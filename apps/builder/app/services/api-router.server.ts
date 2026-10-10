@@ -88,6 +88,7 @@ import {
   serializeProjectSummary,
 } from "./api-build.server";
 import { throwApiError } from "./api-errors.server";
+import { validateProjectSettingsUpdate } from "./project-settings-mutation.server";
 import {
   createBuilderRuntimeState,
   executeApiRuntimeMutation,
@@ -444,14 +445,36 @@ const runtimeBuildMutation = <Result extends Record<string, unknown> = {}>(
 ) =>
   buildMutation(
     runtimeMutationInput(id, requiresConfirm),
-    async ({ input, build, commit }) =>
-      commitRuntimeMutation<Result>({
+    async ({ ctx, input, build, commit }) => {
+      const error = await runtimeMutationValidators[id]?.({
+        input,
+        build,
+        context: ctx,
+      });
+      if (error !== undefined) {
+        return throwApiError("BAD_REQUEST", error);
+      }
+      return commitRuntimeMutation<Result>({
         id,
         build,
         input,
         commit,
-      })
+      });
+    }
   );
+
+const runtimeMutationValidators: Partial<
+  Record<
+    RuntimeOperationId,
+    (args: {
+      input: unknown;
+      build: CompactBuild;
+      context: AppContext;
+    }) => Promise<string | undefined>
+  >
+> = {
+  "projectSettings.update": validateProjectSettingsUpdate,
+};
 
 type BuildCommit = <CommitResult extends Record<string, unknown> = {}>(
   payload: z.infer<typeof buildPatchTransaction>["payload"],

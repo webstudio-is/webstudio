@@ -13,9 +13,9 @@ import {
   SectionTitleButton,
   SectionTitleLabel,
   FloatingPanel,
-  CssValueListItem,
+  InteractiveListItem,
   SmallIconButton,
-  CssValueListArrowFocus,
+  InteractiveListArrowFocus,
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import type { AnimationKeyframe } from "@webstudio-is/sdk";
@@ -225,7 +225,7 @@ const Keyframe = ({
         </Grid>
       }
     >
-      <CssValueListItem
+      <InteractiveListItem
         id={offsetPlaceholder.toString()}
         index={index}
         label={
@@ -245,7 +245,7 @@ const Keyframe = ({
             />
           </Tooltip>
         }
-      ></CssValueListItem>
+      ></InteractiveListItem>
     </FloatingPanel>
   );
 };
@@ -292,7 +292,7 @@ export const Keyframes = ({
       >
         <SectionTitleLabel>Keyframes</SectionTitleLabel>
       </SectionTitle>
-      <CssValueListArrowFocus>
+      <InteractiveListArrowFocus>
         {keyframes.map((value, index) => (
           <Fragment key={keyRefs.current[index]}>
             <Keyframe
@@ -327,7 +327,7 @@ export const Keyframes = ({
             />
           </Fragment>
         ))}
-      </CssValueListArrowFocus>
+      </InteractiveListArrowFocus>
     </div>
   );
 };

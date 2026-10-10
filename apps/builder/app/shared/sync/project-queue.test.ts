@@ -1,3 +1,4 @@
+import { draftPersistence } from "./draft-persistence";
 import {
   describe,
   test,
@@ -426,6 +427,59 @@ describe("project-queue", () => {
       );
     });
   });
+
+  test.each([true, false])(
+    "Preview waits for singleplayer PATCH persistence: %s",
+    async (success) => {
+      vi.spyOn(globalThis, "confirm").mockReturnValue(false);
+      draftPersistence.reset("project");
+      let save: ((value: { status: string }) => void) | undefined;
+      mockBuildPatch.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            save = resolve;
+          })
+      );
+      enqueueProjectDetails({
+        projectId: "project",
+        buildId: "build",
+        version: 1,
+        authPermit: "build",
+        authToken: undefined,
+      });
+      const storage = new ServerSyncStorage("project", initialState);
+      storage.sendTransaction(makeTx("pending"));
+      const done = vi.fn();
+      const saved = draftPersistence.wait("project", {
+        signal: new AbortController().signal,
+      });
+      const waiting = success
+        ? saved.then(done)
+        : expect(saved).rejects.toMatchObject({
+            name: "DraftPersistenceError",
+            reason: "save-failed",
+          });
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(mockBuildPatch).toHaveBeenCalled();
+      expect(done).not.toHaveBeenCalled();
+      save?.({ status: success ? "ok" : "authorization_error" });
+      await flush();
+      await waiting;
+      if (success) {
+        expect(done).toHaveBeenCalledOnce();
+      } else {
+        await expect(
+          draftPersistence.wait("project", {
+            signal: new AbortController().signal,
+          })
+        ).rejects.toMatchObject({
+          name: "DraftPersistenceError",
+          reason: "save-failed",
+        });
+      }
+      draftPersistence.reset();
+    }
+  );
 
   //  enqueueProjectDetails
 

@@ -8,6 +8,7 @@ import { promisify } from "node:util";
 import type { Page as PlaywrightPage } from "@playwright/test";
 import { bundleVersion } from "@webstudio-is/protocol";
 import { getStyleDeclKey, type Page } from "@webstudio-is/sdk";
+import type { ProjectSettings } from "@webstudio-is/project-build";
 import { loadDevBuild } from "../db";
 import { stopChildProcess } from "../process";
 
@@ -18,7 +19,7 @@ const cliLocalPath = fileURLToPath(
 
 type BuildRow = Awaited<ReturnType<typeof loadDevBuild>>;
 
-const getAvailablePort = async () => {
+export const getAvailablePort = async () => {
   const server = createServer();
   server.unref();
   await new Promise<void>((resolve, reject) => {
@@ -34,7 +35,7 @@ const getAvailablePort = async () => {
   return address.port;
 };
 
-const waitForGeneratedPreview = async ({
+export const waitForGeneratedPreview = async ({
   process,
   url,
   output,
@@ -94,7 +95,7 @@ const parseBuildStyleSourceSelectionEntries = (build: BuildRow) => {
   ).map((selection) => [selection.instanceId, selection]);
 };
 
-const createLocalBundleFromDevBuild = (build: BuildRow) => {
+export const createLocalBundleFromDevBuild = (build: BuildRow) => {
   const pages = parseBuildField<{
     homePageId: string;
     pages: Page[];
@@ -127,6 +128,10 @@ const createLocalBundleFromDevBuild = (build: BuildRow) => {
       instances: parseBuildEntriesById(build, "instances"),
       dataSources: parseBuildEntriesById(build, "dataSources"),
       resources: parseBuildEntriesById(build, "resources"),
+      projectSettings: parseBuildField<ProjectSettings>(
+        build,
+        "projectSettings"
+      ),
     },
   };
 };

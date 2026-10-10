@@ -8,7 +8,11 @@ import {
   ws,
   type TemplateMeta,
 } from "@webstudio-is/template";
-import { CheckboxCheckedIcon, RadioCheckedIcon } from "@webstudio-is/icons/svg";
+import {
+  CheckboxCheckedIcon,
+  RadioCheckedIcon,
+  UploadIcon,
+} from "@webstudio-is/icons/svg";
 import type { ReactNode } from "react";
 import {
   collectionComponent,
@@ -173,6 +177,23 @@ const forms: Record<string, TemplateMeta> = {
       "A single-line text input for collecting string data from your users.",
     template: (
       <input
+        ws:style={css`
+          display: block;
+        `}
+      />
+    ),
+  },
+
+  file_input: {
+    category: "forms",
+    description:
+      "Let visitors upload one or more files with a form. Set the name, required state, accepted file types, and multiple-file selection in Settings.",
+    icon: UploadIcon,
+    template: setInstanceMeta(
+      { label: "File Input" },
+      <input
+        type="file"
+        name="files"
         ws:style={css`
           display: block;
         `}

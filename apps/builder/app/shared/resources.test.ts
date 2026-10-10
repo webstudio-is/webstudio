@@ -23,6 +23,7 @@ import {
   loadResourceDiagnostics,
   preloadResources,
 } from "./resources";
+import { $resourcePreviewExchanges } from "./preview-resource-inspection";
 
 const {
   getLoaderState,
@@ -97,6 +98,109 @@ test("keeps an explicitly loaded unbound resource through page-plan recalculatio
     expect($resourcesCache.get().get(key)).toEqual({ data: "2026-09-23" });
   });
   release();
+});
+
+test("captures the exchange returned by an explicitly inspected Resource reload", async () => {
+  const request: ResourceRequest = {
+    ...previewRequest("Contact webhook", "https://example.com/contacts"),
+    method: "post",
+    body: { email: "person@example.com" },
+  };
+  const key = getResourceKey(request);
+  const exchange = {
+    resourceId: key,
+    resourceName: request.name,
+    kind: "http" as const,
+    request: {
+      method: "POST",
+      url: request.url,
+      headers: [],
+      body: request.body,
+      truncated: false,
+    },
+    response: {
+      status: 201,
+      statusText: "Created",
+      headers: [],
+      body: { accepted: true },
+      truncated: false,
+    },
+  };
+  const requestFetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+    expect(String(input)).toContain("inspect=");
+    expect(JSON.parse(String(init?.body))).toEqual([request]);
+    return Response.json({
+      resources: [[key, { data: { accepted: true } }]],
+      inspection: exchange,
+    });
+  });
+
+  const release = loadResourcePreview(request, requestFetch);
+  await vi.waitFor(() => {
+    expect($resourcePreviewExchanges.get().get(key)?.exchange).toEqual(
+      exchange
+    );
+  });
+  expect($resourcesCache.get().get(key)).toEqual({
+    data: { accepted: true },
+  });
+  release();
+});
+
+test("an obsolete inspection cannot replace or cancel a newer same-key inspection", async () => {
+  const request = previewRequest(
+    "Shared",
+    "https://example.com/shared-inspection"
+  );
+  const key = getResourceKey(request);
+  const first = deferredResponse();
+  const second = deferredResponse();
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(() => first.promise)
+    .mockImplementationOnce(() => second.promise);
+  const exchange = (status: number) => ({
+    resourceId: key,
+    resourceName: request.name,
+    kind: "http" as const,
+    request: {
+      method: "GET",
+      url: request.url,
+      headers: [],
+      body: null,
+      truncated: false,
+    },
+    response: {
+      status,
+      statusText: "OK",
+      headers: [],
+      body: null,
+      truncated: false,
+    },
+  });
+  const releaseFirst = loadResourcePreview(request, requestFetch);
+  const releaseSecond = loadResourcePreview(request, requestFetch);
+  first.respond(
+    Response.json({
+      resources: [[key, { data: "old" }]],
+      inspection: exchange(201),
+    })
+  );
+  await vi.waitFor(() => expect(requestFetch).toHaveBeenCalledTimes(2));
+  expect($resourcePreviewExchanges.get().has(key)).toBe(false);
+  second.respond(
+    Response.json({
+      resources: [[key, { data: "new" }]],
+      inspection: exchange(202),
+    })
+  );
+  await vi.waitFor(() => {
+    expect(
+      $resourcePreviewExchanges.get().get(key)?.exchange.response.status
+    ).toBe(202);
+  });
+  releaseFirst();
+  releaseSecond();
 });
 
 test.each([

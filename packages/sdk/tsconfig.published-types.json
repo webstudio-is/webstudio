@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["type-tests/published-exports.ts"],
+  "compilerOptions": {
+    "customConditions": [],
+    "emitDeclarationOnly": false,
+    "noEmit": true
+  }
+}

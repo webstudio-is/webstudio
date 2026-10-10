@@ -308,7 +308,7 @@ export const Canvas = () => {
 
   useEffect(() => startPointerTracking(), []);
 
-  useHashLinkSync();
+  useHashLinkSync(rootInstanceId);
 
   useEffect(subscribeInterceptedEvents, []);
 

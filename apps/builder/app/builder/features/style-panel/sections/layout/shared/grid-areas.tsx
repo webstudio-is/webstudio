@@ -9,8 +9,8 @@ import {
   Label,
   InputField,
   Grid,
-  CssValueListItem,
-  CssValueListArrowFocus,
+  InteractiveListItem,
+  InteractiveListArrowFocus,
   SmallIconButton,
 } from "@webstudio-is/design-system";
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
@@ -627,7 +627,7 @@ export const GridAreas = () => {
         </Flex>
       }
     >
-      <CssValueListArrowFocus>
+      <InteractiveListArrowFocus>
         <Flex direction="column">
           {areas.length === 0 && (
             <PanelContent as={Text} color="subtle" align="center">
@@ -660,7 +660,7 @@ export const GridAreas = () => {
                 }
               }}
             >
-              <CssValueListItem
+              <InteractiveListItem
                 id={String(index)}
                 index={index}
                 onMouseEnter={() => setHoveredAreaIndex(index)}
@@ -687,7 +687,7 @@ export const GridAreas = () => {
             </FloatingPanel>
           ))}
         </Flex>
-      </CssValueListArrowFocus>
+      </InteractiveListArrowFocus>
     </CollapsibleSectionRoot>
   );
 };

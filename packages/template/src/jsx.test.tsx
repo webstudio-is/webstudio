@@ -5,6 +5,7 @@ import type { WsComponentMeta } from "@webstudio-is/sdk";
 import {
   ActionValue,
   AssetValue,
+  FormSubmissionValue,
   expression,
   PageValue,
   Parameter,
@@ -1172,6 +1173,51 @@ test("render resource prop", () => {
       searchParams: [{ name: "filter", value: `$ws$dataSource$1` }],
       headers: [{ name: "auth", value: `$ws$dataSource$1` }],
       body: `$ws$dataSource$1`,
+    },
+  ]);
+});
+
+test("render Form actions with local Email Resources", () => {
+  const project = new ResourceValue("Project recipients", {
+    control: "email",
+    email: { recipientMode: "project" },
+    url: expression`""`,
+    method: "post",
+  });
+  const visitor = new ResourceValue("Visitor email field", {
+    control: "email",
+    email: { recipientMode: "visitor", visitorEmailField: "email" },
+    url: expression`""`,
+    method: "post",
+  });
+  const { props, dataSources, resources } = renderTemplate(
+    <Body ws:id="form" action={new FormSubmissionValue([project, visitor])} />
+  );
+  expect(props.find(({ name }) => name === "action")).toMatchObject({
+    type: "json",
+    value: [
+      { dataSourceId: dataSources[0].id, enabled: true },
+      { dataSourceId: dataSources[1].id, enabled: true },
+    ],
+  });
+  expect(
+    dataSources.map(({ name, type, scopeInstanceId }) => ({
+      name,
+      type,
+      scopeInstanceId,
+    }))
+  ).toEqual([
+    { name: "Project recipients", type: "resource", scopeInstanceId: "form" },
+    { name: "Visitor email field", type: "resource", scopeInstanceId: "form" },
+  ]);
+  expect(
+    resources.map(({ control, email, body }) => ({ control, email, body }))
+  ).toEqual([
+    { control: "email", email: { recipientMode: "project" }, body: undefined },
+    {
+      control: "email",
+      email: { recipientMode: "visitor", visitorEmailField: "email" },
+      body: undefined,
     },
   ]);
 });

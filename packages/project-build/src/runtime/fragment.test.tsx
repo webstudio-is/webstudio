@@ -20,6 +20,7 @@ import {
   getStyleDeclKey,
   portalComponent,
   ROOT_INSTANCE_ID,
+  webstudioFragment,
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import {
@@ -46,6 +47,161 @@ const HtmlEmbed = createTemplateComponentFixture("HtmlEmbed");
 const Paragraph = createTemplateComponentFixture("Paragraph");
 const Slot = createTemplateComponentFixture("Slot");
 const Text = createTemplateComponentFixture("Text");
+const NativeForm = createTemplateComponentFixture("NativeForm");
+
+test("copying Email Resources restores parent bindings by name in the target scope", () => {
+  const parentVariable = new Variable("Owner", "Source owner");
+  const emailVariable = new ResourceValue("Email", {
+    method: "post",
+    url: expression`""`,
+    headers: [],
+  });
+  const source = renderData(
+    <Body ws:id="bodyId" vars={expression`${parentVariable}`}>
+      <NativeForm ws:id="formId" vars={expression`${emailVariable}`} />
+    </Body>
+  );
+  const originalResource = Array.from(source.resources.values())[0];
+  originalResource.control = "email";
+  originalResource.email = {
+    senderExpression: encodeDataVariableId("0"),
+    recipientsExpression: encodeDataVariableId("0"),
+    subject: encodeDataVariableId("0"),
+    body: encodeDataVariableId("0"),
+  };
+  const fragment = extractWebstudioFragment(source, "formId");
+  expect(fragment.resources[0].email).toEqual({
+    senderExpression: "Owner",
+    recipientsExpression: "Owner",
+    subject: "Owner",
+    body: "Owner",
+  });
+
+  const target = createStub(<Body ws:id="targetBody" />);
+  const targetVariable = {
+    id: "targetOwner",
+    type: "variable" as const,
+    name: "Owner",
+    scopeInstanceId: "targetBody",
+    value: { type: "string" as const, value: "Target owner" },
+  };
+  target.dataSources.set(targetVariable.id, targetVariable);
+  insertWebstudioFragmentCopy({
+    data: target,
+    fragment,
+    availableVariables: [targetVariable],
+    projectId: "",
+  });
+  expect(Array.from(target.resources.values())[0].email).toEqual({
+    senderExpression: encodeDataVariableId("targetOwner"),
+    recipientsExpression: encodeDataVariableId("targetOwner"),
+    subject: encodeDataVariableId("targetOwner"),
+    body: encodeDataVariableId("targetOwner"),
+  });
+});
+
+test("copying a Form remaps its local Resource actions", () => {
+  const data = createStub(
+    <Body ws:id="bodyId">
+      <NativeForm ws:id="formId" />
+    </Body>
+  );
+  data.dataSources.set("localResourceVariable", {
+    type: "resource",
+    id: "localResourceVariable",
+    name: "Submission",
+    scopeInstanceId: "formId",
+    resourceId: "localResource",
+  });
+  data.dataSources.set("formDataVariable", {
+    type: "parameter",
+    id: "formDataVariable",
+    name: "formData",
+    scopeInstanceId: "formId",
+  });
+  data.resources.set("localResource", {
+    id: "localResource",
+    name: "Submission",
+    method: "post",
+    url: '"https://example.com"',
+    headers: [],
+    body: encodeDataVariableId("formDataVariable"),
+    control: "email",
+    email: {
+      senderExpression: encodeDataVariableId("formDataVariable"),
+      recipientsExpression: encodeDataVariableId("formDataVariable"),
+      subject: `\`Submission \${${encodeDataVariableId("formDataVariable")}.name}\``,
+      body: encodeDataVariableId("formDataVariable"),
+    },
+  });
+  data.props.set("formData", {
+    id: "formData",
+    instanceId: "formId",
+    name: "formData",
+    type: "parameter",
+    value: "formDataVariable",
+  });
+  data.props.set("formSubmission", {
+    id: "formSubmission",
+    instanceId: "formId",
+    name: "action",
+    type: "json",
+    value: [{ dataSourceId: "localResourceVariable", enabled: false }],
+  });
+
+  const fragment = webstudioFragment.parse(
+    JSON.parse(JSON.stringify(extractWebstudioFragment(data, "formId")))
+  );
+  insertWebstudioFragmentCopy({
+    data,
+    fragment,
+    availableVariables: [],
+    projectId: "",
+  });
+  const copiedForm = Array.from(data.instances.values()).find(
+    ({ id, component }) => id !== "formId" && component === "NativeForm"
+  );
+  const copiedSubmission = Array.from(data.props.values()).find(
+    ({ instanceId, name }) => instanceId === copiedForm?.id && name === "action"
+  );
+  expect(copiedSubmission?.type).toBe("json");
+  if (copiedSubmission?.type === "json") {
+    const destinationId = (
+      copiedSubmission.value as { dataSourceId: string }[]
+    )[0].dataSourceId;
+    expect(destinationId).not.toBe("localResourceVariable");
+    expect(copiedSubmission.value).toEqual([
+      { dataSourceId: destinationId, enabled: false },
+    ]);
+    expect(data.dataSources.get(destinationId)).toMatchObject({
+      scopeInstanceId: copiedForm?.id,
+      resourceId: expect.not.stringMatching(/^localResource$/),
+    });
+    const copiedParameter = Array.from(data.dataSources.values()).find(
+      ({ scopeInstanceId, name }) =>
+        scopeInstanceId === copiedForm?.id && name === "formData"
+    );
+    expect(copiedParameter?.id).not.toBe("formDataVariable");
+    const copiedResource = data.resources.get(
+      (data.dataSources.get(destinationId) as { resourceId: string }).resourceId
+    );
+    expect(copiedResource?.body).toBe(
+      encodeDataVariableId(copiedParameter?.id ?? "")
+    );
+    expect(copiedResource?.email).toEqual({
+      senderExpression: encodeDataVariableId(copiedParameter?.id ?? ""),
+      recipientsExpression: encodeDataVariableId(copiedParameter?.id ?? ""),
+      subject: `\`Submission \${${encodeDataVariableId(copiedParameter?.id ?? "")}?.name}\``,
+      body: encodeDataVariableId(copiedParameter?.id ?? ""),
+    });
+    expect(copiedResource?.email?.senderExpression).not.toBe(
+      encodeDataVariableId("formDataVariable")
+    );
+    expect(copiedResource?.email?.recipientsExpression).not.toBe(
+      encodeDataVariableId("formDataVariable")
+    );
+  }
+});
 
 const stripIndent = (value: string) => {
   const lines = value.replace(/^\n|\n\s*$/g, "").split("\n");

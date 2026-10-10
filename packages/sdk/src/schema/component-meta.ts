@@ -112,6 +112,8 @@ export const wsComponentMeta = z.object({
       default: z.string(),
     })
     .optional(),
+  /** Controls whether the Builder exposes the rendered tag's HTML attributes. */
+  htmlAttributes: z.enum(["show", "hide"]).optional(),
   states: z.optional(z.array(componentState)),
   order: z.number().optional(),
   // properties and html attributes that will be always visible in properties panel

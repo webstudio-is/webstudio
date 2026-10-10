@@ -504,6 +504,80 @@ describe("insert webstudio fragment copy", () => {
 
   $project.set({ id: "current_project" } as Project);
 
+  test("copies Form actions with scoped Resource IDs and keeps external IDs", () => {
+    const externalResource = {
+      id: "external-source",
+      scopeInstanceId: "body",
+      type: "resource" as const,
+      name: "Shared request",
+      resourceId: "external-request",
+    };
+    const data = getWebstudioDataStub({
+      dataSources: new Map([[externalResource.id, externalResource]]),
+    });
+    let nextId = 0;
+    const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
+      data,
+      fragment: {
+        ...emptyFragment,
+        instances: [createInstance("form", "NativeForm", [])],
+        dataSources: [
+          {
+            id: "scoped-source",
+            scopeInstanceId: "form",
+            type: "resource",
+            name: "Form request",
+            resourceId: "scoped-request",
+          },
+        ],
+        resources: [
+          {
+            id: "scoped-request",
+            name: "Form request",
+            method: "post",
+            url: '"https://example.com/submit"',
+            headers: [],
+          },
+        ],
+        props: [
+          {
+            id: "action",
+            instanceId: "form",
+            name: "action",
+            type: "json",
+            value: [
+              { dataSourceId: "scoped-source", enabled: true },
+              { dataSourceId: "external-source", enabled: true },
+            ],
+          },
+        ],
+      },
+      availableVariables: [externalResource],
+      projectId: "",
+      createId: () => `copy-${++nextId}`,
+    });
+
+    const copiedFormId = newInstanceIds.get("form");
+    const copiedScopedId = newDataSourceIds.get("scoped-source");
+    expect(copiedFormId).toBeDefined();
+    expect(copiedScopedId).toBeDefined();
+    expect(copiedScopedId).not.toBe("scoped-source");
+    expect(data.dataSources.get(copiedScopedId ?? "")?.scopeInstanceId).toBe(
+      copiedFormId
+    );
+    expect(
+      Array.from(data.props.values()).find(
+        (prop) => prop.instanceId === copiedFormId && prop.name === "action"
+      )
+    ).toMatchObject({
+      type: "json",
+      value: [
+        { dataSourceId: copiedScopedId, enabled: true },
+        { dataSourceId: "external-source", enabled: true },
+      ],
+    });
+  });
+
   beforeEach(() => {
     $assets.set(new Map());
     $breakpoints.set(new Map());

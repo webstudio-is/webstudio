@@ -12,23 +12,62 @@ import {
 } from "@webstudio-is/sdk";
 import { intrinsicCoreTemplates } from "@webstudio-is/sdk/core-templates";
 import {
+  browserInfoParameterName,
+  formDataParameterName,
+} from "@webstudio-is/sdk/runtime";
+import {
+  ActionValue,
+  FormSubmissionValue,
   css,
+  expression,
   Parameter,
   PlaceholderValue,
+  ResourceValue,
   setInstanceMeta,
   setTemplateMeta,
   type TemplateMeta,
+  Variable,
   ws,
 } from "@webstudio-is/template";
 import {
+  Button,
   CodeText,
   HtmlEmbed,
+  Input,
+  Label,
+  NativeForm,
   Paragraph,
+  Textarea,
 } from "@webstudio-is/sdk-components-react/components";
 import { componentsById } from "./components";
 
 const BlockTemplate = ws.blockTemplate;
 const blockDocument = new Parameter(contentBlockDocumentProp);
+const formData = new Parameter(formDataParameterName);
+const browserInfo = new Parameter(browserInfoParameterName);
+const formState = new Variable("formState", "initial");
+const formResults = new Variable("results", []);
+const formErrors = new Variable("errors", []);
+const formError = new Parameter("collectionItem");
+const projectEmail = new ResourceValue("Project recipients", {
+  control: "email",
+  email: { recipientMode: "project" },
+  url: expression`""`,
+  method: "post",
+});
+const visitorEmail = new ResourceValue("Visitor email field", {
+  control: "email",
+  email: {
+    recipientMode: "visitor",
+    visitorEmailField: "email",
+    subject: JSON.stringify("We received your message"),
+    body: JSON.stringify(
+      "Thanks for contacting us. We received your message and will get back to you soon."
+    ),
+  },
+  url: expression`""`,
+  method: "post",
+});
 
 const listItemMdxTemplateDescriptor = contentBlockMdxTemplateDescriptors.find(
   ({ resolutionKey }) => resolutionKey === "element:li"
@@ -202,6 +241,87 @@ const builtWithWebstudioMeta: TemplateMeta = {
 
 export const coreTemplates = {
   ...intrinsicCoreTemplates,
+  form: {
+    category: "forms",
+    label: "Form (new)",
+    description: "Collect information and submit it to Resource actions.",
+    template: (
+      <NativeForm
+        action={new FormSubmissionValue([projectEmail, visitorEmail])}
+        formData={formData}
+        browserInfo={browserInfo}
+        state={expression`${formState}`}
+        onStateChange={
+          new ActionValue(["state"], expression`${formState} = state`)
+        }
+        onResultChange={
+          new ActionValue(
+            ["result"],
+            expression`({results: ${formResults} = result.results, errors: ${formErrors} = result.errors})`
+          )
+        }
+      >
+        {setInstanceMeta(
+          { label: "Form Content" },
+          <div
+            ws:show={expression`${formState} === 'initial' || ${formState} === 'error'`}
+          >
+            <Label>
+              {new PlaceholderValue("Name")}
+              <Input name="name" autoComplete="name" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Email")}
+              <Input name="email" type="email" autoComplete="email" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Subject")}
+              <Input name="subject" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Message")}
+              <Textarea name="message" required />
+            </Label>
+            <Button type="submit">{new PlaceholderValue("Submit")}</Button>
+          </div>
+        )}
+        {setInstanceMeta(
+          { label: "Success Message" },
+          <div
+            data-ws-form-feedback
+            ws:show={expression`${formState} === 'success'`}
+          >
+            {
+              new PlaceholderValue(
+                "Thanks for contacting us. Your message has been sent."
+              )
+            }
+          </div>
+        )}
+        {setInstanceMeta(
+          { label: "Error Message" },
+          <div
+            data-ws-form-feedback
+            ws:show={expression`${formState} === 'error'`}
+            role="alert"
+          >
+            <p>
+              {
+                new PlaceholderValue(
+                  "We could not send your message. Please try again."
+                )
+              }
+            </p>
+            <ws.collection data={expression`${formErrors}`} item={formError}>
+              <div>
+                {expression`${formError}.message` as unknown as ReactNode}
+              </div>
+            </ws.collection>
+          </div>
+        )}
+      </NativeForm>
+    ),
+  },
   [blockComponent]: blockMeta,
   code_text: {
     category: "typography",

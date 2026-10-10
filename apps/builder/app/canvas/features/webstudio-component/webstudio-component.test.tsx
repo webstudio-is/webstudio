@@ -1,5 +1,22 @@
-import { describe, test, expect } from "vitest";
+import { $syncStatus } from "@webstudio-is/sync-client";
+import { submitPreviewForm } from "~/shared/preview-form-bridge";
+import { describe, test, expect, vi } from "vitest";
 import { __testing__ } from "./webstudio-component";
+import { act } from "react-dom/test-utils";
+import { createRoot } from "react-dom/client";
+import { $pages } from "~/shared/sync/data-stores";
+import { $selectedPageId, $selectedPageHash } from "~/shared/nano-states/pages";
+import { $systemDataByPage } from "~/shared/system";
+import { registerContainers } from "~/shared/sync/sync-stores";
+import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
+import type { System } from "@webstudio-is/sdk";
+
+vi.mock("~/shared/preview-form-bridge", () => ({ submitPreviewForm: vi.fn() }));
+
+registerContainers();
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const { computeComponentKey, getPreviewCurrentUrl, getHtmlEmbedCanvasProps } =
   __testing__;
@@ -126,4 +143,171 @@ describe("getPreviewCurrentUrl", () => {
     expect(url.search).toBe("?tag=blue&empty=");
     expect(url.hash).toBe("#section");
   });
+
+  test("preserves repeated query values for Preview Form submissions", () => {
+    const url = getPreviewCurrentUrl(
+      {
+        pathname: "/contact",
+        search: { choice: ["a", "b"], source: "newsletter" },
+      },
+      ""
+    );
+
+    expect(url.searchParams.getAll("choice")).toEqual(["a", "b"]);
+    expect(url.search).toBe("?choice=a&choice=b&source=newsletter");
+  });
 });
+
+test("the Canvas Form adapter forwards dirty drafts to the parent persistence barrier", async () => {
+  $syncStatus.set({ status: "syncing" });
+  let finish:
+    | ((response: Awaited<ReturnType<typeof submitPreviewForm>>) => void)
+    | undefined;
+  vi.mocked(submitPreviewForm).mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+  );
+  try {
+    const settled = vi.fn();
+    const signal = new AbortController().signal;
+    const result = __testing__
+      .submitManagedFormFromPreview(
+        "form",
+        { email: "visitor@example.com" },
+        signal
+      )
+      .then(settled);
+    expect(submitPreviewForm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        managedFormId: "form",
+        values: { email: "visitor@example.com" },
+        signal,
+      })
+    );
+    await Promise.resolve();
+    expect(settled).not.toHaveBeenCalled();
+    const response = { success: true, status: 200, results: [], errors: [] };
+    finish?.(response);
+    await result;
+    expect(settled).toHaveBeenCalledWith(response);
+  } finally {
+    $syncStatus.set({ status: "idle" });
+    vi.mocked(submitPreviewForm).mockReset();
+  }
+});
+
+test.each(["query", "hash", "params"] as const)(
+  "Preview %s navigation cancels a pending Form without remounting",
+  async (navigation) => {
+    const savedPages = $pages.get();
+    const savedPageId = $selectedPageId.get();
+    const savedSystemData = $systemDataByPage.get();
+    const savedHash = $selectedPageHash.get();
+    $pages.set({
+      homePageId: "home",
+      rootFolderId: "folder",
+      folders: new Map([
+        [
+          "folder",
+          { id: "folder", name: "Root", slug: "", children: ["home"] },
+        ],
+      ]),
+      pages: new Map([
+        [
+          "home",
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: ":slug",
+            rootInstanceId: "body",
+            meta: {},
+          },
+        ],
+      ]),
+    });
+    $selectedPageId.set("home");
+    $systemDataByPage.set(
+      new Map([["home", { params: { slug: "before" }, search: {} }]])
+    );
+    $selectedPageHash.set({ hash: "" });
+    const location = window.location.href;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    let finish: ((response: ManagedFormResponse) => void) | undefined;
+    let signal: AbortSignal | undefined;
+    const redirect = vi.fn();
+    const result = vi.fn();
+    const state = vi.fn();
+    const { PreviewNativeForm } = __testing__;
+    try {
+      await act(async () =>
+        root.render(
+          <PreviewNativeForm
+            action={[{ dataSourceId: "resource", enabled: true }]}
+            successRedirect="/done"
+            onManagedSubmit={(_values, requestSignal) => {
+              signal = requestSignal;
+              return new Promise((resolve) => {
+                finish = resolve;
+              });
+            }}
+            onSuccessRedirect={redirect}
+            onResultChange={result}
+            onStateChange={state}
+          >
+            <button type="submit">Send</button>
+          </PreviewNativeForm>
+        )
+      );
+      const form = container.querySelector("form");
+      await act(async () => container.querySelector("button")?.click());
+      expect(form?.getAttribute("aria-busy")).toBe("true");
+      await act(async () => {
+        if (navigation === "hash") {
+          $selectedPageHash.set({ hash: "#next" });
+        } else {
+          $systemDataByPage.set(
+            new Map<string, Pick<System, "params" | "search">>([
+              [
+                "home",
+                {
+                  params: {
+                    slug: navigation === "params" ? "after" : "before",
+                  },
+                  search:
+                    navigation === "query"
+                      ? { q: ["next"] }
+                      : navigation === "params"
+                        ? { q: "next" }
+                        : {},
+                },
+              ],
+            ])
+          );
+        }
+      });
+      expect(container.querySelector("form")).toBe(form);
+      expect(window.location.href).toBe(location);
+      expect(signal?.aborted).toBe(true);
+      await act(async () =>
+        finish?.({ success: true, status: 200, results: [], errors: [] })
+      );
+      expect(redirect).not.toHaveBeenCalled();
+      expect(result).not.toHaveBeenCalled();
+      expect(state).not.toHaveBeenCalledWith("success");
+      expect(form?.getAttribute("aria-busy")).toBeNull();
+      expect(form?.getAttribute("data-state")).toBeNull();
+    } finally {
+      await act(async () => root.unmount());
+      container.remove();
+      $pages.set(savedPages);
+      $selectedPageId.set(savedPageId);
+      $systemDataByPage.set(savedSystemData);
+      $selectedPageHash.set(savedHash);
+    }
+  }
+);

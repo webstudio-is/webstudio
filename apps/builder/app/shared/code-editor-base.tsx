@@ -558,9 +558,7 @@ export const EditorDialogButton = forwardRef<
         top: 4,
         right: 4,
         visibility: cssVar(maximizeIconVisibilityVar, "hidden"),
-        background: `color-mix(in oklab, ${cssVar(
-          "--background-primary"
-        )} 50%, transparent)`,
+        background: "transparent",
       }}
     />
   );

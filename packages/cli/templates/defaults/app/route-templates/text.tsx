@@ -1,5 +1,5 @@
 import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
-import { isLocalResource, loadResources } from "@webstudio-is/sdk/runtime";
+import { isLocalResource, loadResources, getSystemSearch } from "@webstudio-is/sdk/runtime";
 import { authenticateRequest } from "@webstudio-is/wsauth";
 import { projectDomain } from "__CLIENT__";
 import { getPageMeta, getRemixParams, getResources } from "__SERVER__";
@@ -71,7 +71,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
 
   const system = {
     params,
-    search: Object.fromEntries(url.searchParams),
+    ...getSystemSearch(url.searchParams),
     origin: url.origin,
     pathname: url.pathname,
   };

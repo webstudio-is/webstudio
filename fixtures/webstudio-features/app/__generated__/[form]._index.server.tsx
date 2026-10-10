@@ -34,6 +34,15 @@ export const getResources = (_props: { system: System; resources?: Record<string
 }
 
 
+      import type { ManagedFormResourceGraph } from "@webstudio-is/sdk/runtime";
+import { createJsonStringifyProxy } from "@webstudio-is/sdk/to-string";
+export const getManagedFormResourceGraph = (formId: string, _managedFormProps: { system: System; formData: unknown; browserInfo: unknown }): ManagedFormResourceGraph | undefined => {
+  switch (formId) {
+    default: return undefined;
+  }
+};
+
+
       export const getPageMeta = ({
   system,
   resources,
@@ -58,6 +67,11 @@ export const getResources = (_props: { system: System; resources?: Record<string
 
 
       export const getRemixParams = (params: Record<string, string | undefined>) => toWebstudioParams("/form", params);
+
+      export const getManagedFormSubmissions = () =>
+        new Map<string, { action: unknown; resourceIds: (string | null)[] }>(
+          []
+        );
 
       export const contactEmail = "hello@webstudio.is";
     

@@ -39,7 +39,7 @@ return <Body
 className={`w-body`}>
 <Accordion
 collapsible={true}
-value={accordionValue}
+value={accordionValue == null ? accordionValue : String(accordionValue)}
 onValueChange={(value: any) => {
 accordionValue = value
 set$accordionValue(accordionValue)

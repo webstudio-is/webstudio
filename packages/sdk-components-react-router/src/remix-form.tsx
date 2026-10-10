@@ -33,7 +33,7 @@ export const RemixForm = forwardRef<
       />
     );
   }
-  return <form {...props} ref={ref} />;
+  return <form action={action} method={method} {...props} ref={ref} />;
 });
 
 RemixForm.displayName = "Form";

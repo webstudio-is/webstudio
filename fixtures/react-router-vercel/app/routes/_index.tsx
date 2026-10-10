@@ -12,11 +12,19 @@ import {
 } from "react-router";
 import {
   isLocalResource,
-  loadResource,
   loadResources,
+  loadResourceWithEmail,
+  loadResourcesWithEmail,
+  handleManagedFormSubmission,
+  getManagedFormFailure,
+  readFormDataWithLimit,
+  managedFormRequestParamName,
   formIdFieldName,
+  managedFormIdFieldName,
   formBotFieldName,
+  getSystemSearch,
   cachedFetch,
+  type ManagedFormResponse,
 } from "@webstudio-is/sdk/runtime";
 import { authenticateProjectRequest } from "@webstudio-is/wsauth";
 import {
@@ -36,6 +44,8 @@ import {
 } from "../__generated__/_index";
 import {
   getResources,
+  getManagedFormSubmissions,
+  getManagedFormResourceGraph,
   getPageMeta,
   getRemixParams,
   contactEmail,
@@ -45,6 +55,11 @@ import css from "../__generated__/index.css?url";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
 import { authRoutes } from "../__generated__/$resources.wsauth.server";
 import { createGeneratedAssetResourceFetch } from "../__generated__/$resources.asset-query-runtime";
+import {
+  createManagedFormEmailSender,
+  createManagedFormResourceFetch,
+  validateManagedFormEmail,
+} from "../__generated__/$resources.managed-form-fetch.server";
 import { assetUrlsByPath } from "../__generated__/$resources.assets";
 
 const customFetch: typeof fetch = (input, init) => {
@@ -98,7 +113,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
   const params = getRemixParams(arg.params);
   const system = {
     params,
-    search: Object.fromEntries(url.searchParams),
+    ...getSystemSearch(url.searchParams),
     origin: url.origin,
     pathname: url.pathname,
   };
@@ -242,23 +257,65 @@ const getRequestHost = (request: Request): string =>
 export const action = async ({
   request,
   context,
+  params,
 }: ActionFunctionArgs): Promise<
-  { success: true } | { success: false; errors: string[] }
+  { success: true } | { success: false; errors: string[] } | ManagedFormResponse
 > => {
   authenticateProjectRequest(request, authRoutes, projectDomain);
 
+  let isManagedFormRequest = false;
   try {
     const url = new URL(request.url);
-    url.host = getRequestHost(request);
-
-    const formData = await request.formData();
+    isManagedFormRequest =
+      url.searchParams.get(managedFormRequestParamName) === "1";
+    url.searchParams.delete(managedFormRequestParamName);
+    if (!isManagedFormRequest) {
+      url.host = getRequestHost(request);
+    }
+    const formData = isManagedFormRequest
+      ? await readFormDataWithLimit(request)
+      : await request.formData();
 
     const system = {
-      params: {},
-      search: {},
+      params: getRemixParams(params ?? {}),
+      ...getSystemSearch(url.searchParams),
       origin: url.origin,
       pathname: url.pathname,
     };
+
+    const managedFormIds = formData.getAll(managedFormIdFieldName);
+    if (!isManagedFormRequest && managedFormIds.length > 0) {
+      throw new Error("Invalid Form submission");
+    }
+    if (isManagedFormRequest) {
+      if (managedFormIds.length !== 1 || formData.has(formIdFieldName)) {
+        throw new Error("Invalid Form submission");
+      }
+      const protectedFetch = createManagedFormResourceFetch({
+        request,
+        context,
+        projectDomain,
+      });
+      return await handleManagedFormSubmission({
+        request,
+        formData,
+        url,
+        system,
+        configuration: (formId) => getManagedFormSubmissions().get(formId),
+        getGraph: getManagedFormResourceGraph,
+        createEmailSender: (formData) =>
+          createManagedFormEmailSender({ context, formData, projectId }),
+        validateEmail: validateManagedFormEmail,
+        resourceFetch: protectedFetch,
+        validateDestination: protectedFetch.validateDestination,
+        trustedIp:
+          typeof context === "object" &&
+          context !== null &&
+          "cloudflare" in context
+            ? (request.headers.get("cf-connecting-ip") ?? undefined)
+            : undefined,
+      });
+    }
 
     const resourceName = formData.get(formIdFieldName);
     const generatedResources = getResources({ system });
@@ -293,7 +350,7 @@ export const action = async ({
     formData.delete(formIdFieldName);
     formData.delete(formBotFieldName);
 
-    let result: Awaited<ReturnType<typeof loadResource>>;
+    let result: Awaited<ReturnType<typeof loadResourceWithEmail>>;
     if (actionResource === undefined) {
       if (contactEmail === undefined) {
         throw new Error("Contact email not found");
@@ -307,14 +364,14 @@ export const action = async ({
       if (resource === undefined) {
         throw Error("Resource not found");
       }
-      result = await loadResource(fetch, resource);
+      result = await loadResourceWithEmail(fetch, resource);
     } else {
       const actionFetch = await createGeneratedAssetResourceFetch({
         request,
         context,
         fallback: customFetch,
       });
-      const results = await loadResources(
+      const results = await loadResourcesWithEmail(
         actionFetch,
         {
           ...generatedResources.data,
@@ -333,7 +390,9 @@ export const action = async ({
       if (actionResult === undefined) {
         throw Error("Resource not found");
       }
-      result = actionResult as Awaited<ReturnType<typeof loadResource>>;
+      result = actionResult as Awaited<
+        ReturnType<typeof loadResourceWithEmail>
+      >;
     }
     const { ok, statusText } = result;
     if (ok) {
@@ -343,6 +402,11 @@ export const action = async ({
   } catch (error) {
     console.error(error);
 
+    if (isManagedFormRequest) {
+      return getManagedFormFailure(
+        error instanceof Error ? error.message : "Unknown error"
+      );
+    }
     return {
       success: false,
       errors: [error instanceof Error ? error.message : "Unknown error"],

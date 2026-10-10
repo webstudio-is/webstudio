@@ -22,12 +22,14 @@ import {
   findTreeInstanceIdsExcludingSlotDescendants,
   getStyleDeclKey,
   getHomePage,
+  isFormSubmission,
   portalComponent,
   webstudioFragment,
 } from "@webstudio-is/sdk";
 
 import {
   findAvailableVariables,
+  mapResourceExpressionsMutable,
   replaceDataSourcesInExpression,
   restoreExpressionVariables,
   unsetExpressionVariables,
@@ -453,30 +455,9 @@ export const extractWebstudioFragment = (
       continue;
     }
     const newResource = structuredClone(unwrap(resource));
-    newResource.url = unsetExpressionVariables({
-      expression: newResource.url,
-      unsetNameById,
-    });
-    for (const header of newResource.headers) {
-      header.value = unsetExpressionVariables({
-        expression: header.value,
-        unsetNameById,
-      });
-    }
-    if (newResource.searchParams) {
-      for (const searchParam of newResource.searchParams) {
-        searchParam.value = unsetExpressionVariables({
-          expression: searchParam.value,
-          unsetNameById,
-        });
-      }
-    }
-    if (newResource.body) {
-      newResource.body = unsetExpressionVariables({
-        expression: newResource.body,
-        unsetNameById,
-      });
-    }
+    mapResourceExpressionsMutable(newResource, (expression) =>
+      unsetExpressionVariables({ expression, unsetNameById })
+    );
     fragmentResources.push(newResource);
   }
 
@@ -869,8 +850,11 @@ export const insertWebstudioFragmentCopy = ({
     ) {
       continue;
     }
+    const isNativeFormAction =
+      prop.name === "action" &&
+      fragmentInstances.get(prop.instanceId)?.component === "NativeForm";
     prop = clonePropForInstance({
-      prop: unwrap(prop),
+      prop: structuredClone(unwrap(prop)),
       propId: createId(),
       instanceId: newInstanceIds.get(prop.instanceId) ?? prop.instanceId,
     });
@@ -896,6 +880,17 @@ export const insertWebstudioFragmentCopy = ({
     if (prop.type === "parameter") {
       prop.value = newDataSourceIds.get(prop.value) ?? prop.value;
     }
+    if (
+      prop.type === "json" &&
+      isNativeFormAction &&
+      isFormSubmission(prop.value)
+    ) {
+      prop.value = prop.value.map((action) => ({
+        ...action,
+        dataSourceId:
+          newDataSourceIds.get(action.dataSourceId) ?? action.dataSourceId,
+      }));
+    }
     if (prop.type === "resource") {
       const newResourceId = createId();
       newResourceIds.set(prop.value, newResourceId);
@@ -911,46 +906,12 @@ export const insertWebstudioFragmentCopy = ({
       }
       resource = structuredClone(unwrap(resource));
       resource.id = newResourceIds.get(resource.id) ?? resource.id;
-      resource.url = restoreExpressionVariables({
-        expression: resource.url,
-        maskedIdByName,
-      });
-      resource.url = replaceDataSourcesInExpression(
-        resource.url,
-        newDataSourceIds
+      mapResourceExpressionsMutable(resource, (expression) =>
+        replaceDataSourcesInExpression(
+          restoreExpressionVariables({ expression, maskedIdByName }),
+          newDataSourceIds
+        )
       );
-      for (const header of resource.headers) {
-        header.value = restoreExpressionVariables({
-          expression: header.value,
-          maskedIdByName,
-        });
-        header.value = replaceDataSourcesInExpression(
-          header.value,
-          newDataSourceIds
-        );
-      }
-      if (resource.searchParams) {
-        for (const searchParam of resource.searchParams) {
-          searchParam.value = restoreExpressionVariables({
-            expression: searchParam.value,
-            maskedIdByName,
-          });
-          searchParam.value = replaceDataSourcesInExpression(
-            searchParam.value,
-            newDataSourceIds
-          );
-        }
-      }
-      if (resource.body) {
-        resource.body = restoreExpressionVariables({
-          expression: resource.body,
-          maskedIdByName,
-        });
-        resource.body = replaceDataSourcesInExpression(
-          resource.body,
-          newDataSourceIds
-        );
-      }
       resources.set(resource.id, resource);
     }
   }

@@ -8,6 +8,15 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
+import { build } from "esbuild";
+import type { ReactNode } from "react";
+import {
+  ActionValue,
+  PlaceholderValue,
+  Variable,
+  expression,
+  ws,
+} from "@webstudio-is/template";
 import type { TemplateMeta } from "@webstudio-is/template";
 import type { WsComponentMeta } from "@webstudio-is/sdk";
 import { generateStories } from "./generate-stories";
@@ -65,8 +74,15 @@ const labelMeta: WsComponentMeta = {
   props: {},
 };
 
-const Box = () => null;
+const Box = (_props: { children?: ReactNode }) => null;
 Box.displayName = "Box";
+const NativeForm = (_props: {
+  errors?: unknown;
+  onResultChange?: unknown;
+  children?: ReactNode;
+  "ws:show"?: boolean;
+}) => null;
+NativeForm.displayName = "NativeForm";
 const BaseLabel = () => null;
 BaseLabel.displayName = "Label";
 const RadixLabel = () => null;
@@ -102,6 +118,75 @@ describe("generateStories", () => {
       readFile(path.join(root, "src/__generated__/box.stories.tsx"), "utf8")
     ).resolves.toContain('title: "Components/Box"');
   });
+
+  test.each([
+    { hasErrors: true, hidden: false },
+    { hasErrors: false, hidden: false },
+    { hasErrors: true, hidden: true },
+  ])(
+    "imports managed Form formatting only when used (errors: $hasErrors, hidden: $hidden)",
+    async ({ hasErrors, hidden }) => {
+      const root = await createTempPackage({
+        packageJson: {
+          name: "@webstudio-is/sdk-components-react",
+          type: "module",
+        },
+      });
+      process.chdir(root);
+      const errorsVariable = new Variable("errors", []);
+      await generateStories({
+        packageName: "@webstudio-is/sdk-components-react",
+        components: { Box, NativeForm },
+        templates: [
+          {
+            meta: {
+              category: "general",
+              template: hasErrors ? (
+                <NativeForm
+                  ws:show={!hidden}
+                  errors={expression`${errorsVariable}`}
+                  onResultChange={
+                    new ActionValue(
+                      ["result"],
+                      expression`${errorsVariable} = result.errors`
+                    )
+                  }
+                >
+                  <ws.element ws:label="Error Message">
+                    {new PlaceholderValue("Sorry, something went wrong.")}
+                  </ws.element>
+                </NativeForm>
+              ) : (
+                <Box />
+              ),
+            },
+          },
+        ],
+        metas: { Box: boxMeta, NativeForm: boxMeta },
+      });
+      const source = await readFile(
+        path.join(
+          root,
+          `src/__generated__/${hasErrors ? "native-form" : "box"}.stories.tsx`
+        ),
+        "utf8"
+      );
+      const result = await build({
+        stdin: { contents: source, loader: "tsx" },
+        format: "esm",
+        metafile: true,
+        tsconfigRaw: { compilerOptions: { verbatimModuleSyntax: true } },
+        write: false,
+      });
+      const imports = Object.values(result.metafile!.outputs).flatMap(
+        (output) => output.imports.map(({ path }) => path)
+      );
+      expect(imports.includes("@webstudio-is/sdk")).toBe(hasErrors && !hidden);
+      expect(imports.includes("@webstudio-is/react-sdk/runtime")).toBe(
+        hasErrors
+      );
+    }
+  );
 
   test("rejects templates that resolve to the same story name", async () => {
     const root = await createTempPackage({

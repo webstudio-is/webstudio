@@ -492,6 +492,24 @@ export const parseStringLiteralExpression = (expression: string) => {
   }
 };
 
+/**
+ * Parse a JavaScript string literal, including single-quoted and static
+ * template literals.
+ */
+export const parseStaticStringExpression = (expression: string) => {
+  try {
+    const node = parseCompleteExpression(expression);
+    if (node.type === "Literal" && typeof node.value === "string") {
+      return node.value;
+    }
+    if (node.type === "TemplateLiteral" && node.expressions.length === 0) {
+      return node.quasis[0]?.value.cooked ?? undefined;
+    }
+  } catch {
+    // Invalid or non-static expressions are not string literals.
+  }
+};
+
 const getStaticMemberPath = (node: Expression): string[] | undefined => {
   if (node.type === "Identifier") {
     return [node.name];
@@ -578,6 +596,49 @@ export const getExpressionIdentifiers = (expression: string) => {
     // empty block
   }
   return identifiers;
+};
+
+/** Find a direct assignment of an identifier from another identifier's property. */
+export const hasPropertyAssignment = ({
+  code,
+  target,
+  source,
+  property,
+}: {
+  code: string;
+  target: string;
+  source: string;
+  property: string;
+}): boolean => {
+  try {
+    const root = parse(code, { ecmaVersion: "latest" });
+    let found = false;
+    simple(root, {
+      AssignmentExpression(node) {
+        if (node.operator !== "=" || node.left.type !== "Identifier") {
+          return;
+        }
+        const value = node.right;
+        if (
+          node.left.name === target &&
+          value.type === "MemberExpression" &&
+          value.object.type === "Identifier" &&
+          value.object.name === source &&
+          ((value.computed === false &&
+            value.property.type === "Identifier" &&
+            value.property.name === property) ||
+            (value.computed === true &&
+              value.property.type === "Literal" &&
+              value.property.value === property))
+        ) {
+          found = true;
+        }
+      },
+    });
+    return found;
+  } catch {
+    return false;
+  }
 };
 
 /**

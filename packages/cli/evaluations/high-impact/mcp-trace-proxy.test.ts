@@ -8,6 +8,55 @@ import {
 } from "./mcp-trace-proxy";
 
 describe("bounded MCP tracing", () => {
+  test("retains only bounded evidence for Form template discovery and insertion", () => {
+    expect(
+      getMcpTraceRequest({
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "components.search",
+          arguments: { brief: "Form (new) with visitor email" },
+        },
+      })?.call
+    ).toMatchObject({ arguments: { searchesForForm: true } });
+    expect(
+      getMcpTraceRequest({
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "templates.get",
+          arguments: { template: "template:form" },
+        },
+      })?.call
+    ).toMatchObject({ arguments: { inspectsFormTemplate: true } });
+    expect(
+      getMcpTraceRequest({
+        id: 3,
+        method: "tools/call",
+        params: {
+          name: "insert-component",
+          arguments: {
+            component: "form",
+            label: "private user supplied data",
+          },
+        },
+      })?.call
+    ).toMatchObject({ arguments: { insertsFormTemplate: true } });
+    expect(
+      getMcpTraceRequest({
+        id: 4,
+        method: "tools/call",
+        params: {
+          name: "insert-component",
+          arguments: {
+            component: "heading",
+            label: "private user supplied data",
+          },
+        },
+      })?.call.arguments
+    ).toBeUndefined();
+  });
+
   test("rejects an unbounded tool name", () => {
     expect(
       getMcpTraceRequest({

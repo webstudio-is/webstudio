@@ -1,4 +1,11 @@
-import { getAllPages, getPagePath, isAbsoluteUrl } from "@webstudio-is/sdk";
+import {
+  appendFormDataToSearchParams,
+  appendSystemSearch,
+  getAllPages,
+  getPagePath,
+  getSystemSearch,
+  isAbsoluteUrl,
+} from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
   tokenizePathnamePattern,
@@ -21,10 +28,21 @@ const getSelectedPagePathname = () => {
   }
 };
 
-const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
+export const switchPageAndUpdateSystem = (
+  href: string,
+  {
+    formData,
+    controlNames,
+    includeFallback = true,
+  }: {
+    formData?: FormData;
+    controlNames?: Iterable<string>;
+    includeFallback?: boolean;
+  } = {}
+) => {
   const pages = $pages.get();
   if (pages === undefined) {
-    return;
+    return false;
   }
   // preserve pathname when not specified in href/action
   if (href === "" || href.startsWith("?")) {
@@ -38,9 +56,8 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
     const pathname = getSelectedPagePathname();
     if (pathname) {
       const system = $currentSystem.get();
-      const searchParams = new URLSearchParams(
-        system.search as Record<string, string>
-      );
+      const searchParams = new URLSearchParams();
+      appendSystemSearch(searchParams, system.search);
       href = `${pathname}?${searchParams}${href}`;
     }
   }
@@ -54,20 +71,32 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
   );
   if (matchedPage) {
     const { value: page, params } = matchedPage;
+    if (
+      includeFallback === false &&
+      (page.meta.status === "404" ||
+        getPagePath(page.id, pages) === "/*" ||
+        getPagePath(page.id, pages) === "*")
+    ) {
+      return false;
+    }
     // populate search params with form data values if available
     if (formData) {
-      for (const [key, value] of formData.entries()) {
-        pageHref.searchParams.set(key, value.toString());
-      }
+      appendFormDataToSearchParams(
+        pageHref.searchParams,
+        formData,
+        controlNames ?? []
+      );
     }
-    const search = Object.fromEntries(pageHref.searchParams);
+    const search = getSystemSearch(pageHref.searchParams);
     $selectedPageHash.set({ hash: pageHref.hash });
     selectPage(page.id);
     updateCurrentSystem({
       params: toWebstudioParams(getPagePath(page.id, pages), params),
-      search,
+      search: search.search,
     });
+    return true;
   }
+  return false;
 };
 
 export const subscribeInterceptedEvents = () => {
@@ -135,13 +164,24 @@ export const subscribeInterceptedEvents = () => {
       if (form === undefined) {
         return;
       }
+      if (form.hasAttribute("data-ws-managed-form-id")) {
+        // NativeForm handles managed submissions and their feedback in Preview.
+        return;
+      }
       // use attribute instead of form.action to get raw unresolved value
       // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#dom-fs-action
       const action = form.getAttribute("action") ?? "";
       // lower case just for safety
       const method = form.method.toLowerCase();
       if (method === "get" && isAbsoluteUrl(action) === false) {
-        switchPageAndUpdateSystem(action, new FormData(form));
+        const formData =
+          event.submitter === null
+            ? new FormData(form)
+            : new FormData(form, event.submitter);
+        const controlNames = Array.from(form.elements, (control) =>
+          control.getAttribute("name")
+        ).filter((name): name is string => Boolean(name));
+        switchPageAndUpdateSystem(action, { formData, controlNames });
       }
     }
     // prevent submitting the form when clicking a button type submit

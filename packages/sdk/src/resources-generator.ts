@@ -13,7 +13,7 @@ import {
   getResourceDataSourceIds,
 } from "./resource-dependencies";
 
-const generateResourceRequestFields = ({
+export const generateResourceRequestFields = ({
   resource,
   indent,
   dataSources,
@@ -46,10 +46,13 @@ const generateResourceRequestFields = ({
       usedDataSources,
       scope,
     });
-    generated += `${indent}  { name: "${searchParam.name}", value: ${value} },\n`;
+    generated += `${indent}  { name: ${JSON.stringify(searchParam.name)}, value: ${value} },\n`;
   }
   generated += `${indent}],\n`;
-  generated += `${indent}method: "${resource.method}",\n`;
+  generated += `${indent}method: ${JSON.stringify(resource.method)},\n`;
+  if (resource.bodyFormat !== undefined) {
+    generated += `${indent}bodyFormat: ${JSON.stringify(resource.bodyFormat)},\n`;
+  }
   generated += `${indent}headers: [\n`;
   for (const header of resource.headers) {
     const value = generateExpression({
@@ -58,7 +61,7 @@ const generateResourceRequestFields = ({
       usedDataSources,
       scope,
     });
-    generated += `${indent}  { name: "${header.name}", value: ${value} },\n`;
+    generated += `${indent}  { name: ${JSON.stringify(header.name)}, value: ${value} },\n`;
   }
   generated += `${indent}],\n`;
   if (resource.body !== undefined && resource.body.length > 0) {
@@ -81,6 +84,10 @@ export const generateResources = ({
   resources,
   instances = new Map(),
   contentBlockResourceSelections = [],
+  excludedResourceIds = new Set(),
+  unavailableDataSourceIds = new Set(),
+  generateAdditionalRequestFields,
+  additionalImports = "",
 }: {
   scope: Scope;
   page: Page;
@@ -88,6 +95,16 @@ export const generateResources = ({
   props: Props;
   resources: Resources;
   instances?: Instances;
+  excludedResourceIds?: ReadonlySet<string>;
+  unavailableDataSourceIds?: ReadonlySet<string>;
+  generateAdditionalRequestFields?: (options: {
+    resource: Resource;
+    indent: string;
+    dataSources: DataSources;
+    usedDataSources: DataSources;
+    scope: Scope;
+  }) => string;
+  additionalImports?: string;
   contentBlockResourceSelections?: readonly {
     sourceExpression: string;
     candidates: readonly {
@@ -121,6 +138,13 @@ export const generateResources = ({
       )
       .map((dataSource) => [dataSource.resourceId, dataSource] as const)
   );
+  for (const resourceId of selectedResourceIds) {
+    if (excludedResourceIds.has(resourceId)) {
+      throw new Error(
+        "Dynamic Content Block Resources cannot depend on unavailable inputs"
+      );
+    }
+  }
   const rootResourceIds = getPageResourceRootIds({
     page,
     instances,
@@ -129,8 +153,18 @@ export const generateResources = ({
   });
   for (const { sourceExpression } of contentBlockResourceSelections) {
     for (const dataSourceId of getExpressionDataSourceIds([sourceExpression])) {
+      if (unavailableDataSourceIds.has(dataSourceId)) {
+        throw new Error(
+          "Dynamic Content Block Resources cannot depend on unavailable inputs"
+        );
+      }
       const dataSource = dataSources.get(dataSourceId);
       if (dataSource?.type === "resource") {
+        if (excludedResourceIds.has(dataSource.resourceId)) {
+          throw new Error(
+            "Dynamic Content Block Resources cannot depend on unavailable inputs"
+          );
+        }
         rootResourceIds.add(dataSource.resourceId);
         contentInputDataSourceIds.add(dataSource.id);
       }
@@ -158,6 +192,9 @@ export const generateResources = ({
   const graphResourceIds = new Set<Resource["id"]>();
   const resourceDependencies = new Map<Resource["id"], Resource["id"][]>();
   const addResourceAndDependencies = (resourceId: Resource["id"]) => {
+    if (excludedResourceIds.has(resourceId)) {
+      return;
+    }
     if (graphResourceIds.has(resourceId)) {
       return;
     }
@@ -194,6 +231,9 @@ export const generateResources = ({
 
   let generatedRequests = "";
   for (const resource of resources.values()) {
+    if (excludedResourceIds.has(resource.id)) {
+      continue;
+    }
     const resourceName = scope.getName(resource.id, resource.name);
     if (graphResourceIds.has(resource.id)) {
       const requestDataSources: DataSources = new Map();
@@ -204,6 +244,14 @@ export const generateResources = ({
         usedDataSources: requestDataSources,
         scope,
       });
+      const additionalFields =
+        generateAdditionalRequestFields?.({
+          resource,
+          indent: "      ",
+          dataSources,
+          usedDataSources: requestDataSources,
+          scope,
+        }) ?? "";
       let generatedRequest = `  const ${resourceName} = (documents: ReadonlyMap<string, unknown>): ResourceRequest => {\n`;
       for (const dataSource of requestDataSources.values()) {
         usedDataSources.set(dataSource.id, dataSource);
@@ -217,6 +265,7 @@ export const generateResources = ({
       }
       generatedRequest += `    return {\n`;
       generatedRequest += fields;
+      generatedRequest += additionalFields;
       generatedRequest += `    }\n`;
       generatedRequest += `  }\n`;
       generatedRequests += generatedRequest;
@@ -230,6 +279,14 @@ export const generateResources = ({
       usedDataSources,
       scope,
     });
+    generatedRequests +=
+      generateAdditionalRequestFields?.({
+        resource,
+        indent: "    ",
+        dataSources,
+        usedDataSources,
+        scope,
+      }) ?? "";
     generatedRequests += `  }\n`;
   }
 
@@ -301,6 +358,7 @@ export const generateResources = ({
   let generated = "";
   generated += `import type { System, ResourceRequest } from "@webstudio-is/sdk";\n`;
   generated += `import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";\n`;
+  generated += additionalImports;
   generated += `export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {\n`;
   generated += generatedVariables;
   generated += generatedRequests;

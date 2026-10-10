@@ -1,5 +1,4 @@
-import { Flex, Tooltip, Text, cssVar } from "@webstudio-is/design-system";
-import { InfoCircleIcon } from "@webstudio-is/icons";
+import { Flex, InfoTooltip, Text } from "@webstudio-is/design-system";
 import {
   toValue,
   type CssProperty,
@@ -63,8 +62,8 @@ export const Section = () => {
               );
             }}
             tooltip={
-              <Tooltip
-                variant="wrapped"
+              <InfoTooltip
+                label="About filters"
                 content={
                   <Flex gap="2" direction="column">
                     <Text variant="regularBold">{label}</Text>
@@ -77,9 +76,7 @@ export const Section = () => {
                     </Text>
                   </Flex>
                 }
-              >
-                <InfoCircleIcon color={cssVar("--foreground-secondary")} />
-              </Tooltip>
+              />
             }
           />
         )}

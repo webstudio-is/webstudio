@@ -17,6 +17,8 @@ import {
 } from "../contracts/patch";
 import {
   validateContactEmail,
+  validateEmailSender,
+  validateEmailText,
   validateProjectAuth,
 } from "../contracts/project-settings";
 import type { BuilderState } from "../state/builder-state";
@@ -138,6 +140,31 @@ const validateProjectMetaUpdate = (
           message: contactEmailError,
           constraint: "comma_separated_email_addresses",
           example: "team@example.com",
+        },
+      ]);
+    }
+  }
+  for (const [name, label] of [
+    ["emailSender", "Sender"],
+    ["emailSubject", "Email subject"],
+    ["emailBody", "Email body"],
+    ["emailConfirmationSubject", "Confirmation subject"],
+  ] as const) {
+    const value = values[name];
+    if (typeof value !== "string") {
+      continue;
+    }
+    const error =
+      name === "emailSender"
+        ? validateEmailSender(value)
+        : validateEmailText(value, label, name === "emailBody");
+    if (error) {
+      return throwBuilderValidationError(error, [
+        {
+          code: "invalid_email_setting",
+          path: ["meta", name],
+          message: error,
+          constraint: "valid_email_setting",
         },
       ]);
     }

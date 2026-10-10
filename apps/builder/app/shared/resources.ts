@@ -13,6 +13,11 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import { restResourcesLoader } from "./router-utils";
 import {
+  $resourcePreviewExchanges,
+  recordResourcePreviewExchange,
+  type PreviewResourceExchange,
+} from "./preview-resource-inspection";
+import {
   computeExpression,
   type ResolveExpressionDataSource,
 } from "@webstudio-is/project-build/runtime";
@@ -47,6 +52,7 @@ const pendingDiagnostics = new Map<string, InFlightResourceDiagnostics>();
 const knownRequests = new Map<string, ResourceRequest>();
 const pageRequestKeys = new Set<string>();
 const previewRequests = new Map<string, Set<symbol>>();
+const inspectionRequests = new Map<string, number>();
 const resourceVersions = new Map<string, number>();
 const inFlightBatches = new Set<InFlightResourceBatch>();
 
@@ -141,15 +147,50 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
 
   try {
     const startedAt = performance.now();
-    const response = await requestFetch(restResourcesLoader(), {
-      method: "POST",
-      body: JSON.stringify(list),
-      signal: controller.signal,
-    });
+    const inspectionKey = list
+      .map(getResourceKey)
+      .find(
+        (key) =>
+          inspectionRequests.get(key) === batch.versions.get(key) &&
+          pending.get(key) === batch
+      );
+    const response = await requestFetch(
+      restResourcesLoader({ inspect: inspectionKey }),
+      {
+        method: "POST",
+        body: JSON.stringify(list),
+        signal: controller.signal,
+      }
+    );
     if (response.ok === false) {
       return;
     }
-    const results = new Map<string, unknown>(await response.json());
+    const payload: unknown = await response.json();
+    const isInspectionResponse =
+      typeof payload === "object" && payload !== null && "resources" in payload;
+    const results = new Map<string, unknown>(
+      (isInspectionResponse
+        ? (payload as { resources: [string, unknown][] }).resources
+        : payload) as [string, unknown][]
+    );
+    if (isInspectionResponse) {
+      const { inspection } = payload as {
+        inspection?: PreviewResourceExchange;
+      };
+      if (
+        inspection !== undefined &&
+        inspectionKey !== undefined &&
+        inspection.resourceId === inspectionKey &&
+        pending.get(inspectionKey) === batch &&
+        knownRequests.has(inspectionKey) &&
+        resourceVersions.get(inspectionKey) ===
+          batch.versions.get(inspectionKey) &&
+        inspectionRequests.get(inspectionKey) ===
+          batch.versions.get(inspectionKey)
+      ) {
+        recordResourcePreviewExchange(inspection.resourceId, inspection);
+      }
+    }
     const loaderDurationMs = performance.now() - startedAt;
     for (const [key, result] of results) {
       const request = dispatched.get(key);
@@ -176,6 +217,9 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
   } finally {
     inFlightBatches.delete(batch);
     for (const key of dispatched.keys()) {
+      if (inspectionRequests.get(key) === batch.versions.get(key)) {
+        inspectionRequests.delete(key);
+      }
       if (pending.get(key) === batch) {
         pending.delete(key);
       }
@@ -301,6 +345,10 @@ export const loadResourcePreview = (
   requestFetch: typeof fetch = fetch
 ) => {
   const key = getResourceKey(resource);
+  inspectionRequests.set(key, (resourceVersions.get(key) ?? 0) + 1);
+  const previousInspection = new Map($resourcePreviewExchanges.get());
+  previousInspection.delete(key);
+  $resourcePreviewExchanges.set(previousInspection);
   const lease = Symbol();
   const leases = previewRequests.get(key) ?? new Set<symbol>();
   leases.add(lease);
@@ -515,6 +563,9 @@ export const computeResourceRequest = async (
     url,
     searchParams,
     headers,
+    ...(resource.bodyFormat === undefined
+      ? {}
+      : { bodyFormat: resource.bodyFormat }),
   };
   if (resource.body !== undefined) {
     request.body = body;
@@ -634,6 +685,8 @@ const reset = () => {
   knownRequests.clear();
   pageRequestKeys.clear();
   previewRequests.clear();
+  inspectionRequests.clear();
+  $resourcePreviewExchanges.set(new Map());
   resourceVersions.clear();
   updateCache();
   updatePending();

@@ -23,6 +23,8 @@ export const meta: WsComponentMeta = {
     "type",
     "placeholder",
     "required",
+    "accept",
+    "multiple",
     "autofocus",
   ],
   props: {

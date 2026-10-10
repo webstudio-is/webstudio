@@ -9,13 +9,244 @@ import type { Page } from "./schema/pages";
 import { createScope } from "./scope";
 import { encodeDataSourceVariable } from "./expression";
 import {
+  generateResourceRequestFields,
   generateResources,
   replaceFormActionsWithResources,
 } from "./resources-generator";
+import { generatePageResources } from "./managed-form-resources-generator";
 import type { DataSource } from "./schema/data-sources";
 
 const Body = createTemplateComponentFixture("Body");
 const Form = createTemplateComponentFixture("Form");
+
+test("base request fields do not generate Email delivery configuration", () => {
+  const fields = generateResourceRequestFields({
+    resource: {
+      id: "email",
+      name: "Email",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+      email: { recipientMode: "project" },
+    },
+    indent: "",
+    dataSources: new Map(),
+    usedDataSources: new Map(),
+    scope: createScope(),
+  });
+  expect(fields).toContain('control: "email"');
+  expect(fields).not.toContain("email: {");
+});
+
+test("does not fetch a Form-bound Resource during page load", () => {
+  const generated = generatePageResources({
+    scope: createScope(),
+    page: { rootInstanceId: "form" } as Page,
+    instances: toMap([
+      { type: "instance", id: "form", component: "NativeForm", children: [] },
+    ]),
+    dataSources: toMap([
+      {
+        id: "formDataId",
+        type: "parameter",
+        scopeInstanceId: "form",
+        name: "formData",
+      },
+      {
+        id: "resourceVariableId",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "Submission",
+        resourceId: "resourceId",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "resourceId",
+        name: "Submission",
+        method: "post",
+        url: '"https://example.com"',
+        headers: [],
+        body: encodeDataSourceVariable("formDataId"),
+      },
+    ]),
+    props: new Map(),
+  });
+
+  expect(generated).not.toContain('id: "resourceId"');
+  expect(generated).not.toContain("formDataId");
+  expect(generated).not.toContain("formData");
+});
+
+test("emits only the resolver imports required by bound Email Resources", () => {
+  const emailResource = {
+    id: "email-resource",
+    name: "Receipt",
+    control: "email" as const,
+    method: "post" as const,
+    url: '""',
+    headers: [],
+    email: {
+      recipientMode: "custom" as const,
+      recipientsExpression: encodeDataSourceVariable("recipients-value"),
+      senderExpression: encodeDataSourceVariable("sender-value"),
+    },
+  };
+  const dataSources = toMap([
+    {
+      id: "email-variable",
+      scopeInstanceId: "body",
+      type: "resource" as const,
+      name: "Receipt",
+      resourceId: "email-resource",
+    },
+    {
+      id: "recipients-value",
+      scopeInstanceId: "body",
+      type: "variable" as const,
+      name: "recipients",
+      value: { type: "string" as const, value: "team@example.com" },
+    },
+    {
+      id: "sender-value",
+      scopeInstanceId: "body",
+      type: "variable" as const,
+      name: "sender",
+      value: { type: "string" as const, value: "sender@example.com" },
+    },
+  ]);
+  const input = {
+    scope: createScope(),
+    page: { rootInstanceId: "body" } as Page,
+    dataSources,
+    resources: toMap([emailResource]),
+    props: new Map(),
+  };
+
+  const generated = generatePageResources(input);
+  const genericGenerated = generateResources({
+    ...input,
+    scope: createScope(),
+  });
+  expect(genericGenerated).not.toContain("resolveEmailRecipientsExpression(");
+  expect(genericGenerated).not.toContain(
+    "resolveEmailSenderSettingsExpression("
+  );
+  expect(genericGenerated).not.toContain("email: {");
+  expect(generated).toContain("email: {");
+  expect(generated).toContain(
+    'import { resolveEmailRecipientsExpression, resolveEmailSenderSettingsExpression } from "@webstudio-is/sdk";'
+  );
+  expect(generated).toContain("resolveEmailRecipientsExpression(");
+  expect(generated).toContain("resolveEmailSenderSettingsExpression(");
+
+  const senderOnlyGenerated = generatePageResources({
+    ...input,
+    resources: toMap([
+      {
+        ...emailResource,
+        email: {
+          recipientMode: "custom" as const,
+          recipients: "team@example.com",
+          senderExpression: encodeDataSourceVariable("sender-value"),
+        },
+      },
+    ]),
+  });
+  expect(senderOnlyGenerated).toContain(
+    'import { resolveEmailSenderSettingsExpression } from "@webstudio-is/sdk";'
+  );
+  expect(senderOnlyGenerated).not.toContain("resolveEmailRecipientsExpression");
+
+  const literalEmailResource = {
+    ...emailResource,
+    email: { recipientMode: "project" as const },
+  };
+  const literalGenerated = generatePageResources({
+    ...input,
+    resources: toMap([literalEmailResource]),
+  });
+  expect(literalGenerated).not.toContain("resolveEmailRecipientsExpression");
+  expect(literalGenerated).not.toContain(
+    "resolveEmailSenderSettingsExpression"
+  );
+});
+
+test("excludes transitive Form-only Resources and rejects Dynamic Content Block selection", () => {
+  const input = {
+    page: { rootInstanceId: "form" } as Page,
+    instances: toMap([
+      {
+        type: "instance" as const,
+        id: "form",
+        component: "NativeForm",
+        children: [],
+      },
+    ]),
+    dataSources: toMap([
+      {
+        id: "formDataId",
+        type: "parameter" as const,
+        scopeInstanceId: "form",
+        name: "formData",
+      },
+      {
+        id: "directResourceVariableId",
+        type: "resource" as const,
+        scopeInstanceId: "form",
+        name: "Direct",
+        resourceId: "directResourceId",
+      },
+      {
+        id: "derivedResourceVariableId",
+        type: "resource" as const,
+        scopeInstanceId: "form",
+        name: "Derived",
+        resourceId: "derivedResourceId",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "directResourceId",
+        name: "Direct",
+        method: "post" as const,
+        url: '"https://example.com/direct"',
+        headers: [],
+        body: encodeDataSourceVariable("formDataId"),
+      },
+      {
+        id: "derivedResourceId",
+        name: "Derived",
+        method: "post" as const,
+        url: '"https://example.com/derived"',
+        headers: [],
+        body: encodeDataSourceVariable("directResourceVariableId"),
+      },
+    ]),
+    props: new Map(),
+  };
+  const generated = generatePageResources({ scope: createScope(), ...input });
+  expect(generated).not.toContain("directResourceId");
+  expect(generated).not.toContain("derivedResourceId");
+
+  expect(() =>
+    generatePageResources({
+      scope: createScope(),
+      ...input,
+      contentBlockResourceSelections: [
+        {
+          sourceExpression: '"choice"',
+          candidates: [
+            { assetId: "choice", resourceIds: ["derivedResourceId"] },
+          ],
+        },
+      ],
+    })
+  ).toThrow(
+    "Dynamic Content Block Resources cannot depend on unavailable inputs"
+  );
+});
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item] as const));

@@ -18,6 +18,20 @@ Project settings are located in the top left by clicking the Webstudio logo > Pr
 * **Custom Code** – Global field to output scripts in the head. Custom Code is often used to add analytics scripts such as Google Analytics, PostHog, Plausible, and any other scripts/code you want to output on every page. Please note that this code does _not_ output in the Builder, so your scripts aren't tracking Builder page views. For outputting a script in the body on every page, use a [Slot](../core-components/slot.md). For example, add [HTML Embed(s)](../core-components/html-embed.md) to your Footer Slot so that it outputs on every page.
 * **Compiler** – Atomic CSS reduces the CSS file size by \~70% in many cases. See more below.
 
+## Emails
+
+Configure recipients, Sender, owner notification subject and plain-text body, and the visitor email subject here. Recipients are comma-separated mailboxes such as `team@example.com` or `Name <address@example.com>`; quote a display name that contains a comma. When the list is empty, new Email Resources fall back to the project owner's address. An Email Resource can inherit these recipients or use its own fixed recipient list; submitted Form values cannot choose team recipients.
+
+To send visitor email, create an Email Resource, select **Visitor** as its recipient, choose a named email input on the Form, and add the Resource to the Form's Action. Its body starts empty. Webstudio always prepends a fixed confirmation sentence with the site's URL, followed by any body configured in the Resource. The body can use normal Resource bindings. When a Form includes file inputs, submitted files are attached to the outgoing Email Resource message by default. Turn off ‘Attach submitted files’ to omit them. This action runs alongside other actions, and its failure is reported without reversing an otherwise successful Form submission.
+
+Sender accepts one mailbox, with or without a display name: `Acme Support <support@example.com>` or `support@example.com`. Its address is for replies, and its optional name is the display name. Webstudio's authenticated From address stays fixed. Each Email Resource can inherit Sender or override it.
+
+Owner notification subjects keep the configured project or Resource text and gain a short submission reference in brackets on delivery. Each new submission gets a different reference; a retry of one submission keeps it. Visitor-addressed email subjects do not gain that reference.
+
+The project owner body is the **complete** plain-text message. A nonempty body replaces the automatic Form data and browser information text and is used literally; it does not evaluate bindings typed into Project Settings. Leave it empty to use automatic text for a selected Email Resource that sends to project or custom recipients, whether the Resource is defined on the Form, an ancestor, or Global Root. The automatic text includes submitted hidden fields, but excludes password inputs and Webstudio's internal bot fields. A Resource body override takes precedence, including an explicitly empty body. HTTP Resources can bind submitted values as configured. To use `formData` or `browserInfo` in a Resource expression, define the Resource on the Form; Resources on an ancestor or Global Root cannot bind that Form's data. Resetting a Resource body override restores inheritance of the project body.
+
+Email Resources inherit project defaults until you override individual settings. Reset an override on the Resource to use the project value again. Republish to update the settings included in a published site. On Webstudio Cloud, published Email Resources use the private Cloudflare Email Service when the `EMAIL_SERVICE` binding is configured. Saving settings or publishing does not itself send email; a visitor must submit the Form. Delivery fails explicitly if the service is unavailable. Self-hosted sites need a custom server-side email integration. The existing Contact email recipient setting continues to serve legacy Webhook Forms.
+
 ## Publishing
 
 ### Atomic CSS

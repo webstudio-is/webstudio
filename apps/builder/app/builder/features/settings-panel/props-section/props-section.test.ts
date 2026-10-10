@@ -10,6 +10,20 @@ const {
   shouldWriteBoundValue,
 } = __testing__;
 
+test("Form and generic components render their property sections", () => {
+  for (const component of ["NativeForm", "Box"]) {
+    expect(
+      shouldRenderPropsSectionContainer({
+        component,
+        propsMetasSize: 1,
+        hasVisibleProps: false,
+        isContentMode: false,
+        isDesignMode: true,
+      })
+    ).toBe(true);
+  }
+});
+
 test("finds a legacy React-named expression by its standard attribute name", () => {
   const className: Prop = {
     id: "class-name",

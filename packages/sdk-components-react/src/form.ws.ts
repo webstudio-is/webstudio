@@ -12,6 +12,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   label: "Form",
+  deprecated: true,
   presetStyle,
   initialProps: ["id", "class", "action"],
   props,

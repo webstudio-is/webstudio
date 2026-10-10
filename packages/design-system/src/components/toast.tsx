@@ -371,7 +371,15 @@ export const Toaster = () => {
           </AnimatedToast>
         );
       })}
-      <StyledViewport />
+      <StyledViewport>
+        {toasts.filter(({ visible }) => visible).length > 1 && (
+          <li style={{ listStyle: "none", alignSelf: "flex-end" }}>
+            <Button color="ghost" onClick={() => hotToast.dismiss()}>
+              Clear all
+            </Button>
+          </li>
+        )}
+      </StyledViewport>
     </ToastPrimitive.ToastProvider>
   );
 };

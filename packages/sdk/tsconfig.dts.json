@@ -4,6 +4,11 @@
     "../../@types/**/*.d.ts",
     "src/index.ts",
     "src/runtime.ts",
+    "src/managed-form-draft-graph.ts",
+    "src/form-fields.ts",
+    "src/form-submission.ts",
+    "src/protected-resource-fetch.ts",
+    "src/protected-resource-fetch-node.ts",
     "src/link-utils.ts",
     "src/schema.ts",
     "src/__generated__/normalize.css.ts"

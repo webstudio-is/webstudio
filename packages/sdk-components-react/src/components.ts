@@ -19,6 +19,7 @@ export { Button } from "./button";
 export { Input } from "./input";
 export { WebhookForm as Form } from "./webhook-form";
 export { Form as RemixForm } from "./form";
+export { NativeForm } from "./native-form";
 export { Image } from "./image";
 export { Blockquote } from "./blockquote";
 export { List } from "./list";

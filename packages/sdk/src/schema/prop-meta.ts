@@ -179,6 +179,13 @@ const json = z.object({
   defaultValue: z.unknown().optional(),
 });
 
+const formAction = z.object({
+  ...common,
+  control: z.literal("form-action"),
+  type: z.literal("json"),
+  defaultValue: z.unknown().optional(),
+});
+
 const date = z.object({
   ...common,
   control: z.literal("date"),
@@ -236,6 +243,7 @@ export const propMeta = z.union([
   file,
   url,
   json,
+  formAction,
   date,
   action,
   textContentPropMeta,

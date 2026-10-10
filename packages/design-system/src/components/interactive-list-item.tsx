@@ -153,7 +153,7 @@ const FakeSmallButton = styled("div", {
   height: theme.spacing[9],
 });
 
-export const CssValueListItem = forwardRef(
+export const InteractiveListItem = forwardRef(
   (
     {
       label,
@@ -214,7 +214,9 @@ export const CssValueListItem = forwardRef(
               hidden={hidden}
               disabled={hidden === true || rest.disabled}
             >
-              <DragHandleIconStyled />
+              <DragHandleIconStyled
+                data-drag-handle={draggable ? true : undefined}
+              />
 
               <Flex shrink align="center" css={{ overflow: "hidden" }}>
                 {thumbnail ? <ThumbHolder>{thumbnail}</ThumbHolder> : null}
@@ -256,9 +258,9 @@ export const CssValueListItem = forwardRef(
   }
 );
 
-CssValueListItem.displayName = "CssValueListItem";
+InteractiveListItem.displayName = "InteractiveListItem";
 
-export const CssValueListArrowFocus = ({
+export const InteractiveListArrowFocus = ({
   children,
   dragItemId,
 }: {

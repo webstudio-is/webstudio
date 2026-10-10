@@ -16,9 +16,32 @@ import {
   parseDirectPathExpression,
   parseStaticMemberPath,
   parseStringLiteralExpression,
+  parseStaticStringExpression,
   allowedArrayMethods,
   allowedStringMethods,
+  hasPropertyAssignment,
 } from "./index";
+
+test.each([
+  ["errors = result.errors", true],
+  ["errors = result['errors']", true],
+  ['errors = result["errors"]', true],
+  ["const text = 'errors = result.errors'", false],
+  ["// errors = result.errors", false],
+  ["errors = result.other", false],
+  ["errors = other.errors", false],
+  ["errors += result.errors", false],
+  ["errors = result[dynamic]", false],
+])("identifies actual property assignment in %s", (code, expected) => {
+  expect(
+    hasPropertyAssignment({
+      code,
+      target: "errors",
+      source: "result",
+      property: "errors",
+    })
+  ).toBe(expected);
+});
 
 test("validates complete expressions", () => {
   expect(isValidExpression("post.title ?? 'Untitled'")).toBe(true);
@@ -80,6 +103,19 @@ describe("string literal expressions", () => {
     ["assets", undefined],
   ])("parses %s", (source, expected) => {
     expect(parseStringLiteralExpression(source)).toBe(expected);
+  });
+});
+
+describe("static JavaScript string expressions", () => {
+  test.each([
+    ['"assets"', "assets"],
+    ["'assets'", "assets"],
+    ["`assets`", "assets"],
+    ["`assets-${name}`", undefined],
+    ["'assets' + suffix", undefined],
+    ["'assets' trailing", undefined],
+  ])("parses %s", (source, expected) => {
+    expect(parseStaticStringExpression(source)).toBe(expected);
   });
 });
 

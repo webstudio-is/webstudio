@@ -4,11 +4,11 @@ import type { ResourcePerformance } from "~/shared/resource-diagnostics";
 import {
   ContentDatabaseDiagnostics,
   ResourcePerformanceDiagnostics,
-} from "./content-database-diagnostics";
+} from "../../content-database-diagnostics";
 import {
   RequestErrorDiagnostics,
   type RequestErrorDiagnosticsValue,
-} from "./request-error-diagnostics";
+} from "../../request-error-diagnostics";
 
 export const ResourceDiagnosticsView = ({
   requestError,

@@ -10,6 +10,7 @@ import {
   SmallIconButton,
   IconButton,
   Tooltip,
+  InfoTooltip,
   ScrollArea,
   PanelBanner,
   Link,
@@ -88,16 +89,10 @@ export const StagingDomain = () => (
           <Grid flow="column" align="center" gap={2}>
             <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>
               <Label>Domain:</Label>
-              <Tooltip
+              <InfoTooltip
+                label="About domain name"
                 content="Domain can't be renamed once published"
-                variant="wrapped"
-              >
-                <InfoCircleIcon
-                  tabIndex={0}
-                  style={{ flexShrink: 0 }}
-                  color={cssVar("--foreground-secondary")}
-                />
-              </Tooltip>
+              />
             </Flex>
             <InputField text="mono" value="my-project" disabled />
           </Grid>
@@ -108,16 +103,10 @@ export const StagingDomain = () => (
           <Grid flow="column" align="center" gap={2}>
             <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>
               <Label>Password:</Label>
-              <Tooltip
+              <InfoTooltip
+                label="About staging password"
                 content="Read-only password for staging"
-                variant="wrapped"
-              >
-                <InfoCircleIcon
-                  tabIndex={0}
-                  style={{ flexShrink: 0 }}
-                  color={cssVar("--foreground-secondary")}
-                />
-              </Tooltip>
+              />
             </Flex>
             <InputField text="mono" value="abc123" readOnly />
           </Grid>

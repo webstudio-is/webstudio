@@ -7,8 +7,8 @@ import {
   FloatingPanel,
   IconButton,
   Label,
-  CssValueListItem,
-  CssValueListArrowFocus,
+  InteractiveListItem,
+  InteractiveListArrowFocus,
   SmallIconButton,
   useSortable,
   Button,
@@ -234,7 +234,7 @@ const TrackItem = ({
       open={isEditing}
       onOpenChange={onEditingChange}
     >
-      <CssValueListItem
+      <InteractiveListItem
         id={id}
         draggable={!isAuto}
         active={dragItemId === id}
@@ -407,7 +407,7 @@ const TrackEditor = ({
         </Flex>
       }
     >
-      <CssValueListArrowFocus dragItemId={dragItemId}>
+      <InteractiveListArrowFocus dragItemId={dragItemId}>
         <Flex direction="column" ref={sortableRefCallback}>
           {tracks.length === 0 && (
             <PanelContent as={Text} color="subtle" align="center">
@@ -445,7 +445,7 @@ const TrackEditor = ({
           })}
           {placementIndicator}
         </Flex>
-      </CssValueListArrowFocus>
+      </InteractiveListArrowFocus>
     </CollapsibleSectionRoot>
   );
 };

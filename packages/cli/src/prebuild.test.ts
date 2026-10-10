@@ -42,9 +42,20 @@ import {
   encodeDataVariableId,
   SYSTEM_VARIABLE_ID,
   type Resource,
+  type ResourceRequest,
 } from "@webstudio-is/sdk";
-import { showAttribute } from "@webstudio-is/react-sdk";
-import { formBotFieldName, formIdFieldName } from "@webstudio-is/sdk/runtime";
+import { generateRemixRoute, showAttribute } from "@webstudio-is/react-sdk";
+import { submitManagedForm } from "@webstudio-is/sdk-components-react";
+import {
+  formBotFieldName,
+  formIdFieldName,
+  getManagedFormFailure,
+  managedFormArrayNamesFieldName,
+  managedFormIdFieldName,
+  managedFormRequestParamName,
+  type EmailResourceLoadOptions,
+} from "@webstudio-is/sdk/runtime";
+import { createProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch";
 import {
   generateRedirectsModule,
   getAssetResourcePrerenderPaths,
@@ -76,7 +87,7 @@ const elementComponent = "ws:element";
 const slowPrebuildTestTimeout = 15_000;
 
 const runGeneratedCommand = async (
-  command: "react-router" | "tsc" | "vite" | "vike",
+  command: "react-router" | "remix" | "tsc" | "vite" | "vike",
   args: string[]
 ) => {
   const env = { ...process.env };
@@ -147,7 +158,11 @@ const linkPackagedPreviewDependencies = async () => {
 
 type Redirects = Array<{ old: string; new: string; status?: "301" | "302" }>;
 type GeneratedRouteModule = {
-  loader: (args: { request: Request }) => Response | Promise<Response>;
+  loader: (args: {
+    request: Request;
+    params?: Record<string, string | undefined>;
+    context?: Record<string, unknown>;
+  }) => Response | Promise<Response>;
 };
 
 const importGeneratedRoute = async (path: string) => {
@@ -788,6 +803,292 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 });
 
 describe("prebuild", () => {
+  test.each([true, false])(
+    "imports managed Form formatting only when used (%s)",
+    async (hasErrors) => {
+      const siteData = createSiteData({
+        props: hasErrors
+          ? [
+              [
+                "result-action",
+                {
+                  id: "result-action",
+                  instanceId: "root",
+                  name: "onResultChange",
+                  type: "action",
+                  value: [
+                    {
+                      type: "execute",
+                      args: ["result"],
+                      code: `${encodeDataVariableId("errors")} = result.errors`,
+                    },
+                  ],
+                },
+              ],
+            ]
+          : [],
+        instances: [
+          [
+            "root",
+            {
+              id: "root",
+              component: "NativeForm",
+              children: hasErrors ? [{ type: "id", value: "error" }] : [],
+            },
+          ],
+          [
+            "error",
+            {
+              id: "error",
+              component: "ws:element",
+              tag: "div",
+              label: "Error Message",
+              children: [
+                {
+                  type: "text",
+                  placeholder: true,
+                  value: "Sorry, something went wrong.",
+                },
+              ],
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "errors",
+          {
+            id: "errors",
+            type: "variable",
+            name: "errors",
+            scopeInstanceId: "root",
+            value: { type: "json", value: [] },
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: ["react-router"] });
+      const source = await readFile("app/__generated__/_index.tsx", "utf8");
+      const result = await build({
+        stdin: { contents: source, loader: "tsx" },
+        format: "esm",
+        metafile: true,
+        tsconfigRaw: { compilerOptions: { verbatimModuleSyntax: true } },
+        write: false,
+      });
+      const imports = Object.values(result.metafile.outputs).flatMap((output) =>
+        output.imports.map(({ path }) => path)
+      );
+      expect(imports.includes("@webstudio-is/sdk")).toBe(hasErrors);
+    }
+  );
+
+  test("uses the private Email binding when a TRPC token is present without an Email Service URL", async () => {
+    await prebuild({
+      assets: false,
+      template: ["react-router", "react-router-cloudflare"],
+    });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    const adapterBundle = await build({
+      entryPoints: [
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+      ],
+      bundle: true,
+      format: "esm",
+      platform: "node",
+      conditions: ["webstudio"],
+      write: false,
+    });
+    const adapter = (await import(
+      /* @vite-ignore */
+      `data:text/javascript;base64,${Buffer.from(
+        adapterBundle.outputFiles[0].text
+      ).toString("base64")}`
+    )) as {
+      createManagedFormEmailSender: (input: {
+        context: unknown;
+        formData: FormData;
+        projectId: string;
+      }) => EmailResourceLoadOptions["sendEmail"];
+    };
+    const bindingFetch = vi
+      .fn()
+      .mockResolvedValue(Response.json({ id: "sent" }));
+    const sendEmail = adapter.createManagedFormEmailSender({
+      context: {
+        cloudflare: {
+          env: {
+            EMAIL_SERVICE: { fetch: bindingFetch },
+            TRPC_SERVER_API_TOKEN: "unrelated-trpc-token",
+          },
+        },
+      },
+      formData: new FormData(),
+      projectId: "project-id",
+    });
+    expect(sendEmail).toBeDefined();
+    await expect(
+      sendEmail!(
+        {
+          name: "Email",
+          url: "",
+          method: "post",
+          searchParams: [],
+          headers: [],
+          control: "email",
+          email: {
+            recipientMode: "project",
+            recipients: [{ address: "owner@example.com" }],
+            subject: "Submission",
+            body: "Submitted fields",
+            includeAttachments: false,
+          },
+        },
+        {}
+      )
+    ).resolves.toMatchObject({ ok: true, data: { id: "sent" } });
+    expect(bindingFetch).toHaveBeenCalledExactlyOnceWith(
+      "https://email-service.internal/v1/send",
+      expect.objectContaining({ method: "POST" })
+    );
+    const [, init] = bindingFetch.mock.calls[0];
+    const headers = new Headers(init?.headers);
+    expect(headers.get("content-type")).toBe("application/json");
+    expect(headers.get("x-webstudio-project-id")).toBe("project-id");
+  });
+
+  test("generates a private Email binding adapter only for Cloudflare sites", async () => {
+    await prebuild({
+      assets: false,
+      template: ["react-router", "react-router-cloudflare"],
+    });
+    const cloudflareAdapter = await readFile(
+      "app/__generated__/$resources.managed-form-fetch.server.ts",
+      "utf8"
+    );
+    expect(cloudflareAdapter).toContain("cloudflare?.env;");
+    expect(cloudflareAdapter).toContain("env?.EMAIL_SERVICE;");
+    expect(cloudflareAdapter).toContain(
+      "createCloudflareManagedFormEmailSender"
+    );
+    expect(cloudflareAdapter).toContain("EMAIL_SERVICE_URL");
+    expect(cloudflareAdapter).toContain("TRPC_SERVER_API_TOKEN");
+    expect(cloudflareAdapter).not.toContain("EMAIL_SERVICE_TOKEN");
+    expect(cloudflareAdapter).toContain(
+      "createCloudflareManagedFormEmailSenderWithUrl"
+    );
+    expect(cloudflareAdapter.indexOf("EMAIL_SERVICE_URL")).toBeLessThan(
+      cloudflareAdapter.indexOf("EMAIL_SERVICE;")
+    );
+    expect(cloudflareAdapter).toContain("service, formData, projectId");
+
+    await prebuild({ assets: false, template: ["react-router"] });
+    const nodeAdapter = await readFile(
+      "app/__generated__/$resources.managed-form-fetch.server.ts",
+      "utf8"
+    );
+    expect(nodeAdapter).toContain(
+      "createManagedFormEmailSender = (_input: { context: unknown; formData: FormData; projectId: string }) => undefined"
+    );
+    expect(nodeAdapter).not.toContain("EMAIL_SERVICE");
+  });
+
+  test("publishes configured file-input attributes", async () => {
+    await writeSiteData(
+      createSiteData({
+        instances: [
+          [
+            "root",
+            {
+              id: "root",
+              component: "NativeForm",
+              children: [{ type: "id", value: "upload" }],
+            },
+          ],
+          [
+            "upload",
+            {
+              id: "upload",
+              component: "ws:element",
+              tag: "input",
+              children: [],
+            },
+          ],
+        ],
+        props: [
+          ...(["type", "name", "accept"] as const).map(
+            (name) =>
+              [
+                name,
+                {
+                  id: name,
+                  instanceId: "upload",
+                  name,
+                  type: "string" as const,
+                  value:
+                    name === "type"
+                      ? "file"
+                      : name === "name"
+                        ? "attachments"
+                        : "image/*,.pdf",
+                },
+              ] as [string, Prop]
+          ),
+          ...(["required", "multiple"] as const).map(
+            (name) =>
+              [
+                name,
+                {
+                  id: name,
+                  instanceId: "upload",
+                  name,
+                  type: "boolean" as const,
+                  value: true,
+                },
+              ] as [string, Prop]
+          ),
+        ],
+      })
+    );
+
+    await prebuild({ assets: false, template: ["react-router"] });
+
+    const page = await readFile("app/__generated__/_index.tsx", "utf8");
+    expect(page).toContain('type={"file"}');
+    expect(page).toContain('name={"attachments"}');
+    expect(page).toContain('accept={"image/*,.pdf"}');
+    expect(page).toContain("required={true}");
+    expect(page).toContain("multiple={true}");
+  });
+
+  test("preserves the legacy Contact recipients without a separate Form confirmation", async () => {
+    const siteData = createSiteData({
+      pageMeta: {
+        contactEmail: '"Team, West" <team@example.com>',
+        emailSender: "Owner <owner@example.com>",
+        emailSubject: "New request",
+        emailBody: "Thanks for contacting us.",
+        emailConfirmationSubject: "Received",
+      },
+    });
+    await writeSiteData(siteData);
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
+    const generated = await readFile(
+      "app/__generated__/_index.server.tsx",
+      "utf8"
+    );
+    expect(generated).toContain(
+      'export const contactEmail = "\\"Team, West\\" <team@example.com>"'
+    );
+    expect(generated).not.toContain("export const emailDefaults");
+  });
   test("rejects Assets queries without a content database without changing generated files", async () => {
     const siteData = createSiteData();
     siteData.build.resources = [["posts", createQueryResource()]] as never;
@@ -2440,7 +2741,9 @@ sitemap.map((page) => page.path);`
       });
       const runtime = await import(
         /* @vite-ignore */
-        `data:text/javascript;base64,${Buffer.from(runtimeBundle.outputFiles[0].text).toString("base64")}`
+        `data:text/javascript;base64,${Buffer.from(
+          runtimeBundle.outputFiles[0].text
+        ).toString("base64")}`
       );
       const requestedPaths: string[] = [];
       const server = createServer((request, response) => {
@@ -2836,6 +3139,395 @@ sitemap.map((page) => page.path);`
   });
 
   test.each(["defaults", "react-router"])(
+    "uses page params and all query values in a managed Form Resource (%s)",
+    async (template) => {
+      const system = encodeDataSourceVariable(SYSTEM_VARIABLE_ID);
+      const siteData = createSiteData({
+        pages: [
+          {
+            id: "product",
+            name: "Product",
+            title: "Product",
+            path: "/products/:slug",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "earlier-action",
+            {
+              id: "earlier-action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [],
+            },
+          ],
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [{ dataSourceId: "destination", enabled: true }],
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          SYSTEM_VARIABLE_ID,
+          { id: SYSTEM_VARIABLE_ID, name: "system", type: "parameter" },
+        ],
+        [
+          "destination",
+          {
+            id: "destination",
+            name: "Destination",
+            type: "resource",
+            resourceId: "submit",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "submit",
+          {
+            id: "submit",
+            name: "Submit",
+            method: "post",
+            url: `"https://receiver.example/" + ${system}.params.slug + "?source=" + ${system}.search.source`,
+            headers: [
+              {
+                name: "X-Selected",
+                value: `typeof ${system}.search.tag === "string" ? ${system}.search.tag : ${system}.search.tag[0]`,
+              },
+            ],
+            body: `{ slug: ${system}.params.slug, tags: ${system}.search.tag }`,
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents:
+            'export { action } from "./app/routes/[products].$slug._index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "managed-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "managed-action.mjs")).href
+      );
+      const received: Array<{
+        url: string;
+        selected: string | null;
+        body: unknown;
+      }> = [];
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push({
+            url: request.url,
+            selected: request.headers.get("X-Selected"),
+            body: await request.json(),
+          });
+          return Response.json({ accepted: true });
+        })
+      );
+      const form = new FormData();
+      form.set(managedFormIdFieldName, "root");
+      form.set(formBotFieldName, "brave");
+      form.set(managedFormArrayNamesFieldName, "[]");
+      form.set("message", "Hello");
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/products/chair?source=newsletter&tag=&tag=red%2Cblue&tag=red%2Cblue&${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: form,
+            }
+          ),
+          context: {},
+          params: { slug: "chair" },
+        })
+      ).resolves.toMatchObject({ success: true });
+      const nextForm = new FormData();
+      nextForm.set(managedFormIdFieldName, "root");
+      nextForm.set(formBotFieldName, "brave");
+      nextForm.set(managedFormArrayNamesFieldName, "[]");
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/products/table?source=direct&tag=last&${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: nextForm,
+            }
+          ),
+          context: {},
+          params: { slug: "table" },
+        })
+      ).resolves.toMatchObject({ success: true });
+      expect(received).toEqual([
+        {
+          url: "https://receiver.example/chair?source=newsletter",
+          selected: "",
+          body: { slug: "chair", tags: ["", "red,blue", "red,blue"] },
+        },
+        {
+          url: "https://receiver.example/table?source=direct",
+          selected: "last",
+          body: { slug: "table", tags: "last" },
+        },
+      ]);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "uses route params and query values in a legacy Form Resource (%s)",
+    async (template) => {
+      const system = encodeDataSourceVariable(SYSTEM_VARIABLE_ID);
+      const siteData = createSiteData({
+        pages: [
+          {
+            id: "product",
+            name: "Product",
+            title: "Product",
+            path: "/products/:slug",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+        instances: [["root", { id: "root", component: "Form", children: [] }]],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "resource",
+              value: "submit",
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          SYSTEM_VARIABLE_ID,
+          { id: SYSTEM_VARIABLE_ID, name: "system", type: "parameter" },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "submit",
+          {
+            id: "submit",
+            name: "Submit",
+            method: "post",
+            url: `"https://receiver.example/" + ${system}.params.slug + "?source=" + ${system}.search.source`,
+            headers: [{ name: "X-Selected", value: `${system}.search.tag` }],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents:
+            'export { action } from "./app/routes/[products].$slug._index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "legacy-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "legacy-action.mjs")).href
+      );
+      const received: Array<{
+        url: string;
+        selected: unknown;
+        body: unknown;
+      }> = [];
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push({
+            url: request.url,
+            selected: JSON.parse(request.headers.get("X-Selected") ?? "null"),
+            body: await request.json(),
+          });
+          return Response.json({ accepted: true });
+        })
+      );
+      const form = new FormData();
+      form.set(formIdFieldName, "action");
+      form.set(formBotFieldName, "brave");
+      form.set("message", "Hello");
+      await expect(
+        action({
+          request: new Request(
+            "https://example.com/products/chair?source=newsletter&tag=red&tag=blue",
+            {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: form,
+            }
+          ),
+          context: {},
+          params: { slug: "chair" },
+        })
+      ).resolves.toEqual({ success: true });
+      expect(received).toEqual([
+        {
+          url: "https://receiver.example/chair?source=newsletter",
+          selected: ["red", "blue"],
+          body: { message: "Hello" },
+        },
+      ]);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "passes native GET Form multi-select values to page Resources (%s)",
+    async (template) => {
+      const system = encodeDataSourceVariable(SYSTEM_VARIABLE_ID);
+      const siteData = createSiteData({
+        pages: [
+          {
+            id: "product",
+            name: "Product",
+            title: encodeDataSourceVariable("selected-tags"),
+            path: "/products/:slug",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+        instances: [["root", { id: "root", component: "Form", children: [] }]],
+        props: [
+          [
+            "method",
+            {
+              id: "method",
+              instanceId: "root",
+              name: "method",
+              type: "string",
+              value: "get",
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          SYSTEM_VARIABLE_ID,
+          { id: SYSTEM_VARIABLE_ID, name: "system", type: "parameter" },
+        ],
+        [
+          "selected-tags",
+          {
+            id: "selected-tags",
+            name: "Selected tags",
+            type: "resource",
+            resourceId: "tag-receiver",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "tag-receiver",
+          {
+            id: "tag-receiver",
+            name: "Tag receiver",
+            method: "get",
+            url: '"https://receiver.example/tags"',
+            headers: [
+              { name: "X-Selected-Tags", value: `${system}.search.tag` },
+            ],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents:
+            'export { loader } from "./app/routes/[products].$slug._index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "native-get-loader.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { loader } = await import(
+        pathToFileURL(join(tempDir, "native-get-loader.mjs")).href
+      );
+      const received: Array<{ url: string; selectedTags: string | null }> = [];
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push({
+            url: request.url,
+            selectedTags: request.headers.get("X-Selected-Tags"),
+          });
+          return Response.json({ accepted: true });
+        })
+      );
+
+      await loader({
+        request: new Request(
+          "https://example.com/products/chair?tag=red%2Cblue&tag=green"
+        ),
+        params: { slug: "chair" },
+        context: { EXCLUDE_FROM_SEARCH: false },
+      });
+
+      expect(received).toEqual([
+        {
+          url: "https://receiver.example/tags",
+          selectedTags: '["red,blue","green"]',
+        },
+      ]);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
     "submits identical forms twice while caching dependencies (%s)",
     async (template) => {
       const siteData = createSiteData({
@@ -2883,7 +3575,9 @@ sitemap.map((page) => page.path);`
             id: "submit",
             name: "Submit",
             method: "post",
-            url: `"https://example.com/submit/" + ${encodeDataSourceVariable("author")}.data.id`,
+            url: `"https://example.com/submit/" + ${encodeDataSourceVariable(
+              "author"
+            )}.data.id`,
             headers: [{ name: "Cache-Control", value: '"public, max-age=60"' }],
           },
         ],
@@ -2924,6 +3618,35 @@ sitemap.map((page) => page.path);`
           return Response.json({ id: "author-123" });
         }
       );
+      const expired = (Date.now() - 300_001).toString(16);
+      const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        for (const [botValues, error] of [
+          [[], "Form bot field not found"],
+          [["malformed"], "Form bot value invalid malformed"],
+          [[expired], `Form bot value invalid ${expired}`],
+          [["stale", Date.now().toString(16)], "Form bot value invalid stale"],
+        ] as const) {
+          const invalidForm = new FormData();
+          invalidForm.set(formIdFieldName, "action");
+          for (const value of botValues) {
+            invalidForm.append(formBotFieldName, value);
+          }
+          await expect(
+            action({
+              request: new Request("https://example.com/", {
+                method: "POST",
+                headers: { host: "example.com" },
+                body: invalidForm,
+              }),
+              context: {},
+            })
+          ).resolves.toEqual({ success: false, errors: [error] });
+        }
+      } finally {
+        errorLog.mockRestore();
+      }
+      expect(received).toHaveLength(0);
       for (let index = 0; index < 2; index += 1) {
         const form = new FormData();
         form.set(formIdFieldName, "action");
@@ -2954,7 +3677,2796 @@ sitemap.map((page) => page.path);`
     }
   );
 
-  test("prerenders the configured Webhook Form method", async () => {
+  test.each(["defaults", "react-router"])(
+    "rejects invalid managed Form actions before any request (%s)",
+    async (template) => {
+      const configurations = [
+        ["empty", []],
+        [
+          "too-many",
+          Array(11)
+            .fill("destination")
+            .map((dataSourceId) => ({ dataSourceId, enabled: true })),
+        ],
+        [
+          "duplicate",
+          [
+            { dataSourceId: "destination", enabled: true },
+            { dataSourceId: "destination", enabled: true },
+          ],
+        ],
+        ["missing", [{ dataSourceId: "missing", enabled: true }]],
+        ["malformed", { destinations: "destination" }],
+        ["native", { mode: "native", destinations: ["destination"] }],
+        ["valid", [{ dataSourceId: "destination", enabled: true }]],
+      ] as const;
+      const siteData = createSiteData({
+        instances: [
+          [
+            "root",
+            {
+              id: "root",
+              component: "Box",
+              children: configurations.map(([id]) => ({
+                type: "id",
+                value: id,
+              })),
+            },
+          ],
+          ...configurations.map(
+            ([id]) =>
+              [id, { id, component: "NativeForm", children: [] }] as [
+                string,
+                Omit<Instance, "type">,
+              ]
+          ),
+        ],
+        props: configurations.map(([id, value]) => [
+          `${id}-action`,
+          {
+            id: `${id}-action`,
+            instanceId: id,
+            name: "action",
+            type: "json",
+            value,
+          },
+        ]),
+      });
+      siteData.build.dataSources = [
+        [
+          "destination",
+          {
+            id: "destination",
+            name: "Destination",
+            type: "resource",
+            resourceId: "remote",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "remote",
+          {
+            id: "remote",
+            name: "Remote",
+            method: "post",
+            url: '"https://example.com/endpoint"',
+            headers: [],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: `export { action } from "./app/routes/_index";
+            export { action as endpointAction } from "./app/routes/${generateRemixRoute(
+              "/__ws-form"
+            )}";`,
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action, endpointAction } = await import(
+        pathToFileURL(join(tempDir, "action.mjs")).href
+      );
+      const outgoingFetch = vi.fn(async () => Response.json({ ok: true }));
+      vi.stubGlobal("__testManagedFormFetch", outgoingFetch);
+      const submit = (id: string, fields: Record<string, string> = {}) => {
+        const form = new FormData();
+        form.set(managedFormIdFieldName, id);
+        form.set("message", "Hello");
+        for (const [name, value] of Object.entries(fields)) {
+          form.set(name, value);
+        }
+        return action({
+          request: new Request(
+            `https://example.com/?${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: form,
+            }
+          ),
+          context: {},
+        });
+      };
+
+      for (const [id, error] of [
+        ["unknown", "Form submission settings not found"],
+        ["empty", "Add at least one action"],
+        ["too-many", "Select no more than 10 Resource actions"],
+        ["duplicate", "Select each Resource only once"],
+        ["missing", "Resource destination not found"],
+        ["malformed", "Form submission settings not found"],
+        ["native", "Form submission settings not found"],
+      ]) {
+        await expect(submit(id)).resolves.toEqual(getManagedFormFailure(error));
+      }
+      await expect(submit("valid")).resolves.toEqual(
+        getManagedFormFailure("Form bot field not found")
+      );
+      await expect(
+        submit("valid", { [formBotFieldName]: "stale" })
+      ).resolves.toEqual(getManagedFormFailure("Form bot value invalid stale"));
+      const malformedHex = `${Date.now().toString(16)}not-hex`;
+      await expect(
+        submit("valid", { [formBotFieldName]: malformedHex })
+      ).resolves.toEqual(
+        getManagedFormFailure(`Form bot value invalid ${malformedHex}`)
+      );
+      await expect(
+        submit("valid", {
+          [formBotFieldName]: "brave",
+          [managedFormArrayNamesFieldName]: "not-json",
+        })
+      ).resolves.toEqual(getManagedFormFailure("Invalid Form field groups"));
+      const unmarked = new FormData();
+      unmarked.set(managedFormIdFieldName, "valid");
+      unmarked.set(formBotFieldName, "brave");
+      await expect(
+        action({
+          request: new Request("https://example.com/", {
+            method: "POST",
+            headers: { host: "example.com" },
+            body: unmarked,
+          }),
+          context: {},
+        })
+      ).resolves.toEqual({
+        success: false,
+        errors: ["Invalid Form submission"],
+      });
+      expect(outgoingFetch).not.toHaveBeenCalled();
+      vi.stubGlobal("navigator", { brave: { isBrave: () => true } });
+      await expect(
+        submitManagedForm({
+          values: { message: "Hello" },
+          managedFormId: "valid",
+          location: "https://example.com/?source=staging",
+          fetch: async (input, init) => {
+            const response: Response = await endpointAction({
+              request: new Request(input, {
+                ...init,
+                headers: { host: "example.com" },
+              }),
+              context: {},
+            });
+            expect(response.headers.get("content-type")).toContain(
+              "application/json"
+            );
+            return response;
+          },
+        })
+      ).resolves.toEqual({
+        success: true,
+        status: 200,
+        results: [
+          {
+            resourceId: "remote",
+            resourceName: expect.any(String),
+            status: 200,
+            body: { ok: true },
+          },
+        ],
+        errors: [],
+      });
+      expect(outgoingFetch).toHaveBeenCalledOnce();
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "serves managed Form results as JSON through the framework HTTP handler (%s)",
+    async (template) => {
+      await writeSiteData(
+        createSiteData({
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              title: "Home",
+              path: "",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "help",
+              name: "Help",
+              title: "Help",
+              path: "/help/contact",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "product",
+              name: "Product",
+              title: "Product",
+              path: "/products/:slug",
+              rootInstanceId: "root",
+              meta: {},
+            },
+          ],
+          instances: [
+            ["root", { id: "root", component: "NativeForm", children: [] }],
+          ],
+          props: [
+            [
+              "action",
+              {
+                id: "action",
+                instanceId: "root",
+                name: "action",
+                type: "json",
+                value: [],
+              },
+            ],
+          ],
+        })
+      );
+      await prebuild({ assets: false, template: [template] });
+      if (template === "react-router") {
+        await linkPackagedPreviewDependencies();
+        await runGeneratedCommand("react-router", ["build"]);
+      } else {
+        await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+        const viteConfig = await readFile("vite.config.ts", "utf8");
+        await writeFile(
+          "vite.config.ts",
+          viteConfig
+            .replaceAll(
+              'conditions: ["browser", "development|production"]',
+              'conditions: ["webstudio", "browser", "development|production"]'
+            )
+            .replaceAll(
+              'conditions: ["node", "development|production"]',
+              'conditions: ["webstudio", "node", "development|production"]'
+            )
+        );
+        await runGeneratedCommand("remix", ["vite:build"]);
+      }
+      const serverEntry = pathToFileURL(
+        join(tempDir, "build/server/index.js")
+      ).href;
+      const handlerPackage =
+        template === "react-router"
+          ? "react-router"
+          : "@remix-run/server-runtime";
+      const runner = `
+        import { createRequestHandler } from ${JSON.stringify(handlerPackage)};
+        const serverBuild = await import(${JSON.stringify(serverEntry)});
+        const handleRequest = createRequestHandler(serverBuild, "production");
+        const results = [];
+        for (const path of ["/__ws-form", "/__ws-form/help/contact", "/__ws-form/products/chair"]) {
+          const form = new FormData();
+          form.set(${JSON.stringify(managedFormIdFieldName)}, "root");
+          form.set(${JSON.stringify(formBotFieldName)}, "brave");
+          form.set(${JSON.stringify(managedFormArrayNamesFieldName)}, "[]");
+          const response = await handleRequest(new Request(
+            new URL(path, "https://example.com"),
+            { method: "POST", body: form, headers: { host: "example.com" } }
+          ));
+          results.push({
+            status: response.status,
+            contentType: response.headers.get("content-type"),
+            body: await response.json(),
+          });
+        }
+        process.stdout.write(JSON.stringify(results));
+      `;
+      const { stdout } = await execFileAsync(
+        process.execPath,
+        [
+          "--import",
+          pathToFileURL(
+            join(originalCwd, "../../node_modules/tsx/dist/loader.mjs")
+          ).href,
+          "--input-type=module",
+          "-e",
+          runner,
+        ],
+        {
+          cwd: tempDir,
+          env: { ...process.env, NODE_OPTIONS: "--conditions=webstudio" },
+        }
+      );
+      const results = JSON.parse(stdout) as {
+        status: number;
+        contentType: string;
+        body: unknown;
+      }[];
+      expect(results).toHaveLength(3);
+      for (const result of results) {
+        expect(result.status).toBe(400);
+        expect(result.contentType).toContain("application/json");
+        expect(result.body).toEqual(
+          getManagedFormFailure("Add at least one action")
+        );
+      }
+    },
+    60_000
+  );
+
+  test.each(["defaults", "react-router"])(
+    "generates managed Form endpoints for root, nested, and dynamic pages (%s)",
+    async (template) => {
+      await writeSiteData(
+        createSiteData({
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              title: "Home",
+              path: "",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "help",
+              name: "Help",
+              title: "Help",
+              path: "/help/contact",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "product",
+              name: "Product",
+              title: "Product",
+              path: "/products/:slug",
+              rootInstanceId: "root",
+              meta: {},
+            },
+          ],
+          instances: [
+            ["root", { id: "root", component: "NativeForm", children: [] }],
+          ],
+        })
+      );
+      await prebuild({ assets: false, template: [template] });
+      for (const path of ["/", "/help/contact", "/products/:slug"]) {
+        const endpointPath = path === "/" ? "/__ws-form" : `/__ws-form${path}`;
+        await expect(
+          readFile(
+            join("app/routes", `${generateRemixRoute(endpointPath)}.tsx`),
+            "utf8"
+          )
+        ).resolves.toContain("return Response.json(result");
+      }
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "returns successful Resource results through the framework HTTP handler (%s)",
+    async (template) => {
+      const received: string[] = [];
+      const receiver = createServer((request, response) => {
+        received.push(request.url ?? "");
+        response.writeHead(201, { "content-type": "application/json" });
+        response.end(JSON.stringify({ accepted: true }));
+      });
+      await new Promise<void>((resolve) =>
+        receiver.listen(0, "127.0.0.1", resolve)
+      );
+      try {
+        const address = receiver.address();
+        if (address === null || typeof address === "string") {
+          throw new Error("Mock Resource server did not start");
+        }
+        const siteData = createSiteData({
+          instances: [
+            ["root", { id: "root", component: "NativeForm", children: [] }],
+          ],
+          props: [
+            [
+              "action",
+              {
+                id: "action",
+                instanceId: "root",
+                name: "action",
+                type: "json",
+                value: [{ dataSourceId: "destination", enabled: true }],
+              },
+            ],
+          ],
+        });
+        siteData.build.dataSources = [
+          [
+            "destination",
+            {
+              id: "destination",
+              name: "Destination",
+              type: "resource",
+              resourceId: "remote",
+              scopeInstanceId: "root",
+            },
+          ],
+        ] as never;
+        siteData.build.resources = [
+          [
+            "remote",
+            {
+              id: "remote",
+              name: "Remote",
+              method: "post",
+              url: JSON.stringify(`http://127.0.0.1:${address.port}/accept`),
+              headers: [],
+            },
+          ],
+        ] as never;
+        await writeSiteData(siteData);
+        await prebuild({ assets: false, template: [template] });
+        // The production module blocks loopback; this test replaces only the
+        // temporary site's fetch provider to exercise an actual local server.
+        await writeFile(
+          join(
+            tempDir,
+            "app/__generated__/$resources.managed-form-fetch.server.ts"
+          ),
+          "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => fetch;\n"
+        );
+        if (template === "react-router") {
+          await linkPackagedPreviewDependencies();
+          await runGeneratedCommand("react-router", ["build"]);
+        } else {
+          await symlink(
+            join(originalCwd, "node_modules"),
+            "node_modules",
+            "dir"
+          );
+          const viteConfig = await readFile("vite.config.ts", "utf8");
+          await writeFile(
+            "vite.config.ts",
+            viteConfig
+              .replaceAll(
+                'conditions: ["browser", "development|production"]',
+                'conditions: ["webstudio", "browser", "development|production"]'
+              )
+              .replaceAll(
+                'conditions: ["node", "development|production"]',
+                'conditions: ["webstudio", "node", "development|production"]'
+              )
+          );
+          await runGeneratedCommand("remix", ["vite:build"]);
+        }
+        const serverEntry = pathToFileURL(
+          join(tempDir, "build/server/index.js")
+        ).href;
+        const handlerPackage =
+          template === "react-router"
+            ? "react-router"
+            : "@remix-run/server-runtime";
+        const runner = `
+          import { createRequestHandler } from ${JSON.stringify(
+            handlerPackage
+          )};
+          const build = await import(${JSON.stringify(serverEntry)});
+          const handleRequest = createRequestHandler(build, "production");
+          const form = new FormData();
+          form.set(${JSON.stringify(managedFormIdFieldName)}, "root");
+          form.set(${JSON.stringify(formBotFieldName)}, "brave");
+          form.set(${JSON.stringify(managedFormArrayNamesFieldName)}, "[]");
+          form.set("message", "Hello");
+          const response = await handleRequest(new Request("https://example.com/__ws-form", {
+            method: "POST", body: form, headers: { host: "example.com" },
+          }));
+          process.stdout.write(JSON.stringify({
+            status: response.status,
+            contentType: response.headers.get("content-type"),
+            body: await response.json(),
+          }));
+        `;
+        const { stdout } = await execFileAsync(
+          process.execPath,
+          [
+            "--import",
+            pathToFileURL(
+              join(originalCwd, "../../node_modules/tsx/dist/loader.mjs")
+            ).href,
+            "--input-type=module",
+            "-e",
+            runner,
+          ],
+          {
+            cwd: tempDir,
+            env: { ...process.env, NODE_OPTIONS: "--conditions=webstudio" },
+          }
+        );
+        const result = JSON.parse(stdout) as {
+          status: number;
+          contentType: string;
+          body: unknown;
+        };
+        expect(result.status).toBe(200);
+        expect(result.contentType).toContain("application/json");
+        expect(result.body).toEqual({
+          success: true,
+          status: 200,
+          results: [
+            {
+              resourceId: "remote",
+              resourceName: expect.any(String),
+              status: 201,
+              body: { accepted: true },
+            },
+          ],
+          errors: [],
+        });
+        expect(received).toEqual(["/accept"]);
+      } finally {
+        await new Promise<void>((resolve) => receiver.close(() => resolve()));
+      }
+    },
+    60_000
+  );
+
+  test.each(["/__ws-form", "/__ws-form/submissions", "/__ws-form/:slug"])(
+    "rejects a page under the reserved managed Form endpoint (%s)",
+    async (path) => {
+      await writeSiteData(
+        createSiteData({
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              title: "Home",
+              path: "",
+              rootInstanceId: "root",
+              meta: {},
+            },
+            {
+              id: "reserved",
+              name: "Reserved",
+              title: "Reserved",
+              path,
+              rootInstanceId: "root",
+              meta: {},
+            },
+          ],
+          instances: [
+            ["root", { id: "root", component: "NativeForm", children: [] }],
+          ],
+        })
+      );
+      await expect(
+        prebuild({ assets: false, template: ["react-router"] })
+      ).rejects.toThrow("uses the reserved Form endpoint");
+    }
+  );
+
+  test("keeps an authored reserved-prefix page when no managed Form is present", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "reserved",
+            name: "Reserved",
+            title: "Reserved",
+            path: "/__ws-form",
+            rootInstanceId: "root",
+            meta: {},
+          },
+        ],
+      })
+    );
+    await expect(
+      prebuild({ assets: false, template: ["react-router"] })
+    ).resolves.toBeUndefined();
+  });
+
+  test("keeps a published reserved-prefix page when only a draft has a managed Form", async () => {
+    await writeSiteData(
+      createSiteData({
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            title: "Home",
+            path: "",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "reserved",
+            name: "Reserved",
+            title: "Reserved",
+            path: "/__ws-form",
+            rootInstanceId: "root",
+            meta: {},
+          },
+          {
+            id: "draft",
+            name: "Draft",
+            title: "Draft",
+            path: "/draft",
+            rootInstanceId: "draft-form",
+            meta: {},
+            isDraft: true,
+          },
+        ],
+        instances: [
+          ["root", { id: "root", component: "Box", children: [] }],
+          [
+            "draft-form",
+            { id: "draft-form", component: "NativeForm", children: [] },
+          ],
+        ],
+      })
+    );
+    await expect(
+      prebuild({ assets: false, template: ["react-router"] })
+    ).resolves.toBeUndefined();
+    await expect(
+      readFile("app/routes/[__ws-form]._index.tsx", "utf8")
+    ).resolves.toContain("export default");
+  });
+
+  test.each([
+    ["defaults", 2],
+    ["defaults", 3],
+    ["react-router", 2],
+    ["react-router", 3],
+  ] as const)(
+    "preflights Email deliveries before sibling HTTP dispatch (%s, %i project recipients)",
+    async (template, projectRecipientCount) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [
+                { dataSourceId: "http-source", enabled: true },
+                { dataSourceId: "project-source", enabled: true },
+                { dataSourceId: "custom-source", enabled: true },
+              ],
+            },
+          ],
+        ],
+        pageMeta: {
+          contactEmail:
+            projectRecipientCount === 2
+              ? "first@example.com, first@example.com"
+              : "first@example.com, first@example.com, third@example.com",
+        },
+      });
+      siteData.build.dataSources = [
+        [
+          "http-source",
+          {
+            id: "http-source",
+            name: "HTTP",
+            type: "resource",
+            resourceId: "http",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "project-source",
+          {
+            id: "project-source",
+            name: "Project Email",
+            type: "resource",
+            resourceId: "project-email",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "custom-source",
+          {
+            id: "custom-source",
+            name: "Custom Email",
+            type: "resource",
+            resourceId: "custom-email",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "http",
+          {
+            id: "http",
+            name: "HTTP",
+            method: "post",
+            url: '"https://example.com/submit"',
+            headers: [],
+          },
+        ],
+        [
+          "project-email",
+          {
+            id: "project-email",
+            name: "Project Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+          },
+        ],
+        [
+          "custom-email",
+          {
+            id: "custom-email",
+            name: "Custom Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              recipientMode: "custom",
+              recipients:
+                "fourth@example.com, fifth@example.com, fifth@example.com",
+            },
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "recipient-limit-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "recipient-limit-action.mjs")).href
+      );
+      const outgoingFetch = vi.fn(async () => Response.json({ ok: true }));
+      vi.stubGlobal("fetch", outgoingFetch);
+      const formData = new FormData();
+      formData.set(managedFormIdFieldName, "root");
+      formData.set(managedFormArrayNamesFieldName, "[]");
+      formData.set(formBotFieldName, "brave");
+      formData.set("message", "Hello");
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/?${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: formData,
+            }
+          ),
+          context: {},
+        })
+      ).resolves.toEqual(
+        getManagedFormFailure(
+          projectRecipientCount === 2
+            ? "Email delivery requires Webstudio Cloud and is not configured yet"
+            : "Select no more than 5 team email recipients per Form submission"
+        )
+      );
+      expect(outgoingFetch).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "preflights a dependent Email before HTTP dispatch (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [{ dataSourceId: "http-source", enabled: true }],
+            },
+          ],
+        ],
+        pageMeta: { contactEmail: "owner@example.com" },
+      });
+      siteData.build.dataSources = [
+        [
+          "email-source",
+          {
+            id: "email-source",
+            name: "Email",
+            type: "resource",
+            resourceId: "email",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "http-source",
+          {
+            id: "http-source",
+            name: "HTTP",
+            type: "resource",
+            resourceId: "http",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "email",
+          {
+            id: "email",
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+          },
+        ],
+        [
+          "http",
+          {
+            id: "http",
+            name: "HTTP",
+            method: "post",
+            url: '"https://example.com/submit"',
+            headers: [],
+            body: encodeDataSourceVariable("email-source"),
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "dependent-email-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "dependent-email-action.mjs")).href
+      );
+      const outgoingFetch = vi.fn(async () => Response.json({ ok: true }));
+      vi.stubGlobal("fetch", outgoingFetch);
+      const formData = new FormData();
+      formData.set(managedFormIdFieldName, "root");
+      formData.set(managedFormArrayNamesFieldName, "[]");
+      formData.set(formBotFieldName, "brave");
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/?${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "example.com" },
+              body: formData,
+            }
+          ),
+          context: {},
+        })
+      ).resolves.toEqual(
+        getManagedFormFailure(
+          "Email delivery requires Webstudio Cloud and is not configured yet"
+        )
+      );
+      expect(outgoingFetch).not.toHaveBeenCalled();
+    }
+  );
+
+  test("generates submit-time Resource requests with Form parameters", async () => {
+    const siteData = createSiteData({
+      instances: [
+        ["root", { id: "root", component: "NativeForm", children: [] }],
+      ],
+      props: [
+        [
+          "action",
+          {
+            id: "action",
+            instanceId: "root",
+            name: "action",
+            type: "json",
+            value: [{ dataSourceId: "destination", enabled: true }],
+          },
+        ],
+      ],
+    });
+    siteData.build.dataSources = [
+      [
+        "formData",
+        {
+          id: "formData",
+          name: "formData",
+          type: "parameter",
+          scopeInstanceId: "root",
+        },
+      ],
+      [
+        "destination",
+        {
+          id: "destination",
+          name: "Destination",
+          type: "resource",
+          resourceId: "remote",
+          scopeInstanceId: "root",
+        },
+      ],
+    ] as never;
+    siteData.build.resources = [
+      [
+        "remote",
+        {
+          id: "remote",
+          name: "Remote",
+          method: "get",
+          url: '"https://example.com/submit"',
+          headers: [],
+          body: encodeDataSourceVariable("formData"),
+        },
+      ],
+    ] as never;
+    await writeSiteData(siteData);
+    await prebuild({ assets: false, template: ["react-router"] });
+    await build({
+      entryPoints: ["app/__generated__/_index.server.tsx"],
+      absWorkingDir: tempDir,
+      outfile: join(tempDir, "managed-graph.mjs"),
+      bundle: true,
+      platform: "node",
+      format: "esm",
+      packages: "external",
+    });
+    const { getManagedFormResourceGraph } = await import(
+      pathToFileURL(join(tempDir, "managed-graph.mjs")).href
+    );
+    const formData = { message: "Hello" };
+    const graph = getManagedFormResourceGraph("root", {
+      system: {},
+      formData,
+      browserInfo: {},
+    });
+    expect(graph.rootIds).toEqual(["remote"]);
+    expect(graph.resources[0].createRequest(new Map())).toMatchObject({
+      method: "post",
+      body: formData,
+    });
+  });
+
+  test(
+    "typechecks generated Email bindings in page and managed Form Resources",
+    async () => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "page-email-prop",
+            {
+              id: "page-email-prop",
+              instanceId: "root",
+              name: "value",
+              type: "expression",
+              value: encodeDataSourceVariable("pageEmailSource"),
+            },
+          ],
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [{ dataSourceId: "emailDestination", enabled: true }],
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "sender",
+          {
+            id: "sender",
+            name: "sender",
+            type: "variable",
+            value: { type: "string", value: "Acme <sender@example.com>" },
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "formData",
+          {
+            id: "formData",
+            name: "formData",
+            type: "parameter",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "recipients",
+          {
+            id: "recipients",
+            name: "recipients",
+            type: "variable",
+            value: { type: "string", value: "team@example.com" },
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "pageEmailSource",
+          {
+            id: "pageEmailSource",
+            name: "Page email",
+            type: "resource",
+            resourceId: "page-email",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "emailDestination",
+          {
+            id: "emailDestination",
+            name: "Email",
+            type: "resource",
+            resourceId: "email",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "page-email",
+          {
+            id: "page-email",
+            name: "Page Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              senderExpression: encodeDataSourceVariable("sender"),
+            },
+          },
+        ],
+        [
+          "email",
+          {
+            id: "email",
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              recipientMode: "custom",
+              recipientsExpression: encodeDataSourceVariable("recipients"),
+              body: `\`Submitted fields: \${${encodeDataSourceVariable(
+                "formData"
+              )}}\``,
+            },
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: ["react-router"] });
+      const serverModule = await readFile(
+        "app/__generated__/_index.server.tsx",
+        "utf8"
+      );
+      expect(
+        serverModule.match(
+          /import \{ resolveEmailRecipientsExpression, resolveEmailSenderSettingsExpression \} from "@webstudio-is\/sdk";/g
+        )
+      ).toHaveLength(1);
+      expect(
+        serverModule.match(/resolveEmailRecipientsExpression/g)
+      ).toHaveLength(2);
+      expect(
+        serverModule.match(/resolveEmailSenderSettingsExpression/g)
+      ).toHaveLength(2);
+      await writeFile(
+        "email-typecheck.ts",
+        'export { getResources, getManagedFormResourceGraph } from "./app/__generated__/_index.server";'
+      );
+      await linkPackagedPreviewDependencies();
+      await runGeneratedCommand("tsc", [
+        "--ignoreConfig",
+        "--noEmit",
+        "--strict",
+        "--skipLibCheck",
+        "--moduleResolution",
+        "bundler",
+        "--customConditions",
+        "webstudio",
+        "--module",
+        "esnext",
+        "--target",
+        "es2023",
+        "--types",
+        "node",
+        "--typeRoots",
+        join(originalCwd, "../../node_modules/@types"),
+        "--jsx",
+        "react-jsx",
+        "email-typecheck.ts",
+      ]).catch((error: unknown) => {
+        throw new Error(
+          error instanceof Error && "stdout" in error
+            ? String(error.stdout)
+            : String(error)
+        );
+      });
+    },
+    slowPrebuildTestTimeout
+  );
+
+  test(
+    "typechecks a page-level Email binding without a managed Form",
+    async () => {
+      const siteData = createSiteData({
+        instances: [["root", { id: "root", component: "Box", children: [] }]],
+        props: [
+          [
+            "page-email-prop",
+            {
+              id: "page-email-prop",
+              instanceId: "root",
+              name: "value",
+              type: "expression",
+              value: encodeDataSourceVariable("pageEmailSource"),
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "sender",
+          {
+            id: "sender",
+            name: "sender",
+            type: "variable",
+            value: { type: "string", value: "Acme <sender@example.com>" },
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "recipients",
+          {
+            id: "recipients",
+            name: "recipients",
+            type: "variable",
+            value: {
+              type: "string",
+              value: "team@example.com, support@example.com",
+            },
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "pageEmailSource",
+          {
+            id: "pageEmailSource",
+            name: "Page email",
+            type: "resource",
+            resourceId: "email",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "email",
+          {
+            id: "email",
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              recipientMode: "custom",
+              senderExpression: encodeDataSourceVariable("sender"),
+              recipientsExpression: encodeDataSourceVariable("recipients"),
+              subject: '"Subject"',
+              body: '"Body"',
+            },
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: ["react-router"] });
+      const serverModule = await readFile(
+        "app/__generated__/_index.server.tsx",
+        "utf8"
+      );
+      expect(
+        serverModule.match(
+          /import \{ resolveEmailRecipientsExpression, resolveEmailSenderSettingsExpression \} from "@webstudio-is\/sdk";/g
+        )
+      ).toHaveLength(1);
+      await writeFile(
+        "email-typecheck.ts",
+        'export { getResources } from "./app/__generated__/_index.server";'
+      );
+      await linkPackagedPreviewDependencies();
+      await runGeneratedCommand("tsc", [
+        "--ignoreConfig",
+        "--noEmit",
+        "--strict",
+        "--skipLibCheck",
+        "--moduleResolution",
+        "bundler",
+        "--customConditions",
+        "webstudio",
+        "--module",
+        "esnext",
+        "--target",
+        "es2023",
+        "--types",
+        "node",
+        "--typeRoots",
+        join(originalCwd, "../../node_modules/@types"),
+        "--jsx",
+        "react-jsx",
+        "email-typecheck.ts",
+      ]).catch((error: unknown) => {
+        throw new Error(
+          error instanceof Error && "stdout" in error
+            ? String(error.stdout)
+            : String(error)
+        );
+      });
+    },
+    slowPrebuildTestTimeout
+  );
+
+  test.each(["defaults", "react-router"])(
+    "runs a visitor Email Resource from the generated Form route (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          [
+            "root",
+            {
+              id: "root",
+              component: "NativeForm",
+              children: [{ type: "id", value: "email-input" }],
+            },
+          ],
+          [
+            "email-input",
+            { id: "email-input", component: "Input", children: [] },
+          ],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [{ dataSourceId: "visitor-source", enabled: true }],
+            },
+          ],
+          [
+            "email-name",
+            {
+              id: "email-name",
+              instanceId: "email-input",
+              name: "name",
+              type: "string",
+              value: "visitorEmail",
+            },
+          ],
+          [
+            "email-type",
+            {
+              id: "email-type",
+              instanceId: "email-input",
+              name: "type",
+              type: "string",
+              value: "email",
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "visitor-source",
+          {
+            id: "visitor-source",
+            name: "Receipt",
+            type: "resource",
+            resourceId: "visitor-email",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "visitor-email",
+          {
+            id: "visitor-email",
+            name: "Receipt",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              recipientMode: "visitor",
+              visitorEmailField: "visitorEmail",
+              subject: '"Receipt"',
+              body: '"Custom text"',
+            },
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        "app/__generated__/$resources.managed-form-fetch.server.ts",
+        `export const createManagedFormEmailSender = () => globalThis.__testSendEmail;
+export const validateManagedFormEmail = () => undefined;
+export const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;
+`
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "visitor-email-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "visitor-email-action.mjs")).href
+      );
+      const sendEmail = vi.fn(async (_request: ResourceRequest) => ({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        data: { id: "sent" },
+      }));
+      const httpFetch = vi.fn(async () => Response.json({ accepted: true }));
+      vi.stubGlobal("__testSendEmail", sendEmail);
+      vi.stubGlobal("__testManagedFormFetch", httpFetch);
+      const formData = new FormData();
+      formData.set(managedFormIdFieldName, "root");
+      formData.set(managedFormArrayNamesFieldName, "[]");
+      formData.set(formBotFieldName, "brave");
+      formData.set("visitorEmail", "visitor@example.com");
+      await expect(
+        action({
+          request: new Request(
+            `https://site.example/?${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "site.example" },
+              body: formData,
+            }
+          ),
+          context: {},
+        })
+      ).resolves.toMatchObject({ success: true, status: 200 });
+      expect(sendEmail).toHaveBeenCalledOnce();
+      expect(sendEmail.mock.calls[0][0].email).toMatchObject({
+        recipients: [{ address: "visitor@example.com" }],
+        body: "We received your request from https://site.example.\n\nCustom text",
+        includeAttachments: true,
+      });
+      expect(httpFetch).not.toHaveBeenCalled();
+    },
+    slowPrebuildTestTimeout
+  );
+
+  test.each(["defaults", "react-router"])(
+    "ignores a spoofed forwarded host when resolving a managed relative Resource (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [{ dataSourceId: "destination", enabled: true }],
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "destination",
+          {
+            id: "destination",
+            name: "Destination",
+            type: "resource",
+            resourceId: "relative",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "relative",
+          {
+            id: "relative",
+            name: "Relative",
+            method: "post",
+            url: '"/receive"',
+            headers: [],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        `export const createManagedFormEmailSender = () => undefined;
+export const validateManagedFormEmail = () => undefined;
+export const createManagedFormResourceFetch = () => {
+  const protectedFetch = globalThis.__testManagedFormFetch;
+  protectedFetch.validateDestination = (url) => {
+    if (url.hostname === "site.example") throw new Error("Resource destination is not allowed");
+  };
+  return protectedFetch;
+};
+`
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "spoofed-host-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "spoofed-host-action.mjs")).href
+      );
+      const outbound = vi.fn(async () => Response.json({ accepted: true }));
+      vi.stubGlobal("__testManagedFormFetch", outbound);
+      const formData = new FormData();
+      formData.set(managedFormIdFieldName, "root");
+      formData.set(managedFormArrayNamesFieldName, "[]");
+      formData.set(formBotFieldName, "brave");
+      await expect(
+        action({
+          request: new Request(
+            `https://site.example/?${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: {
+                host: "site.example",
+                "x-forwarded-host": "attacker.example",
+              },
+              body: formData,
+            }
+          ),
+          context: {},
+        })
+      ).resolves.toEqual(
+        getManagedFormFailure("Resource destination is not allowed")
+      );
+      expect(outbound).not.toHaveBeenCalled();
+    },
+    slowPrebuildTestTimeout
+  );
+
+  test.each(["defaults", "react-router"])(
+    "retries only a failed managed Form destination per submission (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [
+                { dataSourceId: "sibling-source", enabled: true },
+                { dataSourceId: "failed-source", enabled: true },
+              ],
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "dependency-source",
+          {
+            id: "dependency-source",
+            name: "Dependency",
+            type: "resource",
+            resourceId: "dependency",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "failed-source",
+          {
+            id: "failed-source",
+            name: "Failed",
+            type: "resource",
+            resourceId: "failed",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "sibling-source",
+          {
+            id: "sibling-source",
+            name: "Sibling",
+            type: "resource",
+            resourceId: "sibling",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "dependency",
+          {
+            id: "dependency",
+            name: "Dependency",
+            method: "get",
+            url: '"https://receiver.example/dependency"',
+            headers: [],
+          },
+        ],
+        [
+          "failed",
+          {
+            id: "failed",
+            name: "Failed",
+            method: "post",
+            url: `"https://receiver.example/failed/" + ${encodeDataSourceVariable(
+              "dependency-source"
+            )}.data.id`,
+            headers: [],
+          },
+        ],
+        [
+          "sibling",
+          {
+            id: "sibling",
+            name: "Sibling",
+            method: "post",
+            url: '"https://receiver.example/sibling"',
+            headers: [],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "retry-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "retry-action.mjs")).href
+      );
+      const attempts = new Map<string, number>();
+      let failure: "status" | "network" | "timeout" | "persistent" = "status";
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = String(input);
+          const attempt = (attempts.get(url) ?? 0) + 1;
+          attempts.set(url, attempt);
+          if (url.endsWith("/dependency")) {
+            return Response.json({ id: "resolved" });
+          }
+          if (url.endsWith("/sibling")) {
+            return Response.json(
+              { accepted: true },
+              { headers: { "Set-Cookie": "private" } }
+            );
+          }
+          if (failure === "persistent") {
+            return new Response("Still failed", { status: 422 });
+          }
+          if (attempt === 1) {
+            if (failure === "status") {
+              return new Response("Temporary failure", { status: 503 });
+            }
+            if (failure === "network") {
+              throw new Error("Connection lost");
+            }
+            return new Promise<Response>((_resolve, reject) => {
+              init?.signal?.addEventListener("abort", () =>
+                reject(new DOMException("Aborted", "AbortError"))
+              );
+            });
+          }
+          return Response.json({ accepted: true });
+        })
+      );
+      const submit = () => {
+        const form = new FormData();
+        form.set(managedFormIdFieldName, "root");
+        form.set(managedFormArrayNamesFieldName, "[]");
+        form.set(formBotFieldName, "brave");
+        return action({
+          request: new Request(
+            `https://site.example/?${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: { host: "site.example" },
+              body: form,
+            }
+          ),
+          context: {},
+        });
+      };
+      const expectAttempts = (failed: number) => {
+        expect(attempts.get("https://receiver.example/dependency")).toBe(1);
+        expect(attempts.get("https://receiver.example/sibling")).toBe(1);
+        expect(attempts.get("https://receiver.example/failed/resolved")).toBe(
+          failed
+        );
+      };
+
+      await expect(submit()).resolves.toEqual({
+        success: true,
+        status: 200,
+        results: [
+          {
+            resourceId: "sibling",
+            resourceName: expect.any(String),
+            status: 200,
+            body: { accepted: true },
+          },
+          {
+            resourceId: "failed",
+            resourceName: expect.any(String),
+            status: 200,
+            body: { accepted: true },
+          },
+        ],
+        errors: [],
+      });
+      expectAttempts(2);
+      attempts.clear();
+      failure = "network";
+      const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+      await expect(submit()).resolves.toMatchObject({
+        success: true,
+        status: 200,
+        results: [
+          {
+            resourceId: "sibling",
+            resourceName: expect.any(String),
+            status: 200,
+            body: { accepted: true },
+          },
+          {
+            resourceId: "failed",
+            resourceName: expect.any(String),
+            status: 200,
+            body: { accepted: true },
+          },
+        ],
+        errors: [],
+      });
+      expectAttempts(2);
+      errorLog.mockRestore();
+      attempts.clear();
+      failure = "timeout";
+      vi.useFakeTimers();
+      try {
+        const pending = submit();
+        await vi.advanceTimersByTimeAsync(10_000);
+        await expect(pending).resolves.toMatchObject({
+          success: true,
+          status: 200,
+          results: [
+            {
+              resourceId: "sibling",
+              resourceName: expect.any(String),
+              status: 200,
+              body: { accepted: true },
+            },
+            {
+              resourceId: "failed",
+              resourceName: expect.any(String),
+              status: 200,
+              body: { accepted: true },
+            },
+          ],
+          errors: [],
+        });
+        expectAttempts(2);
+      } finally {
+        vi.useRealTimers();
+      }
+      attempts.clear();
+      failure = "persistent";
+      await expect(submit()).resolves.toEqual({
+        success: false,
+        status: 502,
+        results: [
+          {
+            resourceId: "sibling",
+            resourceName: expect.any(String),
+            status: 200,
+            body: { accepted: true },
+          },
+          {
+            resourceId: "failed",
+            resourceName: expect.any(String),
+            status: 422,
+            body: "Still failed",
+          },
+        ],
+        errors: [
+          {
+            resourceId: "failed",
+            resourceName: expect.any(String),
+            status: 422,
+            body: "Still failed",
+            message: "Resource request failed (422)",
+          },
+        ],
+      });
+      expectAttempts(2);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "rejects a denied selected destination before a valid sibling POST (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [
+                { dataSourceId: "valid-source", enabled: true },
+                { dataSourceId: "denied-source", enabled: true },
+              ],
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "valid-source",
+          {
+            id: "valid-source",
+            name: "Valid",
+            type: "resource",
+            resourceId: "valid",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "denied-source",
+          {
+            id: "denied-source",
+            name: "Denied",
+            type: "resource",
+            resourceId: "denied",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "valid",
+          {
+            id: "valid",
+            name: "Valid",
+            method: "post",
+            url: '"https://api.example.net/submit"',
+            headers: [],
+          },
+        ],
+        [
+          "denied",
+          {
+            id: "denied",
+            name: "Denied",
+            method: "post",
+            url: '"https://webstudio.is/blocked"',
+            headers: [],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "url-preflight-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "url-preflight-action.mjs")).href
+      );
+      const received: string[] = [];
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        createProtectedResourceFetch({
+          deniedHostnames: ["webstudio.is"],
+          transport: async ({ url }) => {
+            received.push(url.href);
+            return { response: Response.json({ accepted: true }) };
+          },
+        })
+      );
+      const formData = new FormData();
+      formData.set(managedFormIdFieldName, "root");
+      formData.set(managedFormArrayNamesFieldName, "[]");
+      formData.set(formBotFieldName, "brave");
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/?${managedFormRequestParamName}=1`,
+            { method: "POST", headers: { host: "example.com" }, body: formData }
+          ),
+          context: {},
+          params: {},
+        })
+      ).resolves.toEqual(
+        getManagedFormFailure("Resource destination is not allowed")
+      );
+      expect(received).toEqual([]);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "preflights dependent bodies before any selected Form destination (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [
+                { dataSourceId: "independent-source", enabled: true },
+                { dataSourceId: "dependent-source", enabled: true },
+              ],
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "formData",
+          {
+            id: "formData",
+            name: "formData",
+            type: "parameter",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "lookup-source",
+          {
+            id: "lookup-source",
+            name: "Lookup",
+            type: "resource",
+            resourceId: "lookup",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "independent-source",
+          {
+            id: "independent-source",
+            name: "Independent",
+            type: "resource",
+            resourceId: "independent",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "dependent-source",
+          {
+            id: "dependent-source",
+            name: "Dependent",
+            type: "resource",
+            resourceId: "dependent",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "lookup",
+          {
+            id: "lookup",
+            name: "Lookup",
+            method: "get",
+            url: '"https://example.com/lookup"',
+            headers: [],
+          },
+        ],
+        [
+          "independent",
+          {
+            id: "independent",
+            name: "Independent",
+            method: "post",
+            url: '"https://example.com/independent"',
+            headers: [],
+            bodyFormat: "json",
+            body: '{ message: "Hello" }',
+          },
+        ],
+        [
+          "dependent",
+          {
+            id: "dependent",
+            name: "Dependent",
+            method: "post",
+            url: '"https://example.com/dependent"',
+            headers: [],
+            bodyFormat: "json",
+            body: `{ attachment: ${encodeDataSourceVariable(
+              "formData"
+            )}.attachment, lookup: ${encodeDataSourceVariable(
+              "lookup-source"
+            )}.data }`,
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "preflight-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "preflight-action.mjs")).href
+      );
+      const received: string[] = [];
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push(request.url);
+          return Response.json({ id: "looked-up" });
+        })
+      );
+      const formData = new FormData();
+      formData.set(managedFormIdFieldName, "root");
+      formData.set(managedFormArrayNamesFieldName, "[]");
+      formData.set(formBotFieldName, "brave");
+      formData.set("attachment", new File(["hello"], "hello.txt"));
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/?${managedFormRequestParamName}=1`,
+            { method: "POST", headers: { host: "example.com" }, body: formData }
+          ),
+          context: {},
+          params: {},
+        })
+      ).resolves.toEqual(
+        getManagedFormFailure("JSON body cannot include uploaded files")
+      );
+      expect(received).toEqual(["https://example.com/lookup"]);
+
+      formData.set("attachment", "text attachment");
+      await expect(
+        action({
+          request: new Request(
+            `https://example.com/?${managedFormRequestParamName}=1`,
+            { method: "POST", headers: { host: "example.com" }, body: formData }
+          ),
+          context: {},
+          params: {},
+        })
+      ).resolves.toMatchObject({ success: true, status: 200 });
+      expect(received.slice(1).sort()).toEqual([
+        "https://example.com/dependent",
+        "https://example.com/independent",
+        "https://example.com/lookup",
+      ]);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "submits selected Form Resources in parallel with scoped values (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [
+                { dataSourceId: "form-destination", enabled: true },
+                { dataSourceId: "browser-destination", enabled: true },
+              ],
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "formData",
+          {
+            id: "formData",
+            name: "formData",
+            type: "parameter",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "browserInfo",
+          {
+            id: "browserInfo",
+            name: "browserInfo",
+            type: "parameter",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "form-destination",
+          {
+            id: "form-destination",
+            name: "Form destination",
+            type: "resource",
+            resourceId: "form-resource",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "browser-destination",
+          {
+            id: "browser-destination",
+            name: "Browser destination",
+            type: "resource",
+            resourceId: "browser-resource",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "form-resource",
+          {
+            id: "form-resource",
+            name: "Form resource",
+            method: "get",
+            url: '"https://forms.example/submit"',
+            headers: [],
+            bodyFormat: "json",
+            body: encodeDataSourceVariable("formData"),
+          },
+        ],
+        [
+          "browser-resource",
+          {
+            id: "browser-resource",
+            name: "Browser resource",
+            method: "get",
+            url: '"https://browser.example/submit"',
+            headers: [],
+            body: encodeDataSourceVariable("browserInfo"),
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      // Replace the generated adapter only in this temporary test site. The
+      // production action always imports its protected runtime adapter.
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "managed-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "managed-action.mjs")).href
+      );
+      const received: Array<{ url: string; method: string; body: unknown }> =
+        [];
+      let releaseRequests = () => {};
+      const waitForBoth = new Promise<void>((resolve) => {
+        releaseRequests = resolve;
+      });
+      let failBrowserResource = false;
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const outbound = new Request(input, init);
+          received.push({
+            url: outbound.url,
+            method: outbound.method,
+            body: await outbound.json(),
+          });
+          await waitForBoth;
+          if (failBrowserResource && outbound.url.includes("browser.example")) {
+            return new Response("Rejected", {
+              status: 422,
+            });
+          }
+          return Response.json({ accepted: true });
+        })
+      );
+      const submit = (attachment?: File) => {
+        const form = new FormData();
+        form.set(managedFormIdFieldName, "root");
+        form.set(formBotFieldName, Date.now().toString(16));
+        form.set(
+          managedFormArrayNamesFieldName,
+          JSON.stringify(["tags", "empty"])
+        );
+        form.set("message", "Hello");
+        form.append("tags", "red");
+        form.append("tags", "blue");
+        form.set("campaign", "conference");
+        if (attachment !== undefined) {
+          form.set("attachment", attachment);
+        }
+        return action({
+          request: new Request(
+            `https://site.example/?source=event&${managedFormRequestParamName}=1`,
+            {
+              method: "POST",
+              headers: {
+                host: "site.example",
+                "user-agent": "Test Browser",
+                "accept-language": "en-US",
+                referer: "https://site.example/contact",
+                "cf-connecting-ip": "127.0.0.1",
+              },
+              body: form,
+            }
+          ),
+          context: {},
+          params: {},
+        });
+      };
+      await expect(submit(new File(["hello"], "hello.txt"))).resolves.toEqual(
+        getManagedFormFailure("JSON body cannot include uploaded files")
+      );
+      expect(received).toHaveLength(0);
+      const submission = submit();
+      try {
+        await vi.waitFor(() => expect(received).toHaveLength(2));
+      } finally {
+        releaseRequests();
+      }
+      await expect(submission).resolves.toMatchObject({
+        success: true,
+        status: 200,
+        errors: [],
+      });
+      expect(received).toEqual([
+        {
+          url: "https://forms.example/submit",
+          method: "POST",
+          body: {
+            message: "Hello",
+            tags: ["red", "blue"],
+            empty: [],
+            campaign: "conference",
+          },
+        },
+        {
+          url: "https://browser.example/submit",
+          method: "POST",
+          body: {
+            userAgent: "Test Browser",
+            language: "en-US",
+            referrer: "https://site.example/contact",
+          },
+        },
+      ]);
+      failBrowserResource = true;
+      await expect(submit()).resolves.toEqual({
+        success: false,
+        status: 502,
+        results: [
+          {
+            resourceId: "form-resource",
+            resourceName: "Form resource",
+            status: 200,
+            body: { accepted: true },
+          },
+          {
+            resourceId: "browser-resource",
+            resourceName: "Browser resource",
+            status: 422,
+            body: "Rejected",
+          },
+        ],
+        errors: [
+          {
+            resourceId: "browser-resource",
+            resourceName: "Browser resource",
+            status: 422,
+            body: "Rejected",
+            message: "Resource request failed (422)",
+          },
+        ],
+      });
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "forwards repeated managed Form fields as standard multipart entries through the generated endpoint (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [{ dataSourceId: "destination", enabled: true }],
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "formData",
+          {
+            id: "formData",
+            name: "formData",
+            type: "parameter",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "destination",
+          {
+            id: "destination",
+            name: "Destination",
+            type: "resource",
+            resourceId: "remote",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "remote",
+          {
+            id: "remote",
+            name: "Remote",
+            method: "post",
+            url: '"https://receiver.example/submit"',
+            headers: [],
+            bodyFormat: "multipart",
+            body: encodeDataSourceVariable("formData"),
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: `export { action } from "./app/routes/${generateRemixRoute(
+            "/__ws-form"
+          )}";`,
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "multipart-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "multipart-action.mjs")).href
+      );
+      const outbound = vi.fn(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          expect(request.url).toBe("https://receiver.example/submit");
+          expect(request.method).toBe("POST");
+          expect(request.headers.get("content-type")).toContain(
+            "multipart/form-data"
+          );
+          const fields = await request.formData();
+          expect(fields.getAll("tags")).toEqual(["red", "blue", "red"]);
+          const attachments = fields.getAll("attachments") as File[];
+          expect(attachments).toMatchObject([
+            { name: "first.bin", type: "application/octet-stream" },
+            { name: "second.txt", type: "text/plain" },
+          ]);
+          expect(new Uint8Array(await attachments[0].arrayBuffer())).toEqual(
+            new Uint8Array([0, 128, 255])
+          );
+          expect(new Uint8Array(await attachments[1].arrayBuffer())).toEqual(
+            new Uint8Array([115, 101, 99, 111, 110, 100])
+          );
+          return Response.json({ accepted: true });
+        }
+      );
+      vi.stubGlobal("__testManagedFormFetch", outbound);
+      const form = new FormData();
+      form.set(managedFormIdFieldName, "root");
+      form.set(formBotFieldName, "brave");
+      form.set(
+        managedFormArrayNamesFieldName,
+        JSON.stringify(["tags", "attachments"])
+      );
+      form.append("tags", "red");
+      form.append("tags", "blue");
+      form.append("tags", "red");
+      form.append(
+        "attachments",
+        new File([new Uint8Array([0, 128, 255])], "first.bin", {
+          type: "application/octet-stream",
+        })
+      );
+      form.append(
+        "attachments",
+        new File(["second"], "second.txt", { type: "text/plain" })
+      );
+      const response: Response = await action({
+        request: new Request("https://site.example/__ws-form", {
+          method: "POST",
+          headers: { host: "site.example" },
+          body: form,
+        }),
+        context: {},
+        params: {},
+      });
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toMatchObject({ success: true });
+      expect(outbound).toHaveBeenCalledOnce();
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "automatically sends a file in the default Form body as multipart through the generated endpoint (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [{ dataSourceId: "destination", enabled: true }],
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "formData",
+          {
+            id: "formData",
+            name: "formData",
+            type: "parameter",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "destination",
+          {
+            id: "destination",
+            name: "Destination",
+            type: "resource",
+            resourceId: "remote",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "remote",
+          {
+            id: "remote",
+            name: "Remote",
+            method: "get",
+            url: '"https://receiver.example/submit"',
+            headers: [],
+            // No body or bodyFormat: the managed Form uses submitted formData
+            // and lets the normal `auto` serializer choose multipart for files.
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: `export { action } from "./app/routes/${generateRemixRoute(
+            "/__ws-form"
+          )}";`,
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "default-file-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "default-file-action.mjs")).href
+      );
+      const bytes = new Uint8Array([0, 128, 255]);
+      const outbound = vi.fn(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          expect(request.url).toBe("https://receiver.example/submit");
+          expect(request.method).toBe("POST");
+          expect(request.headers.get("content-type")).toMatch(
+            /^multipart\/form-data; boundary=/
+          );
+          const fields = await request.formData();
+          expect(fields.get("message")).toBe("Hello");
+          const attachment = fields.get("attachment");
+          expect(attachment).toMatchObject({
+            name: "note.bin",
+            type: "application/octet-stream",
+          });
+          expect(
+            new Uint8Array(await (attachment as File).arrayBuffer())
+          ).toEqual(bytes);
+          return Response.json({ accepted: true });
+        }
+      );
+      vi.stubGlobal("__testManagedFormFetch", outbound);
+      const form = new FormData();
+      form.set(managedFormIdFieldName, "root");
+      form.set(formBotFieldName, "brave");
+      form.set(managedFormArrayNamesFieldName, "[]");
+      form.set("message", "Hello");
+      form.set("attachment", new File([bytes], "note.bin"));
+      const response: Response = await action({
+        request: new Request("https://site.example/__ws-form", {
+          method: "POST",
+          headers: { host: "site.example" },
+          body: form,
+        }),
+        context: {},
+        params: {},
+      });
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toMatchObject({ success: true });
+      expect(outbound).toHaveBeenCalledOnce();
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "sends configured browserInfo headers from a trusted Cloudflare request (%s)",
+    async (template) => {
+      const browserInfo = encodeDataSourceVariable("browserInfo");
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "NativeForm", children: [] }],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "json",
+              value: [{ dataSourceId: "destination", enabled: true }],
+            },
+          ],
+        ],
+      });
+      siteData.build.dataSources = [
+        [
+          "browserInfo",
+          {
+            id: "browserInfo",
+            name: "browserInfo",
+            type: "parameter",
+            scopeInstanceId: "root",
+          },
+        ],
+        [
+          "destination",
+          {
+            id: "destination",
+            name: "Destination",
+            type: "resource",
+            resourceId: "receiver",
+            scopeInstanceId: "root",
+          },
+        ],
+      ] as never;
+      siteData.build.resources = [
+        [
+          "receiver",
+          {
+            id: "receiver",
+            name: "Receiver",
+            method: "post",
+            url: '"https://receiver.example/submit"',
+            headers: [
+              { name: "X-Forwarded-For", value: `${browserInfo}.ip` },
+              { name: "User-Agent", value: `${browserInfo}.userAgent` },
+              { name: "Accept-Language", value: `${browserInfo}.language` },
+            ],
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => globalThis.__testManagedFormFetch;\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "managed-browser-headers-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "managed-browser-headers-action.mjs")).href
+      );
+      const received: Headers[] = [];
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          received.push(new Headers(new Request(input, init).headers));
+          return Response.json({ accepted: true });
+        })
+      );
+      const form = new FormData();
+      form.set(managedFormIdFieldName, "root");
+      form.set(formBotFieldName, Date.now().toString(16));
+      form.set(managedFormArrayNamesFieldName, "[]");
+      const response = await action({
+        request: new Request(
+          `https://site.example/?${managedFormRequestParamName}=1`,
+          {
+            method: "POST",
+            headers: {
+              host: "site.example",
+              "cf-connecting-ip": "198.51.100.42",
+              "x-forwarded-for": "203.0.113.200",
+              "x-real-ip": "203.0.113.201",
+              "user-agent": "Visitor Browser",
+              "accept-language": "fr-CA,fr;q=0.9",
+              cookie: "session=secret",
+              authorization: "Bearer secret",
+            },
+            body: form,
+          }
+        ),
+        context: { cloudflare: {} },
+        params: {},
+      });
+      expect(response.success).toBe(true);
+      expect(received).toHaveLength(1);
+      expect(received[0].get("X-Forwarded-For")).toBe("198.51.100.42");
+      expect(received[0].get("User-Agent")).toBe("Visitor Browser");
+      expect(received[0].get("Accept-Language")).toBe("fr-CA,fr;q=0.9");
+      expect(received[0].has("Cookie")).toBe(false);
+      expect(received[0].has("Authorization")).toBe(false);
+      expect(received[0].has("X-Real-IP")).toBe(false);
+
+      const nodeResponse = await action({
+        request: new Request(
+          `https://site.example/?${managedFormRequestParamName}=1`,
+          {
+            method: "POST",
+            headers: {
+              host: "site.example",
+              "cf-connecting-ip": "203.0.113.202",
+              "x-forwarded-for": "203.0.113.200",
+              "x-real-ip": "203.0.113.201",
+              "user-agent": "Visitor Browser",
+              "accept-language": "fr-CA,fr;q=0.9",
+            },
+            body: form,
+          }
+        ),
+        context: {},
+        params: {},
+      });
+      expect(nodeResponse.success).toBe(true);
+      expect(received).toHaveLength(2);
+      expect(received[1].has("X-Forwarded-For")).toBe(false);
+    }
+  );
+
+  test("prerenders the new Form without native submission attributes", async () => {
     const siteData = createSiteData({
       instances: [
         [
@@ -2969,36 +6481,54 @@ sitemap.map((page) => page.path);`
           "form",
           {
             id: "form",
-            component: "Form",
+            component: "NativeForm",
             children: [],
           },
         ],
       ],
-      props: [
-        [
-          "form-action",
-          {
-            id: "form-action",
-            instanceId: "form",
-            name: "action",
-            type: "resource",
-            value: "webhook",
-          },
-        ],
-      ],
     });
-    siteData.build.resources = [
+    siteData.build.dataSources = [
       [
-        "webhook",
+        "formData",
         {
-          id: "webhook",
-          name: "action",
-          method: "post",
-          url: '"https://example.com/webhook"',
-          headers: [],
+          type: "parameter",
+          id: "formData",
+          name: "formData",
+          scopeInstanceId: "form",
+        },
+      ],
+      [
+        "browserInfo",
+        {
+          type: "parameter",
+          id: "browserInfo",
+          name: "browserInfo",
+          scopeInstanceId: "form",
         },
       ],
     ] as never;
+    siteData.build.props = [
+      [
+        "formData",
+        {
+          id: "formData",
+          instanceId: "form",
+          name: "formData",
+          type: "parameter",
+          value: "formData",
+        },
+      ],
+      [
+        "browserInfo",
+        {
+          id: "browserInfo",
+          instanceId: "form",
+          name: "browserInfo",
+          type: "parameter",
+          value: "browserInfo",
+        },
+      ],
+    ];
     await writeSiteData(siteData);
 
     await prebuild({ assets: false, template: ["ssg"] });
@@ -3008,12 +6538,12 @@ sitemap.map((page) => page.path);`
 
     const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
     const [form] = findElementsByTagName(html, "form");
-    if (form === undefined) {
-      throw new Error("Expected a prerendered Webhook Form");
-    }
-    expect(
-      Object.fromEntries(form.attrs.map(({ name, value }) => [name, value]))
-    ).toMatchObject({ method: "post" });
+    expect(form).toBeDefined();
+    expect(form?.attrs.map(({ name }) => name)).toEqual(["class", "method"]);
+    expect(form?.attrs.find(({ name }) => name === "method")?.value).toBe(
+      "dialog"
+    );
+    expect(form?.attrs.some(({ name }) => name === "action")).toBe(false);
   }, 30_000);
 
   test("ignores dynamic SSG pages without enumerable Assets query paths", async () => {
@@ -3478,7 +7008,9 @@ sitemap.map((page) => page.path);`
           {
             field: ["properties", "slug"],
             operator: "eq",
-            value: `${encodeDataSourceVariable(SYSTEM_VARIABLE_ID)}.params.slug`,
+            value: `${encodeDataSourceVariable(
+              SYSTEM_VARIABLE_ID
+            )}.params.slug`,
           },
         ],
       },
@@ -3625,7 +7157,9 @@ sitemap.map((page) => page.path);`
               instanceId: "root",
               name: "title",
               type: "expression",
-              value: `${encodeDataVariableId("posts-data")}.data["post-1"].properties.title`,
+              value: `${encodeDataVariableId(
+                "posts-data"
+              )}.data["post-1"].properties.title`,
             },
           ],
         ],

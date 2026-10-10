@@ -26,11 +26,17 @@ runs:
     - name: Discover shards
       id: shards
       shell: bash
-      run: echo "value=$(pnpm --dir apps/builder exec tsx ./e2e/print-shards.ts)" >> "$GITHUB_OUTPUT"
+      run: |
+        shards=$(pnpm --dir apps/builder exec tsx ./e2e/print-shards.ts)
+        echo "value=$shards" >> "$GITHUB_OUTPUT"
 
     - name: Build Builder
       shell: bash
       run: pnpm --filter @webstudio-is/builder build
+
+    - name: Build generated React Router components
+      shell: bash
+      run: pnpm --filter @webstudio-is/sdk-components-react-router build
 
     - name: Generate schema snapshot
       shell: bash

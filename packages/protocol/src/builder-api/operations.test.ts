@@ -320,4 +320,53 @@ describe("public api operation catalog", () => {
       'Public API operation "upload-asset" has no tRPC path.'
     );
   });
+
+  test("exposes the new Form authoring fields through semantic MCP operations", () => {
+    const component = getPublicApiOperation("insert-component").inputSchema;
+    expect(component?.properties?.component).toMatchObject({ type: "string" });
+
+    const updates =
+      getPublicApiOperation("update-props").inputSchema?.properties?.updates;
+    expect(updates).toMatchObject({ type: "array" });
+    const propTypes = JSON.stringify(updates);
+    expect(propTypes).toContain('"const":"json"');
+
+    const createResourceSchema = JSON.stringify(
+      getPublicApiOperation("create-resource").inputSchema
+    );
+    expect(createResourceSchema).toContain(
+      '"recipientMode":{"type":"string","enum":["project","custom","visitor"]}'
+    );
+    for (const field of [
+      "sender",
+      "senderExpression",
+      "recipients",
+      "recipientsExpression",
+      "visitorEmailField",
+      "subject",
+      "body",
+    ]) {
+      expect(createResourceSchema).toContain(`"${field}":{"type":"string"}`);
+    }
+    expect(createResourceSchema).toContain(
+      '"includeAttachments":{"type":"boolean"}'
+    );
+    const updateResourceSchema = JSON.stringify(
+      getPublicApiOperation("update-resource").inputSchema
+    );
+    expect(updateResourceSchema).toContain(
+      '"recipientMode":{"type":"string","enum":["project","custom","visitor"]}'
+    );
+    expect(updateResourceSchema).toContain(
+      '"includeAttachments":{"type":"boolean"}'
+    );
+    const projectSettingsSchema = JSON.stringify(
+      getPublicApiOperation("update-project-settings").inputSchema
+    );
+    for (const field of ["emailSender", "emailSubject", "emailBody"]) {
+      expect(projectSettingsSchema).toContain(
+        `"${field}":{"anyOf":[{"type":"string"},{"type":"null"}]}`
+      );
+    }
+  });
 });

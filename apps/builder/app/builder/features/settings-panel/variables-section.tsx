@@ -1,27 +1,28 @@
-import { useState } from "react";
+import {
+  $livePreviewFormValues,
+  $livePreviewBrowserInfo,
+} from "~/shared/preview-form-values";
+import { useEffect, useRef, useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Button,
   Chip,
   css,
-  CssValueListArrowFocus,
-  CssValueListItem,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  cssVar,
+  InteractiveListArrowFocus,
+  InteractiveListItem,
   Flex,
   Label,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
-  SmallIconButton,
   Text,
-  theme,
+  Tooltip,
+  Kbd,
 } from "@webstudio-is/design-system";
-import { EllipsesIcon, PlusIcon } from "@webstudio-is/icons";
-import type { DataSource } from "@webstudio-is/sdk";
+import { AlertIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
+import { ROOT_INSTANCE_ID, type DataSource } from "@webstudio-is/sdk";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { $dataSources } from "~/shared/sync/data-stores";
 import {
@@ -37,9 +38,21 @@ import {
 import { formatValuePreview } from "~/builder/shared/expression-editor";
 import { VariablePopoverTrigger } from "./variable-popover";
 import {
+  canDeleteVariable,
+  VariableContextMenu,
+  VariableMenu,
+} from "./variable-menu";
+import {
+  $variableToFocus,
+  $variableToOpen,
+  showVariableAtSource,
+} from "./variable-navigation";
+import { StyleSourceBadge } from "../style-panel/style-source";
+import { resolveFormParameterPreview } from "./form-context-preview";
+import {
   $selectedInstance,
+  $selectedInstanceSelector,
   $selectedInstanceKeyWithRoot,
-  $selectedPage,
 } from "~/shared/nano-states";
 import {
   findAvailableVariables,
@@ -101,14 +114,14 @@ const EmptyVariables = () => (
   <Flex direction="column" gap="2">
     <Flex justify="center" align="center">
       <Text variant="labels" align="center">
-        No data variables created
+        No variables created
         <br /> on this instance
       </Text>
     </Flex>
     <Flex justify="center" align="center">
       <VariablePopoverTrigger>
         <Button color="primary" type="button" prefix={<PlusIcon />}>
-          Create data variable
+          Create variable
         </Button>
       </VariablePopoverTrigger>
     </Flex>
@@ -131,10 +144,21 @@ const getVariableBadge = (variable: DataSource) => {
   }
   if (variable.type === "resource") {
     return {
-      label: "Dynamic data variable",
+      label: "Dynamic variable",
       text: "D",
     };
   }
+};
+
+const formVariableDescriptions: Record<string, string> = {
+  formData: "Submitted field values from this Form, keyed by input name.",
+  browserInfo:
+    "Visitor IP address, browser, language, and referrer available to this Form.",
+  formState: "The current Form state: initial, success, or error.",
+  results:
+    "Responses from selected actions, in order. Each includes the resource name, HTTP status code, and response body.",
+  errors:
+    "Errors from failed actions, in order. Each includes the resource name, HTTP status code, response body, and message.",
 };
 
 const DataVariableBadge = ({ variable }: { variable: DataSource }) => {
@@ -155,14 +179,100 @@ const VariablesItem = ({
   index,
   value,
   usageCount,
+  isOpen = true,
 }: {
   variable: DataSource;
   source: "local" | "remote";
   index: number;
   value: unknown;
   usageCount: number;
+  isOpen?: boolean;
 }) => {
-  const selectedPage = useStore($selectedPage);
+  const variableToFocus = useStore($variableToFocus);
+  const rowRef = useRef<HTMLButtonElement>(null);
+  const [isVariableDialogOpen, setIsVariableDialogOpen] = useState(false);
+  useEffect(() => {
+    if (!isOpen || variableToFocus?.id !== variable.id) {
+      return;
+    }
+
+    let focusRequestId: number | undefined;
+    const scrollRequestId = requestAnimationFrame(() => {
+      const row = rowRef.current;
+      if (
+        row === null ||
+        !row.isConnected ||
+        $variableToFocus.get()?.id !== variable.id
+      ) {
+        return;
+      }
+      row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      focusRequestId = requestAnimationFrame(() => {
+        const currentRow = rowRef.current;
+        if (
+          currentRow === null ||
+          !currentRow.isConnected ||
+          $variableToFocus.get()?.id !== variable.id
+        ) {
+          return;
+        }
+        currentRow.focus({ preventScroll: true });
+        $variableToFocus.set(undefined);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(scrollRequestId);
+      if (focusRequestId !== undefined) {
+        cancelAnimationFrame(focusRequestId);
+      }
+    };
+  }, [isOpen, variableToFocus, variable.id]);
+  const instances = useStore($instances);
+  const liveFormValues = useStore($livePreviewFormValues);
+  const liveBrowserInfo = useStore($livePreviewBrowserInfo);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  const dataSources = useStore($dataSources);
+  const valueSourceId = variable.scopeInstanceId ?? ROOT_INSTANCE_ID;
+  const valueSource = instances.get(valueSourceId);
+  const formVariableDescription =
+    valueSource?.component === "NativeForm"
+      ? formVariableDescriptions[variable.name]
+      : undefined;
+  const valueSourceName =
+    valueSourceId === ROOT_INSTANCE_ID
+      ? "Global root"
+      : (valueSource?.label ?? valueSource?.component ?? "System");
+  const shadowed =
+    source === "local" && variable.scopeInstanceId
+      ? findAvailableVariables({
+          startingInstanceId: variable.scopeInstanceId,
+          instances,
+          dataSources: new Map(
+            [...dataSources].filter(
+              ([, other]) => other.scopeInstanceId !== variable.scopeInstanceId
+            )
+          ),
+        }).find(
+          (other) =>
+            other.scopeInstanceId !== variable.scopeInstanceId &&
+            other.name === variable.name
+        )
+      : undefined;
+  value =
+    resolveFormParameterPreview(variable, {
+      instances,
+      selector: selectedInstanceSelector,
+      liveFormValues,
+      liveBrowserInfo,
+    })?.value ?? value;
+  const canDelete = canDeleteVariable(variable, source === "local");
+  const requestDelete = () =>
+    setVariableToDelete({
+      id: variable.id,
+      name: variable.name,
+      usages: usageCount,
+    });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [variableToDelete, setVariableToDelete] = useState<{
     id: string;
@@ -170,73 +280,126 @@ const VariablesItem = ({
     usages: number;
   }>();
   return (
-    <VariablePopoverTrigger key={variable.id} variable={variable}>
-      <CssValueListItem
+    <VariablePopoverTrigger
+      key={variable.id}
+      variable={variable}
+      onOpenChange={setIsVariableDialogOpen}
+    >
+      <InteractiveListItem
+        ref={rowRef}
+        aria-label={`Variable ${variable.name}`}
         id={variable.id}
         index={index}
         label={
           <Flex align="center">
-            <Label tag="label" color={source}>
-              {variable.name}
-            </Label>
+            <Tooltip
+              onPointerDown={(event) => event.preventDefault()}
+              triggerProps={{
+                onClick: (event) => {
+                  if (event.altKey && canDelete) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    requestDelete();
+                  }
+                },
+              }}
+              content={
+                <Flex direction="column" gap="2">
+                  <Text variant="labels">{variable.name}</Text>
+                  <Text>
+                    {variable.type === "variable"
+                      ? `${
+                          variable.value.type === "json"
+                            ? "JSON"
+                            : variable.value.type
+                        } · Static`
+                      : variable.type === "resource"
+                        ? "Resource · Dynamic"
+                        : "JSON · Dynamic parameter"}
+                  </Text>
+                  {formVariableDescription && (
+                    <Text>{formVariableDescription}</Text>
+                  )}
+                  <Text color="moreSubtle">Value comes from</Text>
+                  <Flex gap="1" wrap="wrap">
+                    {source === "local" && (
+                      <StyleSourceBadge source="local" variant="small">
+                        Local
+                      </StyleSourceBadge>
+                    )}
+                    <button
+                      type="button"
+                      style={{
+                        border: 0,
+                        padding: 0,
+                        background: "transparent",
+                        display: "inline-flex",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        showVariableAtSource(variable.id, valueSourceId);
+                      }}
+                    >
+                      <StyleSourceBadge source="instance" variant="small">
+                        {valueSourceName}
+                      </StyleSourceBadge>
+                    </button>
+                  </Flex>
+                  {canDelete && (
+                    <Button
+                      color="neutral-destructive"
+                      prefix={<TrashIcon />}
+                      suffix={
+                        <Kbd value={["alt", "click"]} color="moreSubtle" />
+                      }
+                      onClick={requestDelete}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </Flex>
+              }
+            >
+              <Label tag="label" color={source}>
+                {variable.name}
+              </Label>
+            </Tooltip>
+            {shadowed && (
+              <Tooltip
+                content={`This variable shadows ${shadowed.name} from ${
+                  instances.get(shadowed.scopeInstanceId ?? "")?.label ??
+                  instances.get(shadowed.scopeInstanceId ?? "")?.component ??
+                  "an ancestor"
+                }. Delete the local variable to reveal it.`}
+              >
+                <AlertIcon color={cssVar("--foreground-warning")} />
+              </Tooltip>
+            )}
             {value !== undefined && (
-              <span className={variableLabelStyle.toString()}>
+              <span
+                className={variableLabelStyle.toString()}
+                title={
+                  variable.type === "parameter" &&
+                  variable.name === "browserInfo"
+                    ? JSON.stringify(value, null, 2)
+                    : undefined
+                }
+              >
                 &nbsp;
                 {formatValuePreview(value)}
               </span>
             )}
           </Flex>
         }
-        data-state={isMenuOpen ? "open" : undefined}
+        data-state={isMenuOpen || isVariableDialogOpen ? "open" : undefined}
         suffix={<DataVariableBadge variable={variable} />}
         buttons={
           <>
-            {((source === "local" && variable.type !== "parameter") ||
-              (source === "local" &&
-                variable.id === selectedPage?.systemDataSourceId)) && (
-              <DropdownMenu modal onOpenChange={setIsMenuOpen}>
-                <DropdownMenuTrigger asChild>
-                  {/* a11y is completely broken here
-                      focus is not restored to button invoker
-                      @todo fix it eventually and consider restoring from closed value preview dialog
-                  */}
-                  <SmallIconButton
-                    tabIndex={-1}
-                    aria-label="Open variable menu"
-                    icon={<EllipsesIcon />}
-                    onClick={() => {}}
-                  />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  css={{ width: theme.spacing[28] }}
-                  onCloseAutoFocus={(event) => event.preventDefault()}
-                >
-                  {source === "local" && variable.type !== "parameter" && (
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        setVariableToDelete({
-                          id: variable.id,
-                          name: variable.name,
-                          usages: usageCount,
-                        });
-                      }}
-                    >
-                      Delete {usageCount > 0 && `(${usageCount} bindings)`}
-                    </DropdownMenuItem>
-                  )}
-                  {source === "local" &&
-                    variable.id === selectedPage?.systemDataSourceId && (
-                      <DropdownMenuItem
-                        onSelect={() => {
-                          deleteDataVariable(variable.id);
-                        }}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <VariableMenu
+              variable={variable}
+              canDelete={canDelete}
+              onOpenChange={setIsMenuOpen}
+            />
 
             <DeleteDataVariableDialog
               variable={variableToDelete}
@@ -255,7 +418,7 @@ const VariablesItem = ({
   );
 };
 
-const VariablesList = () => {
+const VariablesList = ({ isOpen }: { isOpen: boolean }) => {
   const instance = useStore($selectedInstance);
   const availableVariables = useStore($availableVariables);
   const variableValues = useStore($instanceVariableValues);
@@ -266,7 +429,7 @@ const VariablesList = () => {
   }
 
   return (
-    <CssValueListArrowFocus>
+    <InteractiveListArrowFocus>
       {/* local variables should be ordered first to not block tab to first item */}
       {availableVariables.map((variable, index) => (
         <VariablesItem
@@ -278,51 +441,99 @@ const VariablesList = () => {
           variable={variable}
           index={index}
           usageCount={usedVariables.get(variable.id) ?? 0}
+          isOpen={isOpen}
         />
       ))}
-    </CssValueListArrowFocus>
+    </InteractiveListArrowFocus>
   );
 };
 
-const label = "Data variables";
+const label = "Variables";
 
 export const VariablesSection = () => {
+  const variableToFocus = useStore($variableToFocus);
+  const variableToOpen = useStore($variableToOpen);
+  const availableVariables = useStore($availableVariables);
+  const selectedInstance = useStore($selectedInstance);
+  const selectedScopeId = selectedInstance?.id ?? ROOT_INSTANCE_ID;
   const [isOpen, setIsOpen] = useOpenState(label);
-  return (
-    <CollapsibleSectionRoot
-      label={label}
-      fullWidth={true}
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-      trigger={
-        <SectionTitle
-          suffix={
-            <VariablePopoverTrigger>
-              <SectionTitleButton
-                type="button"
-                aria-label="Add data variable"
-                prefix={<PlusIcon />}
-                onPointerDown={(event) => {
-                  event.stopPropagation();
-                }}
-                // open panel when adding a new variable
-                onClick={() => {
-                  if (isOpen === false) {
-                    setIsOpen(true);
-                  }
-                }}
-              />
-            </VariablePopoverTrigger>
-          }
-        >
-          <SectionTitleLabel>Data variables</SectionTitleLabel>
-        </SectionTitle>
+  useEffect(() => {
+    if (
+      variableToOpen !== undefined &&
+      availableVariables.some(({ id }) => id === variableToOpen.id)
+    ) {
+      if (isOpen === false) {
+        setIsOpen(true);
       }
-    >
-      {/* prevent applyig gap to list items */}
-      <div>
-        <VariablesList />
-      </div>
-    </CollapsibleSectionRoot>
+    } else if (
+      variableToOpen !== undefined &&
+      !availableVariables.some(({ id }) => id === variableToOpen.id)
+    ) {
+      $variableToOpen.set(undefined);
+    }
+    if (variableToFocus === undefined) {
+      return;
+    }
+    if (variableToFocus.scopeInstanceId !== selectedScopeId) {
+      return;
+    }
+    if (availableVariables.some(({ id }) => id === variableToFocus.id)) {
+      if (isOpen === false) {
+        setIsOpen(true);
+      }
+    } else {
+      $variableToFocus.set(undefined);
+      $variableToOpen.set(undefined);
+    }
+  }, [
+    availableVariables,
+    isOpen,
+    selectedScopeId,
+    setIsOpen,
+    variableToFocus,
+    variableToOpen,
+  ]);
+  return (
+    <VariableContextMenu>
+      <CollapsibleSectionRoot
+        label={label}
+        fullWidth={true}
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        trigger={
+          <SectionTitle
+            suffix={
+              <Flex align="center">
+                <VariablePopoverTrigger>
+                  <SectionTitleButton
+                    type="button"
+                    aria-label="Add variable"
+                    prefix={<PlusIcon />}
+                    onPointerDown={(event) => {
+                      event.stopPropagation();
+                    }}
+                    // open panel when adding a new variable
+                    onClick={() => {
+                      if (isOpen === false) {
+                        setIsOpen(true);
+                      }
+                    }}
+                  />
+                </VariablePopoverTrigger>
+              </Flex>
+            }
+          >
+            <SectionTitleLabel>Variables</SectionTitleLabel>
+          </SectionTitle>
+        }
+      >
+        {/* prevent applyig gap to list items */}
+        <div>
+          <VariablesList isOpen={isOpen} />
+        </div>
+      </CollapsibleSectionRoot>
+    </VariableContextMenu>
   );
 };
+
+export const __testing__ = { VariablesItem };

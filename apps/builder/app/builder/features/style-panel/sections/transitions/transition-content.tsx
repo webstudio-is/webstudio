@@ -9,17 +9,15 @@ import {
   PanelContent,
   Flex,
   Label,
+  InfoTooltip,
   TextArea,
   theme,
   textVariants,
   Separator,
-  Tooltip,
   Text,
   Grid,
   toast,
-  cssVar,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon } from "@webstudio-is/icons";
 import { propertiesData, propertyDescriptions } from "@webstudio-is/css-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { CssValueInputContainer } from "../../shared/css-value-input";
@@ -257,8 +255,8 @@ export const TransitionContent = ({ index }: { index: number }) => {
         <Label>
           <Flex align="center" gap="1">
             Code
-            <Tooltip
-              variant="wrapped"
+            <InfoTooltip
+              label="About transition CSS code"
               content={
                 <Text>
                   Paste CSS code for a transition or part of a transition, for
@@ -268,9 +266,7 @@ export const TransitionContent = ({ index }: { index: number }) => {
                   <Text variant="monoBold">opacity 200ms ease 0s</Text>
                 </Text>
               }
-            >
-              <InfoCircleIcon color={cssVar("--foreground-secondary")} />
-            </Tooltip>
+            />
           </Flex>
         </Label>
         <TextArea

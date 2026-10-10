@@ -21,7 +21,7 @@ const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
 
 const openNewVariablePanel = async ({ page }: { page: Page }) => {
   await page.getByRole("tab", { name: "Settings" }).click();
-  await page.getByRole("button", { name: "Add data variable" }).click();
+  await page.getByRole("button", { name: "Add variable" }).click();
   await page.getByText("New variable", { exact: true }).waitFor();
 };
 
@@ -58,7 +58,7 @@ export const selectContentInstance = async ({ page }: { page: Page }) => {
     .waitFor({ state: "hidden" });
   await page.getByRole("tab", { name: "Settings" }).click();
   await page
-    .getByRole("button", { name: "Add data variable" })
+    .getByRole("button", { name: "Add variable" })
     .waitFor({ state: "visible" });
 };
 
@@ -144,14 +144,7 @@ export const createSystemResourceVariable = async ({
 }) => {
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
-  await selectVariableType({ page, next: "System resource" });
-  if (resource !== "Sitemap") {
-    await getVariableForm(page)
-      .getByText("Resource", { exact: true })
-      .locator("xpath=following::button[1]")
-      .click();
-    await page.getByRole("option", { name: resource, exact: true }).click();
-  }
+  await selectVariableType({ page, next: resource });
   await closeVariablePanelAndWaitForSave({ page });
 };
 

@@ -47,6 +47,21 @@ export type AgentEvaluationResult = {
 };
 
 const fixtureToolNames = {
+  "managed-form-authoring-v1": [
+    "meta.guide",
+    "meta.get-more-tools",
+    "components.search",
+    "templates.get",
+    "create-page",
+    "insert-component",
+    "insert-fragment",
+    "list-instances",
+    "inspect-instance",
+    "update-text",
+    "update-styles",
+    "audit",
+    "verify-page-responsive",
+  ],
   "mdx-article-editing-v1": [
     "meta.guide",
     "inspect-instance",
@@ -138,6 +153,7 @@ export const createMinimalAgentTask = (
     fixture.id === "markdown-blog-v1" ||
     fixture.id === "markdown-references-discovery-v1";
   const isMdxArticleFixture = fixture.id === "mdx-article-editing-v1";
+  const isManagedFormFixture = fixture.id === "managed-form-authoring-v1";
   return {
     schemaVersion: 2,
     fixtureId: fixture.id,
@@ -174,6 +190,11 @@ export const createMinimalAgentTask = (
         ? [
             "Do not stop after reading or connecting the source. Complete all three update-text mutations for the designed title, author, and reading-time instances before changing frontmatter. Each text is a separate tool call with mode expression and expressionBindingMode readwrite.",
             "After those bindings succeed, update only the requested author frontmatter value while preserving all other fields, then reload, inspect, and audit.",
+          ]
+        : []),
+      ...(isManagedFormFixture
+        ? [
+            "Keep the Form's existing Resource actions unchanged. Never submit the Form, trigger a Resource action, or use a browser interaction that could submit it. The project is an isolated local fixture and has no external delivery destination.",
           ]
         : []),
     ],

@@ -8,8 +8,8 @@ import {
 } from "@webstudio-is/css-data";
 import {
   Box,
-  CssValueListArrowFocus,
-  CssValueListItem,
+  InteractiveListArrowFocus,
+  InteractiveListItem,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -278,7 +278,7 @@ export const Section = () => {
       }
     >
       {isAnyTransformPropertyAdded && (
-        <CssValueListArrowFocus>
+        <InteractiveListArrowFocus>
           <Flex direction="column">
             {transformPanels.map(
               (panel, index) =>
@@ -290,7 +290,7 @@ export const Section = () => {
                 )
             )}
           </Flex>
-        </CssValueListArrowFocus>
+        </InteractiveListArrowFocus>
       )}
     </CollapsibleSectionRoot>
   );
@@ -329,7 +329,7 @@ const TransformSection = ({
         </PanelContent>
       }
     >
-      <CssValueListItem
+      <InteractiveListItem
         id={panel}
         index={index}
         hidden={value.hidden}
@@ -363,7 +363,7 @@ const TransformSection = ({
             />
           </>
         }
-      ></CssValueListItem>
+      ></InteractiveListItem>
     </FloatingPanel>
   );
 };

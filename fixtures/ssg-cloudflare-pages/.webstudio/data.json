@@ -1,5 +1,5 @@
 {
-  "bundleVersion": "bundle-1e81gg6",
+  "bundleVersion": "bundle-o02i9",
   "build": {
     "id": "a2e8de30-03d5-4514-a3a6-406b3266a3af",
     "projectId": "d845c167-ea07-4875-b08d-83e97c09dcce",
@@ -498,7 +498,8 @@
   ],
   "assetFolders": [],
   "user": {
-    "email": "hello@webstudio.is"
+    "email": "hello@webstudio.is",
+    "username": "admin"
   },
   "projectDomain": "cli-basic-test-d0osr",
   "projectTitle": "cli-basic-test",

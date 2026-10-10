@@ -5,7 +5,7 @@ import {
   type Resource,
 } from "@webstudio-is/content-engine";
 import type { ResourceRequest } from "./schema/resources";
-import { serializeValue } from "./to-string";
+import { isPlainObject, serializeValue } from "./to-string";
 
 const LOCAL_RESOURCE_PREFIX = "$resources";
 const RESOURCE_ERROR_DETAIL_LIMIT = 2000;
@@ -57,6 +57,82 @@ export const isLocalResource = (pathname: string, resourceName?: string) => {
   return segments.join("/") === `${LOCAL_RESOURCE_PREFIX}/${resourceName}`;
 };
 
+const containsFile = (value: unknown): boolean => {
+  if (
+    (typeof File !== "undefined" && value instanceof File) ||
+    (typeof Blob !== "undefined" && value instanceof Blob)
+  ) {
+    return true;
+  }
+  if (Array.isArray(value)) {
+    return value.some(containsFile);
+  }
+  if (isPlainObject(value)) {
+    return Object.values(value).some(containsFile);
+  }
+  return false;
+};
+
+const toMultipartFormData = (value: object) => {
+  const formData = new FormData();
+  const append = (name: string, item: unknown) => {
+    if (item === undefined || item === null) {
+      return;
+    }
+    if (typeof File !== "undefined" && item instanceof File) {
+      formData.append(name, item, item.name);
+      return;
+    }
+    if (typeof Blob !== "undefined" && item instanceof Blob) {
+      formData.append(name, item);
+      return;
+    }
+    if (Array.isArray(item)) {
+      for (const value of item) {
+        append(name, value);
+      }
+      return;
+    }
+    if (isPlainObject(item) && containsFile(item)) {
+      for (const [key, value] of Object.entries(item)) {
+        append(`${name}[${key}]`, value);
+      }
+      return;
+    }
+    formData.append(name, serializeValue(item));
+  };
+  for (const [name, fieldValue] of Object.entries(value)) {
+    append(name, fieldValue);
+  }
+  return formData;
+};
+
+export const getResourceBodyFormatError = (request: ResourceRequest) => {
+  if (
+    request.control === "email" ||
+    request.method === "get" ||
+    request.bodyFormat === undefined ||
+    request.bodyFormat === "auto"
+  ) {
+    return;
+  }
+  if (request.body instanceof FormData) {
+    return request.bodyFormat === "json"
+      ? "JSON body cannot include form data"
+      : undefined;
+  }
+  if (request.bodyFormat === "json" && containsFile(request.body)) {
+    return "JSON body cannot include uploaded files";
+  }
+  if (request.bodyFormat === "json") {
+    if (isPlainObject(request.body) === false && !Array.isArray(request.body)) {
+      return "JSON body expects an object or array";
+    }
+  } else if (isPlainObject(request.body) === false) {
+    return "Multipart body expects an object of fields";
+  }
+};
+
 export const sitemapResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/sitemap.xml`;
 export const currentDateResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/current-date`;
 export const assetsResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/assets`;
@@ -81,22 +157,71 @@ export const assetsFieldCatalogApiUrl = `${assetsApiUrl}/field-catalog`;
 export const assetsOpenApiUrl = `${assetsApiUrl}/openapi.json`;
 export const assetsQuerySchemaApiUrl = `${assetsApiUrl}/query-schema.json`;
 
+export type ResourceExchange = {
+  /** The configured Resource type; never infer this from the request URL. */
+  kind?: "http" | "email";
+  request: Request | ResourceRequest;
+  response: {
+    status: number;
+    statusText: string;
+    headers: Headers;
+    data: unknown;
+    url?: string;
+  };
+  /** Logical delivery result, which can differ from an Email Service HTTP response. */
+  outcome?: {
+    ok: boolean;
+    status: number;
+    statusText: string;
+    data: unknown;
+  };
+};
+
 export type ResourceLoadOptions = {
+  /** Private, opt-in inspection of the same transport attempt; never replays it. */
+  onExchange?: (exchange: ResourceExchange) => void | Promise<void>;
   signal?: AbortSignal;
   timeoutMs?: number;
 };
 
+export type ResourceLoadResult = {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  data: unknown;
+};
+
 export type ResourceGraphLoadOptions = ResourceLoadOptions & {
+  onResourceExchange?: (
+    resourceId: string,
+    exchange: ResourceExchange
+  ) => void | Promise<void>;
+  /** A caller may retry an independent failed root once. */
+  shouldRetryFailedRoot?: (
+    resourceId: string,
+    request: ResourceRequest,
+    result: ResourceLoadResult
+  ) => boolean;
   requestOverrides?: ReadonlyMap<
     string,
     Partial<ResourceRequest> & { fetch?: typeof fetch }
   >;
+  /** Select a feature transport while retaining shared graph resolution. */
+  loadRequest?: (
+    customFetch: typeof fetch,
+    request: ResourceRequest,
+    baseUrl?: string | URL,
+    options?: ResourceLoadOptions
+  ) => Promise<ResourceLoadResult>;
 };
 
 export type ResourceRequestResource = Readonly<{
   id: string;
   outputName: string;
+  name?: string;
   dependencies: readonly string[];
+  control?: ResourceRequest["control"];
+  bodyFormat?: ResourceRequest["bodyFormat"];
   createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
 }>;
 
@@ -278,6 +403,13 @@ export const loadResource = async (
   baseUrl?: string | URL,
   options: ResourceLoadOptions = {}
 ) => {
+  const observe = async (exchange: ResourceExchange) => {
+    try {
+      await options.onExchange?.(exchange);
+    } catch {
+      /* Inspection must not change delivery outcomes. */
+    }
+  };
   const controller = new AbortController();
   let didTimeout = false;
   const cancel = () => controller.abort(options.signal?.reason);
@@ -297,6 +429,8 @@ export const loadResource = async (
           controller.abort();
         }, options.timeoutMs);
 
+  let inspectionRequest: Request | undefined;
+  let inspectionResponse: ResourceExchange["response"] | undefined;
   try {
     const { method, searchParams, headers, body } = resourceRequest;
     let href = resourceRequest.url;
@@ -321,11 +455,29 @@ export const loadResource = async (
       // empty block
     }
     const requestHeaders = new Headers(
-      headers.map(({ name, value }): [string, string] => [
-        name,
-        serializeValue(value),
-      ])
+      headers
+        .filter(({ value }) => value !== undefined)
+        .map(({ name, value }): [string, string] => [
+          name,
+          serializeValue(value),
+        ])
     );
+    const bodyFormatError = getResourceBodyFormatError(resourceRequest);
+    if (bodyFormatError !== undefined) {
+      return {
+        ok: false,
+        data: {
+          ok: false,
+          error: {
+            code: "INVALID_BODY_FORMAT",
+            message: bodyFormatError,
+            retryable: false,
+          },
+        },
+        status: 400,
+        statusText: bodyFormatError,
+      };
+    }
     const requestInit: RequestInit = {
       method,
       headers: requestHeaders,
@@ -336,10 +488,55 @@ export const loadResource = async (
       requestInit.signal = signal;
     }
     if (method !== "get" && body !== undefined) {
-      requestInit.body = serializeValue(body);
+      if (body instanceof FormData) {
+        // Fetch must generate the Content-Type boundary for this FormData.
+        requestHeaders.delete("Content-Type");
+        requestInit.body = body;
+      } else if (isPlainObject(body)) {
+        if (resourceRequest.bodyFormat === "multipart" || containsFile(body)) {
+          // Form data is JSON by default; preserve upload bytes and repeated
+          // values as multipart whenever the body contains a file.
+          requestHeaders.delete("Content-Type");
+          requestInit.body = toMultipartFormData(body);
+        } else {
+          if (
+            resourceRequest.bodyFormat === "json" ||
+            requestHeaders.has("Content-Type") === false
+          ) {
+            requestHeaders.set("Content-Type", "application/json");
+          }
+          requestInit.body = serializeValue(body);
+        }
+      } else if (
+        resourceRequest.bodyFormat === "json" ||
+        Array.isArray(body) ||
+        typeof body === "number" ||
+        typeof body === "boolean"
+      ) {
+        if (
+          resourceRequest.bodyFormat === "json" ||
+          requestHeaders.has("Content-Type") === false
+        ) {
+          requestHeaders.set("Content-Type", "application/json");
+        }
+        requestInit.body = serializeValue(body);
+      } else {
+        if (requestHeaders.has("Content-Type") === false) {
+          requestHeaders.set("Content-Type", "text/plain");
+        }
+        requestInit.body = serializeValue(body);
+      }
     }
+    const outgoing =
+      options.onExchange && !isLocalResource(href)
+        ? new Request(href, requestInit)
+        : undefined;
+    // Cloudflare adds generic metadata to clone(); inspection uses Web Request fields.
+    inspectionRequest = outgoing?.clone() as Request | undefined;
     const response = await awaitWithSignal(
-      customFetch(href, requestInit),
+      outgoing === undefined
+        ? customFetch(href, requestInit)
+        : customFetch(outgoing),
       signal
     );
 
@@ -359,6 +556,13 @@ export const loadResource = async (
       );
     }
 
+    inspectionResponse = {
+      status: response.status,
+      statusText: response.statusText,
+      headers: new Headers(response.headers),
+      data,
+      url: response.url || undefined,
+    };
     const result = {
       ok: response.ok,
       status: response.status,
@@ -373,30 +577,39 @@ export const loadResource = async (
     }
     return result;
   } catch (error) {
-    if (didTimeout) {
-      return transportFailure({
-        code: "REQUEST_TIMEOUT",
-        message: `Resource request exceeded ${options.timeoutMs}ms`,
-        retryable: true,
-        status: 504,
-      });
+    const failure = didTimeout
+      ? transportFailure({
+          code: "REQUEST_TIMEOUT",
+          message: `Resource request exceeded ${options.timeoutMs}ms`,
+          retryable: true,
+          status: 504,
+        })
+      : options.signal?.aborted
+        ? transportFailure({
+            code: "REQUEST_CANCELLED",
+            message: "Resource request was cancelled",
+            retryable: false,
+            status: 499,
+          })
+        : transportFailure({
+            code: "NETWORK_ERROR",
+            message: "Resource request failed",
+            retryable: true,
+            status: 502,
+          });
+    if (!didTimeout && !options.signal?.aborted) {
+      console.error("Resource request failed");
     }
-    if (options.signal?.aborted) {
-      return transportFailure({
-        code: "REQUEST_CANCELLED",
-        message: "Resource request was cancelled",
-        retryable: false,
-        status: 499,
-      });
-    }
-    console.error("Resource request failed");
-    return transportFailure({
-      code: "NETWORK_ERROR",
-      message: "Resource request failed",
-      retryable: true,
-      status: 502,
-    });
+    inspectionResponse = { ...failure, headers: new Headers() };
+    return failure;
   } finally {
+    if (inspectionRequest && inspectionResponse) {
+      await observe({
+        kind: "http",
+        request: inspectionRequest,
+        response: inspectionResponse,
+      });
+    }
     if (timeoutId !== undefined) {
       clearTimeout(timeoutId);
     }
@@ -422,11 +635,18 @@ export const loadResources = async (
         rootIds: Array.from(requests.keys()),
       }
     : requests;
+  const rootIds = new Set(graph.rootIds);
   const resources: Resource<unknown>[] = graph.resources.map((resource) => ({
     id: resource.id,
     dependencies: resource.dependencies,
     resolve: ({ documents, signal }) => {
-      const { requestOverrides, ...loadOptions } = options ?? {};
+      const {
+        requestOverrides,
+        shouldRetryFailedRoot,
+        onResourceExchange,
+        loadRequest = loadResource,
+        ...loadOptions
+      } = options ?? {};
       const { fetch: requestFetch = customFetch, ...overrides } =
         requestOverrides?.get(resource.id) ?? {};
       const request = resource.createRequest(documents);
@@ -434,10 +654,24 @@ export const loadResources = async (
         ...request,
         ...overrides,
       };
-      return loadResource(requestFetch, resolvedRequest, baseUrl, {
-        ...loadOptions,
-        signal: signal ?? options?.signal,
-      });
+      const load = () =>
+        loadRequest(requestFetch, resolvedRequest, baseUrl, {
+          ...loadOptions,
+          onExchange: onResourceExchange
+            ? (exchange) => onResourceExchange(resource.id, exchange)
+            : loadOptions.onExchange,
+          signal: signal ?? options?.signal,
+        });
+      return load().then((result) =>
+        rootIds.has(resource.id) &&
+        result.ok === false &&
+        shouldRetryFailedRoot?.(resource.id, resolvedRequest, result) ===
+          true &&
+        !signal?.aborted &&
+        !options?.signal?.aborted
+          ? load()
+          : result
+      );
     },
   }));
   const resolved = await resolveResourceGraph({

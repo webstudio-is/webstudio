@@ -8,6 +8,7 @@ import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { getInstanceKey } from "~/shared/nano-states/instances";
 import {
   createInstanceChildrenElements,
+  createManagedFormErrorElements,
   type WebstudioComponentProps,
 } from "./elements";
 
@@ -105,4 +106,60 @@ test("updates expressions when async scoped values resolve", async () => {
   root.unmount();
   container.remove();
   $variableValuesByInstanceSelector.set(new Map());
+});
+
+test("saved Form error rendering follows one and multiple live runtime errors with escaped text", async () => {
+  const selector = ["saved-error", "saved-form"];
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  try {
+    $variableValuesByInstanceSelector.set(
+      new Map([
+        [
+          getInstanceKey([...selector, ROOT_INSTANCE_ID]),
+          new Map([["saved-errors", [{ message: "Add at least one action" }]]]),
+        ],
+      ])
+    );
+    await act(async () =>
+      root.render(
+        <div className="authored-style">
+          {createManagedFormErrorElements(
+            "$ws$dataSource$saved__DASH__errors",
+            selector
+          )}
+        </div>
+      )
+    );
+    await expect
+      .poll(() => container.textContent)
+      .toBe("Add at least one action");
+    await act(async () =>
+      $variableValuesByInstanceSelector.set(
+        new Map([
+          [
+            getInstanceKey([...selector, ROOT_INSTANCE_ID]),
+            new Map([
+              [
+                "saved-errors",
+                [
+                  { message: "First failure" },
+                  { message: "<script>escaped failure</script>" },
+                ],
+              ],
+            ]),
+          ],
+        ])
+      )
+    );
+    await expect.poll(() => container.textContent).toContain("First failure");
+    expect(container.textContent).toContain("<script>escaped failure</script>");
+    expect(container.querySelector("script")).toBeNull();
+    expect(container.querySelector(".authored-style")).not.toBeNull();
+  } finally {
+    act(() => root.unmount());
+    container.remove();
+    $variableValuesByInstanceSelector.set(new Map());
+  }
 });

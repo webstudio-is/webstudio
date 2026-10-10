@@ -7,7 +7,7 @@ description: >-
 # ✍️ Webhook Form
 
 {% hint style="info" %}
-**Name change:** Webhook Forms used to be called "Forms." However, [Forms](form.md) are now a different component intended for building searches and filters.
+This page covers existing Webhook Form instances. The new [Form](form.md) submits to configured Resource actions. Use an **Element** with tag `form` for plain browser form behavior such as searches and filters.
 {% endhint %}
 
 {% embed url="https://www.youtube.com/watch?v=eE-CkewQHMs" %}
@@ -21,9 +21,8 @@ Webhook Forms are used when you need to send form submission data to an external
 By default, submissions are sent to the Project owner.
 
 {% hint style="info" %}
-**Pro feature:** You can customize the recipient of email notifications by navigating to **Project settings > General**.
+**Pro feature:** You can customize the recipient of email notifications by navigating to **Project settings > Emails**.
 
-<img src="../../.gitbook/assets/form-recipient.png" alt="Field to customize the recipient of the form submissions" data-size="original">
 {% endhint %}
 
 ### Webhooks
@@ -37,7 +36,7 @@ Once set up, every form submission will send a payload (form fields and values) 
 
 ## Using the Webhook Form Component
 
-You can add a Webhook Form Component to your canvas from **Components Panel > Data section**.
+Existing projects can keep and edit their saved Webhook Form instances. The component is no longer available for new insertion; use the new [Form](form.md) for new Resource submissions.
 
 {% hint style="warning" %}
 Webhook Forms do not submit inside the Builder, including in Preview. They only submit on the published site.
@@ -51,7 +50,7 @@ A Webhook Form consists of three nested instances:
 2. **Success Message** – Displayed upon successful submission.
 3. **Error Message** – Shown when an error occurs.
 
-You can [add new Components](form.md#form-inputs) to further expand and modify your form.
+You can [add new inputs](form.md#inputs-and-responses) to further expand and modify your form.
 
 ### Form States
 
@@ -82,7 +81,7 @@ Ensure every form input has a value for the `name` field to be included in submi
 
 <figure><img src="../../.gitbook/assets/form-name.png" alt="Form input name"><figcaption></figcaption></figure>
 
-For a full list of input types, including checkboxes and radio buttons, refer to [Form Inputs](form.md#form-inputs).
+For a full list of input types, including checkboxes and radio buttons, refer to [Form inputs](form.md#inputs-and-responses).
 
 ### Input Properties
 
@@ -110,7 +109,7 @@ Webstudio forms include built-in bot protection to prevent spam submissions. Thi
 
 ## Related
 
-- [Form](form.md) – Standard HTML forms
+- [Form](form.md) – Submit to configured Resources
 - [Input](input.md) – Text input fields
 - [Button](button.md) – Submit buttons
 - [n8n Integration](../integrations/n8n.md) – Automate form workflows

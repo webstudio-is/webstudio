@@ -1,3 +1,7 @@
+import { mergeRefs } from "@react-aria/utils";
+import { getCanvasFormVisibility } from "./form-selection-visibility";
+import { resolveManagedFormErrorSlot } from "@webstudio-is/sdk";
+import { $isPreviewMode } from "~/shared/nano-states";
 import { parseError } from "~/shared/error/error-parse";
 import {
   useEffect,
@@ -16,7 +20,6 @@ import { $getSelection, $isRangeSelection } from "lexical";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { mergeRefs } from "@react-aria/utils";
 import type {
   Instance,
   Instances,
@@ -59,9 +62,10 @@ import {
   $variableValuesByInstanceSelector,
   $isDesignMode,
   $selectedInstanceRenderState,
+  $selectedInstanceSelector,
   $selectedPageHash,
 } from "~/shared/nano-states";
-import { $project, $props } from "~/shared/sync/data-stores";
+import { $project, $props, $dataSources } from "~/shared/sync/data-stores";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { $instances } from "~/shared/sync/data-stores";
 import {
@@ -78,6 +82,7 @@ import { $currentSystem } from "~/shared/system";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import {
   createInstanceChildrenElements,
+  createManagedFormErrorElements,
   type WebstudioComponentProps,
 } from "~/canvas/elements";
 import { Block } from "../build-mode/block";
@@ -111,6 +116,13 @@ import { resolveContentBlockOccurrenceAssetId } from "~/shared/content-block-sou
 import { $resourcesState } from "~/shared/resources";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 
+import {
+  PreviewNativeForm,
+  submitManagedFormFromPreview,
+  getPreviewNativeFormProps,
+} from "./preview-native-form";
+import { getPreviewCurrentUrl } from "./preview-current-url";
+
 const getHtmlEmbedCanvasProps = ({
   component,
   isSafeMode,
@@ -138,28 +150,9 @@ const computeComponentKey = (props: Record<string, unknown>) => {
   );
 };
 
-const getPreviewCurrentUrl = (
-  currentSystem: {
-    pathname: string;
-    search: Record<string, string | undefined>;
-  },
-  hash: string
-) => {
-  // Preview renders inside the builder canvas route, so window.location points
-  // at the builder shell, not the page being previewed. Recreate the page URL
-  // from the selected page system data so :local-link state matches preview
-  // navigation, including query params and hash-only links.
-  const currentUrl = new URL(currentSystem.pathname, "https://webstudio.local");
-  currentUrl.search = new URLSearchParams(
-    Object.entries(currentSystem.search).filter(
-      (entry): entry is [string, string] => entry[1] !== undefined
-    )
-  ).toString();
-  currentUrl.hash = hash;
-  return currentUrl;
-};
-
 export const __testing__ = {
+  PreviewNativeForm,
+  submitManagedFormFromPreview,
   computeComponentKey,
   getPreviewCurrentUrl,
   getHtmlEmbedCanvasProps,
@@ -715,7 +708,16 @@ const WebstudioComponentCanvasInner = forwardRef<
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instanceId = instance.id;
   const instances = useStore($instances);
+  const selectedSelector = useStore($selectedInstanceSelector);
+  const isPreviewMode = useStore($isPreviewMode);
+  const dataSources = useStore($dataSources);
   const allProps = useStore($props);
+  const resolvedInstance = resolveManagedFormErrorSlot(
+    instance,
+    instances,
+    dataSources,
+    allProps
+  );
   const externalContentRoots = useStore($externalContentRoots);
   const metas = useStore($registeredComponentMetas);
   const resourcesState = useStore($resourcesState);
@@ -726,14 +728,19 @@ const WebstudioComponentCanvasInner = forwardRef<
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
   const children =
-    getTextContent(instanceProps) ??
-    createInstanceChildrenElements({
-      instances,
-      instanceSelector,
-      children: instance.children,
-      Component: WebstudioComponentCanvas,
-      components,
-    });
+    resolvedInstance !== instance
+      ? createManagedFormErrorElements(
+          resolvedInstance.children[0].value,
+          instanceSelector
+        )
+      : (getTextContent(instanceProps) ??
+        createInstanceChildrenElements({
+          instances,
+          instanceSelector,
+          children: instance.children,
+          Component: WebstudioComponentCanvas,
+          components,
+        }));
   /**
    * Prevents edited element from having a size of 0 on the first render.
    * Directly using `children` in Text Edit
@@ -757,7 +764,15 @@ const WebstudioComponentCanvasInner = forwardRef<
     }
   });
 
-  if (show === false) {
+  if (
+    !getCanvasFormVisibility({
+      show,
+      isPreviewMode,
+      instanceSelector,
+      selectedSelector,
+      instances,
+    })
+  ) {
     return <></>;
   }
 
@@ -1022,6 +1037,14 @@ const WebstudioComponentPreviewInner = forwardRef<
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instances = useStore($instances);
+  const dataSources = useStore($dataSources);
+  const allProps = useStore($props);
+  const resolvedInstance = resolveManagedFormErrorSlot(
+    instance,
+    instances,
+    dataSources,
+    allProps
+  );
   const resourcesState = useStore($resourcesState);
   const { isSafeMode } = useContext(ReactSdkContext);
   const { [showAttribute]: show = true, ...instanceProps } =
@@ -1041,6 +1064,9 @@ const WebstudioComponentPreviewInner = forwardRef<
     [componentAttribute]: instance.component,
     [selectorIdAttribute]: instanceSelector.join(","),
   };
+  if (instance.component === "NativeForm") {
+    Object.assign(props, getPreviewNativeFormProps(instance.id));
+  }
   if (show === false) {
     return <></>;
   }
@@ -1075,6 +1101,10 @@ const WebstudioComponentPreviewInner = forwardRef<
   let Component: undefined | string | AnyComponent = components.get(
     instance.component
   );
+
+  if (instance.component === "NativeForm") {
+    Component = PreviewNativeForm as AnyComponent;
+  }
 
   if (instance.component === elementComponent) {
     Component = instance.tag ?? "div";
@@ -1114,11 +1144,16 @@ const WebstudioComponentPreviewInner = forwardRef<
       {getCanvasPageChildren(
         instance,
         instanceSelector,
-        getTextContent(instanceProps) ??
+        (resolvedInstance !== instance
+          ? createManagedFormErrorElements(
+              resolvedInstance.children[0].value,
+              instanceSelector
+            )
+          : getTextContent(instanceProps)) ??
           createInstanceChildrenElements({
             instances,
             instanceSelector,
-            children: instance.children,
+            children: resolvedInstance.children,
             Component: WebstudioComponentPreview,
             components,
           })

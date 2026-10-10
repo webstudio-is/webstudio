@@ -146,6 +146,30 @@ test("system pathname includes parent folder slug", () => {
   ]);
 });
 
+test("system query bindings preserve repeated values", () => {
+  $pages.set(
+    getInitialPages({
+      id: "dynamicId",
+      path: "/products/:slug",
+      name: "Product",
+      title: "Product",
+      meta: {},
+      rootInstanceId: "",
+    })
+  );
+  selectPage("dynamicId");
+  updateCurrentSystem({
+    params: { slug: "chair" },
+    search: { tag: ["red", "blue"] },
+  });
+  expect($currentSystem.get()).toMatchObject({
+    params: { slug: "chair" },
+    search: { tag: ["red", "blue"] },
+  });
+  updateCurrentSystem({ search: { tag: "green" } });
+  expect($currentSystem.get().search.tag).toBe("green");
+});
+
 test("system params support legacy history without parent folder slug", () => {
   $pages.set(
     getPagesInBlogFolder({

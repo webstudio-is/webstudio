@@ -5475,6 +5475,18 @@ export const runtimeOperationContractData = [
             contactEmail: {
               type: "string",
             },
+            emailSender: {
+              type: "string",
+            },
+            emailSubject: {
+              type: "string",
+            },
+            emailBody: {
+              type: "string",
+            },
+            emailConfirmationSubject: {
+              type: "string",
+            },
             faviconAssetId: {
               type: "string",
             },
@@ -5580,6 +5592,46 @@ export const runtimeOperationContractData = [
               ],
             },
             contactEmail: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            emailSender: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            emailSubject: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            emailBody: {
+              anyOf: [
+                {
+                  type: "string",
+                },
+                {
+                  type: "null",
+                },
+              ],
+            },
+            emailConfirmationSubject: {
               anyOf: [
                 {
                   type: "string",
@@ -8643,7 +8695,45 @@ export const runtimeOperationContractData = [
                                 type: "string",
                                 const: "graphql",
                               },
+                              {
+                                type: "string",
+                                const: "email",
+                              },
                             ],
+                          },
+                          email: {
+                            type: "object",
+                            properties: {
+                              recipientMode: {
+                                type: "string",
+                                enum: ["project", "custom", "visitor"],
+                              },
+                              recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
+                                type: "string",
+                              },
+                              sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
+                              subject: {
+                                type: "string",
+                              },
+                              body: {
+                                type: "string",
+                              },
+                              includeAttachments: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [],
                           },
                           method: {
                             anyOf: [
@@ -8700,6 +8790,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -11859,7 +11953,45 @@ export const runtimeOperationContractData = [
                                 type: "string",
                                 const: "graphql",
                               },
+                              {
+                                type: "string",
+                                const: "email",
+                              },
                             ],
+                          },
+                          email: {
+                            type: "object",
+                            properties: {
+                              recipientMode: {
+                                type: "string",
+                                enum: ["project", "custom", "visitor"],
+                              },
+                              recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
+                                type: "string",
+                              },
+                              sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
+                              subject: {
+                                type: "string",
+                              },
+                              body: {
+                                type: "string",
+                              },
+                              includeAttachments: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [],
                           },
                           method: {
                             anyOf: [
@@ -11916,6 +12048,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -15086,7 +15222,45 @@ export const runtimeOperationContractData = [
                                 type: "string",
                                 const: "graphql",
                               },
+                              {
+                                type: "string",
+                                const: "email",
+                              },
                             ],
+                          },
+                          email: {
+                            type: "object",
+                            properties: {
+                              recipientMode: {
+                                type: "string",
+                                enum: ["project", "custom", "visitor"],
+                              },
+                              recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
+                                type: "string",
+                              },
+                              sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
+                              subject: {
+                                type: "string",
+                              },
+                              body: {
+                                type: "string",
+                              },
+                              includeAttachments: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [],
                           },
                           method: {
                             anyOf: [
@@ -15143,6 +15317,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -18302,7 +18480,45 @@ export const runtimeOperationContractData = [
                                 type: "string",
                                 const: "graphql",
                               },
+                              {
+                                type: "string",
+                                const: "email",
+                              },
                             ],
+                          },
+                          email: {
+                            type: "object",
+                            properties: {
+                              recipientMode: {
+                                type: "string",
+                                enum: ["project", "custom", "visitor"],
+                              },
+                              recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
+                                type: "string",
+                              },
+                              sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
+                              subject: {
+                                type: "string",
+                              },
+                              body: {
+                                type: "string",
+                              },
+                              includeAttachments: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [],
                           },
                           method: {
                             anyOf: [
@@ -18359,6 +18575,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -24236,7 +24456,45 @@ export const runtimeOperationContractData = [
                                       type: "string",
                                       const: "graphql",
                                     },
+                                    {
+                                      type: "string",
+                                      const: "email",
+                                    },
                                   ],
+                                },
+                                email: {
+                                  type: "object",
+                                  properties: {
+                                    recipientMode: {
+                                      type: "string",
+                                      enum: ["project", "custom", "visitor"],
+                                    },
+                                    recipients: {
+                                      type: "string",
+                                    },
+                                    visitorEmailField: {
+                                      type: "string",
+                                    },
+                                    sender: {
+                                      type: "string",
+                                    },
+                                    senderExpression: {
+                                      type: "string",
+                                    },
+                                    recipientsExpression: {
+                                      type: "string",
+                                    },
+                                    subject: {
+                                      type: "string",
+                                    },
+                                    body: {
+                                      type: "string",
+                                    },
+                                    includeAttachments: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: [],
                                 },
                                 method: {
                                   anyOf: [
@@ -24293,6 +24551,10 @@ export const runtimeOperationContractData = [
                                 },
                                 body: {
                                   type: "string",
+                                },
+                                bodyFormat: {
+                                  type: "string",
+                                  enum: ["auto", "json", "multipart"],
                                 },
                               },
                               required: [
@@ -27660,7 +27922,45 @@ export const runtimeOperationContractData = [
                                       type: "string",
                                       const: "graphql",
                                     },
+                                    {
+                                      type: "string",
+                                      const: "email",
+                                    },
                                   ],
+                                },
+                                email: {
+                                  type: "object",
+                                  properties: {
+                                    recipientMode: {
+                                      type: "string",
+                                      enum: ["project", "custom", "visitor"],
+                                    },
+                                    recipients: {
+                                      type: "string",
+                                    },
+                                    visitorEmailField: {
+                                      type: "string",
+                                    },
+                                    sender: {
+                                      type: "string",
+                                    },
+                                    senderExpression: {
+                                      type: "string",
+                                    },
+                                    recipientsExpression: {
+                                      type: "string",
+                                    },
+                                    subject: {
+                                      type: "string",
+                                    },
+                                    body: {
+                                      type: "string",
+                                    },
+                                    includeAttachments: {
+                                      type: "boolean",
+                                    },
+                                  },
+                                  required: [],
                                 },
                                 method: {
                                   anyOf: [
@@ -27717,6 +28017,10 @@ export const runtimeOperationContractData = [
                                 },
                                 body: {
                                   type: "string",
+                                },
+                                bodyFormat: {
+                                  type: "string",
+                                  enum: ["auto", "json", "multipart"],
                                 },
                               },
                               required: [
@@ -41575,7 +41879,41 @@ export const runtimeOperationContractData = [
                   },
                   control: {
                     type: "string",
-                    enum: ["system", "graphql"],
+                    enum: ["system", "graphql", "email"],
+                  },
+                  email: {
+                    type: "object",
+                    properties: {
+                      recipientMode: {
+                        type: "string",
+                        enum: ["project", "custom", "visitor"],
+                      },
+                      recipients: {
+                        type: "string",
+                      },
+                      visitorEmailField: {
+                        type: "string",
+                      },
+                      sender: {
+                        type: "string",
+                      },
+                      senderExpression: {
+                        type: "string",
+                      },
+                      recipientsExpression: {
+                        type: "string",
+                      },
+                      subject: {
+                        type: "string",
+                      },
+                      body: {
+                        type: "string",
+                      },
+                      includeAttachments: {
+                        type: "boolean",
+                      },
+                    },
+                    required: [],
                   },
                   method: {
                     anyOf: [
@@ -41689,6 +42027,10 @@ export const runtimeOperationContractData = [
                     ],
                     description:
                       'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+                  },
+                  bodyFormat: {
+                    type: "string",
+                    enum: ["auto", "json", "multipart"],
                   },
                 },
                 required: ["name", "method", "url", "headers"],
@@ -42334,7 +42676,45 @@ export const runtimeOperationContractData = [
                                 type: "string",
                                 const: "graphql",
                               },
+                              {
+                                type: "string",
+                                const: "email",
+                              },
                             ],
+                          },
+                          email: {
+                            type: "object",
+                            properties: {
+                              recipientMode: {
+                                type: "string",
+                                enum: ["project", "custom", "visitor"],
+                              },
+                              recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
+                                type: "string",
+                              },
+                              sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
+                              subject: {
+                                type: "string",
+                              },
+                              body: {
+                                type: "string",
+                              },
+                              includeAttachments: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [],
                           },
                           method: {
                             anyOf: [
@@ -42391,6 +42771,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -45629,7 +46013,45 @@ export const runtimeOperationContractData = [
                                 type: "string",
                                 const: "graphql",
                               },
+                              {
+                                type: "string",
+                                const: "email",
+                              },
                             ],
+                          },
+                          email: {
+                            type: "object",
+                            properties: {
+                              recipientMode: {
+                                type: "string",
+                                enum: ["project", "custom", "visitor"],
+                              },
+                              recipients: {
+                                type: "string",
+                              },
+                              visitorEmailField: {
+                                type: "string",
+                              },
+                              sender: {
+                                type: "string",
+                              },
+                              senderExpression: {
+                                type: "string",
+                              },
+                              recipientsExpression: {
+                                type: "string",
+                              },
+                              subject: {
+                                type: "string",
+                              },
+                              body: {
+                                type: "string",
+                              },
+                              includeAttachments: {
+                                type: "boolean",
+                              },
+                            },
+                            required: [],
                           },
                           method: {
                             anyOf: [
@@ -45686,6 +46108,10 @@ export const runtimeOperationContractData = [
                           },
                           body: {
                             type: "string",
+                          },
+                          bodyFormat: {
+                            type: "string",
+                            enum: ["auto", "json", "multipart"],
                           },
                         },
                         required: ["id", "name", "method", "url", "headers"],
@@ -52692,7 +53118,45 @@ export const runtimeOperationContractData = [
                         type: "string",
                         const: "graphql",
                       },
+                      {
+                        type: "string",
+                        const: "email",
+                      },
                     ],
+                  },
+                  email: {
+                    type: "object",
+                    properties: {
+                      recipientMode: {
+                        type: "string",
+                        enum: ["project", "custom", "visitor"],
+                      },
+                      recipients: {
+                        type: "string",
+                      },
+                      visitorEmailField: {
+                        type: "string",
+                      },
+                      sender: {
+                        type: "string",
+                      },
+                      senderExpression: {
+                        type: "string",
+                      },
+                      recipientsExpression: {
+                        type: "string",
+                      },
+                      subject: {
+                        type: "string",
+                      },
+                      body: {
+                        type: "string",
+                      },
+                      includeAttachments: {
+                        type: "boolean",
+                      },
+                    },
+                    required: [],
                   },
                   method: {
                     anyOf: [
@@ -52749,6 +53213,10 @@ export const runtimeOperationContractData = [
                   },
                   body: {
                     type: "string",
+                  },
+                  bodyFormat: {
+                    type: "string",
+                    enum: ["auto", "json", "multipart"],
                   },
                 },
                 required: ["id", "name", "method", "url", "headers"],
@@ -58603,7 +59071,45 @@ export const runtimeOperationContractData = [
                         type: "string",
                         const: "graphql",
                       },
+                      {
+                        type: "string",
+                        const: "email",
+                      },
                     ],
+                  },
+                  email: {
+                    type: "object",
+                    properties: {
+                      recipientMode: {
+                        type: "string",
+                        enum: ["project", "custom", "visitor"],
+                      },
+                      recipients: {
+                        type: "string",
+                      },
+                      visitorEmailField: {
+                        type: "string",
+                      },
+                      sender: {
+                        type: "string",
+                      },
+                      senderExpression: {
+                        type: "string",
+                      },
+                      recipientsExpression: {
+                        type: "string",
+                      },
+                      subject: {
+                        type: "string",
+                      },
+                      body: {
+                        type: "string",
+                      },
+                      includeAttachments: {
+                        type: "boolean",
+                      },
+                    },
+                    required: [],
                   },
                   method: {
                     anyOf: [
@@ -58660,6 +59166,10 @@ export const runtimeOperationContractData = [
                   },
                   body: {
                     type: "string",
+                  },
+                  bodyFormat: {
+                    type: "string",
+                    enum: ["auto", "json", "multipart"],
                   },
                 },
                 required: ["id", "name", "method", "url", "headers"],
@@ -75452,7 +75962,41 @@ export const runtimeOperationContractData = [
             },
             control: {
               type: "string",
-              enum: ["system", "graphql"],
+              enum: ["system", "graphql", "email"],
+            },
+            email: {
+              type: "object",
+              properties: {
+                recipientMode: {
+                  type: "string",
+                  enum: ["project", "custom", "visitor"],
+                },
+                recipients: {
+                  type: "string",
+                },
+                visitorEmailField: {
+                  type: "string",
+                },
+                sender: {
+                  type: "string",
+                },
+                senderExpression: {
+                  type: "string",
+                },
+                recipientsExpression: {
+                  type: "string",
+                },
+                subject: {
+                  type: "string",
+                },
+                body: {
+                  type: "string",
+                },
+                includeAttachments: {
+                  type: "boolean",
+                },
+              },
+              required: [],
             },
             method: {
               anyOf: [
@@ -75566,6 +76110,10 @@ export const runtimeOperationContractData = [
               ],
               description:
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+            },
+            bodyFormat: {
+              type: "string",
+              enum: ["auto", "json", "multipart"],
             },
           },
           required: ["name", "method", "url", "headers"],
@@ -75709,7 +76257,41 @@ export const runtimeOperationContractData = [
             },
             control: {
               type: "string",
-              enum: ["system", "graphql"],
+              enum: ["system", "graphql", "email"],
+            },
+            email: {
+              type: "object",
+              properties: {
+                recipientMode: {
+                  type: "string",
+                  enum: ["project", "custom", "visitor"],
+                },
+                recipients: {
+                  type: "string",
+                },
+                visitorEmailField: {
+                  type: "string",
+                },
+                sender: {
+                  type: "string",
+                },
+                senderExpression: {
+                  type: "string",
+                },
+                recipientsExpression: {
+                  type: "string",
+                },
+                subject: {
+                  type: "string",
+                },
+                body: {
+                  type: "string",
+                },
+                includeAttachments: {
+                  type: "boolean",
+                },
+              },
+              required: [],
             },
             method: {
               anyOf: [
@@ -75823,6 +76405,10 @@ export const runtimeOperationContractData = [
               ],
               description:
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+            },
+            bodyFormat: {
+              type: "string",
+              enum: ["auto", "json", "multipart"],
             },
           },
           required: [],
@@ -76067,7 +76653,41 @@ export const runtimeOperationContractData = [
             },
             control: {
               type: "string",
-              enum: ["system", "graphql"],
+              enum: ["system", "graphql", "email"],
+            },
+            email: {
+              type: "object",
+              properties: {
+                recipientMode: {
+                  type: "string",
+                  enum: ["project", "custom", "visitor"],
+                },
+                recipients: {
+                  type: "string",
+                },
+                visitorEmailField: {
+                  type: "string",
+                },
+                sender: {
+                  type: "string",
+                },
+                senderExpression: {
+                  type: "string",
+                },
+                recipientsExpression: {
+                  type: "string",
+                },
+                subject: {
+                  type: "string",
+                },
+                body: {
+                  type: "string",
+                },
+                includeAttachments: {
+                  type: "boolean",
+                },
+              },
+              required: [],
             },
             method: {
               anyOf: [
@@ -76181,6 +76801,10 @@ export const runtimeOperationContractData = [
               ],
               description:
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+            },
+            bodyFormat: {
+              type: "string",
+              enum: ["auto", "json", "multipart"],
             },
           },
           required: ["name", "method", "url", "headers"],
@@ -76270,7 +76894,41 @@ export const runtimeOperationContractData = [
             },
             control: {
               type: "string",
-              enum: ["system", "graphql"],
+              enum: ["system", "graphql", "email"],
+            },
+            email: {
+              type: "object",
+              properties: {
+                recipientMode: {
+                  type: "string",
+                  enum: ["project", "custom", "visitor"],
+                },
+                recipients: {
+                  type: "string",
+                },
+                visitorEmailField: {
+                  type: "string",
+                },
+                sender: {
+                  type: "string",
+                },
+                senderExpression: {
+                  type: "string",
+                },
+                recipientsExpression: {
+                  type: "string",
+                },
+                subject: {
+                  type: "string",
+                },
+                body: {
+                  type: "string",
+                },
+                includeAttachments: {
+                  type: "boolean",
+                },
+              },
+              required: [],
             },
             method: {
               anyOf: [
@@ -76384,6 +77042,10 @@ export const runtimeOperationContractData = [
               ],
               description:
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
+            },
+            bodyFormat: {
+              type: "string",
+              enum: ["auto", "json", "multipart"],
             },
           },
           required: ["name", "method", "url", "headers"],

@@ -137,11 +137,12 @@ describe("isPropVisibleInContentMode", () => {
     ).toBe(true);
   });
 
-  test("shows unset file controls as content-editable asset props", () => {
+  test("uses metadata to expose unset file controls in Content mode", () => {
     const fileMeta: PropMeta = {
       type: "string",
       control: "file",
       required: false,
+      contentMode: true,
     };
 
     expect(
@@ -152,6 +153,19 @@ describe("isPropVisibleInContentMode", () => {
         })
       )
     ).toBe(true);
+  });
+
+  test("does not expose a generic file control without Content mode metadata", () => {
+    expect(
+      isPropVisibleInContentMode(
+        getInput({
+          propName: "upload",
+          propsMetas: new Map([
+            ["upload", { type: "string", control: "file", required: false }],
+          ]),
+        })
+      )
+    ).toBe(false);
   });
 
   test("keeps explicitly Design-mode file controls out of Content mode", () => {

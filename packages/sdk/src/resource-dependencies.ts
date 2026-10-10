@@ -25,6 +25,14 @@ export const getExpressionDataSourceIds = (
   return dataSourceIds;
 };
 
+export const hasResourceOutputDependency = (
+  expression: string | undefined,
+  dataSources: DataSources
+) =>
+  Array.from(getExpressionDataSourceIds([expression])).some(
+    (dataSourceId) => dataSources.get(dataSourceId)?.type === "resource"
+  );
+
 /** Returns data sources referenced by any expression in a resource request. */
 export const getResourceDataSourceIds = (resource: Resource) => {
   return getExpressionDataSourceIds([
@@ -32,6 +40,10 @@ export const getResourceDataSourceIds = (resource: Resource) => {
     ...(resource.searchParams ?? []).map(({ value }) => value),
     ...resource.headers.map(({ value }) => value),
     resource.body,
+    resource.email?.subject,
+    resource.email?.body,
+    resource.email?.senderExpression,
+    resource.email?.recipientsExpression,
   ]);
 };
 

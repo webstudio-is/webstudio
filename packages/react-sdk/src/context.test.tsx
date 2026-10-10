@@ -53,3 +53,9 @@ test("object-valued data binding renders empty text instead of crashing", () => 
 
   expect(html).toBe("<div></div>");
 });
+
+test("repeated query values render as comma-joined text", () => {
+  const html = renderTextBinding(["red", "blue"]);
+
+  expect(html).toBe("<div>red,blue</div>");
+});

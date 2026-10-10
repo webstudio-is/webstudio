@@ -105,9 +105,6 @@ const isPropVisibleInContentMode = ({
   ) {
     return true;
   }
-  if (propMeta?.type === "string" && propMeta.control === "file") {
-    return true;
-  }
   return propMeta?.contentMode === true;
 };
 
@@ -194,7 +191,6 @@ export const usePropsLogic = ({
         styleSources,
       })
     : undefined;
-
   /**
    * In content edit mode we show only props marked with contentMode: true
    * In the future I hope the only thing we will show will be Components

@@ -1,4 +1,6 @@
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
+import { createRoot } from "react-dom/client";
+import { act } from "react-dom/test-utils";
 import { cleanStores } from "nanostores";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
@@ -6,17 +8,68 @@ import {
   createTemplateComponentFixture,
   renderData,
 } from "@webstudio-is/template";
-import { $authToken, $builderMode } from "~/shared/nano-states";
+import {
+  $authToken,
+  $builderMode,
+  $selectedPageHash,
+} from "~/shared/nano-states";
 import { $instances, $pages, $project } from "~/shared/sync/data-stores";
 import {
   getInstanceLink,
   getDeepLinkedInstanceSelection,
   getInstanceSelectorFromUrl,
 } from "../instance-utils/link";
-import { __testing__ } from "./use-switch-page";
+import { __testing__, useHashLinkSync } from "./use-switch-page";
+
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 afterEach(() => {
   cleanStores($authToken, $builderMode, $instances, $pages, $project);
+});
+
+test("hash navigation scrolls after the target Preview page renders", async () => {
+  const savedHash = $selectedPageHash.get();
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const scrollIntoView = vi.spyOn(HTMLElement.prototype, "scrollIntoView");
+  const PreviewPage = ({
+    rootId,
+    ready = true,
+  }: {
+    rootId: string;
+    ready?: boolean;
+  }) => {
+    useHashLinkSync(rootId);
+    return (
+      <div data-ws-id={rootId}>
+        {ready ? <div id="done">Done</div> : <div>Loading</div>}
+      </div>
+    );
+  };
+  try {
+    await act(async () => {
+      $selectedPageHash.set({ hash: "#done" });
+      root.render(<PreviewPage rootId="home-root" ready={false} />);
+    });
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    await act(async () =>
+      root.render(<PreviewPage rootId="thanks-root" ready={false} />)
+    );
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    await act(async () => root.render(<PreviewPage rootId="thanks-root" />));
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+    expect(scrollIntoView.mock.instances[0]).toBe(
+      container.querySelector("#done")
+    );
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    scrollIntoView.mockRestore();
+    $selectedPageHash.set(savedHash);
+  }
 });
 
 const Body = createTemplateComponentFixture("Body");

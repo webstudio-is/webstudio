@@ -14,8 +14,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  CssValueListArrowFocus,
-  CssValueListItem,
+  InteractiveListArrowFocus,
+  InteractiveListItem,
   Flex,
   Grid,
   InputField,
@@ -114,7 +114,7 @@ const QuerySelectionListItem = ({
   settings?: ReactNode;
 }) => {
   const item = (
-    <CssValueListItem
+    <InteractiveListItem
       id={id}
       index={index}
       type="button"
@@ -854,7 +854,7 @@ const QueryParameters = ({
               </DropdownMenuContent>
             </DropdownMenu>
           </Flex>
-          <CssValueListArrowFocus>
+          <InteractiveListArrowFocus>
             {selectionParameters.map((parameter) => {
               const { current, option } = getSelected(parameter);
               const selection = parameter.config.selection;
@@ -947,7 +947,7 @@ const QueryParameters = ({
                 </Grid>
               );
             })}
-          </CssValueListArrowFocus>
+          </InteractiveListArrowFocus>
         </Grid>
       )}
       {regularParameters.map((parameter) => {

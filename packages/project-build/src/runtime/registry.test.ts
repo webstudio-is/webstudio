@@ -17,6 +17,7 @@ import {
   isDestructiveRuntimeCommand,
 } from "./registry";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
+import { createEmptyWebstudioFragment } from "./component-template";
 import { getRuntimeOutputSchema, runtimeOutputSchemas } from "./output-schemas";
 import { getPage, listFolders, listPages } from "./pages";
 import {
@@ -94,6 +95,44 @@ const paginatedReadOperationIds = [
 ] as const;
 
 const maxCompactListBytes = 16 * 1024;
+
+test("rejects a fragment containing a Form with more than 10 actions", () => {
+  let nextId = 0;
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.insertFragment",
+      state,
+      input: {
+        parentInstanceId: "body",
+        fragment: {
+          ...createEmptyWebstudioFragment(),
+          children: [{ type: "id", value: "new-form" }],
+          instances: [
+            {
+              type: "instance",
+              id: "new-form",
+              component: "NativeForm",
+              children: [],
+            },
+          ],
+          props: [
+            {
+              id: "form-action",
+              instanceId: "new-form",
+              name: "action",
+              type: "json",
+              value: Array.from({ length: 11 }, (_, index) => ({
+                dataSourceId: `resource-${index}`,
+                enabled: true,
+              })),
+            },
+          ],
+        },
+      },
+      context: { createId: () => `form-test-${nextId++}` },
+    })
+  ).toThrow("Select no more than 10 Resource actions");
+});
 
 test("assets.list accepts every stored asset type", () => {
   const operation = getBuilderRuntimeOperation("assets.list");
