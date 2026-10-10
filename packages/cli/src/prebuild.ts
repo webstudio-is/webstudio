@@ -32,7 +32,7 @@ import {
   getPublishablePages,
   managedFormEndpointPrefix,
   managedFormRequestParamName,
-  generateResources,
+  generatePageResources,
   generateManagedFormResources,
   generatePageMeta,
   getStaticSiteMapXml,
@@ -1917,7 +1917,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
 
       import type { PageMeta } from "@webstudio-is/sdk";
       import { toWebstudioParams } from "@webstudio-is/react-sdk";
-      ${generateResources({
+      ${generatePageResources({
         scope,
         // XML generation removes the body wrapper from the instance map.
         page: { ...page, rootInstanceId },

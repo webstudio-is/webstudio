@@ -1,4 +1,4 @@
-import { createElement, useRef, useState } from "react";
+import { createElement, createRef, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { page, userEvent } from "@vitest/browser/context";
@@ -32,15 +32,13 @@ import {
   $resources,
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
+import { MethodField, Headers, UrlField } from "./resource-panel";
+import { ResourceForm } from "./http-resource-panel";
 import {
   getResourceScopeForInstance,
-  EmailResourceForm,
-  MethodField,
-  Headers,
-  ResourceForm,
-  UrlField,
   useResourceScope,
-} from "./resource-panel";
+} from "./resource-scope";
+import { EmailResourceForm } from "./email-resource-panel";
 
 const { expressionEvaluations } = vi.hoisted(() => ({
   expressionEvaluations: vi.fn(),
@@ -813,6 +811,74 @@ test("external Email Resource marks an unavailable Form binding as invalid", asy
   );
 });
 
+test.each(["subject", "body"] as const)(
+  "Email Resource %s rejects a Resource output binding in the editor",
+  async (field) => {
+    $dataSources.set(
+      new Map([
+        [
+          "lookup-source",
+          {
+            id: "lookup-source",
+            type: "resource",
+            name: "lookup",
+            scopeInstanceId: "body",
+            resourceId: "lookup",
+          },
+        ],
+      ])
+    );
+    $resources.set(
+      new Map([
+        [
+          "email",
+          {
+            id: "email",
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: { [field]: encodeDataVariableId("lookup-source") },
+          },
+        ],
+      ])
+    );
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () =>
+      root?.render(
+        createElement(
+          TooltipProvider,
+          undefined,
+          createElement(EmailResourceForm, {
+            variable: {
+              id: "email-source",
+              type: "resource",
+              name: "Email",
+              scopeInstanceId: "body",
+              resourceId: "email",
+            },
+          })
+        )
+      )
+    );
+    const input =
+      field === "body"
+        ? container.querySelector("textarea")
+        : Array.from(container.querySelectorAll("input")).find(
+            (element) =>
+              element.getAttribute("placeholder") === "New form submission"
+          );
+    expect(input).toBeTruthy();
+    await act(async () => await userEvent.hover(input!));
+    expect(document.body.textContent).toContain(
+      "Email fields cannot depend on another Resource."
+    );
+  }
+);
+
 test("visitor Email Resource selects a named Form email field", async () => {
   $instances.set(
     new Map([
@@ -1474,6 +1540,75 @@ test("focuses the resource URL when requested", () => {
   expect(document.activeElement).toBe(
     document.querySelector('textarea[name="url-validator"]')
   );
+});
+
+test("a new Resource URL stays visually untouched until edit, while save validates it", async () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const panelRef = createRef<{
+    save: (data: FormData) => void | false | { dataSourceId: string };
+  }>();
+  await act(async () =>
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(
+          "div",
+          undefined,
+          createElement(ResourceForm, { ref: panelRef }),
+          createElement("button", undefined, "Outside")
+        )
+      )
+    )
+  );
+  const url = container.querySelector<HTMLTextAreaElement>(
+    'textarea[name="url-validator"]'
+  )!;
+  await vi.waitFor(() => expect(url.validationMessage).toBe("URL is required"));
+  const invalid = vi.fn();
+  url.addEventListener("invalid", invalid);
+  await act(
+    async () => await userEvent.click(container.querySelector("button")!)
+  );
+  expect(invalid).not.toHaveBeenCalled();
+  expect(url.getAttribute("class")).not.toContain("error");
+  expect(panelRef.current?.save(new FormData())).toBe(false);
+  expect(invalid).toHaveBeenCalledOnce();
+});
+
+test("editing an invalid Resource URL reveals validation on blur", async () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const Harness = () => {
+    const [value, setValue] = useState('""');
+    return createElement(
+      TooltipProvider,
+      undefined,
+      createElement(UrlField, {
+        aliases: new Map(),
+        scope: {},
+        value,
+        onChange: setValue,
+        onCurlPaste: vi.fn(),
+      }),
+      createElement("button", undefined, "Outside")
+    );
+  };
+  await act(async () => root?.render(createElement(Harness)));
+  const url = container.querySelector<HTMLTextAreaElement>(
+    'textarea[name="url-validator"]'
+  )!;
+  const invalid = vi.fn();
+  url.addEventListener("invalid", invalid);
+  await act(async () => await userEvent.type(url, "not-a-url"));
+  await vi.waitFor(() => expect(url.validationMessage).toBe("URL is invalid"));
+  await act(
+    async () => await userEvent.click(container.querySelector("button")!)
+  );
+  expect(invalid).toHaveBeenCalled();
 });
 
 test("selecting a header suggestion with Enter does not submit the resource", async () => {

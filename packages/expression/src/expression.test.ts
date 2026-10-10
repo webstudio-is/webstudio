@@ -19,7 +19,29 @@ import {
   parseStaticStringExpression,
   allowedArrayMethods,
   allowedStringMethods,
+  hasPropertyAssignment,
 } from "./index";
+
+test.each([
+  ["errors = result.errors", true],
+  ["errors = result['errors']", true],
+  ['errors = result["errors"]', true],
+  ["const text = 'errors = result.errors'", false],
+  ["// errors = result.errors", false],
+  ["errors = result.other", false],
+  ["errors = other.errors", false],
+  ["errors += result.errors", false],
+  ["errors = result[dynamic]", false],
+])("identifies actual property assignment in %s", (code, expected) => {
+  expect(
+    hasPropertyAssignment({
+      code,
+      target: "errors",
+      source: "result",
+      property: "errors",
+    })
+  ).toBe(expected);
+});
 
 test("validates complete expressions", () => {
   expect(isValidExpression("post.title ?? 'Untitled'")).toBe(true);

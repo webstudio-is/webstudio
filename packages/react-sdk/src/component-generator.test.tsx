@@ -8,6 +8,7 @@ import { renderText } from "./context";
 import { standardAttributesToReactProps } from "@webstudio-is/content-engine/jsx-attributes";
 import {
   createScope,
+  encodeDataVariableId,
   formatManagedFormErrors,
   elementComponent,
   ROOT_INSTANCE_ID,
@@ -2175,12 +2176,25 @@ test("saved managed Form errors render like Preview for malformed values while p
     ],
   ]);
   const usedDataSources = new Map();
+  const resultAction: import("@webstudio-is/sdk").Prop = {
+    id: "result-action",
+    instanceId: form.id,
+    name: "onResultChange",
+    type: "action",
+    value: [
+      {
+        type: "execute",
+        args: ["result"],
+        code: `${encodeDataVariableId("saved-errors")} = result.errors`,
+      },
+    ],
+  };
   const generated = generateJsxChildren({
     scope: createScope(),
     usedDataSources,
     indexesWithinAncestors: new Map(),
     metas: new Map(),
-    props: new Map(),
+    props: new Map([[resultAction.id, resultAction]]),
     children: [{ type: "id", value: form.id }],
     instances: new Map([
       [form.id, form],
@@ -2253,7 +2267,8 @@ test("saved managed Form errors render like Preview for malformed values while p
         [form.id, form],
         [slot.id, slot],
       ]),
-      props: new Map([
+      props: new Map<string, import("@webstudio-is/sdk").Prop>([
+        [resultAction.id, resultAction],
         [
           "hidden",
           {

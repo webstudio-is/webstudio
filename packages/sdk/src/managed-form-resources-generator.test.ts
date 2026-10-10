@@ -18,7 +18,7 @@ import type { Instance, Instances } from "./schema/instances";
 import type { Resources } from "./schema/resources";
 import type { Props } from "./schema/props";
 import type { ProjectMeta } from "./schema/pages";
-import type { ResourceRequestGraph } from "./resource-loader";
+import type { ManagedFormResourceGraph } from "./managed-form-submission";
 import { createJsonStringifyProxy } from "./to-string";
 
 const evaluateFixtureExpression = (
@@ -74,7 +74,7 @@ const getGeneratedGraph = (input: {
   return module.exports.getManagedFormResourceGraph as (
     formId: string,
     props: { system: unknown; formData: unknown; browserInfo: unknown }
-  ) => ResourceRequestGraph | undefined;
+  ) => ManagedFormResourceGraph | undefined;
 };
 
 test.each([

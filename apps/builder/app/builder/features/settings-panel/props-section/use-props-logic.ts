@@ -105,9 +105,6 @@ const isPropVisibleInContentMode = ({
   ) {
     return true;
   }
-  if (propMeta?.type === "string" && propMeta.control === "file") {
-    return true;
-  }
   return propMeta?.contentMode === true;
 };
 
@@ -167,14 +164,10 @@ const canShowTextContent = ({
   return canHaveTextContent(input);
 };
 
-const isManagedFormProperty = (name: string) =>
-  name === showAttribute || name === "action" || name === "successRedirect";
-
 export const __testing__ = {
   isPropVisibleInContentMode,
   getAndDelete,
   canShowTextContent,
-  isManagedFormProperty,
 };
 
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
@@ -203,12 +196,6 @@ export const usePropsLogic = ({
    * In the future I hope the only thing we will show will be Components
    */
   const isPropVisible = (propName: string) => {
-    if (
-      instance.component === "NativeForm" &&
-      !isManagedFormProperty(propName)
-    ) {
-      return false;
-    }
     if (!isContentMode) {
       return true;
     }

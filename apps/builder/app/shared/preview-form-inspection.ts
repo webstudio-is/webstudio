@@ -37,12 +37,38 @@ export const previewFormExchanges = z.array(previewFormExchange).max(100);
 
 /** Latest Preview submission only; private Builder memory, never project data or Canvas pubsub. */
 export const $previewFormExchanges = atom(
-  new Map<string, { formId: string; attempts: PreviewFormExchange[] }>()
+  new Map<
+    string,
+    { formId: string; attempts: PreviewFormExchange[]; revision: number }
+  >()
 );
 /** Latest explicit Resource editor reload, kept only in Builder memory. */
 export const $resourcePreviewExchanges = atom(
-  new Map<string, PreviewFormExchange>()
+  new Map<string, { exchange: PreviewFormExchange; revision: number }>()
 );
+let exchangeRevision = 0;
+
+export const recordResourcePreviewExchange = (
+  key: string,
+  exchange: PreviewFormExchange
+) => {
+  const next = new Map($resourcePreviewExchanges.get());
+  next.set(key, { exchange, revision: ++exchangeRevision });
+  $resourcePreviewExchanges.set(next);
+};
+
+export const getLatestPreviewExchange = ({
+  formInspection,
+  resourceInspection,
+}: {
+  formInspection?: { attempts: PreviewFormExchange[]; revision: number };
+  resourceInspection?: { exchange: PreviewFormExchange; revision: number };
+}) =>
+  resourceInspection !== undefined &&
+  (formInspection === undefined ||
+    resourceInspection.revision > formInspection.revision)
+    ? resourceInspection.exchange
+    : formInspection?.attempts.at(-1);
 export const recordPreviewFormExchanges = (
   formId: string,
   exchanges: PreviewFormExchange[]
@@ -59,7 +85,11 @@ export const recordPreviewFormExchanges = (
       previous?.formId === formId
         ? [...previous.attempts, exchange]
         : [exchange];
-    next.set(exchange.resourceId, { formId, attempts });
+    next.set(exchange.resourceId, {
+      formId,
+      attempts,
+      revision: ++exchangeRevision,
+    });
   }
   $previewFormExchanges.set(next);
 };

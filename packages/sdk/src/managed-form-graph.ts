@@ -18,6 +18,56 @@ import { SYSTEM_VARIABLE_ID } from "./expression";
 
 export class InvalidManagedFormGraph extends Error {}
 
+/** Keep Form-only inputs and their Resource dependents out of page-load graphs. */
+export const getManagedFormSubmissionResourceIds = ({
+  instances,
+  dataSources,
+  resources,
+}: {
+  instances: Instances;
+  dataSources: DataSources;
+  resources: Resources;
+}) => {
+  const formParameterIds = new Set(
+    Array.from(dataSources.values())
+      .filter(
+        (source) =>
+          source.type === "parameter" &&
+          (source.name === formDataParameterName ||
+            source.name === browserInfoParameterName) &&
+          instances.get(source.scopeInstanceId ?? "")?.component === "NativeForm"
+      )
+      .map(({ id }) => id)
+  );
+  const submissionResourceIds = new Set(
+    Array.from(resources.values())
+      .filter((resource) =>
+        Array.from(getResourceDataSourceIds(resource)).some((id) =>
+          formParameterIds.has(id)
+        )
+      )
+      .map(({ id }) => id)
+  );
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const resource of resources.values()) {
+      if (submissionResourceIds.has(resource.id)) {
+        continue;
+      }
+      if (
+        Array.from(getResourceDependencyIds({ resource, dataSources })).some(
+          (id) => submissionResourceIds.has(id)
+        )
+      ) {
+        submissionResourceIds.add(resource.id);
+        changed = true;
+      }
+    }
+  }
+  return { formParameterIds, submissionResourceIds };
+};
+
 /** Resolve the parameters available to both Preview and published submissions. */
 export const getManagedFormParameterBinding = ({
   source,

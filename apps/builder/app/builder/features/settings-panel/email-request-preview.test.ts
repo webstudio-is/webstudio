@@ -3,6 +3,18 @@ import { encodeDataVariableId } from "@webstudio-is/sdk";
 import { internalFormFieldNames } from "@webstudio-is/sdk/runtime";
 import { buildEmailRequestPreview } from "./email-request-preview";
 
+const managedFormDataSources = new Map([
+  [
+    "form-data",
+    {
+      id: "form-data",
+      type: "parameter" as const,
+      scopeInstanceId: "form",
+      name: "formData",
+    },
+  ],
+]);
+
 test("Email Request preview uses current Form data and settings without sending", async () => {
   const fetchSpy = vi.spyOn(globalThis, "fetch");
   try {
@@ -14,6 +26,7 @@ test("Email Request preview uses current Form data and settings without sending"
       },
       scope: {},
       aliases: new Map(),
+      dataSources: managedFormDataSources,
       formId: "form",
       formData: {
         name: "Ada",
@@ -101,6 +114,7 @@ test("Visitor Email Request preview leaves missing addresses empty and never fab
       },
       scope: {},
       aliases: new Map(),
+      dataSources: managedFormDataSources,
       formId: "form",
       formData: {
         email: "",
@@ -145,6 +159,7 @@ test.each(["name", "type"] as const)(
       projectMeta: { contactEmail: "owner@example.com" },
       scope: { [identifier]: secretFormData },
       aliases: new Map([[identifier, "formData"]]),
+      dataSources: managedFormDataSources,
       formId: "form",
       formData: secretFormData,
       instances: new Map([
@@ -211,6 +226,7 @@ test("Email Request preview blocks explicit access to known password and interna
       },
     },
     aliases: new Map([[identifier, "formData"]]),
+    dataSources: managedFormDataSources,
     formId: "form",
     formData: {
       password: "private-password",
@@ -270,6 +286,7 @@ test("Email Request preview does not fall back to scoped Form data when current 
     settings: { body: `${identifier}.password ?? ""` },
     scope: { [identifier]: { password: "private-password" } },
     aliases: new Map([[identifier, "formData"]]),
+    dataSources: managedFormDataSources,
     formId: "form",
     instances: new Map([
       [
@@ -286,4 +303,44 @@ test("Email Request preview does not fall back to scoped Form data when current 
   });
   expect(preview.preview.text).toBe("");
   expect(JSON.stringify(preview)).not.toContain("private-password");
+});
+
+test("Email Request preview preserves user variables named like managed Form parameters", async () => {
+  const userFormData = encodeDataVariableId("user-form-data");
+  const userBrowserInfo = encodeDataVariableId("user-browser-info");
+  const managedFormData = encodeDataVariableId("form-data");
+  const preview = await buildEmailRequestPreview({
+    settings: {
+      body: `${userFormData}.label + ":" + ${userBrowserInfo}.label + ":" + ${managedFormData}.email`,
+    },
+    scope: {
+      [userFormData]: { label: "user-form" },
+      [userBrowserInfo]: { label: "user-browser" },
+      [managedFormData]: { email: "stale@example.com" },
+    },
+    aliases: new Map([
+      [userFormData, "formData"],
+      [userBrowserInfo, "browserInfo"],
+      [managedFormData, "formData"],
+    ]),
+    dataSources: managedFormDataSources,
+    formId: "form",
+    formData: { email: "current@example.com" },
+    instances: new Map([
+      [
+        "form",
+        {
+          id: "form",
+          type: "instance",
+          component: "NativeForm",
+          children: [],
+        },
+      ],
+    ]),
+    props: new Map(),
+  });
+
+  expect(preview.preview.text).toBe(
+    "user-form:user-browser:current@example.com"
+  );
 });

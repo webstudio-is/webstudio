@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import type { DataSources } from "./schema/data-sources";
 import type { Instance, Instances } from "./schema/instances";
+import type { Props } from "./schema/props";
 import { encodeDataVariableId } from "./expression";
 import {
   resolveManagedFormErrorSlot,
@@ -39,6 +40,24 @@ const sources: DataSources = new Map([
     },
   ],
 ]);
+const props: Props = new Map([
+  [
+    "result-action",
+    {
+      id: "result-action",
+      instanceId: form.id,
+      name: "onResultChange",
+      type: "action",
+      value: [
+        {
+          type: "execute",
+          args: ["result"],
+          code: `${encodeDataVariableId("errors")} = result.errors`,
+        },
+      ],
+    },
+  ],
+]);
 
 test.each([
   [{ message: "Add at least one action" }],
@@ -46,7 +65,12 @@ test.each([
 ])(
   "saved managed Form error slot renders actual messages without persisting changes",
   (...errors) => {
-    const resolved = resolveManagedFormErrorSlot(slot, instances, sources);
+    const resolved = resolveManagedFormErrorSlot(
+      slot,
+      instances,
+      sources,
+      props
+    );
     expect(resolved).toMatchObject({
       id: slot.id,
       tag: slot.tag,
@@ -74,13 +98,15 @@ test("legacy Forms, customized content, and missing errors are untouched", () =>
           [form.id, { ...form, component }],
           [slot.id, slot],
         ]),
-        sources
+        sources,
+        props
       )
     ).toBe(slot);
   }
-  expect(resolveManagedFormErrorSlot(slot, instances, new Map())).toBe(slot);
+  expect(resolveManagedFormErrorSlot(slot, instances, new Map(), props)).toBe(
+    slot
+  );
   for (const changed of [
-    { ...slot, label: "Other content" },
     {
       ...slot,
       children: [
@@ -98,8 +124,58 @@ test("legacy Forms, customized content, and missing errors are untouched", () =>
       ],
     },
   ]) {
-    expect(resolveManagedFormErrorSlot(changed, instances, sources)).toBe(
-      changed
-    );
+    expect(
+      resolveManagedFormErrorSlot(changed, instances, sources, props)
+    ).toBe(changed);
   }
+  expect(
+    resolveManagedFormErrorSlot(
+      { ...slot, label: "Renamed" },
+      instances,
+      sources,
+      props
+    ).children[0].type
+  ).toBe("expression");
+  const renamedSources = new Map(sources);
+  renamedSources.set("errors", {
+    ...sources.get("errors")!,
+    name: "renamedErrors",
+  });
+  expect(
+    resolveManagedFormErrorSlot(slot, instances, renamedSources, props)
+      .children[0].type
+  ).toBe("expression");
+  expect(resolveManagedFormErrorSlot(slot, instances, sources, new Map())).toBe(
+    slot
+  );
+});
+
+test("managed error slot requires a real assignment and accepts computed errors access", () => {
+  const action = props.get("result-action")!;
+  if (action.type !== "action") {
+    throw Error("Expected an action prop");
+  }
+  const withCode = (code: string): Props =>
+    new Map([
+      [action.id, { ...action, value: [{ ...action.value[0], code }] }],
+    ]);
+  const target = encodeDataVariableId("errors");
+  expect(
+    resolveManagedFormErrorSlot(
+      slot,
+      instances,
+      sources,
+      withCode(
+        `const text = "${target} = result.errors"; // ${target} = result.errors`
+      )
+    )
+  ).toBe(slot);
+  expect(
+    resolveManagedFormErrorSlot(
+      slot,
+      instances,
+      sources,
+      withCode(`${target} = result["errors"]`)
+    ).children[0].type
+  ).toBe("expression");
 });

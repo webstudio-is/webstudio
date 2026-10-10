@@ -113,7 +113,7 @@ export const createProtectedResourceFetch = ({
   const protectedFetch: typeof fetch = async (input, init) => {
     const original = new Request(input, init);
     const body = await readLimitedBytes(original.body, maxRequestBytes);
-    const headers = new Headers(original.headers);
+    let headers = new Headers(original.headers);
     // The vetted URL controls DNS and TLS routing. A configured Host override
     // could otherwise route the public connection to an internal virtual host.
     headers.delete("host");
@@ -149,9 +149,17 @@ export const createProtectedResourceFetch = ({
           const next = new URL(location, url);
           validateProtectedResourceDestination(next, deniedHostnames);
           if (next.origin !== url.origin) {
-            throw new Error(
-              "Resource destination redirected to another origin"
-            );
+            if (
+              (original.method !== "GET" && original.method !== "HEAD") ||
+              body !== undefined
+            ) {
+              throw new Error(
+                "Resource destination redirected a submission to another origin"
+              );
+            }
+            // An origin change may be a public URL canonicalization. The new
+            // origin must not receive any configured credentials or headers.
+            headers = new Headers();
           }
           url = next;
           redirects += 1;

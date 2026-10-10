@@ -3644,6 +3644,499 @@ describe("resource patch helpers", () => {
     }
   );
 
+  test.each([
+    "senderExpression",
+    "recipientsExpression",
+    "subject",
+    "body",
+  ] as const)(
+    "rejects Email %s bindings to Resource output before saving",
+    (field) => {
+      const state = createResourceState();
+      state.instances.set("body", {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [],
+      });
+      state.dataSources.set("lookup-source", {
+        id: "lookup-source",
+        name: "lookup",
+        scopeInstanceId: "body",
+        type: "resource",
+        resourceId: resource.id,
+      });
+      expect(() =>
+        upsertResource(
+          state,
+          {
+            scopeInstanceId: "body",
+            resource: resourceFieldsInput.parse({
+              name: "Email",
+              control: "email",
+              method: "post",
+              url: '""',
+              headers: [],
+              email: {
+                recipientMode: "custom",
+                recipients: "team@example.com",
+                [field]: encodeDataVariableId("lookup-source"),
+              },
+            }),
+          },
+          { createId: () => "email-id" }
+        )
+      ).toThrow(`resource.email.${field}`);
+    }
+  );
+
+  test("rejects an Email Resource output binding through createResource", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.dataSources.set("lookup-source", {
+      id: "lookup-source",
+      name: "lookup",
+      scopeInstanceId: "body",
+      type: "resource",
+      resourceId: resource.id,
+    });
+    expect(() =>
+      createResource(
+        state,
+        {
+          scopeInstanceId: "body",
+          resource: resourceFieldsInput.parse({
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              recipientMode: "custom",
+              recipients: "team@example.com",
+              subject: encodeDataVariableId("lookup-source"),
+            },
+          }),
+        },
+        { createId: () => "email-id" }
+      )
+    ).toThrow("resource.email.subject");
+  });
+
+  test("rejects a partial Email update against the merged resource and new scope", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Email",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+      email: {
+        recipientMode: "custom",
+        recipients: "team@example.com",
+        subject: encodeDataVariableId("sender-source"),
+      },
+    });
+    state.dataSources.set("sender-source", {
+      id: "sender-source",
+      name: "sender",
+      scopeInstanceId: "body",
+      type: "variable",
+      value: { type: "string", value: "Subject" },
+    });
+    expect(() =>
+      updateResource(
+        state,
+        {
+          resourceId: "email-id",
+          values: { name: "Renamed" },
+          scopeInstanceId: ROOT_INSTANCE_ID,
+        },
+        { createId: () => "unused" }
+      )
+    ).toThrow("resource.email.subject");
+  });
+
+  test("rejects an Email Resource output binding through updateResource", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Email",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+      email: { recipientMode: "custom", recipients: "team@example.com" },
+    });
+    state.dataSources.set("lookup-source", {
+      id: "lookup-source",
+      name: "lookup",
+      scopeInstanceId: "body",
+      type: "resource",
+      resourceId: resource.id,
+    });
+    expect(() =>
+      updateResource(
+        state,
+        {
+          resourceId: "email-id",
+          scopeInstanceId: "body",
+          values: {
+            email: {
+              recipientMode: "custom",
+              recipients: "team@example.com",
+              senderExpression: encodeDataVariableId("lookup-source"),
+            },
+          },
+        },
+        { createId: () => "unused" }
+      )
+    ).toThrow("resource.email.senderExpression");
+  });
+
+  test("rejects an Email Resource output binding through upsertResourceProp", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [],
+    });
+    state.dataSources.set("lookup-source", {
+      id: "lookup-source",
+      name: "lookup",
+      scopeInstanceId: "body",
+      type: "resource",
+      resourceId: resource.id,
+    });
+    expect(() =>
+      upsertResourceProp(
+        state,
+        {
+          instanceId: "body",
+          propName: "action",
+          resource: resourceFieldsInput.parse({
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: {
+              recipientMode: "custom",
+              recipients: "team@example.com",
+              body: encodeDataVariableId("lookup-source"),
+            },
+          }),
+        },
+        { createId: () => "email-id" }
+      )
+    ).toThrow("resource.email.body");
+  });
+
+  test("accepts an ancestor Email binding by ID when a Form variable shadows its name", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "id", value: "form" }],
+    });
+    state.instances.set("form", {
+      type: "instance",
+      id: "form",
+      component: "Form",
+      children: [],
+    });
+    for (const [id, scopeInstanceId] of [
+      ["body-subject", "body"],
+      ["form-subject", "form"],
+    ] as const) {
+      state.dataSources.set(id, {
+        id,
+        name: "subject",
+        scopeInstanceId,
+        type: "variable",
+        value: { type: "string", value: "Hello" },
+      });
+    }
+
+    expect(() =>
+      upsertResourceProp(
+        state,
+        {
+          instanceId: "form",
+          propName: "action",
+          resource: resourceFieldsInput.parse({
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: { subject: encodeDataVariableId("body-subject") },
+          }),
+        },
+        { createId: () => "email-id" }
+      )
+    ).not.toThrow();
+  });
+
+  test("rejects Form-only Email bindings when updating a Resource shared with body", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "id", value: "form" }],
+    });
+    state.instances.set("form", {
+      type: "instance",
+      id: "form",
+      component: "Form",
+      children: [],
+    });
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Email",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+    });
+    for (const [id, instanceId] of [
+      ["body-action", "body"],
+      ["form-action", "form"],
+    ] as const) {
+      state.props.set(id, {
+        id,
+        instanceId,
+        name: "action",
+        type: "resource",
+        value: "email-id",
+      });
+    }
+    for (const [id, scopeInstanceId] of [
+      ["body-subject", "body"],
+      ["form-subject", "form"],
+    ] as const) {
+      state.dataSources.set(id, {
+        id,
+        name: "subject",
+        scopeInstanceId,
+        type: "variable",
+        value: { type: "string", value: "Hello" },
+      });
+    }
+    const edit = (subject: string) =>
+      upsertResourceProp(
+        state,
+        {
+          resourceId: "email-id",
+          instanceId: "form",
+          propName: "action",
+          resource: resourceFieldsInput.parse({
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: { subject },
+          }),
+        },
+        { createId: () => "unused" }
+      );
+
+    expect(() => edit(encodeDataVariableId("form-subject"))).toThrow(
+      "resource.email.subject"
+    );
+    expect(() => edit(encodeDataVariableId("body-subject"))).not.toThrow();
+  });
+
+  test("validates a retained Resource alias when editing Email from a Form", () => {
+    const state = createResourceState();
+    state.instances.set("body", {
+      type: "instance",
+      id: "body",
+      component: "Body",
+      children: [{ type: "id", value: "form" }],
+    });
+    state.instances.set("form", {
+      type: "instance",
+      id: "form",
+      component: "Form",
+      children: [],
+    });
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Email",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+    });
+    state.dataSources.set("form-alias", {
+      id: "form-alias",
+      name: "formAlias",
+      scopeInstanceId: "form",
+      type: "resource",
+      resourceId: "email-id",
+    });
+    state.dataSources.set("body-alias", {
+      id: "body-alias",
+      name: "bodyAlias",
+      scopeInstanceId: "body",
+      type: "resource",
+      resourceId: "email-id",
+    });
+    state.dataSources.set("form-subject", {
+      id: "form-subject",
+      name: "subject",
+      scopeInstanceId: "form",
+      type: "variable",
+      value: { type: "string", value: "Hello" },
+    });
+
+    expect(() =>
+      upsertResourceProp(
+        state,
+        {
+          resourceId: "email-id",
+          instanceId: "form",
+          propName: "action",
+          resource: resourceFieldsInput.parse({
+            name: "Email",
+            control: "email",
+            method: "post",
+            url: '""',
+            headers: [],
+            email: { subject: encodeDataVariableId("form-subject") },
+          }),
+        },
+        { createId: () => "new-prop" }
+      )
+    ).toThrow("resource.email.subject");
+  });
+
+  test.each([
+    ["updateResource", "prop"],
+    ["updateResource", "alias"],
+    ["upsertResource", "prop"],
+    ["upsertResource", "alias"],
+  ] as const)(
+    "%s validates a shared Email Resource's retained body %s scope",
+    (mutation, consumer) => {
+      const state = createResourceState();
+      state.instances.set("body", {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [{ type: "id", value: "form" }],
+      });
+      state.instances.set("form", {
+        type: "instance",
+        id: "form",
+        component: "Form",
+        children: [],
+      });
+      state.resources.set("email-id", {
+        id: "email-id",
+        name: "Email",
+        control: "email",
+        method: "post",
+        url: '""',
+        headers: [],
+      });
+      state.dataSources.set("form-alias", {
+        id: "form-alias",
+        name: "formAlias",
+        scopeInstanceId: "form",
+        type: "resource",
+        resourceId: "email-id",
+      });
+      if (consumer === "prop") {
+        state.props.set("body-action", {
+          id: "body-action",
+          instanceId: "body",
+          name: "action",
+          type: "resource",
+          value: "email-id",
+        });
+      } else {
+        state.dataSources.set("body-alias", {
+          id: "body-alias",
+          name: "bodyAlias",
+          scopeInstanceId: "body",
+          type: "resource",
+          resourceId: "email-id",
+        });
+      }
+      for (const [id, scopeInstanceId] of [
+        ["body-subject", "body"],
+        ["form-subject", "form"],
+      ] as const) {
+        state.dataSources.set(id, {
+          id,
+          name: "subject",
+          scopeInstanceId,
+          type: "variable",
+          value: { type: "string", value: "Hello" },
+        });
+      }
+      const edit = (subject: string) => {
+        if (mutation === "updateResource") {
+          return updateResource(
+            state,
+            {
+              resourceId: "email-id",
+              scopeInstanceId: "form",
+              values: { email: { subject } },
+            },
+            { createId: () => "unused" }
+          );
+        }
+        return upsertResource(
+          state,
+          {
+            resourceId: "email-id",
+            dataSourceId: "form-alias",
+            scopeInstanceId: "form",
+            resource: resourceFieldsInput.parse({
+              name: "Email",
+              control: "email",
+              method: "post",
+              url: '""',
+              headers: [],
+              email: { subject },
+            }),
+          },
+          { createId: () => "unused" }
+        );
+      };
+
+      expect(() => edit(encodeDataVariableId("form-subject"))).toThrow(
+        "resource.email.subject"
+      );
+      expect(() => edit(encodeDataVariableId("body-subject"))).not.toThrow();
+    }
+  );
+
   test("upserts resource and preserves existing data source id", () => {
     const body: Instance = {
       type: "instance",
@@ -4298,6 +4791,7 @@ describe("resource patch helpers", () => {
     expect(
       createResourceDeletePayload({
         resource,
+        instances: new Map(),
         props: [prop],
         dataSources: [dataSource],
       })
@@ -4306,6 +4800,7 @@ describe("resource patch helpers", () => {
     expect(
       createResourceDeletePayload({
         resource,
+        instances: new Map(),
         props: [prop],
         dataSources: [dataSource],
         force: true,
@@ -4349,6 +4844,7 @@ describe("resource patch helpers", () => {
     expect(
       createResourceDeletePayload({
         resource,
+        instances: new Map([["form", { component: "NativeForm" }]]),
         props: [submission],
         dataSources: [dataSource],
       }).isUsed
@@ -4356,6 +4852,7 @@ describe("resource patch helpers", () => {
     expect(
       createResourceDeletePayload({
         resource,
+        instances: new Map([["form", { component: "NativeForm" }]]),
         props: [submission],
         dataSources: [dataSource],
         force: true,
@@ -4370,6 +4867,36 @@ describe("resource patch helpers", () => {
         },
       ],
     });
+  });
+
+  test("resource deletion leaves a non-Form JSON action prop unchanged", () => {
+    const action: Prop = {
+      id: "button-action",
+      instanceId: "button",
+      name: "action",
+      type: "json",
+      value: [{ dataSourceId: "data-source", enabled: true }],
+    };
+    const dataSource: DataSource = {
+      id: "data-source",
+      scopeInstanceId: "button",
+      name: "Request",
+      type: "resource",
+      resourceId: resource.id,
+    };
+    const result = createResourceDeletePayload({
+      resource,
+      instances: new Map([["button", { component: "Button" }]]),
+      props: [action],
+      dataSources: [dataSource],
+      force: true,
+    });
+    expect(result.payload.flatMap(({ patches }) => patches)).not.toContainEqual(
+      expect.objectContaining({ path: ["button-action", "value"] })
+    );
+    expect(action.value).toEqual([
+      { dataSourceId: "data-source", enabled: true },
+    ]);
   });
 
   test("rejects deleting resources whose data source is referenced by expressions", () => {

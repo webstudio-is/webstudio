@@ -1,28 +1,13 @@
-import {
-  $previewFormExchanges,
-  $resourcePreviewExchanges,
-} from "~/shared/preview-form-inspection";
-import {
-  $livePreviewFormValues,
-  $livePreviewBrowserInfo,
-  getFormOccurrenceKey,
-} from "~/shared/preview-form-values";
-import { z } from "zod";
-import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { javascript } from "@codemirror/lang-javascript";
 import {
   type ReactNode,
-  type Ref,
   type RefObject,
   forwardRef,
   useId,
   useState,
-  useImperativeHandle,
   useRef,
   useEffect,
   useCallback,
-  useMemo,
 } from "react";
 import { AlertIcon, RefreshIcon } from "@webstudio-is/icons";
 import {
@@ -37,102 +22,68 @@ import {
   FloatingPanel,
   Grid,
   InputErrorsTooltip,
-  InputField,
   Label,
   ProChip,
   ScrollArea,
   Select,
   SplitView,
-  Switch,
-  TextArea,
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
 import {
   type DataSource,
-  type ResourceRequest,
   SYSTEM_VARIABLE_ID,
-  emailResourceSettings,
-  findTreeInstanceIds,
   hasAssetsResourceUrl,
-  resourceRequest,
 } from "@webstudio-is/sdk";
 import {
   browserInfoParameterName,
   formDataParameterName,
-  isAssetsResourceRequest,
   currentDateResourceUrl,
 } from "@webstudio-is/sdk/runtime";
-import {
-  ExpressionEditor,
-  formatValue,
-} from "~/builder/shared/expression-editor";
-import {
-  $permissions,
-  $variableValuesByInstanceSelector,
-  $selectedInstanceSelector,
-} from "~/shared/nano-states";
-import { $dataSources, $projectSettings } from "~/shared/sync/data-stores";
+import { formatValue } from "~/builder/shared/expression-editor";
+import { $permissions } from "~/shared/nano-states";
+import { $dataSources } from "~/shared/sync/data-stores";
 import { $resources, $instances, $props } from "~/shared/sync/data-stores";
-import {
-  getBrowserInfoPreview,
-  getFormDataPreview,
-} from "./form-context-preview";
-import {
-  $selectedInstance,
-  $selectedInstanceKeyWithRoot,
-} from "~/shared/nano-states";
+import { $selectedInstance } from "~/shared/nano-states";
 import { $variableToOpen } from "./variable-navigation";
 import {
-  EditorContent,
-  EditorDialog,
-  EditorDialogButton,
-  EditorDialogControl,
-  foldGutterExtension,
-} from "~/shared/code-editor-base";
-import { executeRuntimeMutation } from "~/shared/instance-utils/data";
-import {
   findAvailableVariables,
-  createDataVariableValueFromInput,
   createResourceValueFromFormData,
   findUnsetVariableNames,
-  validateDataVariableJsonValue,
-  validateDataVariableNumberValue,
 } from "@webstudio-is/project-build/runtime";
-import { parseJsonExpression } from "@webstudio-is/expression";
 import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
+import { SystemResourceForm } from "./resource-panel";
+import { ResourceForm } from "./http-resource-panel";
+import { useResourceScope } from "./resource-scope";
+import { EmailResourceForm } from "./email-resource-panel";
+import { GraphqlResourceForm } from "./graphql-resource-panel";
 import {
-  EmailResourceForm,
-  GraphqlResourceForm,
-  ResourceForm,
-  SystemResourceForm,
-  useResourceScope,
-} from "./resource-panel";
-import {
-  $pendingResourceKeys,
-  $resourceDiagnosticsCache,
-  $resourceDiagnosticsErrorCache,
-  $resourcePerformanceCache,
-  $resourcesCache,
   computeResourceRequest,
-  getResourceKey,
   loadResourcePreview,
-  loadResourceDiagnostics,
 } from "~/shared/resources";
 import { Row } from "./shared";
-import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
 import {
-  clearSettledDiagnosticsKey,
-  RequestInspector,
-} from "./request-inspector";
-import {
-  getRequestErrorDiagnostics,
-  RequestErrorDiagnostics,
-} from "./request-error-diagnostics";
-import type { ResourcePerformance } from "~/shared/resource-diagnostics";
-import { ResourceDiagnosticsView } from "./resource-diagnostics-view";
-import { buildEmailRequestPreview } from "./email-request-preview";
+  buildEmailRequestPreview,
+  buildEmailRequestPreviewFromEditor,
+} from "./email-request-preview";
 import { canDeleteVariable, VariableMenu } from "./variable-menu";
+import {
+  AssetsResourceForm,
+  getReloadableAssetsResourceFormData,
+  useAssetsQueryBridge,
+} from "./assets-resource-panel";
+import type { PanelApi } from "./variable-panel-api";
+import {
+  ParameterForm,
+  ParameterVariablePreview,
+} from "./variable-parameter-panel";
+import { StringForm } from "./variable-string-panel";
+import { NumberForm, NumberVariablePreview } from "./variable-number-panel";
+import { BooleanForm } from "./variable-boolean-panel";
+import { JsonForm, JsonVariablePreview } from "./variable-json-panel";
+import { ResourceVariablePreview } from "./resource-variable-preview";
+import { ValuePreviewFrame } from "./variable-value-preview";
+import type { VariablePreviewProps, VariableType } from "./variable-types";
 
 const NameField = ({
   variable,
@@ -242,19 +193,6 @@ const NameField = ({
   );
 };
 
-type VariableType =
-  | "parameter"
-  | "string"
-  | "number"
-  | "boolean"
-  | "json"
-  | "resource"
-  | "email-resource"
-  | "graphql-resource"
-  | "sitemap-resource"
-  | "current-date-resource"
-  | "assets-resource";
-
 const TypeField = ({
   value,
   onChange,
@@ -350,254 +288,6 @@ const TypeField = ({
     </Grid>
   );
 };
-
-type PanelApi = {
-  save: (formData: FormData) => void | false | { dataSourceId: string };
-};
-
-const ParameterForm = forwardRef<
-  undefined | PanelApi,
-  { variable?: DataSource }
->(({ variable }, ref) => {
-  useImperativeHandle(ref, () => ({
-    save: (formData) => {
-      // only existing parameter variables can be renamed
-      if (variable?.scopeInstanceId === undefined) {
-        return;
-      }
-      const scopeInstanceId = variable.scopeInstanceId;
-      const name = z.string().parse(formData.get("name"));
-      executeRuntimeMutation({
-        id: "variables.update",
-        input: {
-          dataSourceId: variable.id,
-          values: { scopeInstanceId, name },
-        },
-      });
-    },
-  }));
-  return <></>;
-});
-ParameterForm.displayName = "ParameterForm";
-
-type ValueVariableType = Extract<
-  VariableType,
-  "string" | "number" | "boolean" | "json"
->;
-
-const saveVariable = (
-  variable: undefined | DataSource,
-  type: ValueVariableType,
-  formData: FormData
-) => {
-  // preserve existing instance scope when edit
-  const scopeInstanceId =
-    variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
-  if (scopeInstanceId === undefined) {
-    return;
-  }
-  const name = z.string().parse(formData.get("name"));
-  const value = z.string().nullable().parse(formData.get("value"));
-  const variableValue = createDataVariableValueFromInput({ type, value });
-  if (variable === undefined) {
-    executeRuntimeMutation({
-      id: "variables.create",
-      input: {
-        scopeInstanceId,
-        name,
-        value: variableValue,
-      },
-    });
-  } else {
-    executeRuntimeMutation({
-      id: "variables.update",
-      input: {
-        dataSourceId: variable.id,
-        values: {
-          scopeInstanceId,
-          name,
-          value: variableValue,
-        },
-      },
-    });
-  }
-};
-
-const useValuePanelRef = ({
-  ref,
-  variable,
-  type,
-}: {
-  ref: Ref<undefined | PanelApi>;
-  variable?: DataSource;
-  type: ValueVariableType;
-}) => {
-  useImperativeHandle(ref, () => ({
-    save: (formData) => {
-      saveVariable(variable, type, formData);
-    },
-  }));
-};
-
-const StringForm = forwardRef<
-  undefined | PanelApi,
-  {
-    variable?: DataSource;
-    value: unknown;
-    onChange: (value: unknown) => void;
-  }
->(({ variable, value: unknownValue, onChange }, ref) => {
-  const value = typeof unknownValue === "string" ? unknownValue : "";
-  useValuePanelRef({ ref, variable, type: "string" });
-  const valueId = useId();
-  return (
-    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-      <Label htmlFor={valueId}>Value</Label>
-      <EditorDialogControl>
-        <TextArea
-          name="value"
-          rows={1}
-          maxRows={10}
-          autoGrow={true}
-          id={valueId}
-          value={value}
-          onChange={onChange}
-        />
-        <EditorDialog
-          title="Variable value"
-          content={
-            <TextArea
-              grow={true}
-              id={valueId}
-              value={value}
-              onChange={onChange}
-            />
-          }
-        >
-          <EditorDialogButton />
-        </EditorDialog>
-      </EditorDialogControl>
-    </Flex>
-  );
-});
-StringForm.displayName = "StringForm";
-
-const NumberForm = forwardRef<
-  undefined | PanelApi,
-  {
-    variable?: DataSource;
-    value: unknown;
-    onChange: (value: unknown) => void;
-  }
->(({ variable, value: unknownValue, onChange }, ref) => {
-  const value =
-    typeof unknownValue === "number" || typeof unknownValue === "string"
-      ? unknownValue
-      : "";
-  const [valueError, setValueError] = useState("");
-  const valueRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    valueRef.current?.setCustomValidity(validateDataVariableNumberValue(value));
-    setValueError("");
-  }, [value]);
-  useValuePanelRef({ ref, variable, type: "number" });
-  const valueId = useId();
-  return (
-    <>
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-        <Label htmlFor={valueId}>Value</Label>
-        <InputErrorsTooltip errors={valueError ? [valueError] : undefined}>
-          <InputField
-            inputRef={valueRef}
-            name="value"
-            id={valueId}
-            inputMode="numeric"
-            color={valueError ? "error" : undefined}
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            onBlur={() => valueRef.current?.checkValidity()}
-            onInvalid={(event) =>
-              setValueError(event.currentTarget.validationMessage)
-            }
-          />
-        </InputErrorsTooltip>
-      </Flex>
-    </>
-  );
-});
-NumberForm.displayName = "NumberForm";
-
-const BooleanForm = forwardRef<
-  undefined | PanelApi,
-  {
-    variable?: DataSource;
-    value: unknown;
-    onChange: (value: unknown) => void;
-  }
->(({ variable, value: unknownValue, onChange }, ref) => {
-  const value = typeof unknownValue === "boolean" ? unknownValue : false;
-  useValuePanelRef({ ref, variable, type: "boolean" });
-  const valueId = useId();
-  return (
-    <>
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-        <Label htmlFor={valueId}>Value</Label>
-        <Switch
-          name="value"
-          value="on"
-          id={valueId}
-          checked={value}
-          onCheckedChange={onChange}
-        />
-      </Flex>
-    </>
-  );
-});
-BooleanForm.displayName = "BooleanForm";
-
-const JsonForm = forwardRef<
-  undefined | PanelApi,
-  {
-    variable?: DataSource;
-    value: unknown;
-    onChange: (value: unknown) => void;
-  }
->(({ variable, value: unknownValue, onChange }, ref) => {
-  const value = typeof unknownValue === "string" ? unknownValue : "";
-  const [valueError, setValueError] = useState("");
-  const valueRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    valueRef.current?.setCustomValidity(validateDataVariableJsonValue(value));
-    setValueError("");
-  }, [value]);
-  useValuePanelRef({ ref, variable, type: "json" });
-  return (
-    <>
-      <input
-        ref={valueRef}
-        style={{ display: "none" }}
-        name="value"
-        data-color={valueError ? "error" : undefined}
-        value={value}
-        onChange={() => {}}
-        onInvalid={(event) =>
-          setValueError(event.currentTarget.validationMessage)
-        }
-      />
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-        <Label>Value</Label>
-        <ExpressionEditor
-          showLineNumbers
-          color={valueError ? "error" : undefined}
-          value={value}
-          onChange={onChange}
-          onChangeComplete={() => valueRef.current?.checkValidity()}
-        />
-      </Flex>
-    </>
-  );
-});
-JsonForm.displayName = "JsonForm";
 
 const VariablePanelForm = forwardRef<
   undefined | PanelApi,
@@ -713,11 +403,16 @@ const VariablePanelForm = forwardRef<
             />
           )}
           {(variableType === "sitemap-resource" ||
-            variableType === "current-date-resource" ||
-            variableType === "assets-resource") && (
+            variableType === "current-date-resource") && (
             <SystemResourceForm
               ref={ref}
               resourceType={variableType}
+              variable={variable}
+            />
+          )}
+          {variableType === "assets-resource" && (
+            <AssetsResourceForm
+              ref={ref}
               variable={variable}
               onChange={onResourceChange}
               querySourceContainer={querySourceContainer}
@@ -732,337 +427,24 @@ const VariablePanelForm = forwardRef<
 );
 VariablePanelForm.displayName = "VariableForm";
 
-const $instanceVariableValues = computed(
-  [$selectedInstanceKeyWithRoot, $variableValuesByInstanceSelector],
-  (instanceKey, variableValuesByInstanceSelector) =>
-    variableValuesByInstanceSelector.get(instanceKey ?? "") ??
-    new Map<string, unknown>()
-);
-
-const VariablePreview = ({
-  variable,
-  variableType,
-  variableValue,
-  showSavedResourceRequest,
-  isComputingRequest,
-  onLoadData,
-  onLoadEmailRequest,
-  emailRequestPreview,
-  queryActive,
-  queryPending,
-  queryContainerRef,
-}: {
-  variable?: DataSource;
-  variableType: VariableType;
-  variableValue: unknown;
-  showSavedResourceRequest: boolean;
-  isComputingRequest: boolean;
-  onLoadData: () => void;
-  onLoadEmailRequest?: () => void;
-  emailRequestPreview?: Awaited<ReturnType<typeof buildEmailRequestPreview>>;
-  queryActive: boolean;
-  queryPending: boolean;
-  queryContainerRef: (element: HTMLDivElement | null) => void;
-}) => {
-  const [pendingDiagnosticsKey, setPendingDiagnosticsKey] = useState<string>();
-  const isResource =
-    variableType === "resource" ||
-    variableType === "graphql-resource" ||
-    variableType === "sitemap-resource" ||
-    variableType === "current-date-resource" ||
-    variableType === "assets-resource";
-  const pendingResourceKeys = useStore($pendingResourceKeys);
-  const resources = useStore($resources);
-  const instances = useStore($instances);
-  const props = useStore($props);
-  const liveFormValues = useStore($livePreviewFormValues);
-  const liveBrowserInfo = useStore($livePreviewBrowserInfo);
-  const selectedInstanceSelector = useStore($selectedInstanceSelector);
-  const variableValues = useStore($instanceVariableValues);
-  const lastExchanges = useStore($previewFormExchanges);
-  const resourceExchanges = useStore($resourcePreviewExchanges);
-  const inspection =
-    variable?.type === "resource"
-      ? lastExchanges.get(variable.resourceId)
-      : undefined;
-  const formExchange = inspection?.attempts.at(-1);
-  const resourcesCache = useStore($resourcesCache);
-  const resourceDiagnosticsCache = useStore($resourceDiagnosticsCache);
-  const resourceDiagnosticsErrorCache = useStore(
-    $resourceDiagnosticsErrorCache
-  );
-  const resourcePerformanceCache = useStore($resourcePerformanceCache);
-  const resourceScope = useResourceScope({ variable });
-  const [resolvedResourceRequest, setResolvedResourceRequest] = useState<
-    ResourceRequest | undefined
-  >(() => resourceRequest.safeParse(variableValue).data);
-  useEffect(() => {
-    const parsedResourceRequest = resourceRequest.safeParse(variableValue).data;
-    if (parsedResourceRequest !== undefined) {
-      setResolvedResourceRequest(parsedResourceRequest);
-      return;
-    }
-    if (
-      variableType === "email-resource" ||
-      variable?.type !== "resource" ||
-      !showSavedResourceRequest
-    ) {
-      setResolvedResourceRequest(undefined);
-      return;
-    }
-    const resource = resources.get(variable.resourceId);
-    if (resource === undefined) {
-      setResolvedResourceRequest(undefined);
-      return;
-    }
-    let active = true;
-    setResolvedResourceRequest(undefined);
-    void computeResourceRequest(resource, resourceScope.variableValues)
-      .then((request) => {
-        if (active) {
-          setResolvedResourceRequest(request);
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setResolvedResourceRequest(undefined);
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [
-    resources,
-    resourceScope.variableValues,
-    variable,
-    variableType,
-    variableValue,
-    showSavedResourceRequest,
-  ]);
-  const parsedResourceRequest = resourceRequest.safeParse(variableValue).data;
-  const computedResourceRequest =
-    parsedResourceRequest ??
-    (variable?.type === "resource" && showSavedResourceRequest
-      ? resolvedResourceRequest
-      : undefined);
-  const previewPending =
-    isComputingRequest ||
-    (computedResourceRequest !== undefined &&
-      pendingResourceKeys.has(getResourceKey(computedResourceRequest)));
-  let computedValue: unknown;
-  let resourceDiagnostics: AssetQueryPreviewDiagnostics | undefined;
-  let resourcePerformance: ResourcePerformance | undefined;
-  let resourceDiagnosticsError: unknown;
-  let computedResourceKey: string | undefined;
-  if (variableType === "string" || variableType === "boolean") {
-    computedValue = variableValue;
-  } else if (variableType === "json") {
-    computedValue = parseJsonExpression(String(variableValue));
-  } else if (variableType === "number") {
-    computedValue = Number(variableValue);
-    if (Number.isNaN(computedValue)) {
-      computedValue = variableValue;
-    }
-  } else if (variableType === "parameter") {
-    computedValue = variable
-      ? (resourceScope.variableValues.get(variable.id) ??
-        variableValues.get(variable.id))
-      : undefined;
-  } else {
-    if (computedResourceRequest) {
-      const resourceKey = getResourceKey(computedResourceRequest);
-      computedResourceKey = resourceKey;
-      computedValue = resourcesCache.get(resourceKey);
-      resourceDiagnostics = resourceDiagnosticsCache.get(resourceKey);
-      resourceDiagnosticsError = resourceDiagnosticsErrorCache.get(resourceKey);
-      resourcePerformance = resourcePerformanceCache.get(resourceKey);
-    }
+const VariablePreview = (props: VariablePreviewProps) => {
+  const { variableType, variableValue } = props;
+  if (variableType === "string") {
+    return <ValuePreviewFrame value={variableValue} />;
   }
-  const latestExchange =
-    (computedResourceKey === undefined
-      ? undefined
-      : resourceExchanges.get(computedResourceKey)) ?? formExchange;
-  const latestExchangeIsFormSubmission = latestExchange === formExchange;
-  if (
-    variableType === "parameter" &&
-    variable?.type === "parameter" &&
-    instances.get(variable.scopeInstanceId ?? "")?.component === "NativeForm"
-  ) {
-    if (variable.name === formDataParameterName) {
-      computedValue =
-        liveFormValues.get(
-          getFormOccurrenceKey(
-            selectedInstanceSelector,
-            variable.scopeInstanceId!
-          ) ?? ""
-        ) ?? getFormDataPreview(instances, props, variable.scopeInstanceId!);
-    } else if (variable.name === browserInfoParameterName) {
-      computedValue = getBrowserInfoPreview(
-        liveBrowserInfo.get(variable.scopeInstanceId ?? "")
-      );
-    }
+  if (variableType === "number") {
+    return <NumberVariablePreview value={variableValue} />;
   }
-  if (latestExchange) {
-    computedValue = {
-      resourceId: latestExchange.resourceId,
-      resourceName: latestExchange.resourceName,
-      ...latestExchange.response,
-      ok: latestExchange.outcome?.ok ?? latestExchange.response.status < 400,
-      attempts: latestExchangeIsFormSubmission
-        ? inspection?.attempts.map(
-            ({ resourceId, resourceName, response, outcome }, index) => ({
-              attempt: index + 1,
-              resourceId,
-              resourceName,
-              ...response,
-              ...(outcome === undefined ? {} : { outcome }),
-            })
-          )
-        : undefined,
-    };
+  if (variableType === "boolean") {
+    return <ValuePreviewFrame value={variableValue} />;
   }
-  const extensions = useMemo(() => [javascript({}), foldGutterExtension], []);
-  const editorProps = {
-    readOnly: true,
-    chromeless: true,
-    extensions,
-    // compute value as json lazily only when dialog is open
-    // by spliting into separate component which is invoked
-    // only when dialog content is rendered
-    value: formatValue(computedValue),
-    onChange: () => {},
-    onChangeComplete: () => {},
-  };
-  const loadDataButton = (
-    <Button
-      type="button"
-      disabled={previewPending}
-      onClick={
-        variableType === "email-resource" ? onLoadEmailRequest : onLoadData
-      }
-    >
-      {previewPending ? "Loading..." : "Load data"}
-    </Button>
-  );
-  const previewContent = (
-    <Grid
-      align="stretch"
-      css={{
-        height: "100%",
-        overflow: "hidden",
-        boxSizing: "content-box",
-        position: "relative",
-        gridTemplateRows: "minmax(0, 1fr)",
-      }}
-    >
-      <EditorContent {...editorProps} />
-      {isResource && !computedValue && (
-        <Flex
-          justify="center"
-          align="center"
-          css={{ position: "absolute", inset: 0 }}
-        >
-          {loadDataButton}
-        </Flex>
-      )}
-    </Grid>
-  );
-  const inspectSubmission =
-    variableType === "resource" ||
-    variableType === "graphql-resource" ||
-    variableType === "email-resource" ||
-    latestExchange !== undefined;
-  const alwaysShowRequestTab =
-    variableType === "resource" ||
-    variableType === "graphql-resource" ||
-    variableType === "email-resource";
-  if (isResource === false && !inspectSubmission) {
-    return previewContent;
+  if (variableType === "json") {
+    return <JsonVariablePreview value={variableValue} />;
   }
-  const requestErrorDiagnostics = getRequestErrorDiagnostics(
-    latestExchange
-      ? latestExchange.outcome
-        ? { ...latestExchange.outcome, data: latestExchange.outcome.body }
-        : { ...latestExchange.response, data: latestExchange.response.body }
-      : computedValue
-  );
-  const diagnosticsRequestError = getRequestErrorDiagnostics(
-    resourceDiagnosticsError
-  );
-  const preview =
-    requestErrorDiagnostics === undefined ? (
-      previewContent
-    ) : (
-      <RequestErrorDiagnostics value={requestErrorDiagnostics} />
-    );
-  const requestSnapshot = latestExchange
-    ? latestExchangeIsFormSubmission && inspection?.attempts.length
-      ? inspection.attempts.map(
-          ({ resourceId, resourceName, request, kind }, index) => ({
-            attempt: index + 1,
-            resourceId,
-            resourceName,
-            kind,
-            ...request,
-          })
-        )
-      : {
-          resourceId: latestExchange.resourceId,
-          resourceName: latestExchange.resourceName,
-          ...latestExchange.request,
-        }
-    : emailRequestPreview;
-  return (
-    <RequestInspector
-      previewLabel={inspectSubmission ? "Response" : "Preview"}
-      request={
-        alwaysShowRequestTab || requestSnapshot !== undefined ? (
-          requestSnapshot !== undefined ? (
-            <EditorContent
-              {...editorProps}
-              value={formatValue(requestSnapshot)}
-            />
-          ) : (
-            <Flex align="center" justify="center" css={{ height: "100%" }}>
-              {loadDataButton}
-            </Flex>
-          )
-        ) : undefined
-      }
-      queryContainerRef={queryActive ? queryContainerRef : undefined}
-      preview={inspectSubmission ? previewContent : preview}
-      queryPending={queryPending}
-      previewPending={
-        variableType === "email-resource" ? false : previewPending
-      }
-      requestPending={previewPending}
-      onDiagnosticsOpen={
-        computedResourceRequest !== undefined &&
-        isAssetsResourceRequest(computedResourceRequest) &&
-        resourceDiagnostics?.artifacts === undefined
-          ? () => {
-              const diagnosticsKey = getResourceKey(computedResourceRequest);
-              setPendingDiagnosticsKey(diagnosticsKey);
-              void loadResourceDiagnostics(computedResourceRequest).finally(
-                () =>
-                  setPendingDiagnosticsKey((pendingKey) =>
-                    clearSettledDiagnosticsKey(pendingKey, diagnosticsKey)
-                  )
-              );
-            }
-          : undefined
-      }
-      diagnosticsPending={pendingDiagnosticsKey === computedResourceKey}
-      diagnostics={
-        <ResourceDiagnosticsView
-          requestError={requestErrorDiagnostics}
-          diagnosticsRequestError={diagnosticsRequestError}
-          diagnostics={resourceDiagnostics}
-          performance={resourcePerformance}
-        />
-      }
-    />
-  );
+  if (variableType === "parameter") {
+    return <ParameterVariablePreview variable={props.variable} />;
+  }
+  return <ResourceVariablePreview {...props} />;
 };
 
 const VariablePopoverContent = ({
@@ -1079,14 +461,7 @@ const VariablePopoverContent = ({
   onSave: (saved: boolean) => void;
 }) => {
   const panelRef = useRef<undefined | PanelApi>(undefined);
-  const [queryActive, setQueryActive] = useState(false);
-  const [queryPending, setQueryPending] = useState(false);
-  const [querySourceContainer, setQuerySourceContainer] =
-    useState<HTMLDivElement | null>(null);
-  const queryContainerRef = useCallback(
-    (element: HTMLDivElement | null) => setQuerySourceContainer(element),
-    []
-  );
+  const assetsQuery = useAssetsQueryBridge();
   const isSystemVariable =
     variable?.id === SYSTEM_VARIABLE_ID ||
     (variable?.type === "parameter" &&
@@ -1211,55 +586,13 @@ const VariablePopoverContent = ({
     if (formRef.current === null) {
       return;
     }
-    const rawSettings = new FormData(formRef.current).get("email-settings");
-    let settings: unknown;
-    try {
-      settings = JSON.parse(String(rawSettings ?? "{}"));
-    } catch {
-      return;
-    }
-    const parsedSettings = emailResourceSettings.safeParse(settings);
-    if (!parsedSettings.success) {
-      return;
-    }
-    const instances = $instances.get();
-    const props = $props.get();
-    const selected = $selectedInstanceSelector.get();
-    const formId =
-      selected?.find(
-        (instanceId) => instances.get(instanceId)?.component === "NativeForm"
-      ) ??
-      Array.from(instances.values()).find(
-        (instance) =>
-          instance.component === "NativeForm" &&
-          variable?.scopeInstanceId !== undefined &&
-          findTreeInstanceIds(instances, instance.id).has(
-            variable.scopeInstanceId
-          )
-      )?.id;
-    const formData =
-      formId === undefined
-        ? undefined
-        : ($livePreviewFormValues
-            .get()
-            .get(getFormOccurrenceKey(selected, formId) ?? "") ??
-          getFormDataPreview(instances, props, formId));
-    const browserInfo =
-      formId === undefined
-        ? undefined
-        : getBrowserInfoPreview($livePreviewBrowserInfo.get().get(formId));
     setIsComputingRequest(true);
     try {
-      const preview = await buildEmailRequestPreview({
-        settings: parsedSettings.data,
-        projectMeta: $projectSettings.get()?.meta,
+      const preview = await buildEmailRequestPreviewFromEditor({
+        form: formRef.current,
+        variable,
         scope: resourceScope.scope,
         aliases: resourceScope.aliases,
-        formId,
-        formData,
-        browserInfo,
-        instances,
-        props,
       });
       if (revision === previewRevisionRef.current) {
         setEmailRequestPreview(preview);
@@ -1280,7 +613,10 @@ const VariablePopoverContent = ({
     const revision = previewRevisionRef.current;
     setShowSavedResourceRequest(false);
     setValue(undefined);
-    const formData = getReloadableResourceFormData(formRef.current);
+    const formData =
+      variableType === "assets-resource"
+        ? getReloadableAssetsResourceFormData(formRef.current)
+        : new FormData(formRef.current ?? undefined);
     if (formData === undefined) {
       return;
     }
@@ -1366,9 +702,9 @@ const VariablePopoverContent = ({
                   value={value}
                   onValueChange={setValue}
                   onResourceChange={onResourceChange}
-                  querySourceContainer={querySourceContainer}
-                  onQueryActiveChange={setQueryActive}
-                  onQueryPendingChange={setQueryPending}
+                  querySourceContainer={assetsQuery.sourceContainer}
+                  onQueryActiveChange={assetsQuery.onActiveChange}
+                  onQueryPendingChange={assetsQuery.onPendingChange}
                 />
               </fieldset>
             </form>
@@ -1384,9 +720,9 @@ const VariablePopoverContent = ({
             onLoadData={reloadData}
             onLoadEmailRequest={loadEmailRequestPreview}
             emailRequestPreview={emailRequestPreview}
-            queryActive={queryActive}
-            queryPending={queryPending}
-            queryContainerRef={queryContainerRef}
+            queryActive={assetsQuery.active}
+            queryPending={assetsQuery.pending}
+            queryContainerRef={assetsQuery.containerRef}
           />
         }
       />
@@ -1549,18 +885,9 @@ export const VariablePopoverTrigger = ({
 
 VariablePopoverTrigger.displayName = "VariablePopoverTrigger";
 
-const getReloadableResourceFormData = (form: HTMLFormElement | null) => {
-  const formData = new FormData(form ?? undefined);
-  if (formData.get("asset-query-valid") === "false") {
-    return;
-  }
-  return formData;
-};
-
 export const __testing__ = {
   VariablePreview,
   NameField,
   JsonForm,
-  getReloadableResourceFormData,
   TypeField,
 };

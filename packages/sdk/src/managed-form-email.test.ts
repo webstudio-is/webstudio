@@ -8,11 +8,13 @@ import {
 } from "./managed-form-email";
 import {
   loadManagedFormResources,
+  shouldRetryManagedFormDestination,
   validateManagedFormBodyFormats,
 } from "./managed-form-submission";
-import { loadResources } from "./resource-loader";
-import type { ResourceRequest } from "./schema/resources";
+import { loadResourcesWithEmail } from "./email-resource-delivery";
+import type { Resource, ResourceRequest } from "./schema/resources";
 import { generateResourceRequestFields } from "./resources-generator";
+import { generateEmailRequestFields } from "./email-resource-generator";
 import { emailSettingsInvalidMessage } from "./email-resource";
 import { createScope } from "./scope";
 
@@ -194,17 +196,25 @@ test.each([
 ])(
   "ordinary %s Email Resource includes submitted files by default in the Email Service payload",
   async (_mode, email) => {
-    const generatedFields = generateResourceRequestFields({
-      resource: {
-        id: "email-resource",
-        name: "Team email",
-        control: "email",
-        method: "post",
-        url: '""',
-        searchParams: [],
-        headers: [],
-        email,
-      },
+    const resource: Resource = {
+      id: "email-resource",
+      name: "Team email",
+      control: "email",
+      method: "post",
+      url: '""',
+      searchParams: [],
+      headers: [],
+      email,
+    };
+    const baseFields = generateResourceRequestFields({
+      resource,
+      indent: "",
+      dataSources: new Map(),
+      usedDataSources: new Map(),
+      scope: createScope(),
+    });
+    const emailFields = generateEmailRequestFields({
+      resource,
       indent: "",
       dataSources: new Map(),
       usedDataSources: new Map(),
@@ -217,7 +227,7 @@ test.each([
       },
     });
     const generatedRequest = new Function(
-      `return ({${generatedFields}})`
+      `return ({${baseFields}${emailFields}})`
     )() as ResourceRequest;
     const formData = new FormData();
     formData.append(
@@ -540,7 +550,7 @@ test("a failed Email root retries once and keeps sibling results", async () => {
     { fetch },
     new FormData()
   );
-  const results = await loadResources(
+  const results = await loadResourcesWithEmail(
     vi.fn(async () => Response.json({ ok: true })),
     {
       rootIds: ["email", "http"],
@@ -566,7 +576,7 @@ test("a failed Email root retries once and keeps sibling results", async () => {
       ],
     },
     undefined,
-    { sendEmail, retryFailedRoots: true }
+    { sendEmail, shouldRetryFailedRoot: shouldRetryManagedFormDestination }
   );
   expect(fetch).toHaveBeenCalledTimes(2);
   expect(results).toMatchObject({
@@ -609,7 +619,7 @@ test.each(["New form submission", "Custom owner subject"])(
     };
     const options = {
       sendEmail,
-      retryFailedRoots: true,
+      shouldRetryFailedRoot: shouldRetryManagedFormDestination,
       validateEmail: (emailRequest: ResourceRequest) =>
         validateCloudflareManagedFormEmail(emailRequest, new FormData()),
     };

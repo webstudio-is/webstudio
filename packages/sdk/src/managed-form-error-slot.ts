@@ -1,16 +1,18 @@
 import type { DataSources } from "./schema/data-sources";
 import type { Instance, Instances } from "./schema/instances";
+import type { Props } from "./schema/props";
 import { encodeDataVariableId } from "./expression";
+import { hasPropertyAssignment } from "@webstudio-is/expression";
 
 /** Render the original managed Form error placeholder from runtime errors without mutating authored data. */
 export const resolveManagedFormErrorSlot = (
   instance: Instance,
   instances: Instances,
-  dataSources: DataSources
+  dataSources: DataSources,
+  props: Props
 ): Instance => {
   const child = instance.children[0];
   if (
-    instance.label !== "Error Message" ||
     instance.children.length !== 1 ||
     child.type !== "text" ||
     child.placeholder !== true ||
@@ -35,11 +37,29 @@ export const resolveManagedFormErrorSlot = (
       return instance;
     }
     if (component === "NativeForm") {
+      const resultAction = [...props.values()].find(
+        (prop) =>
+          prop.instanceId === parent.id &&
+          prop.name === "onResultChange" &&
+          prop.type === "action"
+      );
+      if (resultAction?.type !== "action") {
+        return instance;
+      }
       const errors = [...dataSources.values()].find(
         (source) =>
           source.type === "variable" &&
           source.scopeInstanceId === parent.id &&
-          source.name === "errors"
+          resultAction.value.some(({ args, code }) => {
+            return args.some((arg) =>
+              hasPropertyAssignment({
+                code,
+                target: encodeDataVariableId(source.id),
+                source: arg,
+                property: "errors",
+              })
+            );
+          })
       );
       if (!errors) {
         return instance;

@@ -11,6 +11,7 @@ import {
   $previewFormExchanges,
   $resourcePreviewExchanges,
   recordPreviewFormExchanges,
+  recordResourcePreviewExchange,
 } from "~/shared/preview-form-inspection";
 import {
   $livePreviewFormValues,
@@ -230,32 +231,25 @@ test.each(["resource", "graphql-resource"] as const)(
       container.querySelector('[role="status"]')?.getAttribute("aria-label")
     ).toBe("Loading request…");
     await act(async () =>
-      $resourcePreviewExchanges.set(
-        new Map([
-          [
-            key,
-            {
-              resourceId: key,
-              resourceName: "Request",
-              kind: "http",
-              request: {
-                method: "GET",
-                url: "https://example.com/actual-request",
-                headers: [{ name: "accept", value: "application/json" }],
-                body: undefined,
-                truncated: false,
-              },
-              response: {
-                status: 201,
-                statusText: "Created",
-                headers: [],
-                body: { message: "created response" },
-                truncated: false,
-              },
-            },
-          ],
-        ])
-      )
+      recordResourcePreviewExchange(key, {
+        resourceId: key,
+        resourceName: "Request",
+        kind: "http",
+        request: {
+          method: "GET",
+          url: "https://example.com/actual-request",
+          headers: [{ name: "accept", value: "application/json" }],
+          body: undefined,
+          truncated: false,
+        },
+        response: {
+          status: 201,
+          statusText: "Created",
+          headers: [],
+          body: { message: "created response" },
+          truncated: false,
+        },
+      })
     );
     await act(async () =>
       root?.render(
@@ -308,6 +302,7 @@ test("explicit Resource reload shows the captured request and response headers",
         key,
         {
           formId: "form",
+          revision: 0,
           attempts: [
             {
               resourceId: key,
@@ -333,33 +328,26 @@ test("explicit Resource reload shows the captured request and response headers",
       ],
     ])
   );
-  $resourcePreviewExchanges.set(
-    new Map([
-      [
-        key,
-        {
-          resourceId: key,
-          resourceName: "Contact webhook",
-          kind: "http",
-          request: {
-            method: "POST",
-            url: request.url,
-            headers: [{ name: "content-type", value: "application/json" }],
-            body: { email: "person@example.com" },
-            truncated: false,
-          },
-          response: {
-            status: 201,
-            statusText: "Created",
-            url: request.url,
-            headers: [{ name: "x-request-id", value: "request-123" }],
-            body: { accepted: true },
-            truncated: false,
-          },
-        },
-      ],
-    ])
-  );
+  recordResourcePreviewExchange(key, {
+    resourceId: key,
+    resourceName: "Contact webhook",
+    kind: "http",
+    request: {
+      method: "POST",
+      url: request.url,
+      headers: [{ name: "content-type", value: "application/json" }],
+      body: { email: "person@example.com" },
+      truncated: false,
+    },
+    response: {
+      status: 201,
+      statusText: "Created",
+      url: request.url,
+      headers: [{ name: "x-request-id", value: "request-123" }],
+      body: { accepted: true },
+      truncated: false,
+    },
+  });
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);

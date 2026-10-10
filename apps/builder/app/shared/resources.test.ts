@@ -137,12 +137,70 @@ test("captures the exchange returned by an explicitly inspected Resource reload"
 
   const release = loadResourcePreview(request, requestFetch);
   await vi.waitFor(() => {
-    expect($resourcePreviewExchanges.get().get(key)).toEqual(exchange);
+    expect($resourcePreviewExchanges.get().get(key)?.exchange).toEqual(
+      exchange
+    );
   });
   expect($resourcesCache.get().get(key)).toEqual({
     data: { accepted: true },
   });
   release();
+});
+
+test("an obsolete inspection cannot replace or cancel a newer same-key inspection", async () => {
+  const request = previewRequest(
+    "Shared",
+    "https://example.com/shared-inspection"
+  );
+  const key = getResourceKey(request);
+  const first = deferredResponse();
+  const second = deferredResponse();
+  const requestFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockImplementationOnce(() => first.promise)
+    .mockImplementationOnce(() => second.promise);
+  const exchange = (status: number) => ({
+    resourceId: key,
+    resourceName: request.name,
+    kind: "http" as const,
+    request: {
+      method: "GET",
+      url: request.url,
+      headers: [],
+      body: null,
+      truncated: false,
+    },
+    response: {
+      status,
+      statusText: "OK",
+      headers: [],
+      body: null,
+      truncated: false,
+    },
+  });
+  const releaseFirst = loadResourcePreview(request, requestFetch);
+  const releaseSecond = loadResourcePreview(request, requestFetch);
+  first.respond(
+    Response.json({
+      resources: [[key, { data: "old" }]],
+      inspection: exchange(201),
+    })
+  );
+  await vi.waitFor(() => expect(requestFetch).toHaveBeenCalledTimes(2));
+  expect($resourcePreviewExchanges.get().has(key)).toBe(false);
+  second.respond(
+    Response.json({
+      resources: [[key, { data: "new" }]],
+      inspection: exchange(202),
+    })
+  );
+  await vi.waitFor(() => {
+    expect(
+      $resourcePreviewExchanges.get().get(key)?.exchange.response.status
+    ).toBe(202);
+  });
+  releaseFirst();
+  releaseSecond();
 });
 
 test.each([

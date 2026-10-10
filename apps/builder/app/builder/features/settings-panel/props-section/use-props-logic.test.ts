@@ -10,27 +10,8 @@ import { textContentAttribute } from "@webstudio-is/react-sdk";
 import { __testing__ } from "./use-props-logic";
 import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime";
 
-const {
-  isPropVisibleInContentMode,
-  getAndDelete,
-  canShowTextContent,
-  isManagedFormProperty,
-} = __testing__;
-
-test("managed Form hides native form attributes from its property list", () => {
-  expect(isManagedFormProperty("action")).toBe(true);
-  expect(isManagedFormProperty("successRedirect")).toBe(true);
-  for (const name of [
-    "id",
-    "class",
-    "submission",
-    "method",
-    "target",
-    "encType",
-  ]) {
-    expect(isManagedFormProperty(name)).toBe(false);
-  }
-});
+const { isPropVisibleInContentMode, getAndDelete, canShowTextContent } =
+  __testing__;
 
 const getInput = (
   input: Partial<Parameters<typeof isPropVisibleInContentMode>[0]> = {}
@@ -156,11 +137,12 @@ describe("isPropVisibleInContentMode", () => {
     ).toBe(true);
   });
 
-  test("shows unset file controls as content-editable asset props", () => {
+  test("uses metadata to expose unset file controls in Content mode", () => {
     const fileMeta: PropMeta = {
       type: "string",
       control: "file",
       required: false,
+      contentMode: true,
     };
 
     expect(
@@ -171,6 +153,19 @@ describe("isPropVisibleInContentMode", () => {
         })
       )
     ).toBe(true);
+  });
+
+  test("does not expose a generic file control without Content mode metadata", () => {
+    expect(
+      isPropVisibleInContentMode(
+        getInput({
+          propName: "upload",
+          propsMetas: new Map([
+            ["upload", { type: "string", control: "file", required: false }],
+          ]),
+        })
+      )
+    ).toBe(false);
   });
 
   test("keeps explicitly Design-mode file controls out of Content mode", () => {

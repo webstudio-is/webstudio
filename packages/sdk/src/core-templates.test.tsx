@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { renderTemplate, type TemplateMeta } from "@webstudio-is/template";
+import { UploadIcon } from "@webstudio-is/icons/svg";
 import { contentBlockMdxTemplateDescriptors } from "./content-block";
 import { intrinsicCoreTemplates } from "./core-templates";
 
@@ -43,10 +44,11 @@ test.each([
 });
 
 test("inserts a named file input with editable HTML attributes", () => {
-  const fragment = renderTemplate(
-    (intrinsicCoreTemplates as Record<string, TemplateMeta>).file_input.template
-  );
+  const fileInput = (intrinsicCoreTemplates as Record<string, TemplateMeta>)
+    .file_input;
+  const fragment = renderTemplate(fileInput.template);
 
+  expect(fileInput.icon).toBe(UploadIcon);
   expect(fragment.instances[0]).toEqual(
     expect.objectContaining({ component: "ws:element", tag: "input" })
   );

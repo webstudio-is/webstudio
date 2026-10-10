@@ -53,7 +53,7 @@ import {
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
   managedFormRequestParamName,
-  type ResourceLoadOptions,
+  type EmailResourceLoadOptions,
 } from "@webstudio-is/sdk/runtime";
 import { createProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch";
 import {
@@ -807,6 +807,26 @@ describe("prebuild", () => {
     "imports managed Form formatting only when used (%s)",
     async (hasErrors) => {
       const siteData = createSiteData({
+        props: hasErrors
+          ? [
+              [
+                "result-action",
+                {
+                  id: "result-action",
+                  instanceId: "root",
+                  name: "onResultChange",
+                  type: "action",
+                  value: [
+                    {
+                      type: "execute",
+                      args: ["result"],
+                      code: `${encodeDataVariableId("errors")} = result.errors`,
+                    },
+                  ],
+                },
+              ],
+            ]
+          : [],
         instances: [
           [
             "root",
@@ -892,7 +912,7 @@ describe("prebuild", () => {
         context: unknown;
         formData: FormData;
         projectId: string;
-      }) => ResourceLoadOptions["sendEmail"];
+      }) => EmailResourceLoadOptions["sendEmail"];
     };
     const bindingFetch = vi
       .fn()

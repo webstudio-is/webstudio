@@ -18,7 +18,7 @@ declare module "__MANAGED_FORM_FETCH__" {
     context: unknown;
     formData: FormData;
     projectId: string;
-  }) => import("@webstudio-is/sdk/runtime").ResourceLoadOptions["sendEmail"];
+  }) => import("@webstudio-is/sdk/runtime").EmailResourceLoadOptions["sendEmail"];
   export const validateManagedFormEmail: (
     request: import("@webstudio-is/sdk/runtime").ResourceRequest,
     formData: FormData

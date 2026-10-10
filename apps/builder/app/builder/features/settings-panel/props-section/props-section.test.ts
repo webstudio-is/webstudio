@@ -4,16 +4,24 @@ import { __testing__ } from "./props-section";
 
 const {
   shouldShowPropertiesSection,
-  canAddPropertyOrAttribute,
   shouldRenderPropsSectionContainer,
   shouldSyncMediaAssetProps,
   findExpressionPropByStandardName,
   shouldWriteBoundValue,
 } = __testing__;
 
-test("managed Form has no generic property or attribute picker", () => {
-  expect(canAddPropertyOrAttribute("NativeForm")).toBe(false);
-  expect(canAddPropertyOrAttribute("Box")).toBe(true);
+test("Form and generic components render their property sections", () => {
+  for (const component of ["NativeForm", "Box"]) {
+    expect(
+      shouldRenderPropsSectionContainer({
+        component,
+        propsMetasSize: 1,
+        hasVisibleProps: false,
+        isContentMode: false,
+        isDesignMode: true,
+      })
+    ).toBe(true);
+  }
 });
 
 test("finds a legacy React-named expression by its standard attribute name", () => {

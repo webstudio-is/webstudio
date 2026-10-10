@@ -12,7 +12,7 @@ import {
 import { createScope } from "./scope";
 import { encodeDataSourceVariable } from "./expression";
 import { createJsonStringifyProxy } from "./to-string";
-import type { ResourceRequestGraph } from "./resource-loader";
+import type { ManagedFormResourceGraph } from "./managed-form-submission";
 import type { DataSources } from "./schema/data-sources";
 import type { Instances } from "./schema/instances";
 import type { Props } from "./schema/props";
@@ -226,7 +226,7 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
     module.exports.getManagedFormResourceGraph as (
       id: string,
       values: { system: unknown; formData: unknown; browserInfo: unknown }
-    ) => ResourceRequestGraph | undefined
+    ) => ManagedFormResourceGraph | undefined
   )("form", { system, formData, browserInfo })!;
   expect(draft.rootIds).toEqual(["email", "http"]);
   expect(generated.rootIds).toEqual(["email", "http"]);
@@ -573,7 +573,7 @@ test("Email Sender and custom recipients bindings resolve and validate before di
     module.exports.getManagedFormResourceGraph as (
       id: string,
       values: { system: unknown; formData: unknown; browserInfo: unknown }
-    ) => ResourceRequestGraph | undefined
+    ) => ManagedFormResourceGraph | undefined
   )("form", { system: baseInput.system, formData: {}, browserInfo: {} })!;
   for (const graph of [draft, published]) {
     expect(graph.resources[0].createRequest(new Map()).email).toMatchObject({
@@ -748,7 +748,7 @@ test("draft graph keeps scoped dependencies and external Resource roots in publi
     module.exports.getManagedFormResourceGraph as (
       id: string,
       values: { system: unknown; formData: unknown; browserInfo: unknown }
-    ) => ResourceRequestGraph | undefined
+    ) => ManagedFormResourceGraph | undefined
   )("form", { system, formData: {}, browserInfo: {} })!;
   expect(draft.rootIds).toEqual(["outer", "inner"]);
   expect(draft.rootIds).toEqual(published.rootIds);

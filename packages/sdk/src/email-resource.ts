@@ -1,5 +1,11 @@
 import type { ProjectMeta } from "./schema/pages";
 import type { EmailResourceSettings } from "./schema/resources";
+import type { DataSource } from "./schema/data-sources";
+
+/** Email fields must be resolvable before any Form destination dispatches. */
+export const isEmailBindingDataSourceAvailable = (
+  dataSource: DataSource | undefined
+) => dataSource?.type !== "resource";
 import { parseEmailMailboxes, parseEmailSender } from "./email-addresses";
 
 export const emailSettingsInvalidMessage = "Email settings are invalid";

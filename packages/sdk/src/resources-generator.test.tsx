@@ -9,16 +9,38 @@ import type { Page } from "./schema/pages";
 import { createScope } from "./scope";
 import { encodeDataSourceVariable } from "./expression";
 import {
+  generateResourceRequestFields,
   generateResources,
   replaceFormActionsWithResources,
 } from "./resources-generator";
+import { generatePageResources } from "./managed-form-resources-generator";
 import type { DataSource } from "./schema/data-sources";
 
 const Body = createTemplateComponentFixture("Body");
 const Form = createTemplateComponentFixture("Form");
 
+test("base request fields do not generate Email delivery configuration", () => {
+  const fields = generateResourceRequestFields({
+    resource: {
+      id: "email",
+      name: "Email",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+      email: { recipientMode: "project" },
+    },
+    indent: "",
+    dataSources: new Map(),
+    usedDataSources: new Map(),
+    scope: createScope(),
+  });
+  expect(fields).toContain('control: "email"');
+  expect(fields).not.toContain("email: {");
+});
+
 test("does not fetch a Form-bound Resource during page load", () => {
-  const generated = generateResources({
+  const generated = generatePageResources({
     scope: createScope(),
     page: { rootInstanceId: "form" } as Page,
     instances: toMap([
@@ -102,14 +124,24 @@ test("emits only the resolver imports required by bound Email Resources", () => 
     props: new Map(),
   };
 
-  const generated = generateResources(input);
+  const generated = generatePageResources(input);
+  const genericGenerated = generateResources({
+    ...input,
+    scope: createScope(),
+  });
+  expect(genericGenerated).not.toContain("resolveEmailRecipientsExpression(");
+  expect(genericGenerated).not.toContain(
+    "resolveEmailSenderSettingsExpression("
+  );
+  expect(genericGenerated).not.toContain("email: {");
+  expect(generated).toContain("email: {");
   expect(generated).toContain(
     'import { resolveEmailRecipientsExpression, resolveEmailSenderSettingsExpression } from "@webstudio-is/sdk";'
   );
   expect(generated).toContain("resolveEmailRecipientsExpression(");
   expect(generated).toContain("resolveEmailSenderSettingsExpression(");
 
-  const senderOnlyGenerated = generateResources({
+  const senderOnlyGenerated = generatePageResources({
     ...input,
     resources: toMap([
       {
@@ -131,7 +163,7 @@ test("emits only the resolver imports required by bound Email Resources", () => 
     ...emailResource,
     email: { recipientMode: "project" as const },
   };
-  const literalGenerated = generateResources({
+  const literalGenerated = generatePageResources({
     ...input,
     resources: toMap([literalEmailResource]),
   });
@@ -194,12 +226,12 @@ test("excludes transitive Form-only Resources and rejects Dynamic Content Block 
     ]),
     props: new Map(),
   };
-  const generated = generateResources({ scope: createScope(), ...input });
+  const generated = generatePageResources({ scope: createScope(), ...input });
   expect(generated).not.toContain("directResourceId");
   expect(generated).not.toContain("derivedResourceId");
 
   expect(() =>
-    generateResources({
+    generatePageResources({
       scope: createScope(),
       ...input,
       contentBlockResourceSelections: [

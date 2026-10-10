@@ -4,14 +4,17 @@ import {
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
 } from "./form-fields";
-import { getResourceBodyFormatError, loadResources } from "./resource-loader";
+import { getResourceBodyFormatError } from "./resource-loader";
+import {
+  loadResourcesWithEmail,
+  type EmailResourceGraphLoadOptions,
+} from "./email-resource-delivery";
 import {
   emailSettingsInvalidMessage,
   maxEmailSubjectLength,
   validateEmailSubject,
 } from "./email-resource";
 import type {
-  ResourceGraphLoadOptions,
   ResourceRequestGraph,
   ResourceRequestResource,
 } from "./resource-loader";
@@ -19,6 +22,27 @@ import type { ResourceRequest } from "./schema/resources";
 
 export const formDataParameterName = "formData";
 export const browserInfoParameterName = "browserInfo";
+
+export type ManagedFormResource = ResourceRequestResource & {
+  /** Trusted, published team-recipient count, resolved before dispatch. */
+  emailRecipientCount?: number;
+  /** Visitor delivery failure is reported without failing other destinations. */
+  nonfatal?: boolean;
+  usesDefaultFormBody?: boolean;
+};
+
+export type ManagedFormResourceGraph = Omit<
+  ResourceRequestGraph,
+  "resources"
+> & {
+  resources: readonly ManagedFormResource[];
+};
+
+/** A quota rejection cannot succeed on an immediate retry. */
+export const shouldRetryManagedFormDestination: NonNullable<
+  EmailResourceGraphLoadOptions["shouldRetryFailedRoot"]
+> = (_resourceId, request, result) =>
+  !(request.control === "email" && result.status === 429);
 
 export const internalFormFieldNames = new Set([
   formIdFieldName,
@@ -71,7 +95,7 @@ export const getManagedFormFailure = (
 
 /** Keep only final destination status and body in the public Form response. */
 export const getManagedFormResponse = (
-  graph: ResourceRequestGraph,
+  graph: ManagedFormResourceGraph,
   outcomes: Record<string, unknown>
 ): ManagedFormResponse => {
   const resourcesById = new Map(
@@ -242,12 +266,12 @@ export const getManagedFormValues = (formData: FormData) => {
   return values;
 };
 
-const getReachableResources = (graph: ResourceRequestGraph) => {
+const getReachableResources = (graph: ManagedFormResourceGraph) => {
   const resourcesById = new Map(
     graph.resources.map((resource) => [resource.id, resource])
   );
   const visited = new Set<string>();
-  const reachable: ResourceRequestResource[] = [];
+  const reachable: ManagedFormResource[] = [];
   const visit = (resourceId: string) => {
     if (visited.has(resourceId)) {
       return;
@@ -270,7 +294,7 @@ const getReachableResources = (graph: ResourceRequestGraph) => {
 
 /** Validate the original selection before optional visitor roots are removed. */
 export const validateManagedFormDestinationDependencies = (
-  graph: ResourceRequestGraph
+  graph: ManagedFormResourceGraph
 ) => {
   const roots = new Set(graph.rootIds);
   for (const resource of getReachableResources(graph)) {
@@ -292,7 +316,7 @@ export const validateManagedFormDestinationDependencies = (
 
 /** Reject the whole submission before any destination or dependency runs. */
 export const validateManagedFormRecipientLimit = (
-  graph: ResourceRequestGraph,
+  graph: ManagedFormResourceGraph,
   preparedEmailRequests: ReadonlyMap<string, ResourceRequest> = new Map()
 ) => {
   let deliveries = 0;
@@ -328,11 +352,11 @@ export const validateManagedFormRecipientLimit = (
 };
 
 export const validateManagedFormBodyFormats = (
-  graph: ResourceRequestGraph,
+  graph: ManagedFormResourceGraph,
   formData: FormData,
   emailConfigured = false,
   precomputedRequests: ReadonlyMap<string, ResourceRequest> = new Map()
-): ResourceRequestGraph => {
+): ManagedFormResourceGraph => {
   if (
     emailConfigured === false &&
     getReachableResources(graph).some(
@@ -390,9 +414,9 @@ export const validateManagedFormBodyFormats = (
 /** Resolve dependencies, preflight selected body formats and URL policy, then dispatch. */
 export const loadManagedFormResources = async (
   customFetch: typeof fetch,
-  graph: ResourceRequestGraph,
+  graph: ManagedFormResourceGraph,
   baseUrl?: string | URL,
-  options?: ResourceGraphLoadOptions & {
+  options?: EmailResourceGraphLoadOptions & {
     validateDestination?: (url: URL) => void;
     validateEmail?: (request: ResourceRequest) => void;
   }
@@ -538,7 +562,7 @@ export const loadManagedFormResources = async (
       ? new Map<string, unknown>()
       : new Map(
           Object.entries(
-            await loadResources(
+            await loadResourcesWithEmail(
               customFetch,
               {
                 resources: preparedResources.map((resource) => ({
@@ -548,7 +572,7 @@ export const loadManagedFormResources = async (
                 rootIds: [...dependencyIds],
               },
               baseUrl,
-              { ...loadOptions, retryFailedRoots: false }
+              { ...loadOptions, shouldRetryFailedRoot: undefined }
             )
           )
         );
@@ -569,7 +593,7 @@ export const loadManagedFormResources = async (
     }
     return { ...resource, dependencies: [], createRequest: () => request };
   });
-  const results = await loadResources(
+  const results = await loadResourcesWithEmail(
     customFetch,
     { resources: preparedRoots, rootIds: graph.rootIds },
     baseUrl,

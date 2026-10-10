@@ -24,7 +24,7 @@ import type { Instances } from "./schema/instances";
 import type { Props } from "./schema/props";
 import type { ProjectMeta, System } from "./schema/pages";
 import type { ResourceRequest, Resources } from "./schema/resources";
-import type { ResourceRequestGraph } from "./resource-loader";
+import type { ManagedFormResourceGraph } from "./managed-form-submission";
 
 /** Construct a draft graph from data without evaluating project-authored code in Node. */
 export const createManagedFormDraftGraph = ({
@@ -60,7 +60,7 @@ export const createManagedFormDraftGraph = ({
     expression: string,
     values: ReadonlyMap<string, unknown>
   ) => unknown;
-}): ResourceRequestGraph => {
+}): ManagedFormResourceGraph => {
   if (instances.get(formId)?.component !== "NativeForm") {
     throw new Error("Form not found");
   }

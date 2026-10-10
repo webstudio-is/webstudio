@@ -1,15 +1,10 @@
 import type { DataSource, DataSources } from "./schema/data-sources";
-import type { Page, ProjectMeta } from "./schema/pages";
-import { resolveEmailResourceSettings } from "./email-resource";
+import type { Page } from "./schema/pages";
 import type { Resource, Resources } from "./schema/resources";
 import type { Prop, Props } from "./schema/props";
 import type { Instance, Instances } from "./schema/instances";
 import type { Scope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
-import {
-  browserInfoParameterName,
-  formDataParameterName,
-} from "./managed-form-submission";
 import { findTreeInstanceIds } from "./instances-utils";
 import {
   getExpressionDataSourceIds,
@@ -24,22 +19,12 @@ export const generateResourceRequestFields = ({
   dataSources,
   usedDataSources,
   scope,
-  method,
-  emailBodyCode,
-  resolvedEmailSettings,
-  projectMeta,
-  ownerEmail,
 }: {
   resource: Resource;
   indent: string;
   dataSources: DataSources;
   usedDataSources: DataSources;
   scope: Scope;
-  method?: Resource["method"];
-  emailBodyCode?: string;
-  resolvedEmailSettings?: ReturnType<typeof resolveEmailResourceSettings>;
-  projectMeta?: ProjectMeta;
-  ownerEmail?: string;
 }) => {
   let generated = "";
   generated += `${indent}name: ${JSON.stringify(resource.name)},\n`;
@@ -64,7 +49,7 @@ export const generateResourceRequestFields = ({
     generated += `${indent}  { name: ${JSON.stringify(searchParam.name)}, value: ${value} },\n`;
   }
   generated += `${indent}],\n`;
-  generated += `${indent}method: ${JSON.stringify(method ?? resource.method)},\n`;
+  generated += `${indent}method: ${JSON.stringify(resource.method)},\n`;
   if (resource.bodyFormat !== undefined) {
     generated += `${indent}bodyFormat: ${JSON.stringify(resource.bodyFormat)},\n`;
   }
@@ -88,76 +73,6 @@ export const generateResourceRequestFields = ({
     });
     generated += `${indent}body: ${body},\n`;
   }
-  if (resource.control === "email") {
-    const email = resource.email ?? {};
-    const resolved =
-      resolvedEmailSettings ??
-      resolveEmailResourceSettings({
-        settings: email,
-        projectMeta,
-        ownerEmail,
-      });
-    generated += `${indent}email: {\n`;
-    generated += `${indent}  recipientMode: ${JSON.stringify(resolved.recipientMode)},\n`;
-    if (resolved.visitorEmailField !== undefined) {
-      generated += `${indent}  visitorEmailField: ${JSON.stringify(resolved.visitorEmailField)},\n`;
-    }
-    if (email.recipientsExpression !== undefined) {
-      const recipients = generateExpression({
-        expression: email.recipientsExpression,
-        dataSources,
-        usedDataSources,
-        scope,
-      });
-      generated += `${indent}  recipients: resolveEmailRecipientsExpression(${recipients}),\n`;
-    } else {
-      generated += `${indent}  recipients: ${JSON.stringify(resolved.recipients ?? [])},\n`;
-    }
-    if (email.senderExpression !== undefined) {
-      const sender = generateExpression({
-        expression: email.senderExpression,
-        dataSources,
-        usedDataSources,
-        scope,
-      });
-      generated += `${indent}  ...resolveEmailSenderSettingsExpression(${sender}, ${JSON.stringify(resolved.fromName)}),\n`;
-    } else if (resolved.sender) {
-      generated += `${indent}  sender: ${JSON.stringify(resolved.sender)},\n`;
-      if (resolved.fromName) {
-        generated += `${indent}  fromName: ${JSON.stringify(resolved.fromName)},\n`;
-      }
-    } else if (resolved.fromName) {
-      generated += `${indent}  fromName: ${JSON.stringify(resolved.fromName)},\n`;
-    }
-    generated += `${indent}  includeAttachments: ${resolved.includeAttachments},\n`;
-    const subject = generateExpression({
-      expression: resolved.subject,
-      dataSources,
-      usedDataSources,
-      scope,
-    });
-    generated += `${indent}  subject: ${subject},\n`;
-    if (email.body !== undefined) {
-      const body = generateExpression({
-        expression: email.body,
-        dataSources,
-        usedDataSources,
-        scope,
-      });
-      generated += `${indent}  body: ${body},\n`;
-    } else if (emailBodyCode !== undefined) {
-      generated += `${indent}  body: ${emailBodyCode},\n`;
-    } else {
-      const body = generateExpression({
-        expression: resolved.body,
-        dataSources,
-        usedDataSources,
-        scope,
-      });
-      generated += `${indent}  body: ${body},\n`;
-    }
-    generated += `${indent}},\n`;
-  }
   return generated;
 };
 
@@ -169,6 +84,10 @@ export const generateResources = ({
   resources,
   instances = new Map(),
   contentBlockResourceSelections = [],
+  excludedResourceIds = new Set(),
+  unavailableDataSourceIds = new Set(),
+  generateAdditionalRequestFields,
+  additionalImports = "",
 }: {
   scope: Scope;
   page: Page;
@@ -176,6 +95,16 @@ export const generateResources = ({
   props: Props;
   resources: Resources;
   instances?: Instances;
+  excludedResourceIds?: ReadonlySet<string>;
+  unavailableDataSourceIds?: ReadonlySet<string>;
+  generateAdditionalRequestFields?: (options: {
+    resource: Resource;
+    indent: string;
+    dataSources: DataSources;
+    usedDataSources: DataSources;
+    scope: Scope;
+  }) => string;
+  additionalImports?: string;
   contentBlockResourceSelections?: readonly {
     sourceExpression: string;
     candidates: readonly {
@@ -209,50 +138,10 @@ export const generateResources = ({
       )
       .map((dataSource) => [dataSource.resourceId, dataSource] as const)
   );
-  // Submission values exist only after the browser submits the Form. A Resource
-  // that reads them must not be resolved during the page's normal data load.
-  const formParameterIds = new Set(
-    Array.from(dataSources.values())
-      .filter(
-        (dataSource) =>
-          dataSource.type === "parameter" &&
-          (dataSource.name === formDataParameterName ||
-            dataSource.name === browserInfoParameterName) &&
-          instances.get(dataSource.scopeInstanceId ?? "")?.component ===
-            "NativeForm"
-      )
-      .map(({ id }) => id)
-  );
-  const submissionResourceIds = new Set(
-    Array.from(resources.values())
-      .filter((resource) =>
-        Array.from(getResourceDataSourceIds(resource)).some((id) =>
-          formParameterIds.has(id)
-        )
-      )
-      .map(({ id }) => id)
-  );
-  let foundSubmissionDependency = true;
-  while (foundSubmissionDependency) {
-    foundSubmissionDependency = false;
-    for (const resource of resources.values()) {
-      if (submissionResourceIds.has(resource.id)) {
-        continue;
-      }
-      const dependsOnSubmission = Array.from(
-        getResourceDependencyIds({ resource, dataSources })
-      ).some((dependencyId) => submissionResourceIds.has(dependencyId));
-      if (dependsOnSubmission === false) {
-        continue;
-      }
-      submissionResourceIds.add(resource.id);
-      foundSubmissionDependency = true;
-    }
-  }
   for (const resourceId of selectedResourceIds) {
-    if (submissionResourceIds.has(resourceId)) {
+    if (excludedResourceIds.has(resourceId)) {
       throw new Error(
-        "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+        "Dynamic Content Block Resources cannot depend on unavailable inputs"
       );
     }
   }
@@ -264,16 +153,16 @@ export const generateResources = ({
   });
   for (const { sourceExpression } of contentBlockResourceSelections) {
     for (const dataSourceId of getExpressionDataSourceIds([sourceExpression])) {
-      if (formParameterIds.has(dataSourceId)) {
+      if (unavailableDataSourceIds.has(dataSourceId)) {
         throw new Error(
-          "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+          "Dynamic Content Block Resources cannot depend on unavailable inputs"
         );
       }
       const dataSource = dataSources.get(dataSourceId);
       if (dataSource?.type === "resource") {
-        if (submissionResourceIds.has(dataSource.resourceId)) {
+        if (excludedResourceIds.has(dataSource.resourceId)) {
           throw new Error(
-            "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+            "Dynamic Content Block Resources cannot depend on unavailable inputs"
           );
         }
         rootResourceIds.add(dataSource.resourceId);
@@ -303,7 +192,7 @@ export const generateResources = ({
   const graphResourceIds = new Set<Resource["id"]>();
   const resourceDependencies = new Map<Resource["id"], Resource["id"][]>();
   const addResourceAndDependencies = (resourceId: Resource["id"]) => {
-    if (submissionResourceIds.has(resourceId)) {
+    if (excludedResourceIds.has(resourceId)) {
       return;
     }
     if (graphResourceIds.has(resourceId)) {
@@ -342,7 +231,7 @@ export const generateResources = ({
 
   let generatedRequests = "";
   for (const resource of resources.values()) {
-    if (submissionResourceIds.has(resource.id)) {
+    if (excludedResourceIds.has(resource.id)) {
       continue;
     }
     const resourceName = scope.getName(resource.id, resource.name);
@@ -355,6 +244,14 @@ export const generateResources = ({
         usedDataSources: requestDataSources,
         scope,
       });
+      const additionalFields =
+        generateAdditionalRequestFields?.({
+          resource,
+          indent: "      ",
+          dataSources,
+          usedDataSources: requestDataSources,
+          scope,
+        }) ?? "";
       let generatedRequest = `  const ${resourceName} = (documents: ReadonlyMap<string, unknown>): ResourceRequest => {\n`;
       for (const dataSource of requestDataSources.values()) {
         usedDataSources.set(dataSource.id, dataSource);
@@ -368,6 +265,7 @@ export const generateResources = ({
       }
       generatedRequest += `    return {\n`;
       generatedRequest += fields;
+      generatedRequest += additionalFields;
       generatedRequest += `    }\n`;
       generatedRequest += `  }\n`;
       generatedRequests += generatedRequest;
@@ -381,6 +279,14 @@ export const generateResources = ({
       usedDataSources,
       scope,
     });
+    generatedRequests +=
+      generateAdditionalRequestFields?.({
+        resource,
+        indent: "    ",
+        dataSources,
+        usedDataSources,
+        scope,
+      }) ?? "";
     generatedRequests += `  }\n`;
   }
 
@@ -452,24 +358,7 @@ export const generateResources = ({
   let generated = "";
   generated += `import type { System, ResourceRequest } from "@webstudio-is/sdk";\n`;
   generated += `import type { ResourceRequestGraph } from "@webstudio-is/sdk/runtime";\n`;
-  const generatedEmailResources = Array.from(resources.values()).filter(
-    (resource) => resource.control === "email"
-  );
-  const emailExpressionResolvers = [
-    ...(generatedEmailResources.some(
-      (resource) => resource.email?.recipientsExpression !== undefined
-    )
-      ? ["resolveEmailRecipientsExpression"]
-      : []),
-    ...(generatedEmailResources.some(
-      (resource) => resource.email?.senderExpression !== undefined
-    )
-      ? ["resolveEmailSenderSettingsExpression"]
-      : []),
-  ];
-  if (emailExpressionResolvers.length > 0) {
-    generated += `import { ${emailExpressionResolvers.join(", ")} } from "@webstudio-is/sdk";\n`;
-  }
+  generated += additionalImports;
   generated += `export const getResources = (_props: { system: System; resources?: Record<string, any> }) => {\n`;
   generated += generatedVariables;
   generated += generatedRequests;

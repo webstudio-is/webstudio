@@ -18,7 +18,6 @@ import {
 } from "@webstudio-is/react-sdk";
 import { showAttributeMeta } from "@webstudio-is/project-build/runtime";
 import {
-  elementComponent,
   encodeDataSourceVariable,
   SYSTEM_VARIABLE_ID,
   systemParameter,
@@ -41,7 +40,7 @@ import {
   $registeredComponentMetas,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
-import { $dataSources, $props } from "~/shared/sync/data-stores";
+import { $dataSources } from "~/shared/sync/data-stores";
 import { humanizeString } from "~/shared/string-utils";
 import {
   $selectedInstance,
@@ -343,8 +342,7 @@ const $contentModePropNamesByTag = computed(
 const getInitialPropNames = (
   selectedInstance: ReturnType<typeof $selectedInstance.get>,
   metas: ReturnType<typeof $registeredComponentMetas.get>,
-  instancePropsMetas: Map<string, PropMeta>,
-  props: ReturnType<typeof $props.get>
+  instancePropsMetas: Map<string, PropMeta>
 ) => {
   const initialPropNames = new Set<string>();
   if (selectedInstance) {
@@ -355,24 +353,6 @@ const getInitialPropNames = (
       initialPropNames.add(
         htmlName && instancePropsMetas.has(htmlName) ? htmlName : propName
       );
-    }
-    if (
-      (selectedInstance.component === "Input" ||
-        (selectedInstance.component === elementComponent &&
-          selectedInstance.tag === "input")) &&
-      Array.from(props.values()).some(
-        (prop) =>
-          prop.instanceId === selectedInstance.id &&
-          prop.name === "type" &&
-          prop.type === "string" &&
-          prop.value === "file"
-      )
-    ) {
-      initialPropNames.add("type");
-      initialPropNames.add("name");
-      initialPropNames.add("required");
-      initialPropNames.add("accept");
-      initialPropNames.add("multiple");
     }
   }
   for (const [propName, propMeta] of instancePropsMetas) {
@@ -454,11 +434,6 @@ export const $selectedInstancePropsMetas = computed(
 );
 
 export const $selectedInstanceInitialPropNames = computed(
-  [
-    $selectedInstance,
-    $registeredComponentMetas,
-    $selectedInstancePropsMetas,
-    $props,
-  ],
+  [$selectedInstance, $registeredComponentMetas, $selectedInstancePropsMetas],
   getInitialPropNames
 );

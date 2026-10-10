@@ -14,16 +14,16 @@ import {
   validateManagedFormBodyFormats,
   validateManagedFormBot,
   validateManagedFormDestinationDependencies,
+  shouldRetryManagedFormDestination,
   type ManagedFormResponse,
+  type ManagedFormResourceGraph,
 } from "./managed-form-submission";
 import {
   prepareVisitorEmailRequest,
   VisitorEmailAddressError,
 } from "./managed-form-email";
-import type {
-  ResourceGraphLoadOptions,
-  ResourceRequestGraph,
-} from "./resource-loader";
+import type { ResourceGraphLoadOptions } from "./resource-loader";
+import type { EmailResourceLoadOptions } from "./email-resource-delivery";
 import type { ResourceRequest } from "./schema/resources";
 import type { System } from "./schema/pages";
 
@@ -55,10 +55,10 @@ export const handleManagedFormSubmission = async ({
   getGraph: (
     formId: string,
     values: { system: System; formData: unknown; browserInfo: unknown }
-  ) => ResourceRequestGraph | undefined;
+  ) => ManagedFormResourceGraph | undefined;
   createEmailSender?: (
     formData: FormData
-  ) => ResourceGraphLoadOptions["sendEmail"];
+  ) => EmailResourceLoadOptions["sendEmail"];
   validateEmail?: (request: ResourceRequest, formData: FormData) => void;
   resourceFetch: typeof fetch;
   validateDestination?: (url: URL) => void;
@@ -176,7 +176,7 @@ export const handleManagedFormSubmission = async ({
           signal: request.signal,
           onResourceExchange,
           timeoutMs: 10_000,
-          retryFailedRoots: true,
+          shouldRetryFailedRoot: shouldRetryManagedFormDestination,
           sendEmail,
           validateEmail:
             sendEmail === undefined || validateEmail === undefined

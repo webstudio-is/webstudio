@@ -102,3 +102,21 @@ test("pins the vetted address in the connector and retains the URL hostname", as
   expect(pinned).toEqual({ address: "8.8.8.8", family: 4 });
   expect(mocks.agents[0].close).toHaveBeenCalledTimes(1);
 });
+
+test("resolves and rejects private DNS answers on a cross-origin redirect", async () => {
+  mocks.lookup
+    .mockResolvedValueOnce([{ address: "8.8.8.8", family: 4 }])
+    .mockResolvedValueOnce([{ address: "10.0.0.1", family: 4 }]);
+  mocks.fetch.mockResolvedValueOnce(
+    new Response(null, {
+      status: 301,
+      headers: { location: "https://private.example/path" },
+    })
+  );
+
+  await expect(
+    createNodeProtectedResourceFetch()("https://public.example/path")
+  ).rejects.toThrow("does not resolve to public addresses");
+  expect(mocks.fetch).toHaveBeenCalledTimes(1);
+  expect(mocks.lookup).toHaveBeenCalledTimes(2);
+});

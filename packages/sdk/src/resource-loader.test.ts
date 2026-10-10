@@ -23,10 +23,11 @@ import {
 } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
 import { createCloudflareManagedFormEmailSender } from "./managed-form-email";
+import { loadResourceWithEmail } from "./email-resource-delivery";
 
-test("Email Resources cannot be sent through the HTTP loader", async () => {
+test("Email Resources use the feature transport without an HTTP fetch", async () => {
   const fetch = vi.fn<typeof globalThis.fetch>();
-  const result = await loadResource(fetch, {
+  const result = await loadResourceWithEmail(fetch, {
     name: "Owner email",
     control: "email",
     method: "post",
@@ -68,7 +69,7 @@ test("Email exchange inspection retains actual Email Service response headers", 
     header: string | null;
   }> = [];
 
-  await loadResource(
+  await loadResourceWithEmail(
     vi.fn<typeof globalThis.fetch>(),
     {
       name: "Receipt email",
@@ -131,7 +132,7 @@ test("Email inspection keeps raw HTTP response separate from failed delivery out
     outcome?: { ok: boolean; status: number; data: unknown };
   }> = [];
 
-  const result = await loadResource(
+  const result = await loadResourceWithEmail(
     vi.fn<typeof globalThis.fetch>(),
     {
       name: "Receipt email",
@@ -195,7 +196,7 @@ test("Email inspection preserves a non-JSON HTTP 200 error body", async () => {
     outcome?: { ok: boolean; status: number };
   }> = [];
 
-  const result = await loadResource(
+  const result = await loadResourceWithEmail(
     vi.fn<typeof globalThis.fetch>(),
     {
       name: "Receipt email",
@@ -236,7 +237,7 @@ test.each(["\r", "\n", "\r\n"])(
   async (lineBreak) => {
     const fetch = vi.fn<typeof globalThis.fetch>();
     await expect(
-      loadResource(fetch, {
+      loadResourceWithEmail(fetch, {
         name: "Owner email",
         control: "email",
         method: "post",
@@ -390,7 +391,9 @@ test("retries only failed roots without replaying successful siblings or depende
   };
 
   await expect(
-    loadResources(fetch, graph, undefined, { retryFailedRoots: true })
+    loadResources(fetch, graph, undefined, {
+      shouldRetryFailedRoot: () => true,
+    })
   ).resolves.toMatchObject({
     failed: { ok: true, data: { recovered: true } },
     succeeded: { ok: true },
@@ -422,7 +425,9 @@ test("a second failed root attempt is final and cancellation is not retried", as
     rootIds: ["root"],
   };
   await expect(
-    loadResources(fetch, graph, undefined, { retryFailedRoots: true })
+    loadResources(fetch, graph, undefined, {
+      shouldRetryFailedRoot: () => true,
+    })
   ).resolves.toMatchObject({ Root: { ok: false, status: 422 } });
   expect(fetch).toHaveBeenCalledTimes(2);
 
@@ -435,7 +440,7 @@ test("a second failed root attempt is final and cancellation is not retried", as
       new Map([["Root", graph.resources[0].createRequest(new Map())]]),
       undefined,
       {
-        retryFailedRoots: true,
+        shouldRetryFailedRoot: () => true,
         signal: controller.signal,
       }
     )
@@ -475,7 +480,7 @@ test("cancelling a graph root during its first attempt does not retry", async ()
     rootIds: ["root"],
   };
   const pending = loadResources(fetch, graph, undefined, {
-    retryFailedRoots: true,
+    shouldRetryFailedRoot: () => true,
     signal: controller.signal,
   });
   await started;
@@ -636,6 +641,33 @@ test("uses JSON content type for object bodies unless configured otherwise", asy
   await loadResources(fetch, graph);
   expect(contentTypes.sort()).toEqual(["application/json", "text/plain"]);
 });
+
+test.each([
+  ["array", ["first", "second"], "application/json", '["first","second"]'],
+  ["number", 42, "application/json", "42"],
+  ["boolean", false, "application/json", "false"],
+  ["string", "hello", "text/plain", "hello"],
+] as const)(
+  "automatic body format sends %s with its matching content type",
+  async (_kind, body, expectedType, expectedBody) => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const request = new Request(input, init);
+      expect(request.headers.get("content-type")).toBe(expectedType);
+      expect(await request.text()).toBe(expectedBody);
+      return Response.json({ accepted: true });
+    });
+    await loadResource(fetch, {
+      name: "Submit",
+      method: "post",
+      url: "https://example.com/submit",
+      searchParams: [],
+      headers: [],
+      bodyFormat: "auto",
+      body,
+    });
+    expect(fetch).toHaveBeenCalledOnce();
+  }
+);
 
 test("uses an explicit multipart body format for text fields", async () => {
   let submitted: Request | undefined;
@@ -1779,7 +1811,7 @@ test("optional exchange observer records the same serialized fetch and each retr
     ],
   };
   await loadResources(fetch, graph, undefined, {
-    retryFailedRoots: true,
+    shouldRetryFailedRoot: () => true,
     onResourceExchange: async (id, exchange) => {
       if (!(exchange.request instanceof Request)) {
         throw Error("Expected HTTP transport");

@@ -1,4 +1,14 @@
 export * from "./resource-loader";
+export {
+  loadResourceWithEmail as loadResource,
+  loadResourcesWithEmail as loadResources,
+  loadResourceWithEmail,
+  loadResourcesWithEmail,
+} from "./email-resource-delivery";
+export type {
+  EmailResourceLoadOptions,
+  EmailResourceGraphLoadOptions,
+} from "./email-resource-delivery";
 export * from "./system-search";
 export * from "./email-addresses";
 export * from "./email-resource";

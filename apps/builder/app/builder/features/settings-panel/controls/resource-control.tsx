@@ -36,12 +36,8 @@ import {
   $selectedInstanceKeyWithRoot,
   $selectedPage,
 } from "~/shared/nano-states";
-import {
-  UrlField,
-  MethodField,
-  Headers,
-  getResourceScopeForInstance,
-} from "../resource-panel";
+import { UrlField, MethodField, Headers } from "../resource-panel";
+import { getResourceScopeForInstance } from "../resource-scope";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { type ControlProps, VerticalLayout } from "../shared";
 import { PropertyLabel } from "../property-label";

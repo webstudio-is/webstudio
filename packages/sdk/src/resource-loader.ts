@@ -5,7 +5,6 @@ import {
   type Resource,
 } from "@webstudio-is/content-engine";
 import type { ResourceRequest } from "./schema/resources";
-import { validateEmailSubject } from "./email-resource";
 import { isPlainObject, serializeValue } from "./to-string";
 
 const LOCAL_RESOURCE_PREFIX = "$resources";
@@ -181,25 +180,15 @@ export type ResourceExchange = {
 export type ResourceLoadOptions = {
   /** Private, opt-in inspection of the same transport attempt; never replays it. */
   onExchange?: (exchange: ResourceExchange) => void | Promise<void>;
-  /** Used only when exchange inspection is enabled for an Email delivery. */
-  onEmailRequest?: (request: Request) => void;
-  /** Actual response metadata for the Email Service request, for inspection. */
-  onEmailResponse?: (
-    response: Pick<Response, "status" | "statusText" | "headers" | "url">,
-    data: unknown
-  ) => void;
   signal?: AbortSignal;
   timeoutMs?: number;
-  /** Supplied only by the published site's server runtime. */
-  sendEmail?: (
-    request: ResourceRequest,
-    options: ResourceLoadOptions
-  ) => Promise<{
-    ok: boolean;
-    status: number;
-    statusText: string;
-    data: unknown;
-  }>;
+};
+
+export type ResourceLoadResult = {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  data: unknown;
 };
 
 export type ResourceGraphLoadOptions = ResourceLoadOptions & {
@@ -207,12 +196,23 @@ export type ResourceGraphLoadOptions = ResourceLoadOptions & {
     resourceId: string,
     exchange: ResourceExchange
   ) => void | Promise<void>;
-  /** Retry a failed selected root once, without resolving its dependencies again. */
-  retryFailedRoots?: boolean;
+  /** A caller may retry an independent failed root once. */
+  shouldRetryFailedRoot?: (
+    resourceId: string,
+    request: ResourceRequest,
+    result: ResourceLoadResult
+  ) => boolean;
   requestOverrides?: ReadonlyMap<
     string,
     Partial<ResourceRequest> & { fetch?: typeof fetch }
   >;
+  /** Select a feature transport while retaining shared graph resolution. */
+  loadRequest?: (
+    customFetch: typeof fetch,
+    request: ResourceRequest,
+    baseUrl?: string | URL,
+    options?: ResourceLoadOptions
+  ) => Promise<ResourceLoadResult>;
 };
 
 export type ResourceRequestResource = Readonly<{
@@ -221,11 +221,6 @@ export type ResourceRequestResource = Readonly<{
   name?: string;
   dependencies: readonly string[];
   control?: ResourceRequest["control"];
-  /** Trusted, published team-recipient count for an Email destination. */
-  emailRecipientCount?: number;
-  /** Visitor-directed email failure is reported but does not fail the Form. */
-  nonfatal?: boolean;
-  usesDefaultFormBody?: boolean;
   bodyFormat?: ResourceRequest["bodyFormat"];
   createRequest: (documents: ReadonlyMap<string, unknown>) => ResourceRequest;
 }>;
@@ -415,61 +410,6 @@ export const loadResource = async (
       /* Inspection must not change delivery outcomes. */
     }
   };
-  if (resourceRequest.control === "email") {
-    validateEmailSubject(resourceRequest.email?.subject);
-    if (options.sendEmail !== undefined) {
-      let emailRequest: Request | undefined;
-      let emailResponse: ResourceExchange["response"] | undefined;
-      const sendOptions =
-        options.onExchange === undefined
-          ? options
-          : {
-              ...options,
-              onEmailRequest: (request: Request) => {
-                emailRequest = request;
-              },
-              onEmailResponse: (
-                response: Pick<
-                  Response,
-                  "status" | "statusText" | "headers" | "url"
-                >,
-                data: unknown
-              ) => {
-                emailResponse = {
-                  status: response.status,
-                  statusText: response.statusText,
-                  headers: new Headers(response.headers),
-                  data,
-                  url: response.url || undefined,
-                };
-              },
-            };
-      const result = await options.sendEmail(resourceRequest, sendOptions);
-      await observe({
-        kind: "email",
-        request: emailRequest ?? resourceRequest,
-        response: emailResponse ?? {
-          ...result,
-          headers: new Headers(),
-        },
-        outcome: result,
-      });
-      return result;
-    }
-    return {
-      ok: false,
-      status: 501,
-      statusText: "Email delivery requires Webstudio Cloud",
-      data: {
-        ok: false,
-        error: {
-          code: "EMAIL_NOT_CONFIGURED",
-          message: "Email delivery requires Webstudio Cloud",
-          retryable: false,
-        },
-      },
-    };
-  }
   const controller = new AbortController();
   let didTimeout = false;
   const cancel = () => controller.abort(options.signal?.reason);
@@ -559,17 +499,31 @@ export const loadResource = async (
           requestHeaders.delete("Content-Type");
           requestInit.body = toMultipartFormData(body);
         } else {
-          if (resourceRequest.bodyFormat === "json") {
-            requestHeaders.set("Content-Type", "application/json");
-          } else if (requestHeaders.has("Content-Type") === false) {
+          if (
+            resourceRequest.bodyFormat === "json" ||
+            requestHeaders.has("Content-Type") === false
+          ) {
             requestHeaders.set("Content-Type", "application/json");
           }
           requestInit.body = serializeValue(body);
         }
-      } else if (resourceRequest.bodyFormat === "json" && Array.isArray(body)) {
-        requestHeaders.set("Content-Type", "application/json");
+      } else if (
+        resourceRequest.bodyFormat === "json" ||
+        Array.isArray(body) ||
+        typeof body === "number" ||
+        typeof body === "boolean"
+      ) {
+        if (
+          resourceRequest.bodyFormat === "json" ||
+          requestHeaders.has("Content-Type") === false
+        ) {
+          requestHeaders.set("Content-Type", "application/json");
+        }
         requestInit.body = serializeValue(body);
       } else {
+        if (requestHeaders.has("Content-Type") === false) {
+          requestHeaders.set("Content-Type", "text/plain");
+        }
         requestInit.body = serializeValue(body);
       }
     }
@@ -688,8 +642,9 @@ export const loadResources = async (
     resolve: ({ documents, signal }) => {
       const {
         requestOverrides,
-        retryFailedRoots,
+        shouldRetryFailedRoot,
         onResourceExchange,
+        loadRequest = loadResource,
         ...loadOptions
       } = options ?? {};
       const { fetch: requestFetch = customFetch, ...overrides } =
@@ -700,7 +655,7 @@ export const loadResources = async (
         ...overrides,
       };
       const load = () =>
-        loadResource(requestFetch, resolvedRequest, baseUrl, {
+        loadRequest(requestFetch, resolvedRequest, baseUrl, {
           ...loadOptions,
           onExchange: onResourceExchange
             ? (exchange) => onResourceExchange(resource.id, exchange)
@@ -708,12 +663,10 @@ export const loadResources = async (
           signal: signal ?? options?.signal,
         });
       return load().then((result) =>
-        retryFailedRoots === true &&
         rootIds.has(resource.id) &&
         result.ok === false &&
-        // A per-site Email Service quota rejection cannot succeed on an
-        // immediate retry; preserve the result for the Form error UI.
-        !(resolvedRequest.control === "email" && result.status === 429) &&
+        shouldRetryFailedRoot?.(resource.id, resolvedRequest, result) ===
+          true &&
         !signal?.aborted &&
         !options?.signal?.aborted
           ? load()

@@ -13,6 +13,7 @@ import {
   getStyleDeclKey,
   isAssetsResource,
   isFormSubmission,
+  isEmailBindingDataSourceAvailable,
   ROOT_INSTANCE_ID,
   resource,
   SYSTEM_VARIABLE_ID,
@@ -2389,7 +2390,9 @@ const validateEmailExpressionBindings = ({
 }) => {
   if (
     email?.senderExpression === undefined &&
-    email?.recipientsExpression === undefined
+    email?.recipientsExpression === undefined &&
+    email?.subject === undefined &&
+    email?.body === undefined
   ) {
     return;
   }
@@ -2399,24 +2402,28 @@ const validateEmailExpressionBindings = ({
   const dataSourcesById = new Map(
     dataSources.map((dataSource) => [dataSource.id, dataSource])
   );
-  const availableVariables = findAvailableVariables({
+  const { maskedIdByName, availableDataSourceIds } = findVariablesByInstanceId({
     startingInstanceId: scopeInstanceId,
+    parentInstanceById: getParentInstanceById(instancesById),
     instances: instancesById,
     dataSources: dataSourcesById,
   });
-  const availableNames = new Set(
-    availableVariables.map(({ name }) => encodeDataVariableName(name))
-  );
-  const unsetNameById = new Map(
-    availableVariables.map(({ id, name }) => [id, name])
-  );
-  const issues = listResourceExpressions({ email }, ["resource"])
-    .filter(({ path }) =>
-      ["senderExpression", "recipientsExpression"].includes(path.at(-1) ?? "")
-    )
-    .flatMap(({ path, expression }) =>
+  const availableNames = new Set<string>();
+  for (const id of availableDataSourceIds) {
+    const dataSource = dataSourcesById.get(id);
+    if (isEmailBindingDataSourceAvailable(dataSource)) {
+      availableNames.add(encodeDataVariableId(id));
+    }
+  }
+  for (const [name, id] of maskedIdByName) {
+    if (isEmailBindingDataSourceAvailable(dataSourcesById.get(id))) {
+      availableNames.add(encodeDataVariableName(name));
+    }
+  }
+  const issues = listResourceExpressions({ email }, ["resource"]).flatMap(
+    ({ path, expression }) =>
       getExpressionWarnings({
-        expression: unsetExpressionVariables({ expression, unsetNameById }),
+        expression,
         availableVariables: availableNames,
         path,
       }).map(({ message }) => ({
@@ -2425,12 +2432,62 @@ const validateEmailExpressionBindings = ({
         message,
         constraint: "available_variable_at_resource_scope",
       }))
-    );
+  );
   if (issues.length > 0) {
     return throwBuilderValidationError(
       formatValidationIssueMessages(issues),
       issues
     );
+  }
+};
+
+const validateEmailResourceConsumerBindings = ({
+  email,
+  resourceId,
+  build,
+  propInstanceId,
+  removedAliasId,
+  upsertedAlias,
+}: {
+  email: Resource["email"];
+  resourceId: Resource["id"];
+  build: Pick<CompactBuild, "instances" | "props" | "dataSources">;
+  propInstanceId?: Instance["id"];
+  removedAliasId?: DataSource["id"];
+  upsertedAlias?: { id: DataSource["id"]; scopeInstanceId: Instance["id"] };
+}) => {
+  const scopes = new Set<Instance["id"]>();
+  if (propInstanceId !== undefined) {
+    scopes.add(propInstanceId);
+  }
+  for (const prop of build.props) {
+    if (prop.type === "resource" && prop.value === resourceId) {
+      scopes.add(prop.instanceId);
+    }
+  }
+  for (const dataSource of build.dataSources) {
+    if (
+      dataSource.type === "resource" &&
+      dataSource.resourceId === resourceId &&
+      dataSource.id !== removedAliasId &&
+      dataSource.id !== upsertedAlias?.id
+    ) {
+      scopes.add(dataSource.scopeInstanceId ?? ROOT_INSTANCE_ID);
+    }
+  }
+  if (upsertedAlias !== undefined) {
+    scopes.add(upsertedAlias.scopeInstanceId);
+  }
+  if (scopes.size === 0) {
+    scopes.add(ROOT_INSTANCE_ID);
+  }
+  for (const scopeInstanceId of scopes) {
+    validateEmailExpressionBindings({
+      email,
+      scopeInstanceId,
+      instances: build.instances,
+      dataSources: build.dataSources,
+    });
   }
 };
 
@@ -2755,11 +2812,13 @@ export const createResourceUpdatePayload = ({
 
 export const createResourceDeletePayload = ({
   resource,
+  instances,
   dataSources,
   props,
   force,
 }: {
   resource: Resource;
+  instances: ReadonlyMap<string, Pick<Instance, "component">>;
   dataSources: Iterable<DataSource>;
   props: Iterable<Prop>;
   force?: boolean;
@@ -2784,6 +2843,7 @@ export const createResourceDeletePayload = ({
     if (
       prop.type !== "json" ||
       prop.name !== "action" ||
+      instances.get(prop.instanceId)?.component !== "NativeForm" ||
       !isFormSubmission(prop.value) ||
       !prop.value.some((action) =>
         resourceDataSourceIds.has(action.dataSourceId)
@@ -2926,6 +2986,12 @@ export const createResource = (
   const resourceInput = normalizeResourceFieldsInput(input.resource);
   validateResourceFields(resourceInput, ["resource"]);
   const build = getRequiredBuildData(state);
+  validateEmailExpressionBindings({
+    email: resourceInput.email,
+    scopeInstanceId: input.scopeInstanceId ?? ROOT_INSTANCE_ID,
+    instances: build.instances,
+    dataSources: build.dataSources,
+  });
   const resourceId = context.createId();
   const exposeAsDataSource =
     input.exposeAsDataSource ??
@@ -3084,6 +3150,18 @@ export const updateResource = (
   const dataSourceId = exposeAsDataSource
     ? (dataSource?.id ?? context.createId())
     : dataSource?.id;
+  validateEmailResourceConsumerBindings({
+    email: nextResource.email,
+    resourceId: resource.id,
+    build,
+    removedAliasId: exposeAsDataSource ? undefined : dataSource?.id,
+    upsertedAlias:
+      exposeAsDataSource &&
+      dataSourceId !== undefined &&
+      scopeInstanceId !== undefined
+        ? { id: dataSourceId, scopeInstanceId }
+        : undefined,
+  });
   const warnings = getResourceWarnings({
     fields: nextResource,
     state,
@@ -3216,12 +3294,6 @@ export const upsertResource = (
   const resourceInput = normalizeResourceFieldsInput(input.resource);
   validateResourceFields(resourceInput, ["resource"]);
   const build = getRequiredBuildData(state);
-  validateEmailExpressionBindings({
-    email: resourceInput.email,
-    scopeInstanceId: input.scopeInstanceId,
-    instances: build.instances,
-    dataSources: build.dataSources,
-  });
   if (
     input.resourceId !== undefined &&
     findResource(build.resources, input.resourceId) === undefined
@@ -3239,6 +3311,12 @@ export const upsertResource = (
 
   const resourceId = input.resourceId ?? context.createId();
   const dataSourceId = input.dataSourceId ?? context.createId();
+  validateEmailResourceConsumerBindings({
+    email: resourceInput.email,
+    resourceId,
+    build,
+    upsertedAlias: { id: dataSourceId, scopeInstanceId: input.scopeInstanceId },
+  });
   const resource = createResourceValue({
     id: resourceId,
     name: resourceInput.name,
@@ -3308,6 +3386,19 @@ export const upsertResourceProp = (
   }
 
   const resourceId = input.resourceId ?? context.createId();
+  // upsertResourceMutable removes the first Resource data source when the
+  // prop Resource is saved without exposing it as render-time data.
+  const removedAlias = build.dataSources.find(
+    (dataSource) =>
+      dataSource.type === "resource" && dataSource.resourceId === resourceId
+  );
+  validateEmailResourceConsumerBindings({
+    email: resourceInput.email,
+    resourceId,
+    build,
+    propInstanceId: input.instanceId,
+    removedAliasId: removedAlias?.id,
+  });
   const resource = createResourceValue({
     id: resourceId,
     name: resourceInput.name,
@@ -3411,6 +3502,7 @@ export const deleteResource = (
   }
   const resultPayload = createResourceDeletePayload({
     resource,
+    instances: state.instances,
     dataSources: dataSources.values(),
     props: getRequiredProps(state).values(),
     force: input.force,

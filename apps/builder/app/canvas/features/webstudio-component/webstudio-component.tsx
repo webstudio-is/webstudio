@@ -210,20 +210,10 @@ const PreviewNativeForm = forwardRef<
   const system = useStore($currentSystem);
   const { hash } = useStore($selectedPageHash);
   const formRef = useRef<HTMLFormElement>(null);
-  const isPreviewMode = useStore($isPreviewMode);
-  const wasPreviewMode = useRef(isPreviewMode);
-  const { onStateChange, state } = props;
-  const [revision, setRevision] = useState(0);
+  const onStateChangeRef = useRef(props.onStateChange);
+  onStateChangeRef.current = props.onStateChange;
   const formSelector = (props as Record<string, unknown>)[selectorIdAttribute];
-  useLayoutEffect(() => {
-    if (wasPreviewMode.current && !isPreviewMode) {
-      onStateChange?.("initial");
-      if (state === undefined) {
-        setRevision((value) => value + 1);
-      }
-    }
-    wasPreviewMode.current = isPreviewMode;
-  }, [isPreviewMode, onStateChange, state]);
+  useEffect(() => () => onStateChangeRef.current?.("initial"), []);
   const formId = props["data-ws-managed-form-id"];
   useEffect(() => {
     const form = formRef.current;
@@ -270,10 +260,9 @@ const PreviewNativeForm = forwardRef<
         payload: { selector: String(formSelector), values: null },
       });
     };
-  }, [formId, formSelector, revision]);
+  }, [formId, formSelector]);
   return (
     <NativeForm
-      key={revision}
       {...props}
       ref={mergeRefs(ref, formRef)}
       navigationToken={getPreviewCurrentUrl(system, hash).href}
@@ -842,12 +831,13 @@ const WebstudioComponentCanvasInner = forwardRef<
   const selectedSelector = useStore($selectedInstanceSelector);
   const isPreviewMode = useStore($isPreviewMode);
   const dataSources = useStore($dataSources);
+  const allProps = useStore($props);
   const resolvedInstance = resolveManagedFormErrorSlot(
     instance,
     instances,
-    dataSources
+    dataSources,
+    allProps
   );
-  const allProps = useStore($props);
   const externalContentRoots = useStore($externalContentRoots);
   const metas = useStore($registeredComponentMetas);
   const resourcesState = useStore($resourcesState);
@@ -1167,6 +1157,14 @@ const WebstudioComponentPreviewInner = forwardRef<
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instances = useStore($instances);
+  const dataSources = useStore($dataSources);
+  const allProps = useStore($props);
+  const resolvedInstance = resolveManagedFormErrorSlot(
+    instance,
+    instances,
+    dataSources,
+    allProps
+  );
   const resourcesState = useStore($resourcesState);
   const { isSafeMode } = useContext(ReactSdkContext);
   const { [showAttribute]: show = true, ...instanceProps } =
@@ -1283,11 +1281,16 @@ const WebstudioComponentPreviewInner = forwardRef<
       {getCanvasPageChildren(
         instance,
         instanceSelector,
-        getTextContent(instanceProps) ??
+        (resolvedInstance !== instance
+          ? createManagedFormErrorElements(
+              resolvedInstance.children[0].value,
+              instanceSelector
+            )
+          : getTextContent(instanceProps)) ??
           createInstanceChildrenElements({
             instances,
             instanceSelector,
-            children: instance.children,
+            children: resolvedInstance.children,
             Component: WebstudioComponentPreview,
             components,
           })

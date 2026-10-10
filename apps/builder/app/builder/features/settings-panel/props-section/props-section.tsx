@@ -121,9 +121,6 @@ const shouldShowPropertiesSection = ({
   return isDesignMode || (isContentMode && hasProperties);
 };
 
-const canAddPropertyOrAttribute = (component: Instance["component"]) =>
-  component !== "NativeForm";
-
 const shouldRenderPropsSectionContainer = ({
   component,
   propsMetasSize,
@@ -354,8 +351,7 @@ export const PropsSection = (props: PropsSectionProps) => {
   const addedProps = logic.addedProps;
   const initialProps = logic.initialProps;
   const hasProperties = addedProps.length > 0 || initialProps.length > 0;
-  const canAddProperty =
-    isDesignMode && canAddPropertyOrAttribute(props.component);
+  const canAddProperty = isDesignMode;
   const hasItems = hasProperties || (canAddProperty && addingProp);
 
   const animationAction = logic.initialProps.find(
@@ -459,7 +455,6 @@ export const PropsSection = (props: PropsSectionProps) => {
 
 export const __testing__ = {
   shouldShowPropertiesSection,
-  canAddPropertyOrAttribute,
   shouldRenderPropsSectionContainer,
   shouldSyncMediaAssetProps,
   findExpressionPropByStandardName,

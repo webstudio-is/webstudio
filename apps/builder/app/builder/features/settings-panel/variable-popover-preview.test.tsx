@@ -14,13 +14,13 @@ vi.mock("./email-request-preview", async (importOriginal) => {
     await importOriginal<typeof import("./email-request-preview")>();
   return {
     ...actual,
-    buildEmailRequestPreview: (
-      ...args: Parameters<typeof actual.buildEmailRequestPreview>
+    buildEmailRequestPreviewFromEditor: (
+      ...args: Parameters<typeof actual.buildEmailRequestPreviewFromEditor>
     ) => {
       if (emailPreviewMockState.fail) {
         throw new Error("Unable to evaluate Email expression");
       }
-      return actual.buildEmailRequestPreview(...args);
+      return actual.buildEmailRequestPreviewFromEditor(...args);
     },
   };
 });
@@ -366,6 +366,15 @@ test.each([
       dialog.querySelectorAll<HTMLElement>('[role="tab"]')
     ).find((tab) => tab.textContent === "Request");
     expect(requestTab).toBeDefined();
+    const diagnosticsTab = Array.from(
+      dialog.querySelectorAll<HTMLElement>('[role="tab"]')
+    ).find((tab) => tab.textContent === "Diagnostics");
+    expect(diagnosticsTab).toBeDefined();
+    await act(async () => userEvent.click(diagnosticsTab!));
+    expect(
+      dialog.querySelector('[data-state="active"][aria-busy="false"]')
+    ).not.toBeNull();
+    expect(dialog.textContent).not.toContain("Loading diagnostics…");
     await act(async () => userEvent.click(requestTab!));
     const loadButton = Array.from(
       dialog.querySelectorAll<HTMLButtonElement>("button")

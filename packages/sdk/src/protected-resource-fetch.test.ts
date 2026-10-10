@@ -127,6 +127,62 @@ describe("protected Resource fetch", () => {
     expect(workerFetch).toHaveBeenCalledTimes(1);
   });
 
+  test("follows a public cross-origin GET without forwarding configured headers", async () => {
+    const workerFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 301,
+          headers: { location: "https://www.public.example/path" },
+        })
+      )
+      .mockResolvedValueOnce(new Response("ok"));
+    const protectedFetch = createCloudflareProtectedResourceFetch({
+      ownZoneHostnames: ["own.example"],
+      workerFetch,
+    });
+
+    const response = await protectedFetch("https://public.example/path", {
+      headers: {
+        authorization: "Bearer secret",
+        cookie: "session=secret",
+        "x-submitted-data": "private value",
+      },
+    });
+
+    expect(await response.text()).toBe("ok");
+    expect(workerFetch.mock.calls.map(([url]) => String(url))).toEqual([
+      "https://public.example/path",
+      "https://www.public.example/path",
+    ]);
+    const first = workerFetch.mock.calls[0][1];
+    const second = workerFetch.mock.calls[1][1];
+    expect(new Headers(first?.headers).get("authorization")).toBe(
+      "Bearer secret"
+    );
+    expect([...new Headers(second?.headers)]).toEqual([]);
+    expect(second?.body).toBeUndefined();
+    expect(second?.redirect).toBe("manual");
+  });
+
+  test("rejects an internal cross-origin redirect before the next fetch", async () => {
+    const workerFetch = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: { location: "https://own.example/private" },
+      })
+    );
+    const protectedFetch = createCloudflareProtectedResourceFetch({
+      ownZoneHostnames: ["own.example"],
+      workerFetch,
+    });
+
+    await expect(protectedFetch("https://public.example/path")).rejects.toThrow(
+      "not allowed"
+    );
+    expect(workerFetch).toHaveBeenCalledTimes(1);
+  });
+
   test("rejects redirect method changes and oversized response bodies", async () => {
     const redirect = createProtectedResourceFetch({
       deniedHostnames: [],

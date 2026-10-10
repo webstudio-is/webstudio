@@ -1,4 +1,5 @@
 import type { ResourceLoadOptions } from "./resource-loader";
+import type { EmailResourceLoadOptions } from "./email-resource-delivery";
 import type { ResourceRequest } from "./schema/resources";
 import { internalFormFieldNames } from "./managed-form-submission";
 import { parseEmailSender } from "./email-addresses";
@@ -109,14 +110,17 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
   projectId: string,
   additionalHeaders?: HeadersInit,
   requestUrl: string | URL = "https://email-service.internal/v1/send"
-): ResourceLoadOptions["sendEmail"] | undefined => {
+): EmailResourceLoadOptions["sendEmail"] | undefined => {
   if (sendRequest === undefined) {
     return;
   }
   if (projectId.length === 0) {
     throw new Error("Email Service project ID is required");
   }
-  return async (request: ResourceRequest, options: ResourceLoadOptions) => {
+  return async (
+    request: ResourceRequest,
+    options: ResourceLoadOptions & EmailResourceLoadOptions
+  ) => {
     if (options.signal?.aborted) {
       return failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled");
     }
@@ -279,7 +283,7 @@ export const createCloudflareManagedFormEmailSender = (
   service: EmailService | undefined,
   formData: FormData,
   projectId: string
-): ResourceLoadOptions["sendEmail"] | undefined =>
+): EmailResourceLoadOptions["sendEmail"] | undefined =>
   createCloudflareManagedFormEmailSenderWithFetch(
     service?.fetch.bind(service),
     formData,
@@ -293,7 +297,7 @@ export const createCloudflareManagedFormEmailSenderWithUrl = (
   formData: FormData,
   projectId: string,
   fetcher: typeof fetch = fetch
-): ResourceLoadOptions["sendEmail"] | undefined => {
+): EmailResourceLoadOptions["sendEmail"] | undefined => {
   if (!serviceUrl || !token) {
     return;
   }

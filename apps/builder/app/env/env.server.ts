@@ -22,6 +22,8 @@ const environment = z.object({
   // Trpc on SaaS
   TRPC_SERVER_URL: z.string().url().optional(),
   TRPC_SERVER_API_TOKEN: z.string().optional(),
+  // Server-only credential for Builder Form Preview email delivery.
+  EMAIL_SERVICE_PREVIEW_TOKEN: z.string().min(1).optional(),
 
   PORT: z
     .string()
@@ -96,6 +98,7 @@ const rawEnv = {
   DEPLOYMENT_URL: process.env.DEPLOYMENT_URL,
   TRPC_SERVER_URL: process.env.TRPC_SERVER_URL,
   TRPC_SERVER_API_TOKEN: process.env.TRPC_SERVER_API_TOKEN,
+  EMAIL_SERVICE_PREVIEW_TOKEN: process.env.EMAIL_SERVICE_PREVIEW_TOKEN,
   PORT: process.env.PORT,
   MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE,
   S3_ENDPOINT: process.env.S3_ENDPOINT,

@@ -2,6 +2,7 @@ import {
   getManagedFormParameterBinding,
   getManagedFormResourcePlan,
   InvalidManagedFormGraph,
+  getManagedFormSubmissionResourceIds,
 } from "./managed-form-graph";
 import type { DataSources } from "./schema/data-sources";
 import type { Instances } from "./schema/instances";
@@ -21,7 +22,79 @@ import {
   browserInfoParameterName,
   formDataParameterName,
 } from "./managed-form-submission";
-import { generateResourceRequestFields } from "./resources-generator";
+import {
+  generateResourceRequestFields,
+  generateResources,
+} from "./resources-generator";
+import { generateEmailRequestFields } from "./email-resource-generator";
+import { getExpressionDataSourceIds } from "./resource-dependencies";
+
+/** Compose page-load Resources with the inputs reserved for Form submissions. */
+export const generatePageResources = (
+  options: Parameters<typeof generateResources>[0]
+) => {
+  const { formParameterIds, submissionResourceIds } =
+    getManagedFormSubmissionResourceIds({
+      instances: options.instances ?? new Map(),
+      dataSources: options.dataSources,
+      resources: options.resources,
+    });
+  const selectedResourceIds = new Set(
+    options.contentBlockResourceSelections?.flatMap(({ candidates }) =>
+      candidates.flatMap(({ resourceIds }) => resourceIds)
+    ) ?? []
+  );
+  for (const resourceId of selectedResourceIds) {
+    if (submissionResourceIds.has(resourceId)) {
+      throw new Error(
+        "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+      );
+    }
+  }
+  for (const { sourceExpression } of options.contentBlockResourceSelections ??
+    []) {
+    for (const sourceId of getExpressionDataSourceIds([sourceExpression])) {
+      const source = options.dataSources.get(sourceId);
+      if (
+        formParameterIds.has(sourceId) ||
+        (source?.type === "resource" &&
+          submissionResourceIds.has(source.resourceId))
+      ) {
+        throw new Error(
+          "Dynamic Content Block Resources cannot depend on NativeForm-only inputs"
+        );
+      }
+    }
+  }
+  const emailResources = Array.from(options.resources.values()).filter(
+    (resource) => resource.control === "email"
+  );
+  const emailExpressionResolvers = [
+    ...(emailResources.some(
+      (resource) => resource.email?.recipientsExpression !== undefined
+    )
+      ? ["resolveEmailRecipientsExpression"]
+      : []),
+    ...(emailResources.some(
+      (resource) => resource.email?.senderExpression !== undefined
+    )
+      ? ["resolveEmailSenderSettingsExpression"]
+      : []),
+  ];
+  return generateResources({
+    ...options,
+    excludedResourceIds: submissionResourceIds,
+    unavailableDataSourceIds: formParameterIds,
+    additionalImports:
+      emailExpressionResolvers.length === 0
+        ? ""
+        : `import { ${emailExpressionResolvers.join(", ")} } from "@webstudio-is/sdk";\n`,
+    generateAdditionalRequestFields: (fields) =>
+      fields.resource.control === "email"
+        ? generateEmailRequestFields(fields)
+        : "",
+  });
+};
 
 /**
  * Generate requests for a managed submission separately from page-load requests.
@@ -59,7 +132,7 @@ export const generateManagedFormResources = ({
     "_managedFormDocuments"
   );
   // generateResources supplies the imports in the same server module.
-  let generated = `import { createJsonStringifyProxy } from "@webstudio-is/sdk/to-string";\nexport const getManagedFormResourceGraph = (formId: string, ${propsName}: { system: System; ${formDataParameterName}: unknown; ${browserInfoParameterName}: unknown }): ResourceRequestGraph | undefined => {\n`;
+  let generated = `import type { ManagedFormResourceGraph } from "@webstudio-is/sdk/runtime";\nimport { createJsonStringifyProxy } from "@webstudio-is/sdk/to-string";\nexport const getManagedFormResourceGraph = (formId: string, ${propsName}: { system: System; ${formDataParameterName}: unknown; ${browserInfoParameterName}: unknown }): ManagedFormResourceGraph | undefined => {\n`;
   generated += `  switch (formId) {\n`;
 
   for (const { formId, destinationDataSourceIds } of forms) {
@@ -159,17 +232,28 @@ export const generateManagedFormResources = ({
               )
             : undefined;
         const fields = generateResourceRequestFields({
-          resource,
+          resource: rootIds.includes(resourceId)
+            ? { ...resource, method: "post" }
+            : resource,
           indent: "        ",
           dataSources,
           usedDataSources: requestDataSources,
           scope,
-          method: rootIds.includes(resourceId) ? "post" : undefined,
-          emailBodyCode,
-          resolvedEmailSettings,
-          projectMeta,
-          ownerEmail,
         });
+        const emailFields =
+          resource.control === "email"
+            ? generateEmailRequestFields({
+                resource,
+                indent: "        ",
+                dataSources,
+                usedDataSources: requestDataSources,
+                scope,
+                emailBodyCode,
+                resolvedEmailSettings,
+                projectMeta,
+                ownerEmail,
+              })
+            : "";
         const defaultFormBody =
           resource.control !== "email" &&
           rootIds.includes(resourceId) &&
@@ -245,7 +329,7 @@ export const generateManagedFormResources = ({
           generatedRequests += `      throw new Error(${JSON.stringify(visitorParameterError)});\n    };\n`;
           continue;
         }
-        generatedRequests += `      return {\n${fields}${defaultFormBody}      };\n    };\n`;
+        generatedRequests += `      return {\n${fields}${emailFields}${defaultFormBody}      };\n    };\n`;
       }
 
       let generatedVariables = "";

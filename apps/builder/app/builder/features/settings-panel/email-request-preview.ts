@@ -4,18 +4,103 @@ import {
   parseEmailSender,
   resolveEmailResourceSettings,
   type EmailResourceSettings,
+  type DataSource,
+  type DataSources,
   type Instances,
   type ProjectMeta,
   type Props,
 } from "@webstudio-is/sdk";
+import { emailResourceSettings, findTreeInstanceIds } from "@webstudio-is/sdk";
+import { encodeDataVariableId } from "@webstudio-is/sdk";
+import {
+  $livePreviewFormValues,
+  $livePreviewBrowserInfo,
+  getFormOccurrenceKey,
+} from "~/shared/preview-form-values";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
+import {
+  $instances,
+  $dataSources,
+  $props,
+  $projectSettings,
+} from "~/shared/sync/data-stores";
+import {
+  getBrowserInfoPreview,
+  getFormDataPreview,
+} from "./form-context-preview";
 import { createJsonStringifyProxy } from "@webstudio-is/sdk/to-string";
 import { computeExpressionWithinScope } from "@webstudio-is/project-build/runtime";
 import {
   internalFormFieldNames,
+  formDataParameterName,
+  browserInfoParameterName,
   type ManagedFormBrowserInfo,
 } from "@webstudio-is/sdk/runtime";
 
 type FileMetadata = { name: string; type: string; size: number };
+
+/** Gather current editor inputs and local Form values without sending Email. */
+export const buildEmailRequestPreviewFromEditor = async ({
+  form,
+  variable,
+  scope,
+  aliases,
+}: {
+  form: HTMLFormElement;
+  variable?: DataSource;
+  scope: Record<string, unknown>;
+  aliases: ReadonlyMap<string, string>;
+}) => {
+  const rawSettings = new FormData(form).get("email-settings");
+  let settings: unknown;
+  try {
+    settings = JSON.parse(String(rawSettings ?? "{}"));
+  } catch {
+    return;
+  }
+  const parsedSettings = emailResourceSettings.safeParse(settings);
+  if (!parsedSettings.success) {
+    return;
+  }
+  const instances = $instances.get();
+  const props = $props.get();
+  const selected = $selectedInstanceSelector.get();
+  const formId =
+    selected?.find(
+      (instanceId) => instances.get(instanceId)?.component === "NativeForm"
+    ) ??
+    Array.from(instances.values()).find(
+      (instance) =>
+        instance.component === "NativeForm" &&
+        variable?.scopeInstanceId !== undefined &&
+        findTreeInstanceIds(instances, instance.id).has(
+          variable.scopeInstanceId
+        )
+    )?.id;
+  const formData =
+    formId === undefined
+      ? undefined
+      : ($livePreviewFormValues
+          .get()
+          .get(getFormOccurrenceKey(selected, formId) ?? "") ??
+        getFormDataPreview(instances, props, formId));
+  const browserInfo =
+    formId === undefined
+      ? undefined
+      : getBrowserInfoPreview($livePreviewBrowserInfo.get().get(formId));
+  return buildEmailRequestPreview({
+    settings: parsedSettings.data,
+    projectMeta: $projectSettings.get()?.meta,
+    scope,
+    aliases,
+    dataSources: $dataSources.get(),
+    formId,
+    formData,
+    browserInfo,
+    instances,
+    props,
+  });
+};
 
 const getFileMetadata = (value: unknown): FileMetadata[] => {
   if (Array.isArray(value)) {
@@ -45,6 +130,7 @@ export const buildEmailRequestPreview = async ({
   projectMeta,
   scope,
   aliases,
+  dataSources,
   formId,
   formData,
   browserInfo,
@@ -55,6 +141,7 @@ export const buildEmailRequestPreview = async ({
   projectMeta?: ProjectMeta;
   scope: Record<string, unknown>;
   aliases: ReadonlyMap<string, string>;
+  dataSources: DataSources;
   formId?: string;
   formData?: Record<string, unknown>;
   browserInfo?: ManagedFormBrowserInfo;
@@ -82,14 +169,21 @@ export const buildEmailRequestPreview = async ({
             )
           );
   const evaluationScope = { ...scope };
-  for (const [identifier, name] of aliases) {
-    if (name === "formData") {
+  for (const source of dataSources.values()) {
+    if (source.type !== "parameter" || source.scopeInstanceId !== formId) {
+      continue;
+    }
+    const identifier = encodeDataVariableId(source.id);
+    if (aliases.has(identifier) === false) {
+      continue;
+    }
+    if (source.name === formDataParameterName) {
       evaluationScope[identifier] = createJsonStringifyProxy(
         visibleFormData ?? {},
         formDataOptions
       );
     }
-    if (name === "browserInfo" && browserInfo !== undefined) {
+    if (source.name === browserInfoParameterName && browserInfo !== undefined) {
       evaluationScope[identifier] = createJsonStringifyProxy(browserInfo, {
         space: 2,
       });

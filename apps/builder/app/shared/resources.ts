@@ -14,6 +14,7 @@ import {
 import { restResourcesLoader } from "./router-utils";
 import {
   $resourcePreviewExchanges,
+  recordResourcePreviewExchange,
   type PreviewFormExchange,
 } from "./preview-form-inspection";
 import {
@@ -51,7 +52,7 @@ const pendingDiagnostics = new Map<string, InFlightResourceDiagnostics>();
 const knownRequests = new Map<string, ResourceRequest>();
 const pageRequestKeys = new Set<string>();
 const previewRequests = new Map<string, Set<symbol>>();
-const inspectionRequests = new Set<string>();
+const inspectionRequests = new Map<string, number>();
 const resourceVersions = new Map<string, number>();
 const inFlightBatches = new Set<InFlightResourceBatch>();
 
@@ -148,7 +149,11 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
     const startedAt = performance.now();
     const inspectionKey = list
       .map(getResourceKey)
-      .find((key) => inspectionRequests.has(key));
+      .find(
+        (key) =>
+          inspectionRequests.get(key) === batch.versions.get(key) &&
+          pending.get(key) === batch
+      );
     const response = await requestFetch(
       restResourcesLoader({ inspect: inspectionKey }),
       {
@@ -172,10 +177,18 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
       const { inspection } = payload as {
         inspection?: PreviewFormExchange;
       };
-      if (inspection !== undefined) {
-        const next = new Map($resourcePreviewExchanges.get());
-        next.set(inspection.resourceId, inspection);
-        $resourcePreviewExchanges.set(next);
+      if (
+        inspection !== undefined &&
+        inspectionKey !== undefined &&
+        inspection.resourceId === inspectionKey &&
+        pending.get(inspectionKey) === batch &&
+        knownRequests.has(inspectionKey) &&
+        resourceVersions.get(inspectionKey) ===
+          batch.versions.get(inspectionKey) &&
+        inspectionRequests.get(inspectionKey) ===
+          batch.versions.get(inspectionKey)
+      ) {
+        recordResourcePreviewExchange(inspection.resourceId, inspection);
       }
     }
     const loaderDurationMs = performance.now() - startedAt;
@@ -204,7 +217,9 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
   } finally {
     inFlightBatches.delete(batch);
     for (const key of dispatched.keys()) {
-      inspectionRequests.delete(key);
+      if (inspectionRequests.get(key) === batch.versions.get(key)) {
+        inspectionRequests.delete(key);
+      }
       if (pending.get(key) === batch) {
         pending.delete(key);
       }
@@ -330,7 +345,7 @@ export const loadResourcePreview = (
   requestFetch: typeof fetch = fetch
 ) => {
   const key = getResourceKey(resource);
-  inspectionRequests.add(key);
+  inspectionRequests.set(key, (resourceVersions.get(key) ?? 0) + 1);
   const previousInspection = new Map($resourcePreviewExchanges.get());
   previousInspection.delete(key);
   $resourcePreviewExchanges.set(previousInspection);

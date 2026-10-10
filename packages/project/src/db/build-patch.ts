@@ -5,16 +5,13 @@ import {
   type AssetObjectReader,
 } from "@webstudio-is/asset-uploader/server";
 import type { Build, ProjectSettings } from "@webstudio-is/project-build";
-import { validateContactEmail } from "@webstudio-is/project-build/contracts";
 import { parseConfig } from "@webstudio-is/project-build/persistence";
 import { loadRawBuildById } from "@webstudio-is/project-build/server";
 import type { Database } from "@webstudio-is/postgrest/index.server";
-import {
-  getProjectPlanFeatures,
-  type AppContext,
-} from "@webstudio-is/trpc-interface/index.server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import type { Project } from "./project";
 import { updatePreviewImage } from "./project";
+import { validateProjectSettingsContactEmail } from "./project-settings-email";
 import {
   createBuildPatchUpdate,
   singlePlayerVersionMismatchResult,
@@ -75,19 +72,14 @@ export const patchLoadedBuild = async (
       buildUpdate.projectSettings
     );
     const currentSettings = parseConfig<ProjectSettings>(build.projectSettings);
-    const contactEmail = nextSettings.meta.contactEmail;
-    if (
-      typeof contactEmail === "string" &&
-      contactEmail !== currentSettings.meta.contactEmail
-    ) {
-      const ownerPlan = await getProjectPlanFeatures(projectId, context);
-      const error = validateContactEmail(
-        contactEmail,
-        ownerPlan.maxContactEmailsPerProject
-      );
-      if (error !== undefined) {
-        return { status: "error", errors: error };
-      }
+    const error = await validateProjectSettingsContactEmail({
+      projectId,
+      currentContactEmail: currentSettings.meta.contactEmail,
+      nextContactEmail: nextSettings.meta.contactEmail,
+      context,
+    });
+    if (error !== undefined) {
+      return { status: "error", errors: error };
     }
   }
   if (result.assetPatches.length > 0 && assetStore === undefined) {

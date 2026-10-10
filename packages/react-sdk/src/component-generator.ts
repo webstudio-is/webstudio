@@ -506,7 +506,8 @@ export const generateJsxChildren = ({
       const instance = resolveManagedFormErrorSlot(
         authoredInstance,
         instances,
-        dataSources
+        dataSources,
+        props
       );
       const instanceRuntimeHelpers = usedRuntimeHelpers
         ? new Set<"renderText" | "formatManagedFormErrors">()

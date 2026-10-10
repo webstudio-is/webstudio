@@ -151,6 +151,29 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const destinations = isFormSubmission(action)
       ? getEnabledFormDestinations(action)
       : [];
+    if (
+      !env.EMAIL_SERVICE_PREVIEW_TOKEN &&
+      destinations.some((id) => {
+        const source = dataSources.get(id);
+        return (
+          source?.type === "resource" &&
+          resources.get(source.resourceId)?.control === "email"
+        );
+      })
+    ) {
+      return respond({
+        success: false,
+        status: 503,
+        results: [],
+        errors: [
+          {
+            status: 503,
+            body: null,
+            message: "Email Service is unavailable for Form Preview",
+          },
+        ],
+      });
+    }
     const resourceIds = destinations.map((id) => {
       const source = dataSources.get(id);
       return source?.type === "resource" && resources.has(source.resourceId)
@@ -197,6 +220,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const sensitiveFields = new Set(privacy.excludeKeys ?? []);
     const privateValues = new Set<string>([
       env.TRPC_SERVER_API_TOKEN ?? "",
+      env.EMAIL_SERVICE_PREVIEW_TOKEN ?? "",
       request.url,
     ]);
     const publicValues = new Set<string>();
@@ -276,7 +300,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       createEmailSender: (data) =>
         createCloudflareManagedFormEmailSenderWithUrl(
           cloudflareManagedFormPreviewEmailServiceUrl,
-          env.TRPC_SERVER_API_TOKEN,
+          env.EMAIL_SERVICE_PREVIEW_TOKEN,
           data,
           projectId
         ),

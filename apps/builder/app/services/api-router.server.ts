@@ -2,7 +2,6 @@ import { z } from "zod";
 import {
   AuthorizationError,
   authorizeProject,
-  getProjectPlanFeatures,
   procedure,
   router,
   type AppContext,
@@ -73,7 +72,6 @@ import {
 import type { CompactBuild } from "@webstudio-is/project-build";
 import {
   runtimeOperationContracts,
-  validateContactEmail,
   type RuntimeOperationId,
 } from "@webstudio-is/project-build/contracts";
 import { builderNamespaces } from "@webstudio-is/project-build/contracts";
@@ -90,6 +88,7 @@ import {
   serializeProjectSummary,
 } from "./api-build.server";
 import { throwApiError } from "./api-errors.server";
+import { validateProjectSettingsUpdate } from "./project-settings-mutation.server";
 import {
   createBuilderRuntimeState,
   executeApiRuntimeMutation,
@@ -447,22 +446,13 @@ const runtimeBuildMutation = <Result extends Record<string, unknown> = {}>(
   buildMutation(
     runtimeMutationInput(id, requiresConfirm),
     async ({ ctx, input, build, commit }) => {
-      if (id === "projectSettings.update") {
-        const contactEmail = (input as { meta?: { contactEmail?: unknown } })
-          .meta?.contactEmail;
-        if (
-          typeof contactEmail === "string" &&
-          contactEmail !== build.projectSettings.meta.contactEmail
-        ) {
-          const ownerPlan = await getProjectPlanFeatures(input.projectId, ctx);
-          const error = validateContactEmail(
-            contactEmail,
-            ownerPlan.maxContactEmailsPerProject
-          );
-          if (error !== undefined) {
-            return throwApiError("BAD_REQUEST", error);
-          }
-        }
+      const error = await runtimeMutationValidators[id]?.({
+        input,
+        build,
+        context: ctx,
+      });
+      if (error !== undefined) {
+        return throwApiError("BAD_REQUEST", error);
       }
       return commitRuntimeMutation<Result>({
         id,
@@ -472,6 +462,19 @@ const runtimeBuildMutation = <Result extends Record<string, unknown> = {}>(
       });
     }
   );
+
+const runtimeMutationValidators: Partial<
+  Record<
+    RuntimeOperationId,
+    (args: {
+      input: unknown;
+      build: CompactBuild;
+      context: AppContext;
+    }) => Promise<string | undefined>
+  >
+> = {
+  "projectSettings.update": validateProjectSettingsUpdate,
+};
 
 type BuildCommit = <CommitResult extends Record<string, unknown> = {}>(
   payload: z.infer<typeof buildPatchTransaction>["payload"],
