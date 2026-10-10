@@ -69,5 +69,9 @@ export const useResource = (name: string) => {
 };
 
 export const renderText = (value: unknown) => {
-  return typeof value === "string" || typeof value === "number" ? value : "";
+  return typeof value === "string" || typeof value === "number"
+    ? value
+    : Array.isArray(value)
+      ? value.join(",")
+      : "";
 };

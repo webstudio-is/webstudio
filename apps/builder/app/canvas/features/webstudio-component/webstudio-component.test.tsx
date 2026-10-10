@@ -148,8 +148,7 @@ describe("getPreviewCurrentUrl", () => {
     const url = getPreviewCurrentUrl(
       {
         pathname: "/contact",
-        search: { choice: "b", source: "newsletter" },
-        searchAll: { choice: ["a", "b"], source: ["newsletter"] },
+        search: { choice: ["a", "b"], source: "newsletter" },
       },
       ""
     );
@@ -231,9 +230,7 @@ test.each(["query", "hash", "params"] as const)(
     });
     $selectedPageId.set("home");
     $systemDataByPage.set(
-      new Map([
-        ["home", { params: { slug: "before" }, search: {}, searchAll: {} }],
-      ])
+      new Map([["home", { params: { slug: "before" }, search: {} }]])
     );
     $selectedPageHash.set({ hash: "" });
     const location = window.location.href;
@@ -274,15 +271,19 @@ test.each(["query", "hash", "params"] as const)(
           $selectedPageHash.set({ hash: "#next" });
         } else {
           $systemDataByPage.set(
-            new Map<string, Pick<System, "params" | "search" | "searchAll">>([
+            new Map<string, Pick<System, "params" | "search">>([
               [
                 "home",
                 {
                   params: {
                     slug: navigation === "params" ? "after" : "before",
                   },
-                  search: navigation === "query" ? { q: "next" } : {},
-                  searchAll: navigation === "query" ? { q: ["next"] } : {},
+                  search:
+                    navigation === "query"
+                      ? { q: ["next"] }
+                      : navigation === "params"
+                        ? { q: "next" }
+                        : {},
                 },
               ],
             ])

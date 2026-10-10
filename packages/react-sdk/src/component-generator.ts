@@ -280,12 +280,18 @@ export const generateJsxElement = ({
     ...propsByGeneratedName,
     ...Array.from(classProps.values(), (prop) => ["className", prop] as const),
   ]) {
-    const propValue = generatePropValue({
+    let propValue = generatePropValue({
       scope,
       prop,
       dataSources,
       usedDataSources,
     });
+    if (
+      meta?.props?.[prop.name]?.type === "string" &&
+      (prop.type === "expression" || prop.type === "parameter")
+    ) {
+      propValue = `${propValue} == null ? ${propValue} : String(${propValue})`;
+    }
 
     if (prop.type === "resource") {
       const propMeta = meta?.props?.[prop.name];

@@ -54,7 +54,6 @@ const initialSystem = {
   params: {},
   pathname: "/",
   search: {},
-  searchAll: {},
 };
 
 const waitForStores = () => new Promise((resolve) => setTimeout(resolve, 20));
@@ -1619,7 +1618,6 @@ test("provide page system variable value", async () => {
     params: { slug: "my-post" },
     pathname: "/",
     search: {},
-    searchAll: {},
     origin: "https://undefined.wstd.work",
   });
 });
@@ -1654,7 +1652,6 @@ test("provide global system variable value", async () => {
     params: { slug: "my-post" },
     pathname: "/",
     search: {},
-    searchAll: {},
     origin: "https://undefined.wstd.work",
   };
   expect($variableValuesByInstanceSelector.get()).toEqual(

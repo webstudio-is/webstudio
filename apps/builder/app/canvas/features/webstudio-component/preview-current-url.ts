@@ -1,9 +1,7 @@
+import { appendSystemSearch, type System } from "@webstudio-is/sdk";
+
 export const getPreviewCurrentUrl = (
-  currentSystem: {
-    pathname: string;
-    search: Record<string, string | undefined>;
-    searchAll?: Record<string, string[]>;
-  },
+  currentSystem: Pick<System, "pathname" | "search">,
   hash: string
 ) => {
   // Preview renders inside the builder canvas route, so window.location points
@@ -12,19 +10,7 @@ export const getPreviewCurrentUrl = (
   // navigation, including query params and hash-only links.
   const currentUrl = new URL(currentSystem.pathname, "https://webstudio.local");
   const searchParams = new URLSearchParams();
-  if (currentSystem.searchAll !== undefined) {
-    for (const [name, values] of Object.entries(currentSystem.searchAll)) {
-      for (const value of values) {
-        searchParams.append(name, value);
-      }
-    }
-  } else {
-    for (const [name, value] of Object.entries(currentSystem.search)) {
-      if (value !== undefined) {
-        searchParams.append(name, value);
-      }
-    }
-  }
+  appendSystemSearch(searchParams, currentSystem.search);
   currentUrl.search = searchParams.toString();
   currentUrl.hash = hash;
   return currentUrl;

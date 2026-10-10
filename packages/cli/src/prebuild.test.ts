@@ -3204,9 +3204,12 @@ sitemap.map((page) => page.path);`
             method: "post",
             url: `"https://receiver.example/" + ${system}.params.slug + "?source=" + ${system}.search.source`,
             headers: [
-              { name: "X-Selected", value: `${system}.searchAll.tag[0]` },
+              {
+                name: "X-Selected",
+                value: `typeof ${system}.search.tag === "string" ? ${system}.search.tag : ${system}.search.tag[0]`,
+              },
             ],
-            body: `{ slug: ${system}.params.slug, tags: ${system}.searchAll.tag }`,
+            body: `{ slug: ${system}.params.slug, tags: ${system}.search.tag }`,
           },
         ],
       ] as never;
@@ -3299,7 +3302,7 @@ sitemap.map((page) => page.path);`
         {
           url: "https://receiver.example/table?source=direct",
           selected: "last",
-          body: { slug: "table", tags: ["last"] },
+          body: { slug: "table", tags: "last" },
         },
       ]);
     }
@@ -3348,7 +3351,7 @@ sitemap.map((page) => page.path);`
             name: "Submit",
             method: "post",
             url: `"https://receiver.example/" + ${system}.params.slug + "?source=" + ${system}.search.source`,
-            headers: [{ name: "X-Selected", value: `${system}.searchAll.tag` }],
+            headers: [{ name: "X-Selected", value: `${system}.search.tag` }],
           },
         ],
       ] as never;
@@ -3470,7 +3473,7 @@ sitemap.map((page) => page.path);`
             method: "get",
             url: '"https://receiver.example/tags"',
             headers: [
-              { name: "X-Selected-Tags", value: `${system}.searchAll.tag` },
+              { name: "X-Selected-Tags", value: `${system}.search.tag` },
             ],
           },
         ],

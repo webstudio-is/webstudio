@@ -56,6 +56,41 @@ const Vimeo = createTemplateComponentFixture("Vimeo");
 
 const virtualRoot = "/component-generator-test";
 
+test("string props coerce repeated query values without changing missing values", () => {
+  const tags = new Variable("Selected Tags", ["red", "blue"]);
+  const generated = generateWebstudioComponent({
+    classesMap: new Map(),
+    scope: createScope(),
+    name: "Page",
+    rootInstanceId: "body",
+    parameters: [],
+    metas: new Map<string, WsComponentMeta>([
+      [
+        "Input",
+        {
+          props: {
+            placeholder: {
+              type: "string",
+              control: "text",
+              required: false,
+              contentMode: true,
+            },
+          },
+        },
+      ],
+    ]),
+    ...renderData(
+      <Body ws:id="body">
+        <Input ws:id="input" placeholder={expression`${tags}`} />
+      </Body>
+    ),
+  });
+
+  expect(generated).toContain("String(SelectedTags)");
+  expect(generated).toContain("SelectedTags == null ? SelectedTags");
+  expect(isValidJSX(generated)).toBe(true);
+});
+
 test("Form submission parameters are unavailable during page render", () => {
   const formData = new Parameter("formData");
   const browserInfo = new Parameter("browserInfo");

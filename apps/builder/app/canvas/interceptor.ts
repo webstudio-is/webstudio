@@ -1,8 +1,9 @@
 import {
+  appendFormDataToSearchParams,
+  appendSystemSearch,
   getAllPages,
   getPagePath,
   getSystemSearch,
-  appendFormDataToSearchParams,
   isAbsoluteUrl,
 } from "@webstudio-is/sdk";
 import {
@@ -56,11 +57,7 @@ export const switchPageAndUpdateSystem = (
     if (pathname) {
       const system = $currentSystem.get();
       const searchParams = new URLSearchParams();
-      for (const [name, values] of Object.entries(system.searchAll ?? {})) {
-        for (const value of values) {
-          searchParams.append(name, value);
-        }
-      }
+      appendSystemSearch(searchParams, system.search);
       href = `${pathname}?${searchParams}${href}`;
     }
   }
@@ -95,7 +92,7 @@ export const switchPageAndUpdateSystem = (
     selectPage(page.id);
     updateCurrentSystem({
       params: toWebstudioParams(getPagePath(page.id, pages), params),
-      ...search,
+      search: search.search,
     });
     return true;
   }

@@ -68,7 +68,6 @@ const initialSystem = {
   params: {},
   pathname: "/",
   search: {},
-  searchAll: {},
 };
 
 const createPages = () => {

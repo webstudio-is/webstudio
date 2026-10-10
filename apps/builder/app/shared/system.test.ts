@@ -146,7 +146,7 @@ test("system pathname includes parent folder slug", () => {
   ]);
 });
 
-test("system query bindings keep every value and scalar compatibility", () => {
+test("system query bindings preserve repeated values", () => {
   $pages.set(
     getInitialPages({
       id: "dynamicId",
@@ -160,16 +160,14 @@ test("system query bindings keep every value and scalar compatibility", () => {
   selectPage("dynamicId");
   updateCurrentSystem({
     params: { slug: "chair" },
-    search: { tag: "blue" },
-    searchAll: { tag: ["red", "blue"] },
+    search: { tag: ["red", "blue"] },
   });
   expect($currentSystem.get()).toMatchObject({
     params: { slug: "chair" },
-    search: { tag: "blue" },
-    searchAll: { tag: ["red", "blue"] },
+    search: { tag: ["red", "blue"] },
   });
   updateCurrentSystem({ search: { tag: "green" } });
-  expect($currentSystem.get().searchAll?.tag).toEqual(["green"]);
+  expect($currentSystem.get().search.tag).toBe("green");
 });
 
 test("system params support legacy history without parent folder slug", () => {

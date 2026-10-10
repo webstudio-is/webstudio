@@ -68,10 +68,6 @@ test("preview GET form preserves repeated selected query values", () => {
     );
     expect($currentSystem.get().search).toEqual({
       source: "newsletter",
-      tag: "red,blue",
-    });
-    expect($currentSystem.get().searchAll).toEqual({
-      source: ["newsletter"],
       tag: ["", "red,blue", "red,blue"],
     });
     for (const option of select.options) {
@@ -92,10 +88,6 @@ test("preview GET form preserves repeated selected query values", () => {
     expect($currentSystem.get().search).toEqual({
       source: "newsletter",
       intent: "search",
-    });
-    expect($currentSystem.get().searchAll).toEqual({
-      source: ["newsletter"],
-      intent: ["search"],
     });
   } finally {
     unsubscribe();
