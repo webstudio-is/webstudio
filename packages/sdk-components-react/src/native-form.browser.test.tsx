@@ -337,6 +337,52 @@ test("Form resolves Preview success redirects against the Preview page", async (
   }
 });
 
+test("unmatched Preview redirect keeps successful Form feedback on the current page", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const onSuccessRedirect = vi.fn(() => false);
+  const onResultChange = vi.fn();
+  const onSubmissionSuccess = vi.fn();
+  try {
+    await act(async () => {
+      root.render(
+        <NativeForm
+          action={[{ dataSourceId: "resource-one", enabled: true }]}
+          successRedirect="/missing"
+          getRedirectBaseUrl={() => "https://webstudio.local/contact"}
+          onManagedSubmit={async () => ({
+            success: true,
+            status: 200,
+            results: [],
+            errors: [],
+          })}
+          onSuccessRedirect={onSuccessRedirect}
+          onResultChange={onResultChange}
+          onSubmissionSuccess={onSubmissionSuccess}
+        >
+          <div data-ws-form-feedback>Submitted</div>
+          <button type="submit">Send</button>
+        </NativeForm>
+      );
+    });
+    await act(async () => container.querySelector("button")?.click());
+    expect(onSuccessRedirect).toHaveBeenCalledExactlyOnceWith(
+      "https://webstudio.local/missing"
+    );
+    expect(container.querySelector("form")?.getAttribute("data-state")).toBe(
+      "success"
+    );
+    expect(onResultChange).toHaveBeenCalledWith(
+      expect.objectContaining({ success: true })
+    );
+    expect(onSubmissionSuccess).toHaveBeenCalledOnce();
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
 test("file-input settings enforce required uploads and keep optional or multiple files", async () => {
   const container = document.createElement("div");
   document.body.append(container);

@@ -29,12 +29,19 @@ const getSelectedPagePathname = () => {
 
 export const switchPageAndUpdateSystem = (
   href: string,
-  formData?: FormData,
-  controlNames?: Iterable<string>
+  {
+    formData,
+    controlNames,
+    includeFallback = true,
+  }: {
+    formData?: FormData;
+    controlNames?: Iterable<string>;
+    includeFallback?: boolean;
+  } = {}
 ) => {
   const pages = $pages.get();
   if (pages === undefined) {
-    return;
+    return false;
   }
   // preserve pathname when not specified in href/action
   if (href === "" || href.startsWith("?")) {
@@ -67,6 +74,14 @@ export const switchPageAndUpdateSystem = (
   );
   if (matchedPage) {
     const { value: page, params } = matchedPage;
+    if (
+      includeFallback === false &&
+      (page.meta.status === "404" ||
+        getPagePath(page.id, pages) === "/*" ||
+        getPagePath(page.id, pages) === "*")
+    ) {
+      return false;
+    }
     // populate search params with form data values if available
     if (formData) {
       appendFormDataToSearchParams(
@@ -82,7 +97,9 @@ export const switchPageAndUpdateSystem = (
       params: toWebstudioParams(getPagePath(page.id, pages), params),
       ...search,
     });
+    return true;
   }
+  return false;
 };
 
 export const subscribeInterceptedEvents = () => {
@@ -167,7 +184,7 @@ export const subscribeInterceptedEvents = () => {
         const controlNames = Array.from(form.elements, (control) =>
           control.getAttribute("name")
         ).filter((name): name is string => Boolean(name));
-        switchPageAndUpdateSystem(action, formData, controlNames);
+        switchPageAndUpdateSystem(action, { formData, controlNames });
       }
     }
     // prevent submitting the form when clicking a button type submit

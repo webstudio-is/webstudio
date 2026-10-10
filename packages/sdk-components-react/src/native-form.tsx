@@ -33,7 +33,7 @@ export const NativeForm = forwardRef<
       signal: AbortSignal
     ) => void | Promise<ManagedFormResponse>;
     getRedirectBaseUrl?: () => string;
-    onSuccessRedirect?: (destination: string) => void;
+    onSuccessRedirect?: (destination: string) => boolean | void;
     onSubmissionSuccess?: () => void | Promise<void>;
     navigationToken?: string;
     // These parameters define Resource expression scope in Builder.
@@ -192,13 +192,16 @@ export const NativeForm = forwardRef<
                 getRedirectBaseUrl?.() ?? window.location.href
               )
             : undefined;
+          let redirected = false;
           if (destination) {
             if (onSuccessRedirect) {
-              onSuccessRedirect(destination);
+              redirected = onSuccessRedirect(destination) !== false;
             } else {
               window.location.assign(destination);
+              redirected = true;
             }
-          } else {
+          }
+          if (redirected === false) {
             revealFeedback();
             if (response.success) {
               // Refresh is a separate GET. Its failure must not change the

@@ -384,7 +384,7 @@ export const $selectedInstancePropsMetas = computed(
       return propMeta;
     };
     // add html attributes only when instance has tag
-    if (tag) {
+    if (tag && meta?.htmlAttributes !== "hide") {
       if (elementsByTag[tag].categories.includes("html-element")) {
         for (const attribute of [...ariaAttributes].reverse()) {
           propsMetas.set(attribute.name, toAttributeMeta(attribute));

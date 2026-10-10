@@ -2,14 +2,14 @@
 export const navigatePreviewFormSuccess = (
   destination: string,
   currentHref: string,
-  navigateInternal: (path: string) => void,
+  navigateInternal: (path: string) => boolean,
   navigateExternal: (href: string) => void
 ) => {
   const current = new URL(currentHref);
   const target = new URL(destination, current);
   if (target.origin === current.origin) {
-    navigateInternal(target.pathname + target.search + target.hash);
-  } else {
-    navigateExternal(target.href);
+    return navigateInternal(target.pathname + target.search + target.hash);
   }
+  navigateExternal(target.href);
+  return true;
 };

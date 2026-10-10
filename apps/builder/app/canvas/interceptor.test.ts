@@ -1,11 +1,14 @@
 import { afterEach, expect, test } from "vitest";
 import type { Pages } from "@webstudio-is/sdk";
 import { $builderMode } from "~/shared/nano-states/misc";
-import { selectPage } from "~/shared/nano-states/pages";
+import { $selectedPageId, selectPage } from "~/shared/nano-states/pages";
 import { $pages } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { $currentSystem, $systemDataByPage } from "~/shared/system";
-import { subscribeInterceptedEvents } from "./interceptor";
+import {
+  subscribeInterceptedEvents,
+  switchPageAndUpdateSystem,
+} from "./interceptor";
 
 registerContainers();
 
@@ -115,4 +118,48 @@ test("preview leaves managed Form submissions to React", () => {
   } finally {
     unsubscribe();
   }
+});
+
+test("Preview Form redirect does not select the catch-all 404 page", () => {
+  $pages.set({
+    homePageId: "home",
+    rootFolderId: "folder",
+    folders: new Map([
+      [
+        "folder",
+        { id: "folder", name: "Root", slug: "", children: ["home", "404"] },
+      ],
+    ]),
+    pages: new Map([
+      [
+        "home",
+        {
+          id: "home",
+          name: "Home",
+          title: "Home",
+          path: "",
+          rootInstanceId: "root",
+          meta: {},
+        },
+      ],
+      [
+        "404",
+        {
+          id: "404",
+          name: "404",
+          title: "Not found",
+          path: "/*",
+          rootInstanceId: "not-found-root",
+          meta: { status: "404" },
+        },
+      ],
+    ]),
+  });
+  selectPage("home");
+  expect(
+    switchPageAndUpdateSystem("/missing", { includeFallback: false })
+  ).toBe(false);
+  expect($selectedPageId.get()).toBe("home");
+  expect(switchPageAndUpdateSystem("/missing")).toBe(true);
+  expect($selectedPageId.get()).toBe("404");
 });

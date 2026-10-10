@@ -2,7 +2,7 @@
 import { afterEach, expect, test } from "vitest";
 import { listBuilderComponentPanelItems } from "@webstudio-is/project-build/runtime";
 import { CodeText } from "@webstudio-is/sdk-components-react/components";
-import { getCanvasComponentLibraries } from "@webstudio-is/sdk-components-registry/canvas";
+import { canvasComponentLibraries } from "@webstudio-is/sdk-components-registry/canvas";
 import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import {
@@ -37,41 +37,17 @@ test("renders templates that import an alternate registered implementation", () 
   expect(template?.instances[0]?.component).toBe("CodeText");
 });
 
-test("the new Form is feature gated without changing Webhook Form", () => {
-  for (const library of getCanvasComponentLibraries(false)) {
+test("lists the new Form while preserving Webhook Form", () => {
+  for (const library of canvasComponentLibraries) {
     registerComponentLibrary(library);
   }
-
-  const hiddenPanelItems = listBuilderComponentPanelItems({
+  const itemsByCategory = listBuilderComponentPanelItems({
     metas: $registeredComponentMetas.get(),
     templates: $registeredTemplates.get(),
     getFallbackLabel: (component) => getInstanceLabel({ component }),
     getMetaLabel: (component) => getInstanceLabel({ component }),
   });
-  const hiddenForms = hiddenPanelItems
-    .get("forms")
-    ?.filter(({ name }) => name === "form");
-
-  expect(hiddenForms).toEqual([]);
-  expect(hiddenPanelItems.get("data")).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({
-        name: "Form",
-        label: "Webhook Form",
-        firstInstance: expect.objectContaining({ component: "Form" }),
-      }),
-    ])
-  );
-
-  for (const library of getCanvasComponentLibraries(true)) {
-    registerComponentLibrary(library);
-  }
-  const forms = listBuilderComponentPanelItems({
-    metas: $registeredComponentMetas.get(),
-    templates: $registeredTemplates.get(),
-    getFallbackLabel: (component) => getInstanceLabel({ component }),
-    getMetaLabel: (component) => getInstanceLabel({ component }),
-  })
+  const forms = itemsByCategory
     .get("forms")
     ?.filter(({ name }) => name === "form");
 
@@ -82,6 +58,16 @@ test("the new Form is feature gated without changing Webhook Form", () => {
       firstInstance: expect.objectContaining({ component: "NativeForm" }),
     }),
   ]);
+
+  expect(itemsByCategory.get("data")).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        name: "Form",
+        label: "Webhook Form",
+        firstInstance: expect.objectContaining({ component: "Form" }),
+      }),
+    ])
+  );
 
   // Saved instances keep their original component IDs and implementations.
   expect($registeredComponents.get().has("Form")).toBe(true);

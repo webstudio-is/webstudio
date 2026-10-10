@@ -120,7 +120,7 @@ export const getPreviewNativeFormProps = (formId: string) => {
       navigatePreviewFormSuccess(
         destination,
         getPreviewUrl().href,
-        switchPageAndUpdateSystem,
+        (path) => switchPageAndUpdateSystem(path, { includeFallback: false }),
         (href) => window.location.assign(href)
       ),
   };

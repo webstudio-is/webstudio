@@ -11,6 +11,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   label: "Form",
+  htmlAttributes: "hide",
   states: [
     { label: "Success", selector: "[data-state=success]" },
     { label: "Error", selector: "[data-state=error]" },

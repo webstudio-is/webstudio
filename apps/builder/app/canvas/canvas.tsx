@@ -13,8 +13,7 @@ import { createAssetUrlsByPath } from "@webstudio-is/project-build/runtime";
 import type { Components } from "@webstudio-is/react-sdk";
 import { wsImageLoader, wsVideoLoader } from "@webstudio-is/image";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
-import { getCanvasComponentLibraries } from "@webstudio-is/sdk-components-registry/canvas";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { canvasComponentLibraries } from "@webstudio-is/sdk-components-registry/canvas";
 import { ErrorMessage } from "~/shared/error";
 import { $publisher, publish } from "~/shared/pubsub";
 import {
@@ -265,9 +264,7 @@ export const Canvas = () => {
   const isContentMode = useStore($isContentMode);
 
   useMount(() => {
-    for (const library of getCanvasComponentLibraries(
-      isFeatureEnabled("newFormComponent")
-    )) {
+    for (const library of canvasComponentLibraries) {
       registerComponentLibrary(library);
     }
   });
@@ -311,7 +308,7 @@ export const Canvas = () => {
 
   useEffect(() => startPointerTracking(), []);
 
-  useHashLinkSync();
+  useHashLinkSync(rootInstanceId);
 
   useEffect(subscribeInterceptedEvents, []);
 
