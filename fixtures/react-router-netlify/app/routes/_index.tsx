@@ -12,8 +12,9 @@ import {
 } from "react-router";
 import {
   isLocalResource,
-  loadResource,
   loadResources,
+  loadResourceWithEmail,
+  loadResourcesWithEmail,
   handleManagedFormSubmission,
   getManagedFormFailure,
   readFormDataWithLimit,
@@ -349,7 +350,7 @@ export const action = async ({
     formData.delete(formIdFieldName);
     formData.delete(formBotFieldName);
 
-    let result: Awaited<ReturnType<typeof loadResource>>;
+    let result: Awaited<ReturnType<typeof loadResourceWithEmail>>;
     if (actionResource === undefined) {
       if (contactEmail === undefined) {
         throw new Error("Contact email not found");
@@ -363,14 +364,14 @@ export const action = async ({
       if (resource === undefined) {
         throw Error("Resource not found");
       }
-      result = await loadResource(fetch, resource);
+      result = await loadResourceWithEmail(fetch, resource);
     } else {
       const actionFetch = await createGeneratedAssetResourceFetch({
         request,
         context,
         fallback: customFetch,
       });
-      const results = await loadResources(
+      const results = await loadResourcesWithEmail(
         actionFetch,
         {
           ...generatedResources.data,
@@ -389,7 +390,9 @@ export const action = async ({
       if (actionResult === undefined) {
         throw Error("Resource not found");
       }
-      result = actionResult as Awaited<ReturnType<typeof loadResource>>;
+      result = actionResult as Awaited<
+        ReturnType<typeof loadResourceWithEmail>
+      >;
     }
     const { ok, statusText } = result;
     if (ok) {

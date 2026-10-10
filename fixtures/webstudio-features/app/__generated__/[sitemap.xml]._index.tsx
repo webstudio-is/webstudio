@@ -76,7 +76,7 @@ tag={"lastmod"}>
 tag={"xhtml:link"}
 rel={"alternate"}
 hreflang={"en"}
-href={`${system?.origin ?? '${ORIGIN}'}${url?.path}en`} />
+href={`${system?.origin ?? '${ORIGIN}'}${url?.path}en` == null ? `${system?.origin ?? '${ORIGIN}'}${url?.path}en` : String(`${system?.origin ?? '${ORIGIN}'}${url?.path}en`)} />
 </XmlNode>
 </Fragment>
 )

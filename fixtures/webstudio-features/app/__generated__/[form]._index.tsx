@@ -38,7 +38,7 @@ let [formState_1, set$formState_1] = useVariableState<any>("initial")
 return <Body
 className={`w-body`}>
 <Form
-state={formState}
+state={formState == null ? formState : String(formState)}
 onStateChange={(state: any) => {
 formState = state
 set$formState(formState)
@@ -86,7 +86,7 @@ className={`w-box`}>
 }
 </Form>
 <Form
-state={formState_1}
+state={formState_1 == null ? formState_1 : String(formState_1)}
 onStateChange={(state: any) => {
 formState_1 = state
 set$formState_1(formState_1)
