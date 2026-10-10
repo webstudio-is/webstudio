@@ -196,13 +196,10 @@ test("Action control handles an empty Resource list and can select an in-scope d
       instanceId: "form",
       name: "action",
       type: "json",
-      value: [
-        { dataSourceId: "one", enabled: true },
-        { dataSourceId: "two", enabled: true },
-        { dataSourceId: "three", enabled: true },
-        { dataSourceId: "four", enabled: true },
-        { dataSourceId: "five", enabled: true },
-      ],
+      value: Array.from({ length: 10 }, (_, index) => ({
+        dataSourceId: `resource-${index}`,
+        enabled: true,
+      })),
     })
   );
   expect(container.textContent).not.toContain("Create Resource in Form");

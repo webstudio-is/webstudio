@@ -3,25 +3,17 @@ import { isFormSubmission, validateFormSubmission } from "@webstudio-is/sdk";
 
 test("requires and limits Resource actions", () => {
   expect(validateFormSubmission([])).toMatch(/at least one/);
+  const actions = Array.from({ length: 10 }, (_, index) => ({
+    dataSourceId: String(index),
+    enabled: true,
+  }));
+  expect(validateFormSubmission(actions)).toBeUndefined();
   expect(
     validateFormSubmission([
-      { dataSourceId: "a", enabled: true },
-      { dataSourceId: "b", enabled: true },
-      { dataSourceId: "c", enabled: true },
-      { dataSourceId: "d", enabled: true },
-      { dataSourceId: "e", enabled: true },
+      ...actions,
+      { dataSourceId: "extra", enabled: true },
     ])
-  ).toBeUndefined();
-  expect(
-    validateFormSubmission([
-      { dataSourceId: "a", enabled: true },
-      { dataSourceId: "b", enabled: true },
-      { dataSourceId: "c", enabled: true },
-      { dataSourceId: "d", enabled: true },
-      { dataSourceId: "e", enabled: true },
-      { dataSourceId: "f", enabled: true },
-    ])
-  ).toMatch(/no more than 5/);
+  ).toBe("Select no more than 10 Resource actions");
 });
 
 test("requires an Action array with explicit enabled state", () => {

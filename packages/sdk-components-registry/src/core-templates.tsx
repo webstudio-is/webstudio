@@ -57,7 +57,14 @@ const projectEmail = new ResourceValue("Project recipients", {
 });
 const visitorEmail = new ResourceValue("Visitor email field", {
   control: "email",
-  email: { recipientMode: "visitor", visitorEmailField: "email" },
+  email: {
+    recipientMode: "visitor",
+    visitorEmailField: "email",
+    subject: JSON.stringify("We received your message"),
+    body: JSON.stringify(
+      "Thanks for contacting us. We received your message and will get back to you soon."
+    ),
+  },
   url: expression`""`,
   method: "post",
 });
@@ -281,12 +288,23 @@ export const coreTemplates = {
         {setInstanceMeta(
           { label: "Success Message" },
           <div ws:show={expression`${formState} === 'success'`}>
-            {new PlaceholderValue("Thank you for your submission!")}
+            {
+              new PlaceholderValue(
+                "Thanks for contacting us. Your message has been sent."
+              )
+            }
           </div>
         )}
         {setInstanceMeta(
           { label: "Error Message" },
           <div ws:show={expression`${formState} === 'error'`} role="alert">
+            <p>
+              {
+                new PlaceholderValue(
+                  "We could not send your message. Please try again."
+                )
+              }
+            </p>
             <ws.collection data={expression`${formErrors}`} item={formError}>
               <div>
                 {expression`${formError}.message` as unknown as ReactNode}

@@ -320,4 +320,42 @@ describe("public api operation catalog", () => {
       'Public API operation "upload-asset" has no tRPC path.'
     );
   });
+
+  test("exposes the new Form authoring fields through semantic MCP operations", () => {
+    const component = getPublicApiOperation("insert-component").inputSchema;
+    expect(component?.properties?.component).toMatchObject({ type: "string" });
+
+    const updates =
+      getPublicApiOperation("update-props").inputSchema?.properties?.updates;
+    expect(updates).toMatchObject({ type: "array" });
+    const propTypes = JSON.stringify(updates);
+    expect(propTypes).toContain('"const":"json"');
+
+    const emailFields =
+      getPublicApiOperation("create-resource").inputSchema?.properties?.resource
+        ?.properties?.email?.properties;
+    expect(emailFields).toMatchObject({
+      recipientMode: { enum: ["project", "custom", "visitor"] },
+      sender: { type: "string" },
+      senderExpression: { type: "string" },
+      recipients: { type: "string" },
+      recipientsExpression: { type: "string" },
+      visitorEmailField: { type: "string" },
+      subject: { type: "string" },
+      body: { type: "string" },
+      includeAttachments: { type: "boolean" },
+    });
+    expect(
+      getPublicApiOperation("update-resource").inputSchema?.properties?.values
+        ?.properties?.email?.properties
+    ).toMatchObject(emailFields);
+    expect(
+      getPublicApiOperation("update-project-settings").inputSchema?.properties
+        ?.meta?.properties
+    ).toMatchObject({
+      emailSender: { anyOf: [{ type: "string" }, { type: "null" }] },
+      emailSubject: { anyOf: [{ type: "string" }, { type: "null" }] },
+      emailBody: { anyOf: [{ type: "string" }, { type: "null" }] },
+    });
+  });
 });

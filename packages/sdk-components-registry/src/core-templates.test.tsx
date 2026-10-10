@@ -180,7 +180,7 @@ test("Form Error Message binds all errors through its authored container", () =>
       value: encodeDataVariableId(errors.id),
     })
   );
-  expect(JSON.stringify(error.children)).not.toContain("Sorry");
+  expect(JSON.stringify(error.children)).not.toContain("could not send");
   const message = fragment.instances.find(({ children }) =>
     children.some(
       (child) => child.type === "expression" && child.value.endsWith(".message")
@@ -191,6 +191,7 @@ test("Form Error Message binds all errors through its authored container", () =>
 
 test("new Form templates select project and visitor Email Resources", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
+  const renderedTemplate = JSON.stringify(fragment);
   const form = fragment.instances.find(
     ({ component }) => component === "NativeForm"
   )!;
@@ -213,14 +214,27 @@ test("new Form templates select project and visitor Email Resources", () => {
   );
   expect(emailResources.map((resource) => resource?.email)).toEqual([
     { recipientMode: "project" },
-    { recipientMode: "visitor", visitorEmailField: "email" },
+    {
+      recipientMode: "visitor",
+      visitorEmailField: "email",
+      subject: JSON.stringify("We received your message"),
+      body: JSON.stringify(
+        "Thanks for contacting us. We received your message and will get back to you soon."
+      ),
+    },
   ]);
   expect(emailResources.every((resource) => resource?.body === undefined)).toBe(
     true
   );
-  expect(
-    emailResources.every((resource) => resource?.email?.subject === undefined)
-  ).toBe(true);
+  expect(renderedTemplate).toContain(
+    "Thanks for contacting us. Your message has been sent."
+  );
+  expect(renderedTemplate).toContain(
+    "We could not send your message. Please try again."
+  );
+  expect(renderedTemplate).toContain(
+    "Thanks for contacting us. We received your message and will get back to you soon."
+  );
   const emailInput = fragment.instances.find(
     ({ component, id }) =>
       component === "Input" &&

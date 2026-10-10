@@ -833,6 +833,28 @@ Commands:
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
 - MCP tool: replace-resource-text {"find":"api.old.example.com","replace":"api.example.com","fields":["url"],"limit":20}
 
+## Configure Form (new) through MCP
+
+Use the exact component id returned by `components.search` for **Form (new)**.
+After inserting its registered template, use the Form instance id for the
+Form-scoped Resource and Action settings.
+
+Commands:
+
+- MCP tool: insert-component {"parentInstanceId":"<parentInstanceId>","component":"<componentId from components.search>"}
+- MCP tool: create-resource {"resource":{"name":"Send submission","method":"post","url":"https://api.example.com/submit","headers":[],"body":"formData"},"scopeInstanceId":"<formInstanceId>","dataSourceName":"Send submission","exposeAsDataSource":true}
+- MCP tool: update-props {"updates":[{"instanceId":"<formInstanceId>","name":"action","type":"json","value":[{"dataSourceId":"<returned dataSourceId>","enabled":true}]}]}
+- MCP tool: update-resource {"resourceId":"<emailResourceId>","values":{"email":{"recipientMode":"visitor","visitorEmailField":"email","includeAttachments":true}}}
+- MCP tool: update-project-settings {"meta":{"emailSender":"Acme <hello@example.com>","emailSubject":"New form submission","emailBody":""}}
+
+Notes:
+
+- Use `update-props` with a JSON Action array to add, order, enable, disable, or remove destinations. The Action entries use `{ "dataSourceId": "...", "enabled": true }` and support up to ten Resources, matching the Builder control.
+- Create each destination Resource in the Form's scope so it can use `formData` and `browserInfo`. Set `exposeAsDataSource:true` to receive the data-source id used by the Action array. When a Resource uses Form-only parameters, it is kept out of page-load requests and runs with the Form submission.
+- `update-resource` accepts the same Email settings as the Builder: project, custom, or visitor recipients; sender; subject; body; and submitted-file attachments. Use expressions in string fields for dynamic values.
+- `update-project-settings` edits the project-wide Email sender, subject, and plain-text body. `update-props` also sets Form fields and Success redirect, while `bind-props` supplies dynamic expressions. `insert-component` uses the registered Form template, including its default contact fields and Email Actions.
+- MCP mutations update saved project configuration. To test real delivery, submit the Form in Preview or on a published test site and inspect the configured destinations.
+
 ## Query Markdown assets
 
 Commands:
