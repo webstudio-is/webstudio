@@ -8,6 +8,7 @@ import { renderText } from "./context";
 import { standardAttributesToReactProps } from "@webstudio-is/content-engine/jsx-attributes";
 import {
   createScope,
+  collectionComponent,
   encodeDataVariableId,
   formatManagedFormErrors,
   elementComponent,
@@ -794,7 +795,25 @@ test("generate collection component with itemKey", () => {
   expect(
     generateJsxChildren({
       scope: createScope(),
-      metas: new Map(),
+      metas: new Map<string, WsComponentMeta>([
+        [
+          collectionComponent,
+          {
+            props: {
+              item: {
+                type: "string",
+                control: "text",
+                required: false,
+              },
+              itemKey: {
+                type: "string",
+                control: "text",
+                required: false,
+              },
+            },
+          },
+        ],
+      ]),
       children: [{ type: "id", value: "list" }],
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),

@@ -287,6 +287,7 @@ export const generateJsxElement = ({
       usedDataSources,
     });
     if (
+      instance.component !== collectionComponent &&
       meta?.props?.[prop.name]?.type === "string" &&
       (prop.type === "expression" || prop.type === "parameter")
     ) {
