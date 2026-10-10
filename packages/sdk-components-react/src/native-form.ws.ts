@@ -24,7 +24,7 @@ export const meta: WsComponentMeta = {
       control: "form-action",
       label: "Action",
       required: false,
-      description: "Choose up to 5 Resource actions for this Form.",
+      description: "Choose up to 10 Resource actions for this Form.",
     },
     successRedirect: {
       type: "string",

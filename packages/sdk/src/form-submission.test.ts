@@ -16,7 +16,7 @@ test("enabled Actions preserve configured order", () => {
   expect(getEnabledFormActions(actions)).toEqual(["third", "first"]);
 });
 
-test("all-disabled, duplicate and excessive Actions are rejected", () => {
+test("all-disabled, duplicate and over-limit Actions are rejected", () => {
   expect(
     validateFormSubmission([{ dataSourceId: "first", enabled: false }])
   ).toBe("Add at least one action");
@@ -28,12 +28,20 @@ test("all-disabled, duplicate and excessive Actions are rejected", () => {
   ).toBe("Select each Resource only once");
   expect(
     validateFormSubmission(
-      Array.from({ length: 6 }, (_, i) => ({
+      Array.from({ length: 11 }, (_, i) => ({
         dataSourceId: String(i),
         enabled: true,
       }))
     )
-  ).toBe("Select no more than 5 Resource actions");
+  ).toBe("Select no more than 10 Resource actions");
+});
+
+test("accepts 10 Resource actions", () => {
+  const actions = Array.from({ length: 10 }, (_, i) => ({
+    dataSourceId: String(i),
+    enabled: true,
+  }));
+  expect(validateFormSubmission(actions)).toBeUndefined();
 });
 
 test.each([

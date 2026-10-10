@@ -1,4 +1,4 @@
-export const maxFormActions = 5;
+export const maxFormActions = 10;
 export const emptyFormActionMessage = "Add at least one action";
 
 export type FormAction = {

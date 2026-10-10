@@ -3681,7 +3681,7 @@ sitemap.map((page) => page.path);`
         ["empty", []],
         [
           "too-many",
-          Array(6)
+          Array(11)
             .fill("destination")
             .map((dataSourceId) => ({ dataSourceId, enabled: true })),
         ],
@@ -3806,7 +3806,7 @@ sitemap.map((page) => page.path);`
       for (const [id, error] of [
         ["unknown", "Form submission settings not found"],
         ["empty", "Add at least one action"],
-        ["too-many", "Select no more than 5 Resource actions"],
+        ["too-many", "Select no more than 10 Resource actions"],
         ["duplicate", "Select each Resource only once"],
         ["missing", "Resource destination not found"],
         ["malformed", "Form submission settings not found"],
