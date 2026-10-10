@@ -10,7 +10,7 @@ import {
   $props,
   $resources,
 } from "~/shared/sync/data-stores";
-import { FormDestinationsControl } from "./form-destinations";
+import { FormActionControl } from "./form-action";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -82,12 +82,12 @@ test("Action control handles an empty Resource list and can select an in-scope d
   const render = (prop?: Prop) => {
     root?.render(
       <TooltipProvider>
-        <FormDestinationsControl
+        <FormActionControl
           instanceId="form"
           propName="action"
           prop={prop}
           computedValue={prop?.type === "json" ? prop.value : undefined}
-          meta={{ type: "json", control: "form-destinations", required: false }}
+          meta={{ type: "json", control: "form-action", required: false }}
           onChange={onChange}
         />
       </TooltipProvider>
@@ -252,7 +252,7 @@ test("a Form can select a Resource defined outside its scope", async () => {
   await act(async () => {
     root?.render(
       <TooltipProvider>
-        <FormDestinationsControl
+        <FormActionControl
           instanceId="form"
           propName="action"
           prop={{
@@ -263,7 +263,7 @@ test("a Form can select a Resource defined outside its scope", async () => {
             value: [],
           }}
           computedValue={[]}
-          meta={{ type: "json", control: "form-destinations", required: false }}
+          meta={{ type: "json", control: "form-action", required: false }}
           onChange={onChange}
         />
       </TooltipProvider>
@@ -333,14 +333,14 @@ test("stored Form selection renders and a deleted Resource can be removed", asyn
   await act(async () => {
     root?.render(
       <TooltipProvider>
-        <FormDestinationsControl
+        <FormActionControl
           instanceId="form"
           propName="action"
           prop={savedProp}
           computedValue={
             savedProp.type === "json" ? savedProp.value : undefined
           }
-          meta={{ type: "json", control: "form-destinations", required: false }}
+          meta={{ type: "json", control: "form-action", required: false }}
           onChange={onChange}
         />
       </TooltipProvider>
@@ -420,7 +420,7 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <FormDestinationsControl
+        <FormActionControl
           instanceId="form"
           propName="action"
           prop={{
@@ -431,7 +431,7 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
             value: [{ dataSourceId: "http", enabled: true }],
           }}
           computedValue={[{ dataSourceId: "http", enabled: true }]}
-          meta={{ type: "json", control: "form-destinations", required: false }}
+          meta={{ type: "json", control: "form-action", required: false }}
           onChange={onChange}
         />
       </TooltipProvider>
@@ -511,7 +511,7 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <FormDestinationsControl
+        <FormActionControl
           instanceId="form"
           propName="action"
           prop={{
@@ -522,7 +522,7 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
             value: [{ dataSourceId: "send", enabled: true }],
           }}
           computedValue={[{ dataSourceId: "send", enabled: true }]}
-          meta={{ type: "json", control: "form-destinations", required: false }}
+          meta={{ type: "json", control: "form-action", required: false }}
           onChange={onChange}
         />
       </TooltipProvider>
@@ -542,7 +542,7 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <FormDestinationsControl
+        <FormActionControl
           instanceId="form"
           propName="action"
           prop={{
@@ -553,7 +553,7 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
             value: [{ dataSourceId: "send", enabled: false }],
           }}
           computedValue={[{ dataSourceId: "send", enabled: false }]}
-          meta={{ type: "json", control: "form-destinations", required: false }}
+          meta={{ type: "json", control: "form-action", required: false }}
           onChange={onChange}
         />
       </TooltipProvider>
@@ -671,7 +671,7 @@ test.each([
     await act(async () =>
       root?.render(
         <TooltipProvider>
-          <FormDestinationsControl
+          <FormActionControl
             instanceId="form"
             propName="action"
             prop={{
@@ -684,7 +684,7 @@ test.each([
             computedValue={actions}
             meta={{
               type: "json",
-              control: "form-destinations",
+              control: "form-action",
               required: false,
             }}
             onChange={vi.fn()}

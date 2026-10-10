@@ -179,9 +179,9 @@ const json = z.object({
   defaultValue: z.unknown().optional(),
 });
 
-const formSubmission = z.object({
+const formAction = z.object({
   ...common,
-  control: z.literal("form-destinations"),
+  control: z.literal("form-action"),
   type: z.literal("json"),
   defaultValue: z.unknown().optional(),
 });
@@ -243,7 +243,7 @@ export const propMeta = z.union([
   file,
   url,
   json,
-  formSubmission,
+  formAction,
   date,
   action,
   textContentPropMeta,

@@ -1,6 +1,6 @@
 import { managedFormIdFieldName } from "./form-fields";
 import {
-  getEnabledFormDestinations,
+  getEnabledFormActions,
   isFormSubmission,
   validateFormSubmission,
 } from "./form-submission";
@@ -81,7 +81,7 @@ export const handleManagedFormSubmission = async ({
   }
   if (
     configured.resourceIds.length !==
-      getEnabledFormDestinations(configured.action).length ||
+      getEnabledFormActions(configured.action).length ||
     configured.resourceIds.some((id) => id === null)
   ) {
     throw new Error("Resource destination not found");

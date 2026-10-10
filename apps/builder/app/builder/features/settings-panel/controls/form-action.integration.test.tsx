@@ -22,7 +22,7 @@ import {
   $styles,
 } from "~/shared/sync/data-stores";
 import { registerContainers, serverSyncStore } from "~/shared/sync/sync-stores";
-import { FormDestinationsControl } from "./form-destinations";
+import { FormActionControl } from "./form-action";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -115,7 +115,7 @@ test("Actions references an existing Resource without creating another", async (
     return (
       <TooltipProvider>
         <div data-floating-panel-container>
-          <FormDestinationsControl
+          <FormActionControl
             instanceId="form"
             propName="action"
             prop={submission}
@@ -124,7 +124,7 @@ test("Actions references an existing Resource without creating another", async (
             }
             meta={{
               type: "json",
-              control: "form-destinations",
+              control: "form-action",
               required: false,
             }}
             onChange={(value) => {

@@ -1,5 +1,5 @@
-export const maxFormDestinations = 5;
-export const emptyFormDestinationMessage = "Add at least one action";
+export const maxFormActions = 5;
+export const emptyFormActionMessage = "Add at least one action";
 
 export type FormAction = {
   /** Resource data source ID, stable across renames. */
@@ -22,11 +22,11 @@ export const isFormSubmission = (value: unknown): value is FormSubmission =>
   );
 
 export const validateFormSubmission = (actions: FormSubmission) => {
-  if (getEnabledFormDestinations(actions).length === 0) {
-    return emptyFormDestinationMessage;
+  if (getEnabledFormActions(actions).length === 0) {
+    return emptyFormActionMessage;
   }
-  if (actions.length > maxFormDestinations) {
-    return `Select no more than ${maxFormDestinations} Resource destinations`;
+  if (actions.length > maxFormActions) {
+    return `Select no more than ${maxFormActions} Resource actions`;
   }
   if (
     new Set(actions.map((action) => action.dataSourceId)).size !==
@@ -36,7 +36,7 @@ export const validateFormSubmission = (actions: FormSubmission) => {
   }
 };
 
-export const getEnabledFormDestinations = (actions: FormSubmission) =>
+export const getEnabledFormActions = (actions: FormSubmission) =>
   actions
     .filter((action) => action.enabled)
     .map((action) => action.dataSourceId);

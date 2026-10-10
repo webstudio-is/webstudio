@@ -100,7 +100,7 @@ test("copying Email Resources restores parent bindings by name in the target sco
   });
 });
 
-test("copying a Form remaps its local Resource destinations", () => {
+test("copying a Form remaps its local Resource actions", () => {
   const data = createStub(
     <Body ws:id="bodyId">
       <NativeForm ws:id="formId" />

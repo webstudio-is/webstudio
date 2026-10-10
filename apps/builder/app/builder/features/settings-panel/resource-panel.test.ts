@@ -2294,7 +2294,7 @@ test("Method uses the standard full-width collapsed Select and keeps description
     const [value, setValue] = useState<Resource["method"]>("get");
     return createElement(MethodField, {
       value,
-      formDestination: true,
+      formAction: true,
       onChange: (method) => {
         setValue(method);
         onChange(method);

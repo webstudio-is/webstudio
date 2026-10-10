@@ -26,8 +26,8 @@ import {
 } from "@webstudio-is/icons";
 import {
   isFormSubmission,
-  emptyFormDestinationMessage,
-  maxFormDestinations,
+  emptyFormActionMessage,
+  maxFormActions,
   validateFormSubmission,
   type FormSubmission,
   type DataSource,
@@ -114,11 +114,11 @@ const ActionItem = ({
   );
 };
 
-export const FormDestinationsControl = ({
+export const FormActionControl = ({
   instanceId,
   prop,
   onChange,
-}: ControlProps<"form-destinations">) => {
+}: ControlProps<"form-action">) => {
   const instances = useStore($instances);
   const dataSources = useStore($dataSources);
   const resourcesById = useStore($resources);
@@ -215,8 +215,7 @@ export const FormDestinationsControl = ({
                 <SmallIconButton
                   aria-label="Add action"
                   disabled={
-                    action.length >= maxFormDestinations ||
-                    resources.length === 0
+                    action.length >= maxFormActions || resources.length === 0
                   }
                   icon={<PlusIcon />}
                 />
@@ -232,7 +231,7 @@ export const FormDestinationsControl = ({
                 )}
                 onSelect={() => {
                   if (
-                    action.length < maxFormDestinations &&
+                    action.length < maxFormActions &&
                     !action.some(
                       ({ dataSourceId }) => dataSourceId === variable.id
                     )
@@ -286,9 +285,7 @@ export const FormDestinationsControl = ({
               </Grid>
             </InteractiveListArrowFocus>
           )}
-          {error && error !== emptyFormDestinationMessage && (
-            <Text>{error}</Text>
-          )}
+          {error && error !== emptyFormActionMessage && <Text>{error}</Text>}
         </Flex>
       </Box>
     </Box>

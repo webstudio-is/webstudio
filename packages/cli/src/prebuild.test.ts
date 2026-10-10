@@ -3665,7 +3665,7 @@ sitemap.map((page) => page.path);`
   );
 
   test.each(["defaults", "react-router"])(
-    "rejects invalid managed Form destinations before any request (%s)",
+    "rejects invalid managed Form actions before any request (%s)",
     async (template) => {
       const configurations = [
         ["empty", []],
@@ -3796,7 +3796,7 @@ sitemap.map((page) => page.path);`
       for (const [id, error] of [
         ["unknown", "Form submission settings not found"],
         ["empty", "Add at least one action"],
-        ["too-many", "Select no more than 5 Resource destinations"],
+        ["too-many", "Select no more than 5 Resource actions"],
         ["duplicate", "Select each Resource only once"],
         ["missing", "Resource destination not found"],
         ["malformed", "Form submission settings not found"],

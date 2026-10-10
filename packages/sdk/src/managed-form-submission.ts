@@ -482,7 +482,7 @@ export const loadManagedFormResources = async (
           "Email delivery requires Webstudio Cloud and is not configured yet"
         );
       }
-      // Managed Form destinations run in parallel. An Email dependency could
+      // Managed Form actions run in parallel. An Email dependency could
       // dispatch a lookup before we can validate the resolved message, so Email
       // must use Form and Project values available during this preflight.
       if (resource.dependencies.length > 0) {

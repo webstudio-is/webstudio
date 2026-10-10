@@ -12,7 +12,7 @@ import {
 import { encodeDataSourceVariable, ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { $pages, $props, $resources } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
-import { FormDestinationsControl } from "./controls/form-destinations";
+import { FormActionControl } from "./controls/form-action";
 import { $variableToFocus, $variableToOpen } from "./variable-navigation";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { $instances, $dataSources } from "~/shared/sync/data-stores";
@@ -572,7 +572,7 @@ test("clicking an Action opens its Resource editor and highlights its Variables 
     root?.render(
       <TooltipProvider>
         <CollapsibleProvider initialOpen="Variables">
-          <FormDestinationsControl
+          <FormActionControl
             instanceId="child"
             prop={{
               id: "action",
@@ -586,7 +586,7 @@ test("clicking an Action opens its Resource editor and highlights its Variables 
             computedValue={[]}
             meta={{
               type: "json",
-              control: "form-destinations",
+              control: "form-action",
               required: false,
             }}
           />
@@ -706,7 +706,7 @@ test("an Action Resource unavailable in Variables does not open a stale dialog",
     root?.render(
       <TooltipProvider>
         <CollapsibleProvider initialOpen="Variables">
-          <FormDestinationsControl
+          <FormActionControl
             instanceId="child"
             propName="action"
             prop={{
@@ -719,7 +719,7 @@ test("an Action Resource unavailable in Variables does not open a stale dialog",
             computedValue={[]}
             meta={{
               type: "json",
-              control: "form-destinations",
+              control: "form-action",
               required: false,
             }}
             onChange={() => {}}

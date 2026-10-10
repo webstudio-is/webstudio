@@ -13,7 +13,7 @@ import { JsonControl } from "./json";
 import { JsonCodeControl } from "./json-code";
 import { TextContent } from "./text-content";
 import { ResourceControl } from "./resource-control";
-import { FormDestinationsControl } from "./form-destinations";
+import { FormActionControl } from "./form-action";
 import { TagControl } from "./tag-control";
 import { TimeZoneControl } from "./time-zone";
 
@@ -69,10 +69,8 @@ export const renderControl = ({
     return <ResourceControl key={key} meta={meta} prop={prop} {...rest} />;
   }
 
-  if (meta.control === "form-destinations") {
-    return (
-      <FormDestinationsControl key={key} meta={meta} prop={prop} {...rest} />
-    );
+  if (meta.control === "form-action") {
+    return <FormActionControl key={key} meta={meta} prop={prop} {...rest} />;
   }
 
   if (meta.control === "code") {

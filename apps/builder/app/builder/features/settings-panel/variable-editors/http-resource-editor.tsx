@@ -42,7 +42,7 @@ export const ResourceForm = forwardRef<
   const { scope, aliases } = useResourceScope({ variable });
   const props = useStore($props);
   const instances = useStore($instances);
-  const formDestination =
+  const formAction =
     variable !== undefined &&
     Array.from(props.values()).some(
       (prop) =>
@@ -110,7 +110,7 @@ export const ResourceForm = forwardRef<
       <Row>
         <MethodField
           value={method}
-          formDestination={formDestination}
+          formAction={formAction}
           onChange={(value) => {
             onChange?.();
             setMethod(value);
@@ -200,7 +200,7 @@ export const ResourceForm = forwardRef<
           }}
         />
       </Row>
-      {(method !== "get" || formDestination) && (
+      {(method !== "get" || formAction) && (
         <>
           <Row>
             <Grid gap={1}>

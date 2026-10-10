@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { isFormSubmission, validateFormSubmission } from "@webstudio-is/sdk";
 
-test("requires and limits Resource destinations", () => {
+test("requires and limits Resource actions", () => {
   expect(validateFormSubmission([])).toMatch(/at least one/);
   expect(
     validateFormSubmission([

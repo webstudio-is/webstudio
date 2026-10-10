@@ -7,7 +7,7 @@ description: >-
 # ✍️ Webhook Form
 
 {% hint style="info" %}
-This page covers existing Webhook Form instances. The new [Form](form.md) submits to configured Resource destinations. Use an **Element** with tag `form` for plain browser form behavior such as searches and filters.
+This page covers existing Webhook Form instances. The new [Form](form.md) submits to configured Resource actions. Use an **Element** with tag `form` for plain browser form behavior such as searches and filters.
 {% endhint %}
 
 {% embed url="https://www.youtube.com/watch?v=eE-CkewQHMs" %}

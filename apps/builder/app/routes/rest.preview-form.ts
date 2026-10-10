@@ -10,7 +10,7 @@ import * as projectApi from "@webstudio-is/project/index.server";
 import {
   findTreeInstanceIds,
   decodeDataVariableId,
-  getEnabledFormDestinations,
+  getEnabledFormActions,
   isFormSubmission,
   getAllPages,
   getPagePath,
@@ -149,7 +149,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
     const action = actionProp?.type === "json" ? actionProp.value : undefined;
     const destinations = isFormSubmission(action)
-      ? getEnabledFormDestinations(action)
+      ? getEnabledFormActions(action)
       : [];
     if (
       !env.TRPC_SERVER_API_TOKEN &&

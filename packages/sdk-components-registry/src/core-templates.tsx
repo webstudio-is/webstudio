@@ -236,7 +236,7 @@ export const coreTemplates = {
   ...intrinsicCoreTemplates,
   form: {
     category: "forms",
-    description: "Collect information and submit it to Resource destinations.",
+    description: "Collect information and submit it to Resource actions.",
     template: (
       <NativeForm
         action={new FormSubmissionValue([projectEmail, visitorEmail])}

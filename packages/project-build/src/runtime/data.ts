@@ -1141,7 +1141,7 @@ export const rebindTreeVariablesMutable = ({
   });
 };
 
-const removeFormDestinations = <
+const removeFormActionsForResources = <
   T extends { dataSourceId: string; enabled: boolean },
 >(
   actions: T[],
@@ -1181,7 +1181,7 @@ export const deleteVariableMutable = (
     ) {
       continue;
     }
-    prop.value = removeFormDestinations(prop.value, removedIds);
+    prop.value = removeFormActionsForResources(prop.value, removedIds);
   }
   if (dataSource.type === "resource") {
     data.resources.delete(dataSource.resourceId);
@@ -2885,7 +2885,10 @@ export const createResourceDeletePayload = ({
         ...formSubmissionProps.map((prop) => ({
           op: "replace" as const,
           path: [prop.id, "value"],
-          value: removeFormDestinations(prop.value, resourceDataSourceIds),
+          value: removeFormActionsForResources(
+            prop.value,
+            resourceDataSourceIds
+          ),
         })),
       ],
     });

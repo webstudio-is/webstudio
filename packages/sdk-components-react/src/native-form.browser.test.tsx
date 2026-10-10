@@ -147,7 +147,7 @@ test("a throwing submit callback cannot trigger native delivery", async () => {
   }
 });
 
-test("legacy native-mode settings do not activate saved Resource destinations", async () => {
+test("legacy native-mode settings do not activate saved Resource actions", async () => {
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);

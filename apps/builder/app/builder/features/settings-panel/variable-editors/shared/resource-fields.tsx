@@ -174,11 +174,11 @@ export const UrlField = ({
 export const MethodField = ({
   value,
   onChange,
-  formDestination = false,
+  formAction = false,
 }: {
   value: Resource["method"];
   onChange: (value: Resource["method"]) => void;
-  formDestination?: boolean;
+  formAction?: boolean;
 }) => {
   return (
     <Grid gap={1}>
@@ -196,7 +196,7 @@ export const MethodField = ({
                 put: "Replace data on a server.",
                 delete: "Delete data from a server.",
               }[method],
-              formDestination && method === "post"
+              formAction && method === "post"
                 ? "Form submissions use POST. This method applies elsewhere."
                 : undefined,
             ]

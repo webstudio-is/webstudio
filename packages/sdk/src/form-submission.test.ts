@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import {
-  getEnabledFormDestinations,
+  getEnabledFormActions,
   isFormSubmission,
   validateFormSubmission,
 } from "./form-submission";
@@ -13,7 +13,7 @@ test("enabled Actions preserve configured order", () => {
   ];
   expect(isFormSubmission(actions)).toBe(true);
   expect(validateFormSubmission(actions)).toBeUndefined();
-  expect(getEnabledFormDestinations(actions)).toEqual(["third", "first"]);
+  expect(getEnabledFormActions(actions)).toEqual(["third", "first"]);
 });
 
 test("all-disabled, duplicate and excessive Actions are rejected", () => {
@@ -33,7 +33,7 @@ test("all-disabled, duplicate and excessive Actions are rejected", () => {
         enabled: true,
       }))
     )
-  ).toBe("Select no more than 5 Resource destinations");
+  ).toBe("Select no more than 5 Resource actions");
 });
 
 test.each([

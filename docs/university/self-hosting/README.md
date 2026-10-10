@@ -46,7 +46,7 @@ If you want the export to contain human-readable class names, disable atomic CSS
 
 This is the default behavior if you were to publish to Webstudio Cloud.
 
-The JavaScript application supports dynamic functionality like [CMS integrations](../foundations/cms.md), [Forms](../core-components/form.md) with HTTP Resource destinations, Webhook Forms, [image optimization](../core-components/image.md#optimize), and redirects.
+The JavaScript application supports dynamic functionality like [CMS integrations](../foundations/cms.md), [Forms](../core-components/form.md) with HTTP Resource actions, Webhook Forms, [image optimization](../core-components/image.md#optimize), and redirects.
 
 JavaScript applications require a hosting environment that handles server-side code execution, fetching data from CMS integrations, and more.
 
@@ -54,7 +54,7 @@ JavaScript applications require a hosting environment that handles server-side c
 
 The new **Form** submits to a generated same-origin HTTP endpoint. For the home page, the endpoint is `POST /__ws-form`; for a page such as `/contact`, it is `POST /__ws-form/contact`. The app handles the submitted fields and files, validates the request, and sends HTTP Resource requests from the server. Keep the generated routes available when configuring your host or reverse proxy. A successful submission can then refresh page Resources without a full-page reload.
 
-A static export has no Form endpoint. If you need native browser submission on a static site, use an **Element** with tag `form` and an `action` that your chosen service handles. This does not use Webstudio's managed Resource destinations.
+A static export has no Form endpoint. If you need native browser submission on a static site, use an **Element** with tag `form` and an `action` that your chosen service handles. This does not use Webstudio's managed Resource actions.
 
 #### Platforms for JavaScript applications
 
@@ -115,7 +115,7 @@ While static site exporting and hosting are less technical, this comes at the co
 * Statuses
 * Client navigation
 * Webhook form
-* Form submission to Resource destinations
+* Form submission to Resource actions
 * Image optimization
 * No robots.txt
 * No sitemap.xml

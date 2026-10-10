@@ -65,7 +65,7 @@ import {
   type ComponentBuildContribution,
   isPublishedDeployment,
   isFormSubmission,
-  getEnabledFormDestinations,
+  getEnabledFormActions,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
@@ -1770,7 +1770,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
         const action =
           actionProp?.type === "json" ? actionProp.value : undefined;
         const resourceIds = isFormSubmission(action)
-          ? getEnabledFormDestinations(action).map((id) => {
+          ? getEnabledFormActions(action).map((id) => {
               const dataSource = dataSources.get(id);
               return dataSource?.type === "resource" &&
                 resources.has(dataSource.resourceId)
@@ -1784,7 +1784,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
       ([formId, { action }]) => ({
         formId,
         destinationDataSourceIds: isFormSubmission(action)
-          ? getEnabledFormDestinations(action)
+          ? getEnabledFormActions(action)
           : [],
       })
     );

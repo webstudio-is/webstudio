@@ -504,7 +504,7 @@ describe("insert webstudio fragment copy", () => {
 
   $project.set({ id: "current_project" } as Project);
 
-  test("copies Form destinations with scoped Resource IDs and keeps external IDs", () => {
+  test("copies Form actions with scoped Resource IDs and keeps external IDs", () => {
     const externalResource = {
       id: "external-source",
       scopeInstanceId: "body",

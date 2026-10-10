@@ -351,8 +351,7 @@ export const PropsSection = (props: PropsSectionProps) => {
   const addedProps = logic.addedProps;
   const initialProps = logic.initialProps;
   const hasProperties = addedProps.length > 0 || initialProps.length > 0;
-  const canAddProperty = isDesignMode;
-  const hasItems = hasProperties || (canAddProperty && addingProp);
+  const hasItems = hasProperties || (isDesignMode && addingProp);
 
   const animationAction = logic.initialProps.find(
     (prop) => prop.meta.type === "animationAction"
@@ -432,11 +431,11 @@ export const PropsSection = (props: PropsSectionProps) => {
       {showPropertiesSection && (
         <CollapsibleSectionWithAddButton
           label="Properties & attributes"
-          onAdd={canAddProperty ? () => setAddingProp(true) : undefined}
+          onAdd={isDesignMode ? () => setAddingProp(true) : undefined}
           hasItems={hasItems}
         >
           <Flex gap="1" direction="column">
-            {canAddProperty && addingProp && (
+            {isDesignMode && addingProp && (
               <AddPropertyOrAttribute
                 onPropSelected={(propName) => {
                   setAddingProp(false);
