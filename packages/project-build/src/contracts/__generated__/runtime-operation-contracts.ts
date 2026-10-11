@@ -8729,6 +8729,14 @@ export const runtimeOperationContractData = [
                               body: {
                                 type: "string",
                               },
+                              confirmationSubject: {
+                                type: "string",
+                                enum: ["formSubject", "default"],
+                              },
+                              confirmationBody: {
+                                type: "string",
+                                const: "default",
+                              },
                               includeAttachments: {
                                 type: "boolean",
                               },
@@ -11986,6 +11994,14 @@ export const runtimeOperationContractData = [
                               },
                               body: {
                                 type: "string",
+                              },
+                              confirmationSubject: {
+                                type: "string",
+                                enum: ["formSubject", "default"],
+                              },
+                              confirmationBody: {
+                                type: "string",
+                                const: "default",
                               },
                               includeAttachments: {
                                 type: "boolean",
@@ -15256,6 +15272,14 @@ export const runtimeOperationContractData = [
                               body: {
                                 type: "string",
                               },
+                              confirmationSubject: {
+                                type: "string",
+                                enum: ["formSubject", "default"],
+                              },
+                              confirmationBody: {
+                                type: "string",
+                                const: "default",
+                              },
                               includeAttachments: {
                                 type: "boolean",
                               },
@@ -18513,6 +18537,14 @@ export const runtimeOperationContractData = [
                               },
                               body: {
                                 type: "string",
+                              },
+                              confirmationSubject: {
+                                type: "string",
+                                enum: ["formSubject", "default"],
+                              },
+                              confirmationBody: {
+                                type: "string",
+                                const: "default",
                               },
                               includeAttachments: {
                                 type: "boolean",
@@ -24490,6 +24522,14 @@ export const runtimeOperationContractData = [
                                     body: {
                                       type: "string",
                                     },
+                                    confirmationSubject: {
+                                      type: "string",
+                                      enum: ["formSubject", "default"],
+                                    },
+                                    confirmationBody: {
+                                      type: "string",
+                                      const: "default",
+                                    },
                                     includeAttachments: {
                                       type: "boolean",
                                     },
@@ -27955,6 +27995,14 @@ export const runtimeOperationContractData = [
                                     },
                                     body: {
                                       type: "string",
+                                    },
+                                    confirmationSubject: {
+                                      type: "string",
+                                      enum: ["formSubject", "default"],
+                                    },
+                                    confirmationBody: {
+                                      type: "string",
+                                      const: "default",
                                     },
                                     includeAttachments: {
                                       type: "boolean",
@@ -41909,6 +41957,14 @@ export const runtimeOperationContractData = [
                       body: {
                         type: "string",
                       },
+                      confirmationSubject: {
+                        type: "string",
+                        enum: ["formSubject", "default"],
+                      },
+                      confirmationBody: {
+                        type: "string",
+                        const: "default",
+                      },
                       includeAttachments: {
                         type: "boolean",
                       },
@@ -42709,6 +42765,14 @@ export const runtimeOperationContractData = [
                               },
                               body: {
                                 type: "string",
+                              },
+                              confirmationSubject: {
+                                type: "string",
+                                enum: ["formSubject", "default"],
+                              },
+                              confirmationBody: {
+                                type: "string",
+                                const: "default",
                               },
                               includeAttachments: {
                                 type: "boolean",
@@ -46046,6 +46110,14 @@ export const runtimeOperationContractData = [
                               },
                               body: {
                                 type: "string",
+                              },
+                              confirmationSubject: {
+                                type: "string",
+                                enum: ["formSubject", "default"],
+                              },
+                              confirmationBody: {
+                                type: "string",
+                                const: "default",
                               },
                               includeAttachments: {
                                 type: "boolean",
@@ -53152,6 +53224,14 @@ export const runtimeOperationContractData = [
                       body: {
                         type: "string",
                       },
+                      confirmationSubject: {
+                        type: "string",
+                        enum: ["formSubject", "default"],
+                      },
+                      confirmationBody: {
+                        type: "string",
+                        const: "default",
+                      },
                       includeAttachments: {
                         type: "boolean",
                       },
@@ -59104,6 +59184,14 @@ export const runtimeOperationContractData = [
                       },
                       body: {
                         type: "string",
+                      },
+                      confirmationSubject: {
+                        type: "string",
+                        enum: ["formSubject", "default"],
+                      },
+                      confirmationBody: {
+                        type: "string",
+                        const: "default",
                       },
                       includeAttachments: {
                         type: "boolean",
@@ -75992,6 +76080,14 @@ export const runtimeOperationContractData = [
                 body: {
                   type: "string",
                 },
+                confirmationSubject: {
+                  type: "string",
+                  enum: ["formSubject", "default"],
+                },
+                confirmationBody: {
+                  type: "string",
+                  const: "default",
+                },
                 includeAttachments: {
                   type: "boolean",
                 },
@@ -76286,6 +76382,14 @@ export const runtimeOperationContractData = [
                 },
                 body: {
                   type: "string",
+                },
+                confirmationSubject: {
+                  type: "string",
+                  enum: ["formSubject", "default"],
+                },
+                confirmationBody: {
+                  type: "string",
+                  const: "default",
                 },
                 includeAttachments: {
                   type: "boolean",
@@ -76683,6 +76787,14 @@ export const runtimeOperationContractData = [
                 body: {
                   type: "string",
                 },
+                confirmationSubject: {
+                  type: "string",
+                  enum: ["formSubject", "default"],
+                },
+                confirmationBody: {
+                  type: "string",
+                  const: "default",
+                },
                 includeAttachments: {
                   type: "boolean",
                 },
@@ -76923,6 +77035,14 @@ export const runtimeOperationContractData = [
                 },
                 body: {
                   type: "string",
+                },
+                confirmationSubject: {
+                  type: "string",
+                  enum: ["formSubject", "default"],
+                },
+                confirmationBody: {
+                  type: "string",
+                  const: "default",
                 },
                 includeAttachments: {
                   type: "boolean",

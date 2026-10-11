@@ -1040,7 +1040,7 @@ test("remaps action data source references when inserting registered component t
     createState(parent),
     {
       parentInstanceId: parent.id,
-      component: "Form",
+      component: "WebhookForm",
     },
     {
       createId: createIdFactory(),
