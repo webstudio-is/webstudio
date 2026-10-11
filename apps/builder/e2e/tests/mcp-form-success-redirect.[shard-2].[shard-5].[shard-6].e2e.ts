@@ -260,6 +260,7 @@ test("MCP-authored successful Form scrolls off-screen feedback into view", async
       projectId: fixture.projectId,
       receiverPort: receiver.port,
       callback: async ({ url }) => {
+        await page.emulateMedia({ reducedMotion: "reduce" });
         await openLocalPreviewOnly(page, url);
         const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
         const message = "Thanks for contacting us. Your message has been sent.";
@@ -276,7 +277,10 @@ test("MCP-authored successful Form scrolls off-screen feedback into view", async
         await expect(form).toHaveAttribute("data-state", "success");
         await expectFeedbackInViewport(page, message);
         expect(await getScrollCalls(page)).toEqual([
-          expect.objectContaining({ text: expect.stringContaining(message) }),
+          expect.objectContaining({
+            text: expect.stringContaining(message),
+            behavior: "instant",
+          }),
         ]);
         expect(receiver.deliveries).toHaveLength(1);
       },

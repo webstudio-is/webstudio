@@ -79,6 +79,9 @@ test.each([
     .mockImplementation(function (this: HTMLElement) {
       scrolledElements.push(this);
     });
+  vi.spyOn(window, "matchMedia").mockReturnValue({
+    matches: false,
+  } as MediaQueryList);
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
     () => ({ top, bottom: top + 30 }) as DOMRect
   );
@@ -87,7 +90,10 @@ test.each([
     await act(async () => view.controller.current.complete("error"));
     if (expected) {
       await vi.waitFor(() => expect(scroll).toHaveBeenCalledOnce());
-      expect(scroll.mock.calls[0][0]).toMatchObject({ block: "center" });
+      expect(scroll.mock.calls[0][0]).toMatchObject({
+        block: "center",
+        behavior: "smooth",
+      });
       expect(scrolledElements[0]?.hasAttribute("data-ws-form-feedback")).toBe(
         true
       );
