@@ -32,10 +32,8 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import {
   Box,
-  Flex,
   Grid,
   InputErrorsTooltip,
-  InfoTooltip,
   InputField,
   Label,
   Radio,
@@ -399,7 +397,7 @@ export const EmailResourceForm = forwardRef<
                 ? "Send to the addresses in Project Settings, or to the account holder if none are set."
                 : value === "custom"
                   ? "Send to the addresses entered below."
-                  : "Choose a Form input to use as the recipient’s email address."
+                  : "Choose a Form input to use as the recipient’s email address. The confirmation email is sent to that address."
             }
             onChange={(value: "project" | "custom" | "visitor") => {
               if (value === "project") {
@@ -449,28 +447,19 @@ export const EmailResourceForm = forwardRef<
       {settings.recipientMode === "visitor" && (
         <Row>
           <Grid gap={1}>
-            <Flex align="center" gap={1}>
-              <Box css={{ flexGrow: 1, minWidth: 0 }}>
-                <InputErrorsTooltip
-                  errors={recipientError ? [recipientError] : undefined}
-                >
-                  <Select
-                    fullWidth
-                    aria-label="Visitor email field"
-                    value={settings.visitorEmailField}
-                    placeholder="Select an email field"
-                    options={emailFields}
-                    getLabel={(name) => name}
-                    onChange={(name) => setField("visitorEmailField", name)}
-                  />
-                </InputErrorsTooltip>
-              </Box>
-              <InfoTooltip
-                label="About Visitor email field"
-                content="Sends the confirmation email to the address submitted in this Form input."
-                disableHoverableContent={true}
+            <InputErrorsTooltip
+              errors={recipientError ? [recipientError] : undefined}
+            >
+              <Select
+                fullWidth
+                aria-label="Visitor email field"
+                value={settings.visitorEmailField}
+                placeholder="Select an email field"
+                options={emailFields}
+                getLabel={(name) => name}
+                onChange={(name) => setField("visitorEmailField", name)}
               />
-            </Flex>
+            </InputErrorsTooltip>
           </Grid>
         </Row>
       )}

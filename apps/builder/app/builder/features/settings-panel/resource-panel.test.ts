@@ -1045,14 +1045,11 @@ test("visitor Email Resource selects a named Form email field", async () => {
   );
   expect(container.textContent).toContain("Visitor email field");
   expect(container.textContent).toContain("visitorEmail");
-  const visitorInfoTooltipText =
-    "Sends the confirmation email to the address submitted in this Form input.";
   const visitorOptionDescription =
-    "Choose a Form input to use as the recipient’s email address.";
-  expect(container.textContent).not.toContain(visitorInfoTooltipText);
+    "Choose a Form input to use as the recipient’s email address. The confirmation email is sent to that address.";
   expect(
     container.querySelector('[aria-label="About Visitor email field"]')
-  ).not.toBeNull();
+  ).toBeNull();
   expect(container.textContent).toContain("Attachments");
   const attachmentOptions =
     container.querySelectorAll<HTMLElement>('[role="radio"]');
@@ -1104,7 +1101,6 @@ test("visitor Email Resource selects a named Form email field", async () => {
   expect(container.textContent).not.toContain(
     "Select one named email input in this Form."
   );
-  expect(container.textContent).not.toContain(visitorInfoTooltipText);
   const visitorField = Array.from(
     container.querySelectorAll<HTMLButtonElement>('[role="combobox"]')
   ).at(-1);
@@ -1114,25 +1110,9 @@ test("visitor Email Resource selects a named Form email field", async () => {
       exact: true,
     })
   ).toBeVisible();
-  const visitorInfo = container.querySelector<SVGElement>(
-    '[aria-label="About Visitor email field"]'
-  )!;
-  await act(async () => userEvent.hover(visitorInfo));
-  await expect
-    .poll(() => document.body.textContent)
-    .toContain(visitorInfoTooltipText);
-  await act(async () => userEvent.unhover(visitorInfo));
-  await expect
-    .poll(() => document.body.textContent)
-    .not.toContain(visitorInfoTooltipText);
-  await act(async () => visitorInfo.focus());
-  await expect
-    .poll(() => document.body.textContent)
-    .toContain(visitorInfoTooltipText);
-  await act(async () => visitorInfo.blur());
-  await expect
-    .poll(() => document.body.textContent)
-    .not.toContain(visitorInfoTooltipText);
+  expect(
+    container.querySelector('[aria-label="About Visitor email field"]')
+  ).toBeNull();
   await act(async () => userEvent.click(visitorField!));
   await act(async () => userEvent.keyboard("{Escape}"));
 });
