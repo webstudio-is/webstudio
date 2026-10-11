@@ -212,9 +212,9 @@ test("MCP-authored Email Resource loads its Request preview without sending emai
     dialog.getByText("owner@mcp.test", { exact: false })
   ).toBeVisible();
   await expect(
-    dialog.getByText("MCP contact notification", { exact: false })
+    dialog.getByText("Contact form:", { exact: false })
   ).toBeVisible();
   const requestEditor = dialog.locator('[role="tabpanel"] .cm-content').last();
-  await expect(requestEditor).toContainText("Form data:");
+  await expect(requestEditor).toContainText("Submitted fields:");
   expect(submissionRequests).toEqual([]);
 });

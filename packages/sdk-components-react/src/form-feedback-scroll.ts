@@ -24,20 +24,23 @@ export const useFormFeedbackScroll = (
       cancelAnimationFrame(frame.current);
     }
     frame.current = requestAnimationFrame(() => {
-      const form = formRef.current;
-      if (!form) {
-        return;
-      }
-      const bounds = form.getBoundingClientRect();
-      if (bounds.top < 0 || bounds.bottom > window.innerHeight) {
-        form.scrollIntoView({
-          block: "end",
-          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-            .matches
-            ? "instant"
-            : "smooth",
-        });
-      }
+      // Let React commit the success/error feedback before measuring the Form.
+      frame.current = requestAnimationFrame(() => {
+        const form = formRef.current;
+        if (!form) {
+          return;
+        }
+        const bounds = form.getBoundingClientRect();
+        if (bounds.bottom < 0 || bounds.bottom > window.innerHeight) {
+          form.scrollIntoView({
+            block: "end",
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+              .matches
+              ? "instant"
+              : "smooth",
+          });
+        }
+      });
     });
   }, []);
 

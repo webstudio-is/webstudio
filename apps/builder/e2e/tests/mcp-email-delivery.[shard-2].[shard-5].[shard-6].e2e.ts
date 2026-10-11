@@ -135,8 +135,8 @@ test("MCP-authored contact Form delivers customized Email messages locally", asy
         expect(ownerMessage).toBeDefined();
         expect(visitorMessage).toBeDefined();
         expect(ownerMessage).toMatchObject({
-          subject: expect.stringContaining("MCP contact notification"),
-          text: expect.stringContaining('"name": "Ada Lovelace"'),
+          subject: expect.stringContaining("Contact form: MCP email test"),
+          text: expect.stringContaining("Name: Ada Lovelace"),
           replyTo: { address: "forms@mcp.test", name: "Contact Form" },
           attachments: [
             {
@@ -148,8 +148,11 @@ test("MCP-authored contact Form delivers customized Email messages locally", asy
             },
           ],
         });
+        expect(ownerMessage?.text).toContain("Email: ada@example.test");
+        expect(ownerMessage?.text).toContain("Subject: MCP email test");
+        expect(ownerMessage?.text).toContain("Page: http://127.0.0.1:");
         expect(visitorMessage).toMatchObject({
-          subject: expect.stringContaining("We received your message"),
+          subject: expect.stringContaining("Contact Form received your email"),
           text: expect.stringContaining(
             "We received your request from http://127.0.0.1:"
           ),

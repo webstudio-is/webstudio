@@ -98,7 +98,7 @@ test("MCP-authored legacy Webhook Form action uses current dynamic route params 
             response.request().method() === "POST" &&
             new URL(response.url()).origin === new URL(url).origin
         );
-        await form.getByRole("button", { name: "Submit" }).click();
+        await form.locator('button[type="submit"]').click();
         const response = await responsePromise;
         expect(response.status()).toBe(200);
         await expect(form).toHaveAttribute("data-state", "success");
@@ -107,7 +107,7 @@ test("MCP-authored legacy Webhook Form action uses current dynamic route params 
             method: "POST",
             slug: "second",
             routeHeader: "second",
-            body: { email: "", message: "Current route" },
+            body: { email: "", message: "Current route", name: "" },
           },
         ]);
       },

@@ -109,7 +109,7 @@ test("MCP-authored legacy Webhook Form preserves single and repeated query bindi
               response.request().method() === "POST" &&
               new URL(response.url()).origin === new URL(url).origin
           );
-          await form.getByRole("button", { name: "Submit" }).click();
+          await form.locator('button[type="submit"]').click();
           const response = await responsePromise;
           expect(response.status()).toBe(200);
           await expect(form).toHaveAttribute("data-state", "success");
