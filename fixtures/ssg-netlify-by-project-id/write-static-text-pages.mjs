@@ -34,9 +34,7 @@ for (const pagePath of pagePaths) {
     throw new Error(`Invalid static text page path: ${pagePath}`);
   }
 
-  const prerenderedDirectory = usesIndexFile
-    ? dirname(outputFile)
-    : outputFile;
+  const prerenderedDirectory = usesIndexFile ? dirname(outputFile) : outputFile;
   const prerenderedContent = await readFile(
     join(prerenderedDirectory, "index.html"),
     "utf8"
