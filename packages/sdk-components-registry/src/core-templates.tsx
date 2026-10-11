@@ -254,7 +254,6 @@ export const coreTemplates = {
         action={new FormSubmissionValue([ownerEmail, visitorEmail])}
         formData={formData}
         browserInfo={browserInfo}
-        state={expression`${formState}`}
         onStateChange={
           new ActionValue(["state"], expression`${formState} = state`)
         }

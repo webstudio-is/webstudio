@@ -203,6 +203,22 @@ test("Form success and error feedback render without DOM markers", () => {
   expect(JSON.stringify(fragment)).not.toContain("data-ws-form-feedback");
 });
 
+test("Form state stays internal while feedback uses the formState variable", () => {
+  const fragment = renderCoreTemplate(coreTemplates.form);
+  const form = fragment.instances.find(
+    ({ component }) => component === "Form"
+  )!;
+  const formProps = fragment.props.filter(
+    ({ instanceId }) => instanceId === form.id
+  );
+
+  expect(formProps.some(({ name }) => name === "state")).toBe(false);
+  expect(formProps.some(({ name }) => name === "onStateChange")).toBe(true);
+  expect(fragment.dataSources?.some(({ name }) => name === "formState")).toBe(
+    true
+  );
+});
+
 test("new Form templates select project and visitor Email Resources", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
   const renderedTemplate = JSON.stringify(fragment);
