@@ -369,7 +369,8 @@ test("MCP-authored failed Action keeps the Form in place despite success redirec
         const secondResponse = await secondSubmission;
         expect(secondResponse.status()).toBe(502);
         await expect(form).toHaveAttribute("data-state", "error");
-        expect(await getScrollCalls(page)).toHaveLength(1);
+        await expectFeedbackInViewport(page, feedback);
+        expect(new URL(page.url()).searchParams.has("mcp-e2e")).toBe(false);
         expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual([
           "/reject",
           "/reject",
