@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect } from "@playwright/test";
+import { encodeDataSourceVariable } from "@webstudio-is/sdk";
 import {
   migratePages,
   serializePages,
@@ -242,21 +243,27 @@ const author = async () => {
   };
 
   try {
-    await call("insert-component", {
+    const inserted = await call("insert-component", {
       parentInstanceId: home.rootInstanceId,
       component: "form",
     });
-    await call("refresh");
-    const instances = await call("list-instances", {
-      pagePath: "/",
-      component: "Form",
-    });
-    const form = (
-      instances.instances as Array<{ id: string; component: string }>
-    ).find(({ component }) => component === "Form");
-    if (form === undefined) {
-      throw new Error("Expected the inserted Form");
+    const formId = (inserted.rootInstanceIds as string[])[0];
+    if (formId === undefined) {
+      throw new Error("Expected the inserted Form ID");
     }
+    await call("refresh");
+    const form = { id: formId };
+    const formInspection = await call("inspect-instance", {
+      instanceId: form.id,
+      include: ["props"],
+    });
+    const formDataId = (
+      formInspection.props as Array<{ name: string; value: unknown }>
+    ).find(({ name }) => name === "formData")?.value;
+    if (typeof formDataId !== "string") {
+      throw new Error("Expected the Form data parameter");
+    }
+    const formData = encodeDataSourceVariable(formDataId);
     const createAction = async (
       name: string,
       path: string,
@@ -280,7 +287,7 @@ const author = async () => {
       "First GraphQL action",
       "/submit",
       "graphql",
-      '{ query: "mutation Record($name: String!) { record(name: $name) }", variables: { name: formData.name } }'
+      `{ query: "mutation Record($name: String!) { record(name: $name) }", variables: { name: ${formData}.name } }`
     );
     const disabled = await createAction("Disabled HTTP action", "/reject");
     const http = await createAction("Last HTTP action", "/submit");

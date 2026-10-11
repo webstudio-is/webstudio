@@ -1710,12 +1710,12 @@ const screenshotInputSchema = {
     baseUrl: {
       type: "string",
       description:
-        "Existing preview/site origin or base URL used with path, for example http://127.0.0.1:5177. When set, screenshot does not generate, build, start, or restart preview.",
+        "Existing site base URL used with path, for example http://127.0.0.1:5177. Skips preview generation and startup.",
     },
     path: {
       type: "string",
       description:
-        "Generated-site path to capture, for example /, /pricing, or /about. With baseUrl, captures that existing site. Without baseUrl, uses or starts the active long-running MCP preview server.",
+        "Generated-site path, for example /pricing. With baseUrl, capture that site; otherwise use or start the MCP preview.",
     },
     output: {
       type: "string",
@@ -1733,19 +1733,19 @@ const screenshotInputSchema = {
       type: "boolean",
       default: false,
       description:
-        "Capture the full page height after layout instead of only the viewport. Use this for long pages and design-system audits.",
+        "Capture the full page after layout, rather than the viewport.",
     },
     includeImageMetrics: {
       type: "boolean",
       default: false,
       description:
-        "Include per-image loading state and natural/rendered dimensions. Rendered audit enables this automatically; omit for compact ordinary screenshots.",
+        "Include image loading state and natural/rendered dimensions. Rendered audit enables this automatically.",
     },
     includeResourceMetrics: {
       type: "boolean",
       default: false,
       description:
-        "Include sanitized Resource Timing transfer and render-blocking metadata. Rendered audit enables this automatically; omit for compact ordinary screenshots.",
+        "Include sanitized Resource Timing and render-blocking data. Rendered audit enables this automatically.",
     },
     includeContrastMetrics: {
       type: "boolean",
@@ -1777,7 +1777,7 @@ const screenshotInputSchema = {
       type: "boolean",
       default: true,
       description:
-        "Wait for document.fonts.ready before sampling layout. Set false if a font never settles; capture still waits for stable layout frames.",
+        "Wait for document.fonts.ready. Set false if fonts never settle; layout still stabilizes.",
     },
     waitForTimeout: {
       type: "number",
@@ -1796,14 +1796,14 @@ const screenshotInputSchema = {
       enum: projectSessionPreviewSources,
       default: "session",
       description:
-        "When screenshot needs to start/restart preview for a path, choose local for .webstudio/data.json or session for the current ProjectSession snapshot after MCP edits.",
+        "Preview source: local uses .webstudio/data.json; session uses the current ProjectSession snapshot.",
     },
     mode: {
       type: "string",
       enum: projectSessionPreviewModes,
       default: "iterative",
       description:
-        "Iterative keeps one development server and browser alive while reloading after MCP edits. Production performs a full generated build and is intended for audits and release-like verification.",
+        "Iterative reloads a persistent dev server and browser after MCP edits. Production builds the generated site for audits.",
     },
     imageDomains: {
       type: "array",

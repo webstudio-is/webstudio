@@ -467,7 +467,7 @@ export const EmailResourceForm = forwardRef<
               </Box>
               <InfoTooltip
                 label="About Visitor email field"
-                content="Choose a Form input to use as the recipient’s email address."
+                content="Sends the confirmation email to the address submitted in this Form input."
                 disableHoverableContent={true}
               />
             </Flex>

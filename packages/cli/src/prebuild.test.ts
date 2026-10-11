@@ -5113,7 +5113,7 @@ export const createManagedFormResourceFetch = () => globalThis.__testManagedForm
       expect(sendEmail).toHaveBeenCalledOnce();
       expect(sendEmail.mock.calls[0][0].email).toMatchObject({
         recipients: [{ address: "visitor@example.com" }],
-        body: "We received your request from https://site.example.\n\nCustom text",
+        body: "Custom text",
         includeAttachments: true,
       });
       expect(httpFetch).not.toHaveBeenCalled();
@@ -6015,6 +6015,7 @@ export const createManagedFormResourceFetch = () => {
             userAgent: "Test Browser",
             language: "en-US",
             referrer: "https://site.example/contact",
+            pageUrl: "https://site.example/?source=event",
           },
         },
       ]);

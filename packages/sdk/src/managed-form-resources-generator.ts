@@ -27,17 +27,94 @@ import {
   generateResources,
 } from "./resources-generator";
 import { generateEmailRequestFields } from "./email-resource-generator";
+import { isFormSubmission } from "./form-submission";
+import { getParentInstanceById } from "./instances-utils";
+import {
+  getPageResourceRootIds,
+  getTransitiveResourceIds,
+} from "./resource-dependencies";
 
 /** Compose page-load Resources with the inputs reserved for Form submissions. */
 export const generatePageResources = (
   options: Parameters<typeof generateResources>[0]
 ) => {
+  const instances = options.instances ?? new Map();
   const { formParameterIds, submissionResourceIds } =
     getManagedFormSubmissionResourceIds({
-      instances: options.instances ?? new Map(),
+      instances,
       dataSources: options.dataSources,
       resources: options.resources,
     });
+  const parentInstanceById = getParentInstanceById(instances);
+  const isInFormScope = (instanceId: string | undefined) => {
+    while (instanceId !== undefined) {
+      if (instances.get(instanceId)?.component === "Form") {
+        return true;
+      }
+      instanceId = parentInstanceById.get(instanceId);
+    }
+    return false;
+  };
+  const independentlyUsedResourceIds = getPageResourceRootIds({
+    page: options.page,
+    instances,
+    props: options.props,
+    dataSources: options.dataSources,
+  });
+  for (const source of options.dataSources.values()) {
+    if (source.type === "resource" && !isInFormScope(source.scopeInstanceId)) {
+      independentlyUsedResourceIds.add(source.resourceId);
+    }
+  }
+  for (const prop of options.props.values()) {
+    if (prop.type === "resource") {
+      independentlyUsedResourceIds.add(prop.value);
+    }
+  }
+  for (const selection of options.contentBlockResourceSelections ?? []) {
+    for (const candidate of selection.candidates) {
+      for (const resourceId of candidate.resourceIds) {
+        independentlyUsedResourceIds.add(resourceId);
+      }
+    }
+  }
+  for (const resourceId of [...independentlyUsedResourceIds]) {
+    for (const dependencyId of getTransitiveResourceIds({
+      resourceId,
+      resources: options.resources,
+      dataSources: options.dataSources,
+    })) {
+      independentlyUsedResourceIds.add(dependencyId);
+    }
+  }
+  for (const prop of options.props.values()) {
+    if (
+      prop.type !== "json" ||
+      prop.name !== "action" ||
+      instances.get(prop.instanceId)?.component !== "Form" ||
+      !isFormSubmission(prop.value)
+    ) {
+      continue;
+    }
+    for (const { dataSourceId } of prop.value) {
+      const source = options.dataSources.get(dataSourceId);
+      if (source?.type === "resource") {
+        const actionResourceIds = new Set([
+          source.resourceId,
+          ...getTransitiveResourceIds({
+            resourceId: source.resourceId,
+            resources: options.resources,
+            dataSources: options.dataSources,
+          }),
+        ]);
+        for (const resourceId of actionResourceIds) {
+          if (!independentlyUsedResourceIds.has(resourceId)) {
+            submissionResourceIds.add(resourceId);
+          }
+        }
+      }
+    }
+  }
   const emailResources = Array.from(options.resources.values()).filter(
     (resource) => resource.control === "email"
   );

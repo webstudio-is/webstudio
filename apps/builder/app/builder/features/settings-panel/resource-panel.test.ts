@@ -1046,7 +1046,7 @@ test("visitor Email Resource selects a named Form email field", async () => {
   expect(container.textContent).toContain("Visitor email field");
   expect(container.textContent).toContain("visitorEmail");
   const visitorInfoTooltipText =
-    "Adds a note with this site’s URL to help recipients identify where the message came from and discourage spam.";
+    "Sends the confirmation email to the address submitted in this Form input.";
   const visitorOptionDescription =
     "Choose a Form input to use as the recipient’s email address.";
   expect(container.textContent).not.toContain(visitorInfoTooltipText);

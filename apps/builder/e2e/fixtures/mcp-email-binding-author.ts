@@ -29,8 +29,13 @@ import { loadDevBuild, updateBuild } from "../db";
 
 const projectId = process.argv[2];
 const mode = process.argv[3];
-if (projectId === undefined || (mode !== "bind" && mode !== "reset")) {
-  throw new Error("Expected a project ID and bind or reset mode");
+const formId = process.argv[4];
+if (
+  projectId === undefined ||
+  (mode !== "bind" && mode !== "reset") ||
+  formId === undefined
+) {
+  throw new Error("Expected a project ID, bind or reset mode, and Form ID");
 }
 
 const commands = new Set([
@@ -228,16 +233,7 @@ const call = async (name: string, args: Record<string, unknown> = {}) => {
 };
 
 try {
-  const instances = await call("list-instances", {
-    pagePath: "/",
-    component: "Form",
-  });
-  const form = (
-    instances.instances as Array<{ id: string; component: string }>
-  ).find(({ component }) => component === "Form");
-  if (form === undefined) {
-    throw new Error("Expected the contact Form");
-  }
+  const form = { id: formId };
   const resources = await call("list-resources", {
     scopeInstanceId: form.id,
   });

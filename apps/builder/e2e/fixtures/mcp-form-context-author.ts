@@ -252,21 +252,15 @@ const author = async () => {
       name: "Form context",
       path: "/contact/:slug",
     });
-    await call("insert-component", {
+    const inserted = await call("insert-component", {
       parentInstanceId: page.rootInstanceId,
       component: "form",
     });
-    await call("refresh");
-    const instances = await call("list-instances", {
-      pagePath: "/contact/:slug",
-      component: "Form",
-    });
-    const formId = (
-      instances.instances as Array<{ id: string; component: string }>
-    ).find(({ component }) => component === "Form")?.id;
+    const formId = (inserted.rootInstanceIds as string[])[0];
     if (formId === undefined) {
-      throw new Error(`Expected inserted Form: ${JSON.stringify(instances)}`);
+      throw new Error("Expected the inserted Form ID");
     }
+    await call("refresh");
     const formInspection = await call("inspect-instance", {
       instanceId: formId,
       include: ["props"],

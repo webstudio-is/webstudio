@@ -257,21 +257,15 @@ const author = async () => {
         '<Link href="/form-query?tag=second&amp;tag=first&amp;tag=second">Open repeated Form query</Link>' +
         '<Link href="/form-query?tag=solo">Open single Form query</Link>',
     });
-    await call("insert-component", {
+    const inserted = await call("insert-component", {
       parentInstanceId: page.rootInstanceId,
       component: "form",
     });
-    await call("refresh");
-    const instances = await call("list-instances", {
-      pagePath: "/form-query",
-      component: "Form",
-    });
-    const formId = (
-      instances.instances as Array<{ id: string; component: string }>
-    ).find(({ component }) => component === "Form")?.id;
+    const formId = (inserted.rootInstanceIds as string[])[0];
     if (formId === undefined) {
-      throw new Error(`Expected inserted Form: ${JSON.stringify(instances)}`);
+      throw new Error("Expected the inserted Form ID");
     }
+    await call("refresh");
     const resource = await call("create-resource", {
       resource: {
         name: "Managed query receiver",

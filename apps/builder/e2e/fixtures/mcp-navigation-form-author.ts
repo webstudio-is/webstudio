@@ -245,21 +245,15 @@ const author = async () => {
   try {
     // Inserting the public Form template creates connected Email Resources.
     // Removing every Action through MCP must switch that same Form to navigation.
-    await call("insert-component", {
+    const inserted = await call("insert-component", {
       parentInstanceId: home.rootInstanceId,
       component: "form",
     });
-    await call("refresh");
-    const instances = await call("list-instances", {
-      pagePath: "/",
-      component: "Form",
-    });
-    const formId = (
-      instances.instances as Array<{ id: string; component: string }>
-    ).find(({ component }) => component === "Form")?.id;
+    const formId = (inserted.rootInstanceIds as string[])[0];
     if (formId === undefined) {
-      throw new Error("Expected the inserted Form template");
+      throw new Error("Expected the inserted Form ID");
     }
+    await call("refresh");
     const initial = await call("inspect-instance", {
       instanceId: formId,
       include: ["props"],

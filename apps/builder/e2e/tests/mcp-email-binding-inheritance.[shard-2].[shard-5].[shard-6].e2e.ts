@@ -34,7 +34,7 @@ test("MCP Email bindings deliver values and reset to Project Settings inheritanc
     assetNamePrefix: "mcp-email-binding-",
     builderToken: "mcp-email-binding-builder-token",
   });
-  const author = async (path: string, mode: string) => {
+  const author = async (path: string, mode: string, formId?: string) => {
     const { stdout } = await execFileAsync(
       process.execPath,
       [
@@ -46,6 +46,7 @@ test("MCP Email bindings deliver values and reset to Project Settings inheritanc
         path,
         fixture.projectId,
         mode,
+        ...(formId === undefined ? [] : [formId]),
       ],
       {
         timeout: 60_000,
@@ -54,8 +55,8 @@ test("MCP Email bindings deliver values and reset to Project Settings inheritanc
     );
     return JSON.parse(stdout) as { formId: string };
   };
-  await author(initialAuthorPath, "email");
-  const { formId } = await author(bindingAuthorPath, "bind");
+  const { formId } = await author(initialAuthorPath, "email");
+  await author(bindingAuthorPath, "bind", formId);
   const receiver = await startLocalEmailReceiver();
   try {
     await page.route("**/*", (route) =>
@@ -97,7 +98,7 @@ test("MCP Email bindings deliver values and reset to Project Settings inheritanc
       replyTo: { address: "ada@example.test" },
     });
 
-    await author(bindingAuthorPath, "reset");
+    await author(bindingAuthorPath, "reset", formId);
     await withMcpEmailPreview({
       projectId: fixture.projectId,
       emailPort: receiver.port,

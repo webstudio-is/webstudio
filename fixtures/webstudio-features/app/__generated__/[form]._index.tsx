@@ -4,7 +4,7 @@
 
       import { Fragment, useState } from "react";
       import { renderText, useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-      import { Body as Body, Form as Form } from "@webstudio-is/sdk-components-react-router";
+      import { Body as Body, WebhookForm as WebhookForm } from "@webstudio-is/sdk-components-react-router";
 import { Box as Box, Label as Label, Input as Input, Button as Button, Heading as Heading } from "@webstudio-is/sdk-components-react/components";
 
 
@@ -37,7 +37,7 @@ let [formState, set$formState] = useVariableState<any>("initial")
 let [formState_1, set$formState_1] = useVariableState<any>("initial")
 return <Body
 className={`w-body`}>
-<Form
+<WebhookForm
 state={formState == null ? formState : String(formState)}
 onStateChange={(state: any) => {
 formState = state
@@ -84,8 +84,8 @@ className={`w-box`}>
 {"Sorry, something went wrong."}
 </Box>
 }
-</Form>
-<Form
+</WebhookForm>
+<WebhookForm
 state={formState_1 == null ? formState_1 : String(formState_1)}
 onStateChange={(state: any) => {
 formState_1 = state
@@ -134,7 +134,7 @@ className={`w-box`}>
 {"Sorry, something went wrong."}
 </Box>
 }
-</Form>
+</WebhookForm>
 </Body>
 }
 

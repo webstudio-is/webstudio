@@ -242,21 +242,16 @@ const author = async () => {
   };
 
   try {
-    await call("insert-component", {
+    const inserted = await call("insert-component", {
       parentInstanceId: home.rootInstanceId,
       component: "form",
     });
-    await call("refresh");
-    const instances = await call("list-instances", {
-      pagePath: "/",
-      component: "Form",
-    });
-    const form = (
-      instances.instances as Array<{ id: string; component: string }>
-    ).find(({ component }) => component === "Form");
-    if (form === undefined) {
-      throw new Error("Expected the inserted Form");
+    const formId = (inserted.rootInstanceIds as string[])[0];
+    if (formId === undefined) {
+      throw new Error("Expected the inserted Form ID");
     }
+    await call("refresh");
+    const form = { id: formId };
     const graphql = await call("create-resource", {
       resource: {
         name: "GraphQL inspection action",
@@ -287,7 +282,10 @@ const author = async () => {
       ])
     );
     process.stdout.write(
-      `${JSON.stringify({ formId: form.id, graphqlResourceId: graphql.resourceId })}\n`
+      `${JSON.stringify({
+        formId: form.id,
+        graphqlResourceId: graphql.resourceId,
+      })}\n`
     );
   } finally {
     await client.close();

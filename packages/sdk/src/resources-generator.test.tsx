@@ -72,12 +72,163 @@ test("does not fetch a Form-bound Resource during page load", () => {
         body: encodeDataSourceVariable("formDataId"),
       },
     ]),
-    props: new Map(),
+    props: toMap([
+      {
+        id: "action-prop",
+        instanceId: "form",
+        type: "json",
+        name: "action",
+        value: [{ dataSourceId: "resourceVariableId", enabled: true }],
+      },
+    ]),
   });
 
   expect(generated).not.toContain('id: "resourceId"');
   expect(generated).not.toContain("formDataId");
   expect(generated).not.toContain("formData");
+});
+
+test("does not evaluate configured Form Actions during page load", () => {
+  const generated = generatePageResources({
+    scope: createScope(),
+    page: { rootInstanceId: "form" } as Page,
+    instances: toMap([
+      { type: "instance", id: "form", component: "Form", children: [] },
+    ]),
+    dataSources: toMap([
+      {
+        id: "graphql-source",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "GraphQL action",
+        resourceId: "graphql-resource",
+      },
+      {
+        id: "disabled-source",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "Disabled action",
+        resourceId: "disabled-resource",
+      },
+      {
+        id: "action-dependency-source",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "Action dependency",
+        resourceId: "action-dependency-resource",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "graphql-resource",
+        name: "GraphQL action",
+        control: "graphql",
+        method: "post",
+        url: `${encodeDataSourceVariable("action-dependency-source")}.url`,
+        headers: [],
+        body: "{ variables: { name: formData.name } }",
+      },
+      {
+        id: "disabled-resource",
+        name: "Disabled action",
+        method: "post",
+        url: '"https://example.com/disabled"',
+        headers: [],
+      },
+      {
+        id: "action-dependency-resource",
+        name: "Action dependency",
+        method: "get",
+        url: '"https://example.com/graphql"',
+        headers: [],
+      },
+    ]),
+    props: toMap([
+      {
+        id: "action-prop",
+        instanceId: "form",
+        type: "json",
+        name: "action",
+        value: [
+          { dataSourceId: "graphql-source", enabled: true },
+          { dataSourceId: "disabled-source", enabled: false },
+        ],
+      },
+    ]),
+  });
+
+  expect(generated).not.toContain("graphql-resource");
+  expect(generated).not.toContain("disabled-resource");
+  expect(generated).not.toContain("action-dependency-resource");
+  expect(generated).not.toContain("formData.name");
+});
+
+test("keeps a page-used Resource selected as a disabled Form Action", () => {
+  const generated = generatePageResources({
+    scope: createScope(),
+    page: { rootInstanceId: "body" } as Page,
+    instances: toMap([
+      {
+        type: "instance",
+        id: "body",
+        component: "Body",
+        children: [{ type: "id", value: "form" }],
+      },
+      { type: "instance", id: "form", component: "Form", children: [] },
+    ]),
+    dataSources: toMap([
+      {
+        id: "form-shared-source",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "Shared action",
+        resourceId: "shared-resource",
+      },
+      {
+        id: "page-resource-source",
+        type: "resource",
+        scopeInstanceId: "form",
+        name: "Page content",
+        resourceId: "page-resource",
+      },
+    ]),
+    resources: toMap([
+      {
+        id: "shared-resource",
+        name: "Shared",
+        method: "get",
+        url: '"https://example.com/shared"',
+        headers: [],
+      },
+      {
+        id: "page-resource",
+        name: "Page content",
+        method: "get",
+        url: `${encodeDataSourceVariable("form-shared-source")}.url`,
+        headers: [],
+      },
+    ]),
+    props: toMap([
+      {
+        id: "content-prop",
+        instanceId: "form",
+        type: "expression",
+        name: "data-content",
+        value: encodeDataSourceVariable("page-resource-source"),
+      },
+      {
+        id: "action-prop",
+        instanceId: "form",
+        type: "json",
+        name: "action",
+        value: [{ dataSourceId: "form-shared-source", enabled: false }],
+      },
+    ]),
+  });
+
+  expect(generated).toContain('id: "shared-resource"');
+  expect(generated).toContain('id: "page-resource"');
+  expect(generated).toContain('dependencies: ["shared-resource"]');
 });
 
 test("emits only the resolver imports required by bound Email Resources", () => {

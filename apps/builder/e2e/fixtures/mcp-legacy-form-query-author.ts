@@ -258,7 +258,7 @@ const author = async () => {
     });
     const form = await call("insert-component", {
       parentInstanceId: rootInstanceId,
-      component: "Form",
+      component: "WebhookForm",
     });
     const formId = (form.rootInstanceIds as string[])[0];
     expect(formId).toBeDefined();
@@ -272,23 +272,9 @@ const author = async () => {
         },
       ],
     });
-    const formInstances = await call("list-instances", {
-      pagePath: "/legacy-query",
-      tag: "input",
-    });
-    const inputId = (formInstances.instances as Array<{ id: string }>)[0]?.id;
-    if (inputId === undefined) {
-      throw new Error("Expected the legacy Form name input");
-    }
-    await call("update-props", {
-      updates: [
-        {
-          instanceId: inputId,
-          name: "name",
-          type: "string",
-          value: "message",
-        },
-      ],
+    await call("insert-fragment", {
+      parentInstanceId: formId,
+      fragment: '<Input name="message" /><Button type="submit">Submit</Button>',
     });
     const fragment = await call("insert-fragment", {
       parentInstanceId: rootInstanceId,

@@ -270,32 +270,29 @@ const author = async () => {
   };
 
   try {
-    await call("insert-component", {
+    const insertedForm = await call("insert-component", {
       parentInstanceId: home.rootInstanceId,
       component: "form",
     });
+    const formId = (insertedForm.rootInstanceIds as string[])[0];
+    if (formId === undefined) {
+      throw new Error("Expected the inserted Form ID");
+    }
+    let secondFormId: string | undefined;
     if (emailIsolationMode) {
-      await call("insert-component", {
+      const insertedSecondForm = await call("insert-component", {
         parentInstanceId: home.rootInstanceId,
         component: "form",
       });
+      secondFormId = (insertedSecondForm.rootInstanceIds as string[])[0];
     }
     await call("refresh");
-    const instances = await call("list-instances", {
-      pagePath: "/",
-      component: "Form",
-    });
-    const forms = (
-      instances.instances as Array<{ id: string; component: string }>
-    ).filter(({ component }) => component === "Form");
-    const form = forms[0];
-    const secondForm = forms[1];
-    if (
-      form === undefined ||
-      (emailIsolationMode && secondForm === undefined)
-    ) {
-      throw new Error(`Inserted Form is missing: ${JSON.stringify(instances)}`);
+    if (emailIsolationMode && secondFormId === undefined) {
+      throw new Error("Expected the second inserted Form ID");
     }
+    const form = { id: formId };
+    const secondForm =
+      secondFormId === undefined ? undefined : { id: secondFormId };
     const formsToUpdate =
       emailIsolationMode && secondForm !== undefined
         ? [form, secondForm]
@@ -355,9 +352,13 @@ const author = async () => {
     };
     const formattedBody =
       authorOptions.mode === "format-json"
-        ? `({ sender: ${variableId("formData")}.email, message: ${variableId("formData")}.message })`
+        ? `({ sender: ${variableId("formData")}.email, message: ${variableId(
+            "formData"
+          )}.message })`
         : authorOptions.mode === "format-multipart"
-          ? `({ sender: ${variableId("formData")}.email, message: ${variableId("formData")}.message })`
+          ? `({ sender: ${variableId("formData")}.email, message: ${variableId(
+              "formData"
+            )}.message })`
           : authorOptions.mode === "format-text"
             ? `${variableId("formData")}.message`
             : undefined;
