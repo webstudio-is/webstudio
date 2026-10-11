@@ -1,3 +1,7 @@
-# Webstudio SDK Components
+# Webstudio Components for React Router
 
-Webstudio SDK is a TypeScript API that lets you use your Webstudio project or some components in your custom codebase or just render a complete Remix Document.
+React Router adapters for Webstudio's React components.
+
+## Package boundary
+
+Owns the React Router adapter layer. It connects production components to React Router lifecycle behavior. Keep generic component behavior in the component package and avoid duplicating shared behavior here.

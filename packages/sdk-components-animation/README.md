@@ -7,3 +7,7 @@ Animation components provide Webstudio-native building blocks for scroll, view, 
 Webstudio animation component discovery uses the shared Webstudio registry format: a shadcn-compatible registry item shape with Webstudio-specific metadata stored in `meta`. The superset metadata describes animation composition, props, content models, templates, insertion rules, and Builder/MCP guidance.
 
 This package is not published as an installable shadcn registry yet; the shape is used internally by Builder and MCP discovery.
+
+## Package boundary
+
+Owns production animation components and their behavior. Keep shared component mechanisms in shared packages and authoring or editing behavior in Builder.
