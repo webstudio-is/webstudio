@@ -91,10 +91,10 @@ test("managed Form reveals partial failure and leaves visible success feedback i
   const scroll = vi
     .spyOn(HTMLElement.prototype, "scrollIntoView")
     .mockImplementation(() => {});
-  let feedbackTop = window.innerHeight + 30;
+  let formTop = window.innerHeight + 30;
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
     function (this: HTMLElement) {
-      const top = this.hasAttribute("data-feedback") ? feedbackTop : 0;
+      const top = this.tagName === "FORM" ? formTop : 0;
       return { top, bottom: top + 30 } as DOMRect;
     }
   );
@@ -102,12 +102,10 @@ test("managed Form reveals partial failure and leaves visible success feedback i
   try {
     await act(async () => view.container.querySelector("button")?.click());
     await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
-    expect(
-      (scroll.mock.instances[0] as unknown as Element).getAttribute(
-        "data-feedback"
-      )
-    ).toBe("error");
-    feedbackTop = 40;
+    expect((scroll.mock.instances[0] as unknown as Element).tagName).toBe(
+      "FORM"
+    );
+    formTop = 40;
     await act(async () => view.container.querySelector("button")?.click());
     await vi.waitFor(() =>
       expect(
@@ -171,8 +169,7 @@ test("managed Form reveals authored Error Message on repeated failures", async (
     .mockImplementation(() => {});
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
     function (this: HTMLElement) {
-      const top =
-        this.getAttribute("role") === "alert" ? window.innerHeight + 30 : 0;
+      const top = this.tagName === "FORM" ? window.innerHeight + 30 : 0;
       return { top, bottom: top + 30 } as DOMRect;
     }
   );
@@ -183,6 +180,9 @@ test("managed Form reveals authored Error Message on repeated failures", async (
     const alert = view.container.querySelector('[role="alert"]');
     expect(alert).not.toBeNull();
     expect(alert?.textContent).toBe("failed");
+    expect((scroll.mock.instances[0] as unknown as Element).tagName).toBe(
+      "FORM"
+    );
     await act(async () => view.container.querySelector("button")?.click());
     await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(2));
     expect(view.container.querySelectorAll('[role="alert"]')).toHaveLength(1);
@@ -224,8 +224,7 @@ test("managed Form reveals a persistent configuration error", async () => {
     .mockImplementation(() => {});
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
     function (this: HTMLElement) {
-      const top =
-        this.getAttribute("role") === "alert" ? window.innerHeight + 30 : 0;
+      const top = this.tagName === "FORM" ? window.innerHeight + 30 : 0;
       return { top, bottom: top + 30 } as DOMRect;
     }
   );

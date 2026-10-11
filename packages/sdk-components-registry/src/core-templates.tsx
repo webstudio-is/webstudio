@@ -305,19 +305,49 @@ export const coreTemplates = {
         )}
         {setInstanceMeta(
           { label: "Error Message" },
-          <div ws:show={expression`${formState} === 'error'`} role="alert">
-            <p>
+          <div
+            ws:show={expression`${formState} === 'error'`}
+            role="alert"
+            ws:style={css`
+              margin-block-start: 12px;
+              padding: 12px 16px;
+              border: 1px solid #f1c5c2;
+              border-inline-start: 4px solid #c52a28;
+              border-radius: 6px;
+              background-color: #fff7f6;
+              color: #7f1d1d;
+            `}
+          >
+            <p
+              ws:style={css`
+                margin: 0 0 8px;
+                font-weight: 600;
+              `}
+            >
               {
                 new PlaceholderValue(
                   "We could not send your message. Please try again."
                 )
               }
             </p>
-            <ws.collection data={expression`${formErrors}`} item={formError}>
-              <div>
-                {expression`${formError}.message` as unknown as ReactNode}
-              </div>
-            </ws.collection>
+            <ul
+              ws:style={css`
+                display: grid;
+                gap: 4px;
+                margin: 0;
+                padding-inline-start: 20px;
+              `}
+            >
+              <ws.collection data={expression`${formErrors}`} item={formError}>
+                <li
+                  ws:style={css`
+                    overflow-wrap: anywhere;
+                  `}
+                >
+                  {expression`${formError}.message` as unknown as ReactNode}
+                </li>
+              </ws.collection>
+            </ul>
           </div>
         )}
       </NativeForm>

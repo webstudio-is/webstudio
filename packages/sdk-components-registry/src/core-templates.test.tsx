@@ -171,7 +171,9 @@ test("Form Error Message binds all errors through its authored container", () =>
   const collection = fragment.instances.find(
     ({ component }) => component === collectionComponent
   )!;
-  expect(error.children).toContainEqual({ type: "id", value: collection.id });
+  const list = fragment.instances.find(({ tag }) => tag === "ul")!;
+  expect(error.children).toContainEqual({ type: "id", value: list.id });
+  expect(list.children).toContainEqual({ type: "id", value: collection.id });
   expect(fragment.props).toContainEqual(
     expect.objectContaining({
       instanceId: collection.id,
@@ -187,6 +189,9 @@ test("Form Error Message binds all errors through its authored container", () =>
     )
   );
   expect(message).toBeDefined();
+  expect(error.tag).toBe("div");
+  expect(fragment.instances.some(({ tag }) => tag === "ul")).toBe(true);
+  expect(fragment.instances.some(({ tag }) => tag === "li")).toBe(true);
 });
 
 test("Form success and error feedback render without DOM markers", () => {

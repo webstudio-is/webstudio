@@ -1,43 +1,10 @@
 import { useCallback, useEffect, useRef, type ForwardedRef } from "react";
 
-const isVisible = (element: Element, form: HTMLFormElement) => {
-  if (element instanceof HTMLInputElement && element.type === "hidden") {
-    return false;
-  }
-  for (
-    let current: Element | null = element;
-    current && current !== form;
-    current = current.parentElement
-  ) {
-    const style = window.getComputedStyle(current);
-    if (
-      current.hasAttribute("hidden") ||
-      current.getAttribute("aria-hidden") === "true" ||
-      style.display === "none" ||
-      style.visibility === "hidden" ||
-      style.visibility === "collapse"
-    ) {
-      return false;
-    }
-  }
-  return true;
-};
-
-const getVisibleElements = (form: HTMLFormElement) =>
-  new Set(
-    Array.from(form.querySelectorAll("*")).filter((element) =>
-      isVisible(element, form)
-    )
-  );
-
-/** Scroll newly visible content inside a Form into view after submission. */
+/** Scroll a submitted Form into view after its result renders. */
 export const useFormFeedbackScroll = (
-  forwardedRef: ForwardedRef<HTMLFormElement>,
-  state?: "initial" | "success" | "error"
+  forwardedRef: ForwardedRef<HTMLFormElement>
 ) => {
   const formRef = useRef<HTMLFormElement | null>(null);
-  const beforeSubmit = useRef<Set<Element>>(new Set());
-  const prepared = useRef(false);
   const frame = useRef<number>();
 
   const setFormRef = useCallback(
@@ -52,57 +19,26 @@ export const useFormFeedbackScroll = (
     [forwardedRef]
   );
 
-  const prepareFeedback = useCallback(() => {
-    prepared.current = true;
-    if (formRef.current) {
-      beforeSubmit.current = getVisibleElements(formRef.current);
-    }
+  const revealFeedback = useCallback(() => {
     if (frame.current !== undefined) {
       cancelAnimationFrame(frame.current);
     }
-  }, []);
-
-  // Re-snapshot after an earlier error is hidden. Saved forms may keep the
-  // feedback element mounted and toggle its display instead of mounting it.
-  useEffect(() => {
-    if (state === "initial" && prepared.current && formRef.current) {
-      beforeSubmit.current = getVisibleElements(formRef.current);
-    }
-  }, [state]);
-
-  const revealFeedback = useCallback(() => {
-    let remainingFrames = 10;
-    const check = () => {
+    frame.current = requestAnimationFrame(() => {
       const form = formRef.current;
       if (!form) {
         return;
       }
-      const visibleElements = Array.from(form.querySelectorAll("*")).filter(
-        (element) => isVisible(element, form) && element instanceof HTMLElement
-      );
-      const target =
-        visibleElements.find((element) =>
-          element.matches('[role="alert"], [role="status"]')
-        ) ??
-        visibleElements.find((element) => !beforeSubmit.current.has(element));
-      if (!target) {
-        if (--remainingFrames > 0) {
-          frame.current = requestAnimationFrame(check);
-        }
-        return;
-      }
-      const bounds = target.getBoundingClientRect();
+      const bounds = form.getBoundingClientRect();
       if (bounds.top < 0 || bounds.bottom > window.innerHeight) {
-        target.scrollIntoView({
-          block: "center",
+        form.scrollIntoView({
+          block: "end",
           behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
             .matches
             ? "instant"
             : "smooth",
         });
       }
-    };
-    frame.current = requestAnimationFrame(check);
+    });
   }, []);
 
   useEffect(
@@ -114,5 +50,5 @@ export const useFormFeedbackScroll = (
     []
   );
 
-  return { setFormRef, prepareFeedback, revealFeedback };
+  return { setFormRef, revealFeedback };
 };

@@ -104,6 +104,10 @@ test("success feedback scroll waits until delayed route revalidation settles", a
   const scrollIntoView = vi
     .spyOn(HTMLElement.prototype, "scrollIntoView")
     .mockImplementation(() => {});
+  vi.spyOn(HTMLFormElement.prototype, "getBoundingClientRect").mockReturnValue({
+    top: window.innerHeight + 1,
+    bottom: window.innerHeight + 20,
+  } as DOMRect);
   const Page = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
@@ -119,28 +123,7 @@ test("success feedback scroll waits until delayed route revalidation settles", a
           onStateChange={setState}
         >
           <button type="submit">Send</button>
-          {state === "success" && (
-            <div
-              ref={(element) => {
-                if (element) {
-                  element.getBoundingClientRect = () =>
-                    ({
-                      top: window.innerHeight + 1,
-                      bottom: window.innerHeight + 20,
-                      left: 0,
-                      right: 20,
-                      width: 20,
-                      height: 19,
-                      x: 0,
-                      y: window.innerHeight + 1,
-                      toJSON: () => ({}),
-                    }) as DOMRect;
-                }
-              }}
-            >
-              Submitted
-            </div>
-          )}
+          {state === "success" && <div>Submitted</div>}
         </NativeForm>
       </>
     );
@@ -333,6 +316,10 @@ test("refresh failure retains the completed success result and does not replay P
   const scrollIntoView = vi
     .spyOn(HTMLElement.prototype, "scrollIntoView")
     .mockImplementation(() => {});
+  vi.spyOn(HTMLFormElement.prototype, "getBoundingClientRect").mockReturnValue({
+    top: window.innerHeight + 1,
+    bottom: window.innerHeight + 20,
+  } as DOMRect);
   const Page = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
@@ -349,28 +336,7 @@ test("refresh failure retains the completed success result and does not replay P
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
-          {state === "success" && (
-            <div
-              ref={(element) => {
-                if (element) {
-                  element.getBoundingClientRect = () =>
-                    ({
-                      top: window.innerHeight + 1,
-                      bottom: window.innerHeight + 20,
-                      left: 0,
-                      right: 20,
-                      width: 20,
-                      height: 19,
-                      x: 0,
-                      y: window.innerHeight + 1,
-                      toJSON: () => ({}),
-                    }) as DOMRect;
-                }
-              }}
-            >
-              Submitted
-            </div>
-          )}
+          {state === "success" && <div>Submitted</div>}
         </NativeForm>
       </>
     );

@@ -68,8 +68,7 @@ export const NativeForm = forwardRef<
       "initial" | "success" | "error"
     >("initial");
     const activeRequest = useRef<AbortController>();
-    const { setFormRef, prepareFeedback, revealFeedback } =
-      useFormFeedbackScroll(ref, state ?? internalState);
+    const { setFormRef, revealFeedback } = useFormFeedbackScroll(ref);
     const [hydrated, setHydrated] = useState(false);
     useEffect(() => setHydrated(true), []);
     useEffect(() => () => activeRequest.current?.abort(), []);
@@ -123,7 +122,6 @@ export const NativeForm = forwardRef<
       if (activeRequest.current) {
         return;
       }
-      prepareFeedback();
       if (configurationError) {
         reportFailure(configurationError);
         return;

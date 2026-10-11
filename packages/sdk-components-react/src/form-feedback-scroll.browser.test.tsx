@@ -9,7 +9,6 @@ import { useFormFeedbackScroll } from "./form-feedback-scroll";
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 type Controller = {
-  prepare: () => void;
   complete: (state: "success" | "error") => void;
   reset: () => void;
 };
@@ -23,10 +22,8 @@ const renderFeedback = async (persistent = false) => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
     );
-    const { setFormRef, prepareFeedback, revealFeedback } =
-      useFormFeedbackScroll(null, state);
+    const { setFormRef, revealFeedback } = useFormFeedbackScroll(null);
     controller.current = {
-      prepare: prepareFeedback,
       complete: (nextState) => {
         setState(nextState);
         revealFeedback();
@@ -37,16 +34,11 @@ const renderFeedback = async (persistent = false) => {
       <form ref={setFormRef}>
         {state === "initial" && <button>Send</button>}
         {persistent ? (
-          <div
-            role="alert"
-            style={{ display: state === "error" ? "block" : "none" }}
-          >
+          <div style={{ display: state === "error" ? "block" : "none" }}>
             error
           </div>
         ) : (
-          state !== "initial" && (
-            <div role={state === "error" ? "alert" : "status"}>{state}</div>
-          )
+          state !== "initial" && <div>{state}</div>
         )}
       </form>
     );
@@ -82,15 +74,14 @@ test.each([
     () => ({ top, bottom: top + 30 }) as DOMRect
   );
   try {
-    view.controller.current.prepare();
     await act(async () => view.controller.current.complete("error"));
     if (expected) {
       await vi.waitFor(() => expect(scroll).toHaveBeenCalledOnce());
       expect(scroll.mock.calls[0][0]).toMatchObject({
-        block: "center",
+        block: "end",
         behavior: "smooth",
       });
-      expect(scrolledElements[0]?.getAttribute("role")).toBe("alert");
+      expect(scrolledElements[0]?.tagName).toBe("FORM");
     } else {
       await new Promise((resolve) => setTimeout(resolve, 80));
       expect(scroll).not.toHaveBeenCalled();
@@ -119,12 +110,10 @@ test("uses instant scrolling with reduced motion and handles repeated errors", a
       }) as MediaQueryList
   );
   try {
-    view.controller.current.prepare();
     await act(async () => view.controller.current.complete("error"));
     await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
     expect(scroll.mock.calls[0][0]).toMatchObject({ behavior: "instant" });
     await act(async () => view.controller.current.reset());
-    view.controller.current.prepare();
     await act(async () => view.controller.current.complete("error"));
     await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(2));
     expect(matchMedia).toHaveBeenCalledWith("(prefers-reduced-motion: reduce)");
