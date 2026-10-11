@@ -151,16 +151,13 @@ test("MCP-authored contact Form delivers customized Email messages locally", asy
         expect(ownerMessage?.text).toContain("Email: ada@example.test");
         expect(ownerMessage?.text).toContain("Subject: MCP email test");
         expect(ownerMessage?.text).toContain("Page: http://127.0.0.1:");
-        expect(visitorMessage).toMatchObject({
-          subject: expect.stringContaining("Contact Form received your email"),
-          text: expect.stringContaining(
-            "We received your request from http://127.0.0.1:"
-          ),
-        });
-        expect(visitorMessage?.attachments ?? []).toEqual([]);
-        expect(visitorMessage?.text).toContain(
+        expect(
+          visitorMessage?.subject.startsWith("We received your message [")
+        ).toBe(true);
+        expect(visitorMessage?.text).toBe(
           "Thanks for contacting us. We will reply soon."
         );
+        expect(visitorMessage?.attachments ?? []).toEqual([]);
       },
     });
   } finally {

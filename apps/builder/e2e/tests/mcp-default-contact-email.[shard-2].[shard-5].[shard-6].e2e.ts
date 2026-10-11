@@ -178,9 +178,6 @@ test("MCP-inserted default contact Form sends its automatic owner message and vi
             "Thank you for your message.\n\nWe received it and will respond as soon as possible.\n\nContact Form"
           ),
         });
-        expect(visitor?.text).toContain(
-          `We received your request from ${new URL(url).origin}`
-        );
         expect(visitor?.attachments ?? []).toEqual([]);
       },
     });
