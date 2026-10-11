@@ -76,13 +76,13 @@ const labelMeta: WsComponentMeta = {
 
 const Box = (_props: { children?: ReactNode }) => null;
 Box.displayName = "Box";
-const ResourceForm = (_props: {
+const Form = (_props: {
   errors?: unknown;
   onResultChange?: unknown;
   children?: ReactNode;
   "ws:show"?: boolean;
 }) => null;
-ResourceForm.displayName = "ResourceForm";
+Form.displayName = "Form";
 const BaseLabel = () => null;
 BaseLabel.displayName = "Label";
 const RadixLabel = () => null;
@@ -136,13 +136,13 @@ describe("generateStories", () => {
       const errorsVariable = new Variable("errors", []);
       await generateStories({
         packageName: "@webstudio-is/sdk-components-react",
-        components: { Box, ResourceForm },
+        components: { Box, Form },
         templates: [
           {
             meta: {
               category: "general",
               template: hasErrors ? (
-                <ResourceForm
+                <Form
                   ws:show={!hidden}
                   errors={expression`${errorsVariable}`}
                   onResultChange={
@@ -155,19 +155,19 @@ describe("generateStories", () => {
                   <ws.element ws:label="Error Message">
                     {new PlaceholderValue("Sorry, something went wrong.")}
                   </ws.element>
-                </ResourceForm>
+                </Form>
               ) : (
                 <Box />
               ),
             },
           },
         ],
-        metas: { Box: boxMeta, ResourceForm: boxMeta },
+        metas: { Box: boxMeta, Form: boxMeta },
       });
       const source = await readFile(
         path.join(
           root,
-          `src/__generated__/${hasErrors ? "resource-form" : "box"}.stories.tsx`
+          `src/__generated__/${hasErrors ? "form" : "box"}.stories.tsx`
         ),
         "utf8"
       );

@@ -163,9 +163,11 @@ test("prints compact mcp tool summaries as json by default", () => {
       default: "iterative",
     })
   );
-  expect(
-    screenshotTool?.inputSchema.properties?.baseUrl?.description
-  ).toContain("Skips preview generation and startup");
+  expect(screenshotTool?.inputSchema.properties?.baseUrl).toMatchObject({
+    description: expect.stringContaining(
+      "Skips preview generation and startup"
+    ),
+  });
   expect(
     JSON.stringify(
       expectedTools.find(({ name }) => name === "insert-page-transfer-item")
