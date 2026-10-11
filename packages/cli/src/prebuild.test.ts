@@ -1586,7 +1586,7 @@ describe("prebuild", () => {
     });
 
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["build"]);
     await runGeneratedCommand("vike", ["prerender"]);
 
     const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
@@ -1651,7 +1651,7 @@ describe("prebuild", () => {
 
     await prebuild({ assets: false, template: ["ssg"] });
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["build"]);
     await runGeneratedCommand("vike", ["prerender"]);
 
     const htmlSource = await readFile("dist/client/index.html", "utf8");
@@ -3003,7 +3003,7 @@ sitemap.map((page) => page.path);`
 
     await prebuild({ assets: false, template: ["ssg"] });
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["build"]);
     await runGeneratedCommand("vike", ["prerender"]);
 
     const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
@@ -3163,7 +3163,7 @@ sitemap.map((page) => page.path);`
     expect(sitemap).not.toContain('"path": "/blog/hello-world"');
     expect(sitemap).not.toContain('"path": "/blog/draft-post"');
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["build"]);
     await runGeneratedCommand("vike", ["prerender"]);
     await expect(
       readFile("dist/client/blog/hello-world/index.html", "utf8")
@@ -3701,7 +3701,7 @@ sitemap.map((page) => page.path);`
         meta: { totalCount: 1, hasMore: false },
       },
     ]);
-    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["build"]);
     await runGeneratedCommand("vike", ["prerender"]);
     await expect(readFile("dist/client/index.html", "utf8")).resolves.toContain(
       "<!DOCTYPE html>"
@@ -3909,7 +3909,7 @@ sitemap.map((page) => page.path);`
       "node_modules",
       "junction"
     );
-    await runGeneratedCommand("vite", ["build"]);
+    await runGeneratedCommand("vike", ["build"]);
     await runGeneratedCommand("vike", ["prerender"]);
 
     await expect(readFile("dist/client/robots.txt", "utf8")).resolves.toBe(

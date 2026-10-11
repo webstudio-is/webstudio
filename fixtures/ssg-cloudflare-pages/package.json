@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "vite build && vike prerender",
+    "build": "vike build && vike prerender",
     "build:debug": "pnpm build && cd dist && oxfmt '**/*.html'",
     "dev": "vite dev",
     "typecheck": "tsc --noEmit",
@@ -28,7 +28,7 @@
     "@types/react-dom": "^18.2.25",
     "@vitejs/plugin-react": "^4.7.0",
     "typescript": "7.0.2",
-    "vite": "^7.3.7",
+    "vite": "7.1.12",
     "webstudio": "workspace:*"
   },
   "dependencies": {

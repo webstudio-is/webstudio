@@ -129,7 +129,7 @@
     "ts-expect": "^1.3.0",
     "typescript": "7.0.2",
     "vike": "0.4.267-commit-feffb0f",
-    "vite": "^7.3.7",
+    "vite": "7.1.12",
     "vitest": "^3.1.2",
     "wrangler": "4.130.0"
   }
