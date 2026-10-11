@@ -209,6 +209,7 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 | Default result count | 20 |
 | Maximum result count | 1000 |
 | Candidate documents | 1000 |
+| Documents in a reference graph | 2000 |
 | Serialized query result | 16 MiB |
 | Published content database | 500 KiB |
 

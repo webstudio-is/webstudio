@@ -126,6 +126,14 @@ const getPreviewRequestFailure = (error: unknown): PreviewProbeFailure => {
   };
 };
 
+const isExpectedPreviewProject = (
+  identity: { projectId?: unknown; version?: unknown },
+  requiredProject: { projectId: string; version?: number }
+) =>
+  identity.projectId === requiredProject.projectId &&
+  (requiredProject.version === undefined ||
+    identity.version === requiredProject.version);
+
 export const waitForPreviewReady = async (
   url: string,
   {
@@ -134,16 +142,22 @@ export const waitForPreviewReady = async (
     isRunning,
     requiredAssetNames = [],
     requiredProject,
+    probeIdentityOnly = false,
   }: {
     timeoutMs?: number;
     intervalMs?: number;
     isRunning?: () => boolean;
     requiredAssetNames?: string[];
     requiredProject?: { projectId: string; version?: number };
+    probeIdentityOnly?: boolean;
   } = {},
   dependencies = defaultPreviewServerDependencies
 ) => {
   const deadline = Date.now() + timeoutMs;
+  const usesIdentityProbe =
+    probeIdentityOnly &&
+    requiredProject !== undefined &&
+    requiredAssetNames.length === 0;
   let sawStaleServer = false;
   let sawUnexpectedProject = false;
   let lastProbeFailure: PreviewProbeFailure | undefined;
@@ -154,11 +168,14 @@ export const waitForPreviewReady = async (
       );
     }
     try {
+      const probeUrl = usesIdentityProbe
+        ? new URL("/__webstudio/preview.json", url)
+        : url;
       const attemptTimeoutMs = Math.max(
         1,
         Math.min(5000, deadline - Date.now())
       );
-      const response = await dependencies.fetch(url, {
+      const response = await dependencies.fetch(probeUrl, {
         method: "GET",
         signal: AbortSignal.timeout(attemptTimeoutMs),
       });
@@ -170,7 +187,25 @@ export const waitForPreviewReady = async (
               constraint: `http_status:${response.status}`,
             }
           : undefined;
-      if (response.status === 401 && requiredProject !== undefined) {
+      if (usesIdentityProbe) {
+        if (response.ok) {
+          const identity = (await response.json()) as {
+            projectId?: unknown;
+            version?: unknown;
+          };
+          if (isExpectedPreviewProject(identity, requiredProject)) {
+            return;
+          }
+          sawUnexpectedProject = true;
+        } else if (response.status < 500) {
+          lastProbeFailure = {
+            code: "preview_identity_unavailable",
+            message:
+              "The preview server did not return its generated project identity.",
+            constraint: "preview_identity_available",
+          };
+        }
+      } else if (response.status === 401 && requiredProject !== undefined) {
         const identityResponse = await dependencies.fetch(
           new URL("/__webstudio/preview.json", url),
           {
@@ -183,17 +218,13 @@ export const waitForPreviewReady = async (
             projectId?: unknown;
             version?: unknown;
           };
-          if (
-            identity.projectId === requiredProject.projectId &&
-            (requiredProject.version === undefined ||
-              identity.version === requiredProject.version)
-          ) {
+          if (isExpectedPreviewProject(identity, requiredProject)) {
             return;
           }
           sawUnexpectedProject = true;
         }
       }
-      if (response.status < 500) {
+      if (!usesIdentityProbe && response.status < 500) {
         if (requiredAssetNames.length === 0 && requiredProject === undefined) {
           return;
         }
