@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { existsSync } from "node:fs";
 import { expectTextHidden } from "../flows/assertions";
 import {
   getCanvasFrame,
@@ -303,7 +304,23 @@ test("Canvas switches away from text animation without reloading", async ({
   if (canvas === undefined) {
     throw new Error("Expected canvas frame");
   }
-  await canvas.locator("[data-ws-text-animate]").first().waitFor();
+  await canvas
+    .locator(
+      '[data-ws-component="@webstudio-is/sdk-components-animation:AnimateText"]'
+    )
+    .first()
+    .waitFor();
+  // Fork CI uses the public fallback, which does not initialize text animation.
+  if (
+    existsSync(
+      new URL(
+        "../../../../packages/sdk-components-animation/private-src/README.md",
+        import.meta.url
+      )
+    )
+  ) {
+    await canvas.locator("[data-ws-text-animate]").first().waitFor();
+  }
   await openPage({
     page,
     pageName: "Home",
