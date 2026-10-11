@@ -117,7 +117,9 @@ const moveFeedbackBelowViewport = async (
       if (feedback === undefined) {
         return false;
       }
-      feedback.style.marginBlockStart = "1600px";
+      const spacer = document.createElement("div");
+      spacer.style.height = "1600px";
+      feedback.before(spacer);
       (
         window as Window & { __mcpFeedbackPositioned?: boolean }
       ).__mcpFeedbackPositioned = true;
