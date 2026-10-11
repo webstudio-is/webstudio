@@ -12,6 +12,7 @@ import {
 import {
   encodeDataVariableId,
   encodeDataSourceVariable,
+  createFormEmailDataProxy,
   getAllPages,
   getHomePage,
   ROOT_INSTANCE_ID,
@@ -1278,6 +1279,26 @@ test("the synchronous Form evaluator shares Builder binding semantics", async ()
       await computeExpression(expression, values)
     );
   }
+});
+
+test("the expression evaluator preserves an existing stringify proxy", async () => {
+  const value = createFormEmailDataProxy(
+    { subject: "Question", name: "Ada" },
+    { space: 2 }
+  );
+  const identifier = encodeDataVariableId("formData");
+  expect(
+    await computeExpression(
+      `${identifier} + ""`,
+      new Map([["formData", value]])
+    )
+  ).toBe("Subject: Question\nName: Ada");
+  expect(
+    await computeExpression(
+      `${identifier}.subject`,
+      new Map([["formData", value]])
+    )
+  ).toBe("Question");
 });
 
 test("the synchronous Form evaluator can surface the same errors Builder bindings suppress", async () => {

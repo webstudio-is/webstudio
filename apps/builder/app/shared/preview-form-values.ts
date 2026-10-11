@@ -32,6 +32,9 @@ export const recordPreviewBrowserInfo = (formId: string, value: unknown) => {
       ...(typeof record.referrer === "string"
         ? { referrer: record.referrer }
         : {}),
+      ...(typeof record.pageUrl === "string"
+        ? { pageUrl: record.pageUrl }
+        : {}),
     };
     next.set(formId, browserInfo);
   }

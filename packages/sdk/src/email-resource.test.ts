@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  createFormEmailDataProxy,
   getDefaultFormEmailBodyExpression,
   resolveEmailRecipientsExpression,
   resolveEmailSenderExpression,
@@ -74,6 +75,25 @@ describe("bound Email Resource addresses", () => {
 });
 
 describe("Email Resource defaults", () => {
+  test("formats submitted values as readable lines without excluded fields", () => {
+    const formData = createFormEmailDataProxy(
+      {
+        name: "Ada",
+        subject: "Question",
+        interests: ["Design", "Code"],
+        attachment: new File(["note"], "note.txt"),
+        password: "secret",
+        address: { city: "Lisbon" },
+      },
+      { excludeKeys: ["password"] }
+    );
+    expect(`Submitted fields:\n${formData}`).toBe(
+      "Submitted fields:\nName: Ada\nSubject: Question\nInterests: Design, Code\nAttachment: note.txt\nAddress:\n  City: Lisbon"
+    );
+    expect(formData.subject).toBe("Question");
+    expect(String(formData.address)).toBe('{"city":"Lisbon"}');
+  });
+
   const projectMeta = {
     contactEmail: '"Team, West" <team@example.com>',
     emailSender: "Owner Name <owner@example.com>",
@@ -156,7 +176,7 @@ describe("Email Resource defaults", () => {
     expect(resolveEmailResourceSettings({}).fromName).toBe("Site Owner");
   });
 
-  test("visitor mode uses one runtime recipient, empty body, and visitor subject", () => {
+  test("visitor mode resolves one recipient and marks inherited confirmation copy", () => {
     expect(
       resolveEmailResourceSettings({
         settings: { recipientMode: "visitor", visitorEmailField: "email" },
@@ -172,8 +192,18 @@ describe("Email Resource defaults", () => {
       recipients: [],
       subject: '"We got it"',
       body: '""',
+      confirmationBody: "default",
       includeAttachments: true,
     });
+    expect(
+      resolveEmailResourceSettings({ settings: { recipientMode: "visitor" } })
+        .confirmationSubject
+    ).toBe("default");
+    expect(
+      resolveEmailResourceSettings({
+        settings: { recipientMode: "visitor", body: '""' },
+      }).confirmationBody
+    ).toBeUndefined();
   });
 
   test("allows visitor Email Resource attachments to be explicitly disabled", () => {

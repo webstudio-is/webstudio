@@ -4,6 +4,7 @@ import { expect, test, vi } from "vitest";
 import { createScope } from "./scope";
 import { encodeDataSourceVariable, SYSTEM_VARIABLE_ID } from "./expression";
 import {
+  createFormEmailDataProxy,
   getDefaultFormEmailBodyExpression,
   resolveEmailRecipientsExpression,
   resolveEmailSenderSettingsExpression,
@@ -64,6 +65,7 @@ const getGeneratedGraph = (input: {
       }
       if (specifier === "@webstudio-is/sdk") {
         return {
+          createFormEmailDataProxy,
           resolveEmailRecipientsExpression,
           resolveEmailSenderSettingsExpression,
         };
@@ -361,7 +363,7 @@ test("a Form-scoped Email Resource gets the automatic form text and a typed emai
   expect(graph?.resources[0].emailRecipientCount).toBe(1);
   expect(graph?.resources[0].createRequest(new Map()).email).toMatchObject({
     subject: "Custom subject",
-    body: expect.stringContaining('"hidden": "yes"'),
+    body: expect.stringContaining("Hidden: yes"),
     recipients: [{ name: "Team, West", address: "team@example.com" }],
     sender: { address: "owner@example.com" },
     fromName: "Ada Owner",
@@ -376,7 +378,7 @@ test("a Form-scoped Email Resource gets the automatic form text and a typed emai
     graph?.resources[0].createRequest(new Map()).email?.body
   ).not.toContain("ws--form-bot");
   expect(graph?.resources[0].createRequest(new Map()).email?.body).toContain(
-    '"name": "notes.txt"'
+    "Upload: notes.txt"
   );
 });
 
@@ -1005,8 +1007,8 @@ test("an edited default Email body formats Form values and preserves field acces
     },
     browserInfo: { language: "en" },
   })?.resources[0].createRequest(new Map());
-  expect(request?.email?.body).toContain('"name": "Ada"');
-  expect(request?.email?.body).toContain('"name": "notes.txt"');
+  expect(request?.email?.body).toContain("Name: Ada");
+  expect(request?.email?.body).toContain("Upload: notes.txt");
   expect(request?.email?.body).toContain('"language": "en"');
   expect(request?.email?.body).toContain("Submitter: Ada");
   expect(request?.email?.body).toContain("Uploaded: notes.txt");
@@ -1272,7 +1274,7 @@ test.each([
     const graphs = buildGraphs(input);
     for (const graph of graphs) {
       const body = graph.resources[0].createRequest(new Map()).email?.body;
-      expect(body).toContain('"name": "Ada"');
+      expect(body).toContain("Name: Ada");
       expect(body).toContain('"language": "en"');
     }
     const projectOverrideGraphs = buildGraphs({
@@ -1431,7 +1433,7 @@ test("automatic Email body redacts Element passwords and unknown input types", (
       ],
     ]),
   });
-  expect(elementBody).toContain('"name": "Ada"');
+  expect(elementBody).toContain("Name: Ada");
   expect(elementBody).not.toContain("secret");
 
   const duplicatePropsBody = getBody({
@@ -1484,7 +1486,7 @@ test("automatic Email body redacts Element passwords and unknown input types", (
       ],
     ]),
   });
-  expect(duplicatePropsBody).toContain('"name": "Ada"');
+  expect(duplicatePropsBody).toContain("Name: Ada");
   expect(duplicatePropsBody).not.toContain("secret");
 
   const dynamicTypeBody = getBody({
@@ -2696,9 +2698,7 @@ test.each(["http", "email", "visitor"] as const)(
         );
         expect(Boolean(resource.usesDefaultFormBody)).toBe(kind === "http");
         if (kind === "email") {
-          expect(request.email?.body).toContain(
-            '"email": "visitor@example.com"'
-          );
+          expect(request.email?.body).toContain("Email: visitor@example.com");
           expect(request.email?.body).toContain("submitted value");
         }
       }

@@ -4,7 +4,9 @@ import { expect, test } from "vitest";
 import { createManagedFormDraftGraph } from "./managed-form-draft-graph";
 import { generateManagedFormResources } from "./managed-form-resources-generator";
 import { validateManagedFormRecipientLimit } from "./managed-form-submission";
+import { prepareVisitorEmailRequest } from "./managed-form-email";
 import {
+  createFormEmailDataProxy,
   emailSettingsInvalidMessage,
   resolveEmailRecipientsExpression,
   resolveEmailSenderSettingsExpression,
@@ -157,12 +159,20 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
         method: "post",
         url: '""',
         headers: [],
-        email: { recipientMode: "visitor", visitorEmailField: "email" },
+        email: {
+          recipientMode: "visitor",
+          visitorEmailField: "email",
+          subject: "$ws$dataSource$form__DASH__data.subject",
+          body: '"Thank you for your message.\\n\\nWe received it and will respond as soon as possible."',
+          confirmationSubject: "formSubject",
+          confirmationBody: "default",
+        },
       },
     ],
   ]);
   const formData = {
     email: "ada@example.com",
+    subject: "New shoes",
     tags: ["a", "b"],
     password: "secret",
   };
@@ -173,7 +183,10 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
     pathname: "/",
     origin: "https://site.example",
   };
-  const projectMeta = { contactEmail: "team@example.com" };
+  const projectMeta = {
+    contactEmail: "team@example.com",
+    emailSender: "Nike GmbH <sender@example.com>",
+  };
   const input = {
     formId: "form",
     destinationDataSourceIds: ["email-source", "http-source"],
@@ -215,6 +228,7 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
       }
       if (specifier === "@webstudio-is/sdk") {
         return {
+          createFormEmailDataProxy,
           resolveEmailRecipientsExpression,
           resolveEmailSenderSettingsExpression,
         };
@@ -254,9 +268,23 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
     recipientMode: "visitor",
     visitorEmailField: "email",
     recipients: [],
-    body: "",
+    body: "Thank you for your message.\n\nWe received it and will respond as soon as possible.",
     includeAttachments: true,
   });
+  const submittedFields = new FormData();
+  submittedFields.set("email", "ada@example.com");
+  for (const graph of [draft, generated]) {
+    const request = graph.resources
+      .find((resource) => resource.id === "email")!
+      .createRequest(new Map());
+    const prepared = prepareVisitorEmailRequest(request, submittedFields);
+    expect(prepared.email?.subject).toBe(
+      "Nike GmbH received your email: New shoes"
+    );
+    expect(prepared.email?.body).toMatch(
+      /respond as soon as possible\.\n\nNike GmbH$/
+    );
+  }
   expect(
     draft.resources.find((resource) => resource.id === "email")?.nonfatal
   ).toBe(true);
@@ -556,6 +584,7 @@ test("Email Sender and custom recipients bindings resolve and validate before di
       }
       if (specifier === "@webstudio-is/sdk") {
         return {
+          createFormEmailDataProxy,
           resolveEmailRecipientsExpression,
           resolveEmailSenderSettingsExpression,
         };
@@ -728,6 +757,7 @@ test("draft graph keeps scoped dependencies and external Resource roots in publi
       }
       if (specifier === "@webstudio-is/sdk") {
         return {
+          createFormEmailDataProxy,
           resolveEmailRecipientsExpression,
           resolveEmailSenderSettingsExpression,
         };

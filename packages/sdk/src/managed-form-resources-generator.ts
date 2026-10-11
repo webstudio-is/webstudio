@@ -106,7 +106,7 @@ export const generateManagedFormResources = ({
     "_managedFormDocuments"
   );
   // generateResources supplies the imports in the same server module.
-  let generated = `import type { ManagedFormResourceGraph } from "@webstudio-is/sdk/runtime";\nimport { createJsonStringifyProxy } from "@webstudio-is/sdk/to-string";\nexport const getManagedFormResourceGraph = (formId: string, ${propsName}: { system: System; ${formDataParameterName}: unknown; ${browserInfoParameterName}: unknown }): ManagedFormResourceGraph | undefined => {\n`;
+  let generated = `import type { ManagedFormResourceGraph } from "@webstudio-is/sdk/runtime";\nimport { createFormEmailDataProxy } from "@webstudio-is/sdk";\nimport { createJsonStringifyProxy } from "@webstudio-is/sdk/to-string";\nexport const getManagedFormResourceGraph = (formId: string, ${propsName}: { system: System; ${formDataParameterName}: unknown; ${browserInfoParameterName}: unknown }): ManagedFormResourceGraph | undefined => {\n`;
   generated += `  switch (formId) {\n`;
 
   for (const { formId, destinationDataSourceIds } of forms) {
@@ -196,7 +196,7 @@ export const generateManagedFormResources = ({
           rootIds.includes(resourceId) &&
           formDataSource
             ? getDefaultFormEmailBodyExpression(
-                `createJsonStringifyProxy(${propsName}.${formDataParameterName} as object, ${JSON.stringify(
+                `createFormEmailDataProxy(${propsName}.${formDataParameterName} as object, ${JSON.stringify(
                   formDataStringifyOptions
                 )})`,
                 browserInfoSource
@@ -294,7 +294,7 @@ export const generateManagedFormResources = ({
               dataSource.name === formDataParameterName
                 ? formDataStringifyOptions
                 : { space: 2 };
-            generatedRequests += `      const ${name} = createJsonStringifyProxy(${propsName}.${
+            generatedRequests += `      const ${name} = ${dataSource.name === formDataParameterName ? "createFormEmailDataProxy" : "createJsonStringifyProxy"}(${propsName}.${
               dataSource.name
             } as object, ${JSON.stringify(options)});\n`;
           }

@@ -32,6 +32,7 @@ export const getBrowserInfoPreview = (
     serverInfo?.language ??
     (typeof navigator === "undefined" ? "" : navigator.language),
   referrer: serverInfo?.referrer ?? "",
+  ...(serverInfo?.pageUrl ? { pageUrl: serverInfo.pageUrl } : {}),
 });
 
 type FormPreviewContext = {

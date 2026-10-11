@@ -3,7 +3,10 @@ import type { EmailResourceLoadOptions } from "./email-resource-delivery";
 import type { ResourceRequest } from "./schema/resources";
 import { internalFormFieldNames } from "./managed-form-submission";
 import { parseEmailSender } from "./email-addresses";
-import { emailSettingsInvalidMessage } from "./email-resource";
+import {
+  emailSettingsInvalidMessage,
+  resolveVisitorConfirmationCopy,
+} from "./email-resource";
 
 type EmailService = {
   fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -33,8 +36,7 @@ export class VisitorEmailAddressError extends Error {}
 /** Visitor addressing is resolved from the submitted form, never from an arbitrary expression. */
 export const prepareVisitorEmailRequest = (
   request: ResourceRequest,
-  formData: FormData,
-  siteUrl: string
+  formData: FormData
 ): ResourceRequest => {
   const email = request.email;
   if (email?.recipientMode !== "visitor") {
@@ -55,13 +57,14 @@ export const prepareVisitorEmailRequest = (
       "Visitor email requires one valid email field"
     );
   }
-  const preamble = `We received your request from ${siteUrl}.`;
+  const { subject, body } = resolveVisitorConfirmationCopy(email);
   return {
     ...request,
     email: {
       ...email,
       recipients: [{ address }],
-      body: email.body ? `${preamble}\n\n${email.body}` : preamble,
+      subject,
+      body,
       includeAttachments: email.includeAttachments ?? true,
     },
   };

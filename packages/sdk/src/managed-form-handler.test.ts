@@ -18,9 +18,10 @@ test("the shared handler executes a Form graph from the supplied runtime configu
   data.set(formBotFieldName, Date.now().toString(16));
   data.append("interests", "design");
   data.append("interests", "code");
-  const request = new Request("https://site.example/contact", {
+  const request = new Request("https://site.example/contact?topic=alpha", {
     method: "POST",
     body: data,
+    headers: { referer: "https://other.example/start?secret=hidden" },
   });
   const resourceFetch = vi.fn(async () =>
     Response.json({ accepted: true }, { status: 201 })
@@ -62,6 +63,10 @@ test("the shared handler executes a Form graph from the supplied runtime configu
     "form",
     expect.objectContaining({
       formData: { interests: ["design", "code"] },
+      browserInfo: {
+        pageUrl: "https://site.example/contact?topic=alpha",
+        referrer: "https://other.example/start",
+      },
     })
   );
   expect(resourceFetch).toHaveBeenCalledTimes(1);
@@ -489,7 +494,7 @@ test("a visitor Email Resource sends in parallel and a failed delivery remains n
   const sendEmail = vi.fn(async (request) => {
     expect(request.email).toMatchObject({
       recipients: [{ address: "visitor@example.com" }],
-      body: "We received your request from https://site.example.",
+      body: "",
       includeAttachments: false,
     });
     return {

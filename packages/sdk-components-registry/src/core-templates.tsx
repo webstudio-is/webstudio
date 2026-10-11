@@ -6,6 +6,7 @@ import {
   blockComponent,
   contentBlockDocumentProp,
   contentBlockMdxTemplateDescriptors,
+  defaultVisitorConfirmationBody,
   elementComponent,
   getDefaultContentBlockTemplateName,
   type ContentBlockMdxTemplateDescriptor,
@@ -53,7 +54,8 @@ const ownerEmail = new ResourceValue("Email to owner", {
   control: "email",
   email: {
     recipientMode: "project",
-    body: expression`"Form data:\\n" + ${formData}`,
+    subject: expression`"Contact form: " + ${formData}.subject`,
+    body: expression`(${browserInfo}.pageUrl ? "Page: " + ${browserInfo}.pageUrl + "\\n\\n" : "") + "Submitted fields:\\n" + ${formData}`,
   },
   url: expression`""`,
   method: "post",
@@ -63,10 +65,10 @@ const visitorEmail = new ResourceValue("Email to visitor", {
   email: {
     recipientMode: "visitor",
     visitorEmailField: "email",
-    subject: JSON.stringify("We received your message"),
-    body: JSON.stringify(
-      "Thanks for contacting us. We received your message and will get back to you soon."
-    ),
+    subject: expression`${formData}.subject`,
+    body: JSON.stringify(defaultVisitorConfirmationBody),
+    confirmationSubject: "formSubject",
+    confirmationBody: "default",
     includeAttachments: false,
   },
   url: expression`""`,

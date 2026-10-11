@@ -47,6 +47,7 @@ import {
   createJsonStringifyProxy,
   formDataParameterName,
   isPlainObject,
+  isStringifyProxy,
 } from "@webstudio-is/sdk/runtime";
 import type { CompactBuild } from "../types";
 import {
@@ -511,11 +512,12 @@ export const evaluateExpressionSync = (
         return proxiedVariables.get(key);
       }
       const value = variables.get(key);
-      const proxiedValue = isPlainObject(value)
-        ? createJsonStringifyProxy(
-            Object.isFrozen(value) ? structuredClone(value) : value
-          )
-        : value;
+      const proxiedValue =
+        isPlainObject(value) && !isStringifyProxy(value)
+          ? createJsonStringifyProxy(
+              Object.isFrozen(value) ? structuredClone(value) : value
+            )
+          : value;
       proxiedVariables.set(key, proxiedValue);
       return proxiedValue;
     };

@@ -1,8 +1,10 @@
 import {
   getFormEmailStringifyOptions,
+  createFormEmailDataProxy,
   parseEmailMailboxes,
   parseEmailSender,
   resolveEmailResourceSettings,
+  resolveVisitorConfirmationCopy,
   type EmailResourceSettings,
   type DataSource,
   type DataSources,
@@ -123,6 +125,33 @@ const getFileMetadata = (value: unknown): FileMetadata[] => {
   return [];
 };
 
+// Preview only transports file metadata. Rebuild a metadata-only File so Email
+// expressions format it the same way as a submitted File, without loading bytes.
+const toEmailPreviewValue = (value: unknown): unknown => {
+  if (isPreviewFileMetadata(value)) {
+    const file = new File([], value.name, { type: value.type });
+    Object.defineProperty(file, "size", { value: value.size });
+    return file;
+  }
+  if (Array.isArray(value)) {
+    return value.map(toEmailPreviewValue);
+  }
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    (Object.getPrototypeOf(value) === Object.prototype ||
+      Object.getPrototypeOf(value) === null)
+  ) {
+    return Object.fromEntries(
+      Object.entries(value).map(([name, entry]) => [
+        name,
+        toEmailPreviewValue(entry),
+      ])
+    );
+  }
+  return toPublicPreviewValue(value);
+};
+
 /** Show the known Email payload without creating a request or sending a message. */
 export const buildEmailRequestPreview = async ({
   settings,
@@ -173,7 +202,7 @@ export const buildEmailRequestPreview = async ({
       : Object.fromEntries(
           Object.entries(visibleFormDataWithFileTags).map(([name, value]) => [
             name,
-            toPublicPreviewValue(value),
+            toEmailPreviewValue(value),
           ])
         );
   const evaluationScope = { ...scope };
@@ -186,7 +215,7 @@ export const buildEmailRequestPreview = async ({
       continue;
     }
     if (source.name === formDataParameterName) {
-      evaluationScope[identifier] = createJsonStringifyProxy(
+      evaluationScope[identifier] = createFormEmailDataProxy(
         visibleFormData ?? {},
         formDataOptions
       );
@@ -225,8 +254,8 @@ export const buildEmailRequestPreview = async ({
     settings.senderExpression === undefined
       ? resolved.sender
       : parseEmailSender((await evaluateText(settings.senderExpression)) ?? "");
-  const subject = await evaluateText(resolved.subject);
-  const body =
+  const evaluatedSubject = await evaluateText(resolved.subject);
+  const evaluatedBody =
     settings.body !== undefined ||
     resolved.recipientMode === "visitor" ||
     projectMeta?.emailBody
@@ -234,13 +263,27 @@ export const buildEmailRequestPreview = async ({
       : visibleFormData === undefined
         ? await evaluateText(resolved.body)
         : `Form data:\n${String(
-            createJsonStringifyProxy(visibleFormData, formDataOptions)
+            createFormEmailDataProxy(visibleFormData, formDataOptions)
           )}` +
           (browserInfo === undefined
             ? ""
             : `\n\nBrowser info:\n${String(
                 createJsonStringifyProxy(browserInfo, { space: 2 })
               )}`);
+  const copy =
+    resolved.recipientMode === "visitor" &&
+    evaluatedSubject !== undefined &&
+    evaluatedBody !== undefined
+      ? resolveVisitorConfirmationCopy({
+          subject: evaluatedSubject,
+          body: evaluatedBody,
+          fromName: sender?.name ?? resolved.fromName,
+          confirmationSubject: resolved.confirmationSubject,
+          confirmationBody: resolved.confirmationBody,
+        })
+      : undefined;
+  const subject = copy?.subject ?? evaluatedSubject;
+  const body = copy?.body ?? evaluatedBody;
   const attachments =
     resolved.includeAttachments && visibleFormDataWithFileTags !== undefined
       ? Object.values(visibleFormDataWithFileTags).flatMap(getFileMetadata)

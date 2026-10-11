@@ -249,18 +249,24 @@ test("new Form templates select project and visitor Email Resources", () => {
   expect(emailResources.map((resource) => resource?.email)).toEqual([
     expect.objectContaining({
       recipientMode: "project",
-      body: expect.stringContaining("Form data"),
+      subject: expect.stringContaining("Contact form: "),
+      body: expect.stringContaining("Submitted fields"),
     }),
     {
       recipientMode: "visitor",
       visitorEmailField: "email",
-      subject: JSON.stringify("We received your message"),
+      subject: expect.stringContaining(".subject"),
       body: JSON.stringify(
-        "Thanks for contacting us. We received your message and will get back to you soon."
+        "Thank you for your message.\n\nWe received it and will respond as soon as possible."
       ),
       includeAttachments: false,
+      confirmationSubject: "formSubject",
+      confirmationBody: "default",
     },
   ]);
+  expect(emailResources[0]?.email?.subject).toContain(".subject");
+  expect(emailResources[1]?.email?.subject).toContain(".subject");
+  expect(emailResources[0]?.email?.body).toContain(".pageUrl");
   expect(emailResources.every((resource) => resource?.body === undefined)).toBe(
     true
   );
@@ -270,9 +276,7 @@ test("new Form templates select project and visitor Email Resources", () => {
   expect(renderedTemplate).toContain(
     "We could not send your message. Please try again."
   );
-  expect(renderedTemplate).toContain(
-    "Thanks for contacting us. We received your message and will get back to you soon."
-  );
+  expect(renderedTemplate).toContain("Thank you for your message.");
   const emailInput = fragment.instances.find(
     ({ component, id }) =>
       component === "Input" &&

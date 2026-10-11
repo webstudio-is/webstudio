@@ -1,3 +1,10 @@
+const stringifyProxyMarker = Symbol.for("webstudio.stringify-proxy");
+
+export const isStringifyProxy = (value: unknown): value is object =>
+  typeof value === "object" &&
+  value !== null &&
+  Reflect.get(value, stringifyProxyMarker) === true;
+
 export const createJsonStringifyProxy = <T extends object>(
   target: T,
   options?: {
@@ -7,8 +14,11 @@ export const createJsonStringifyProxy = <T extends object>(
     stringifyAs?: string;
   }
 ): T => {
-  return new Proxy(target, {
+  const proxy = new Proxy(target, {
     get(target, prop, receiver) {
+      if (prop === stringifyProxyMarker) {
+        return true;
+      }
       if (prop === "toString") {
         return function () {
           if (options?.stringifyAs !== undefined) {
@@ -50,6 +60,7 @@ export const createJsonStringifyProxy = <T extends object>(
       return value;
     },
   });
+  return proxy;
 };
 
 export const isPlainObject = (value: unknown): value is object => {

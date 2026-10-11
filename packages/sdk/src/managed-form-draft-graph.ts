@@ -12,6 +12,7 @@ import {
   formDataParameterName,
 } from "./managed-form-submission";
 import {
+  createFormEmailDataProxy,
   getDefaultFormEmailBodyExpression,
   resolveEmailRecipientsExpression,
   resolveEmailSenderExpression,
@@ -69,7 +70,7 @@ export const createManagedFormDraftGraph = ({
     props,
     formId
   );
-  const formDataProxy = createJsonStringifyProxy(
+  const formDataProxy = createFormEmailDataProxy(
     formData,
     formDataStringifyOptions
   );
@@ -210,6 +211,8 @@ export const createManagedFormDraftGraph = ({
         recipients: recipients!,
         sender,
         fromName: sender?.name ?? resolvedEmail.fromName,
+        confirmationSubject: resolvedEmail.confirmationSubject,
+        confirmationBody: resolvedEmail.confirmationBody,
         includeAttachments: resolvedEmail.includeAttachments,
         subject: evaluate(resolvedEmail.subject) as string,
         body:

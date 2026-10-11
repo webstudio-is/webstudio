@@ -149,6 +149,80 @@ test("Email Resource Sender has no redundant project-default reset button", asyn
   ).toBe("Custom <custom@example.com>");
 });
 
+test("Email default-copy provenance changes only when its field is edited", async () => {
+  $resources.set(
+    new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "Visitor confirmation",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          email: {
+            recipientMode: "visitor",
+            sender: "Acme <sender@example.com>",
+            subject: '"Question"',
+            body: '"Thank you for your message."',
+            confirmationSubject: "formSubject",
+            confirmationBody: "default",
+          },
+        },
+      ],
+    ])
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(EmailResourceForm, {
+          variable: {
+            id: "data-source",
+            type: "resource",
+            name: "Visitor confirmation",
+            scopeInstanceId: "body",
+            resourceId: "email",
+          },
+        })
+      )
+    );
+  });
+  const settings = () =>
+    JSON.parse(
+      container.querySelector<HTMLInputElement>('input[name="email-settings"]')
+        ?.value ?? "{}"
+    );
+  const sender = container.querySelector<HTMLInputElement>(
+    'input[placeholder="Acme <acme@example.com>"]'
+  )!;
+  await act(async () => userEvent.fill(sender, "Team <team@example.com>"));
+  expect(settings()).toMatchObject({
+    confirmationSubject: "formSubject",
+    confirmationBody: "default",
+  });
+
+  const subject = container.querySelector<HTMLInputElement>(
+    'input[placeholder="New form submission"]'
+  )!;
+  await act(async () => userEvent.fill(subject, "Custom subject"));
+  expect(settings()).toMatchObject({
+    subject: '"Custom subject"',
+    confirmationBody: "default",
+  });
+  expect(settings()).not.toHaveProperty("confirmationSubject");
+
+  const body = container.querySelector<HTMLTextAreaElement>("textarea")!;
+  await act(async () => userEvent.fill(body, ""));
+  expect(settings().body).toBe('""');
+  expect(settings()).not.toHaveProperty("confirmationBody");
+});
+
 test("changing another Email field does not reevaluate custom recipients", async () => {
   const recipientExpression = JSON.stringify("team@example.com");
   expressionEvaluations.mockClear();

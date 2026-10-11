@@ -14,6 +14,7 @@ import { useStore } from "@nanostores/react";
 import {
   decodeDataVariableId,
   defaultEmailBody,
+  defaultVisitorConfirmationBody,
   findTreeInstanceIds,
   getDefaultFormEmailBodyExpression,
   getFormEmailFieldNames,
@@ -208,7 +209,7 @@ export const EmailResourceForm = forwardRef<
   )?.[0];
   const defaultBody =
     settings.recipientMode === "visitor"
-      ? JSON.stringify("")
+      ? JSON.stringify(defaultVisitorConfirmationBody)
       : formDataIdentifier
         ? getDefaultFormEmailBodyExpression(
             formDataIdentifier,
@@ -221,7 +222,16 @@ export const EmailResourceForm = forwardRef<
     value: EmailResourceSettings[K]
   ) => {
     onChange?.();
-    setSettings((previous) => ({ ...previous, [key]: value }));
+    setSettings((previous) => {
+      const next = { ...previous, [key]: value };
+      if (key === "subject") {
+        delete next.confirmationSubject;
+      }
+      if (key === "body") {
+        delete next.confirmationBody;
+      }
+      return next;
+    });
   };
   const unavailableFormBinding = (expression: string) =>
     Array.from(getExpressionIdentifiers(expression)).some((identifier) => {
@@ -457,7 +467,7 @@ export const EmailResourceForm = forwardRef<
               </Box>
               <InfoTooltip
                 label="About Visitor email field"
-                content="Adds a note with this site’s URL to help recipients identify where the message came from and discourage spam."
+                content="Choose a Form input to use as the recipient’s email address."
                 disableHoverableContent={true}
               />
             </Flex>

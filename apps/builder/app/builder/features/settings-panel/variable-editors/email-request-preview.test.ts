@@ -1,5 +1,9 @@
 import { expect, test, vi } from "vitest";
-import { encodeDataVariableId } from "@webstudio-is/sdk";
+import {
+  createFormEmailDataProxy,
+  defaultVisitorConfirmationBody,
+  encodeDataVariableId,
+} from "@webstudio-is/sdk";
 import { internalFormFieldNames } from "@webstudio-is/sdk/runtime";
 import { buildEmailRequestPreview } from "./email-request-preview";
 
@@ -103,9 +107,9 @@ test("Email Request preview uses current Form data and settings without sending"
       name: "Acme",
       address: "sender@example.com",
     });
-    expect(preview.preview.text).toContain('"name": "Ada"');
-    expect(preview.preview.text).toContain('"email": "ada@example.com"');
-    expect(preview.preview.text).toContain('"sample.txt"');
+    expect(preview.preview.text).toContain("Name: Ada");
+    expect(preview.preview.text).toContain("Email: ada@example.com");
+    expect(preview.preview.text).toContain("Upload: sample.txt");
     expect(preview.preview.text).not.toContain("hidden-password");
     expect(preview.preview.attachments).toEqual([
       { name: "sample.txt", type: "text/plain", size: 3 },
@@ -115,6 +119,106 @@ test("Email Request preview uses current Form data and settings without sending"
   } finally {
     fetchSpy.mockRestore();
   }
+});
+
+test("Email Request preview formats formData in an explicit body expression", async () => {
+  const identifier = encodeDataVariableId("form-data");
+  const preview = await buildEmailRequestPreview({
+    settings: { body: `"Submitted fields:\\n" + ${identifier}` },
+    scope: {},
+    aliases: new Map([[identifier, "formData"]]),
+    dataSources: managedFormDataSources,
+    formId: "form",
+    formData: { name: "Ada", subject: "Question" },
+    instances: new Map([
+      [
+        "form",
+        {
+          id: "form",
+          type: "instance" as const,
+          component: "Form",
+          children: [],
+        },
+      ],
+    ]),
+    props: new Map(),
+  });
+  expect(preview.preview.text).toBe(
+    "Submitted fields:\nName: Ada\nSubject: Question"
+  );
+});
+
+test("Email Request preview formats uploaded files like the submitted Email", async () => {
+  const identifier = encodeDataVariableId("form-data");
+  const preview = await buildEmailRequestPreview({
+    settings: { body: `"Submitted fields:\\n" + ${identifier}` },
+    scope: {},
+    aliases: new Map([[identifier, "formData"]]),
+    dataSources: managedFormDataSources,
+    formId: "form",
+    formData: {
+      upload: {
+        __webstudioPreviewFile: true,
+        name: "sample.txt",
+        type: "text/plain",
+        size: 3,
+      },
+    },
+    instances: new Map([
+      [
+        "form",
+        {
+          id: "form",
+          type: "instance" as const,
+          component: "Form",
+          children: [],
+        },
+      ],
+    ]),
+    props: new Map(),
+  });
+  const submittedFormData = createFormEmailDataProxy(
+    { upload: new File(["abc"], "sample.txt", { type: "text/plain" }) },
+    undefined
+  );
+  expect(preview.preview.text).toBe(`Submitted fields:\n${submittedFormData}`);
+});
+
+test("Email Request preview includes the known submission page URL", async () => {
+  const browserInfoIdentifier = encodeDataVariableId("browser-info");
+  const preview = await buildEmailRequestPreview({
+    settings: { body: `"Page: " + ${browserInfoIdentifier}.pageUrl` },
+    scope: {},
+    aliases: new Map([[browserInfoIdentifier, "browserInfo"]]),
+    dataSources: new Map([
+      [
+        "browser-info",
+        {
+          id: "browser-info",
+          type: "parameter" as const,
+          scopeInstanceId: "form",
+          name: "browserInfo",
+        },
+      ],
+    ]),
+    formId: "form",
+    browserInfo: { pageUrl: "https://site.example/contact?topic=alpha" },
+    instances: new Map([
+      [
+        "form",
+        {
+          id: "form",
+          type: "instance" as const,
+          component: "Form",
+          children: [],
+        },
+      ],
+    ]),
+    props: new Map(),
+  });
+  expect(preview.preview.text).toBe(
+    "Page: https://site.example/contact?topic=alpha"
+  );
 });
 
 test("Visitor Email Request preview leaves missing addresses empty and never fabricates a send", async () => {
@@ -155,12 +259,92 @@ test("Visitor Email Request preview leaves missing addresses empty and never fab
       props: new Map(),
     });
     expect(preview.preview.to).toEqual([]);
-    expect(preview.preview.text).toBe("");
+    expect(preview.preview.text).toBe(
+      "Thank you for your message.\n\nWe received it and will respond as soon as possible.\n\nSite Owner"
+    );
     expect(preview.preview).not.toHaveProperty("attachments");
     expect(fetchSpy).not.toHaveBeenCalled();
   } finally {
     fetchSpy.mockRestore();
   }
+});
+
+test("Visitor Email Request preview uses sender defaults without rewriting custom copy", async () => {
+  const identifier = encodeDataVariableId("form-data");
+  const input = {
+    projectMeta: { emailSender: "Nike GmbH <sender@example.com>" },
+    scope: {},
+    aliases: new Map([[identifier, "formData"]]),
+    dataSources: managedFormDataSources,
+    formId: "form",
+    formData: { email: "visitor@example.com", subject: "Question" },
+    instances: new Map([
+      [
+        "form",
+        {
+          id: "form",
+          type: "instance" as const,
+          component: "Form",
+          children: [],
+        },
+      ],
+    ]),
+    props: new Map(),
+  };
+  const defaultPreview = await buildEmailRequestPreview({
+    ...input,
+    settings: {
+      recipientMode: "visitor",
+      visitorEmailField: "email",
+      subject: `${identifier}.subject`,
+      body: JSON.stringify(defaultVisitorConfirmationBody),
+      confirmationSubject: "formSubject",
+      confirmationBody: "default",
+    },
+  });
+  expect(defaultPreview.preview).toMatchObject({
+    subject: "Nike GmbH received your email: Question",
+    text: `${defaultVisitorConfirmationBody}\n\nNike GmbH`,
+  });
+
+  const collidingCustomPreview = await buildEmailRequestPreview({
+    ...input,
+    settings: {
+      recipientMode: "visitor",
+      visitorEmailField: "email",
+      subject: JSON.stringify("We received your message: Question"),
+      body: JSON.stringify(defaultVisitorConfirmationBody),
+    },
+  });
+  expect(collidingCustomPreview.preview).toMatchObject({
+    subject: "We received your message: Question",
+    text: defaultVisitorConfirmationBody,
+  });
+
+  const mixedPreview = await buildEmailRequestPreview({
+    ...input,
+    settings: {
+      recipientMode: "visitor",
+      visitorEmailField: "email",
+      subject: JSON.stringify("Custom subject"),
+      body: JSON.stringify(defaultVisitorConfirmationBody),
+      confirmationBody: "default",
+    },
+  });
+  expect(mixedPreview.preview).toMatchObject({
+    subject: "Custom subject",
+    text: `${defaultVisitorConfirmationBody}\n\nNike GmbH`,
+  });
+
+  const blankBodyPreview = await buildEmailRequestPreview({
+    ...input,
+    settings: {
+      recipientMode: "visitor",
+      visitorEmailField: "email",
+      body: '""',
+    },
+  });
+  expect(blankBodyPreview.preview.text).toBe("");
 });
 
 test.each(["name", "type"] as const)(

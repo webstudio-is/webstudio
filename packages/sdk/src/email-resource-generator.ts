@@ -64,6 +64,12 @@ export const generateEmailRequestFields = ({
     generated += `${indent}  fromName: ${JSON.stringify(resolved.fromName)},\n`;
   }
   generated += `${indent}  includeAttachments: ${resolved.includeAttachments},\n`;
+  if (resolved.confirmationSubject !== undefined) {
+    generated += `${indent}  confirmationSubject: ${JSON.stringify(resolved.confirmationSubject)},\n`;
+  }
+  if (resolved.confirmationBody !== undefined) {
+    generated += `${indent}  confirmationBody: ${JSON.stringify(resolved.confirmationBody)},\n`;
+  }
   const subject = generateExpression({
     expression: resolved.subject,
     dataSources,

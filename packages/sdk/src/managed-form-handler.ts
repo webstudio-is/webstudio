@@ -90,7 +90,7 @@ export const handleManagedFormSubmission = async ({
   const graph = getGraph(formId, {
     system,
     formData: getManagedFormValues(formData),
-    browserInfo: getManagedFormBrowserInfo(request, trustedIp),
+    browserInfo: getManagedFormBrowserInfo(request, trustedIp, url),
   });
   if (graph === undefined || graph.rootIds.length === 0) {
     throw new Error("Form Resource graph not found");
@@ -112,8 +112,7 @@ export const handleManagedFormSubmission = async ({
           }
           const request = prepareVisitorEmailRequest(
             resource.createRequest(new Map()),
-            formData,
-            url.origin
+            formData
           );
           return [{ ...resource, createRequest: () => request }];
         } catch (error) {
@@ -145,8 +144,7 @@ export const handleManagedFormSubmission = async ({
           createRequest: (documents: ReadonlyMap<string, unknown>) =>
             prepareVisitorEmailRequest(
               resource.createRequest(documents),
-              formData,
-              url.origin
+              formData
             ),
         },
       ];

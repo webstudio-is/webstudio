@@ -15,7 +15,10 @@ import { loadResourcesWithEmail } from "./email-resource-delivery";
 import type { Resource, ResourceRequest } from "./schema/resources";
 import { generateResourceRequestFields } from "./resources-generator";
 import { generateEmailRequestFields } from "./email-resource-generator";
-import { emailSettingsInvalidMessage } from "./email-resource";
+import {
+  defaultVisitorConfirmationBody,
+  emailSettingsInvalidMessage,
+} from "./email-resource";
 import { createScope } from "./scope";
 
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
@@ -57,30 +60,113 @@ const visitorRequest = (
   },
 });
 
-test("visitor Email Resource uses one submitted address and prepends the site receipt", () => {
+test("visitor Email Resource uses one submitted address and keeps custom copy", () => {
   const formData = new FormData();
   formData.append("email", "visitor@example.com");
   formData.append("password", "private value");
   formData.append("upload", new File(["secret"], "private.txt"));
   const prepared = prepareVisitorEmailRequest(
     visitorRequest("Custom text"),
-    formData,
-    "https://published.example"
+    formData
   );
   expect(prepared.email).toMatchObject({
     recipients: [{ address: "visitor@example.com" }],
-    body: "We received your request from https://published.example.\n\nCustom text",
+    body: "Custom text",
     includeAttachments: true,
   });
   expect(JSON.stringify(prepared)).not.toContain("private value");
   expect(JSON.stringify(prepared)).not.toContain("private.txt");
   expect(
-    prepareVisitorEmailRequest(
-      visitorRequest(),
-      formData,
-      "https://published.example"
-    ).email?.body
-  ).toBe("We received your request from https://published.example.");
+    prepareVisitorEmailRequest(visitorRequest(), formData).email?.body
+  ).toBe("");
+});
+
+test("default visitor confirmation identifies the resolved sender and keeps custom copy", () => {
+  const formData = new FormData();
+  formData.set("email", "visitor@example.com");
+  const defaultCopy = prepareVisitorEmailRequest(
+    {
+      ...visitorRequest(defaultVisitorConfirmationBody),
+      email: {
+        ...visitorRequest().email!,
+        fromName: "Nike GmbH",
+        subject: "New shoes",
+        body: defaultVisitorConfirmationBody,
+        confirmationSubject: "formSubject",
+        confirmationBody: "default",
+      },
+    },
+    formData
+  );
+  expect(defaultCopy.email?.subject).toBe(
+    "Nike GmbH received your email: New shoes"
+  );
+  expect(defaultCopy.email?.body).toBe(
+    "Thank you for your message.\n\nWe received it and will respond as soon as possible.\n\nNike GmbH"
+  );
+
+  const customCopy = prepareVisitorEmailRequest(
+    visitorRequest("Custom message"),
+    formData
+  );
+  expect(customCopy.email?.subject).toBe("New submission");
+  expect(customCopy.email?.body).toBe("Custom message");
+
+  const collidingCopy = prepareVisitorEmailRequest(
+    {
+      ...visitorRequest(defaultVisitorConfirmationBody),
+      email: {
+        ...visitorRequest().email!,
+        fromName: "Nike GmbH",
+        subject: "We received your message: New shoes",
+        body: defaultVisitorConfirmationBody,
+      },
+    },
+    formData
+  );
+  expect(collidingCopy.email?.subject).toBe(
+    "We received your message: New shoes"
+  );
+  expect(collidingCopy.email?.body).toBe(defaultVisitorConfirmationBody);
+
+  const mixedCopy = prepareVisitorEmailRequest(
+    {
+      ...visitorRequest(defaultVisitorConfirmationBody),
+      email: {
+        ...visitorRequest().email!,
+        fromName: "Nike GmbH",
+        subject: "Custom subject",
+        body: defaultVisitorConfirmationBody,
+        confirmationBody: "default",
+      },
+    },
+    formData
+  );
+  expect(mixedCopy.email?.subject).toBe("Custom subject");
+  expect(mixedCopy.email?.body).toBe(
+    `${defaultVisitorConfirmationBody}\n\nNike GmbH`
+  );
+});
+
+test("inherited visitor body becomes a sender-signed confirmation", () => {
+  const formData = new FormData();
+  formData.set("email", "visitor@example.com");
+  const prepared = prepareVisitorEmailRequest(
+    {
+      ...visitorRequest(),
+      email: {
+        ...visitorRequest().email!,
+        fromName: "Nike GmbH",
+        confirmationSubject: "default",
+        confirmationBody: "default",
+      },
+    },
+    formData
+  );
+  expect(prepared.email?.subject).toBe("Nike GmbH received your email");
+  expect(prepared.email?.body).toBe(
+    `${defaultVisitorConfirmationBody}\n\nNike GmbH`
+  );
 });
 
 test("visitor Email Resource includes files by default and respects opt-out", async () => {
@@ -95,12 +181,7 @@ test("visitor Email Resource includes files by default and respects opt-out", as
     { fetch },
     formData
   )!;
-  const siteUrl = "https://published.example";
-  const prepared = prepareVisitorEmailRequest(
-    visitorRequest(),
-    formData,
-    siteUrl
-  );
+  const prepared = prepareVisitorEmailRequest(visitorRequest(), formData);
 
   expect(prepared.email?.includeAttachments).toBe(true);
   validateCloudflareManagedFormEmail(prepared, formData);
@@ -118,8 +199,7 @@ test("visitor Email Resource includes files by default and respects opt-out", as
 
   const excluded = prepareVisitorEmailRequest(
     visitorRequest("", false),
-    formData,
-    siteUrl
+    formData
   );
   expect(excluded.email?.includeAttachments).toBe(false);
   await sendEmail(excluded, {});
@@ -134,12 +214,7 @@ test("visitor Email Resource includes files by default and respects opt-out", as
 
 test("visitor Email Resource rejects repeated, missing, and invalid addresses", () => {
   const formData = new FormData();
-  const prepare = () =>
-    prepareVisitorEmailRequest(
-      visitorRequest(),
-      formData,
-      "https://published.example"
-    );
+  const prepare = () => prepareVisitorEmailRequest(visitorRequest(), formData);
   expect(prepare).toThrow("one valid email field");
   formData.set("email", "Name <visitor@example.com>");
   expect(prepare).toThrow("one valid email field");

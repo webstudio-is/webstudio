@@ -23,6 +23,8 @@ export const emailResourceSettings = z.object({
   recipientsExpression: z.string().optional(),
   subject: z.string().optional(),
   body: z.string().optional(),
+  confirmationSubject: z.enum(["formSubject", "default"]).optional(),
+  confirmationBody: z.literal("default").optional(),
   includeAttachments: z.boolean().optional(),
 });
 export type EmailResourceSettings = z.infer<typeof emailResourceSettings>;
@@ -39,6 +41,8 @@ export const emailRequestSettings = z.object({
   fromName: z.string().optional(),
   subject: z.string(),
   body: z.string(),
+  confirmationSubject: z.enum(["formSubject", "default"]).optional(),
+  confirmationBody: z.literal("default").optional(),
   includeAttachments: z.boolean(),
 });
 

@@ -128,8 +128,9 @@ export class Parameter {
 
 type ResourceConfig = {
   control?: Resource["control"];
-  email?: Omit<NonNullable<Resource["email"]>, "body"> & {
+  email?: Omit<NonNullable<Resource["email"]>, "body" | "subject"> & {
     body?: string | Expression;
+    subject?: string | Expression;
   };
   url: Expression;
   method: Resource["method"];
@@ -525,7 +526,11 @@ export const renderTemplate = (
       return id;
     }
     const email = resourceValue.config.email;
-    const { body: emailBody, ...emailSettings } = email ?? {};
+    const {
+      body: emailBody,
+      subject: emailSubject,
+      ...emailSettings
+    } = email ?? {};
     resources.set(resourceValue, {
       id,
       name: resourceValue.name,
@@ -535,6 +540,14 @@ export const renderTemplate = (
           ? undefined
           : {
               ...emailSettings,
+              ...(emailSubject === undefined
+                ? {}
+                : {
+                    subject:
+                      emailSubject instanceof Expression
+                        ? compileExpression(instanceId, emailSubject)
+                        : emailSubject,
+                  }),
               ...(emailBody === undefined
                 ? {}
                 : {

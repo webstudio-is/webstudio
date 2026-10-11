@@ -607,6 +607,7 @@ export type ManagedFormBrowserInfo = {
   userAgent?: string;
   language?: string;
   referrer?: string;
+  pageUrl?: string;
 };
 
 /** Referrers are diagnostic context, never a transport for URL credentials. */
@@ -627,7 +628,8 @@ const getSafeFormReferrer = (value: string | null) => {
 /** The caller supplies IP only from a trusted platform header. */
 export const getManagedFormBrowserInfo = (
   request: Request,
-  trustedIp?: string
+  trustedIp?: string,
+  pageUrl?: URL
 ): ManagedFormBrowserInfo => {
   const referrer = getSafeFormReferrer(request.headers.get("referer"));
   return {
@@ -639,5 +641,6 @@ export const getManagedFormBrowserInfo = (
       ? { language: request.headers.get("accept-language") ?? undefined }
       : {}),
     ...(referrer ? { referrer } : {}),
+    ...(pageUrl ? { pageUrl: pageUrl.href } : {}),
   };
 };
