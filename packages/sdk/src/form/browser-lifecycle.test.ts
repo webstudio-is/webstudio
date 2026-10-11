@@ -26,7 +26,9 @@ const settle = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 const abortableSubmission = (controller: AbortController) =>
   new Promise<ManagedFormResponse>((_resolve, reject) => {
-    controller.signal.addEventListener("abort", () => reject(new Error("aborted")));
+    controller.signal.addEventListener("abort", () =>
+      reject(new Error("aborted"))
+    );
   });
 
 test("an unhandled redirect still refreshes and reveals success", async () => {
