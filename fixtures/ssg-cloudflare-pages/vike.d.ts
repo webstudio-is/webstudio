@@ -6,7 +6,6 @@ declare global {
     interface Config {
       lang?: (props: { data: PageData }) => string;
       Head?: (props: { data: PageData }) => React.ReactNode;
-      documentType?: "text";
     }
 
     interface PageContext {

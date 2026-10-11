@@ -94,6 +94,11 @@ const runGeneratedCommand = async (
   });
 };
 
+const prerenderSsg = async () => {
+  await runGeneratedCommand("vike", ["build"]);
+  await runGeneratedCommand("vike", ["prerender"]);
+};
+
 const linkPackagedPreviewDependencies = async () => {
   const sourceNodeModules = join(originalCwd, "node_modules");
   const targetNodeModules = join(tempDir, "node_modules");
@@ -792,7 +797,7 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 describe("prebuild", () => {
   test("rejects Assets queries without a content database without changing generated files", async () => {
     const siteData = createSiteData();
-    siteData.build.resources = [["posts", createQueryResource()]] as never;
+    siteData.build.resources = [["posts", createQueryResource()]];
     siteData.build.dataSources = [
       [
         "posts-data",
@@ -804,7 +809,7 @@ describe("prebuild", () => {
           scopeInstanceId: "root",
         },
       ],
-    ] as never;
+    ];
     await writeSiteData(siteData);
     const existingFiles = [
       "app/routes/_index.tsx",
@@ -1268,7 +1273,7 @@ describe("prebuild", () => {
           resourceId: "posts",
         },
       ],
-    ] as never;
+    ];
     siteData.build.resources = [
       [
         "posts",
@@ -1292,7 +1297,7 @@ describe("prebuild", () => {
           }),
         },
       ],
-    ] as never;
+    ];
     siteData.build.styleSources = [
       ["dynamic-style", { type: "local", id: "dynamic-style" }],
     ] as never;
@@ -1441,7 +1446,7 @@ describe("prebuild", () => {
         name,
         resourceId: `${name}-resource`,
       },
-    ]) as never;
+    ]);
     siteData.build.resources = resourceNames.map((name) => [
       `${name}-resource`,
       {
@@ -1451,7 +1456,7 @@ describe("prebuild", () => {
         method: "get",
         headers: [],
       },
-    ]) as never;
+    ]);
     await writeSiteData(siteData);
 
     await prebuild({
@@ -1588,8 +1593,7 @@ describe("prebuild", () => {
     });
 
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vike", ["build"]);
-    await runGeneratedCommand("vike", ["prerender"]);
+    await prerenderSsg();
 
     const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
     const codeElements = findElementsByTagName(html, "code");
@@ -1653,8 +1657,7 @@ describe("prebuild", () => {
 
     await prebuild({ assets: false, template: ["ssg"] });
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vike", ["build"]);
-    await runGeneratedCommand("vike", ["prerender"]);
+    await prerenderSsg();
 
     const htmlSource = await readFile("dist/client/index.html", "utf8");
     expect(htmlSource).toMatch(/^<!DOCTYPE html><html/);
@@ -2348,9 +2351,7 @@ sitemap.map((page) => page.path);`
         ],
         assetIndex: index,
       };
-      siteData.build.resources = [
-        ["posts", createQueryResource("full")],
-      ] as never;
+      siteData.build.resources = [["posts", createQueryResource("full")]];
       siteData.build.dataSources = [
         [
           "posts-data",
@@ -2362,7 +2363,7 @@ sitemap.map((page) => page.path);`
             scopeInstanceId: "root",
           },
         ],
-      ] as never;
+      ];
       await writeSiteData(
         siteData as unknown as ReturnType<typeof createSiteData>
       );
@@ -2514,7 +2515,7 @@ sitemap.map((page) => page.path);`
       }),
       assetIndex: index,
     };
-    siteData.build.resources = [["posts", createQueryResource()]] as never;
+    siteData.build.resources = [["posts", createQueryResource()]];
     siteData.build.dataSources = [
       [
         "posts-data",
@@ -2526,7 +2527,7 @@ sitemap.map((page) => page.path);`
           scopeInstanceId: "root",
         },
       ],
-    ] as never;
+    ];
     await writeSiteData(
       siteData as unknown as ReturnType<typeof createSiteData>
     );
@@ -2866,7 +2867,7 @@ sitemap.map((page) => page.path);`
             scopeInstanceId: "root",
           },
         ],
-      ] as never;
+      ];
       siteData.build.resources = [
         [
           "author",
@@ -2889,7 +2890,7 @@ sitemap.map((page) => page.path);`
             headers: [{ name: "Cache-Control", value: '"public, max-age=60"' }],
           },
         ],
-      ] as never;
+      ];
       await writeSiteData(siteData);
       await prebuild({ assets: false, template: [template] });
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
@@ -3000,13 +3001,12 @@ sitemap.map((page) => page.path);`
           headers: [],
         },
       ],
-    ] as never;
+    ];
     await writeSiteData(siteData);
 
     await prebuild({ assets: false, template: ["ssg"] });
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vike", ["build"]);
-    await runGeneratedCommand("vike", ["prerender"]);
+    await prerenderSsg();
 
     const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
     const [form] = findElementsByTagName(html, "form");
@@ -3135,7 +3135,7 @@ sitemap.map((page) => page.path);`
           }),
         },
       ],
-    ] as never;
+    ];
     siteData.build.dataSources = [
       [
         "post-data",
@@ -3147,7 +3147,7 @@ sitemap.map((page) => page.path);`
           scopeInstanceId: "post-root",
         },
       ],
-    ] as never;
+    ];
     await writeSiteData(siteData);
 
     await prebuild({ assets: false, template: ["ssg"] });
@@ -3165,8 +3165,7 @@ sitemap.map((page) => page.path);`
     expect(sitemap).not.toContain('"path": "/blog/hello-world"');
     expect(sitemap).not.toContain('"path": "/blog/draft-post"');
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vike", ["build"]);
-    await runGeneratedCommand("vike", ["prerender"]);
+    await prerenderSsg();
     await expect(
       readFile("dist/client/blog/hello-world/index.html", "utf8")
     ).resolves.toContain("<!DOCTYPE html>");
@@ -3654,7 +3653,7 @@ sitemap.map((page) => page.path);`
           }),
         },
       ],
-    ] as never;
+    ];
     siteData.build.dataSources = [
       [
         "posts-data",
@@ -3666,7 +3665,7 @@ sitemap.map((page) => page.path);`
           scopeInstanceId: "root",
         },
       ],
-    ] as never;
+    ];
     await writeSiteData(
       siteData as unknown as ReturnType<typeof createSiteData>
     );
@@ -3703,8 +3702,7 @@ sitemap.map((page) => page.path);`
         meta: { totalCount: 1, hasMore: false },
       },
     ]);
-    await runGeneratedCommand("vike", ["build"]);
-    await runGeneratedCommand("vike", ["prerender"]);
+    await prerenderSsg();
     await expect(readFile("dist/client/index.html", "utf8")).resolves.toContain(
       "<!DOCTYPE html>"
     );
@@ -3808,7 +3806,7 @@ sitemap.map((page) => page.path);`
           scopeInstanceId: "collection",
         },
       ],
-    ] as never;
+    ];
     siteData.build.resources = [
       [
         "sitemap-resource",
@@ -3821,7 +3819,7 @@ sitemap.map((page) => page.path);`
           headers: [],
         },
       ],
-    ] as never;
+    ];
     await writeSiteData(siteData);
 
     await prebuild({ assets: false, template: ["react-router"] });
@@ -3907,8 +3905,7 @@ sitemap.map((page) => page.path);`
 
     await prebuild({ assets: false, template: ["ssg"] });
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vike", ["build"]);
-    await runGeneratedCommand("vike", ["prerender"]);
+    await prerenderSsg();
 
     await expect(readFile("dist/client/robots.txt", "utf8")).resolves.toBe(
       robots

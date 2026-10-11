@@ -12,10 +12,6 @@ import {
 } from "../app/__generated__/_index";
 
 export const onRenderHtml: OnRenderHtmlAsync = async (pageContext) => {
-  if (pageContext.config.documentType === "text") {
-    pageContext.content = pageContext.data.pageMeta.content ?? "";
-    return;
-  }
   const lang = pageContext.data.pageMeta.language || "en";
   const Head = pageContext.config.Head ?? (() => <></>);
   const Page = pageContext.Page ?? (() => <></>);

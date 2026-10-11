@@ -52,6 +52,10 @@ export const createFramework = async (
     join(templatesDirectory, "text", "+config.ts"),
     "utf8"
   );
+  const textRenderTemplate = await readFile(
+    join(templatesDirectory, "text", "+onRenderHtml.ts"),
+    "utf8"
+  );
 
   // cleanup route templates after reading to not bloat generated code
   await cleanupFrameworkTemplates(options);
@@ -111,6 +115,10 @@ export const createFramework = async (
         {
           file: join("pages", route, "+config.ts"),
           template: textConfigTemplate,
+        },
+        {
+          file: join("pages", route, "+onRenderHtml.ts"),
+          template: textRenderTemplate,
         },
         {
           file: join("pages", route, "+data.ts"),
