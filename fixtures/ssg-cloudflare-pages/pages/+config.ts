@@ -9,5 +9,8 @@ export default {
     lang: {
       env: { server: true, client: true },
     },
+    documentType: {
+      env: { server: true },
+    },
   },
 } satisfies Config;

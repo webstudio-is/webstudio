@@ -12,6 +12,12 @@ import {
 } from "../app/__generated__/_index";
 
 export const onRenderHtml: OnRenderHtmlAsync = async (pageContext) => {
+  if (pageContext.config.documentType === "text") {
+    // The post-build step removes this stable prefix after Vike prerenders the route.
+    return dangerouslySkipEscape(
+      `<head></head>\n${pageContext.data.pageMeta.content ?? ""}`
+    );
+  }
   const lang = pageContext.data.pageMeta.language || "en";
   const Head = pageContext.config.Head ?? (() => <></>);
   const Page = pageContext.Page ?? (() => <></>);
