@@ -361,7 +361,7 @@ test("unmatched Preview redirect keeps successful Form feedback on the current p
           onResultChange={onResultChange}
           onSubmissionSuccess={onSubmissionSuccess}
         >
-          <div data-ws-form-feedback>Submitted</div>
+          <div>Submitted</div>
           <button type="submit">Send</button>
         </NativeForm>
       );

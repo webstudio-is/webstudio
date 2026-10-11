@@ -121,7 +121,6 @@ test("success feedback scroll waits until delayed route revalidation settles", a
           <button type="submit">Send</button>
           {state === "success" && (
             <div
-              data-ws-form-feedback
               ref={(element) => {
                 if (element) {
                   element.getBoundingClientRect = () =>
@@ -156,7 +155,7 @@ test("success feedback scroll waits until delayed route revalidation settles", a
     await act(async () => container.querySelector("button")?.click());
     await vi.waitFor(() => expect(loader).toHaveBeenCalledTimes(2));
     await vi.waitFor(() =>
-      expect(container.querySelector("[data-ws-form-feedback]")).not.toBeNull()
+      expect(container.textContent).toContain("Submitted")
     );
     expect(scrollIntoView).not.toHaveBeenCalled();
 
@@ -352,7 +351,6 @@ test("refresh failure retains the completed success result and does not replay P
           <button type="submit">Send</button>
           {state === "success" && (
             <div
-              data-ws-form-feedback
               ref={(element) => {
                 if (element) {
                   element.getBoundingClientRect = () =>

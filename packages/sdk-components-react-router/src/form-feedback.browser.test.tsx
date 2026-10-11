@@ -159,7 +159,7 @@ test("managed Form reveals authored Error Message on repeated failures", async (
       >
         <button type="submit">Send</button>
         {state === "error" && (
-          <div role="alert" data-ws-form-feedback>
+          <div role="alert">
             {errors.map(({ message }) => message).join("\n")}
           </div>
         )}
@@ -211,7 +211,7 @@ test("managed Form reveals a persistent configuration error", async () => {
       >
         <button type="submit">Send</button>
         {state === "error" && (
-          <div role="alert" data-ws-form-feedback>
+          <div role="alert">
             {errors.map(({ message }) => message).join("\n")}
           </div>
         )}
@@ -240,7 +240,6 @@ test("managed Form reveals a persistent configuration error", async () => {
       if (alert !== null) {
         expect(currentAlert).toBe(alert);
       }
-      expect(currentAlert?.hasAttribute("data-ws-form-feedback")).toBe(true);
       expect(view.container.querySelector("form")?.dataset.state).toBe("error");
       alert = currentAlert;
     }

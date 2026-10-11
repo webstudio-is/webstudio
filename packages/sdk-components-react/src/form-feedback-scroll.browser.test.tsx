@@ -35,21 +35,17 @@ const renderFeedback = async (persistent = false) => {
     };
     return (
       <form ref={setFormRef}>
-        {state !== "initial" && <div data-new-status />}
         {state === "initial" && <button>Send</button>}
         {persistent ? (
           <div
-            data-feedback="error"
-            data-ws-form-feedback
+            role="alert"
             style={{ display: state === "error" ? "block" : "none" }}
           >
             error
           </div>
         ) : (
           state !== "initial" && (
-            <div data-feedback={state} data-ws-form-feedback>
-              {state}
-            </div>
+            <div role={state === "error" ? "alert" : "status"}>{state}</div>
           )
         )}
       </form>
@@ -94,9 +90,7 @@ test.each([
         block: "center",
         behavior: "smooth",
       });
-      expect(scrolledElements[0]?.hasAttribute("data-ws-form-feedback")).toBe(
-        true
-      );
+      expect(scrolledElements[0]?.getAttribute("role")).toBe("alert");
     } else {
       await new Promise((resolve) => setTimeout(resolve, 80));
       expect(scroll).not.toHaveBeenCalled();

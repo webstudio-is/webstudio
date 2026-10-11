@@ -87,8 +87,8 @@ const positionFeedback = async (
     ({ message, position }) => {
       const place = () => {
         const feedback = Array.from(
-          document.querySelectorAll<HTMLElement>("[data-ws-form-feedback]")
-        ).find((element) => element.textContent?.includes(message));
+          document.querySelectorAll<HTMLElement>("body *")
+        ).find((element) => element.textContent?.trim() === message);
         if (feedback === undefined) {
           return false;
         }
@@ -123,9 +123,7 @@ const getScrollCalls = async (page: Page) =>
   );
 
 const expectFeedbackInsideViewport = async (page: Page, message: string) => {
-  const feedback = page.locator("[data-ws-form-feedback]").filter({
-    hasText: message,
-  });
+  const feedback = page.getByText(message, { exact: true });
   await expect(feedback).toBeVisible();
   await expect
     .poll(() =>

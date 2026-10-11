@@ -112,8 +112,8 @@ const moveFeedbackBelowViewport = async (
   await page.evaluate((messageText) => {
     const moveFeedback = () => {
       const feedback = Array.from(
-        document.querySelectorAll<HTMLElement>("[data-ws-form-feedback]")
-      ).find((element) => element.textContent?.includes(messageText));
+        document.querySelectorAll<HTMLElement>("body *")
+      ).find((element) => element.textContent?.trim() === messageText);
       if (feedback === undefined) {
         return false;
       }

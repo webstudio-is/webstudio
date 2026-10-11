@@ -30,7 +30,7 @@ const getVisibleElements = (form: HTMLFormElement) =>
     )
   );
 
-/** Reveal feedback created by state-driven form content, including saved forms without markers. */
+/** Scroll newly visible content inside a Form into view after submission. */
 export const useFormFeedbackScroll = (
   forwardedRef: ForwardedRef<HTMLFormElement>,
   state?: "initial" | "success" | "error"
@@ -82,7 +82,7 @@ export const useFormFeedbackScroll = (
       );
       const target =
         visibleElements.find((element) =>
-          element.hasAttribute("data-ws-form-feedback")
+          element.matches('[role="alert"], [role="status"]')
         ) ??
         visibleElements.find((element) => !beforeSubmit.current.has(element));
       if (!target) {

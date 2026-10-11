@@ -295,10 +295,7 @@ export const coreTemplates = {
         )}
         {setInstanceMeta(
           { label: "Success Message" },
-          <div
-            data-ws-form-feedback
-            ws:show={expression`${formState} === 'success'`}
-          >
+          <div ws:show={expression`${formState} === 'success'`} role="status">
             {
               new PlaceholderValue(
                 "Thanks for contacting us. Your message has been sent."
@@ -308,11 +305,7 @@ export const coreTemplates = {
         )}
         {setInstanceMeta(
           { label: "Error Message" },
-          <div
-            data-ws-form-feedback
-            ws:show={expression`${formState} === 'error'`}
-            role="alert"
-          >
+          <div ws:show={expression`${formState} === 'error'`} role="alert">
             <p>
               {
                 new PlaceholderValue(
