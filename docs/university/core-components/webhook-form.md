@@ -7,7 +7,7 @@ description: >-
 # ✍️ Webhook Form
 
 {% hint style="info" %}
-This page covers existing Webhook Form instances. The new [Form](form.md) submits to configured Resource actions. Use an **Element** with tag `form` for plain browser form behavior such as searches and filters.
+**Deprecated:** Webhook Form is scheduled for removal in a future release. Existing instances remain supported until then. Use the new [Form](form.md) for configured Resource actions, or an **Element** with tag `form` for plain browser form behavior such as searches and filters.
 {% endhint %}
 
 {% embed url="https://www.youtube.com/watch?v=eE-CkewQHMs" %}

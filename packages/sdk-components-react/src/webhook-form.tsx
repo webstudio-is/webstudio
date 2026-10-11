@@ -10,6 +10,7 @@ type Props = ComponentProps<"form"> & {
   onStateChange: (state: "initial" | "success" | "error") => void;
 };
 
+/** @deprecated Use the managed NativeForm component for new forms. */
 export const WebhookForm = forwardRef<ElementRef<"form">, Props>(
   ({ children, state = "initial", ...props }, ref) => (
     <form {...props} ref={ref}>

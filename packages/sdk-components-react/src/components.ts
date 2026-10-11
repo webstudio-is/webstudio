@@ -17,6 +17,7 @@ export { Superscript } from "./superscript";
 export { Subscript } from "./subscript";
 export { Button } from "./button";
 export { Input } from "./input";
+/** @deprecated Use NativeForm for new forms. */
 export { WebhookForm as Form } from "./webhook-form";
 export { Form as RemixForm } from "./form";
 export { NativeForm } from "./native-form";

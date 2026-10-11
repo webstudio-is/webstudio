@@ -80,6 +80,7 @@ const isJSDom = () => {
   return hasMatchMedia === false;
 };
 
+/** @deprecated Use NativeForm for new forms. */
 export const WebhookForm = forwardRef<
   ElementRef<typeof defaultTag>,
   Omit<ComponentProps<typeof defaultTag>, "action"> & {
