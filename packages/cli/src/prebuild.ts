@@ -1762,7 +1762,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     });
     const formInstances = Array.from(instances.values());
     const managedFormSubmissions = formInstances
-      .filter((instance) => instance.component === "NativeForm")
+      .filter((instance) => instance.component === "ResourceForm")
       .map((instance) => {
         const actionProp = Array.from(props.values())
           .filter(

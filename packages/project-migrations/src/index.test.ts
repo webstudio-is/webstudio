@@ -101,6 +101,22 @@ test("migrates legacy pages inside webstudio data", () => {
   });
 });
 
+test("renames saved managed forms to ResourceForm", () => {
+  const data = structuredClone(emptyData);
+  data.instances.set("form", {
+    type: "instance",
+    id: "form",
+    component: "NativeForm",
+    children: [],
+  });
+
+  migrateWebstudioDataMutable(data);
+
+  expect(data.instances.get("form")?.component).toBe("ResourceForm");
+  migrateWebstudioDataMutable(data);
+  expect(data.instances.get("form")?.component).toBe("ResourceForm");
+});
+
 test("migrates styles inside webstudio data", () => {
   const data = structuredClone(emptyData);
   data.styles.set("base:local:overflow::hover", {

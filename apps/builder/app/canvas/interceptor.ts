@@ -164,13 +164,16 @@ export const subscribeInterceptedEvents = () => {
       if (form === undefined) {
         return;
       }
-      if (form.hasAttribute("data-ws-managed-form-id")) {
-        // NativeForm handles managed submissions and their feedback in Preview.
+      const action = form.getAttribute("action") ?? "";
+      const formMode = new URL(action, document.baseURI).searchParams.get(
+        "__webstudio__"
+      );
+      if (formMode === "resources" || formMode === "navigate") {
+        // The Form's action URL identifies submissions handled by ResourceForm.
         return;
       }
       // use attribute instead of form.action to get raw unresolved value
       // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#dom-fs-action
-      const action = form.getAttribute("action") ?? "";
       // lower case just for safety
       const method = form.method.toLowerCase();
       if (method === "get" && isAbsoluteUrl(action) === false) {

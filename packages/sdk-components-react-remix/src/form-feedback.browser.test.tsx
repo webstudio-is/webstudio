@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, expect, test, vi } from "vitest";
-import { NativeForm } from "./native-form";
+import { ResourceForm } from "./resource-form";
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -51,7 +51,7 @@ test("managed Remix Form scrolls partial failure and reveals visible success", a
       "initial"
     );
     return (
-      <NativeForm
+      <ResourceForm
         data-ws-managed-form-id="saved-managed-form"
         action={[
           { dataSourceId: "first", enabled: true },
@@ -63,7 +63,7 @@ test("managed Remix Form scrolls partial failure and reveals visible success", a
         {state !== "success" && <button type="submit">Send</button>}
         {state === "error" && <div data-feedback="error">Partial failure</div>}
         {state === "success" && <div data-feedback="success">Done</div>}
-      </NativeForm>
+      </ResourceForm>
     );
   };
   const router = createMemoryRouter([{ path: "/", element: <Form />, action }]);

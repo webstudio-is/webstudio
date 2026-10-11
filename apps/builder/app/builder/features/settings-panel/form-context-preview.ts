@@ -39,7 +39,7 @@ type FormPreviewContext = {
   instances?: Instances;
 };
 
-/** Identify only submission parameters available in the active NativeForm. */
+/** Identify only submission parameters available in the active ResourceForm. */
 export const getFormParameterName = (
   source: DataSource,
   { formId, instances }: FormPreviewContext
@@ -52,7 +52,7 @@ export const getFormParameterName = (
     (formId === undefined && instances === undefined) ||
     (formId !== undefined && source.scopeInstanceId !== formId) ||
     (instances !== undefined &&
-      instances.get(source.scopeInstanceId)?.component !== "NativeForm")
+      instances.get(source.scopeInstanceId)?.component !== "ResourceForm")
   ) {
     return;
   }

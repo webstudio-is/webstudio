@@ -14,7 +14,7 @@ import {
 
 const managedFormPolicy: ComponentGenerationPolicy = {
   transformProps: (instance, props) => {
-    if (instance.component !== "NativeForm") {
+    if (instance.component !== "ResourceForm") {
       return;
     }
     for (const [name, prop] of props) {
@@ -39,7 +39,7 @@ const managedFormPolicy: ComponentGenerationPolicy = {
       (dataSource.name === formDataParameterName ||
         dataSource.name === browserInfoParameterName) &&
       instances.get(dataSource.scopeInstanceId ?? "")?.component ===
-        "NativeForm"
+        "ResourceForm"
     ) {
       // Submission values exist only while a managed submit runs.
       return `const ${valueName}: any = undefined\n`;

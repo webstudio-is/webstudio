@@ -230,11 +230,11 @@ const call = async (name: string, args: Record<string, unknown> = {}) => {
 try {
   const instances = await call("list-instances", {
     pagePath: "/",
-    component: "NativeForm",
+    component: "ResourceForm",
   });
   const form = (
     instances.instances as Array<{ id: string; component: string }>
-  ).find(({ component }) => component === "NativeForm");
+  ).find(({ component }) => component === "ResourceForm");
   if (form === undefined) {
     throw new Error("Expected the contact Form");
   }

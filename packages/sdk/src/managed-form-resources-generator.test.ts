@@ -90,7 +90,12 @@ test.each([
     const instances: Instances = new Map([
       [
         "form",
-        { id: "form", type: "instance", component: "NativeForm", children: [] },
+        {
+          id: "form",
+          type: "instance",
+          component: "ResourceForm",
+          children: [],
+        },
       ],
     ]);
     const dataSources: DataSources = new Map([
@@ -164,7 +169,12 @@ test.each([SYSTEM_VARIABLE_ID, "page-system"])(
       ],
       [
         "form",
-        { id: "form", type: "instance", component: "NativeForm", children: [] },
+        {
+          id: "form",
+          type: "instance",
+          component: "ResourceForm",
+          children: [],
+        },
       ],
     ]);
     const dataSources: DataSources = new Map([
@@ -291,7 +301,7 @@ test("a Form-scoped Email Resource gets the automatic form text and a typed emai
         {
           type: "instance",
           id: "form",
-          component: "NativeForm",
+          component: "ResourceForm",
           children: [{ type: "id", value: "password-input" }],
         },
       ],
@@ -385,7 +395,7 @@ test.each([
           {
             type: "instance",
             id: "form",
-            component: "NativeForm",
+            component: "ResourceForm",
             children: [],
           },
         ],
@@ -487,7 +497,7 @@ test("a translated project body is inherited unless the Email Resource overrides
           {
             type: "instance",
             id: "form",
-            component: "NativeForm",
+            component: "ResourceForm",
             children: [],
           },
         ],
@@ -562,7 +572,7 @@ test("counts project and custom Email recipients across a Form, including duplic
           {
             type: "instance",
             id: "form",
-            component: "NativeForm",
+            component: "ResourceForm",
             children: [],
           },
         ],
@@ -664,7 +674,7 @@ test("preflights bound Email recipient counts when Resources are referenced", ()
           {
             type: "instance",
             id: "form",
-            component: "NativeForm",
+            component: "ResourceForm",
             children: [],
           },
         ],
@@ -811,7 +821,7 @@ test("counts an Email dependency of a selected HTTP Resource", () => {
           {
             type: "instance",
             id: "form",
-            component: "NativeForm",
+            component: "ResourceForm",
             children: [],
           },
         ],
@@ -904,7 +914,7 @@ test("an edited default Email body formats Form values and preserves field acces
         {
           type: "instance",
           id: "form",
-          component: "NativeForm",
+          component: "ResourceForm",
           children: [{ type: "id", value: "password-input" }],
         },
       ],
@@ -1013,7 +1023,7 @@ test("Visitor Email keeps its empty receipt body instead of the submitted-fields
       {
         type: "instance",
         id: "form",
-        component: "NativeForm",
+        component: "ResourceForm",
         children: [{ type: "id", value: "email-input" }],
       },
     ],
@@ -1179,7 +1189,7 @@ test.each([
         {
           type: "instance",
           id: "form",
-          component: "NativeForm",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -1360,7 +1370,7 @@ test("automatic Email body redacts Element passwords and unknown input types", (
           {
             type: "instance",
             id: "form",
-            component: "NativeForm",
+            component: "ResourceForm",
             children: [{ type: "id", value: "input" }],
           },
         ],
@@ -1589,7 +1599,12 @@ test("an external Email Resource cannot read a Form-only binding", () => {
     instances: new Map([
       [
         "form",
-        { type: "instance", id: "form", component: "NativeForm", children: [] },
+        {
+          type: "instance",
+          id: "form",
+          component: "ResourceForm",
+          children: [],
+        },
       ],
     ]),
     dataSources: new Map([
@@ -1641,7 +1656,12 @@ test("builds a submit-time graph with Form bindings and dependent Resource resul
     instances: new Map([
       [
         "form",
-        { type: "instance", id: "form", component: "NativeForm", children: [] },
+        {
+          type: "instance",
+          id: "form",
+          component: "ResourceForm",
+          children: [],
+        },
       ],
     ]),
     dataSources: new Map([
@@ -1761,7 +1781,7 @@ test("an external Resource can be selected without gaining access to Form data",
   const instances: Instances = new Map([
     [
       "form",
-      { type: "instance", id: "form", component: "NativeForm", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ],
   ]);
   const dataSources: DataSources = new Map([
@@ -1858,7 +1878,7 @@ test.each(["form", "page", undefined])(
           {
             type: "instance",
             id: "form",
-            component: "NativeForm",
+            component: "ResourceForm",
             children: [],
           },
         ],
@@ -1926,7 +1946,7 @@ test("a shared outside alias cannot promote a Resource into Form scope", () => {
   const instances: Instances = new Map([
     [
       "form",
-      { type: "instance", id: "form", component: "NativeForm", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ],
   ]);
   const dataSources: DataSources = new Map([
@@ -1991,7 +2011,7 @@ test("an invalid Form graph does not prevent another Form from building", () => 
       {
         type: "instance",
         id: "invalidForm",
-        component: "NativeForm",
+        component: "ResourceForm",
         children: [],
       },
     ],
@@ -2000,7 +2020,7 @@ test("an invalid Form graph does not prevent another Form from building", () => 
       {
         type: "instance",
         id: "validForm",
-        component: "NativeForm",
+        component: "ResourceForm",
         children: [],
       },
     ],
@@ -2083,7 +2103,12 @@ test("deduplicates Resource roots while preserving selection order", () => {
     instances: new Map([
       [
         "form",
-        { type: "instance", id: "form", component: "NativeForm", children: [] },
+        {
+          type: "instance",
+          id: "form",
+          component: "ResourceForm",
+          children: [],
+        },
       ],
     ]),
     dataSources: new Map([
@@ -2156,7 +2181,7 @@ test("an external dependency cannot read Form data through an internal destinati
   const instances: Instances = new Map([
     [
       "form",
-      { type: "instance", id: "form", component: "NativeForm", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ],
   ]);
   const dataSources: DataSources = new Map([
@@ -2254,7 +2279,7 @@ test.each([
         {
           type: "instance",
           id: "form",
-          component: "NativeForm",
+          component: "ResourceForm",
           children: [{ type: "id", value: "child" }],
         },
       ],
@@ -2350,7 +2375,12 @@ test.each([
       ],
       [
         "form",
-        { type: "instance", id: "form", component: "NativeForm", children: [] },
+        {
+          type: "instance",
+          id: "form",
+          component: "ResourceForm",
+          children: [],
+        },
       ],
     ]);
     const dataSources: DataSources = new Map([
@@ -2550,7 +2580,7 @@ test.each(["http", "email", "visitor"] as const)(
         {
           type: "instance",
           id: "form",
-          component: "NativeForm",
+          component: "ResourceForm",
           children: [{ type: "id", value: "input" }],
         },
       ],

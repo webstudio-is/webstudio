@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { createMemoryRouter, RouterProvider, useLocation } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
 import {
   managedFormArrayNamesFieldName,
   managedFormIdFieldName,
   managedFormRequestParamName,
 } from "@webstudio-is/sdk/runtime";
-import { NativeForm } from "./native-form";
+import { ResourceForm } from "./resource-form";
 import { RemixForm } from "./remix-form";
 
 (
@@ -36,6 +36,51 @@ test("external native form preserves its action and method", async () => {
       "https://receiver.example/search"
     );
     expect(form?.getAttribute("method")).toBe("get");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+test("an empty Resource list submits query values through client navigation", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const QueryForm = () => {
+    const location = useLocation();
+    return (
+      <>
+        <ResourceForm action={[]}>
+          <input name="query" defaultValue="chairs" />
+          <input name="tag" defaultValue="wood" />
+          <input name="tag" defaultValue="blue" />
+          <button type="submit">Search</button>
+        </ResourceForm>
+        <output>{location.search}</output>
+      </>
+    );
+  };
+  const router = createMemoryRouter(
+    [{ path: "/catalog", element: <QueryForm /> }],
+    { initialEntries: ["/catalog?old=discard"] }
+  );
+  try {
+    await act(async () => root.render(<RouterProvider router={router} />));
+    const form = container.querySelector("form");
+    expect(form?.getAttribute("action")).toBe("?__webstudio__=navigate");
+    expect(form?.method).toBe("get");
+    await act(async () => {
+      container.querySelector("button")?.click();
+      await vi.waitFor(() =>
+        expect(router.state.location.search).toBe(
+          "?query=chairs&tag=wood&tag=blue"
+        )
+      );
+    });
+    expect(router.state.location.pathname).toBe("/catalog");
+    expect(container.querySelector("output")?.textContent).toBe(
+      "?query=chairs&tag=wood&tag=blue"
+    );
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -81,7 +126,7 @@ test("managed Form posts its server identity and shows the action error", async 
     );
     const [errors, setErrors] = useState<Array<{ message: string }>>([]);
     return (
-      <NativeForm
+      <ResourceForm
         data-ws-managed-form-id="form-instance"
         action={[{ dataSourceId: "resource-id", enabled: true }]}
         state={state}
@@ -107,7 +152,7 @@ test("managed Form posts its server identity and shows the action error", async 
             {errors.map(({ message }) => message).join("\n")}
           </div>
         )}
-      </NativeForm>
+      </ResourceForm>
     );
   };
   const router = createMemoryRouter(
@@ -199,7 +244,7 @@ test("managed Form reports success after the action succeeds", async () => {
       {
         path: "/",
         element: (
-          <NativeForm
+          <ResourceForm
             data-ws-managed-form-id="form-instance"
             action={[{ dataSourceId: "resource-id", enabled: true }]}
             onStateChange={(state) => stateChanges.push(state)}
@@ -207,7 +252,7 @@ test("managed Form reports success after the action succeeds", async () => {
           >
             <input name="message" defaultValue="Hello" />
             <button type="submit">Send</button>
-          </NativeForm>
+          </ResourceForm>
         ),
         action,
       },

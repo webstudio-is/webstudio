@@ -2,7 +2,7 @@
  * Used to identify form inside server handler
  */
 export const formIdFieldName = `ws--form-id`;
-/** Identifies a managed NativeForm without accepting destinations from the visitor. */
+/** Identifies a managed ResourceForm without accepting destinations from the visitor. */
 export const managedFormIdFieldName = `ws--managed-form-id`;
 /** Query marker lets the server apply managed-only parsing limits before parsing. */
 export const managedFormRequestParamName = `ws--managed-form-request`;

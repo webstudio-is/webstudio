@@ -55,7 +55,7 @@ test("lists the new Form while preserving Webhook Form", () => {
     expect.objectContaining({
       name: "form",
       label: "Form (new)",
-      firstInstance: expect.objectContaining({ component: "NativeForm" }),
+      firstInstance: expect.objectContaining({ component: "ResourceForm" }),
     }),
   ]);
 
@@ -81,7 +81,7 @@ test("lists the new Form while preserving Webhook Form", () => {
   expect($registeredComponentMetas.get().get("RemixForm")?.deprecated).toBe(
     true
   );
-  expect($registeredComponentMetas.get().get("NativeForm")?.deprecated).toBe(
+  expect($registeredComponentMetas.get().get("ResourceForm")?.deprecated).toBe(
     undefined
   );
   expect(

@@ -8,7 +8,7 @@ import {
 import { useStore } from "@nanostores/react";
 import { mergeRefs } from "@react-aria/utils";
 import { selectorIdAttribute } from "@webstudio-is/react-sdk";
-import { NativeForm } from "@webstudio-is/sdk-components-react/components";
+import { ResourceForm } from "@webstudio-is/sdk-components-react/components";
 import type { submitManagedForm } from "@webstudio-is/sdk-components-react";
 import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
 import { $selectedPageHash } from "~/shared/nano-states/pages";
@@ -38,9 +38,9 @@ export const submitManagedFormFromPreview = (
   });
 };
 
-export const PreviewNativeForm = forwardRef<
-  ElementRef<typeof NativeForm>,
-  ComponentProps<typeof NativeForm>
+export const PreviewResourceForm = forwardRef<
+  ElementRef<typeof ResourceForm>,
+  ComponentProps<typeof ResourceForm>
 >((props, ref) => {
   const system = useStore($currentSystem);
   const { hash } = useStore($selectedPageHash);
@@ -97,15 +97,16 @@ export const PreviewNativeForm = forwardRef<
     };
   }, [formId, formSelector]);
   return (
-    <NativeForm
+    <ResourceForm
       {...props}
       ref={mergeRefs(ref, formRef)}
       navigationToken={getPreviewCurrentUrl(system, hash).href}
+      onQueryNavigate={(url) => switchPageAndUpdateSystem(url)}
     />
   );
 });
 
-export const getPreviewNativeFormProps = (formId: string) => {
+export const getPreviewResourceFormProps = (formId: string) => {
   const getPreviewUrl = () =>
     getPreviewCurrentUrl($currentSystem.get(), $selectedPageHash.get().hash);
   return {

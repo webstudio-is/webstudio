@@ -36,7 +36,7 @@ export const getManagedFormSubmissionResourceIds = ({
           (source.name === formDataParameterName ||
             source.name === browserInfoParameterName) &&
           instances.get(source.scopeInstanceId ?? "")?.component ===
-            "NativeForm"
+            "ResourceForm"
       )
       .map(({ id }) => id)
   );
@@ -86,7 +86,7 @@ export const getManagedFormParameterBinding = ({
   }
   if (
     source.scopeInstanceId === formId &&
-    instances.get(formId)?.component === "NativeForm" &&
+    instances.get(formId)?.component === "ResourceForm" &&
     (source.name === formDataParameterName ||
       source.name === browserInfoParameterName)
   ) {

@@ -242,11 +242,11 @@ test.each(["query", "hash", "params"] as const)(
     const redirect = vi.fn();
     const result = vi.fn();
     const state = vi.fn();
-    const { PreviewNativeForm } = __testing__;
+    const { PreviewResourceForm } = __testing__;
     try {
       await act(async () =>
         root.render(
-          <PreviewNativeForm
+          <PreviewResourceForm
             action={[{ dataSourceId: "resource", enabled: true }]}
             successRedirect="/done"
             onManagedSubmit={(_values, requestSignal) => {
@@ -260,7 +260,7 @@ test.each(["query", "hash", "params"] as const)(
             onStateChange={state}
           >
             <button type="submit">Send</button>
-          </PreviewNativeForm>
+          </PreviewResourceForm>
         )
       );
       const form = container.querySelector("form");

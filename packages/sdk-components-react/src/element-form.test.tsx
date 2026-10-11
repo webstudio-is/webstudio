@@ -40,7 +40,7 @@ test("Element with tag=form submits with native validation, navigation, and enco
   if (!generatedForm) {
     throw new Error("Expected Element to generate a literal form");
   }
-  expect(generated).not.toContain("<NativeForm");
+  expect(generated).not.toContain("<ResourceForm");
   // These fixed JSX values map directly to HTML attributes and text. Exercise
   // the generated form subtree instead of authoring a second form in the test.
   const html = generatedForm

@@ -1,7 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
   Box,
-  cssVar,
   InteractiveListArrowFocus,
   InteractiveListItem,
   DropdownMenu,
@@ -14,11 +13,11 @@ import {
   SmallToggleButton,
   Text,
   Tooltip,
+  InfoTooltip,
   useSortable,
   theme,
 } from "@webstudio-is/design-system";
 import {
-  AlertIcon,
   EyeClosedIcon,
   EyeOpenIcon,
   MinusIcon,
@@ -26,7 +25,6 @@ import {
 } from "@webstudio-is/icons";
 import {
   isFormSubmission,
-  emptyFormActionMessage,
   maxFormActions,
   validateFormSubmission,
   type FormSubmission,
@@ -151,7 +149,9 @@ export const FormActionControl = ({
   });
   const error = invalidSavedValue
     ? "Invalid Form action settings"
-    : validateFormSubmission(action);
+    : action.length === 0
+      ? undefined
+      : validateFormSubmission(action);
 
   return (
     <Box>
@@ -191,15 +191,6 @@ export const FormActionControl = ({
                   </Text>
                 </li>
               </Box>
-              {action.length === 0 && (
-                <Flex align="center" gap="1">
-                  <AlertIcon
-                    color={cssVar("--foreground-warning")}
-                    style={{ flexShrink: 0 }}
-                  />
-                  <Text>Add at least one action.</Text>
-                </Flex>
-              )}
             </Flex>
           }
           resettable={invalidSavedValue || action.length > 0}
@@ -285,7 +276,16 @@ export const FormActionControl = ({
               </Grid>
             </InteractiveListArrowFocus>
           )}
-          {error && error !== emptyFormActionMessage && <Text>{error}</Text>}
+          {error && <Text>{error}</Text>}
+          {!invalidSavedValue && action.length === 0 && (
+            <Flex align="center" justify="center" gap="1">
+              <Text>Navigation mode</Text>
+              <InfoTooltip
+                label="About Navigation mode"
+                content="Submits the form fields as URL query parameters and navigates without a full page reload. Use this for search and filters that update page Resources from the URL."
+              />
+            </Flex>
+          )}
         </Flex>
       </Box>
     </Box>

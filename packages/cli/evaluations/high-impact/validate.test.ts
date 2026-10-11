@@ -13,6 +13,7 @@ import {
   fontAssetsFixture,
   highImpactFixtures,
   managedFormAuthoringFixture,
+  formModesAuthoringFixture,
   markdownBlogFixture,
   markdownReferencesDiscoveryFixture,
   validateHighImpactFixture,
@@ -47,7 +48,7 @@ const addManagedContactPage = (): EvaluationProject => {
   const instances = [
     {
       id: formId,
-      component: "NativeForm",
+      component: "ResourceForm",
       children: [
         { type: "id" as const, value: "form-content" },
         { type: "id" as const, value: "form-success" },
@@ -813,7 +814,7 @@ describe("managed Form evaluation", () => {
     const project = addManagedContactPage();
     const calls = managedFormCalls();
     const form = project.instances.find(
-      ({ component }) => component === "NativeForm"
+      ({ component }) => component === "ResourceForm"
     )!;
     const button = project.instances.find(
       ({ component }) => component === "Button"
@@ -997,6 +998,94 @@ describe("managed Form evaluation", () => {
       toolCalls: calls,
     });
     expect(result.checks.formTemplateDiscovery).toBe("failed");
+  });
+});
+
+describe("Form modes evaluation", () => {
+  test("recognizes labeled MCP instances and the native Element form tag", () => {
+    const project = clone(formModesAuthoringFixture.project);
+    project.instances.push(
+      {
+        id: "mode-contact",
+        component: "ResourceForm",
+        children: [],
+      },
+      {
+        id: "mode-search",
+        component: "ResourceForm",
+        children: [],
+      },
+      {
+        id: "mode-native",
+        component: "ws:element",
+        tag: "form",
+        children: [],
+      }
+    );
+    project.props.push(
+      {
+        id: "mode-contact-label",
+        instanceId: "mode-contact",
+        name: "aria-label",
+        type: "string",
+        value: "Contact",
+      },
+      {
+        id: "mode-search-label",
+        instanceId: "mode-search",
+        name: "aria-label",
+        type: "string",
+        value: "Search",
+      },
+      {
+        id: "mode-native-label",
+        instanceId: "mode-native",
+        name: "aria-label",
+        type: "string",
+        value: "Native",
+      },
+      {
+        id: "mode-contact-actions",
+        instanceId: "mode-contact",
+        name: "action",
+        type: "json",
+        value: [{ dataSourceId: "email-owner", enabled: true }],
+      },
+      {
+        id: "mode-search-actions",
+        instanceId: "mode-search",
+        name: "action",
+        type: "json",
+        value: [],
+      }
+    );
+    const result = evaluateHighImpactOutcome({
+      fixture: formModesAuthoringFixture,
+      project,
+      toolCalls: [
+        { name: "meta.guide" },
+        {
+          name: "components.search",
+          arguments: { searchesForForm: true },
+        },
+        {
+          name: "components.search",
+          arguments: { searchesForWebhookForm: true },
+        },
+        {
+          name: "components.search",
+          arguments: { searchesForElement: true },
+        },
+        { name: "templates.get" },
+        { name: "insert-component" },
+        { name: "insert-component" },
+        { name: "insert-component" },
+      ],
+    });
+    expect(result.checks.resourceFormMode).toBe("passed");
+    expect(result.checks.navigationFormMode).toBe("passed");
+    expect(result.checks.nativeFormMode).toBe("passed");
+    expect(result.checks.formModesRegistryDiscovery).toBe("passed");
   });
 });
 
@@ -2049,5 +2138,103 @@ describe("design-input evaluation", () => {
     });
 
     expect(result.checks.audit).toBe("passed");
+  });
+});
+
+describe("Form modes authoring evaluation", () => {
+  const project = (): EvaluationProject => ({
+    ...formModesAuthoringFixture.project,
+    instances: [
+      {
+        id: "contact",
+        component: "ResourceForm",
+        label: "Contact",
+        children: [],
+      },
+      {
+        id: "search",
+        component: "ResourceForm",
+        label: "Search",
+        children: [],
+      },
+      {
+        id: "native",
+        component: "Element",
+        tag: "form",
+        label: "Native",
+        children: [],
+      },
+    ],
+    props: [
+      {
+        id: "contact-action",
+        instanceId: "contact",
+        name: "action",
+        type: "json",
+        value: [{ dataSourceId: "email", enabled: true }],
+      },
+      {
+        id: "search-action",
+        instanceId: "search",
+        name: "action",
+        type: "json",
+        value: [],
+      },
+    ],
+  });
+  const calls = [
+    {
+      name: "components.search",
+      arguments: { searchesForForm: true },
+    },
+    {
+      name: "components.search",
+      arguments: { searchesForWebhookForm: true },
+    },
+    {
+      name: "components.search",
+      arguments: { searchesForElement: true },
+    },
+    { name: "templates.get" },
+    ...Array.from({ length: 3 }, () => ({ name: "insert-component" })),
+  ];
+  test("accepts distinct Resource, navigation, and native forms", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: formModesAuthoringFixture,
+      project: project(),
+      toolCalls: calls,
+    });
+    expect(result.checks.resourceFormMode).toBe("passed");
+    expect(result.checks.navigationFormMode).toBe("passed");
+    expect(result.checks.nativeFormMode).toBe("passed");
+    expect(result.checks.formModesRegistryDiscovery).toBe("passed");
+  });
+  test("rejects the legacy identity and navigation with connected actions", () => {
+    const invalid = project();
+    invalid.instances[0].component = "Form";
+    invalid.props[1].value = [{ dataSourceId: "email", enabled: false }];
+    const result = evaluateHighImpactOutcome({
+      fixture: formModesAuthoringFixture,
+      project: invalid,
+      toolCalls: calls,
+    });
+    expect(result.checks.resourceFormMode).toBe("failed");
+    expect(result.checks.navigationFormMode).toBe("failed");
+  });
+  test("rejects a managed marker on the native form", () => {
+    const invalid = project();
+    invalid.props.push({
+      id: "native-action",
+      instanceId: "native",
+      name: "action",
+      type: "string",
+      value: "?__webstudio__=navigate",
+    });
+    const result = evaluateHighImpactOutcome({
+      fixture: formModesAuthoringFixture,
+      project: invalid,
+      toolCalls: calls,
+    });
+    expect(result.checks.nativeFormMode).toBe("failed");
   });
 });

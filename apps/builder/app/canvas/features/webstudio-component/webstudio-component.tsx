@@ -117,10 +117,10 @@ import { $resourcesState } from "~/shared/resources";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 
 import {
-  PreviewNativeForm,
+  PreviewResourceForm,
   submitManagedFormFromPreview,
-  getPreviewNativeFormProps,
-} from "./preview-native-form";
+  getPreviewResourceFormProps,
+} from "./preview-resource-form";
 import { getPreviewCurrentUrl } from "./preview-current-url";
 
 const getHtmlEmbedCanvasProps = ({
@@ -151,7 +151,7 @@ const computeComponentKey = (props: Record<string, unknown>) => {
 };
 
 export const __testing__ = {
-  PreviewNativeForm,
+  PreviewResourceForm,
   submitManagedFormFromPreview,
   computeComponentKey,
   getPreviewCurrentUrl,
@@ -1064,8 +1064,8 @@ const WebstudioComponentPreviewInner = forwardRef<
     [componentAttribute]: instance.component,
     [selectorIdAttribute]: instanceSelector.join(","),
   };
-  if (instance.component === "NativeForm") {
-    Object.assign(props, getPreviewNativeFormProps(instance.id));
+  if (instance.component === "ResourceForm") {
+    Object.assign(props, getPreviewResourceFormProps(instance.id));
   }
   if (show === false) {
     return <></>;
@@ -1102,8 +1102,8 @@ const WebstudioComponentPreviewInner = forwardRef<
     instance.component
   );
 
-  if (instance.component === "NativeForm") {
-    Component = PreviewNativeForm as AnyComponent;
+  if (instance.component === "ResourceForm") {
+    Component = PreviewResourceForm as AnyComponent;
   }
 
   if (instance.component === elementComponent) {

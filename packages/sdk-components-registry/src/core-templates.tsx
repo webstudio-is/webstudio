@@ -35,7 +35,7 @@ import {
   HtmlEmbed,
   Input,
   Label,
-  NativeForm,
+  ResourceForm,
   Paragraph,
   Textarea,
 } from "@webstudio-is/sdk-components-react/components";
@@ -250,7 +250,7 @@ export const coreTemplates = {
     label: "Form (new)",
     description: "Collect information and submit it to Resource actions.",
     template: (
-      <NativeForm
+      <ResourceForm
         action={new FormSubmissionValue([ownerEmail, visitorEmail])}
         formData={formData}
         browserInfo={browserInfo}
@@ -350,7 +350,7 @@ export const coreTemplates = {
             </ul>
           </div>
         )}
-      </NativeForm>
+      </ResourceForm>
     ),
   },
   [blockComponent]: blockMeta,

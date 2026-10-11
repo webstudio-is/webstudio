@@ -54,14 +54,14 @@ test.each([true, false])(
         return <div data-renderer="canvas" />;
       }
       return (
-        <__testing__.PreviewNativeForm
+        <__testing__.PreviewResourceForm
           action={[{ dataSourceId: "request", enabled: true }]}
           state={state}
           onStateChange={setState}
           onManagedSubmit={submit}
         >
           <button type="submit">Send</button>
-        </__testing__.PreviewNativeForm>
+        </__testing__.PreviewResourceForm>
       );
     };
     await act(async () => root?.render(<Harness />));
@@ -98,12 +98,12 @@ test.each([true, false])(
     const Harness = () => {
       const isPreviewMode = useStore($isPreviewMode);
       return isPreviewMode ? (
-        <__testing__.PreviewNativeForm
+        <__testing__.PreviewResourceForm
           action={[{ dataSourceId: "request", enabled: true }]}
           onManagedSubmit={submit}
         >
           <button type="submit">Send</button>
-        </__testing__.PreviewNativeForm>
+        </__testing__.PreviewResourceForm>
       ) : (
         <div data-renderer="canvas" />
       );
@@ -135,7 +135,7 @@ test("Preview publishes live unsent DOM values as input/change events occur", as
   try {
     await act(async () =>
       root?.render(
-        <__testing__.PreviewNativeForm
+        <__testing__.PreviewResourceForm
           data-ws-managed-form-id="live-form"
           action={[{ dataSourceId: "request", enabled: true }]}
           onManagedSubmit={submit}
@@ -146,7 +146,7 @@ test("Preview publishes live unsent DOM values as input/change events occur", as
             <option value="second">Second</option>
           </select>
           <input name="flag" type="checkbox" value="yes" />
-        </__testing__.PreviewNativeForm>
+        </__testing__.PreviewResourceForm>
       )
     );
     await expect
@@ -199,7 +199,7 @@ test.each([
     const form: Instance = {
       type: "instance" as const,
       id: "form",
-      component: "NativeForm",
+      component: "ResourceForm",
       children: [{ type: "id" as const, value: slot.id }],
     };
     $instances.set(

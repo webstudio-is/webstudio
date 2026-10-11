@@ -17,6 +17,8 @@ export type BoundedMcpCall = {
   arguments?: {
     path?: string;
     searchesForForm?: true;
+    searchesForWebhookForm?: true;
+    searchesForElement?: true;
     inspectsFormTemplate?: true;
     insertsFormTemplate?: true;
     viewport?: { width: number; height: number };
@@ -138,10 +140,18 @@ export const getMcpTraceRequest = (
     const args: NonNullable<BoundedMcpCall["arguments"]> = {};
     if (
       params.name === "components.search" &&
-      typeof params.arguments.brief === "string" &&
-      params.arguments.brief.toLowerCase().includes("form")
+      typeof params.arguments.brief === "string"
     ) {
-      args.searchesForForm = true;
+      const brief = params.arguments.brief.toLowerCase();
+      if (brief.includes("form") && brief.includes("webhook") === false) {
+        args.searchesForForm = true;
+      }
+      if (brief.includes("webhook")) {
+        args.searchesForWebhookForm = true;
+      }
+      if (brief.includes("element") || brief.includes("native")) {
+        args.searchesForElement = true;
+      }
     }
     if (
       params.name === "templates.get" &&

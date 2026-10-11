@@ -18,7 +18,7 @@ const reactGlobalPath = fileURLToPath(
   new URL("../../../../scripts/register-react-global.ts", import.meta.url)
 );
 
-test("MCP-authored Form reports an empty Action list without dispatching a request", async ({
+test("MCP-authored Form uses query navigation when no Actions are connected", async ({
   page,
   context,
 }) => {
@@ -76,13 +76,20 @@ test("MCP-authored Form reports an empty Action list without dispatching a reque
       await form.locator('input[name="email"]').fill("ada@example.com");
       await form.locator('input[name="subject"]').fill("No Action test");
       await form.locator('textarea[name="message"]').fill("No dispatch");
+      await expect(form).toHaveAttribute("action", "?__webstudio__=navigate");
       await form.getByRole("button", { name: "Submit" }).click();
-      await expect(form).toHaveAttribute("data-state", "error");
-      await expect(
-        form.getByText("We could not send your message. Please try again.", {
-          exact: true,
-        })
-      ).toBeVisible();
+      await expect
+        .poll(() => new URL(page.url()).searchParams.get("name"))
+        .toBe("Ada");
+      expect(new URL(page.url()).searchParams.get("email")).toBe(
+        "ada@example.com"
+      );
+      expect(new URL(page.url()).searchParams.get("subject")).toBe(
+        "No Action test"
+      );
+      expect(new URL(page.url()).searchParams.get("message")).toBe(
+        "No dispatch"
+      );
       expect(formRequests).toEqual([]);
     },
   });

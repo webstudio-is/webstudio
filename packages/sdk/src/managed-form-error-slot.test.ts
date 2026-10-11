@@ -21,7 +21,7 @@ const slot: Instance = {
 const form: Instance = {
   type: "instance",
   id: "form",
-  component: "NativeForm",
+  component: "ResourceForm",
   children: [{ type: "id", value: slot.id }],
 };
 const instances: Instances = new Map([
@@ -60,7 +60,7 @@ const props: Props = new Map([
 ]);
 
 test.each([
-  [{ message: "Add at least one action" }],
+  [{ message: "Enable at least one action" }],
   [{ message: "First failure" }, { message: "Second failure" }],
 ])(
   "saved managed Form error slot renders actual messages without persisting changes",

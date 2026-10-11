@@ -1,5 +1,7 @@
 export const maxFormActions = 10;
-export const emptyFormActionMessage = "Add at least one action";
+export const noEnabledFormActionMessage = "Enable at least one action";
+export const resourceFormActionUrl = "?__webstudio__=resources";
+export const navigationFormActionUrl = "?__webstudio__=navigate";
 
 export type FormAction = {
   /** Resource data source ID, stable across renames. */
@@ -23,7 +25,7 @@ export const isFormSubmission = (value: unknown): value is FormSubmission =>
 
 export const validateFormSubmission = (actions: FormSubmission) => {
   if (getEnabledFormActions(actions).length === 0) {
-    return emptyFormActionMessage;
+    return noEnabledFormActionMessage;
   }
   if (actions.length > maxFormActions) {
     return `Select no more than ${maxFormActions} Resource actions`;

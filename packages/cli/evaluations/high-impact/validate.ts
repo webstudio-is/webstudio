@@ -30,6 +30,7 @@ import {
   designInputFixture,
   fontAssetsFixture,
   managedFormAuthoringFixture,
+  formModesAuthoringFixture,
   markdownBlogFixture,
   markdownReferencesDiscoveryFixture,
   mdxArticleFixture,
@@ -557,7 +558,7 @@ const validateManagedFormAuthoring = (
     "/contact"
   );
   const formInstances = instances.filter(
-    ({ component }) => component === "NativeForm"
+    ({ component }) => component === "ResourceForm"
   );
   const form = formInstances[0];
   const propsByInstance = new Map<string, EvaluationProject["props"]>();
@@ -2015,13 +2016,98 @@ const validateMdxArticle = (
   );
 };
 
+const validateFormModesAuthoring = (
+  input: HighImpactEvaluationInput,
+  checks: Record<string, "passed" | "failed">,
+  failures: string[]
+) => {
+  const getProp = (id: string, name: string) =>
+    input.project.props.find(
+      (prop) => prop.instanceId === id && prop.name === name
+    )?.value;
+  const resourceForms = input.project.instances.filter(
+    (instance) => instance.component === "ResourceForm"
+  );
+  const contact = resourceForms.find((instance) => {
+    const actions = getProp(instance.id, "action");
+    return Array.isArray(actions) && actions.length > 0;
+  });
+  const search = resourceForms.find((instance) => {
+    const actions = getProp(instance.id, "action");
+    return Array.isArray(actions) && actions.length === 0;
+  });
+  const native = input.project.instances.find(
+    (instance) =>
+      (instance.component === "Element" ||
+        instance.component === "ws:element") &&
+      (instance.tag === "form" || getProp(instance.id, "tag") === "form")
+  );
+  const contactActions = getProp(contact?.id ?? "", "action");
+  const searchActions = getProp(search?.id ?? "", "action");
+  recordCheck(
+    checks,
+    failures,
+    "resourceFormMode",
+    resourceForms.length >= 2 &&
+      contact?.component === "ResourceForm" &&
+      Array.isArray(contactActions) &&
+      contactActions.length > 0,
+    "Contact must be a ResourceForm with connected Resource actions."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "navigationFormMode",
+    resourceForms.length >= 2 &&
+      search?.component === "ResourceForm" &&
+      Array.isArray(searchActions) &&
+      searchActions.length === 0,
+    "Search must be a ResourceForm with an explicitly empty Action array."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "nativeFormMode",
+    (native?.component === "Element" || native?.component === "ws:element") &&
+      (native.tag === "form" || getProp(native.id, "tag") === "form") &&
+      getProp(native.id, "action") === undefined,
+    "Native must be an Element form without a managed Action."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "formModesRegistryDiscovery",
+    input.toolCalls.some(
+      (call) =>
+        call.name === "components.search" &&
+        call.arguments?.searchesForForm === true
+    ) &&
+      input.toolCalls.some(
+        (call) =>
+          call.name === "components.search" &&
+          call.arguments?.searchesForWebhookForm === true
+      ) &&
+      input.toolCalls.some(
+        (call) =>
+          call.name === "components.search" &&
+          call.arguments?.searchesForElement === true
+      ) &&
+      input.toolCalls.some((call) => call.name === "templates.get") &&
+      input.toolCalls.filter((call) => call.name === "insert-component")
+        .length >= 3,
+    "Discover the registered components and insert their templates through MCP."
+  );
+};
+
 export const evaluateHighImpactOutcome = (
   input: HighImpactEvaluationInput
 ): HighImpactEvaluationResult => {
   const checks: Record<string, "passed" | "failed"> = {};
   const failures: string[] = [];
   validateCommon(input, checks, failures);
-  if (input.fixture.id === mdxArticleFixture.id) {
+  if (input.fixture.id === formModesAuthoringFixture.id) {
+    validateFormModesAuthoring(input, checks, failures);
+  } else if (input.fixture.id === mdxArticleFixture.id) {
     validateMdxArticle(input, checks, failures);
   } else if (input.fixture.id === managedFormAuthoringFixture.id) {
     validateManagedFormAuthoring(input, checks, failures);

@@ -47,7 +47,7 @@ const HtmlEmbed = createTemplateComponentFixture("HtmlEmbed");
 const Paragraph = createTemplateComponentFixture("Paragraph");
 const Slot = createTemplateComponentFixture("Slot");
 const Text = createTemplateComponentFixture("Text");
-const NativeForm = createTemplateComponentFixture("NativeForm");
+const ResourceForm = createTemplateComponentFixture("ResourceForm");
 
 test("copying Email Resources restores parent bindings by name in the target scope", () => {
   const parentVariable = new Variable("Owner", "Source owner");
@@ -58,7 +58,7 @@ test("copying Email Resources restores parent bindings by name in the target sco
   });
   const source = renderData(
     <Body ws:id="bodyId" vars={expression`${parentVariable}`}>
-      <NativeForm ws:id="formId" vars={expression`${emailVariable}`} />
+      <ResourceForm ws:id="formId" vars={expression`${emailVariable}`} />
     </Body>
   );
   const originalResource = Array.from(source.resources.values())[0];
@@ -103,7 +103,7 @@ test("copying Email Resources restores parent bindings by name in the target sco
 test("copying a Form remaps its local Resource actions", () => {
   const data = createStub(
     <Body ws:id="bodyId">
-      <NativeForm ws:id="formId" />
+      <ResourceForm ws:id="formId" />
     </Body>
   );
   data.dataSources.set("localResourceVariable", {
@@ -159,7 +159,7 @@ test("copying a Form remaps its local Resource actions", () => {
     projectId: "",
   });
   const copiedForm = Array.from(data.instances.values()).find(
-    ({ id, component }) => id !== "formId" && component === "NativeForm"
+    ({ id, component }) => id !== "formId" && component === "ResourceForm"
   );
   const copiedSubmission = Array.from(data.props.values()).find(
     ({ instanceId, name }) => instanceId === copiedForm?.id && name === "action"

@@ -118,7 +118,9 @@ test("saved Form error rendering follows one and multiple live runtime errors wi
       new Map([
         [
           getInstanceKey([...selector, ROOT_INSTANCE_ID]),
-          new Map([["saved-errors", [{ message: "Add at least one action" }]]]),
+          new Map([
+            ["saved-errors", [{ message: "Enable at least one action" }]],
+          ]),
         ],
       ])
     );
@@ -134,7 +136,7 @@ test("saved Form error rendering follows one and multiple live runtime errors wi
     );
     await expect
       .poll(() => container.textContent)
-      .toBe("Add at least one action");
+      .toBe("Enable at least one action");
     await act(async () =>
       $variableValuesByInstanceSelector.set(
         new Map([

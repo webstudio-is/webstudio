@@ -850,9 +850,9 @@ export const insertWebstudioFragmentCopy = ({
     ) {
       continue;
     }
-    const isNativeFormAction =
+    const isResourceFormAction =
       prop.name === "action" &&
-      fragmentInstances.get(prop.instanceId)?.component === "NativeForm";
+      fragmentInstances.get(prop.instanceId)?.component === "ResourceForm";
     prop = clonePropForInstance({
       prop: structuredClone(unwrap(prop)),
       propId: createId(),
@@ -882,7 +882,7 @@ export const insertWebstudioFragmentCopy = ({
     }
     if (
       prop.type === "json" &&
-      isNativeFormAction &&
+      isResourceFormAction &&
       isFormSubmission(prop.value)
     ) {
       prop.value = prop.value.map((action) => ({

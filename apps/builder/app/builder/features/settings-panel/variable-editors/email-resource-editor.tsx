@@ -189,7 +189,7 @@ export const EmailResourceForm = forwardRef<
     variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
   const formId = Array.from(instances.values()).find(
     (instance) =>
-      instance.component === "NativeForm" &&
+      instance.component === "ResourceForm" &&
       scopeInstanceId !== undefined &&
       findTreeInstanceIds(instances, instance.id).has(scopeInstanceId)
   )?.id;

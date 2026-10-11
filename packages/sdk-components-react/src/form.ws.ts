@@ -12,6 +12,8 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   label: "Form",
+  description:
+    "Deprecated. Use ResourceForm for Resource submissions or an Element with tag form for native browser submissions.",
   deprecated: true,
   presetStyle,
   initialProps: ["id", "class", "action"],

@@ -9,17 +9,19 @@ import {
 } from "react";
 import {
   isFormSubmission,
+  navigationFormActionUrl,
+  resourceFormActionUrl,
   validateFormSubmission,
 } from "@webstudio-is/sdk/form-submission";
 import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
 import { resolveRedirectUrl } from "@webstudio-is/sdk/link-utils";
-import { getFormDataValue } from "./form-submission";
+import { getFormDataEntries, getFormDataValue } from "./form-submission";
 import { submitManagedForm } from "./managed-form-client";
 import { useFormFeedbackScroll } from "./form-feedback-scroll";
 
 export const defaultTag = "form";
 
-export const NativeForm = forwardRef<
+export const ResourceForm = forwardRef<
   ElementRef<typeof defaultTag>,
   Omit<ComponentProps<typeof defaultTag>, "action"> & {
     action?: unknown;
@@ -32,6 +34,7 @@ export const NativeForm = forwardRef<
       formData: ReturnType<typeof getFormDataValue>,
       signal: AbortSignal
     ) => void | Promise<ManagedFormResponse>;
+    onQueryNavigate?: (url: string) => void;
     getRedirectBaseUrl?: () => string;
     onSuccessRedirect?: (destination: string) => boolean | void;
     onSubmissionSuccess?: () => void | Promise<void>;
@@ -51,6 +54,7 @@ export const NativeForm = forwardRef<
       onStateChange,
       onResultChange,
       onManagedSubmit,
+      onQueryNavigate,
       getRedirectBaseUrl,
       onSuccessRedirect,
       onSubmissionSuccess,
@@ -98,10 +102,15 @@ export const NativeForm = forwardRef<
       revealFeedback();
     };
     const validSubmission = isFormSubmission(action);
+    const hasResourceActions = validSubmission && action.length > 0;
+    const isNavigationMode =
+      action === undefined || (validSubmission && action.length === 0);
     const configurationError = validSubmission
-      ? validateFormSubmission(action)
+      ? hasResourceActions
+        ? validateFormSubmission(action)
+        : undefined
       : action === undefined
-        ? validateFormSubmission([])
+        ? undefined
         : "Invalid Form submission settings";
     const handleManagedSubmit = (event: FormEvent<HTMLFormElement>) => {
       try {
@@ -116,6 +125,27 @@ export const NativeForm = forwardRef<
         return;
       }
       if (event.defaultPrevented) {
+        return;
+      }
+      if (isNavigationMode) {
+        if (onQueryNavigate === undefined) {
+          return;
+        }
+        event.preventDefault();
+        const submitter = (event.nativeEvent as SubmitEvent).submitter;
+        const entries = getFormDataEntries(
+          event.currentTarget,
+          submitter instanceof HTMLElement ? submitter : undefined
+        );
+        const destination = new URL(event.currentTarget.action);
+        const search = new URLSearchParams();
+        for (const [name, value] of entries) {
+          search.append(name, value instanceof File ? value.name : value);
+        }
+        destination.search = search.toString();
+        onQueryNavigate(
+          `${destination.pathname}${destination.search}${destination.hash}`
+        );
         return;
       }
       event.preventDefault();
@@ -255,8 +285,10 @@ export const NativeForm = forwardRef<
           state ?? (internalState === "initial" ? undefined : internalState)
         }
         aria-busy={pending || undefined}
-        action={undefined}
-        method="dialog"
+        action={
+          hasResourceActions ? resourceFormActionUrl : navigationFormActionUrl
+        }
+        method={hasResourceActions ? "dialog" : "get"}
         encType={undefined}
         ref={setFormRef}
         onSubmit={handleManagedSubmit}
@@ -269,4 +301,4 @@ export const NativeForm = forwardRef<
   }
 );
 
-NativeForm.displayName = "NativeForm";
+ResourceForm.displayName = "ResourceForm";

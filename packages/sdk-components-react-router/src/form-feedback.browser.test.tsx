@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
-import { NativeForm } from "./native-form";
+import { ResourceForm } from "./resource-form";
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -73,7 +73,7 @@ test("managed Form reveals partial failure and leaves visible success feedback i
       "initial"
     );
     return (
-      <NativeForm
+      <ResourceForm
         data-ws-managed-form-id="saved-managed-form"
         action={[
           { dataSourceId: "first", enabled: true },
@@ -85,7 +85,7 @@ test("managed Form reveals partial failure and leaves visible success feedback i
         {state !== "success" && <button type="submit">Send</button>}
         {state === "error" && <div data-feedback="error">Partial failure</div>}
         {state === "success" && <div data-feedback="success">Done</div>}
-      </NativeForm>
+      </ResourceForm>
     );
   };
   const scroll = vi
@@ -148,7 +148,7 @@ test("managed Form reveals authored Error Message on repeated failures", async (
     );
     const [errors, setErrors] = useState<Array<{ message: string }>>([]);
     return (
-      <NativeForm
+      <ResourceForm
         data-ws-managed-form-id="saved-managed-form"
         action={[{ dataSourceId: "first", enabled: true }]}
         state={state}
@@ -161,7 +161,7 @@ test("managed Form reveals authored Error Message on repeated failures", async (
             {errors.map(({ message }) => message).join("\n")}
           </div>
         )}
-      </NativeForm>
+      </ResourceForm>
     );
   };
   const scroll = vi
@@ -203,8 +203,8 @@ test("managed Form reveals a persistent configuration error", async () => {
     );
     const [errors, setErrors] = useState<Array<{ message: string }>>([]);
     return (
-      <NativeForm
-        action={[]}
+      <ResourceForm
+        action={[{ dataSourceId: "disabled-resource", enabled: false }]}
         state={state}
         onStateChange={setState}
         onResultChange={(result) => setErrors(result.errors)}
@@ -215,7 +215,7 @@ test("managed Form reveals a persistent configuration error", async () => {
             {errors.map(({ message }) => message).join("\n")}
           </div>
         )}
-      </NativeForm>
+      </ResourceForm>
     );
   };
   const view = await renderRoute(<Form />, action);
@@ -235,7 +235,7 @@ test("managed Form reveals a persistent configuration error", async () => {
       await act(async () => view.container.querySelector("button")?.click());
       await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(attempt));
       const currentAlert = view.container.querySelector('[role="alert"]');
-      expect(currentAlert?.textContent).toContain("Add at least one action");
+      expect(currentAlert?.textContent).toContain("Enable at least one action");
       if (alert !== null) {
         expect(currentAlert).toBe(alert);
       }
@@ -258,7 +258,7 @@ test("managed Form follows a valid success redirect without scrolling feedback",
       "initial"
     );
     return (
-      <NativeForm
+      <ResourceForm
         data-ws-managed-form-id="saved-managed-form"
         action={[{ dataSourceId: "first", enabled: true }]}
         state={state}
@@ -267,7 +267,7 @@ test("managed Form follows a valid success redirect without scrolling feedback",
       >
         <button type="submit">Send</button>
         {state === "success" && <div data-feedback="success">Done</div>}
-      </NativeForm>
+      </ResourceForm>
     );
   };
   const previousUrl = window.location.href;

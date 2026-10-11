@@ -106,6 +106,7 @@ export type HighImpactFixture = {
   id:
     | "authenticated-page-v1"
     | "managed-form-authoring-v1"
+    | "form-modes-authoring-v1"
     | "design-input-v1"
     | "font-assets-v1"
     | "markdown-blog-v1"
@@ -212,6 +213,17 @@ export const managedFormAuthoringFixture: HighImpactFixture = {
   id: "managed-form-authoring-v1",
   objective:
     'Create a polished /contact page for Northstar workspace with an accessible contact form. First search the component registry for Form (new), inspect the returned template, then insert it with insert-component using the form component. Do not recreate the Form manually or use insert-fragment as a substitute. If registry discovery fails, report that instead of building a substitute. Keep the template\'s named required name, email, subject, and message fields, submit button, success and error feedback, and default Resource actions connected. Add an h1 reading "Contact Northstar" and a short introductory sentence. Change the submit button label to "Send message", set the success message to "Thanks, we received your message. Our team will reply within one business day.", and set the error message to "We couldn\'t send your message. Please try again." Keep the existing form actions unchanged. Do not submit the form or trigger any Resource action. Audit the result and verify the page at desktop and mobile sizes.',
+  agent: {
+    reasoningEffort: "low",
+    guidance: { workflow: "general" },
+  },
+  project: emptyProject(),
+};
+
+export const formModesAuthoringFixture: HighImpactFixture = {
+  id: "form-modes-authoring-v1",
+  objective:
+    'Create /form-modes to demonstrate the three Form behaviors. Use focused component-registry searches for "Form (new)", "Webhook Form", and "Element", and inspect the returned metadata/templates to distinguish them. Insert a Form (new) labeled "Contact" and retain its default Resource actions. Insert a second Form (new) labeled "Search", remove all its Action selections, and use a named search input so submitting it performs client-side query navigation for page search/filter bindings. Insert an Element with tag form labeled "Native" for native browser submission. Explain which rendered action markers identify the Contact and Search forms and why the Element is native. Keep the deprecated Webhook Form available but do not use it for new forms. Do not send emails or trigger Resource actions. Audit and verify /form-modes at desktop and mobile sizes.',
   agent: {
     reasoningEffort: "low",
     guidance: { workflow: "general" },
@@ -430,6 +442,7 @@ export const mdxArticleFixture: HighImpactFixture = {
 export const highImpactFixtures = [
   authenticatedPageFixture,
   managedFormAuthoringFixture,
+  formModesAuthoringFixture,
   designInputFixture,
   fontAssetsFixture,
   markdownBlogFixture,

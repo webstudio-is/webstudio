@@ -207,7 +207,7 @@ test("new Form templates select project and visitor Email Resources", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
   const renderedTemplate = JSON.stringify(fragment);
   const form = fragment.instances.find(
-    ({ component }) => component === "NativeForm"
+    ({ component }) => component === "ResourceForm"
   )!;
   const action = fragment.props.find(
     ({ instanceId, name }) => instanceId === form.id && name === "action"

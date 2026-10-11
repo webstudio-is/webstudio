@@ -91,6 +91,19 @@ export const getFormDataValue = (
   return values;
 };
 
+/** Keep successful controls in submission order for native-style GET navigation. */
+export const getFormDataEntries = (
+  form: HTMLFormElement,
+  submitter?: HTMLElement
+) => {
+  const formData = submitter
+    ? new FormData(form, submitter)
+    : new FormData(form);
+  return Array.from(formData.entries()).filter(
+    ([name]) => !internalFormFieldNames.has(name)
+  );
+};
+
 /** Preserve list shape across multipart submission, including empty groups. */
 export const createManagedSubmissionFormData = ({
   values,

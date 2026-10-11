@@ -38,7 +38,7 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
       {
         type: "instance",
         id: "form",
-        component: "NativeForm",
+        component: "ResourceForm",
         children: [
           { type: "id", value: "password" },
           { type: "id", value: "email-input" },
@@ -299,7 +299,7 @@ test("draft graph leaves Resource-output-bound recipient counts unknown for pref
       {
         type: "instance",
         id: "form",
-        component: "NativeForm",
+        component: "ResourceForm",
         children: [],
       },
     ],
@@ -384,7 +384,7 @@ test("draft graph counts resolved formData-bound recipients instead of stale tex
   const instances: Instances = new Map([
     [
       "form",
-      { type: "instance", id: "form", component: "NativeForm", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ],
   ]);
   const dataSources: DataSources = new Map([
@@ -462,7 +462,7 @@ test("Email Sender and custom recipients bindings resolve and validate before di
   const instances: Instances = new Map([
     [
       "form",
-      { type: "instance", id: "form", component: "NativeForm", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ],
   ]);
   const dataSources: DataSources = new Map([
@@ -627,7 +627,7 @@ test("draft graph keeps scoped dependencies and external Resource roots in publi
     ],
     [
       "form",
-      { type: "instance", id: "form", component: "NativeForm", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ],
   ]);
   const dataSources: DataSources = new Map([
@@ -780,7 +780,7 @@ test("an external Resource cannot bind formData in Builder Preview", () => {
     ],
     [
       "form",
-      { type: "instance", id: "form", component: "NativeForm", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ],
   ]);
   const dataSources: DataSources = new Map([

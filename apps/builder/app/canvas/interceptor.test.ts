@@ -94,12 +94,13 @@ test("preview GET form preserves repeated selected query values", () => {
   }
 });
 
-test("preview leaves managed Form submissions to React", () => {
+test("Preview leaves action-marked Form submissions to ResourceForm", () => {
   $builderMode.set("preview");
   const unsubscribe = subscribeInterceptedEvents();
   try {
     const form = document.createElement("form");
-    form.setAttribute("data-ws-managed-form-id", "published-form");
+    form.setAttribute("action", "?__webstudio__=resources");
+    form.method = "dialog";
     document.body.appendChild(form);
     const event = new SubmitEvent("submit", {
       bubbles: true,

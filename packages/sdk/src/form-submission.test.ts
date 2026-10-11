@@ -19,7 +19,7 @@ test("enabled Actions preserve configured order", () => {
 test("all-disabled, duplicate and over-limit Actions are rejected", () => {
   expect(
     validateFormSubmission([{ dataSourceId: "first", enabled: false }])
-  ).toBe("Add at least one action");
+  ).toBe("Enable at least one action");
   expect(
     validateFormSubmission([
       { dataSourceId: "first", enabled: true },

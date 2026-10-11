@@ -832,7 +832,7 @@ describe("prebuild", () => {
             "root",
             {
               id: "root",
-              component: "NativeForm",
+              component: "ResourceForm",
               children: hasErrors ? [{ type: "id", value: "error" }] : [],
             },
           ],
@@ -1004,7 +1004,7 @@ describe("prebuild", () => {
             "root",
             {
               id: "root",
-              component: "NativeForm",
+              component: "ResourceForm",
               children: [{ type: "id", value: "upload" }],
             },
           ],
@@ -3154,7 +3154,7 @@ sitemap.map((page) => page.path);`
           },
         ],
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          ["root", { id: "root", component: "ResourceForm", children: [] }],
         ],
         props: [
           [
@@ -3715,7 +3715,7 @@ sitemap.map((page) => page.path);`
           ],
           ...configurations.map(
             ([id]) =>
-              [id, { id, component: "NativeForm", children: [] }] as [
+              [id, { id, component: "ResourceForm", children: [] }] as [
                 string,
                 Omit<Instance, "type">,
               ]
@@ -3921,7 +3921,7 @@ sitemap.map((page) => page.path);`
             },
           ],
           instances: [
-            ["root", { id: "root", component: "NativeForm", children: [] }],
+            ["root", { id: "root", component: "ResourceForm", children: [] }],
           ],
           props: [
             [
@@ -4052,7 +4052,7 @@ sitemap.map((page) => page.path);`
             },
           ],
           instances: [
-            ["root", { id: "root", component: "NativeForm", children: [] }],
+            ["root", { id: "root", component: "ResourceForm", children: [] }],
           ],
         })
       );
@@ -4088,7 +4088,7 @@ sitemap.map((page) => page.path);`
         }
         const siteData = createSiteData({
           instances: [
-            ["root", { id: "root", component: "NativeForm", children: [] }],
+            ["root", { id: "root", component: "ResourceForm", children: [] }],
           ],
           props: [
             [
@@ -4257,7 +4257,7 @@ sitemap.map((page) => page.path);`
             },
           ],
           instances: [
-            ["root", { id: "root", component: "NativeForm", children: [] }],
+            ["root", { id: "root", component: "ResourceForm", children: [] }],
           ],
         })
       );
@@ -4329,7 +4329,7 @@ sitemap.map((page) => page.path);`
           ["root", { id: "root", component: "Box", children: [] }],
           [
             "draft-form",
-            { id: "draft-form", component: "NativeForm", children: [] },
+            { id: "draft-form", component: "ResourceForm", children: [] },
           ],
         ],
       })
@@ -4352,7 +4352,7 @@ sitemap.map((page) => page.path);`
     async (template, projectRecipientCount) => {
       const siteData = createSiteData({
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          ["root", { id: "root", component: "ResourceForm", children: [] }],
         ],
         props: [
           [
@@ -4501,7 +4501,7 @@ sitemap.map((page) => page.path);`
     async (template) => {
       const siteData = createSiteData({
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          ["root", { id: "root", component: "ResourceForm", children: [] }],
         ],
         props: [
           [
@@ -4611,7 +4611,7 @@ sitemap.map((page) => page.path);`
   test("generates submit-time Resource requests with Form parameters", async () => {
     const siteData = createSiteData({
       instances: [
-        ["root", { id: "root", component: "NativeForm", children: [] }],
+        ["root", { id: "root", component: "ResourceForm", children: [] }],
       ],
       props: [
         [
@@ -4692,7 +4692,7 @@ sitemap.map((page) => page.path);`
     async () => {
       const siteData = createSiteData({
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          ["root", { id: "root", component: "ResourceForm", children: [] }],
         ],
         props: [
           [
@@ -4984,7 +4984,7 @@ sitemap.map((page) => page.path);`
             "root",
             {
               id: "root",
-              component: "NativeForm",
+              component: "ResourceForm",
               children: [{ type: "id", value: "email-input" }],
             },
           ],
@@ -5125,7 +5125,7 @@ export const createManagedFormResourceFetch = () => globalThis.__testManagedForm
     async (template) => {
       const siteData = createSiteData({
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          ["root", { id: "root", component: "ResourceForm", children: [] }],
         ],
         props: [
           [
@@ -5232,7 +5232,7 @@ export const createManagedFormResourceFetch = () => {
     async (template) => {
       const siteData = createSiteData({
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          ["root", { id: "root", component: "ResourceForm", children: [] }],
         ],
         props: [
           [
@@ -5513,7 +5513,7 @@ export const createManagedFormResourceFetch = () => {
     async (template) => {
       const siteData = createSiteData({
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          ["root", { id: "root", component: "ResourceForm", children: [] }],
         ],
         props: [
           [
@@ -5636,7 +5636,7 @@ export const createManagedFormResourceFetch = () => {
     async (template) => {
       const siteData = createSiteData({
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          ["root", { id: "root", component: "ResourceForm", children: [] }],
         ],
         props: [
           [
@@ -5812,7 +5812,7 @@ export const createManagedFormResourceFetch = () => {
     async (template) => {
       const siteData = createSiteData({
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          ["root", { id: "root", component: "ResourceForm", children: [] }],
         ],
         props: [
           [
@@ -6053,7 +6053,7 @@ export const createManagedFormResourceFetch = () => {
     async (template) => {
       const siteData = createSiteData({
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          ["root", { id: "root", component: "ResourceForm", children: [] }],
         ],
         props: [
           [
@@ -6195,7 +6195,7 @@ export const createManagedFormResourceFetch = () => {
     async (template) => {
       const siteData = createSiteData({
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          ["root", { id: "root", component: "ResourceForm", children: [] }],
         ],
         props: [
           [
@@ -6322,7 +6322,7 @@ export const createManagedFormResourceFetch = () => {
       const browserInfo = encodeDataSourceVariable("browserInfo");
       const siteData = createSiteData({
         instances: [
-          ["root", { id: "root", component: "NativeForm", children: [] }],
+          ["root", { id: "root", component: "ResourceForm", children: [] }],
         ],
         props: [
           [
@@ -6481,7 +6481,7 @@ export const createManagedFormResourceFetch = () => {
           "form",
           {
             id: "form",
-            component: "NativeForm",
+            component: "ResourceForm",
             children: [],
           },
         ],

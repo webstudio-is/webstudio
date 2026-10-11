@@ -1,6 +1,6 @@
 import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
 import { form } from "@webstudio-is/sdk/normalize.css";
-import type { defaultTag } from "./native-form";
+import type { defaultTag } from "./resource-form";
 
 const presetStyle = {
   form: [

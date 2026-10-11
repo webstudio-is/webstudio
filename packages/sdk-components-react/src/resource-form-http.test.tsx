@@ -14,12 +14,12 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
       contents: `
         import { createElement } from "react";
         import { createRoot } from "react-dom/client";
-        import { NativeForm } from "./native-form";
+        import { ResourceForm } from "./resource-form";
 
         window.formStates = [];
         window.formResults = [];
         createRoot(document.getElementById("root")).render(
-          createElement(NativeForm, {
+          createElement(ResourceForm, {
             "data-ws-managed-form-id": "form-one",
             action: [{ dataSourceId: "destination", enabled: true }],
             onStateChange: (state) => window.formStates.push(state),
@@ -31,7 +31,7 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
         );
       `,
       resolveDir: import.meta.dirname,
-      sourcefile: "native-form-http-entry.tsx",
+      sourcefile: "resource-form-http-entry.tsx",
       loader: "tsx",
     },
     bundle: true,

@@ -61,7 +61,7 @@ export const createManagedFormDraftGraph = ({
     values: ReadonlyMap<string, unknown>
   ) => unknown;
 }): ManagedFormResourceGraph => {
-  if (instances.get(formId)?.component !== "NativeForm") {
+  if (instances.get(formId)?.component !== "ResourceForm") {
     throw new Error("Form not found");
   }
   const formDataStringifyOptions = getFormEmailStringifyOptions(

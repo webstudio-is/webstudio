@@ -19,7 +19,7 @@ test("does not expose rendered form attributes for the managed Form", () => {
   const form = {
     type: "instance" as const,
     id: "form",
-    component: "NativeForm",
+    component: "ResourceForm",
     tag: "form",
     children: [],
   };
@@ -38,7 +38,7 @@ test("does not expose rendered form attributes for the managed Form", () => {
     },
   };
   $registeredComponentMetas.set(
-    new Map([...Object.entries(coreMetas), ["NativeForm", nativeFormMeta]])
+    new Map([...Object.entries(coreMetas), ["ResourceForm", nativeFormMeta]])
   );
   selectInstance([form.id]);
 
@@ -58,7 +58,7 @@ test("keeps rendered form attributes for components without the opt-out", () => 
   const form = {
     type: "instance" as const,
     id: "form",
-    component: "NativeForm",
+    component: "ResourceForm",
     tag: "form",
     children: [],
   };
@@ -68,7 +68,7 @@ test("keeps rendered form attributes for components without the opt-out", () => 
     new Map([
       ...Object.entries(coreMetas),
       [
-        "NativeForm",
+        "ResourceForm",
         {
           label: "Form",
           props: {},

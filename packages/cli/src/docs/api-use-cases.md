@@ -839,6 +839,30 @@ Use the exact component id returned by `components.search` for **Form (new)**.
 After inserting its registered template, use the Form instance id for the
 Form-scoped Resource and Action settings.
 
+The new Form's canonical component id is `ResourceForm`; `Form` is the deprecated
+legacy Webhook Form identity and remains available until the next release. Always
+use registry discovery instead of assuming the display label is its component id.
+
+The new Form has two modes derived from its Action array:
+
+- One or more connected Resources: the rendered action is
+  `?__webstudio__=resources` and submission runs the enabled Resource actions.
+- No connected Resources (`action: []`): the rendered action is
+  `?__webstudio__=navigate` and submission updates URL query parameters through
+  client-side navigation. Use this for search and filters with page Resources
+  bound to `system.search`. Removing the last Action switches to Navigation mode;
+  disabling an Action does not remove it.
+- For ordinary browser submission, insert an `Element` with `tag: "form"`.
+  It has no managed action marker and retains native browser behavior.
+
+Do not write the `__webstudio__` marker as a project Action value: that prop holds
+Resource selections, and the runtime derives the HTML action URL from it.
+Verify both modes through MCP in a real project: add Resource actions, remove
+all actions for a search/filter form, then reconnect them. Check the rendered
+action, query navigation without a full reload, and Resource execution. Also
+verify a plain form Element remains native and the legacy Webhook Form is still
+available. A saved project snapshot alone does not prove these runtime behaviors.
+
 Commands:
 
 - MCP tool: insert-component {"parentInstanceId":"<parentInstanceId>","component":"<componentId from components.search>"}

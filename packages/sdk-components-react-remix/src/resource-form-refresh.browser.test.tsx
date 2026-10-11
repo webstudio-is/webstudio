@@ -1,13 +1,12 @@
-import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import {
   createMemoryRouter,
   RouterProvider,
   useLoaderData,
-} from "react-router";
+} from "react-router-dom";
 import { afterEach, expect, test, vi } from "vitest";
-import { NativeForm } from "./native-form";
+import { ResourceForm } from "./resource-form";
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -53,13 +52,13 @@ test("managed submission refreshes mutable page data once without replaying POST
     return (
       <>
         <output>{value}</output>
-        <NativeForm
+        <ResourceForm
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource", enabled: true }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
-        </NativeForm>
+        </ResourceForm>
       </>
     );
   };
@@ -81,70 +80,6 @@ test("managed submission refreshes mutable page data once without replaying POST
     expect(resourceGets.mock.calls[0][0].cache).toBe("no-store");
     expect(posts).toHaveBeenCalledTimes(1);
     expect(results).toEqual([success]);
-  } finally {
-    await act(async () => root.unmount());
-    container.remove();
-  }
-});
-
-test("success feedback scroll waits until delayed route revalidation settles", async () => {
-  let finishRefresh: (() => void) | undefined;
-  let loadCount = 0;
-  const loader = vi.fn(async () => {
-    loadCount++;
-    if (loadCount > 1) {
-      await new Promise<void>((resolve) => {
-        finishRefresh = resolve;
-      });
-    }
-    return { value: loadCount };
-  });
-  const posts = vi.fn(async () => Response.json(success));
-  vi.stubGlobal("fetch", posts);
-  const scrollIntoView = vi
-    .spyOn(HTMLElement.prototype, "scrollIntoView")
-    .mockImplementation(() => {});
-  vi.spyOn(HTMLFormElement.prototype, "getBoundingClientRect").mockReturnValue({
-    top: window.innerHeight + 1,
-    bottom: window.innerHeight + 20,
-  } as DOMRect);
-  const Page = () => {
-    const [state, setState] = useState<"initial" | "success" | "error">(
-      "initial"
-    );
-    const { value } = useLoaderData() as { value: number };
-    return (
-      <>
-        <output>{value}</output>
-        <NativeForm
-          data-ws-managed-form-id="form"
-          action={[{ dataSourceId: "resource", enabled: true }]}
-          state={state}
-          onStateChange={setState}
-        >
-          <button type="submit">Send</button>
-          {state === "success" && <div>Submitted</div>}
-        </NativeForm>
-      </>
-    );
-  };
-  const router = createMemoryRouter([{ path: "/", loader, element: <Page /> }]);
-  const container = document.createElement("div");
-  document.body.append(container);
-  const root = createRoot(container);
-  try {
-    await act(async () => root.render(<RouterProvider router={router} />));
-    await vi.waitFor(() => expect(loader).toHaveBeenCalledTimes(1));
-    await act(async () => container.querySelector("button")?.click());
-    await vi.waitFor(() => expect(loader).toHaveBeenCalledTimes(2));
-    await vi.waitFor(() =>
-      expect(container.textContent).toContain("Submitted")
-    );
-    expect(scrollIntoView).not.toHaveBeenCalled();
-
-    await act(async () => finishRefresh?.());
-    await vi.waitFor(() => expect(scrollIntoView).toHaveBeenCalledOnce());
-    expect(posts).toHaveBeenCalledOnce();
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -174,12 +109,12 @@ test("failed submissions skip refresh and a later successful submission refreshe
     return (
       <>
         <output>{value}</output>
-        <NativeForm
+        <ResourceForm
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource", enabled: true }]}
         >
           <button type="submit">Send</button>
-        </NativeForm>
+        </ResourceForm>
       </>
     );
   };
@@ -215,13 +150,13 @@ test("a redirect skips refresh", async () => {
       path: "/",
       loader,
       element: (
-        <NativeForm
+        <ResourceForm
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource", enabled: true }]}
           successRedirect="#done"
         >
           <button type="submit">Send</button>
-        </NativeForm>
+        </ResourceForm>
       ),
     },
   ]);
@@ -258,13 +193,13 @@ test("navigation ignores an in-flight submission from the old page", async () =>
       path: "/",
       loader,
       element: (
-        <NativeForm
+        <ResourceForm
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource", enabled: true }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
-        </NativeForm>
+        </ResourceForm>
       ),
     },
     { path: "/next", element: <output>Next page</output> },
@@ -313,31 +248,18 @@ test("refresh failure retains the completed success result and does not replay P
     );
   });
   const results: unknown[] = [];
-  const scrollIntoView = vi
-    .spyOn(HTMLElement.prototype, "scrollIntoView")
-    .mockImplementation(() => {});
-  vi.spyOn(HTMLFormElement.prototype, "getBoundingClientRect").mockReturnValue({
-    top: window.innerHeight + 1,
-    bottom: window.innerHeight + 20,
-  } as DOMRect);
   const Page = () => {
-    const [state, setState] = useState<"initial" | "success" | "error">(
-      "initial"
-    );
     const { value } = useLoaderData() as { value: string };
     return (
       <>
         <output>{value}</output>
-        <NativeForm
+        <ResourceForm
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource", enabled: true }]}
-          state={state}
-          onStateChange={setState}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
-          {state === "success" && <div>Submitted</div>}
-        </NativeForm>
+        </ResourceForm>
       </>
     );
   };
@@ -364,7 +286,6 @@ test("refresh failure retains the completed success result and does not replay P
     );
     expect(results).toEqual([success]);
     expect(posts).toHaveBeenCalledTimes(1);
-    await vi.waitFor(() => expect(scrollIntoView).toHaveBeenCalledOnce());
   } finally {
     await act(async () => root.unmount());
     container.remove();

@@ -36,7 +36,7 @@ export const resolveManagedFormErrorSlot = (
     if (component === "WebhookForm" || component === "Form") {
       return instance;
     }
-    if (component === "NativeForm") {
+    if (component === "ResourceForm") {
       const resultAction = [...props.values()].find(
         (prop) =>
           prop.instanceId === parent.id &&

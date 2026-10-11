@@ -44,7 +44,7 @@ test("does not fetch a Form-bound Resource during page load", () => {
     scope: createScope(),
     page: { rootInstanceId: "form" } as Page,
     instances: toMap([
-      { type: "instance", id: "form", component: "NativeForm", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ]),
     dataSources: toMap([
       {
@@ -180,7 +180,7 @@ test("excludes transitive Form-only Resources and rejects Dynamic Content Block 
       {
         type: "instance" as const,
         id: "form",
-        component: "NativeForm",
+        component: "ResourceForm",
         children: [],
       },
     ]),

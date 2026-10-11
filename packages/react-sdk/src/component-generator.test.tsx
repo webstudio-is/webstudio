@@ -41,7 +41,7 @@ const Body = createTemplateComponentFixture("Body");
 const Box = createTemplateComponentFixture("Box");
 const Button = createTemplateComponentFixture("Button");
 const Form = createTemplateComponentFixture("Form");
-const NativeForm = createTemplateComponentFixture("NativeForm");
+const ResourceForm = createTemplateComponentFixture("ResourceForm");
 const Fragment = createTemplateComponentFixture("Fragment");
 const HeadSlot = createTemplateComponentFixture("HeadSlot");
 const Heading = createTemplateComponentFixture("Heading");
@@ -104,7 +104,7 @@ test("Form submission parameters are unavailable during page render", () => {
     metas: new Map(),
     ...renderData(
       <Body ws:id="body">
-        <NativeForm
+        <ResourceForm
           ws:id="form"
           formData={formData}
           browserInfo={browserInfo}
@@ -120,7 +120,7 @@ test("Form submission parameters are unavailable during page render", () => {
 test("managed Forms own their server identity after custom props and action deduplication", () => {
   const data = renderData(
     <Body ws:id="body">
-      <NativeForm ws:id="form" />
+      <ResourceForm ws:id="form" />
     </Body>
   );
   data.props.set("custom-id", {
@@ -177,7 +177,7 @@ test("managed Forms own their server identity after custom props and action dedu
 test("managed Form policy applies to a root Form and leaves other elements' props intact", () => {
   const data = renderData(
     <Body ws:id="body">
-      <NativeForm ws:id="form" />
+      <ResourceForm ws:id="form" />
       <Box ws:id="box" />
     </Body>
   );
@@ -2300,7 +2300,7 @@ test("saved managed Form errors render like Preview for malformed values while p
   const form: import("@webstudio-is/sdk").Instance = {
     type: "instance",
     id: "saved-form",
-    component: "NativeForm",
+    component: "ResourceForm",
     children: [{ type: "id", value: slot.id }],
   };
   const dataSources: import("@webstudio-is/sdk").DataSources = new Map([
@@ -2357,7 +2357,7 @@ test("saved managed Form errors render like Preview for malformed values while p
     "createElement",
     "renderText",
     "formatManagedFormErrors",
-    "NativeForm",
+    "ResourceForm",
     "errors",
     `${code}return Page();`
   );

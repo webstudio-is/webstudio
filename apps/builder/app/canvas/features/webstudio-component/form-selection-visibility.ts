@@ -29,7 +29,7 @@ export const getCanvasFormVisibility = ({
     return false;
   }
   const component = selected.component.split(":").at(-1);
-  let isManagedFormSlot = component === "NativeForm";
+  let isManagedFormSlot = component === "ResourceForm";
   if (
     !isManagedFormSlot &&
     ["form content", "success message", "error message"].includes(
@@ -42,12 +42,12 @@ export const getCanvasFormVisibility = ({
       .find((instance) => {
         const component = instance?.component.split(":").at(-1);
         return (
-          component === "NativeForm" ||
+          component === "ResourceForm" ||
           component === "WebhookForm" ||
           component === "Form"
         );
       });
-    isManagedFormSlot = form?.component.split(":").at(-1) === "NativeForm";
+    isManagedFormSlot = form?.component.split(":").at(-1) === "ResourceForm";
   }
   if (!isManagedFormSlot || instanceSelector.length > selectedSelector.length) {
     return false;

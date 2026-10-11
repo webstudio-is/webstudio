@@ -88,12 +88,12 @@ const Box = createTemplateComponentFixture("Box");
 const Fragment = createTemplateComponentFixture("Fragment");
 const Slot = createTemplateComponentFixture("Slot");
 const Text = createTemplateComponentFixture("Text");
-const NativeForm = createTemplateComponentFixture("NativeForm");
+const ResourceForm = createTemplateComponentFixture("ResourceForm");
 
 test("deleting a Resource removes it from a new Form's destinations", () => {
   const data = renderData(
     <Body ws:id="bodyId">
-      <NativeForm ws:id="formId" />
+      <ResourceForm ws:id="formId" />
     </Body>
   );
   data.dataSources.set("resourceVariable", {
@@ -131,7 +131,7 @@ test("deleting a Resource removes it from a new Form's destinations", () => {
 test("a Form can select ancestor and local Resources, while Form data stays local", () => {
   const data = renderData(
     <Body ws:id="bodyId">
-      <NativeForm ws:id="formId" />
+      <ResourceForm ws:id="formId" />
       <Box ws:id="siblingId" />
     </Body>
   );
@@ -174,7 +174,7 @@ test("a Form can select ancestor and local Resources, while Form data stays loca
 test("Form-scoped Resource bindings and destination survive edit, save, and reload", () => {
   const data = renderData(
     <Body ws:id="bodyId">
-      <NativeForm ws:id="formId" />
+      <ResourceForm ws:id="formId" />
     </Body>
   );
   data.dataSources.set("formData", {
@@ -266,7 +266,7 @@ test.each(["formData", "browserInfo"])(
   (name) => {
     const data = renderData(
       <Body ws:id="bodyId">
-        <NativeForm ws:id="formId" />
+        <ResourceForm ws:id="formId" />
       </Body>
     );
     data.dataSources.set(name, {
@@ -299,7 +299,7 @@ test.each(["state", "onStateChange", "onResultChange"])(
   (propName) => {
     const data = renderData(
       <Body ws:id="bodyId">
-        <NativeForm ws:id="formId" />
+        <ResourceForm ws:id="formId" />
       </Body>
     );
     const variable: DataSource = {
@@ -4888,7 +4888,7 @@ describe("resource patch helpers", () => {
     expect(
       createResourceDeletePayload({
         resource,
-        instances: new Map([["form", { component: "NativeForm" }]]),
+        instances: new Map([["form", { component: "ResourceForm" }]]),
         props: [submission],
         dataSources: [dataSource],
       }).isUsed
@@ -4896,7 +4896,7 @@ describe("resource patch helpers", () => {
     expect(
       createResourceDeletePayload({
         resource,
-        instances: new Map([["form", { component: "NativeForm" }]]),
+        instances: new Map([["form", { component: "ResourceForm" }]]),
         props: [submission],
         dataSources: [dataSource],
         force: true,

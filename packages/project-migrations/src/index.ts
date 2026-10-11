@@ -65,6 +65,16 @@ export const migrateContentBlockDocumentBindingsMutable = (
   }
 };
 
+export const migrateResourceFormInstancesMutable = (
+  instances: Iterable<Instance>
+) => {
+  for (const instance of instances) {
+    if (instance.component === "NativeForm") {
+      instance.component = "ResourceForm";
+    }
+  }
+};
+
 export const migrateCodeTextContentMutable = (
   data: Pick<WebstudioData, "instances" | "props">
 ) => {
@@ -178,6 +188,7 @@ const migrateContentBlockImageStylesMutable = (
  */
 export const migrateWebstudioDataMutable = (data: WebstudioData) => {
   data.pages = migratePages(data.pages);
+  migrateResourceFormInstancesMutable(data.instances.values());
   migrateResourcesMutable(data.resources.values());
   migrateStylesMutable(data.styles);
   migrateCodeTextContentMutable(data);

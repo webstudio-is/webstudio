@@ -1,6 +1,7 @@
 import { afterEach, expect, test, vi } from "vitest";
 import {
   createManagedSubmissionFormData,
+  getFormDataEntries,
   getFormDataValue,
 } from "./form-submission";
 import {
@@ -134,4 +135,22 @@ test("preserves a same-name submit button after the field value", () => {
   expect(getFormDataValue(form, submitter)).toEqual({
     intent: ["message", "send"],
   });
+});
+
+test("keeps ordered repeated fields for query navigation and omits internal fields", () => {
+  const form = document.createElement("form");
+  form.innerHTML = `
+    <input name="tag" value="second" />
+    <input type="hidden" name="${formBotFieldName}" value="internal" />
+    <input name="tag" value="first" />
+    <button type="submit" name="intent" value="search">Search</button>
+  `;
+
+  expect(
+    getFormDataEntries(form, form.querySelector("button") ?? undefined)
+  ).toEqual([
+    ["tag", "second"],
+    ["tag", "first"],
+    ["intent", "search"],
+  ]);
 });

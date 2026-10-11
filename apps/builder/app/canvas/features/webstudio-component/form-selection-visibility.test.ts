@@ -9,7 +9,7 @@ const makeInstance = (
 ): Instance => ({ type: "instance", id, component, label, children: [] });
 const instances: Instances = new Map([
   ["page", makeInstance("page", "Body")],
-  ["form", makeInstance("form", "NativeForm")],
+  ["form", makeInstance("form", "ResourceForm")],
   ["content", makeInstance("content", "ws:element", "Form Content")],
   ["success", makeInstance("success", "ws:element", "Success Message")],
   ["error", makeInstance("error", "ws:element", "Error Message")],
@@ -84,6 +84,6 @@ test("selection reveals only the selected occurrence of a repeated Form", () => 
 
 test("a Form renamed to a feedback label still reveals its selected instance", () => {
   const renamed = new Map(instances);
-  renamed.set("form", makeInstance("form", "NativeForm", "Error Message"));
+  renamed.set("form", makeInstance("form", "ResourceForm", "Error Message"));
   expect(visible("form", selector("form"), false, true, renamed)).toBe(true);
 });

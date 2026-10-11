@@ -57,7 +57,12 @@ test("Action control handles an empty Resource list and can select an in-scope d
       ],
       [
         "form",
-        { type: "instance", id: "form", component: "NativeForm", children: [] },
+        {
+          type: "instance",
+          id: "form",
+          component: "ResourceForm",
+          children: [],
+        },
       ],
     ])
   );
@@ -113,11 +118,20 @@ test("Action control handles an empty Resource list and can select an in-scope d
     "errors — failed actions and their messages",
   ]);
   expect(document.body.textContent).not.toContain("status —");
-  expect(document.body.textContent).toContain("Add at least one action.");
+  expect(container.textContent).toContain("Navigation mode");
   await act(async () => userEvent.keyboard("{Escape}"));
   expect(
-    container.querySelector('[aria-label="Native browser form"]')
-  ).toBeNull();
+    container.querySelector('[aria-label="About Navigation mode"]')
+  ).not.toBeNull();
+  await act(async () =>
+    container
+      .querySelector<SVGElement>('[aria-label="About Navigation mode"]')
+      ?.focus()
+  );
+  expect(document.body.textContent).toContain(
+    "Submits the form fields as URL query parameters and navigates without a full page reload. Use this for search and filters that update page Resources from the URL."
+  );
+  await act(async () => userEvent.keyboard("{Escape}"));
   expect(container.textContent).not.toContain(
     "Select at least one Resource destination"
   );
@@ -183,7 +197,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
   );
   expect(document.body.textContent).toContain("Reset");
   expect(document.body.textContent).not.toContain("Reset value");
-  expect(document.body.textContent).not.toContain("Add at least one action.");
+  expect(container.textContent).not.toContain("Navigation mode");
   await act(async () => userEvent.keyboard("{Escape}"));
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
@@ -224,7 +238,12 @@ test("a Form can select a Resource defined outside its scope", async () => {
       ],
       [
         "form",
-        { type: "instance", id: "form", component: "NativeForm", children: [] },
+        {
+          type: "instance",
+          id: "form",
+          component: "ResourceForm",
+          children: [],
+        },
       ],
     ])
   );
@@ -298,7 +317,12 @@ test("stored Form selection renders and a deleted Resource can be removed", asyn
       ],
       [
         "form",
-        { type: "instance", id: "form", component: "NativeForm", children: [] },
+        {
+          type: "instance",
+          id: "form",
+          component: "ResourceForm",
+          children: [],
+        },
       ],
     ])
   );
@@ -377,7 +401,12 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
       ],
       [
         "form",
-        { type: "instance", id: "form", component: "NativeForm", children: [] },
+        {
+          type: "instance",
+          id: "form",
+          component: "ResourceForm",
+          children: [],
+        },
       ],
       [
         "sibling",
@@ -482,7 +511,12 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
     new Map([
       [
         "form",
-        { type: "instance", id: "form", component: "NativeForm", children: [] },
+        {
+          type: "instance",
+          id: "form",
+          component: "ResourceForm",
+          children: [],
+        },
       ],
     ])
   );
@@ -606,21 +640,23 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
 });
 
 test.each([
-  { actions: [], showWarning: true },
+  { actions: [], mode: "Navigation mode", warning: undefined },
   {
     actions: [{ dataSourceId: "first", enabled: false }],
-    showWarning: false,
+    mode: undefined,
+    warning: "Enable at least one action",
   },
   {
     actions: [
       { dataSourceId: "first", enabled: false },
       { dataSourceId: "second", enabled: true },
     ],
-    showWarning: false,
+    mode: undefined,
+    warning: undefined,
   },
 ])(
-  "the approved empty-action warning appears only when the list is empty",
-  async ({ actions, showWarning }) => {
+  "an empty Action list selects Navigation mode; a non-empty disabled list does not",
+  async ({ actions, mode, warning }) => {
     $instances.set(
       new Map([
         [
@@ -628,7 +664,7 @@ test.each([
           {
             id: "form",
             type: "instance",
-            component: "NativeForm",
+            component: "ResourceForm",
             children: [],
           },
         ],
@@ -689,12 +725,16 @@ test.each([
         </TooltipProvider>
       )
     );
-    const label = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Action"
-    )!;
-    await act(async () => await userEvent.click(label));
-    expect(
-      document.body.textContent?.includes("Add at least one action.")
-    ).toBe(showWarning);
+    expect(container.textContent?.includes("Navigation mode")).toBe(
+      mode === "Navigation mode"
+    );
+    if (mode) {
+      expect(
+        container.querySelector('[aria-label="About Navigation mode"]')
+      ).not.toBeNull();
+    }
+    if (warning) {
+      expect(container.textContent).toContain(warning);
+    }
   }
 );

@@ -933,7 +933,7 @@ describe("insert webstudio component at", () => {
       const body = $instances.get().get("bodyId");
       const formId =
         body?.children[0]?.type === "id" ? body.children[0].value : "";
-      expect($instances.get().get(formId)?.component).toBe("NativeForm");
+      expect($instances.get().get(formId)?.component).toBe("ResourceForm");
       const formProps = Array.from($props.get().values()).filter(
         ({ instanceId }) => instanceId === formId
       );
@@ -1067,7 +1067,7 @@ describe("insert webstudio component at", () => {
               childIds.includes(instanceId) && name === "name"
           )
           .map(({ value }) => value)
-      ).toEqual(["name", "email", "subject", "message"]);
+      ).toEqual(["name", "email", "subject", "message", "attachment"]);
       expect(
         Array.from($props.get().values()).some(
           ({ instanceId, name, value }) =>

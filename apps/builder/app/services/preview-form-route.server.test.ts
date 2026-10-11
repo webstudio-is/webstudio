@@ -82,7 +82,7 @@ const draftBuild = {
       component: "Body",
       children: [{ type: "id", value: "form" }],
     },
-    { type: "instance", id: "form", component: "NativeForm", children: [] },
+    { type: "instance", id: "form", component: "ResourceForm", children: [] },
   ],
   props: [
     {
@@ -315,11 +315,11 @@ test.each([false, true])(
           contents: `
           import { createElement } from "react";
           import { createRoot } from "react-dom/client";
-          import { NativeForm } from "./native-form";
+          import { ResourceForm } from "./resource-form";
           import { submitPreviewForm } from "~/shared/preview-form-bridge";
 
           createRoot(document.getElementById("root")).render(
-            createElement(NativeForm, {
+            createElement(ResourceForm, {
               "data-ws-managed-form-id": "form",
               action: [{ dataSourceId: "destination", enabled: true }],
               onManagedSubmit: (values, signal) => submitPreviewForm({
