@@ -317,14 +317,14 @@ const author = async () => {
       name: string;
     }>;
     const projectRecipientsResource = emails.find(
-      ({ name }) => name === "Project recipients"
+      ({ name }) => name === "Email to owner"
     );
     if (emailIsolationMode && projectRecipientsResource === undefined) {
       throw new Error("Expected the first Form Project Email Resource");
     }
     let emailResourceIdsByForm: [string, string] | undefined;
     expect(emails.map(({ name }) => name)).toEqual(
-      expect.arrayContaining(["Project recipients", "Visitor email field"])
+      expect.arrayContaining(["Email to owner", "Email to visitor"])
     );
     const variables = await call("list-variables", {
       scopeInstanceId: form.id,
@@ -407,10 +407,10 @@ const author = async () => {
       });
       if (emailMode) {
         const projectEmail = emails.find(
-          ({ name }) => name === "Project recipients"
+          ({ name }) => name === "Email to owner"
         );
         const visitorEmail = emails.find(
-          ({ name }) => name === "Visitor email field"
+          ({ name }) => name === "Email to visitor"
         );
         if (projectEmail === undefined || visitorEmail === undefined) {
           throw new Error("Expected the default Email Resources");
@@ -431,13 +431,13 @@ const author = async () => {
               body: JSON.stringify(
                 "Thanks for contacting us. We will reply soon."
               ),
-              includeAttachments: !emailAttachmentsMode,
+              includeAttachments: false,
             },
           },
         });
       } else {
         const projectEmail = emails.find(
-          ({ name }) => name === "Project recipients"
+          ({ name }) => name === "Email to owner"
         );
         if (projectEmail === undefined || secondForm === undefined) {
           throw new Error("Expected Project recipient Email Resources");
@@ -451,7 +451,7 @@ const author = async () => {
             dataSourceId: string;
             name: string;
           }>
-        ).find(({ name }) => name === "Project recipients");
+        ).find(({ name }) => name === "Email to owner");
         if (secondProjectEmail === undefined) {
           throw new Error("Expected the second Form Project Email Resource");
         }
@@ -500,7 +500,7 @@ const author = async () => {
       ) as Array<{ id: string; email?: Record<string, unknown> }>;
       if (emailMode) {
         const visitorEmail = emails.find(
-          ({ name }) => name === "Visitor email field"
+          ({ name }) => name === "Email to visitor"
         );
         expect(
           persistedEmailResources.find(({ id }) => id === visitorEmail?.id)
@@ -510,11 +510,11 @@ const author = async () => {
           visitorEmailField: "email",
           subject: JSON.stringify("We received your message"),
           body: JSON.stringify("Thanks for contacting us. We will reply soon."),
-          includeAttachments: !emailAttachmentsMode,
+          includeAttachments: false,
         });
         if (emailAttachmentsMode) {
           const projectEmail = emails.find(
-            ({ name }) => name === "Project recipients"
+            ({ name }) => name === "Email to owner"
           );
           expect(
             persistedEmailResources.find(({ id }) => id === projectEmail?.id)
@@ -592,7 +592,7 @@ const author = async () => {
             ...(emailMode
               ? emails
                   .filter(({ name }) =>
-                    ["Project recipients", "Visitor email field"].includes(name)
+                    ["Email to owner", "Email to visitor"].includes(name)
                   )
                   .map(({ dataSourceId }) => ({ dataSourceId, enabled: true }))
               : emailIsolationMode
@@ -707,7 +707,7 @@ const author = async () => {
         emailResourceIds: emailMode
           ? emails
               .filter(({ name }) =>
-                ["Project recipients", "Visitor email field"].includes(name)
+                ["Email to owner", "Email to visitor"].includes(name)
               )
               .map(({ id }) => id)
           : undefined,

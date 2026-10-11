@@ -266,8 +266,8 @@ const author = async () => {
       dataSourceId: string;
       name: string;
     }>;
-    const owner = emails.find(({ name }) => name === "Project recipients");
-    const visitor = emails.find(({ name }) => name === "Visitor email field");
+    const owner = emails.find(({ name }) => name === "Email to owner");
+    const visitor = emails.find(({ name }) => name === "Email to visitor");
     if (owner === undefined || visitor === undefined) {
       throw new Error("Expected both default Form Email Resources");
     }

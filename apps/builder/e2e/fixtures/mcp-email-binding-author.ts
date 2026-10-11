@@ -247,7 +247,7 @@ try {
       dataSourceId: string;
       name: string;
     }>
-  ).find(({ name }) => name === "Project recipients");
+  ).find(({ name }) => name === "Email to owner");
   if (projectEmail === undefined) {
     throw new Error("Expected the contact Form Project Email Resource");
   }

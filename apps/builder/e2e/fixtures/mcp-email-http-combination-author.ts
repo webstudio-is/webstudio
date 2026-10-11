@@ -274,9 +274,9 @@ const author = async () => {
         dataSourceId: string;
         name: string;
       }>
-    ).find(({ name }) => name === "Project recipients");
+    ).find(({ name }) => name === "Email to owner");
     if (email === undefined) {
-      throw new Error("Expected the Form's Project recipients Email Action");
+      throw new Error("Expected the Form's Email to owner Email Action");
     }
     await call("update-resource", {
       resourceId: email.id,

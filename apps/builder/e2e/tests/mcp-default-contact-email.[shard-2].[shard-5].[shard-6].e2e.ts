@@ -61,6 +61,11 @@ const submitContactForm = async (page: Page, url: string, formId: string) => {
   await form
     .locator('textarea[name="message"]')
     .fill("Please get back to me about the project.");
+  await form.locator('input[name="attachment"]').setInputFiles({
+    name: "project-brief.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("Please review this project brief."),
+  });
   const submission = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname.startsWith("/__ws-form") &&
@@ -100,8 +105,11 @@ test("MCP-inserted default contact Form sends its automatic owner message and vi
     id: string;
     email?: Record<string, unknown>;
   }>;
-  expect(resources.find(({ id }) => id === ownerResourceId)?.email).toEqual({
+  expect(
+    resources.find(({ id }) => id === ownerResourceId)?.email
+  ).toMatchObject({
     recipientMode: "project",
+    body: expect.stringContaining("Form data"),
   });
   expect(
     resources.find(({ id }) => id === visitorResourceId)?.email
@@ -145,16 +153,23 @@ test("MCP-inserted default contact Form sends its automatic owner message and vi
           subject: expect.stringContaining("New form submission"),
           replyTo: { address: "forms@mcp.test", name: "Contact Form" },
         });
-        expect(owner?.text).toContain("Form data:");
-        expect(owner?.text).toContain("Browser info:");
-        for (const value of [
-          "Ada Lovelace",
-          "ada@example.test",
-          "A question",
-          "Please get back to me about the project.",
-        ]) {
-          expect(owner?.text).toContain(value);
-        }
+        expect(owner?.text).toContain('"name": "Ada Lovelace"');
+        expect(owner?.text).toContain('"email": "ada@example.test"');
+        expect(owner?.text).toContain('"subject": "A question"');
+        expect(owner?.text).toContain(
+          '"message": "Please get back to me about the project."'
+        );
+        expect(owner?.text).toContain('"attachment": {');
+        expect(owner?.text).toContain('"name": "project-brief.txt"');
+        expect(owner?.attachments).toEqual([
+          expect.objectContaining({
+            filename: "project-brief.txt",
+            contentType: "text/plain",
+            contentBase64: Buffer.from(
+              "Please review this project brief."
+            ).toString("base64"),
+          }),
+        ]);
         expect(visitor).toMatchObject({
           subject: expect.stringContaining("We received your message"),
           text: expect.stringContaining(
@@ -164,6 +179,7 @@ test("MCP-inserted default contact Form sends its automatic owner message and vi
         expect(visitor?.text).toContain(
           `We received your request from ${new URL(url).origin}`
         );
+        expect(visitor?.attachments ?? []).toEqual([]);
       },
     });
   } finally {

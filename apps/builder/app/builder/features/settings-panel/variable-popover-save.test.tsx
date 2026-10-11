@@ -109,7 +109,7 @@ test.each(["new", "existing"] as const)(
         userEvent.click(
           Array.from(
             document.querySelectorAll<HTMLElement>('[role="option"]')
-          ).find((option) => option.textContent?.startsWith("Email"))!
+          ).find((option) => option.textContent?.startsWith("Email resource"))!
         )
       );
     }

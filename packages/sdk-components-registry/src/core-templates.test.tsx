@@ -234,8 +234,15 @@ test("new Form templates select project and visitor Email Resources", () => {
   const emailResources = emailSources.map((source) =>
     fragment.resources.find(({ id }) => id === source.resourceId)
   );
+  expect(emailResources.map((resource) => resource?.name)).toEqual([
+    "Email to owner",
+    "Email to visitor",
+  ]);
   expect(emailResources.map((resource) => resource?.email)).toEqual([
-    { recipientMode: "project" },
+    expect.objectContaining({
+      recipientMode: "project",
+      body: expect.stringContaining("Form data"),
+    }),
     {
       recipientMode: "visitor",
       visitorEmailField: "email",
@@ -243,6 +250,7 @@ test("new Form templates select project and visitor Email Resources", () => {
       body: JSON.stringify(
         "Thanks for contacting us. We received your message and will get back to you soon."
       ),
+      includeAttachments: false,
     },
   ]);
   expect(emailResources.every((resource) => resource?.body === undefined)).toBe(
@@ -278,19 +286,33 @@ test("new Form templates select project and visitor Email Resources", () => {
     .filter(
       ({ component }) => component === "Input" || component === "Textarea"
     )
-    .map(({ id, component }) => ({
-      component,
-      name: fragment.props.find(
-        (prop) => prop.instanceId === id && prop.name === "name"
-      )?.value,
-      required: fragment.props.find(
-        (prop) => prop.instanceId === id && prop.name === "required"
-      )?.value,
-    }));
+    .map(({ id, component }) => {
+      const propValue = (name: string) =>
+        fragment.props.find(
+          (prop) => prop.instanceId === id && prop.name === name
+        )?.value;
+      return {
+        component,
+        name: propValue("name"),
+        type: propValue("type"),
+        required: propValue("required"),
+      };
+    });
   expect(contactFields).toEqual([
-    { component: "Input", name: "name", required: true },
-    { component: "Input", name: "email", required: true },
-    { component: "Input", name: "subject", required: true },
-    { component: "Textarea", name: "message", required: true },
+    { component: "Input", name: "name", type: undefined, required: true },
+    { component: "Input", name: "email", type: "email", required: true },
+    { component: "Input", name: "subject", type: undefined, required: true },
+    {
+      component: "Textarea",
+      name: "message",
+      type: undefined,
+      required: true,
+    },
+    {
+      component: "Input",
+      name: "attachment",
+      type: "file",
+      required: undefined,
+    },
   ]);
 });

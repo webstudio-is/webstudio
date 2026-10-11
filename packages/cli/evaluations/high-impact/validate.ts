@@ -746,8 +746,8 @@ const validateManagedFormAuthoring = (
           ];
     });
   const expectedResources = [
-    { name: "Project recipients", recipientMode: "project" },
-    { name: "Visitor email field", recipientMode: "visitor" },
+    { name: "Email to owner", recipientMode: "project" },
+    { name: "Email to visitor", recipientMode: "visitor" },
   ];
   const visitorConfirmationSubject = JSON.stringify("We received your message");
   const visitorConfirmationBody = JSON.stringify(

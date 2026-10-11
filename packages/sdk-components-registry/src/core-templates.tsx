@@ -49,13 +49,16 @@ const formState = new Variable("formState", "initial");
 const formResults = new Variable("results", []);
 const formErrors = new Variable("errors", []);
 const formError = new Parameter("collectionItem");
-const projectEmail = new ResourceValue("Project recipients", {
+const ownerEmail = new ResourceValue("Email to owner", {
   control: "email",
-  email: { recipientMode: "project" },
+  email: {
+    recipientMode: "project",
+    body: expression`"Form data:\\n" + ${formData}`,
+  },
   url: expression`""`,
   method: "post",
 });
-const visitorEmail = new ResourceValue("Visitor email field", {
+const visitorEmail = new ResourceValue("Email to visitor", {
   control: "email",
   email: {
     recipientMode: "visitor",
@@ -64,6 +67,7 @@ const visitorEmail = new ResourceValue("Visitor email field", {
     body: JSON.stringify(
       "Thanks for contacting us. We received your message and will get back to you soon."
     ),
+    includeAttachments: false,
   },
   url: expression`""`,
   method: "post",
@@ -247,7 +251,7 @@ export const coreTemplates = {
     description: "Collect information and submit it to Resource actions.",
     template: (
       <NativeForm
-        action={new FormSubmissionValue([projectEmail, visitorEmail])}
+        action={new FormSubmissionValue([ownerEmail, visitorEmail])}
         formData={formData}
         browserInfo={browserInfo}
         state={expression`${formState}`}
@@ -281,6 +285,10 @@ export const coreTemplates = {
             <Label>
               {new PlaceholderValue("Message")}
               <Textarea name="message" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Attachment")}
+              <Input name="attachment" type="file" />
             </Label>
             <Button type="submit">{new PlaceholderValue("Submit")}</Button>
           </div>

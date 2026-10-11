@@ -195,7 +195,7 @@ test("MCP-authored Email Resource loads its Request preview without sending emai
   await selectCanvasTextInstance({ page, text: "Submit" });
   await page.getByRole("tab", { name: "Settings" }).click();
   const resourceRow = page.getByRole("button", {
-    name: "Variable Project recipients",
+    name: "Variable Email to owner",
   });
   await expect(resourceRow).toBeVisible();
   await resourceRow.click();
@@ -215,8 +215,6 @@ test("MCP-authored Email Resource loads its Request preview without sending emai
     dialog.getByText("MCP contact notification", { exact: false })
   ).toBeVisible();
   const requestEditor = dialog.locator('[role="tabpanel"] .cm-content').last();
-  await expect(requestEditor).toContainText(
-    "A visitor sent a message through the contact form."
-  );
+  await expect(requestEditor).toContainText("Form data:");
   expect(submissionRequests).toEqual([]);
 });

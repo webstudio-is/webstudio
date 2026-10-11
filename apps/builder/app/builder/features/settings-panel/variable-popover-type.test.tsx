@@ -67,7 +67,7 @@ test("System resource types are listed directly in Type", async () => {
 
   const selects = container.querySelectorAll<HTMLButtonElement>("button");
   expect(selects).toHaveLength(1);
-  expect(selects[0].textContent).toContain("Sitemap");
+  expect(selects[0].textContent).toContain("Sitemap resource");
 
   await act(async () => await userEvent.click(selects[0]));
   expect(
@@ -78,17 +78,25 @@ test("System resource types are listed directly in Type", async () => {
   const topLevelOptions = Array.from(
     document.querySelectorAll<HTMLElement>('[role="option"]')
   ).map((option) => option.textContent?.replace(/Pro$/, "").trim());
-  expect(topLevelOptions).toContain("Sitemap");
-  expect(topLevelOptions).toContain("Current date");
-  expect(topLevelOptions).toContain("Assets");
-  expect(topLevelOptions).toContain("Email");
+  expect(topLevelOptions).toEqual([
+    "String",
+    "Number",
+    "Boolean",
+    "JSON",
+    "REST resource",
+    "GraphQL resource",
+    "Assets resource",
+    "Email resource",
+    "Sitemap resource",
+    "Current date resource",
+  ]);
   expect(topLevelOptions).not.toContain("System resource");
   await act(
     async () =>
       await userEvent.click(
         Array.from(
           document.querySelectorAll<HTMLElement>('[role="option"]')
-        ).find((option) => option.textContent?.startsWith("Email"))!
+        ).find((option) => option.textContent?.startsWith("Email resource"))!
       )
   );
   expect(onChange).toHaveBeenCalledWith("email-resource");
@@ -201,14 +209,14 @@ test("editing a System Resource and changing its Type persists the selected cate
 
   const typeSelect = Array.from(
     editor.querySelectorAll<HTMLButtonElement>('[role="combobox"]')
-  ).find((element) => element.textContent?.includes("Sitemap"));
+  ).find((element) => element.textContent?.includes("Sitemap resource"));
   expect(typeSelect).toBeDefined();
   await act(async () => userEvent.click(typeSelect!));
   await act(async () =>
     userEvent.click(
       Array.from(
         document.querySelectorAll<HTMLElement>('[role="option"]')
-      ).find((option) => option.textContent?.startsWith("Email"))!
+      ).find((option) => option.textContent?.startsWith("Email resource"))!
     )
   );
 

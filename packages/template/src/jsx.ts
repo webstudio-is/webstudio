@@ -128,7 +128,9 @@ export class Parameter {
 
 type ResourceConfig = {
   control?: Resource["control"];
-  email?: Resource["email"];
+  email?: Omit<NonNullable<Resource["email"]>, "body"> & {
+    body?: string | Expression;
+  };
   url: Expression;
   method: Resource["method"];
   searchParams?: Array<{ name: string; value: Expression }>;
@@ -522,11 +524,26 @@ export const renderTemplate = (
     if (resources.has(resourceValue)) {
       return id;
     }
+    const email = resourceValue.config.email;
+    const { body: emailBody, ...emailSettings } = email ?? {};
     resources.set(resourceValue, {
       id,
       name: resourceValue.name,
       control: resourceValue.config.control,
-      email: resourceValue.config.email,
+      email:
+        email === undefined
+          ? undefined
+          : {
+              ...emailSettings,
+              ...(emailBody === undefined
+                ? {}
+                : {
+                    body:
+                      emailBody instanceof Expression
+                        ? compileExpression(instanceId, emailBody)
+                        : emailBody,
+                  }),
+            },
       url: compileExpression(instanceId, resourceValue.config.url),
       method: resourceValue.config.method,
       searchParams: resourceValue.config.searchParams?.map(

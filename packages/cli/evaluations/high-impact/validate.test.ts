@@ -114,7 +114,7 @@ const addManagedContactPage = (): EvaluationProject => {
   const resources = [
     {
       id: "project-email",
-      name: "Project recipients",
+      name: "Email to owner",
       control: "email",
       method: "post",
       url: '""',
@@ -122,7 +122,7 @@ const addManagedContactPage = (): EvaluationProject => {
     },
     {
       id: "visitor-email",
-      name: "Visitor email field",
+      name: "Email to visitor",
       control: "email",
       method: "post",
       url: '""',
@@ -297,14 +297,14 @@ const addManagedContactPage = (): EvaluationProject => {
       {
         id: projectDataSourceId,
         type: "resource",
-        name: "Project recipients",
+        name: "Email to owner",
         resourceId: "project-email",
         scopeInstanceId: formId,
       },
       {
         id: visitorDataSourceId,
         type: "resource",
-        name: "Visitor email field",
+        name: "Email to visitor",
         resourceId: "visitor-email",
         scopeInstanceId: formId,
       },
@@ -775,7 +775,7 @@ describe("managed Form evaluation", () => {
       project: {
         ...project,
         resources: project.resources.map((resource) => {
-          if (resource.name !== "Visitor email field") {
+          if (resource.name !== "Email to visitor") {
             return resource;
           }
           const email = { ...(resource.email as Record<string, unknown>) };
@@ -799,7 +799,7 @@ describe("managed Form evaluation", () => {
       project: {
         ...project,
         resources: project.resources.map((resource) =>
-          resource.name === "Project recipients"
+          resource.name === "Email to owner"
             ? { ...resource, email: { recipientMode: "custom" } }
             : resource
         ),
@@ -829,7 +829,7 @@ describe("managed Form evaluation", () => {
         instanceId === success.id && name === "data-ws-show"
     )!;
     const visitor = project.resources.find(
-      ({ name }) => name === "Visitor email field"
+      ({ name }) => name === "Email to visitor"
     )!;
     const visitorEmail = visitor.email as Record<string, unknown>;
     const responsive = calls.find(

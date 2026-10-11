@@ -317,10 +317,10 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
       scopeInstanceId: string;
     }>;
     const projectResource = resourceList.find(
-      ({ name }) => name === "Project recipients"
+      ({ name }) => name === "Email to owner"
     );
     const visitorResource = resourceList.find(
-      ({ name }) => name === "Visitor email field"
+      ({ name }) => name === "Email to visitor"
     );
     expect(projectResource).toMatchObject({ scopeInstanceId: form?.id });
     expect(visitorResource).toMatchObject({ scopeInstanceId: form?.id });

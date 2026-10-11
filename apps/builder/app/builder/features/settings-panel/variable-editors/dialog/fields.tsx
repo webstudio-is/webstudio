@@ -197,38 +197,38 @@ export const TypeField = ({
     },
     {
       value: "resource",
-      label: getResourceTypeLabel("Resource"),
+      label: getResourceTypeLabel("REST resource"),
       description:
         "A REST resource is a configuration for secure data fetching. You can safely use secrets in any field.",
     },
     {
       value: "graphql-resource",
-      label: getResourceTypeLabel("GraphQL"),
+      label: getResourceTypeLabel("GraphQL resource"),
       description:
         "A GraphQL resource is a configuration for secure data fetching with GraphQL. You can safely use secrets in any field.",
     },
     {
-      value: "sitemap-resource",
-      label: getResourceTypeLabel("Sitemap"),
-      description: "Resource that loads the sitemap data of the current site.",
-    },
-    {
-      value: "current-date-resource",
-      label: getResourceTypeLabel("Current date"),
-      description:
-        "Provides current date information (year, month, day) normalized to midnight UTC. Time components are set to 00:00:00 to prevent React hydration errors.",
-    },
-    {
       value: "assets-resource",
-      label: getResourceTypeLabel("Assets"),
+      label: getResourceTypeLabel("Assets resource"),
       description:
         "Loads all project assets by default, with optional filters, sorting, pagination, and file content.",
     },
     {
       value: "email-resource",
-      label: getResourceTypeLabel("Email"),
+      label: getResourceTypeLabel("Email resource"),
       description:
         "Send a plain-text email through Webstudio Cloud when a Form is submitted.",
+    },
+    {
+      value: "sitemap-resource",
+      label: getResourceTypeLabel("Sitemap resource"),
+      description: "Resource that loads the sitemap data of the current site.",
+    },
+    {
+      value: "current-date-resource",
+      label: getResourceTypeLabel("Current date resource"),
+      description:
+        "Provides current date information (year, month, day) normalized to midnight UTC. Time components are set to 00:00:00 to prevent React hydration errors.",
     },
   ];
   const options = new Map(optionsList.map((option) => [option.value, option]));

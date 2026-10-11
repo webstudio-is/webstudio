@@ -159,7 +159,7 @@ test("loads an unsaved system resource while an unrelated page request is pendin
     expect(option).toBeDefined();
     await act(async () => userEvent.click(option!));
   };
-  await selectOption("String", "Current date");
+  await selectOption("String", "Current date resource");
 
   const loadButton = Array.from(
     dialog.querySelectorAll<HTMLButtonElement>("button")
@@ -192,7 +192,7 @@ test("loads an unsaved system resource while an unrelated page request is pendin
   });
 
   // Switching System Resource subtypes must discard the completed preview.
-  await selectOption("Current date", "Sitemap");
+  await selectOption("Current date resource", "Sitemap resource");
   expect(dialog.textContent).not.toContain("2026-09-23");
   const sitemapLoadButton = Array.from(
     dialog.querySelectorAll<HTMLButtonElement>("button")
@@ -209,7 +209,7 @@ test("loads an unsaved system resource while an unrelated page request is pendin
   expect(sitemapPreview).toBeDefined();
 
   // A late response for the old subtype cannot replace the new subtype's UI.
-  await selectOption("Sitemap", "Current date");
+  await selectOption("Sitemap resource", "Current date resource");
   respond(
     Response.json([
       [getResourceKey(sitemapPreview!), { data: "stale sitemap response" }],
@@ -219,7 +219,7 @@ test("loads an unsaved system resource while an unrelated page request is pendin
     expect(dialog.textContent).not.toContain("stale sitemap response");
   });
 
-  await selectOption("Current date", "GraphQL");
+  await selectOption("Current date resource", "GraphQL resource");
   expect(
     Array.from(dialog.querySelectorAll("button")).some(
       (button) => button.textContent === "Load data"

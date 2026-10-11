@@ -91,7 +91,7 @@ test("MCP-authored Form delivers Email and HTTP Actions in configured result ord
         expect(submission.results).toEqual([
           expect.objectContaining({
             resourceId: emailResourceId,
-            resourceName: "Project recipients",
+            resourceName: "Email to owner",
             status: 200,
           }),
           expect.objectContaining({

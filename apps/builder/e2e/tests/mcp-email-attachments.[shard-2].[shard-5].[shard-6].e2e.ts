@@ -61,12 +61,11 @@ test("MCP-authored Email Resources deliver multiple files and honor attachment o
     email?: { includeAttachments?: boolean };
   }>;
   const ownerResource = resources.find(
-    ({ id, name }) =>
-      emailResourceIds.includes(id) && name === "Project recipients"
+    ({ id, name }) => emailResourceIds.includes(id) && name === "Email to owner"
   );
   const visitorResource = resources.find(
     ({ id, name }) =>
-      emailResourceIds.includes(id) && name === "Visitor email field"
+      emailResourceIds.includes(id) && name === "Email to visitor"
   );
   expect(ownerResource?.email?.includeAttachments).toBe(true);
   expect(visitorResource?.email?.includeAttachments).toBe(false);
