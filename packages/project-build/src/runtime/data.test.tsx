@@ -88,7 +88,7 @@ const Box = createTemplateComponentFixture("Box");
 const Fragment = createTemplateComponentFixture("Fragment");
 const Slot = createTemplateComponentFixture("Slot");
 const Text = createTemplateComponentFixture("Text");
-const ResourceForm = createTemplateComponentFixture("ResourceForm");
+const ResourceForm = createTemplateComponentFixture("Form");
 
 test("deleting a Resource removes it from a new Form's destinations", () => {
   const data = renderData(
@@ -4888,7 +4888,7 @@ describe("resource patch helpers", () => {
     expect(
       createResourceDeletePayload({
         resource,
-        instances: new Map([["form", { component: "ResourceForm" }]]),
+        instances: new Map([["form", { component: "Form" }]]),
         props: [submission],
         dataSources: [dataSource],
       }).isUsed
@@ -4896,7 +4896,7 @@ describe("resource patch helpers", () => {
     expect(
       createResourceDeletePayload({
         resource,
-        instances: new Map([["form", { component: "ResourceForm" }]]),
+        instances: new Map([["form", { component: "Form" }]]),
         props: [submission],
         dataSources: [dataSource],
         force: true,

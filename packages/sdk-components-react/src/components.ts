@@ -17,10 +17,11 @@ export { Superscript } from "./superscript";
 export { Subscript } from "./subscript";
 export { Button } from "./button";
 export { Input } from "./input";
-/** @deprecated Legacy Webhook Form is supported through the next release. Use ResourceForm for new forms. */
-export { WebhookForm as Form } from "./webhook-form";
+export { Form } from "./resource-form";
+/** @deprecated Legacy Webhook Form is supported through the next release. Use Form for new forms. */
+export { WebhookForm } from "./webhook-form";
+/** @deprecated Use Form for managed submissions or an Element with tag form for native forms. */
 export { Form as RemixForm } from "./form";
-export { ResourceForm } from "./resource-form";
 export { Image } from "./image";
 export { Blockquote } from "./blockquote";
 export { List } from "./list";

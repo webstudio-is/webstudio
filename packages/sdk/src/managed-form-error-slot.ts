@@ -33,10 +33,10 @@ export const resolveManagedFormErrorSlot = (
       return instance;
     }
     const component = parent.component.split(":").at(-1);
-    if (component === "WebhookForm" || component === "Form") {
+    if (component === "WebhookForm") {
       return instance;
     }
-    if (component === "ResourceForm") {
+    if (component === "Form") {
       const resultAction = [...props.values()].find(
         (prop) =>
           prop.instanceId === parent.id &&

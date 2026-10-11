@@ -283,11 +283,11 @@ const author = async () => {
     await call("refresh");
     const instances = await call("list-instances", {
       pagePath: "/",
-      component: "ResourceForm",
+      component: "Form",
     });
     const forms = (
       instances.instances as Array<{ id: string; component: string }>
-    ).filter(({ component }) => component === "ResourceForm");
+    ).filter(({ component }) => component === "Form");
     const form = forms[0];
     const secondForm = forms[1];
     if (

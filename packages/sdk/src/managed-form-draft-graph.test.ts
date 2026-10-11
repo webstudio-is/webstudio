@@ -38,7 +38,7 @@ test("draft Form graph resolves HTTP and Email bindings like the published gener
       {
         type: "instance",
         id: "form",
-        component: "ResourceForm",
+        component: "Form",
         children: [
           { type: "id", value: "password" },
           { type: "id", value: "email-input" },
@@ -299,7 +299,7 @@ test("draft graph leaves Resource-output-bound recipient counts unknown for pref
       {
         type: "instance",
         id: "form",
-        component: "ResourceForm",
+        component: "Form",
         children: [],
       },
     ],
@@ -382,10 +382,7 @@ test("draft graph leaves Resource-output-bound recipient counts unknown for pref
 
 test("draft graph counts resolved formData-bound recipients instead of stale text", () => {
   const instances: Instances = new Map([
-    [
-      "form",
-      { type: "instance", id: "form", component: "ResourceForm", children: [] },
-    ],
+    ["form", { type: "instance", id: "form", component: "Form", children: [] }],
   ]);
   const dataSources: DataSources = new Map([
     [
@@ -460,10 +457,7 @@ test("draft graph counts resolved formData-bound recipients instead of stale tex
 
 test("Email Sender and custom recipients bindings resolve and validate before dispatch", () => {
   const instances: Instances = new Map([
-    [
-      "form",
-      { type: "instance", id: "form", component: "ResourceForm", children: [] },
-    ],
+    ["form", { type: "instance", id: "form", component: "Form", children: [] }],
   ]);
   const dataSources: DataSources = new Map([
     [
@@ -625,10 +619,7 @@ test("draft graph keeps scoped dependencies and external Resource roots in publi
         children: [{ type: "id", value: "form" }],
       },
     ],
-    [
-      "form",
-      { type: "instance", id: "form", component: "ResourceForm", children: [] },
-    ],
+    ["form", { type: "instance", id: "form", component: "Form", children: [] }],
   ]);
   const dataSources: DataSources = new Map([
     [
@@ -778,10 +769,7 @@ test("an external Resource cannot bind formData in Builder Preview", () => {
         children: [{ type: "id", value: "form" }],
       },
     ],
-    [
-      "form",
-      { type: "instance", id: "form", component: "ResourceForm", children: [] },
-    ],
+    ["form", { type: "instance", id: "form", component: "Form", children: [] }],
   ]);
   const dataSources: DataSources = new Map([
     [

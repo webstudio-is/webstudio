@@ -66,11 +66,17 @@ export const migrateContentBlockDocumentBindingsMutable = (
 };
 
 export const migrateResourceFormInstancesMutable = (
-  instances: Iterable<Instance>
+  instances: Iterable<Instance>,
+  migrateLegacyForm: boolean
 ) => {
   for (const instance of instances) {
-    if (instance.component === "NativeForm") {
-      instance.component = "ResourceForm";
+    if (migrateLegacyForm && instance.component === "Form") {
+      instance.component = "WebhookForm";
+    } else if (
+      instance.component === "NativeForm" ||
+      instance.component === "ResourceForm"
+    ) {
+      instance.component = "Form";
     }
   }
 };
@@ -188,7 +194,11 @@ const migrateContentBlockImageStylesMutable = (
  */
 export const migrateWebstudioDataMutable = (data: WebstudioData) => {
   data.pages = migratePages(data.pages);
-  migrateResourceFormInstancesMutable(data.instances.values());
+  migrateResourceFormInstancesMutable(
+    data.instances.values(),
+    data.pages.formComponentIdentityVersion === undefined
+  );
+  data.pages.formComponentIdentityVersion = 1;
   migrateResourcesMutable(data.resources.values());
   migrateStylesMutable(data.styles);
   migrateCodeTextContentMutable(data);

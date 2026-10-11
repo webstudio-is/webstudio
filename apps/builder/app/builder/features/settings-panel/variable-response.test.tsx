@@ -52,7 +52,7 @@ test("Form context Preview shows live data and server browser info", async () =>
         {
           id: "form",
           type: "instance",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],

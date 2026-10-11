@@ -41,7 +41,7 @@ const Body = createTemplateComponentFixture("Body");
 const Box = createTemplateComponentFixture("Box");
 const Button = createTemplateComponentFixture("Button");
 const Form = createTemplateComponentFixture("Form");
-const ResourceForm = createTemplateComponentFixture("ResourceForm");
+const ResourceForm = createTemplateComponentFixture("Form");
 const Fragment = createTemplateComponentFixture("Fragment");
 const HeadSlot = createTemplateComponentFixture("HeadSlot");
 const Heading = createTemplateComponentFixture("Heading");
@@ -2300,7 +2300,7 @@ test("saved managed Form errors render like Preview for malformed values while p
   const form: import("@webstudio-is/sdk").Instance = {
     type: "instance",
     id: "saved-form",
-    component: "ResourceForm",
+    component: "Form",
     children: [{ type: "id", value: slot.id }],
   };
   const dataSources: import("@webstudio-is/sdk").DataSources = new Map([
@@ -2357,7 +2357,7 @@ test("saved managed Form errors render like Preview for malformed values while p
     "createElement",
     "renderText",
     "formatManagedFormErrors",
-    "ResourceForm",
+    "Form",
     "errors",
     `${code}return Page();`
   );

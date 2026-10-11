@@ -839,9 +839,11 @@ Use the exact component id returned by `components.search` for **Form (new)**.
 After inserting its registered template, use the Form instance id for the
 Form-scoped Resource and Action settings.
 
-The new Form's canonical component id is `ResourceForm`; `Form` is the deprecated
-legacy Webhook Form identity and remains available until the next release. Always
-use registry discovery instead of assuming the display label is its component id.
+The new Form's canonical component id is `Form`. The deprecated legacy
+Webhook Form uses the `WebhookForm` identity and remains available until the
+next release. `RemixForm` is deprecated compatibility and should not be used
+for new projects. Always use registry discovery instead of assuming the display
+label is its component id.
 
 The new Form has two modes derived from its Action array:
 

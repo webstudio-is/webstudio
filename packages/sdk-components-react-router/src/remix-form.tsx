@@ -3,7 +3,7 @@ import { Form, type FormProps } from "react-router";
 
 export const defaultTag = "form";
 
-/** @deprecated Use ResourceForm for Resource submissions or an Element for native forms. */
+/** @deprecated Use Form for Resource submissions or an Element for native forms. */
 export const RemixForm = forwardRef<
   ElementRef<typeof defaultTag>,
   Omit<ComponentProps<typeof defaultTag>, "action"> &

@@ -558,7 +558,7 @@ const validateManagedFormAuthoring = (
     "/contact"
   );
   const formInstances = instances.filter(
-    ({ component }) => component === "ResourceForm"
+    ({ component }) => component === "Form"
   );
   const form = formInstances[0];
   const propsByInstance = new Map<string, EvaluationProject["props"]>();
@@ -2026,7 +2026,7 @@ const validateFormModesAuthoring = (
       (prop) => prop.instanceId === id && prop.name === name
     )?.value;
   const resourceForms = input.project.instances.filter(
-    (instance) => instance.component === "ResourceForm"
+    (instance) => instance.component === "Form"
   );
   const contact = resourceForms.find((instance) => {
     const actions = getProp(instance.id, "action");
@@ -2049,20 +2049,20 @@ const validateFormModesAuthoring = (
     failures,
     "resourceFormMode",
     resourceForms.length >= 2 &&
-      contact?.component === "ResourceForm" &&
+      contact?.component === "Form" &&
       Array.isArray(contactActions) &&
       contactActions.length > 0,
-    "Contact must be a ResourceForm with connected Resource actions."
+    "Contact must be a Form with connected Resource actions."
   );
   recordCheck(
     checks,
     failures,
     "navigationFormMode",
     resourceForms.length >= 2 &&
-      search?.component === "ResourceForm" &&
+      search?.component === "Form" &&
       Array.isArray(searchActions) &&
       searchActions.length === 0,
-    "Search must be a ResourceForm with an explicitly empty Action array."
+    "Search must be a Form with an explicitly empty Action array."
   );
   recordCheck(
     checks,

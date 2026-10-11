@@ -36,7 +36,7 @@ test("Preview Form posts to the authenticated Builder and sets error state witho
     {
       type: "instance",
       id: formId,
-      component: "ResourceForm",
+      component: "Form",
       children: [inputId, buttonId].map((value) => ({ type: "id", value })),
     },
     {
@@ -199,7 +199,7 @@ test("Preview Form success redirects navigate matched pages and keep feedback fo
       {
         type: "instance",
         id: formId,
-        component: "ResourceForm",
+        component: "Form",
         children: [{ type: "id", value: buttonId }],
       },
       {
@@ -403,7 +403,7 @@ test("Preview Form preserves browser FormData and renders configured failure res
       {
         type: "instance",
         id: formId,
-        component: "ResourceForm",
+        component: "Form",
         children: [
           firstInputId,
           secondInputId,

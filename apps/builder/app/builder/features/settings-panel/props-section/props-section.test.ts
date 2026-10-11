@@ -11,7 +11,7 @@ const {
 } = __testing__;
 
 test("Form and generic components render their property sections", () => {
-  for (const component of ["ResourceForm", "Box"]) {
+  for (const component of ["Form", "Box"]) {
     expect(
       shouldRenderPropsSectionContainer({
         component,

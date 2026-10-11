@@ -60,7 +60,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -241,7 +241,7 @@ test("a Form can select a Resource defined outside its scope", async () => {
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -320,7 +320,7 @@ test("stored Form selection renders and a deleted Resource can be removed", asyn
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -404,7 +404,7 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -514,7 +514,7 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -664,7 +664,7 @@ test.each([
           {
             id: "form",
             type: "instance",
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],

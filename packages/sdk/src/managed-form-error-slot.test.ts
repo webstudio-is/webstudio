@@ -21,7 +21,7 @@ const slot: Instance = {
 const form: Instance = {
   type: "instance",
   id: "form",
-  component: "ResourceForm",
+  component: "Form",
   children: [{ type: "id", value: slot.id }],
 };
 const instances: Instances = new Map([
@@ -90,7 +90,7 @@ test.each([
 );
 
 test("legacy Forms, customized content, and missing errors are untouched", () => {
-  for (const component of ["WebhookForm", "Form"]) {
+  for (const component of ["WebhookForm"]) {
     expect(
       resolveManagedFormErrorSlot(
         slot,

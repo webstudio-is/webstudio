@@ -69,11 +69,11 @@ export const buildEmailRequestPreviewFromEditor = async ({
   const selected = $selectedInstanceSelector.get();
   const formId =
     selected?.find(
-      (instanceId) => instances.get(instanceId)?.component === "ResourceForm"
+      (instanceId) => instances.get(instanceId)?.component === "Form"
     ) ??
     Array.from(instances.values()).find(
       (instance) =>
-        instance.component === "ResourceForm" &&
+        instance.component === "Form" &&
         variable?.scopeInstanceId !== undefined &&
         findTreeInstanceIds(instances, instance.id).has(
           variable.scopeInstanceId

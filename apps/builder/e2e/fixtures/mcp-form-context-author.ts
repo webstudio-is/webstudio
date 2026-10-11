@@ -259,11 +259,11 @@ const author = async () => {
     await call("refresh");
     const instances = await call("list-instances", {
       pagePath: "/contact/:slug",
-      component: "ResourceForm",
+      component: "Form",
     });
     const formId = (
       instances.instances as Array<{ id: string; component: string }>
-    ).find(({ component }) => component === "ResourceForm")?.id;
+    ).find(({ component }) => component === "Form")?.id;
     if (formId === undefined) {
       throw new Error(`Expected inserted Form: ${JSON.stringify(instances)}`);
     }

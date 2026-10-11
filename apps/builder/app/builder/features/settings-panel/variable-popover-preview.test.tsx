@@ -236,7 +236,7 @@ test("Edit variable preview shows server browser info for a Form variable", asyn
         {
           id: "form",
           type: "instance",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -299,7 +299,7 @@ test.each([
           {
             id: "form",
             type: "instance",
-            component: "ResourceForm",
+            component: "Form",
             children: [{ type: "id", value: "email-input" }],
           },
         ],

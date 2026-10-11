@@ -1064,7 +1064,7 @@ const WebstudioComponentPreviewInner = forwardRef<
     [componentAttribute]: instance.component,
     [selectorIdAttribute]: instanceSelector.join(","),
   };
-  if (instance.component === "ResourceForm") {
+  if (instance.component === "Form") {
     Object.assign(props, getPreviewResourceFormProps(instance.id));
   }
   if (show === false) {
@@ -1102,7 +1102,7 @@ const WebstudioComponentPreviewInner = forwardRef<
     instance.component
   );
 
-  if (instance.component === "ResourceForm") {
+  if (instance.component === "Form") {
     Component = PreviewResourceForm as AnyComponent;
   }
 

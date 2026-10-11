@@ -9,11 +9,11 @@ Use **Form** to send visitor input to HTTP or Email [Resources](../foundations/c
 ## Configure actions
 
 1. Use the two Email Resources included in a new Form, or create HTTP, Email, or GraphQL Resources in **Variables**, on the Form or an ancestor.
-2. Select the Form. In **Properties & Attributes > Action**, use the plus menu to choose up to five visible Resources. Each Resource can be selected once; use the row controls to disable or remove an action. Edit a Resource in **Variables**.
+2. Select the Form. In **Properties & Attributes > Action**, use the plus menu to choose up to ten visible Resources. Each Resource can be selected once; use the row controls to disable or remove an action. Edit a Resource in **Variables**.
 3. Give each input a **Name**. Its name identifies the submitted value in `formData`.
 4. Submit the Form in Builder Preview to test the current draft, or publish and test the deployed site.
 
-The Form starts independent destinations in parallel. An empty destination list shows an error only when someone tries to submit; it does not dispatch or navigate. Every HTTP destination receives a POST request. A Resource created inside the Form can bind `formData` and the safe `browserInfo` values (visitor IP, user agent, language, and referrer). A Resource on an ancestor can be selected, but cannot bind that Form's data.
+With selected actions, the Form starts independent destinations in parallel. Every HTTP destination receives a POST request. With no actions selected, the Form uses **Navigation** mode: a GET submission updates the current page's query string using its named fields. A Resource created inside the Form can bind `formData` and the safe `browserInfo` values (visitor IP, user agent, language, and referrer). A Resource on an ancestor can be selected, but cannot bind that Form's data.
 
 By default, a Form-scoped HTTP Resource forwards all submitted fields. It sends JSON for text values and multipart data when files are included. Edit the Resource body to choose or transform fields, or set its body format if the receiving service requires one. An HTTP Resource outside the Form uses its own configured body.
 

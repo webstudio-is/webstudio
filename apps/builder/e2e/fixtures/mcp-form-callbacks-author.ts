@@ -266,7 +266,7 @@ const author = async () => {
       name: "callbackErrors",
       value: { type: "json", value: [] },
     });
-    const component = mode === "legacy" ? "Form" : "ResourceForm";
+    const component = mode === "legacy" ? "WebhookForm" : "Form";
     const fragment = await call("insert-fragment", {
       parentInstanceId: home.rootInstanceId,
       fragment: `<${component} id="callback-form"><Input name="outcome" /><Button type="submit">Submit callback form</Button></${component}><Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>`,

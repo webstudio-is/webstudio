@@ -244,11 +244,11 @@ const author = async () => {
     await call("refresh");
     const instances = await call("list-instances", {
       pagePath: "/",
-      component: "ResourceForm",
+      component: "Form",
     });
     const form = (
       instances.instances as Array<{ id: string; component: string }>
-    ).find(({ component }) => component === "ResourceForm");
+    ).find(({ component }) => component === "Form");
     if (form === undefined) {
       throw new Error("Expected the inserted Form");
     }

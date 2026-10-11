@@ -933,7 +933,7 @@ describe("insert webstudio component at", () => {
       const body = $instances.get().get("bodyId");
       const formId =
         body?.children[0]?.type === "id" ? body.children[0].value : "";
-      expect($instances.get().get(formId)?.component).toBe("ResourceForm");
+      expect($instances.get().get(formId)?.component).toBe("Form");
       const formProps = Array.from($props.get().values()).filter(
         ({ instanceId }) => instanceId === formId
       );

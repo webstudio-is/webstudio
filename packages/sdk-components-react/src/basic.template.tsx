@@ -25,7 +25,6 @@ import {
   ListItem,
   Paragraph,
   RadioButton,
-  RemixForm,
   RichTextLink,
   Separator,
   Span,
@@ -208,17 +207,6 @@ const RadioButtonTemplate: TemplateMeta = {
   ),
 };
 
-const RemixFormTemplate: TemplateMeta = {
-  category: "forms",
-  template: (
-    <RemixForm>
-      <Label>{new PlaceholderValue("Search")}</Label>
-      <Input name="query" placeholder="Find a ticket" />
-      <Button>{new PlaceholderValue("Search")}</Button>
-    </RemixForm>
-  ),
-};
-
 const RichTextLinkTemplate: TemplateMeta = {
   category: "typography",
   template: (
@@ -292,7 +280,6 @@ export const templates = [
   ListItemTemplate,
   ParagraphTemplate,
   RadioButtonTemplate,
-  RemixFormTemplate,
   RichTextLinkTemplate,
   SeparatorTemplate,
   SpanTemplate,

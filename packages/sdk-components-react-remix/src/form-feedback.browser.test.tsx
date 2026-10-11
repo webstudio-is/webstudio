@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, expect, test, vi } from "vitest";
-import { ResourceForm } from "./resource-form";
+import { Form } from "./resource-form";
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -46,12 +46,12 @@ test("managed Remix Form scrolls partial failure and reveals visible success", a
       errors: [],
     });
   vi.stubGlobal("fetch", async () => Response.json(await action()));
-  const Form = () => {
+  const FormFixture = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
     );
     return (
-      <ResourceForm
+      <Form
         data-ws-managed-form-id="saved-managed-form"
         action={[
           { dataSourceId: "first", enabled: true },
@@ -63,28 +63,33 @@ test("managed Remix Form scrolls partial failure and reveals visible success", a
         {state !== "success" && <button type="submit">Send</button>}
         {state === "error" && <div data-feedback="error">Partial failure</div>}
         {state === "success" && <div data-feedback="success">Done</div>}
-      </ResourceForm>
+      </Form>
     );
   };
-  const router = createMemoryRouter([{ path: "/", element: <Form />, action }]);
+  const router = createMemoryRouter([
+    { path: "/", element: <FormFixture />, action },
+  ]);
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
   const scroll = vi
     .spyOn(HTMLElement.prototype, "scrollIntoView")
     .mockImplementation(() => {});
-  let top = window.innerHeight + 30;
+  let formTop = window.innerHeight + 30;
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
     function (this: HTMLElement) {
-      const actualTop = this.hasAttribute("data-feedback") ? top : 0;
-      return { top: actualTop, bottom: actualTop + 30 } as DOMRect;
+      const top = this.tagName === "FORM" ? formTop : 0;
+      return { top, bottom: top + 30 } as DOMRect;
     }
   );
   try {
     await act(async () => root.render(<RouterProvider router={router} />));
     await act(async () => container.querySelector("button")?.click());
     await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
-    top = 40;
+    expect((scroll.mock.instances[0] as unknown as Element).tagName).toBe(
+      "FORM"
+    );
+    formTop = 40;
     await act(async () => container.querySelector("button")?.click());
     await vi.waitFor(() =>
       expect(

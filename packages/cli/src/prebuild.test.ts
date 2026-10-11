@@ -260,6 +260,7 @@ const createSiteData = (
     props?: Array<[string, Prop]>;
     pageMeta?: Record<string, unknown>;
     redirects?: Redirects;
+    formComponentIdentityVersion?: number;
   } = {}
 ) => {
   const pages = overrides.pages ?? [
@@ -306,6 +307,7 @@ const createSiteData = (
       createdAt: "2024-01-01T00:00:00.000Z",
       updatedAt: "2024-01-02T00:00:00.000Z",
       pages: {
+        formComponentIdentityVersion: overrides.formComponentIdentityVersion,
         meta: {
           siteName: "Site",
           contactEmail: "",
@@ -3808,7 +3810,7 @@ sitemap.map((page) => page.path);`
 
       for (const [id, error] of [
         ["unknown", "Form submission settings not found"],
-        ["empty", "Add at least one action"],
+        ["empty", "Enable at least one action"],
         ["too-many", "Select no more than 10 Resource actions"],
         ["duplicate", "Select each Resource only once"],
         ["missing", "Resource destination not found"],
@@ -4013,7 +4015,7 @@ sitemap.map((page) => page.path);`
         expect(result.status).toBe(400);
         expect(result.contentType).toContain("application/json");
         expect(result.body).toEqual(
-          getManagedFormFailure("Add at least one action")
+          getManagedFormFailure("Enable at least one action")
         );
       }
     },
@@ -4610,9 +4612,8 @@ sitemap.map((page) => page.path);`
 
   test("generates submit-time Resource requests with Form parameters", async () => {
     const siteData = createSiteData({
-      instances: [
-        ["root", { id: "root", component: "ResourceForm", children: [] }],
-      ],
+      formComponentIdentityVersion: 1,
+      instances: [["root", { id: "root", component: "Form", children: [] }]],
       props: [
         [
           "action",
@@ -6466,7 +6467,7 @@ export const createManagedFormResourceFetch = () => {
     }
   );
 
-  test("prerenders the new Form without native submission attributes", async () => {
+  test("prerenders the canonical Form with its navigation action", async () => {
     const siteData = createSiteData({
       instances: [
         [
@@ -6539,11 +6540,17 @@ export const createManagedFormResourceFetch = () => {
     const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
     const [form] = findElementsByTagName(html, "form");
     expect(form).toBeDefined();
-    expect(form?.attrs.map(({ name }) => name)).toEqual(["class", "method"]);
-    expect(form?.attrs.find(({ name }) => name === "method")?.value).toBe(
-      "dialog"
+    expect(form?.attrs.map(({ name }) => name)).toEqual([
+      "class",
+      "action",
+      "method",
+    ]);
+    expect(form?.attrs.find(({ name }) => name === "action")?.value).toBe(
+      "?__webstudio__=navigate"
     );
-    expect(form?.attrs.some(({ name }) => name === "action")).toBe(false);
+    expect(form?.attrs.find(({ name }) => name === "method")?.value).toBe(
+      "get"
+    );
   }, 30_000);
 
   test("ignores dynamic SSG pages without enumerable Assets query paths", async () => {

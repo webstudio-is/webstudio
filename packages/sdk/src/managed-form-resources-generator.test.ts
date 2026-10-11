@@ -93,7 +93,7 @@ test.each([
         {
           id: "form",
           type: "instance",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -172,7 +172,7 @@ test.each([SYSTEM_VARIABLE_ID, "page-system"])(
         {
           id: "form",
           type: "instance",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -301,7 +301,7 @@ test("a Form-scoped Email Resource gets the automatic form text and a typed emai
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [{ type: "id", value: "password-input" }],
         },
       ],
@@ -395,7 +395,7 @@ test.each([
           {
             type: "instance",
             id: "form",
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],
@@ -497,7 +497,7 @@ test("a translated project body is inherited unless the Email Resource overrides
           {
             type: "instance",
             id: "form",
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],
@@ -572,7 +572,7 @@ test("counts project and custom Email recipients across a Form, including duplic
           {
             type: "instance",
             id: "form",
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],
@@ -674,7 +674,7 @@ test("preflights bound Email recipient counts when Resources are referenced", ()
           {
             type: "instance",
             id: "form",
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],
@@ -821,7 +821,7 @@ test("counts an Email dependency of a selected HTTP Resource", () => {
           {
             type: "instance",
             id: "form",
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],
@@ -914,7 +914,7 @@ test("an edited default Email body formats Form values and preserves field acces
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [{ type: "id", value: "password-input" }],
         },
       ],
@@ -1023,7 +1023,7 @@ test("Visitor Email keeps its empty receipt body instead of the submitted-fields
       {
         type: "instance",
         id: "form",
-        component: "ResourceForm",
+        component: "Form",
         children: [{ type: "id", value: "email-input" }],
       },
     ],
@@ -1189,7 +1189,7 @@ test.each([
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -1370,7 +1370,7 @@ test("automatic Email body redacts Element passwords and unknown input types", (
           {
             type: "instance",
             id: "form",
-            component: "ResourceForm",
+            component: "Form",
             children: [{ type: "id", value: "input" }],
           },
         ],
@@ -1602,7 +1602,7 @@ test("an external Email Resource cannot read a Form-only binding", () => {
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -1659,7 +1659,7 @@ test("builds a submit-time graph with Form bindings and dependent Resource resul
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -1779,10 +1779,7 @@ test("builds a submit-time graph with Form bindings and dependent Resource resul
 
 test("an external Resource can be selected without gaining access to Form data", () => {
   const instances: Instances = new Map([
-    [
-      "form",
-      { type: "instance", id: "form", component: "ResourceForm", children: [] },
-    ],
+    ["form", { type: "instance", id: "form", component: "Form", children: [] }],
   ]);
   const dataSources: DataSources = new Map([
     [
@@ -1878,7 +1875,7 @@ test.each(["form", "page", undefined])(
           {
             type: "instance",
             id: "form",
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],
@@ -1944,10 +1941,7 @@ test.each(["form", "page", undefined])(
 
 test("a shared outside alias cannot promote a Resource into Form scope", () => {
   const instances: Instances = new Map([
-    [
-      "form",
-      { type: "instance", id: "form", component: "ResourceForm", children: [] },
-    ],
+    ["form", { type: "instance", id: "form", component: "Form", children: [] }],
   ]);
   const dataSources: DataSources = new Map([
     [
@@ -2011,7 +2005,7 @@ test("an invalid Form graph does not prevent another Form from building", () => 
       {
         type: "instance",
         id: "invalidForm",
-        component: "ResourceForm",
+        component: "Form",
         children: [],
       },
     ],
@@ -2020,7 +2014,7 @@ test("an invalid Form graph does not prevent another Form from building", () => 
       {
         type: "instance",
         id: "validForm",
-        component: "ResourceForm",
+        component: "Form",
         children: [],
       },
     ],
@@ -2106,7 +2100,7 @@ test("deduplicates Resource roots while preserving selection order", () => {
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -2179,10 +2173,7 @@ test("deduplicates Resource roots while preserving selection order", () => {
 
 test("an external dependency cannot read Form data through an internal destination", () => {
   const instances: Instances = new Map([
-    [
-      "form",
-      { type: "instance", id: "form", component: "ResourceForm", children: [] },
-    ],
+    ["form", { type: "instance", id: "form", component: "Form", children: [] }],
   ]);
   const dataSources: DataSources = new Map([
     [
@@ -2279,7 +2270,7 @@ test.each([
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [{ type: "id", value: "child" }],
         },
       ],
@@ -2378,7 +2369,7 @@ test.each([
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -2580,7 +2571,7 @@ test.each(["http", "email", "visitor"] as const)(
         {
           type: "instance",
           id: "form",
-          component: "ResourceForm",
+          component: "Form",
           children: [{ type: "id", value: "input" }],
         },
       ],

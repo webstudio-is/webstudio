@@ -37,7 +37,7 @@ test("renders templates that import an alternate registered implementation", () 
   expect(template?.instances[0]?.component).toBe("CodeText");
 });
 
-test("lists the new Form while preserving Webhook Form", () => {
+test("lists the managed Form while retaining deprecated Webhook Form", () => {
   for (const library of canvasComponentLibraries) {
     registerComponentLibrary(library);
   }
@@ -55,36 +55,31 @@ test("lists the new Form while preserving Webhook Form", () => {
     expect.objectContaining({
       name: "form",
       label: "Form (new)",
-      firstInstance: expect.objectContaining({ component: "ResourceForm" }),
+      firstInstance: expect.objectContaining({ component: "Form" }),
     }),
   ]);
 
-  expect(itemsByCategory.get("data")).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({
-        name: "Form",
-        label: "Webhook Form",
-        firstInstance: expect.objectContaining({ component: "Form" }),
-      }),
-    ])
-  );
+  // The legacy template remains in its original category through the next release.
+  expect(
+    itemsByCategory.get("data")?.some(({ name }) => name === "WebhookForm")
+  ).toBe(true);
 
   // Saved instances keep their original component IDs and implementations.
   expect($registeredComponents.get().has("Form")).toBe(true);
+  expect($registeredComponents.get().has("ResourceForm")).toBe(false);
+  expect($registeredComponents.get().has("WebhookForm")).toBe(true);
   expect($registeredComponents.get().has("RemixForm")).toBe(true);
   expect($registeredComponentMetas.get().get("Form")?.deprecated).toBe(
     undefined
   );
-  expect($registeredComponentMetas.get().get("Form")?.label).toBe(
+  expect($registeredComponentMetas.get().get("WebhookForm")?.label).toBe(
     "Webhook Form"
   );
   expect($registeredComponentMetas.get().get("RemixForm")?.deprecated).toBe(
     true
   );
-  expect($registeredComponentMetas.get().get("ResourceForm")?.deprecated).toBe(
-    undefined
-  );
   expect(
-    $registeredTemplates.get().get("Form")?.template.instances[0]?.component
-  ).toBe("Form");
+    $registeredTemplates.get().get("WebhookForm")?.template.instances[0]
+      ?.component
+  ).toBe("WebhookForm");
 });

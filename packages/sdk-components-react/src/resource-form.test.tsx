@@ -1,17 +1,17 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
-import { ResourceForm } from "./resource-form";
+import { Form } from "./resource-form";
 
-test("ResourceForm exposes a valid action URL that identifies its mode", () => {
+test("Form exposes a valid action URL that identifies its mode", () => {
   const html = renderToStaticMarkup(
-    <ResourceForm
+    <Form
       action={[{ dataSourceId: "request", enabled: true }]}
       method="post"
       encType="multipart/form-data"
     >
       <input name="message" />
       <button type="submit">Send</button>
-    </ResourceForm>
+    </Form>
   );
 
   expect(html).toContain(
@@ -22,11 +22,11 @@ test("ResourceForm exposes a valid action URL that identifies its mode", () => {
   expect(html).toContain('<input name="message"/>');
 });
 
-test("ResourceForm action URL identifies Navigation mode when no Resources are connected", () => {
+test("Form action URL identifies Navigation mode when no Resources are connected", () => {
   const html = renderToStaticMarkup(
-    <ResourceForm action={[]}>
+    <Form action={[]}>
       <input name="query" />
-    </ResourceForm>
+    </Form>
   );
   expect(html).toContain(
     '<form action="?__webstudio__=navigate" method="get">'
@@ -35,7 +35,7 @@ test("ResourceForm action URL identifies Navigation mode when no Resources are c
 
 test("server rendering blocks an over-limit managed Form", () => {
   const html = renderToStaticMarkup(
-    <ResourceForm
+    <Form
       action={[
         { dataSourceId: "one", enabled: true },
         { dataSourceId: "two", enabled: true },
@@ -46,7 +46,7 @@ test("server rendering blocks an over-limit managed Form", () => {
       ]}
     >
       <button type="submit">Send</button>
-    </ResourceForm>
+    </Form>
   );
   expect(html).toContain('action="?__webstudio__=resources"');
   expect(html).toContain('method="dialog"');

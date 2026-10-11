@@ -82,7 +82,7 @@ const draftBuild = {
       component: "Body",
       children: [{ type: "id", value: "form" }],
     },
-    { type: "instance", id: "form", component: "ResourceForm", children: [] },
+    { type: "instance", id: "form", component: "Form", children: [] },
   ],
   props: [
     {

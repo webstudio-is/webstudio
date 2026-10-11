@@ -7,7 +7,7 @@ import {
   useLoaderData,
 } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
-import { ResourceForm } from "./resource-form";
+import { Form } from "./resource-form";
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -53,13 +53,13 @@ test("managed submission refreshes mutable page data once without replaying POST
     return (
       <>
         <output>{value}</output>
-        <ResourceForm
+        <Form
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource", enabled: true }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
-        </ResourceForm>
+        </Form>
       </>
     );
   };
@@ -116,7 +116,7 @@ test("success feedback scroll waits until delayed route revalidation settles", a
     return (
       <>
         <output>{value}</output>
-        <ResourceForm
+        <Form
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource", enabled: true }]}
           state={state}
@@ -124,7 +124,7 @@ test("success feedback scroll waits until delayed route revalidation settles", a
         >
           <button type="submit">Send</button>
           {state === "success" && <div>Submitted</div>}
-        </ResourceForm>
+        </Form>
       </>
     );
   };
@@ -174,12 +174,12 @@ test("failed submissions skip refresh and a later successful submission refreshe
     return (
       <>
         <output>{value}</output>
-        <ResourceForm
+        <Form
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource", enabled: true }]}
         >
           <button type="submit">Send</button>
-        </ResourceForm>
+        </Form>
       </>
     );
   };
@@ -215,13 +215,13 @@ test("a redirect skips refresh", async () => {
       path: "/",
       loader,
       element: (
-        <ResourceForm
+        <Form
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource", enabled: true }]}
           successRedirect="#done"
         >
           <button type="submit">Send</button>
-        </ResourceForm>
+        </Form>
       ),
     },
   ]);
@@ -258,13 +258,13 @@ test("navigation ignores an in-flight submission from the old page", async () =>
       path: "/",
       loader,
       element: (
-        <ResourceForm
+        <Form
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource", enabled: true }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
-        </ResourceForm>
+        </Form>
       ),
     },
     { path: "/next", element: <output>Next page</output> },
@@ -328,7 +328,7 @@ test("refresh failure retains the completed success result and does not replay P
     return (
       <>
         <output>{value}</output>
-        <ResourceForm
+        <Form
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource", enabled: true }]}
           state={state}
@@ -337,7 +337,7 @@ test("refresh failure retains the completed success result and does not replay P
         >
           <button type="submit">Send</button>
           {state === "success" && <div>Submitted</div>}
-        </ResourceForm>
+        </Form>
       </>
     );
   };

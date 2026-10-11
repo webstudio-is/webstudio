@@ -852,7 +852,7 @@ export const insertWebstudioFragmentCopy = ({
     }
     const isResourceFormAction =
       prop.name === "action" &&
-      fragmentInstances.get(prop.instanceId)?.component === "ResourceForm";
+      fragmentInstances.get(prop.instanceId)?.component === "Form";
     prop = clonePropForInstance({
       prop: structuredClone(unwrap(prop)),
       propId: createId(),

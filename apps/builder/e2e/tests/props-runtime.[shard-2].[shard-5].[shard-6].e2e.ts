@@ -86,7 +86,7 @@ const seedSavedWebhookForm = async (projectId: string) => {
     {
       type: "instance",
       id: formId,
-      component: "Form",
+      component: "WebhookForm",
       children: [contentId, successId, errorId].map((value) => ({
         type: "id",
         value,

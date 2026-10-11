@@ -80,7 +80,7 @@ const isJSDom = () => {
   return hasMatchMedia === false;
 };
 
-/** @deprecated Legacy Webhook Form is supported through the next release. Use ResourceForm for new forms. */
+/** @deprecated Legacy Webhook Form is supported through the next release. Use Form for new forms. */
 export const WebhookForm = forwardRef<
   ElementRef<typeof defaultTag>,
   Omit<ComponentProps<typeof defaultTag>, "action"> & {

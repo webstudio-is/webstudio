@@ -18,6 +18,7 @@ import type { DataSource } from "./schema/data-sources";
 
 const Body = createTemplateComponentFixture("Body");
 const Form = createTemplateComponentFixture("Form");
+const WebhookForm = createTemplateComponentFixture("WebhookForm");
 
 test("base request fields do not generate Email delivery configuration", () => {
   const fields = generateResourceRequestFields({
@@ -44,7 +45,7 @@ test("does not fetch a Form-bound Resource during page load", () => {
     scope: createScope(),
     page: { rootInstanceId: "form" } as Page,
     instances: toMap([
-      { type: "instance", id: "form", component: "ResourceForm", children: [] },
+      { type: "instance", id: "form", component: "Form", children: [] },
     ]),
     dataSources: toMap([
       {
@@ -180,7 +181,7 @@ test("excludes transitive Form-only Resources and rejects Dynamic Content Block 
       {
         type: "instance" as const,
         id: "form",
-        component: "ResourceForm",
+        component: "Form",
         children: [],
       },
     ]),
@@ -1142,7 +1143,7 @@ test("skip missing resource referenced by action prop", () => {
 
 test("replace form action with resource", () => {
   const data = renderData(
-    <Form ws:id="formId" action="https://my-url.com"></Form>
+    <WebhookForm ws:id="formId" action="https://my-url.com"></WebhookForm>
   );
   replaceFormActionsWithResources(data);
   expect(data.props).toEqual(
@@ -1170,7 +1171,7 @@ test("replace form action with resource", () => {
 });
 
 test("ignore empty form action", () => {
-  const data = renderData(<Form ws:id="formId" action=""></Form>);
+  const data = renderData(<WebhookForm ws:id="formId" action=""></WebhookForm>);
   replaceFormActionsWithResources(data);
   expect(data.props).toEqual(
     toMap([
@@ -1183,5 +1184,17 @@ test("ignore empty form action", () => {
       },
     ])
   );
+  expect(data.resources).toEqual(new Map());
+});
+
+test("preserve navigation attributes on the canonical Form", () => {
+  const data = renderData(
+    <Form ws:id="formId" action="?__webstudio__=navigate" method="get" />
+  );
+  const originalProps = new Map(data.props);
+
+  replaceFormActionsWithResources(data);
+
+  expect(data.props).toEqual(originalProps);
   expect(data.resources).toEqual(new Map());
 });

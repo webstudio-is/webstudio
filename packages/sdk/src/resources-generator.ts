@@ -484,7 +484,7 @@ export const replaceFormActionsWithResources = ({
     if (
       prop.name === "method" &&
       prop.type === "string" &&
-      instances.get(prop.instanceId)?.component === "Form"
+      instances.get(prop.instanceId)?.component === "WebhookForm"
     ) {
       let data = formProps.get(prop.instanceId);
       if (data === undefined) {
@@ -498,7 +498,7 @@ export const replaceFormActionsWithResources = ({
       prop.name === "action" &&
       prop.type === "string" &&
       prop.value &&
-      instances.get(prop.instanceId)?.component === "Form"
+      instances.get(prop.instanceId)?.component === "WebhookForm"
     ) {
       let data = formProps.get(prop.instanceId);
       if (data === undefined) {

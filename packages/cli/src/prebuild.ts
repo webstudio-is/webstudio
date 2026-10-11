@@ -67,7 +67,10 @@ import {
   isFormSubmission,
   getEnabledFormActions,
 } from "@webstudio-is/sdk";
-import { migratePages } from "@webstudio-is/project-migrations/pages";
+import {
+  migratePages,
+  migrateResourceFormInstancesMutable,
+} from "@webstudio-is/project-migrations";
 import {
   collectFontFamiliesFromStyleDecls,
   createWebstudioDataFromFragment,
@@ -985,6 +988,11 @@ export const prebuild = async (options: {
   }
   const siteData = parsedSiteData.data;
   const pages = migratePages(siteData.build.pages);
+  const migratedInstances = new Map(siteData.build.instances);
+  migrateResourceFormInstancesMutable(
+    migratedInstances.values(),
+    pages.formComponentIdentityVersion === undefined
+  );
   const publicationBuild = { ...siteData.build, pages };
   const allAssetIds = new Set(siteData.assets.map(({ id }) => id));
   const allMdxAssetIds = getPublishedMdxAssetIds(siteData.assets);
@@ -1195,9 +1203,8 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
   );
 
   for (const page of generatedPages) {
-    const instanceMap = new Map(siteData.build.instances);
     const pageInstanceSet = findTreeInstanceIdsExcludingStaticHidden({
-      instances: instanceMap,
+      instances: migratedInstances,
       props: normalizedPropsMap,
       rootInstanceId: page.rootInstanceId,
     });
@@ -1205,7 +1212,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     pageInstanceSet.add(ROOT_INSTANCE_ID);
     // collect used instances and metas
     const instances: [Instance["id"], Instance][] = [];
-    for (const [_instanceId, instance] of siteData.build.instances) {
+    for (const instance of migratedInstances.values()) {
       if (pageInstanceSet.has(instance.id)) {
         instances.push([instance.id, instance]);
         const meta = framework.metas[instance.component];
@@ -1762,7 +1769,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     });
     const formInstances = Array.from(instances.values());
     const managedFormSubmissions = formInstances
-      .filter((instance) => instance.component === "ResourceForm")
+      .filter((instance) => instance.component === "Form")
       .map((instance) => {
         const actionProp = Array.from(props.values())
           .filter(

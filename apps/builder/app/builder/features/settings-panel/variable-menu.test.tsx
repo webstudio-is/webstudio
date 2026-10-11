@@ -149,7 +149,7 @@ test.each(["formState", "results", "errors"])(
           {
             id: "form",
             type: "instance",
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],
@@ -222,7 +222,7 @@ test.each(["formState", "results", "errors"])(
           {
             id: "form",
             type: "instance",
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],
@@ -295,7 +295,7 @@ test.each(["formState", "results", "errors"])(
           {
             id: "form",
             type: "instance",
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],
@@ -377,7 +377,7 @@ test.each(["formState", "results", "errors"])(
           {
             id: "form",
             type: "instance",
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],
@@ -463,7 +463,7 @@ test("ordinary Form-scoped variable remains deletable from the row context menu"
         {
           id: "form",
           type: "instance",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],

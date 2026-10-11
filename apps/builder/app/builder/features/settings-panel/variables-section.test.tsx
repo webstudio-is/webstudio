@@ -145,7 +145,7 @@ test.each(["formState", "results", "errors"] as const)(
           {
             id: "form",
             type: "instance" as const,
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],
@@ -272,7 +272,7 @@ test("Variables list preview uses server browser info after Preview submission",
         {
           id: "form",
           type: "instance",
-          component: "ResourceForm",
+          component: "Form",
           children: [],
         },
       ],
@@ -332,7 +332,7 @@ test.each([
           {
             id: "form",
             type: "instance" as const,
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],

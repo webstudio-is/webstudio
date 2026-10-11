@@ -48,7 +48,7 @@ const addManagedContactPage = (): EvaluationProject => {
   const instances = [
     {
       id: formId,
-      component: "ResourceForm",
+      component: "Form",
       children: [
         { type: "id" as const, value: "form-content" },
         { type: "id" as const, value: "form-success" },
@@ -814,7 +814,7 @@ describe("managed Form evaluation", () => {
     const project = addManagedContactPage();
     const calls = managedFormCalls();
     const form = project.instances.find(
-      ({ component }) => component === "ResourceForm"
+      ({ component }) => component === "Form"
     )!;
     const button = project.instances.find(
       ({ component }) => component === "Button"
@@ -1007,12 +1007,12 @@ describe("Form modes evaluation", () => {
     project.instances.push(
       {
         id: "mode-contact",
-        component: "ResourceForm",
+        component: "Form",
         children: [],
       },
       {
         id: "mode-search",
-        component: "ResourceForm",
+        component: "Form",
         children: [],
       },
       {
@@ -2147,13 +2147,13 @@ describe("Form modes authoring evaluation", () => {
     instances: [
       {
         id: "contact",
-        component: "ResourceForm",
+        component: "Form",
         label: "Contact",
         children: [],
       },
       {
         id: "search",
-        component: "ResourceForm",
+        component: "Form",
         label: "Search",
         children: [],
       },
@@ -2211,8 +2211,8 @@ describe("Form modes authoring evaluation", () => {
   });
   test("rejects the legacy identity and navigation with connected actions", () => {
     const invalid = project();
-    invalid.instances[0].component = "Form";
-    invalid.props[1].value = [{ dataSourceId: "email", enabled: false }];
+    invalid.instances[0].component = "WebhookForm";
+    invalid.props[1].value = [{ dataSourceId: "email", enabled: true }];
     const result = evaluateHighImpactOutcome({
       fixture: formModesAuthoringFixture,
       project: invalid,
