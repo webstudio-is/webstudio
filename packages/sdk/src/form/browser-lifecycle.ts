@@ -55,6 +55,7 @@ export class FormSubmissionController {
     location: string
   ) {
     if (this.disposed || this.pending) {
+      void submission.catch(() => {});
       controller.abort();
       return false;
     }
