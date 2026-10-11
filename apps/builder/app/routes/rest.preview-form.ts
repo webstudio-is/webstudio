@@ -20,17 +20,17 @@ import {
   defaultEmailSubject,
 } from "@webstudio-is/sdk";
 import { createManagedFormDraftGraph } from "@webstudio-is/sdk/managed-form-draft-graph";
+import { getSystemSearch } from "@webstudio-is/sdk/runtime";
 import {
   cloudflareManagedFormPreviewEmailServiceUrl,
   createCloudflareManagedFormEmailSenderWithUrl,
   getManagedFormFailure,
-  getSystemSearch,
   handleManagedFormSubmission,
   readFormDataWithLimit,
   getManagedFormBrowserInfo,
   validateCloudflareManagedFormEmail,
   type ManagedFormResponse,
-} from "@webstudio-is/sdk/runtime";
+} from "@webstudio-is/sdk/form/server";
 import { managedFormIdFieldName } from "@webstudio-is/sdk/form-fields";
 import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
 import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";

@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { useState } from "react";
+import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { expect, test, vi } from "vitest";
@@ -12,6 +12,72 @@ import {
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
+
+test("a StrictMode Form submits after the effect cleanup probe", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const onManagedSubmit = vi.fn().mockResolvedValue({
+    success: true,
+    status: 200,
+    results: [],
+    errors: [],
+  });
+  const onResultChange = vi.fn();
+  try {
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <Form
+            action={[{ dataSourceId: "resource-one", enabled: true }]}
+            onManagedSubmit={onManagedSubmit}
+            onResultChange={onResultChange}
+          >
+            <input name="email" defaultValue="person@example.com" />
+            <button type="submit">Send</button>
+          </Form>
+        </StrictMode>
+      );
+    });
+    await act(async () => container.querySelector("button")?.click());
+    expect(onManagedSubmit).toHaveBeenCalledOnce();
+    expect(onResultChange).toHaveBeenCalledOnce();
+    expect(container.querySelector("form")?.dataset.state).toBe("success");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+test("a StrictMode Form aborts an active request on real unmount", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  let signal: AbortSignal | undefined;
+  try {
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <Form
+            action={[{ dataSourceId: "resource-one", enabled: true }]}
+            onManagedSubmit={(_values, requestSignal) => {
+              signal = requestSignal;
+              return new Promise(() => {});
+            }}
+          >
+            <button type="submit">Send</button>
+          </Form>
+        </StrictMode>
+      );
+    });
+    await act(async () => container.querySelector("button")?.click());
+    expect(signal?.aborted).toBe(false);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+  expect(signal?.aborted).toBe(true);
+});
 
 test("an unconfigured Form blocks native navigation", async () => {
   const html = renderToStaticMarkup(

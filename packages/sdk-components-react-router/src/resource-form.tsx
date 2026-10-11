@@ -50,7 +50,7 @@ export const Form = forwardRef<
   }, [revalidator.state, resolvePendingRefresh]);
   useEffect(() => () => resolvePendingRefresh(), [resolvePendingRefresh]);
 
-  const revalidate = () => {
+  const revalidate = async () => {
     const refreshPromise = new Promise<void>((resolve) => {
       pendingRefresh.current = {
         sawLoading: revalidator.state === "loading",
@@ -63,7 +63,11 @@ export const Form = forwardRef<
         resolvePendingRefresh();
       }
     });
-    return refreshPromise;
+    await refreshPromise;
+    // React Router restores the previous scroll position after revalidation.
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
   };
 
   return (

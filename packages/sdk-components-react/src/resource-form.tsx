@@ -14,9 +14,13 @@ import {
   validateFormSubmission,
 } from "@webstudio-is/sdk/form-submission";
 import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
-import { resolveRedirectUrl } from "@webstudio-is/sdk/link-utils";
-import { getFormDataEntries, getFormDataValue } from "./form-submission";
-import { submitManagedForm } from "./managed-form-client";
+import {
+  FormSubmissionController,
+  getFormDataEntries,
+  getFormDataValue,
+  submitManagedForm,
+  type FormSubmissionCallbacks,
+} from "@webstudio-is/sdk/form/browser";
 import { useFormFeedbackScroll } from "./form-feedback-scroll";
 
 export const defaultTag = "form";
@@ -71,19 +75,29 @@ export const Form = forwardRef<
     const [internalState, setInternalState] = useState<
       "initial" | "success" | "error"
     >("initial");
-    const activeRequest = useRef<AbortController>();
+    const callbacks = useRef<FormSubmissionCallbacks>();
+    const submissionController = useRef<FormSubmissionController>();
+    submissionController.current ??= new FormSubmissionController(
+      () => callbacks.current!
+    );
     const { setFormRef, revealFeedback } = useFormFeedbackScroll(ref);
     const [hydrated, setHydrated] = useState(false);
     useEffect(() => setHydrated(true), []);
-    useEffect(() => () => activeRequest.current?.abort(), []);
+    useEffect(() => {
+      // StrictMode replays effect setup after cleanup without remounting refs.
+      if (submissionController.current?.isDisposed) {
+        submissionController.current = new FormSubmissionController(
+          () => callbacks.current!
+        );
+      }
+      return () => submissionController.current?.dispose();
+    }, []);
     const previousNavigationToken = useRef(navigationToken);
     const currentNavigationToken = useRef(navigationToken);
     currentNavigationToken.current = navigationToken;
     useEffect(() => {
       if (previousNavigationToken.current !== navigationToken) {
-        activeRequest.current?.abort();
-        activeRequest.current = undefined;
-        setPending(false);
+        submissionController.current?.cancel();
         previousNavigationToken.current = navigationToken;
       }
     }, [navigationToken]);
@@ -100,6 +114,24 @@ export const Form = forwardRef<
       });
       reportState("error");
       revealFeedback();
+    };
+    callbacks.current = {
+      onPending: setPending,
+      onResult: (result) => onResultChange?.(result),
+      onState: reportState,
+      onFeedback: revealFeedback,
+      onRefresh: onSubmissionSuccess,
+      onRedirect: (destination) => {
+        if (onSuccessRedirect) {
+          return onSuccessRedirect(destination);
+        }
+        window.location.assign(destination);
+        return true;
+      },
+      successRedirect,
+      getRedirectBaseUrl: () => getRedirectBaseUrl?.() ?? window.location.href,
+      getLocation: () => window.location.href,
+      getNavigationToken: () => currentNavigationToken.current,
     };
     const validSubmission = isFormSubmission(action);
     const hasResourceActions = validSubmission && action.length > 0;
@@ -149,7 +181,7 @@ export const Form = forwardRef<
         return;
       }
       event.preventDefault();
-      if (activeRequest.current) {
+      if (submissionController.current?.pending) {
         return;
       }
       if (configurationError) {
@@ -196,86 +228,16 @@ export const Form = forwardRef<
     };
     const handleSubmission = (
       submission: Promise<ManagedFormResponse>,
-      controller = new AbortController(),
+      controller: AbortController,
       submittedNavigationToken = navigationToken,
       submittedLocation = window.location.href
-    ) => {
-      activeRequest.current = controller;
-      setPending(true);
-      void submission
-        .then(async (response) => {
-          if (
-            controller.signal.aborted ||
-            submittedNavigationToken !== currentNavigationToken.current ||
-            submittedLocation !== window.location.href
-          ) {
-            return;
-          }
-          setPending(false);
-          onResultChange?.(response);
-          reportState(response.success ? "success" : "error");
-          const destination = response.success
-            ? resolveRedirectUrl(
-                successRedirect,
-                getRedirectBaseUrl?.() ?? window.location.href
-              )
-            : undefined;
-          let redirected = false;
-          if (destination) {
-            if (onSuccessRedirect) {
-              redirected = onSuccessRedirect(destination) !== false;
-            } else {
-              window.location.assign(destination);
-              redirected = true;
-            }
-          }
-          if (redirected === false) {
-            if (response.success) {
-              if (onSubmissionSuccess) {
-                // Refresh is a separate GET. Its failure must not change the
-                // completed submission result or repeat the POST.
-                try {
-                  await onSubmissionSuccess();
-                } catch (error) {
-                  console.error(error);
-                }
-                // React Router restores the previous scroll position after
-                // revalidation settles. Let that restoration finish first.
-                await new Promise<void>((resolve) => {
-                  requestAnimationFrame(() =>
-                    requestAnimationFrame(() => resolve())
-                  );
-                });
-              }
-            }
-            if (
-              !controller.signal.aborted &&
-              submittedNavigationToken === currentNavigationToken.current &&
-              submittedLocation === window.location.href
-            ) {
-              revealFeedback();
-            }
-          }
-        })
-        .catch((error: unknown) => {
-          if (
-            controller.signal.aborted ||
-            submittedNavigationToken !== currentNavigationToken.current ||
-            submittedLocation !== window.location.href
-          ) {
-            return;
-          }
-          const message =
-            error instanceof Error ? error.message : "Form submission failed";
-          reportFailure(message, 500);
-        })
-        .finally(() => {
-          if (activeRequest.current === controller) {
-            activeRequest.current = undefined;
-            setPending(false);
-          }
-        });
-    };
+    ) =>
+      submissionController.current?.submit(
+        submission,
+        controller,
+        submittedNavigationToken,
+        submittedLocation
+      );
     return (
       <form
         {...props}
