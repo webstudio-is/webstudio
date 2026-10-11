@@ -644,8 +644,9 @@ export const hasPropertyAssignment = ({
 /**
  * transpile expression into executable one
  *
- * add optional chaining operator to every member expression
- * to access any field without runtime errors
+ * add optional chaining to member access in executable output so missing
+ * fields do not cause runtime errors. Authored expressions should use direct
+ * access such as formData.subject and add ?? only when a fallback is needed.
  *
  * replace variable names if necessary
  */

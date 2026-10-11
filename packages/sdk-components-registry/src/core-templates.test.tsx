@@ -3,6 +3,7 @@ import { expect, test } from "vitest";
 import {
   collectionComponent,
   encodeDataVariableId,
+  executeExpression,
   blockComponent,
   blockBodyComponent,
   blockTemplateComponent,
@@ -326,5 +327,40 @@ test("new Form templates select project and visitor Email Resources", () => {
       type: "file",
       required: undefined,
     },
+  ]);
+});
+
+test("default Form email subjects use submitted subject or a readable fallback", () => {
+  const fragment = renderCoreTemplate(coreTemplates.form);
+  const formData = fragment.dataSources.find(
+    (source) => source.type === "parameter" && source.name === "formData"
+  );
+  if (formData === undefined) {
+    throw new Error("Expected formData parameter");
+  }
+  const subjects = fragment.resources
+    .filter((resource) => resource.control === "email")
+    .map((resource) => resource.email?.subject);
+  const evaluateSubject = (subject: string | undefined, data: object) => {
+    if (subject === undefined) {
+      throw new Error("Expected email subject");
+    }
+    expect(subject).toContain(`${encodeDataVariableId(formData.id)}.subject`);
+    expect(subject).not.toContain("?.subject");
+    return executeExpression(
+      subject.replaceAll(
+        encodeDataVariableId(formData.id),
+        JSON.stringify(data)
+      )
+    );
+  };
+
+  expect(subjects).toHaveLength(2);
+  expect(
+    subjects.map((subject) => evaluateSubject(subject, { subject: "Question" }))
+  ).toEqual(["Contact form: Question", "Question"]);
+  expect(subjects.map((subject) => evaluateSubject(subject, {}))).toEqual([
+    "Contact form: New message",
+    "Your message",
   ]);
 });

@@ -54,7 +54,7 @@ const ownerEmail = new ResourceValue("Email to owner", {
   control: "email",
   email: {
     recipientMode: "project",
-    subject: expression`"Contact form: " + ${formData}.subject`,
+    subject: expression`"Contact form: " + (${formData}.subject ?? "New message")`,
     body: expression`(${browserInfo}.pageUrl ? "Page: " + ${browserInfo}.pageUrl + "\\n\\n" : "") + "Submitted fields:\\n" + ${formData}`,
   },
   url: expression`""`,
@@ -65,7 +65,7 @@ const visitorEmail = new ResourceValue("Email to visitor", {
   email: {
     recipientMode: "visitor",
     visitorEmailField: "email",
-    subject: expression`${formData}.subject`,
+    subject: expression`${formData}.subject ?? "Your message"`,
     body: JSON.stringify(defaultVisitorConfirmationBody),
     confirmationSubject: "formSubject",
     confirmationBody: "default",

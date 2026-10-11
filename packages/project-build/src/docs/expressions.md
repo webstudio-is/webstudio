@@ -183,8 +183,11 @@ and arithmetic operators, comparisons, logical operators, nullish coalescing,
 ternaries, and template literals.
 
 Webstudio automatically makes property and index access safe when an
-intermediate value is missing. Write direct access such as `post.author.name`.
-Use nullish coalescing when the expression needs a fallback value.
+intermediate value is missing. Write direct access such as `post.author.name`
+or `formData.subject`; do not add `?.` yourself. Use nullish coalescing when
+the expression needs a fallback value, for example
+`formData.subject ?? "New message"`. The `?.` visible in generated executable
+code is added internally and is not part of the authored expression.
 
 Supported string methods:
 
