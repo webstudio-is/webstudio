@@ -160,7 +160,6 @@ export const generateManagedFormResources = ({
   projectMeta,
   props,
   ownerEmail,
-  ownerName,
   systemDataSourceId,
 }: {
   scope: Scope;
@@ -170,7 +169,6 @@ export const generateManagedFormResources = ({
   props?: Props;
   projectMeta?: ProjectMeta;
   ownerEmail?: string;
-  ownerName?: string;
   systemDataSourceId?: string;
   forms: readonly {
     formId: string;
@@ -235,7 +233,6 @@ export const generateManagedFormResources = ({
                 settings: resource.email,
                 projectMeta,
                 ownerEmail,
-                ownerName,
               })
             : undefined;
         const hasRecipientExpression =

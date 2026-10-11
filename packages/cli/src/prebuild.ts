@@ -1963,7 +1963,6 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
         projectMeta,
         props,
         ownerEmail: siteData.user?.email ?? undefined,
-        ownerName: siteData.user?.username ?? undefined,
       })}
 
       ${generatePageMeta({

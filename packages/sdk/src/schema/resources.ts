@@ -12,7 +12,7 @@ const method = z.union([
 const bodyFormat = z.enum(["auto", "json", "multipart"]);
 
 // Missing fields inherit the published Project Emails settings. Configured
-// recipient and Sender values must be nonempty, and subject and body overrides
+// recipient and Reply to values must be nonempty, and subject and body overrides
 // must be valid, nonempty expressions.
 export const emailResourceSettings = z.object({
   recipientMode: z.enum(["project", "custom", "visitor"]).optional(),

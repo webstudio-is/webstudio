@@ -42,7 +42,7 @@ describe("email addresses", () => {
 });
 
 describe("bound Email Resource addresses", () => {
-  test("resolves one Sender mailbox and a comma-separated recipient list", () => {
+  test("resolves one Reply to mailbox and a comma-separated recipient list", () => {
     expect(resolveEmailSenderExpression("Acme <sender@example.com>")).toEqual({
       name: "Acme",
       address: "sender@example.com",
@@ -61,7 +61,7 @@ describe("bound Email Resource addresses", () => {
     ["empty", ""],
     ["non-string", { address: "user@example.com" }],
     ["invalid mailbox", "invalid"],
-  ])("rejects %s resolved Sender values", (_, value) => {
+  ])("rejects %s resolved Reply to values", (_, value) => {
     expect(() => resolveEmailSenderExpression(value)).toThrow();
   });
 
@@ -106,7 +106,6 @@ describe("Email Resource defaults", () => {
       resolveEmailResourceSettings({
         projectMeta,
         ownerEmail: "fallback@example.com",
-        ownerName: "Site Owner Profile",
       })
     ).toMatchObject({
       recipients: [{ name: "Team, West", address: "team@example.com" }],
@@ -127,7 +126,6 @@ describe("Email Resource defaults", () => {
         settings,
         projectMeta,
         ownerEmail: "fallback@example.com",
-        ownerName: "Site Owner Profile",
       })
     ).toMatchObject({
       recipients: [{ address: "custom@example.com" }],
@@ -152,16 +150,15 @@ describe("Email Resource defaults", () => {
     });
   });
 
-  test("falls back to owner for recipients and Sender and keeps a readable Form body", () => {
+  test("falls back to owner for recipients but leaves Reply to empty", () => {
     expect(
       resolveEmailResourceSettings({
         ownerEmail: "owner@example.com",
-        ownerName: "Owner Profile",
       })
     ).toMatchObject({
       recipients: [{ address: "owner@example.com" }],
-      sender: { address: "owner@example.com" },
-      fromName: "Owner Profile",
+      sender: undefined,
+      fromName: "Site Owner",
     });
     const expression = getDefaultFormEmailBodyExpression(
       "formData",

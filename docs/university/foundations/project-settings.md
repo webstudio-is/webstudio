@@ -20,11 +20,11 @@ Project settings are located in the top left by clicking the Webstudio logo > Pr
 
 ## Emails
 
-Configure recipients, Sender, owner notification subject and plain-text body, and the visitor email subject here. Recipients are comma-separated mailboxes such as `team@example.com` or `Name <address@example.com>`; quote a display name that contains a comma. When the list is empty, new Email Resources fall back to the project owner's address. An Email Resource can inherit these recipients or use its own fixed recipient list; submitted Form values cannot choose team recipients.
+Configure recipients, Reply to, owner notification subject and plain-text body, and the visitor email subject here. Recipients are comma-separated mailboxes such as `team@example.com` or `Name <address@example.com>`; quote a display name that contains a comma. When the list is empty, new Email Resources fall back to the project owner's address. An Email Resource can inherit these recipients or use its own fixed recipient list; submitted Form values cannot choose team recipients.
 
 To send visitor email, create an Email Resource, select **Visitor** as its recipient, choose a named email input on the Form, and add the Resource to the Form's Action. Its body starts empty. Webstudio always prepends a fixed confirmation sentence with the site's URL, followed by any body configured in the Resource. The body can use normal Resource bindings. When a Form includes file inputs, submitted files are attached to the outgoing Email Resource message by default. Turn off ‘Attach submitted files’ to omit them. This action runs alongside other actions, and its failure is reported without reversing an otherwise successful Form submission.
 
-Sender accepts one mailbox, with or without a display name: `Acme Support <support@example.com>` or `support@example.com`. Its address is for replies, and its optional name is the display name. Webstudio's authenticated From address stays fixed. Each Email Resource can inherit Sender or override it.
+Reply to accepts one mailbox, with or without a display name: `Acme Support <support@example.com>` or `support@example.com`. Its address is for replies, and its optional name is the display name. Webstudio's authenticated From address stays fixed. Each Email Resource inherits this setting unless it has its own Reply to override. The Resource override is empty by default.
 
 Owner notification subjects keep the configured project or Resource text and gain a short submission reference in brackets on delivery. Each new submission gets a different reference; a retry of one submission keeps it. Visitor-addressed email subjects do not gain that reference.
 

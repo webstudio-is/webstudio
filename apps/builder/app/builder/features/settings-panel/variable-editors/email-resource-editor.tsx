@@ -273,11 +273,9 @@ export const EmailResourceForm = forwardRef<
   const senderError =
     settings.senderExpression !== undefined
       ? getEmailExpressionError("senderExpression")
-      : settings.sender === undefined
+      : settings.sender === undefined || settings.sender === ""
         ? undefined
-        : settings.sender === ""
-          ? "Sender is required."
-          : validateEmailSender(settings.sender);
+        : validateEmailSender(settings.sender);
   const recipientError =
     settings.recipientMode === "visitor"
       ? !settings.visitorEmailField ||
@@ -314,7 +312,12 @@ export const EmailResourceForm = forwardRef<
     }
     onChange?.();
     setSettings((previous) => {
-      const next = { ...previous, [valueKey]: literalValue };
+      const next = { ...previous };
+      if (literalValue === "") {
+        delete next[valueKey];
+      } else {
+        next[valueKey] = literalValue;
+      }
       delete next[expressionKey];
       return next;
     });
@@ -350,10 +353,9 @@ export const EmailResourceForm = forwardRef<
   }));
   const senderField = (
     <EmailExpressionField
-      label="Sender"
+      label="Reply to"
       expression={
-        settings.senderExpression ??
-        JSON.stringify(settings.sender ?? projectMeta?.emailSender ?? "")
+        settings.senderExpression ?? JSON.stringify(settings.sender ?? "")
       }
       placeholder="Acme <acme@example.com>"
       scope={emailBindingScope}

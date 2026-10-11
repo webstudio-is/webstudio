@@ -1884,7 +1884,7 @@ const addEmailResourceIssues = (
     context.addIssue({
       code: "custom",
       path: ["email", "sender"],
-      message: "Sender must contain exactly one valid email address.",
+      message: "Reply to must contain exactly one valid email address.",
     });
   }
 };

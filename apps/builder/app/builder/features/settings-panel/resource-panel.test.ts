@@ -94,7 +94,7 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-test("Email Resource Sender has no redundant project-default reset button", async () => {
+test("Email Resource Reply to override starts empty when inherited", async () => {
   $projectSettings.set({
     meta: { emailSender: "Project <project@example.com>" },
     compiler: {},
@@ -110,7 +110,7 @@ test("Email Resource Sender has no redundant project-default reset button", asyn
           method: "post",
           url: '""',
           headers: [],
-          email: { sender: "Custom <custom@example.com>" },
+          email: {},
         },
       ],
     ])
@@ -139,14 +139,14 @@ test("Email Resource Sender has no redundant project-default reset button", asyn
     container.querySelector<HTMLInputElement>(
       'input[placeholder="Acme <acme@example.com>"]'
     )?.value
-  ).toBe("Custom <custom@example.com>");
+  ).toBe("");
   expect(container.textContent).not.toContain("Reset to project default");
   expect(
     JSON.parse(
       container.querySelector<HTMLInputElement>('input[name="email-settings"]')
         ?.value ?? "{}"
     ).sender
-  ).toBe("Custom <custom@example.com>");
+  ).toBeUndefined();
 });
 
 test("Email default-copy provenance changes only when its field is edited", async () => {
@@ -309,7 +309,7 @@ test("Email Resource uses Subject and Body inputs with a separate binding editor
   const labels = Array.from(container.querySelectorAll("label")).map(
     (label) => label.textContent
   );
-  for (const field of ["Sender", "Recipients", "Subject", "Body"]) {
+  for (const field of ["Reply to", "Recipients", "Subject", "Body"]) {
     expect(labels.filter((label) => label === field)).toHaveLength(1);
   }
   expect(container.textContent).not.toContain("expression");
@@ -339,7 +339,7 @@ test("Email Resource uses Subject and Body inputs with a separate binding editor
     .toContain("Expression editor");
 });
 
-test("Email Sender and Custom recipients validation is shown in tooltips", async () => {
+test("Email Reply to and Custom recipients validation is shown in tooltips", async () => {
   $resources.set(
     new Map([
       [
@@ -390,14 +390,14 @@ test("Email Sender and Custom recipients validation is shown in tooltips", async
   expect(senderInput.value).toBe("not-an-email");
   expect(recipientsInput.value).toBe("also-not-an-email");
   expect(container.textContent).not.toContain(
-    "Sender must contain exactly one valid email address."
+    "Reply to must contain exactly one valid email address."
   );
   expect(container.textContent).not.toContain("Contact email is invalid.");
 
   await act(async () => userEvent.hover(senderInput));
   await expect
     .poll(() => document.body.textContent)
-    .toContain("Sender must contain exactly one valid email address.");
+    .toContain("Reply to must contain exactly one valid email address.");
   await act(async () => userEvent.hover(recipientsInput));
   await expect
     .poll(() => document.body.textContent)
@@ -508,7 +508,7 @@ test("Email Resource recipient modes and attachment radios", async () => {
       'input[placeholder="Acme <acme@example.com>, team@example.com"]'
     )
   ).not.toBeNull();
-  // Sender, custom Recipients, Subject, and Body all use the binding control.
+  // Reply to, custom Recipients, Subject, and Body all use the binding control.
   expect(
     container.querySelectorAll('button[data-variant="default"]')
   ).toHaveLength(4);

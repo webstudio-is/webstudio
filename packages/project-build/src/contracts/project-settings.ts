@@ -30,7 +30,7 @@ export const validateContactEmail = (
 export const validateEmailSender = (sender: string) =>
   sender.trim() === "" || parseEmailSender(sender)
     ? undefined
-    : "Sender must contain exactly one valid email address.";
+    : "Reply to must contain exactly one valid email address.";
 
 export const validateEmailText = (
   value: string,

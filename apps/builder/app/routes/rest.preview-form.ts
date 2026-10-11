@@ -287,7 +287,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           resources,
           projectMeta,
           ownerEmail,
-          ownerName: owner?.username ?? undefined,
           system: values.system,
           systemDataSourceId: match.value.systemDataSourceId,
           formData: values.formData as Record<string, unknown>,

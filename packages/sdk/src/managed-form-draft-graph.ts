@@ -37,7 +37,6 @@ export const createManagedFormDraftGraph = ({
   props,
   projectMeta,
   ownerEmail,
-  ownerName,
   system,
   systemDataSourceId,
   formData,
@@ -52,7 +51,6 @@ export const createManagedFormDraftGraph = ({
   props: Props;
   projectMeta?: ProjectMeta;
   ownerEmail?: string;
-  ownerName?: string;
   system: System;
   systemDataSourceId?: string;
   formData: Record<string, unknown>;
@@ -112,7 +110,6 @@ export const createManagedFormDraftGraph = ({
             settings: resource.email,
             projectMeta,
             ownerEmail,
-            ownerName,
           })
         : undefined;
     const hasRecipientExpression =

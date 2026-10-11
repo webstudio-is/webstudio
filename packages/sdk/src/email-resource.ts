@@ -154,12 +154,10 @@ export const resolveEmailResourceSettings = ({
   settings = {},
   projectMeta = {},
   ownerEmail,
-  ownerName,
 }: {
   settings?: EmailResourceSettings;
   projectMeta?: ProjectMeta;
   ownerEmail?: string;
-  ownerName?: string;
 }) => {
   const recipientsText =
     settings.recipientMode === "custom"
@@ -167,8 +165,7 @@ export const resolveEmailResourceSettings = ({
       : settings.recipientMode === "visitor"
         ? ""
         : projectMeta.contactEmail || ownerEmail || "";
-  const senderText =
-    settings.sender ?? (projectMeta.emailSender || ownerEmail || "");
+  const senderText = settings.sender ?? projectMeta.emailSender ?? "";
   const recipients = parseEmailMailboxes(recipientsText);
   const sender = parseEmailSender(senderText);
   return {
@@ -176,7 +173,7 @@ export const resolveEmailResourceSettings = ({
     recipients: settings.recipientMode === "visitor" ? [] : recipients,
     visitorEmailField: settings.visitorEmailField,
     sender,
-    fromName: sender?.name ?? ownerName ?? "Site Owner",
+    fromName: sender?.name ?? "Site Owner",
     confirmationSubject:
       settings.confirmationSubject ??
       (settings.recipientMode === "visitor" &&

@@ -26,7 +26,7 @@ import { sectionSpacing } from "./utils";
 const fields = [
   {
     key: "emailSender",
-    label: "Sender",
+    label: "Reply to",
     placeholder: "Acme <acme@example.com>",
   },
   {
