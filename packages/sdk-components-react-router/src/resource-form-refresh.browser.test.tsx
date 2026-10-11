@@ -4,6 +4,7 @@ import { act } from "react-dom/test-utils";
 import {
   createMemoryRouter,
   RouterProvider,
+  ScrollRestoration,
   useLoaderData,
 } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
@@ -13,7 +14,10 @@ import { Form } from "./resource-form";
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 const success = {
   success: true,
@@ -148,6 +152,90 @@ test("success feedback scroll waits until delayed route revalidation settles", a
   } finally {
     await act(async () => root.unmount());
     container.remove();
+  }
+});
+
+test("success feedback stays visible when restoration follows route idle", async () => {
+  let finishRefresh: (() => void) | undefined;
+  let finishRestoration: (() => void) | undefined;
+  let loadCount = 0;
+  const loader = async () => {
+    if (++loadCount === 2) {
+      await new Promise<void>((resolve) => {
+        finishRefresh = resolve;
+      });
+    }
+    return null;
+  };
+  vi.stubGlobal("fetch", async () => Response.json(success));
+  vi.stubGlobal("matchMedia", () => ({ matches: true }));
+  const Page = () => {
+    const [state, setState] = useState<"initial" | "success" | "error">(
+      "initial"
+    );
+    return (
+      <>
+        <ScrollRestoration />
+        <div style={{ height: window.innerHeight * 2 }} />
+        <Form
+          data-ws-managed-form-id="form"
+          action={[{ dataSourceId: "resource", enabled: true }]}
+          state={state}
+          onStateChange={setState}
+        >
+          <button type="submit">Send</button>
+          {state === "success" && <div data-feedback="success">Submitted</div>}
+        </Form>
+        <div style={{ height: window.innerHeight }} />
+      </>
+    );
+  };
+  const router = createMemoryRouter([{ path: "/", loader, element: <Page /> }]);
+  const originalRevalidate = router.revalidate.bind(router);
+  router.revalidate = async () => {
+    await originalRevalidate();
+    await new Promise<void>((resolve) => {
+      finishRestoration = resolve;
+    });
+    // Model a late scroll restoration after the route reports idle.
+    window.scrollTo(0, 0);
+  };
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => root.render(<RouterProvider router={router} />));
+    await vi.waitFor(() => expect(loadCount).toBe(1));
+    window.scrollTo(0, 0);
+    await act(async () => container.querySelector("button")?.click());
+    await vi.waitFor(() => expect(finishRefresh).toBeDefined());
+    await vi.waitFor(() =>
+      expect(container.textContent).toContain("Submitted")
+    );
+    expect(window.scrollY).toBe(0);
+
+    await act(async () => finishRefresh?.());
+    await vi.waitFor(() => expect(finishRestoration).toBeDefined());
+    for (let frame = 0; frame < 6; frame++) {
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => resolve())
+      );
+    }
+    expect(window.scrollY).toBe(0);
+    await act(async () => finishRestoration?.());
+    await vi.waitFor(() => expect(window.scrollY).toBeGreaterThan(0));
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    );
+    const feedback = container.querySelector("[data-feedback='success']");
+    expect(feedback).not.toBeNull();
+    const feedbackBounds = feedback!.getBoundingClientRect();
+    expect(feedbackBounds.top).toBeGreaterThanOrEqual(0);
+    expect(feedbackBounds.bottom).toBeLessThanOrEqual(window.innerHeight);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    window.scrollTo(0, 0);
   }
 });
 

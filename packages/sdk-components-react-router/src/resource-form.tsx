@@ -1,11 +1,4 @@
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useRef,
-  type ComponentProps,
-  type ElementRef,
-} from "react";
+import { forwardRef, type ComponentProps, type ElementRef } from "react";
 import {
   useLocation,
   useNavigate,
@@ -23,47 +16,9 @@ export const Form = forwardRef<
   const navigation = useNavigation();
   const revalidator = useRevalidator();
   const navigationToken = `${location.key}:${navigation.location?.key ?? ""}`;
-  const pendingRefresh = useRef<
-    { sawLoading: boolean; resolve: () => void } | undefined
-  >();
-  const previousNavigationToken = useRef(navigationToken);
-  const resolvePendingRefresh = useCallback(() => {
-    pendingRefresh.current?.resolve();
-    pendingRefresh.current = undefined;
-  }, []);
-
-  useEffect(() => {
-    if (previousNavigationToken.current !== navigationToken) {
-      resolvePendingRefresh();
-      previousNavigationToken.current = navigationToken;
-    }
-  }, [navigationToken, resolvePendingRefresh]);
-  useEffect(() => {
-    const refresh = pendingRefresh.current;
-    if (revalidator.state === "loading") {
-      if (refresh) {
-        refresh.sawLoading = true;
-      }
-    } else if (refresh?.sawLoading) {
-      resolvePendingRefresh();
-    }
-  }, [revalidator.state, resolvePendingRefresh]);
-  useEffect(() => () => resolvePendingRefresh(), [resolvePendingRefresh]);
 
   const revalidate = async () => {
-    const refreshPromise = new Promise<void>((resolve) => {
-      pendingRefresh.current = {
-        sawLoading: revalidator.state === "loading",
-        resolve,
-      };
-    });
-    revalidator.revalidate();
-    requestAnimationFrame(() => {
-      if (!pendingRefresh.current?.sawLoading) {
-        resolvePendingRefresh();
-      }
-    });
-    await refreshPromise;
+    await revalidator.revalidate();
     // React Router restores the previous scroll position after revalidation.
     await new Promise<void>((resolve) => {
       requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
