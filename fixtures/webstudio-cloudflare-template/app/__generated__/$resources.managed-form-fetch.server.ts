@@ -2,7 +2,7 @@ import {
   createCloudflareProtectedResourceFetch,
   getDeniedResourceHostnames,
 } from "@webstudio-is/sdk/protected-resource-fetch";
-import { createCloudflareManagedFormEmailSender, createCloudflareManagedFormEmailSenderWithUrl, validateCloudflareManagedFormEmail } from "@webstudio-is/sdk/runtime";
+import { createCloudflareManagedFormEmailSender, createCloudflareManagedFormEmailSenderWithUrl, validateCloudflareManagedFormEmail } from "@webstudio-is/sdk/form/server";
 export const validateManagedFormEmail = validateCloudflareManagedFormEmail;
 export const createManagedFormEmailSender = ({ context, formData, projectId }: { context: unknown; formData: FormData; projectId: string }) => {
   const env = (context as { cloudflare?: { env?: { EMAIL_SERVICE?: unknown; EMAIL_SERVICE_URL?: string; TRPC_SERVER_API_TOKEN?: string } } } | null)?.cloudflare?.env;

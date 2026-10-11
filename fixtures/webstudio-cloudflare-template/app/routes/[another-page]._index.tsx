@@ -15,17 +15,21 @@ import {
   loadResources,
   loadResourceWithEmail,
   loadResourcesWithEmail,
-  handleManagedFormSubmission,
   cachedFetch,
+  getSystemSearch,
+} from "@webstudio-is/sdk/runtime";
+import {
+  handleManagedFormSubmission,
   getManagedFormFailure,
   readFormDataWithLimit,
+  type ManagedFormResponse,
+} from "@webstudio-is/sdk/form/server";
+import {
   managedFormRequestParamName,
   formIdFieldName,
   managedFormIdFieldName,
   formBotFieldName,
-  getSystemSearch,
-  type ManagedFormResponse,
-} from "@webstudio-is/sdk/runtime";
+} from "@webstudio-is/sdk/form";
 import { authenticateRequest } from "@webstudio-is/wsauth";
 import {
   ReactSdkContext,
