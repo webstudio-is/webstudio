@@ -24,7 +24,7 @@ import {
 import { build } from "esbuild";
 import { loadConfigFromFile } from "vite";
 import { bundleVersion } from "@webstudio-is/protocol";
-import type { Asset, Instance, Prop } from "@webstudio-is/sdk";
+import type { Asset, DataSource, Instance, Prop } from "@webstudio-is/sdk";
 import {
   createDocumentGraph,
   type AssetFileDocument,
@@ -243,6 +243,8 @@ const createSiteData = (
     }>;
     instances?: Array<[string, Omit<Instance, "type">]>;
     props?: Array<[string, Prop]>;
+    dataSources?: Array<[string, DataSource]>;
+    resources?: Array<[string, Resource]>;
     pageMeta?: Record<string, unknown>;
     redirects?: Redirects;
   } = {}
@@ -335,8 +337,8 @@ const createSiteData = (
           ],
         ]
       ).map(([id, instance]) => [id, { type: "instance", ...instance }]),
-      dataSources: [],
-      resources: [],
+      dataSources: overrides.dataSources ?? [],
+      resources: overrides.resources ?? [],
       styleSources: [],
       styleSourceSelections: [],
       styles: [],
@@ -3873,42 +3875,38 @@ sitemap.map((page) => page.path);`
           meta: { documentType: "text", content: '""' },
         },
       ],
+      dataSources: [
+        [
+          "security-data",
+          {
+            id: "security-data",
+            type: "resource",
+            name: "Security",
+            resourceId: "security-resource",
+            scopeInstanceId: "root",
+          },
+        ],
+      ],
+      resources: [
+        [
+          "security-resource",
+          {
+            id: "security-resource",
+            name: "Security",
+            control: "system",
+            method: "get",
+            url: JSON.stringify(
+              `data:application/json,${encodeURIComponent(JSON.stringify({ content: security }))}`
+            ),
+            headers: [],
+          },
+        ],
+      ],
     });
-    siteData.build.dataSources = [
-      [
-        "security-data",
-        {
-          id: "security-data",
-          type: "resource",
-          name: "Security",
-          resourceId: "security-resource",
-          scopeInstanceId: "root",
-        },
-      ],
-    ] as never;
-    siteData.build.resources = [
-      [
-        "security-resource",
-        {
-          id: "security-resource",
-          name: "Security",
-          control: "system",
-          method: "get",
-          url: JSON.stringify(
-            `data:application/json,${encodeURIComponent(JSON.stringify({ content: security }))}`
-          ),
-          headers: [],
-        },
-      ],
-    ] as never;
     await writeSiteData(siteData);
 
     await prebuild({ assets: false, template: ["ssg"] });
-    await symlink(
-      join(originalCwd, "node_modules"),
-      "node_modules",
-      "junction"
-    );
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
     await runGeneratedCommand("vike", ["build"]);
     await runGeneratedCommand("vike", ["prerender"]);
 
