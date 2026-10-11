@@ -61,7 +61,6 @@ import {
   type Pages,
   type ComponentBuildContribution,
   isPublishedDeployment,
-  isPathnamePattern,
 } from "@webstudio-is/sdk";
 import { migratePages } from "@webstudio-is/project-migrations/pages";
 import {
@@ -1006,7 +1005,6 @@ export const prebuild = async (options: {
   }
 
   const generatedFiles = new Set<string>();
-  const staticTextPagePaths = new Set<string>();
   const previousGeneratedFiles =
     options.incremental === true
       ? await readGeneratedFilesManifest()
@@ -1880,13 +1878,6 @@ export const prebuild = async (options: {
       index: siteData.assetIndex,
       requireCompleteEnumeration: options.template.includes("ssg"),
     });
-    if (
-      isStaticBuild &&
-      documentType === "text" &&
-      isPathnamePattern(pagePath) === false
-    ) {
-      staticTextPagePaths.add(pagePath);
-    }
     for (const { file, template } of getTemplates({
       pagePath,
       prerenderPaths,
@@ -1934,13 +1925,6 @@ export const prebuild = async (options: {
         );
       await writeGeneratedFile(file, content);
     }
-  }
-
-  if (isStaticBuild) {
-    await writeGeneratedFile(
-      join(generatedDir, "$resources.static-text-pages.json"),
-      JSON.stringify([...staticTextPagePaths].sort(), undefined, 2)
-    );
   }
 
   // MARK: - Default sitemap.xml
