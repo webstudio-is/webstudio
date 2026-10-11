@@ -44,12 +44,8 @@ export const createFramework = async (
     join(templatesDirectory, "html", "+Head.tsx"),
     "utf8"
   );
-  const htmlDataTemplate = await readFile(
-    join(templatesDirectory, "html", "+data.ts"),
-    "utf8"
-  );
-  const textPageTemplate = await readFile(
-    join(templatesDirectory, "text", "+Page.tsx"),
+  const dataTemplate = await readFile(
+    join(templatesDirectory, "+data.ts"),
     "utf8"
   );
   const textConfigTemplate = await readFile(
@@ -92,7 +88,7 @@ export const createFramework = async (
         },
         {
           file: join("pages", route, "+data.ts"),
-          template: htmlDataTemplate,
+          template: dataTemplate,
         },
       ];
       if (dynamic) {
@@ -113,16 +109,12 @@ export const createFramework = async (
       const route = generateVikeTextRoute(pagePath);
       return [
         {
-          file: join("pages", route, "+Page.tsx"),
-          template: textPageTemplate,
-        },
-        {
           file: join("pages", route, "+config.ts"),
           template: textConfigTemplate,
         },
         {
           file: join("pages", route, "+data.ts"),
-          template: htmlDataTemplate,
+          template: dataTemplate,
         },
         {
           file: join("pages", route, "+route.ts"),

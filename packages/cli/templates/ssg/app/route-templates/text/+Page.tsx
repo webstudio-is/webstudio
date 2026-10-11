@@ -1,1 +1,0 @@
-export const Page = () => null;
