@@ -631,6 +631,7 @@ test("Email Request loads only a local preview until an actual submission exists
           }}
           inspectSubmission
           alwaysShowRequestTab
+          emptyPreviewMessage="Submit this Form in Preview to see the Email Service response."
           variableValue={undefined}
           showSavedResourceRequest={false}
           isComputingRequest={false}
@@ -651,6 +652,9 @@ test("Email Request loads only a local preview until an actual submission exists
     )
   ).toEqual(["Response", "Request", "Diagnostics"]);
   expect(container.textContent).not.toContain("Email delivery is available");
+  expect(container.textContent).toContain(
+    "Submit this Form in Preview to see the Email Service response."
+  );
   const requestTab = Array.from(
     container.querySelectorAll<HTMLElement>('[role="tab"]')
   ).find((tab) => tab.textContent === "Request");
@@ -687,6 +691,7 @@ test("Email Request loads only a local preview until an actual submission exists
           requestSnapshot={{
             preview: { to: [], subject: "Receipt", fromName: "Site Owner" },
           }}
+          emptyPreviewMessage="Submit this Form in Preview to see the Email Service response."
           queryActive={false}
           queryPending={false}
           queryContainerRef={() => {}}
@@ -696,6 +701,18 @@ test("Email Request loads only a local preview until an actual submission exists
   );
   expect(container.textContent).toContain('"preview"');
   expect(container.textContent).toContain('"subject": "Receipt"');
+  const responseTab = Array.from(
+    container.querySelectorAll<HTMLElement>('[role="tab"]')
+  ).find((tab) => tab.textContent === "Response");
+  await act(async () => {
+    responseTab?.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 })
+    );
+    responseTab?.click();
+  });
+  expect(container.textContent).toContain(
+    "Submit this Form in Preview to see the Email Service response."
+  );
   expect($previewFormExchanges.get().has("unsent-email")).toBe(false);
 });
 

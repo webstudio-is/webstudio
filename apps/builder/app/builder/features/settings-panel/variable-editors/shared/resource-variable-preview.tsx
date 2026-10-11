@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { javascript } from "@codemirror/lang-javascript";
-import { Button, Flex, Grid } from "@webstudio-is/design-system";
+import { Button, Flex, Grid, Text } from "@webstudio-is/design-system";
 import {
   resourceRequest,
   type DataSource,
@@ -41,6 +41,7 @@ export type ResourcePreviewProps = {
   variable?: DataSource;
   variableValue: unknown;
   showEmptyLoadButton?: boolean;
+  emptyPreviewMessage?: ReactNode;
   inspectSubmission?: boolean;
   alwaysShowRequestTab?: boolean;
   showSavedResourceRequest?: boolean;
@@ -64,6 +65,7 @@ export const ResourceVariablePreview = ({
   variableValue,
   resolveInspection,
   showEmptyLoadButton = false,
+  emptyPreviewMessage,
   inspectSubmission: inspectSubmissionByDefault = false,
   alwaysShowRequestTab = false,
   showSavedResourceRequest = false,
@@ -190,6 +192,15 @@ export const ResourceVariablePreview = ({
       }}
     >
       <EditorContent {...editorProps} />
+      {computedValue === undefined && emptyPreviewMessage !== undefined && (
+        <Flex
+          align="center"
+          justify="center"
+          css={{ position: "absolute", inset: 0, padding: 16 }}
+        >
+          <Text color="moreSubtle">{emptyPreviewMessage}</Text>
+        </Flex>
+      )}
       {showEmptyLoadButton && !computedValue && (
         <Flex
           justify="center"

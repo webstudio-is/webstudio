@@ -598,6 +598,7 @@ export const EmailResourceEditor = forwardRef<
           requestSnapshot={requestPreview}
           inspectSubmission
           alwaysShowRequestTab
+          emptyPreviewMessage="Submit this Form in Preview to see the Email Service response."
           suppressPreviewPending
         />
       }
