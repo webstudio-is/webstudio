@@ -31,7 +31,6 @@ import {
   formDataParameterName,
 } from "@webstudio-is/sdk/runtime";
 import {
-  Box,
   Grid,
   InputErrorsTooltip,
   InputField,
