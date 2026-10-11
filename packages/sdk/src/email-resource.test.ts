@@ -148,6 +148,12 @@ describe("Email Resource defaults", () => {
       subject: '"Project subject"',
       body: '"Project body"',
     });
+    expect(
+      resolveEmailResourceSettings({
+        settings: { sender: "" },
+        projectMeta,
+      }).sender
+    ).toEqual({ name: "Owner Name", address: "owner@example.com" });
   });
 
   test("falls back to owner for recipients but leaves Reply to empty", () => {

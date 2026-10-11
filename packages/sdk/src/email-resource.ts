@@ -165,7 +165,7 @@ export const resolveEmailResourceSettings = ({
       : settings.recipientMode === "visitor"
         ? ""
         : projectMeta.contactEmail || ownerEmail || "";
-  const senderText = settings.sender ?? projectMeta.emailSender ?? "";
+  const senderText = settings.sender || projectMeta.emailSender || "";
   const recipients = parseEmailMailboxes(recipientsText);
   const sender = parseEmailSender(senderText);
   return {
