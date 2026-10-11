@@ -119,7 +119,7 @@ const moveFeedbackBelowViewport = async (
       }
       const spacer = document.createElement("div");
       spacer.style.height = "1600px";
-      feedback.before(spacer);
+      feedback.parentNode?.insertBefore(spacer, feedback);
       (
         window as Window & { __mcpFeedbackPositioned?: boolean }
       ).__mcpFeedbackPositioned = true;
