@@ -26,4 +26,4 @@ if (forbidden.length > 0) {
     `Form browser entry crosses the delivery boundary: ${forbidden.join(", ")}`
   );
 }
-console.log(`Form browser boundary: ${modules.length} modules checked`);
+console.info(`Form browser boundary: ${modules.length} modules checked`);

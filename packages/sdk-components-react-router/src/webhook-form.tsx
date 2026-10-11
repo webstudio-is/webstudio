@@ -10,7 +10,7 @@ import {
   formIdFieldName,
   formBotFieldName,
   isBraveBrowser,
-} from "@webstudio-is/sdk/runtime";
+} from "@webstudio-is/sdk/form/browser";
 
 export const defaultTag = "form";
 
