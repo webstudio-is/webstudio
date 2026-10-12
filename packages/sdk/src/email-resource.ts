@@ -138,16 +138,13 @@ export const validateEmailSubject = (subject: unknown) => {
 
 export const getDefaultFormEmailBodyExpression = (
   formDataIdentifier: string,
-  browserInfoIdentifier?: string,
-  projectBody?: string
+  browserInfoIdentifier?: string
 ) =>
-  projectBody
-    ? JSON.stringify(projectBody)
-    : `\`Form data:\n\${${formDataIdentifier}}` +
-      (browserInfoIdentifier
-        ? `\n\nBrowser info:\n\${${browserInfoIdentifier}}`
-        : "") +
-      "\`";
+  `\`Form data:\n\${${formDataIdentifier}}` +
+  (browserInfoIdentifier
+    ? `\n\nBrowser info:\n\${${browserInfoIdentifier}}`
+    : "") +
+  "\`";
 
 /** Inheritance is represented by an absent field, so reset removes an override. */
 export const resolveEmailResourceSettings = ({
@@ -176,9 +173,7 @@ export const resolveEmailResourceSettings = ({
     fromName: sender?.name ?? "Site Owner",
     confirmationSubject:
       settings.confirmationSubject ??
-      (settings.recipientMode === "visitor" &&
-      settings.subject === undefined &&
-      !projectMeta.emailConfirmationSubject
+      (settings.recipientMode === "visitor" && settings.subject === undefined
         ? "default"
         : undefined),
     confirmationBody:
@@ -190,15 +185,14 @@ export const resolveEmailResourceSettings = ({
       settings.subject ??
       JSON.stringify(
         settings.recipientMode === "visitor"
-          ? projectMeta.emailConfirmationSubject ||
-              defaultEmailConfirmationSubject
-          : projectMeta.emailSubject || defaultEmailSubject
+          ? defaultEmailConfirmationSubject
+          : defaultEmailSubject
       ),
     body:
       settings.body ??
       (settings.recipientMode === "visitor"
         ? JSON.stringify("")
-        : JSON.stringify(projectMeta.emailBody || defaultEmailBody)),
+        : JSON.stringify(defaultEmailBody)),
     includeAttachments: settings.includeAttachments ?? true,
   };
 };

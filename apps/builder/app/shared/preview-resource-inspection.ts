@@ -50,6 +50,10 @@ export const recordResourcePreviewExchange = (
   $resourcePreviewExchanges.set(next);
 };
 
-onSet($project, () => {
-  $resourcePreviewExchanges.set(new Map());
+onSet($project, ({ newValue }) => {
+  // Sync can refresh project metadata while staying in the same project.
+  // Keep inspected submissions available when returning from Preview.
+  if (newValue?.id !== $project.get()?.id) {
+    $resourcePreviewExchanges.set(new Map());
+  }
 });

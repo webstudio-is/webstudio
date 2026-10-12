@@ -5478,15 +5478,6 @@ export const runtimeOperationContractData = [
             emailSender: {
               type: "string",
             },
-            emailSubject: {
-              type: "string",
-            },
-            emailBody: {
-              type: "string",
-            },
-            emailConfirmationSubject: {
-              type: "string",
-            },
             faviconAssetId: {
               type: "string",
             },
@@ -5602,36 +5593,6 @@ export const runtimeOperationContractData = [
               ],
             },
             emailSender: {
-              anyOf: [
-                {
-                  type: "string",
-                },
-                {
-                  type: "null",
-                },
-              ],
-            },
-            emailSubject: {
-              anyOf: [
-                {
-                  type: "string",
-                },
-                {
-                  type: "null",
-                },
-              ],
-            },
-            emailBody: {
-              anyOf: [
-                {
-                  type: "string",
-                },
-                {
-                  type: "null",
-                },
-              ],
-            },
-            emailConfirmationSubject: {
               anyOf: [
                 {
                   type: "string",

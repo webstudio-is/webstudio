@@ -475,10 +475,13 @@ For responsive page work, use Builder breakpoints as the source of truth:
 
 Before authoring unfamiliar expressions, read `webstudio://project/expressions` with MCP `resources/read` or `webstudio mcp read-resource webstudio://project/expressions`. It documents the supported expression subset, method allowlist, scope, Collection context, and validation limits.
 
-Write direct property access in authored expressions, such as `formData.subject`.
-Webstudio makes it safe when generating executable code, so do not write
-`formData?.subject`. Use `formData.subject ?? "New message"` when a missing value
-needs a meaningful fallback. Generated `?.` is an internal implementation detail.
+Always write direct property access in authored expressions, such as
+`formData.subject`. Never type optional property access (`?.`) in an authored
+binding. The expression compiler inserts it into generated JavaScript to make
+missing intermediate values safe; that generated syntax is not an authoring
+example and must not be copied into a binding. Use
+`formData.subject ?? "New message"` when a missing value needs a meaningful
+fallback.
 
 - Use direct value tools for fixed content. For one visible text child, use `update-text` with plain `text`. For a bounded multi-instance literal replacement, use `replace-text` with `find`, `replace`, `pagePath` or `pageId`, and `limit`; it does not change expression children. Use `replace-prop-text` for bounded changes inside static string props, optionally limited to prop names or instance ids; it never changes dynamic bindings. For static props such as `aria-label`, `alt`, `id`, `class`, `href`, or button labels stored as props, use `update-props` with the prop's direct type/value.
 - Use `bind-props` only when the prop must stay dynamic: an expression, resource result, action, or existing scoped runtime context such as `system`. Do not use `bind-props` just to set a fixed string.

@@ -220,6 +220,38 @@ test("Form state stays internal while feedback uses the formState variable", () 
   );
 });
 
+test("default Form leaves layout to its Form Content", () => {
+  const fragment = renderCoreTemplate(coreTemplates.form);
+  const form = fragment.instances.find(({ component }) => component === "Form");
+  const content = fragment.instances.find(
+    ({ label }) => label === "Form Content"
+  );
+  expect(form).toBeDefined();
+  expect(content).toBeDefined();
+  expect(
+    fragment.styleSourceSelections.filter(
+      ({ instanceId }) => instanceId === form?.id
+    )
+  ).toEqual([]);
+  const contentStyleSourceId = fragment.styleSourceSelections.find(
+    ({ instanceId }) => instanceId === content?.id
+  )?.values[0];
+  expect(
+    fragment.styles
+      .filter(({ styleSourceId }) => styleSourceId === contentStyleSourceId)
+      .map(({ property, value }) => ({ property, value }))
+  ).toEqual([
+    { property: "display", value: { type: "keyword", value: "flex" } },
+    {
+      property: "flexDirection",
+      value: { type: "keyword", value: "column" },
+    },
+    { property: "alignItems", value: { type: "keyword", value: "start" } },
+    { property: "rowGap", value: { type: "unit", unit: "px", value: 16 } },
+    { property: "columnGap", value: { type: "unit", unit: "px", value: 16 } },
+  ]);
+});
+
 test("new Form templates select project and visitor Email Resources", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
   const renderedTemplate = JSON.stringify(fragment);
@@ -268,6 +300,11 @@ test("new Form templates select project and visitor Email Resources", () => {
   expect(emailResources[0]?.email?.subject).toContain(".subject");
   expect(emailResources[1]?.email?.subject).toContain(".subject");
   expect(emailResources[0]?.email?.body).toContain(".pageUrl");
+  expect(
+    emailResources
+      .flatMap((resource) => [resource?.email?.subject, resource?.email?.body])
+      .some((expression) => expression?.includes("?."))
+  ).toBe(false);
   expect(emailResources.every((resource) => resource?.body === undefined)).toBe(
     true
   );
@@ -346,7 +383,7 @@ test("default Form email subjects use submitted subject or a readable fallback",
       throw new Error("Expected email subject");
     }
     expect(subject).toContain(`${encodeDataVariableId(formData.id)}.subject`);
-    expect(subject).not.toContain("?.subject");
+    expect(subject).not.toContain("?.");
     return executeExpression(
       subject.replaceAll(
         encodeDataVariableId(formData.id),

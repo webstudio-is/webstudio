@@ -488,7 +488,7 @@ test.each([
   }
 );
 
-test("a translated project body is inherited unless the Email Resource overrides it", () => {
+test("the default Form body is used unless the Email Resource overrides it", () => {
   const getBody = (resourceBody?: string) => {
     const getGraph = getGeneratedGraph({
       instances: new Map([
@@ -543,7 +543,6 @@ test("a translated project body is inherited unless the Email Resource overrides
       ],
       projectMeta: {
         contactEmail: "team@example.com",
-        emailBody: "Solicitud recibida. Incluiremos los detalles por separado.",
       },
     });
     const graph = getGraph("form", {
@@ -553,12 +552,8 @@ test("a translated project body is inherited unless the Email Resource overrides
     });
     return graph?.resources[0].createRequest(new Map()).email?.body;
   };
-  const projectBody =
-    "Solicitud recibida. Incluiremos los detalles por separado.";
   const inherited = getBody();
-  expect(inherited).toBe(projectBody);
-  expect(inherited).not.toContain("Form data:");
-  expect(inherited).not.toContain("Browser info:");
+  expect(inherited).toContain("Nombre: Ana");
   const override = { body: '"Mensaje del recurso"' };
   expect(getBody(override.body)).toBe("Mensaje del recurso");
 });
@@ -1110,7 +1105,6 @@ test("Visitor Email keeps its empty receipt body instead of the submitted-fields
     props,
     projectMeta: {
       contactEmail: "team@example.com",
-      emailBody: "Project body override is not used for Visitor receipts",
     },
     system: {
       params: {},
@@ -1275,21 +1269,8 @@ test.each([
       expect(body).toContain("Name: Ada");
       expect(body).toContain('"language": "en"');
     }
-    const projectOverrideGraphs = buildGraphs({
-      ...input,
-      projectMeta: {
-        ...input.projectMeta,
-        emailBody: "Project override",
-      },
-    });
-    for (const graph of projectOverrideGraphs) {
-      expect(graph.resources[0].createRequest(new Map()).email?.body).toBe(
-        "Project override"
-      );
-    }
     const resourceOverrideGraphs = buildGraphs({
       ...input,
-      projectMeta: { ...input.projectMeta, emailBody: "Project override" },
       resources: new Map([
         [
           "email",

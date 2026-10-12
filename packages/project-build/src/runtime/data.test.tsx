@@ -1240,6 +1240,12 @@ test("roundtrip system variable in assignment expression", () => {
 test("replace data source ids in expression", () => {
   expect(
     replaceDataSourcesInExpression(
+      `$ws$dataSource$oldId.subject ?? "New message"`,
+      new Map([["oldId", "newId"]])
+    )
+  ).toEqual(`$ws$dataSource$newId.subject ?? "New message"`);
+  expect(
+    replaceDataSourcesInExpression(
       `$ws$dataSource$oldId + missingVariable`,
       new Map([["oldId", "newId"]])
     )

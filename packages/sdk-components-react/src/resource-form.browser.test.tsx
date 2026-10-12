@@ -546,6 +546,9 @@ test("managed Form submits by HTTP outside a router provider and reports pending
     expect(container.querySelector("form")?.getAttribute("aria-busy")).toBe(
       "true"
     );
+    expect(container.querySelector('output[role="status"]')?.textContent).toBe(
+      "Submitting…"
+    );
     const [url, init] = request.mock.calls[0];
     const endpoint = new URL(String(url));
     expect(endpoint.searchParams.get(managedFormRequestParamName)).toBe("1");
@@ -580,6 +583,9 @@ test("managed Form submits by HTTP outside a router provider and reports pending
     await vi.waitFor(() => expect(states).toEqual(["initial", "success"]));
     expect(container.querySelector("form")?.hasAttribute("aria-busy")).toBe(
       false
+    );
+    expect(container.querySelector('output[role="status"]')?.textContent).toBe(
+      ""
     );
     expect(results).toEqual([
       {

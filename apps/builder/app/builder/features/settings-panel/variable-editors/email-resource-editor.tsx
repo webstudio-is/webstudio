@@ -14,6 +14,8 @@ import { useStore } from "@nanostores/react";
 import {
   decodeDataVariableId,
   defaultEmailBody,
+  defaultEmailSubject,
+  defaultEmailConfirmationSubject,
   defaultVisitorConfirmationBody,
   findTreeInstanceIds,
   getDefaultFormEmailBodyExpression,
@@ -47,7 +49,6 @@ import {
   $instances,
   $props,
   $resources,
-  $projectSettings,
 } from "~/shared/sync/data-stores";
 import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
@@ -160,7 +161,6 @@ export const EmailResourceForm = forwardRef<
   const dataSources = useStore($dataSources);
   const instances = useStore($instances);
   const props = useStore($props);
-  const projectMeta = useStore($projectSettings)?.meta;
   const attachmentId = useId();
   const recipientsLabelId = useId();
   const resource =
@@ -198,6 +198,9 @@ export const EmailResourceForm = forwardRef<
   const [settings, setSettings] = useState<EmailResourceSettings>(
     resource?.email ?? {}
   );
+  const [showCustomRecipientError, setShowCustomRecipientError] = useState(
+    resource?.email?.recipientMode === "custom"
+  );
   const formDataIdentifier = Array.from(aliases).find(
     ([, alias]) => alias === formDataParameterName
   )?.[0];
@@ -210,10 +213,9 @@ export const EmailResourceForm = forwardRef<
       : formDataIdentifier
         ? getDefaultFormEmailBodyExpression(
             formDataIdentifier,
-            browserInfoIdentifier,
-            projectMeta?.emailBody
+            browserInfoIdentifier
           )
-        : JSON.stringify(projectMeta?.emailBody || defaultEmailBody);
+        : JSON.stringify(defaultEmailBody);
   const setField = <K extends keyof EmailResourceSettings>(
     key: K,
     value: EmailResourceSettings[K]
@@ -276,7 +278,7 @@ export const EmailResourceForm = forwardRef<
       : settings.sender === undefined || settings.sender === ""
         ? undefined
         : validateEmailSender(settings.sender);
-  const recipientError =
+  const recipientValidationError =
     settings.recipientMode === "visitor"
       ? !settings.visitorEmailField ||
         !emailFields.includes(settings.visitorEmailField)
@@ -290,6 +292,10 @@ export const EmailResourceForm = forwardRef<
             (settings.recipients
               ? undefined
               : "Enter at least one recipient."));
+  const recipientError =
+    settings.recipientMode === "custom" && !showCustomRecipientError
+      ? undefined
+      : recipientValidationError;
   const subjectError = getEmailExpressionError("subject");
   const bodyError = getEmailExpressionError("body");
   const setEmailExpression = (
@@ -307,8 +313,14 @@ export const EmailResourceForm = forwardRef<
       // Non-literal expressions are stored as bindings and validated at submit.
     }
     if (literalValue === undefined) {
+      if (valueKey === "recipients") {
+        setShowCustomRecipientError(true);
+      }
       setField(expressionKey, expression);
       return;
+    }
+    if (valueKey === "recipients") {
+      setShowCustomRecipientError(true);
     }
     onChange?.();
     setSettings((previous) => {
@@ -324,7 +336,15 @@ export const EmailResourceForm = forwardRef<
   };
   useImperativeHandle(ref, () => ({
     save: (formData) => {
-      if (senderError || recipientError || subjectError || bodyError) {
+      if (recipientValidationError) {
+        setShowCustomRecipientError(true);
+      }
+      if (
+        senderError ||
+        recipientValidationError ||
+        subjectError ||
+        bodyError
+      ) {
         return false;
       }
       const scopeInstanceId =
@@ -357,7 +377,7 @@ export const EmailResourceForm = forwardRef<
       expression={
         settings.senderExpression ?? JSON.stringify(settings.sender ?? "")
       }
-      placeholder="Acme <acme@example.com>"
+      placeholder="John <john@example.com>"
       scope={emailBindingScope}
       aliases={emailBindingAliases}
       error={senderError}
@@ -401,6 +421,7 @@ export const EmailResourceForm = forwardRef<
                   : "Choose a Form input to use as the recipient’s email address. The confirmation email is sent to that address."
             }
             onChange={(value: "project" | "custom" | "visitor") => {
+              setShowCustomRecipientError(false);
               if (value === "project") {
                 onChange?.();
                 setSettings((previous) => {
@@ -430,7 +451,7 @@ export const EmailResourceForm = forwardRef<
                 settings.recipientsExpression ??
                 JSON.stringify(settings.recipients ?? "")
               }
-              placeholder="Acme <acme@example.com>, team@example.com"
+              placeholder="John <john@example.com>, pete@example.com"
               scope={emailBindingScope}
               aliases={emailBindingAliases}
               error={recipientError}
@@ -471,9 +492,8 @@ export const EmailResourceForm = forwardRef<
           settings.subject ??
           JSON.stringify(
             settings.recipientMode === "visitor"
-              ? projectMeta?.emailConfirmationSubject ||
-                  "We received your submission"
-              : projectMeta?.emailSubject || "New form submission"
+              ? defaultEmailConfirmationSubject
+              : defaultEmailSubject
           )
         }
         placeholder="New form submission"
@@ -600,7 +620,7 @@ export const EmailResourceEditor = forwardRef<
           requestSnapshot={requestPreview}
           inspectSubmission
           alwaysShowRequestTab
-          emptyPreviewMessage="Submit this Form in Preview to see the Email Service response."
+          emptyPreviewMessage="Submit this Form in Preview to see the email service response."
           suppressPreviewPending
         />
       }

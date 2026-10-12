@@ -43,7 +43,7 @@ test("shows the free and paid address limits in Project Emails", async () => {
   );
   await act(async () =>
     page
-      .getByPlaceholder("Acme <acme@example.com>, team@example.com")
+      .getByPlaceholder("John <john@example.com>, pete@example.com")
       .fill("one@example.com")
   );
   expect(
@@ -61,7 +61,7 @@ test("shows the free and paid address limits in Project Emails", async () => {
   );
   await act(async () =>
     page
-      .getByPlaceholder("Acme <acme@example.com>, team@example.com")
+      .getByPlaceholder("John <john@example.com>, pete@example.com")
       .fill("one@example.com, two@example.com")
   );
   expect(
@@ -70,7 +70,7 @@ test("shows the free and paid address limits in Project Emails", async () => {
   expect($projectSettings.get()?.meta.contactEmail).toBeUndefined();
 });
 
-test("visitor email body is configured on its Email Resource", () => {
+test("subject and body are configured on each Email Resource", () => {
   act(() =>
     root.render(
       <TooltipProvider delayDuration={0}>
@@ -78,7 +78,10 @@ test("visitor email body is configured on its Email Resource", () => {
       </TooltipProvider>
     )
   );
-  expect(document.body.textContent).toContain("Visitor email subject");
+  expect(document.body.textContent).toContain("Reply to");
+  expect(document.body.textContent).not.toContain("Owner subject");
+  expect(document.body.textContent).not.toContain("Owner plain-text body");
+  expect(document.body.textContent).not.toContain("Visitor email subject");
   expect(document.body.textContent).not.toContain(
     "Emails are sent through Webstudio. Replies go to this address."
   );
@@ -87,9 +90,9 @@ test("visitor email body is configured on its Email Resource", () => {
   );
 });
 
-test("keyboard users can open the existing recipients helper", async () => {
+test("keyboard users can open the recipients helper", async () => {
   const recipientsHelp =
-    "Existing Contact email recipients are also used by legacy forms. Leave empty to send new Email Resources to the project owner.";
+    "These addresses are used by email resources. Leave empty to send to the account holder.";
   act(() =>
     root.render(
       <TooltipProvider delayDuration={0}>
@@ -117,35 +120,4 @@ test("keyboard users can open the existing recipients helper", async () => {
   expect(document.activeElement).toBe(recipientsHelpButton);
   await act(async () => userEvent.keyboard("{Enter}"));
   expect(page.getByRole("tooltip").getByText(recipientsHelp)).toBeVisible();
-});
-
-test("keyboard users can open the existing owner body helper", async () => {
-  const ownerBodyHelp =
-    "Leave empty for the default message. Form-scoped Email Resources include submitted fields and browser information by default. Edit an Email Resource body expression to use bindings in a custom message.";
-  act(() =>
-    root.render(
-      <TooltipProvider delayDuration={0}>
-        <SectionEmails />
-      </TooltipProvider>
-    )
-  );
-
-  expect(document.querySelector("#project-emailBody")).not.toBeNull();
-  expect(document.body.textContent).not.toContain(ownerBodyHelp);
-  const ownerBodyHelpButton = document.querySelector(
-    'button[aria-label="Owner plain-text body"]'
-  );
-  expect(ownerBodyHelpButton).not.toBeNull();
-  expect(
-    document.querySelector('button[aria-label="About owner plain-text body"]')
-  ).toBeNull();
-  for (let attempts = 0; attempts < 10; attempts += 1) {
-    if (document.activeElement === ownerBodyHelpButton) {
-      break;
-    }
-    await act(async () => userEvent.tab());
-  }
-  expect(document.activeElement).toBe(ownerBodyHelpButton);
-  await act(async () => userEvent.keyboard("{Enter}"));
-  expect(page.getByRole("tooltip").getByText(ownerBodyHelp)).toBeVisible();
 });

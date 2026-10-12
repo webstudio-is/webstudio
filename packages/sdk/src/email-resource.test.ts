@@ -97,11 +97,9 @@ describe("Email Resource defaults", () => {
   const projectMeta = {
     contactEmail: '"Team, West" <team@example.com>',
     emailSender: "Owner Name <owner@example.com>",
-    emailSubject: "Project subject",
-    emailBody: "Project body",
   };
 
-  test("inherits project defaults and applies Resource overrides", () => {
+  test("inherits project recipients and Reply to, and applies Resource copy", () => {
     expect(
       resolveEmailResourceSettings({
         projectMeta,
@@ -111,8 +109,8 @@ describe("Email Resource defaults", () => {
       recipients: [{ name: "Team, West", address: "team@example.com" }],
       sender: { name: "Owner Name", address: "owner@example.com" },
       fromName: "Owner Name",
-      subject: '"Project subject"',
-      body: '"Project body"',
+      subject: '"New form submission"',
+      body: '"A new form was submitted."',
     });
     const settings = {
       recipientMode: "custom" as const,
@@ -145,8 +143,8 @@ describe("Email Resource defaults", () => {
       })
     ).toMatchObject({
       sender: { name: "Owner Name", address: "owner@example.com" },
-      subject: '"Project subject"',
-      body: '"Project body"',
+      subject: '"New form submission"',
+      body: '"A new form was submitted."',
     });
     expect(
       resolveEmailResourceSettings({
@@ -185,15 +183,13 @@ describe("Email Resource defaults", () => {
         settings: { recipientMode: "visitor", visitorEmailField: "email" },
         projectMeta: {
           contactEmail: "team@example.com",
-          emailBody: "Owner message",
-          emailConfirmationSubject: "We got it",
         },
       })
     ).toMatchObject({
       recipientMode: "visitor",
       visitorEmailField: "email",
       recipients: [],
-      subject: '"We got it"',
+      subject: '"We received your submission"',
       body: '""',
       confirmationBody: "default",
       includeAttachments: true,
@@ -219,21 +215,5 @@ describe("Email Resource defaults", () => {
         },
       }).includeAttachments
     ).toBe(false);
-  });
-
-  test("uses a translated project body as the complete literal message", () => {
-    const expression = getDefaultFormEmailBodyExpression(
-      "formData",
-      "browserInfo",
-      "Solicitud recibida. ${secrets}\\ `citado`"
-    );
-    const render = new Function(
-      "formData",
-      "browserInfo",
-      `return ${expression}`
-    ) as (formData: string, browserInfo: string) => string;
-    expect(render("nombre: Ana", "idioma: es")).toBe(
-      "Solicitud recibida. ${secrets}\\ `citado`"
-    );
   });
 });

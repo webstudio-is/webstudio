@@ -32,16 +32,6 @@ export const validateEmailSender = (sender: string) =>
     ? undefined
     : "Reply to must contain exactly one valid email address.";
 
-export const validateEmailText = (
-  value: string,
-  label: string,
-  multiline = false
-) =>
-  // eslint-disable-next-line no-control-regex
-  /[\u0000-\u001f\u007f]/.test(multiline ? value.replaceAll("\n", "") : value)
-    ? `${label} contains an invalid control character.`
-    : undefined;
-
 export const validateProjectAuth = (auth: string) => {
   const result = parseWsAuth(auth);
   if (result.errors.length === 0) {

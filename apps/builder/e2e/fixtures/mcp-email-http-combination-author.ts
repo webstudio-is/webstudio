@@ -256,8 +256,6 @@ const author = async () => {
       meta: {
         contactEmail: "owner@mcp.test",
         emailSender: "Contact Form <forms@mcp.test>",
-        emailSubject: "Combined action notification",
-        emailBody: "Email and HTTP received the same submission.",
       },
     });
     const resources = await call("list-resources", {

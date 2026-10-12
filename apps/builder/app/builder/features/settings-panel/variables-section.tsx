@@ -20,6 +20,7 @@ import {
   Text,
   Tooltip,
   Kbd,
+  theme,
 } from "@webstudio-is/design-system";
 import { AlertIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { ROOT_INSTANCE_ID, type DataSource } from "@webstudio-is/sdk";
@@ -293,6 +294,7 @@ const VariablesItem = ({
         label={
           <Flex align="center">
             <Tooltip
+              variant="wrapped"
               onPointerDown={(event) => event.preventDefault()}
               triggerProps={{
                 onClick: (event) => {
@@ -306,17 +308,20 @@ const VariablesItem = ({
               content={
                 <Flex direction="column" gap="2">
                   <Text variant="labels">{variable.name}</Text>
-                  <Text>
-                    {variable.type === "variable"
-                      ? `${
-                          variable.value.type === "json"
-                            ? "JSON"
-                            : variable.value.type
-                        } · Static`
-                      : variable.type === "resource"
-                        ? "Resource · Dynamic"
-                        : "JSON · Dynamic parameter"}
-                  </Text>
+                  <Flex align="center" gap="1">
+                    <Text>
+                      {variable.type === "variable"
+                        ? `${
+                            variable.value.type === "json"
+                              ? "JSON"
+                              : variable.value.type
+                          } · Static`
+                        : variable.type === "resource"
+                          ? "Resource · Dynamic"
+                          : "JSON · Dynamic parameter"}
+                    </Text>
+                    <DataVariableBadge variable={variable} />
+                  </Flex>
                   {formVariableDescription && (
                     <Text>{formVariableDescription}</Text>
                   )}
@@ -347,6 +352,7 @@ const VariablesItem = ({
                   </Flex>
                   {canDelete && (
                     <Button
+                      css={{ marginTop: theme.spacing[2] }}
                       color="neutral-destructive"
                       prefix={<TrashIcon />}
                       suffix={

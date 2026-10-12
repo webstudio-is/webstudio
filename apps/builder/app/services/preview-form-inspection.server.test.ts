@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { defaultEmailBody, defaultEmailSubject } from "@webstudio-is/sdk";
-import { capturePreviewFormExchange } from "./preview-form-inspection.server";
+import { capturePreviewResourceExchange } from "./preview-resource-inspection.server";
 
 test("Preview exchange hides credentials and unknown server values while retaining actual public data", async () => {
   const request = new Request(
@@ -25,7 +25,7 @@ test("Preview exchange hides credentials and unknown server values while retaini
   Object.defineProperty(request, "url", {
     value: "https://user:url-password@example.com/send?token=url-token&q=hello",
   });
-  const snapshot = await capturePreviewFormExchange(
+  const snapshot = await capturePreviewResourceExchange(
     "resource",
     {
       request,
@@ -89,7 +89,7 @@ test("Preview exchange hides credentials and unknown server values while retaini
 });
 
 test("an HTTP Resource targeting the Email Service URL keeps request-body redaction", async () => {
-  const snapshot = await capturePreviewFormExchange(
+  const snapshot = await capturePreviewResourceExchange(
     "http-resource",
     {
       kind: "http",
@@ -123,7 +123,7 @@ test("multipart inspection reports file metadata without upload bytes", async ()
     method: "POST",
     body: formData,
   });
-  const snapshot = await capturePreviewFormExchange(
+  const snapshot = await capturePreviewResourceExchange(
     "resource",
     {
       request,
@@ -147,7 +147,7 @@ test("multipart inspection reports file metadata without upload bytes", async ()
 });
 
 test("inspection preserves repeated query parameters and sanitizes relative Location credentials", async () => {
-  const snapshot = await capturePreviewFormExchange(
+  const snapshot = await capturePreviewResourceExchange(
     "resource",
     {
       request: new Request(
@@ -196,7 +196,7 @@ test.each(["response URL", "request Location", "response Location"])(
         body: JSON.stringify({ note: "redirect-secret", value: "visible" }),
       }
     );
-    const snapshot = await capturePreviewFormExchange(
+    const snapshot = await capturePreviewResourceExchange(
       "resource",
       {
         request,
@@ -248,7 +248,7 @@ test.each([
   { a: { b: { c: { d: { e: { f: { g: { h: { i: { j: true } } } } } } } } } },
   Array.from({ length: 100 }, () => "x".repeat(4096)),
 ])("inspection reports every body limit as truncated", async (body) => {
-  const snapshot = await capturePreviewFormExchange(
+  const snapshot = await capturePreviewResourceExchange(
     "resource",
     {
       request: new Request("https://example.com/send", {
@@ -278,7 +278,7 @@ test.each([
 });
 
 test("Email inspection preserves logical request and outcome while redacting adapter credentials", async () => {
-  const snapshot = await capturePreviewFormExchange(
+  const snapshot = await capturePreviewResourceExchange(
     "email-resource",
     {
       request: {
@@ -291,7 +291,7 @@ test("Email inspection preserves logical request and outcome while redacting ada
         email: {
           recipientMode: "visitor",
           recipients: [{ address: "ada@example.com" }],
-          subject: "Receipt subject [0123456789abcdef]",
+          subject: "Receipt subject",
           body: "Submitted message",
           includeAttachments: false,
         },
@@ -321,7 +321,7 @@ test("Email inspection preserves logical request and outcome while redacting ada
   expect(snapshot.request.headers).toEqual([]);
   expect(snapshot.request.body).toMatchObject({
     recipients: [{ address: "ada@example.com" }],
-    subject: "Receipt subject [0123456789abcdef]",
+    subject: "Receipt subject",
     body: "Submitted message",
   });
   expect(snapshot.response).toMatchObject({
@@ -332,7 +332,7 @@ test("Email inspection preserves logical request and outcome while redacting ada
 });
 
 test("Email inspection preserves safe service response headers and redacts credentials", async () => {
-  const snapshot = await capturePreviewFormExchange(
+  const snapshot = await capturePreviewResourceExchange(
     "email-resource",
     {
       kind: "email",
@@ -413,7 +413,7 @@ test("Email inspection preserves safe service response headers and redacts crede
 
 test("Email transport inspection keeps attachment metadata but omits encoded file bytes", async () => {
   const contentBase64 = btoa("private attachment bytes");
-  const snapshot = await capturePreviewFormExchange(
+  const snapshot = await capturePreviewResourceExchange(
     "email-resource",
     {
       kind: "email",
@@ -459,8 +459,8 @@ test("Email transport inspection keeps attachment metadata but omits encoded fil
   expect(JSON.stringify(snapshot)).not.toContain(contentBase64);
 });
 
-test("a submission reference does not make a private Email subject inspectable", async () => {
-  const snapshot = await capturePreviewFormExchange(
+test("a private Email subject is not inspectable", async () => {
+  const snapshot = await capturePreviewResourceExchange(
     "email",
     {
       request: {
@@ -473,7 +473,7 @@ test("a submission reference does not make a private Email subject inspectable",
         email: {
           recipientMode: "project",
           recipients: [],
-          subject: "private-derived-subject [0123456789abcdef]",
+          subject: "private-derived-subject",
           body: "",
           includeAttachments: false,
         },
@@ -491,7 +491,7 @@ test("a submission reference does not make a private Email subject inspectable",
 });
 
 test("platform Email defaults remain inspectable without exposing credentials", async () => {
-  const snapshot = await capturePreviewFormExchange(
+  const snapshot = await capturePreviewResourceExchange(
     "email",
     {
       request: {
@@ -504,7 +504,7 @@ test("platform Email defaults remain inspectable without exposing credentials", 
         email: {
           recipientMode: "project",
           recipients: [],
-          subject: `${defaultEmailSubject} [0123456789abcdef]`,
+          subject: defaultEmailSubject,
           body: defaultEmailBody,
           includeAttachments: false,
         },
@@ -522,7 +522,7 @@ test("platform Email defaults remain inspectable without exposing credentials", 
     }
   );
   expect(snapshot.request.body).toMatchObject({
-    subject: `${defaultEmailSubject} [0123456789abcdef]`,
+    subject: defaultEmailSubject,
     body: defaultEmailBody,
   });
   expect(JSON.stringify(snapshot)).not.toContain("server-only-token");

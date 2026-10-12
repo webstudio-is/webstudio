@@ -275,8 +275,7 @@ export const generateManagedFormResources = ({
                 )})`,
                 browserInfoSource
                   ? `createJsonStringifyProxy(${propsName}.${browserInfoParameterName} as object, { space: 2 })`
-                  : undefined,
-                projectMeta?.emailBody
+                  : undefined
               )
             : undefined;
         const fields = generateResourceRequestFields({

@@ -258,6 +258,9 @@ export const Form = forwardRef<
         <fieldset disabled={!hydrated} style={{ display: "contents" }}>
           <div style={{ display: "contents" }}>{children}</div>
         </fieldset>
+        <output role="status" aria-live="polite">
+          {pending ? "Submitting…" : ""}
+        </output>
       </form>
     );
   }

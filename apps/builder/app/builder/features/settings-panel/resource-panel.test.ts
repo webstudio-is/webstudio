@@ -43,6 +43,7 @@ import {
   useResourceScope,
 } from "./resource-scope";
 import { EmailResourceForm } from "./variable-editors/email-resource-editor";
+import type { PanelApi } from "./variable-editors/shared/variable-panel-api";
 
 const { expressionEvaluations } = vi.hoisted(() => ({
   expressionEvaluations: vi.fn(),
@@ -137,7 +138,7 @@ test("Email Resource Reply to override starts empty when inherited", async () =>
   });
   expect(
     container.querySelector<HTMLInputElement>(
-      'input[placeholder="Acme <acme@example.com>"]'
+      'input[placeholder="John <john@example.com>"]'
     )?.value
   ).toBe("");
   expect(container.textContent).not.toContain("Reset to project default");
@@ -199,7 +200,7 @@ test("Email default-copy provenance changes only when its field is edited", asyn
         ?.value ?? "{}"
     );
   const sender = container.querySelector<HTMLInputElement>(
-    'input[placeholder="Acme <acme@example.com>"]'
+    'input[placeholder="John <john@example.com>"]'
   )!;
   await act(async () => userEvent.fill(sender, "Team <team@example.com>"));
   expect(settings()).toMatchObject({
@@ -274,7 +275,7 @@ test("changing another Email field does not reevaluate custom recipients", async
   await expect.poll(recipientEvaluations).toBe(1);
 
   const sender = container.querySelector<HTMLInputElement>(
-    'input[placeholder="Acme <acme@example.com>"]'
+    'input[placeholder="John <john@example.com>"]'
   )!;
   await act(async () =>
     userEvent.fill(sender, "Support <support@example.com>")
@@ -382,10 +383,10 @@ test("Email Reply to and Custom recipients validation is shown in tooltips", asy
   });
 
   const senderInput = container.querySelector<HTMLInputElement>(
-    'input[placeholder="Acme <acme@example.com>"]'
+    'input[placeholder="John <john@example.com>"]'
   )!;
   const recipientsInput = container.querySelector<HTMLInputElement>(
-    'input[placeholder="Acme <acme@example.com>, team@example.com"]'
+    'input[placeholder="John <john@example.com>, pete@example.com"]'
   )!;
   expect(senderInput.value).toBe("not-an-email");
   expect(recipientsInput.value).toBe("also-not-an-email");
@@ -402,6 +403,108 @@ test("Email Reply to and Custom recipients validation is shown in tooltips", asy
   await expect
     .poll(() => document.body.textContent)
     .toContain("Contact email is invalid.");
+});
+
+test("Custom recipients validate after editing or attempting to save", async () => {
+  $resources.set(
+    new Map([
+      [
+        "email",
+        {
+          id: "email",
+          name: "Notify",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+        },
+      ],
+    ])
+  );
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const editorRef = createRef<PanelApi>();
+  await act(async () => {
+    root?.render(
+      createElement(
+        TooltipProvider,
+        undefined,
+        createElement(
+          "form",
+          undefined,
+          createElement("input", {
+            type: "hidden",
+            name: "name",
+            value: "Notify",
+          }),
+          createElement(EmailResourceForm, {
+            ref: editorRef,
+            variable: {
+              id: "data-source",
+              type: "resource",
+              name: "Notify",
+              scopeInstanceId: "body",
+              resourceId: "email",
+            },
+          })
+        )
+      )
+    );
+  });
+
+  await act(async () =>
+    userEvent.click(
+      container.querySelector<HTMLButtonElement>('[role="combobox"]')!
+    )
+  );
+  await act(async () =>
+    page.getByRole("option", { name: "Custom recipients", exact: true }).click()
+  );
+  const recipientsInput = () =>
+    container.querySelector<HTMLInputElement>(
+      'input[placeholder="John <john@example.com>, pete@example.com"]'
+    )!;
+  expect(recipientsInput().getAttribute("data-color")).not.toBe("error");
+  await act(async () => userEvent.type(recipientsInput(), "invalid"));
+  expect(recipientsInput().getAttribute("data-color")).toBe("error");
+  await act(async () => userEvent.clear(recipientsInput()));
+  expect(recipientsInput().getAttribute("data-color")).toBe("error");
+
+  await act(async () =>
+    userEvent.click(
+      container.querySelector<HTMLButtonElement>('[role="combobox"]')!
+    )
+  );
+  await act(async () =>
+    page.getByRole("option", { name: "Project recipients (or owner)" }).click()
+  );
+  await act(async () =>
+    userEvent.click(
+      container.querySelector<HTMLButtonElement>('[role="combobox"]')!
+    )
+  );
+  await act(async () =>
+    page.getByRole("option", { name: "Custom recipients", exact: true }).click()
+  );
+  expect(recipientsInput().getAttribute("data-color")).not.toBe("error");
+
+  const form = container.querySelector("form")!;
+  let saveResult: unknown;
+  await act(async () => {
+    saveResult = editorRef.current?.save(new FormData(form));
+  });
+  expect(saveResult).toBe(false);
+  expect(recipientsInput().getAttribute("data-color")).toBe("error");
+
+  await act(async () => userEvent.type(recipientsInput(), "john@example.com"));
+  expect(recipientsInput().getAttribute("data-color")).not.toBe("error");
+  expect(
+    JSON.parse(
+      container.querySelector<HTMLInputElement>('input[name="email-settings"]')!
+        .value
+    ).recipients
+  ).toBe("john@example.com");
 });
 
 test("Email Resource recipient modes and attachment radios", async () => {
@@ -505,7 +608,7 @@ test("Email Resource recipient modes and attachment radios", async () => {
   ).toBeVisible();
   expect(
     container.querySelector(
-      'input[placeholder="Acme <acme@example.com>, team@example.com"]'
+      'input[placeholder="John <john@example.com>, pete@example.com"]'
     )
   ).not.toBeNull();
   // Reply to, custom Recipients, Subject, and Body all use the binding control.
@@ -713,8 +816,8 @@ test.each(["sender", "recipients"] as const)(
 
     const fieldInput = container.querySelector<HTMLInputElement>(
       field === "sender"
-        ? 'input[placeholder="Acme <acme@example.com>"]'
-        : 'input[placeholder="Acme <acme@example.com>, team@example.com"]'
+        ? 'input[placeholder="John <john@example.com>"]'
+        : 'input[placeholder="John <john@example.com>, pete@example.com"]'
     )!;
     let bindingControl = fieldInput.parentElement;
     while (
@@ -805,8 +908,8 @@ test.each(["sender", "recipients"] as const)(
 
     const reopenedInput = container.querySelector<HTMLInputElement>(
       field === "sender"
-        ? 'input[placeholder="Acme <acme@example.com>"]'
-        : 'input[placeholder="Acme <acme@example.com>, team@example.com"]'
+        ? 'input[placeholder="John <john@example.com>"]'
+        : 'input[placeholder="John <john@example.com>, pete@example.com"]'
     )!;
     let reopenedControl = reopenedInput.parentElement;
     while (
@@ -2214,7 +2317,7 @@ test.each([
     );
 
     const customInput = container.querySelector<HTMLInputElement>(
-      'input[placeholder="Acme <acme@example.com>, team@example.com"]'
+      'input[placeholder="John <john@example.com>, pete@example.com"]'
     )!;
     expect(customInput).not.toBeNull();
     const customLabelCount = () =>
@@ -2304,7 +2407,7 @@ test.each([
     expect(customLabelCount()).toBe(1);
     expect(
       container.querySelector(
-        'input[placeholder="Acme <acme@example.com>, team@example.com"]'
+        'input[placeholder="John <john@example.com>, pete@example.com"]'
       )
     ).toBeNull();
     if (mode === "project") {

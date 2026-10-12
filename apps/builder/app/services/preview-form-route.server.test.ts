@@ -828,12 +828,95 @@ test("an unset Preview credential fails before any action is sent", async () => 
     const response = await action({ request: request() } as never);
     expect(await response.json()).toMatchObject({
       success: false,
-      errors: [{ message: "Email Service is unavailable for Form Preview" }],
+      errors: [{ message: "Email service is unavailable for Form Preview" }],
     });
     expect(response.status).toBe(503);
     expect(createNodeProtectedResourceFetch).not.toHaveBeenCalled();
   } finally {
     env.TRPC_SERVER_API_TOKEN = token;
+  }
+});
+
+test("two Email actions identify each credential failure in local Preview", async () => {
+  vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
+    ...draftBuild,
+    props: [
+      {
+        ...draftBuild.props[0],
+        value: [
+          { dataSourceId: "destination", enabled: true },
+          { dataSourceId: "visitorDestination", enabled: true },
+        ],
+      },
+    ],
+    dataSources: [
+      { ...draftBuild.dataSources[0], name: "Email to owner" },
+      ...draftBuild.dataSources.slice(1),
+      {
+        id: "visitorDestination",
+        type: "resource",
+        scopeInstanceId: "form",
+        resourceId: "visitorEmail",
+        name: "Email to visitor",
+      },
+    ],
+    resources: [
+      {
+        id: "webhook",
+        name: "Email to owner",
+        control: "email",
+        method: "post",
+        url: '""',
+        headers: [],
+      },
+      {
+        id: "visitorEmail",
+        name: "Email to visitor",
+        control: "email",
+        method: "post",
+        url: '""',
+        headers: [],
+      },
+    ],
+    projectSettings: {
+      meta: { contactEmail: "team@example.com" },
+    },
+  } as never);
+  const send = vi.fn(async () =>
+    Response.json(
+      { error: { code: "unauthorized", message: "Unauthorized" } },
+      { status: 401 }
+    )
+  );
+  vi.stubGlobal("fetch", send);
+  try {
+    const response = await action({ request: request() } as never);
+    const result = (await response.json()) as unknown as {
+      errors: Array<{ resourceName: string; message: string }>;
+    };
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(result.errors).toHaveLength(2);
+    expect(
+      result.errors.map(({ resourceName, message }) => ({
+        resourceName,
+        message,
+      }))
+    ).toEqual([
+      {
+        resourceName: "Email to owner",
+        message: expect.stringContaining(
+          "Email to owner: the email service rejected"
+        ),
+      },
+      {
+        resourceName: "Email to visitor",
+        message: expect.stringContaining(
+          "Email to visitor: the email service rejected"
+        ),
+      },
+    ]);
+  } finally {
+    vi.unstubAllGlobals();
   }
 });
 
@@ -942,64 +1025,53 @@ test("a parent-scope Action with no Body sends entered Form values in the actual
   });
 });
 
-test.each(["resource", "project"])(
-  "Email Preview inspection retains user-authored %s subject and body",
-  async (source) => {
-    const subject = "Configured Email subject";
-    const body =
-      "Configured Email body server-only-test-token public-example-token";
-    vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
-      ...draftBuild,
-      resources: [
-        {
-          id: "webhook",
-          name: "Email",
-          control: "email",
-          method: "post",
-          url: '""',
-          headers: [],
-          ...(source === "resource"
-            ? {
-                email: {
-                  subject: JSON.stringify(subject),
-                  body: JSON.stringify(body),
-                },
-              }
-            : {}),
-        },
-      ],
-      projectSettings: {
-        meta: {
-          contactEmail: "team@example.com",
-          ...(source === "project"
-            ? { emailSubject: subject, emailBody: body }
-            : {}),
+test("Email Preview inspection retains user-authored Resource subject and body", async () => {
+  const subject = "Configured Email subject";
+  const body =
+    "Configured Email body server-only-test-token public-example-token";
+  vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
+    ...draftBuild,
+    resources: [
+      {
+        id: "webhook",
+        name: "Email",
+        control: "email",
+        method: "post",
+        url: '""',
+        headers: [],
+        email: {
+          subject: JSON.stringify(subject),
+          body: JSON.stringify(body),
         },
       },
-    } as never);
-    const send = vi.fn(async () => Response.json({ id: "sent" }));
-    vi.stubGlobal("fetch", send);
-    try {
-      const response = await action({ request: request() } as never);
-      const result = (await response.json()) as unknown as {
-        success: boolean;
-        previewExchanges: PreviewFormExchange[];
-      };
-      expect(result.success).toBe(true);
-      expect(result.previewExchanges[0].request.body).toMatchObject({
-        to: [{ address: "team@example.com" }],
-        subject: expect.stringMatching(
-          /^Configured Email subject \[[a-f0-9]{16}\]$/
-        ),
-        text: "Configured Email body [redacted] public-example-token",
-      });
-      expect(result.previewExchanges[0].response.body).toEqual({ id: "sent" });
-      expect(JSON.stringify(result.previewExchanges)).not.toContain(
-        "server-only-test-token"
-      );
-      expect(send).toHaveBeenCalledOnce();
-    } finally {
-      vi.unstubAllGlobals();
-    }
+    ],
+    projectSettings: {
+      meta: {
+        contactEmail: "team@example.com",
+      },
+    },
+  } as never);
+  const send = vi.fn(async () => Response.json({ id: "sent" }));
+  vi.stubGlobal("fetch", send);
+  try {
+    const response = await action({ request: request() } as never);
+    const result = (await response.json()) as unknown as {
+      success: boolean;
+      previewExchanges: PreviewFormExchange[];
+    };
+    expect(result.success).toBe(true);
+    expect(result.previewExchanges[0].request.body).toMatchObject({
+      to: [{ address: "team@example.com" }],
+      subject: "Configured Email subject",
+      headers: { "X-Message-ID": expect.stringMatching(/^[a-f0-9]{16}$/) },
+      text: "Configured Email body [redacted] public-example-token",
+    });
+    expect(result.previewExchanges[0].response.body).toEqual({ id: "sent" });
+    expect(JSON.stringify(result.previewExchanges)).not.toContain(
+      "server-only-test-token"
+    );
+    expect(send).toHaveBeenCalledOnce();
+  } finally {
+    vi.unstubAllGlobals();
   }
-);
+});

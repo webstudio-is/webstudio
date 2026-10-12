@@ -41,6 +41,7 @@ export const emailRequestSettings = z.object({
   fromName: z.string().optional(),
   subject: z.string(),
   body: z.string(),
+  headers: z.record(z.string(), z.string()).optional(),
   confirmationSubject: z.enum(["formSubject", "default"]).optional(),
   confirmationBody: z.literal("default").optional(),
   includeAttachments: z.boolean(),

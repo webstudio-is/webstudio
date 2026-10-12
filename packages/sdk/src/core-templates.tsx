@@ -196,6 +196,7 @@ const forms: Record<string, TemplateMeta> = {
         name="files"
         ws:style={css`
           display: block;
+          border-style: none;
         `}
       />
     ),

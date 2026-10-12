@@ -222,8 +222,7 @@ export const createManagedFormDraftGraph = ({
                   getDefaultFormEmailBodyExpression(
                     encodeDataVariableId(formDataSource.id),
                     browserInfoSource &&
-                      encodeDataVariableId(browserInfoSource.id),
-                    projectMeta?.emailBody
+                      encodeDataVariableId(browserInfoSource.id)
                   ),
                   values
                 ) as string)

@@ -256,9 +256,7 @@ export const buildEmailRequestPreview = async ({
       : parseEmailSender((await evaluateText(settings.senderExpression)) ?? "");
   const evaluatedSubject = await evaluateText(resolved.subject);
   const evaluatedBody =
-    settings.body !== undefined ||
-    resolved.recipientMode === "visitor" ||
-    projectMeta?.emailBody
+    settings.body !== undefined || resolved.recipientMode === "visitor"
       ? await evaluateText(resolved.body)
       : visibleFormData === undefined
         ? await evaluateText(resolved.body)

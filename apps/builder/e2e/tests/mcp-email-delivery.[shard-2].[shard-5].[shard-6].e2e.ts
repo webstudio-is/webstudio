@@ -135,7 +135,7 @@ test("MCP-authored contact Form delivers customized Email messages locally", asy
         expect(ownerMessage).toBeDefined();
         expect(visitorMessage).toBeDefined();
         expect(ownerMessage).toMatchObject({
-          subject: expect.stringContaining("Contact form: MCP email test"),
+          subject: "Contact form: MCP email test",
           text: expect.stringContaining("Name: Ada Lovelace"),
           replyTo: { address: "forms@mcp.test", name: "Contact Form" },
           attachments: [
@@ -151,9 +151,7 @@ test("MCP-authored contact Form delivers customized Email messages locally", asy
         expect(ownerMessage?.text).toContain("Email: ada@example.test");
         expect(ownerMessage?.text).toContain("Subject: MCP email test");
         expect(ownerMessage?.text).toContain("Page: http://127.0.0.1:");
-        expect(
-          visitorMessage?.subject.startsWith("We received your message [")
-        ).toBe(true);
+        expect(visitorMessage?.subject).toBe("We received your message");
         expect(visitorMessage?.text).toBe(
           "Thanks for contacting us. We will reply soon."
         );
@@ -289,7 +287,7 @@ test("custom recipients and Email overrides stay isolated between Forms", async 
   }
 });
 
-test("Email retries keep one submission reference and new submissions get a new one", async ({
+test("Email retries keep one message ID and new submissions get a new one", async ({
   page,
   context,
 }) => {
@@ -326,8 +324,11 @@ test("Email retries keep one submission reference and new submissions get a new 
     }
   );
   const { formId } = JSON.parse(stdout) as { formId: string };
-  const requests: Array<{ subject: string; to: Array<{ address: string }> }> =
-    [];
+  const requests: Array<{
+    subject: string;
+    to: Array<{ address: string }>;
+    headers: { "X-Message-ID": string };
+  }> = [];
   const receiver = createServer(async (request, response) => {
     const chunks: Buffer[] = [];
     for await (const chunk of request) {
@@ -336,6 +337,7 @@ test("Email retries keep one submission reference and new submissions get a new 
     const email = JSON.parse(Buffer.concat(chunks).toString("utf8")) as {
       subject: string;
       to: Array<{ address: string }>;
+      headers: { "X-Message-ID": string };
     };
     requests.push(email);
     response.writeHead(requests.length === 1 ? 503 : 200, {
@@ -378,7 +380,7 @@ test("Email retries keep one submission reference and new submissions get a new 
         const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
         await form.locator('input[name="name"]').fill("First local submission");
         await form.locator('input[name="email"]').fill("visitor@example.test");
-        await form.locator('input[name="subject"]').fill("Reference test");
+        await form.locator('input[name="subject"]').fill("Message ID test");
         await form.locator('textarea[name="message"]').fill("First submission");
 
         const firstResponse = page.waitForResponse(
@@ -403,7 +405,7 @@ test("Email retries keep one submission reference and new submissions get a new 
           .fill("visitor@example.test");
         await secondForm
           .locator('input[name="subject"]')
-          .fill("Reference test");
+          .fill("Message ID test");
         await secondForm
           .locator('textarea[name="message"]')
           .fill("Second submission");
@@ -417,23 +419,27 @@ test("Email retries keep one submission reference and new submissions get a new 
         await expect(secondForm).toHaveAttribute("data-state", "success");
         await expect.poll(() => requests.length).toBe(5);
 
-        const getReference = (subject: string) => {
-          const separator = subject.lastIndexOf(" [");
-          expect(separator).toBeGreaterThan(0);
-          expect(subject.endsWith("]")).toBe(true);
-          return subject.slice(separator + 2, -1);
-        };
-        const firstReference = getReference(requests[0].subject);
-        expect(firstReference).not.toBe("");
+        const firstMessageId = requests[0].headers["X-Message-ID"];
+        expect(firstMessageId).not.toBe("");
         expect(
-          requests.slice(0, 3).map(({ subject }) => getReference(subject))
-        ).toEqual([firstReference, firstReference, firstReference]);
+          requests.slice(0, 3).map(({ headers }) => headers["X-Message-ID"])
+        ).toEqual([firstMessageId, firstMessageId, firstMessageId]);
         expect(requests[0]).toEqual(requests[2]);
-        const secondReferences = requests
+        const expectedSubjects = new Set([
+          "Contact form: Message ID test",
+          "We received your message",
+        ]);
+        expect(
+          new Set(requests.slice(0, 2).map(({ subject }) => subject))
+        ).toEqual(expectedSubjects);
+        const secondMessageIds = requests
           .slice(3)
-          .map(({ subject }) => getReference(subject));
-        expect(secondReferences[0]).toBe(secondReferences[1]);
-        expect(secondReferences[0]).not.toBe(firstReference);
+          .map(({ headers }) => headers["X-Message-ID"]);
+        expect(secondMessageIds[0]).toBe(secondMessageIds[1]);
+        expect(secondMessageIds[0]).not.toBe(firstMessageId);
+        expect(
+          new Set(requests.slice(3).map(({ subject }) => subject))
+        ).toEqual(expectedSubjects);
         expect(
           new Set(requests.slice(0, 2).map(({ to }) => to[0]?.address))
         ).toEqual(new Set(["owner@mcp.test", "visitor@example.test"]));

@@ -28,6 +28,18 @@ import { FormResourcePreview } from "./variable-editors/form-resource-preview";
 ).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root | undefined;
 const previousCache = $resourcesCache.get();
+const openResponseTab = async (container: HTMLElement) => {
+  const tab = Array.from(
+    container.querySelectorAll<HTMLElement>('[role="tab"]')
+  ).find((tab) => tab.textContent === "Response");
+  await act(async () => {
+    tab?.dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, button: 0 })
+    );
+    tab?.click();
+  });
+};
+
 afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
@@ -200,7 +212,8 @@ test("Resource inspector can load the actual Request from an empty Request tab",
       container.querySelectorAll('[role="tab"]'),
       (tab) => tab.textContent
     )
-  ).toEqual(["Response", "Request", "Diagnostics"]);
+  ).toEqual(["Request", "Response", "Diagnostics"]);
+  await openResponseTab(container);
   await expect.poll(() => container.textContent).toContain("201");
   expect(container.textContent).toContain("Created");
   expect(container.textContent).toContain("created response");
@@ -478,6 +491,7 @@ test.each(["submission", "reload"] as const)(
         </TooltipProvider>
       )
     );
+    await openResponseTab(container);
     await expect
       .poll(() => container.textContent)
       .toContain(`"source": "${latest}"`);
@@ -564,11 +578,12 @@ test.each(["http", "email"] as const)(
       container.querySelectorAll<HTMLElement>('[role="tab"]')
     );
     expect(tabs.map((tab) => tab.textContent)).toEqual([
-      "Response",
       "Request",
+      "Response",
       "Diagnostics",
     ]);
     expect(tabs[0].getAttribute("data-state")).toBe("active");
+    await openResponseTab(container);
     await expect.poll(() => container.textContent).toContain("Retry-After");
     expect(container.textContent).toContain("Service Unavailable");
     expect(container.textContent).toContain("Created");
@@ -576,10 +591,10 @@ test.each(["http", "email"] as const)(
     expect(container.textContent).toContain('"accepted": true');
     expect(container.textContent).toContain("https://example.com/final");
     await act(async () => {
-      tabs[1].dispatchEvent(
+      tabs[0].dispatchEvent(
         new MouseEvent("mousedown", { bubbles: true, button: 0 })
       );
-      tabs[1].click();
+      tabs[0].click();
     });
     await expect
       .poll(() => container.textContent)
@@ -599,10 +614,10 @@ test.each(["http", "email"] as const)(
       expect(container.textContent).not.toContain("Load data");
     }
     await act(async () => {
-      tabs[1].dispatchEvent(
+      tabs[0].dispatchEvent(
         new MouseEvent("mousedown", { bubbles: true, button: 0 })
       );
-      tabs[1].click();
+      tabs[0].click();
     });
     await expect
       .poll(() => container.textContent)
@@ -631,7 +646,7 @@ test("Email Request loads only a local preview until an actual submission exists
           }}
           inspectSubmission
           alwaysShowRequestTab
-          emptyPreviewMessage="Submit this Form in Preview to see the Email Service response."
+          emptyPreviewMessage="Submit this Form in Preview to see the email service response."
           variableValue={undefined}
           showSavedResourceRequest={false}
           isComputingRequest={false}
@@ -650,10 +665,14 @@ test("Email Request loads only a local preview until an actual submission exists
       container.querySelectorAll('[role="tab"]'),
       (tab) => tab.textContent
     )
-  ).toEqual(["Response", "Request", "Diagnostics"]);
+  ).toEqual(["Request", "Response", "Diagnostics"]);
+  expect(
+    container.querySelector('[role="tab"][data-state="active"]')?.textContent
+  ).toBe("Request");
+  await openResponseTab(container);
   expect(container.textContent).not.toContain("Email delivery is available");
   expect(container.textContent).toContain(
-    "Submit this Form in Preview to see the Email Service response."
+    "Submit this Form in Preview to see the email service response."
   );
   const requestTab = Array.from(
     container.querySelectorAll<HTMLElement>('[role="tab"]')
@@ -691,7 +710,7 @@ test("Email Request loads only a local preview until an actual submission exists
           requestSnapshot={{
             preview: { to: [], subject: "Receipt", fromName: "Site Owner" },
           }}
-          emptyPreviewMessage="Submit this Form in Preview to see the Email Service response."
+          emptyPreviewMessage="Submit this Form in Preview to see the email service response."
           queryActive={false}
           queryPending={false}
           queryContainerRef={() => {}}
@@ -711,7 +730,7 @@ test("Email Request loads only a local preview until an actual submission exists
     responseTab?.click();
   });
   expect(container.textContent).toContain(
-    "Submit this Form in Preview to see the Email Service response."
+    "Submit this Form in Preview to see the email service response."
   );
   expect($previewFormExchanges.get().has("unsent-email")).toBe(false);
 });
@@ -777,6 +796,7 @@ test("Email inspector shows raw HTTP response and failed delivery diagnostics se
     )
   );
 
+  await openResponseTab(container);
   expect(container.textContent).toContain('"status": 200');
   expect(container.textContent).toContain("Delivery rejected");
   expect(container.textContent).toContain("request-id");

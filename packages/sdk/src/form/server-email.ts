@@ -70,7 +70,7 @@ export const prepareVisitorEmailRequest = (
   };
 };
 
-/** Bound Base64 allocation before the Email Service validates the payload. */
+/** Bound Base64 allocation before the email service validates the payload. */
 export const validateCloudflareManagedFormEmail = (
   request: ResourceRequest,
   formData: FormData
@@ -118,7 +118,7 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
     return;
   }
   if (projectId.length === 0) {
-    throw new Error("Email Service project ID is required");
+    throw new Error("Email service project ID is required");
   }
   return async (
     request: ResourceRequest,
@@ -189,6 +189,7 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
           to: email.recipients,
           subject: email.subject,
           text: email.body,
+          ...(email.headers === undefined ? {} : { headers: email.headers }),
           ...(email.sender === undefined ? {} : { replyTo: email.sender }),
           ...(email.fromName === undefined ? {} : { fromName: email.fromName }),
           ...(attachments.length === 0 ? {} : { attachments }),
@@ -315,9 +316,9 @@ export const createCloudflareManagedFormEmailSenderWithUrl = (
     url.search !== "" ||
     url.hash !== ""
   ) {
-    throw new Error("Email Service URL must be an approved Preview endpoint");
+    throw new Error("Email service URL must be an approved Preview endpoint");
   }
-  return createCloudflareManagedFormEmailSenderWithFetch(
+  const sendEmail = createCloudflareManagedFormEmailSenderWithFetch(
     (input, init) => {
       return fetcher(input, { ...(init ?? {}), redirect: "error" });
     },
@@ -326,4 +327,18 @@ export const createCloudflareManagedFormEmailSenderWithUrl = (
     { authorization: `Bearer ${token}` },
     url
   );
+  if (sendEmail === undefined) {
+    return;
+  }
+  return async (request, options) => {
+    const result = await sendEmail(request, options);
+    if (result.status === 401) {
+      return failure(
+        401,
+        "EMAIL_PREVIEW_AUTH_FAILED",
+        `${request.name}: the email service rejected the Builder's credential. Check TRPC_SERVER_API_TOKEN on the Builder server.`
+      );
+    }
+    return result;
+  };
 };

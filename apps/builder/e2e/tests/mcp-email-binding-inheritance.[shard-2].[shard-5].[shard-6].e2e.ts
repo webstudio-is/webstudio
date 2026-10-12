@@ -107,8 +107,8 @@ test("MCP Email bindings deliver values and reset to Project Settings inheritanc
     await expect.poll(() => receiver.messages.length).toBe(2);
     expect(receiver.messages[1]).toMatchObject({
       to: [{ address: "owner@mcp.test" }],
-      subject: expect.stringContaining("Inherited project subject"),
-      text: "Inherited project body.",
+      subject: expect.stringContaining("New form submission"),
+      text: expect.stringContaining("Form data:"),
       replyTo: { address: "forms@mcp.test", name: "Contact Form" },
     });
   } finally {

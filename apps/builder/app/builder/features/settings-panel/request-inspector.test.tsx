@@ -193,7 +193,7 @@ test("HTTP response tab names its response and loading state", async () => {
   ).toBe("Loading response…");
 });
 
-test("shows Response before Request and opens on Response", () => {
+test("shows Request before Response and opens on Request", () => {
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -209,8 +209,8 @@ test("shows Response before Request and opens on Response", () => {
   const tabs = Array.from(container.querySelectorAll('[role="tab"]'));
 
   expect(tabs.map(({ textContent }) => textContent)).toEqual([
-    "Response",
     "Request",
+    "Response",
     "Diagnostics",
   ]);
   expect(tabs[0].getAttribute("data-state")).toBe("active");

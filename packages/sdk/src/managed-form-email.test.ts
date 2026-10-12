@@ -237,7 +237,14 @@ test("sends the private worker envelope with files and no form internals", async
     { fetch },
     formData
   )!;
-  const result = await sendEmail(request, {});
+  const requestWithMessageId: ResourceRequest = {
+    ...request,
+    email: {
+      ...request.email!,
+      headers: { "X-Message-ID": "0123456789abcdef" },
+    },
+  };
+  const result = await sendEmail(requestWithMessageId, {});
   expect(result).toMatchObject({ ok: true, status: 200, data: { id: "sent" } });
   expect(fetch).toHaveBeenCalledTimes(1);
   const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
@@ -250,6 +257,7 @@ test("sends the private worker envelope with files and no form internals", async
     to: [{ address: "team@example.com", name: "Team" }],
     subject: "New submission",
     text: "Text body",
+    headers: { "X-Message-ID": "0123456789abcdef" },
     replyTo: { address: "reply@example.com", name: "Visitor replies" },
     fromName: "Visitor replies",
     attachments: [
@@ -297,8 +305,6 @@ test.each([
       projectMeta: {
         contactEmail: "team@example.com",
         emailSender: "sender@example.com",
-        emailSubject: "New submission",
-        emailBody: "Submitted",
       },
     });
     const generatedRequest = new Function(
@@ -409,6 +415,37 @@ test("sends Preview email to the canonical URL with server-only authorization", 
     subject: "New submission",
     text: "Text body",
   });
+});
+
+test("Preview reports a rejected server credential with the failing action name", async () => {
+  const fetcher = vi.fn(async () =>
+    Response.json(
+      { error: { code: "unauthorized", message: "Unauthorized" } },
+      { status: 401 }
+    )
+  );
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    cloudflareManagedFormPreviewEmailServiceUrl,
+    "local-server-token",
+    new FormData(),
+    projectId,
+    fetcher
+  )!;
+
+  const result = await sendEmail(request, {});
+
+  expect(result).toMatchObject({
+    ok: false,
+    status: 401,
+    statusText:
+      "Team email: the email service rejected the Builder's credential. Check TRPC_SERVER_API_TOKEN on the Builder server.",
+    data: {
+      error: {
+        code: "EMAIL_PREVIEW_AUTH_FAILED",
+      },
+    },
+  });
+  expect(JSON.stringify(result)).not.toContain("local-server-token");
 });
 
 test("does not create a Preview sender without both URL and token", () => {
@@ -661,7 +698,7 @@ test("a failed Email root retries once and keeps sibling results", async () => {
 });
 
 test.each(["New form submission", "Custom owner subject"])(
-  "owner subject %s keeps one reference on retry and changes for another submission",
+  "owner subject %s stays unchanged while its message ID is stable on retry",
   async (subject) => {
     const sendEmail = vi
       .fn()
@@ -708,18 +745,75 @@ test.each(["New form submission", "Custom owner subject"])(
     const subjects = sendEmail.mock.calls.map(
       ([emailRequest]) => emailRequest.email!.subject
     );
-    expect(subjects).toHaveLength(3);
-    expect(subjects[0]).toMatch(
-      new RegExp(`^${subject} \\[([0-9a-f]{16})\\]$`)
+    const messageIds = sendEmail.mock.calls.map(
+      ([emailRequest]) => emailRequest.email!.headers?.["X-Message-ID"]
     );
-    expect(subjects[1]).toBe(subjects[0]);
-    expect(subjects[2]).not.toBe(subjects[0]);
+    expect(subjects).toHaveLength(3);
+    expect(subjects).toEqual([subject, subject, subject]);
+    expect(messageIds[0]).toHaveLength(16);
+    expect(
+      [...messageIds[0]!].every((character) =>
+        "0123456789abcdef".includes(character)
+      )
+    ).toBe(true);
+    expect(messageIds[1]).toBe(messageIds[0]);
+    expect(messageIds[2]).not.toBe(messageIds[0]);
   }
 );
 
+test("Email actions in one Form submission share the message ID", async () => {
+  const sendEmail = vi.fn(async (_emailRequest: ResourceRequest) => ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    data: null,
+  }));
+  await loadManagedFormResources(
+    vi.fn(),
+    {
+      rootIds: ["owner", "visitor"],
+      resources: [
+        {
+          id: "owner",
+          outputName: "Owner email",
+          control: "email",
+          dependencies: [],
+          createRequest: () => ({
+            ...request,
+            email: {
+              ...request.email!,
+              subject: "New contact form submission",
+            },
+          }),
+        },
+        {
+          id: "visitor",
+          outputName: "Visitor email",
+          control: "email",
+          dependencies: [],
+          createRequest: () => ({
+            ...request,
+            email: { ...request.email!, subject: "We received your message" },
+          }),
+        },
+      ],
+    },
+    undefined,
+    { sendEmail }
+  );
+  const requests = sendEmail.mock.calls.map(([emailRequest]) => emailRequest);
+  expect(requests).toHaveLength(2);
+  expect(requests[0]!.email?.subject).toBe("New contact form submission");
+  expect(requests[1]!.email?.subject).toBe("We received your message");
+  expect(requests[0]!.email?.headers?.["X-Message-ID"]).toBeTruthy();
+  expect(requests[1]!.email?.headers?.["X-Message-ID"]).toBe(
+    requests[0]!.email?.headers?.["X-Message-ID"]
+  );
+});
+
 test.each([
   { name: "empty", subject: "" },
-  { name: "too long after suffix", subject: "a".repeat(980) },
+  { name: "too long", subject: "a".repeat(999) },
 ])(
   "$name owner subject blocks every destination before dispatch",
   async ({ subject }) => {
@@ -763,7 +857,7 @@ test.each([
   }
 );
 
-test("owner subject fits the maximum length with its reference", async () => {
+test("owner subject at the maximum length stays unchanged", async () => {
   const sendEmail = vi.fn(async (_emailRequest: ResourceRequest) => ({
     ok: true,
     status: 200,
@@ -782,7 +876,7 @@ test("owner subject fits the maximum length with its reference", async () => {
           dependencies: [],
           createRequest: () => ({
             ...request,
-            email: { ...request.email!, subject: "a".repeat(979) },
+            email: { ...request.email!, subject: "a".repeat(998) },
           }),
         },
       ],
@@ -791,7 +885,10 @@ test("owner subject fits the maximum length with its reference", async () => {
     { sendEmail }
   );
   expect(sendEmail).toHaveBeenCalledOnce();
-  expect(sendEmail.mock.calls[0][0].email?.subject).toHaveLength(998);
+  expect(sendEmail.mock.calls[0][0].email?.subject).toBe("a".repeat(998));
+  expect(
+    sendEmail.mock.calls[0][0].email?.headers?.["X-Message-ID"]
+  ).toHaveLength(16);
 });
 
 test("oversize Email preflight stops both Email and HTTP destinations", async () => {

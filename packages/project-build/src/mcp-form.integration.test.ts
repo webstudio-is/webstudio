@@ -362,7 +362,7 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
               type: "execute",
               args: ["result"],
               code: expect.stringContaining(
-                `${encodeDataSourceVariable(results?.id ?? "")} = result?.results`
+                `${encodeDataSourceVariable(results?.id ?? "")} = result.results`
               ),
             }),
           ],
@@ -376,7 +376,7 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
       }>
     ).find(({ name }) => name === "onResultChange");
     expect(resultCallback?.value[0]?.code).toContain(
-      `${encodeDataSourceVariable(errors?.id ?? "")} = result?.errors`
+      `${encodeDataSourceVariable(errors?.id ?? "")} = result.errors`
     );
     expect(
       remote.state.resources?.get(projectResource?.id ?? "")
@@ -545,8 +545,6 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
       meta: {
         contactEmail: "team@example.com",
         emailSender: "Site <sender@example.com>",
-        emailSubject: "New contact request",
-        emailBody: "A visitor submitted the contact form.",
       },
     });
     await call("refresh");
@@ -554,8 +552,6 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
     expect(settings.data.meta).toMatchObject({
       contactEmail: "team@example.com",
       emailSender: "Site <sender@example.com>",
-      emailSubject: "New contact request",
-      emailBody: "A visitor submitted the contact form.",
     });
     await call("update-resource", {
       resourceId: projectResource?.id,

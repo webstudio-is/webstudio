@@ -371,6 +371,11 @@ test.each([
       async () => await userEvent.hover(container.querySelector("label")!)
     );
     expect(document.body.textContent).toContain(description);
+    const tooltipContent = document.querySelector<HTMLElement>(
+      "[data-side][data-align]"
+    );
+    expect(tooltipContent).not.toBeNull();
+    expect(getComputedStyle(tooltipContent!).maxWidth).toBe("224px");
   }
 );
 
@@ -403,6 +408,9 @@ test("clicking an ancestor source label selects and focuses its defining instanc
     async () => await new Promise((resolve) => setTimeout(resolve, 10))
   );
   expect(document.body.textContent).toContain("Value comes from");
+  expect(
+    document.querySelector('[role="tooltip"] [aria-label="Static variable"]')
+  ).not.toBeNull();
   const tooltipButtons = Array.from(
     document.querySelectorAll<HTMLButtonElement>('[role="tooltip"] button')
   );

@@ -294,7 +294,7 @@ describe("project settings runtime", () => {
     );
   });
 
-  test("validates Sender and rejects line breaks in email subjects", () => {
+  test("validates Reply to", () => {
     expect(() =>
       updateProjectSettings(createState(), {
         meta: { emailSender: "Acme <acme@example.com>" },
@@ -305,32 +305,14 @@ describe("project settings runtime", () => {
         meta: { emailSender: "a@example.com, b@example.com" },
       })
     ).toThrow();
-    expect(() =>
-      updateProjectSettings(createState(), {
-        meta: { emailSubject: "Hello\nBcc: attacker@example.com" },
-      })
-    ).toThrow();
-    expect(() =>
-      updateProjectSettings(createState(), {
-        meta: { emailConfirmationSubject: "Hello\rInjected" },
-      })
-    ).toThrow();
-    expect(() =>
-      updateProjectSettings(createState(), {
-        meta: { emailBody: "Hello\nWorld" },
-      })
-    ).not.toThrow();
   });
 
-  test("saves Email defaults beside the unchanged legacy Contact list", () => {
+  test("saves Reply to beside the unchanged legacy Contact list", () => {
     const state = createState();
     state.projectSettings!.meta.contactEmail = "legacy@example.com";
     const input = projectSettingsUpdateInput.parse({
       meta: {
         emailSender: "Owner <owner@example.com>",
-        emailSubject: "A submission",
-        emailBody: "First line\nSecond line",
-        emailConfirmationSubject: "Thank you",
       },
     });
     const patches = updateProjectSettings(state, input).payload[0]?.patches;

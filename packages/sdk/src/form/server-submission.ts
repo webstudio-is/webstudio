@@ -48,21 +48,22 @@ export type ManagedFormResourceGraph = Omit<
   resources: readonly ManagedFormResource[];
 };
 
-/** A quota rejection cannot succeed on an immediate retry. */
+/** Authentication and quota rejections cannot succeed on an immediate retry. */
 export const shouldRetryManagedFormDestination: NonNullable<
   EmailResourceGraphLoadOptions["shouldRetryFailedRoot"]
 > = (_resourceId, request, result) =>
-  !(request.control === "email" && result.status === 429);
+  !(
+    request.control === "email" &&
+    (result.status === 401 || result.status === 429)
+  );
 
 const maxFormRequestBytes = 25 * 1024 * 1024;
 export const maxFormTeamEmailDeliveries = 5;
-const submissionReferenceBytes = 8;
-const submissionReferenceSuffixLength = 3 + submissionReferenceBytes * 2;
+const messageIdBytes = 8;
 
-const createSubmissionReference = () =>
-  Array.from(
-    crypto.getRandomValues(new Uint8Array(submissionReferenceBytes)),
-    (byte) => byte.toString(16).padStart(2, "0")
+const createMessageId = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(messageIdBytes)), (byte) =>
+    byte.toString(16).padStart(2, "0")
   ).join("");
 
 export const getManagedFormFailure = (
@@ -448,7 +449,7 @@ export const loadManagedFormResources = async (
   const preparedEmailRequests = new Map<string, ResourceRequest>();
   const failedVisitorIds = new Set<string>();
   const failedVisitorResults: Record<string, unknown> = {};
-  let submissionReference: string | undefined;
+  let messageId: string | undefined;
   for (const resource of getReachableResources(graph)) {
     if (resource.control !== "email") {
       continue;
@@ -480,17 +481,19 @@ export const loadManagedFormResources = async (
       }
       if (
         request.email.subject.length === 0 ||
-        request.email.subject.length >
-          maxEmailSubjectLength - submissionReferenceSuffixLength
+        request.email.subject.length > maxEmailSubjectLength
       ) {
         throw new Error("Email subject is invalid");
       }
-      submissionReference ??= createSubmissionReference();
+      messageId ??= createMessageId();
       const preparedRequest = {
         ...request,
         email: {
           ...request.email,
-          subject: `${request.email.subject} [${submissionReference}]`,
+          headers: {
+            ...request.email.headers,
+            "X-Message-ID": messageId,
+          },
         },
       };
       validateEmail?.(preparedRequest);

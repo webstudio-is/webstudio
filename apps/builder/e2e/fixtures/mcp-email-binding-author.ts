@@ -290,8 +290,6 @@ try {
       meta: {
         contactEmail: "owner@mcp.test",
         emailSender: "Contact Form <forms@mcp.test>",
-        emailSubject: "Inherited project subject",
-        emailBody: "Inherited project body.",
       },
     });
   }

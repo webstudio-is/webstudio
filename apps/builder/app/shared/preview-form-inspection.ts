@@ -40,8 +40,12 @@ export const recordPreviewFormExchanges = (
   $previewFormExchanges.set(next);
 };
 
-onSet($project, () => {
-  $previewFormExchanges.set(new Map());
+onSet($project, ({ newValue }) => {
+  // Sync can refresh project metadata while staying in the same project.
+  // Keep inspected submissions available when returning from Preview.
+  if (newValue?.id !== $project.get()?.id) {
+    $previewFormExchanges.set(new Map());
+  }
 });
 
 /** Compare the latest Form attempt with an explicit Resource reload. */

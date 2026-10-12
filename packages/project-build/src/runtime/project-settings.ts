@@ -18,7 +18,6 @@ import {
 import {
   validateContactEmail,
   validateEmailSender,
-  validateEmailText,
   validateProjectAuth,
 } from "../contracts/project-settings";
 import type { BuilderState } from "../state/builder-state";
@@ -144,20 +143,12 @@ const validateProjectMetaUpdate = (
       ]);
     }
   }
-  for (const [name, label] of [
-    ["emailSender", "Sender"],
-    ["emailSubject", "Email subject"],
-    ["emailBody", "Email body"],
-    ["emailConfirmationSubject", "Confirmation subject"],
-  ] as const) {
+  for (const name of ["emailSender"] as const) {
     const value = values[name];
     if (typeof value !== "string") {
       continue;
     }
-    const error =
-      name === "emailSender"
-        ? validateEmailSender(value)
-        : validateEmailText(value, label, name === "emailBody");
+    const error = validateEmailSender(value);
     if (error) {
       return throwBuilderValidationError(error, [
         {

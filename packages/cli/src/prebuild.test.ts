@@ -1071,9 +1071,6 @@ describe("prebuild", () => {
       pageMeta: {
         contactEmail: '"Team, West" <team@example.com>',
         emailSender: "Owner <owner@example.com>",
-        emailSubject: "New request",
-        emailBody: "Thanks for contacting us.",
-        emailConfirmationSubject: "Received",
       },
     });
     await writeSiteData(siteData);

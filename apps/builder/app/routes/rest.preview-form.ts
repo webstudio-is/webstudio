@@ -1,5 +1,5 @@
 import { parseJsonExpression } from "@webstudio-is/expression";
-import { capturePreviewFormExchange } from "~/services/preview-form-inspection.server";
+import { capturePreviewResourceExchange } from "~/services/preview-resource-inspection.server";
 import type { PreviewFormExchange } from "~/shared/preview-form-inspection";
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
@@ -169,7 +169,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           {
             status: 503,
             body: null,
-            message: "Email Service is unavailable for Form Preview",
+            message: "Email service is unavailable for Form Preview",
           },
         ],
       });
@@ -260,9 +260,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
     }
     for (const value of [
-      projectMeta?.emailSubject,
-      projectMeta?.emailBody,
-      projectMeta?.emailConfirmationSubject,
       defaultEmailSubject,
       defaultEmailBody,
       defaultEmailConfirmationSubject,
@@ -309,7 +306,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return;
         }
         exchanges.push(
-          await capturePreviewFormExchange(resourceId, exchange, {
+          await capturePreviewResourceExchange(resourceId, exchange, {
             publicValues,
             privateValues,
             resourceName: resourceNames.get(resourceId) ?? resourceId,

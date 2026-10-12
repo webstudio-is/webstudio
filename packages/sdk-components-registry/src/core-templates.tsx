@@ -55,7 +55,10 @@ const ownerEmail = new ResourceValue("Email to owner", {
   email: {
     recipientMode: "project",
     subject: expression`"Contact form: " + (${formData}.subject ?? "New message")`,
-    body: expression`(${browserInfo}.pageUrl ? "Page: " + ${browserInfo}.pageUrl + "\\n\\n" : "") + "Submitted fields:\\n" + ${formData}`,
+    body: expression`\`\${${browserInfo}.pageUrl ? \`Page: \${${browserInfo}.pageUrl}
+
+\` : ""}Submitted fields:
+\${${formData}}\``,
   },
   url: expression`""`,
   method: "post",
@@ -270,6 +273,12 @@ export const coreTemplates = {
           { label: "Form Content" },
           <div
             ws:show={expression`${formState} === 'initial' || ${formState} === 'error'`}
+            ws:style={css`
+              display: flex;
+              flex-direction: column;
+              align-items: start;
+              gap: 16px;
+            `}
           >
             <Label>
               {new PlaceholderValue("Name")}
@@ -289,7 +298,13 @@ export const coreTemplates = {
             </Label>
             <Label>
               {new PlaceholderValue("Attachment")}
-              <Input name="attachment" type="file" />
+              <Input
+                name="attachment"
+                type="file"
+                ws:style={css`
+                  border-style: none;
+                `}
+              />
             </Label>
             <Button type="submit">{new PlaceholderValue("Submit")}</Button>
           </div>

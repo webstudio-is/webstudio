@@ -239,7 +239,13 @@ export const RequestInspector = ({
 }) => (
   <PanelTabs
     key={queryContainerRef === undefined ? "preview" : "query"}
-    defaultValue={queryContainerRef === undefined ? "preview" : "query"}
+    defaultValue={
+      queryContainerRef !== undefined
+        ? "query"
+        : request !== undefined
+          ? "request"
+          : "preview"
+    }
     css={{ height: "100%", minWidth: 0, overflow: "hidden" }}
   >
     <PanelTabsList
@@ -252,10 +258,10 @@ export const RequestInspector = ({
       {queryContainerRef !== undefined && (
         <PanelTabsTrigger value="query">Query</PanelTabsTrigger>
       )}
-      <PanelTabsTrigger value="preview">{previewLabel}</PanelTabsTrigger>
       {request !== undefined && (
         <PanelTabsTrigger value="request">Request</PanelTabsTrigger>
       )}
+      <PanelTabsTrigger value="preview">{previewLabel}</PanelTabsTrigger>
       <PanelTabsTrigger value="diagnostics" onClick={onDiagnosticsOpen}>
         Diagnostics
       </PanelTabsTrigger>

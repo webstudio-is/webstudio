@@ -363,10 +363,11 @@ describe("public api operation catalog", () => {
     const projectSettingsSchema = JSON.stringify(
       getPublicApiOperation("update-project-settings").inputSchema
     );
-    for (const field of ["emailSender", "emailSubject", "emailBody"]) {
-      expect(projectSettingsSchema).toContain(
-        `"${field}":{"anyOf":[{"type":"string"},{"type":"null"}]}`
-      );
-    }
+    expect(projectSettingsSchema).toContain(
+      '"emailSender":{"anyOf":[{"type":"string"},{"type":"null"}]}'
+    );
+    expect(projectSettingsSchema).not.toContain('"emailSubject"');
+    expect(projectSettingsSchema).not.toContain('"emailBody"');
+    expect(projectSettingsSchema).not.toContain('"emailConfirmationSubject"');
   });
 });

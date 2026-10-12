@@ -114,7 +114,7 @@ test.each(["new", "existing"] as const)(
       );
     }
     const sender = dialog.querySelector<HTMLInputElement>(
-      'input[placeholder="Acme <acme@example.com>"]'
+      'input[placeholder="John <john@example.com>"]'
     )!;
     const subject = dialog.querySelector<HTMLInputElement>(
       'input[placeholder="New form submission"]'

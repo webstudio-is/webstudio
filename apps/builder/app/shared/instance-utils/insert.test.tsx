@@ -32,6 +32,7 @@ import {
   coreMetas,
   elementComponent,
   encodeDataSourceVariable,
+  executeExpression,
   isFormSubmission,
 } from "@webstudio-is/sdk";
 import {
@@ -958,6 +959,63 @@ describe("insert webstudio component at", () => {
             $dataSources.get().get(dataSourceId)?.scopeInstanceId
         )
       ).toEqual([formId, formId]);
+      const insertedEmailSubjects = action.value.map(({ dataSourceId }) => {
+        const dataSource = $dataSources.get().get(dataSourceId);
+        if (dataSource?.type !== "resource") {
+          throw new Error("Expected an Email Resource on the new Form");
+        }
+        return $resources.get().get(dataSource.resourceId)?.email?.subject;
+      });
+      expect(insertedEmailSubjects).toHaveLength(2);
+      for (const subject of insertedEmailSubjects) {
+        expect(subject).toContain(".subject");
+        expect(subject).not.toContain("?.");
+      }
+      const ownerDataSource = $dataSources
+        .get()
+        .get(action.value[0].dataSourceId);
+      if (ownerDataSource?.type !== "resource") {
+        throw new Error("Expected owner Email Resource");
+      }
+      const ownerBody = $resources.get().get(ownerDataSource.resourceId)
+        ?.email?.body;
+      const formDataProp = formProps.find(({ name }) => name === "formData");
+      const browserInfoProp = formProps.find(
+        ({ name }) => name === "browserInfo"
+      );
+      if (
+        ownerBody === undefined ||
+        formDataProp?.type !== "parameter" ||
+        browserInfoProp?.type !== "parameter"
+      ) {
+        throw new Error("Expected owner Email body and Form parameters");
+      }
+      expect(ownerBody).toContain("Submitted fields:\n");
+      expect(
+        lintExpression({
+          expression: ownerBody,
+          availableVariables: new Set([
+            encodeDataSourceVariable(formDataProp.value),
+            encodeDataSourceVariable(browserInfoProp.value),
+          ]),
+        })
+      ).toEqual([]);
+      const evaluateOwnerBody = (pageUrl: string) =>
+        executeExpression(
+          ownerBody
+            .replaceAll(
+              encodeDataSourceVariable(browserInfoProp.value),
+              JSON.stringify({ pageUrl })
+            )
+            .replaceAll(
+              encodeDataSourceVariable(formDataProp.value),
+              JSON.stringify("Name: Ada")
+            )
+        );
+      expect(evaluateOwnerBody("https://example.com/contact")).toBe(
+        "Page: https://example.com/contact\n\nSubmitted fields:\nName: Ada"
+      );
+      expect(evaluateOwnerBody("")).toBe("Submitted fields:\nName: Ada");
       expect(formProps.some(({ name }) => name === "onStateChange")).toBe(true);
       const resultProp = formProps.find(
         ({ name }) => name === "onResultChange"
@@ -1017,6 +1075,12 @@ describe("insert webstudio component at", () => {
         .get(getInstanceKey([formId, "bodyId"]))
         ?.get("onResultChange") as (value: unknown) => void;
       onResultChange(result);
+      const onStateChange = $propValuesByInstanceSelector
+        .get()
+        .get(getInstanceKey([formId, "bodyId"]))
+        ?.get("onStateChange") as (state: string) => void;
+      expect(onStateChange).toBeTypeOf("function");
+      onStateChange("error");
       const variables = new Map(
         Array.from($dataSources.get().values())
           .filter((dataSource) => dataSource.type === "variable")
@@ -1026,6 +1090,7 @@ describe("insert webstudio component at", () => {
           ])
       );
       expect(variables.has("status")).toBe(false);
+      expect(variables.get("formState")).toBe("error");
       expect(variables.get("results")).toBe(result.results);
       expect(variables.get("errors")).toBe(result.errors);
       for (const child of $instances.get().get(formId)?.children ?? []) {

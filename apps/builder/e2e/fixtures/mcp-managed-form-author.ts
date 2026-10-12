@@ -395,16 +395,12 @@ const author = async () => {
         meta: {
           contactEmail: "owner@mcp.test",
           emailSender: "Contact Form <forms@mcp.test>",
-          emailSubject: "MCP contact notification",
-          emailBody: "A visitor sent a message through the contact form.",
         },
       });
       const projectSettings = await call("get-project-settings");
       expect(projectSettings.meta).toMatchObject({
         contactEmail: "owner@mcp.test",
         emailSender: "Contact Form <forms@mcp.test>",
-        emailSubject: "MCP contact notification",
-        emailBody: "A visitor sent a message through the contact form.",
       });
       if (emailMode) {
         const projectEmail = emails.find(
