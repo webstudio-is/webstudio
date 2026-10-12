@@ -1,15 +1,17 @@
-import type { StyleDecl, StyleSource } from "@webstudio-is/sdk";
+import type { StyleSource } from "@webstudio-is/sdk";
 import { pseudoClassesByTag } from "@webstudio-is/html-data";
 import {
   isPseudoElement,
   pseudoClassDescriptions,
-  pseudoElementDescriptions,
 } from "@webstudio-is/css-data";
 
 /**
  * A style condition decides when declarations apply. Local or a token still
  * decides where they are saved, so conditions are found per element, not per
  * style source.
+ *
+ * This is a display classification of the selector stored in
+ * `StyleDecl.state`. Property-value conditions are modelled separately.
  */
 export type StyleConditionType =
   | "state"
@@ -37,6 +39,11 @@ export const styleConditionGroups: Array<{
   { type: "custom", label: "Custom selectors" },
 ];
 
+const nativeStates = new Set([
+  ...Object.values(pseudoClassesByTag).flat(),
+  ...Object.keys(pseudoClassDescriptions),
+]);
+
 const isEmptyState = (state: undefined | string): state is undefined =>
   state === undefined || state.trim() === "";
 
@@ -57,27 +64,25 @@ export const getStyleCondition = (
   if (isPseudoElement(selector)) {
     return { type: "pseudoElement", selector };
   }
-  if (selector in pseudoClassDescriptions) {
+  if (nativeStates.has(selector)) {
     return { type: "state", selector };
   }
   return { type: "custom", selector };
 };
 
-/** Conditions styled on any style source applied to the element. */
-export const getStyledSelectors = ({
-  instanceStyleSourceIds,
-  styles,
-}: {
-  instanceStyleSourceIds: ReadonlySet<StyleSource["id"]>;
-  styles: Iterable<Pick<StyleDecl, "state" | "styleSourceId">>;
-}) => {
+/**
+ * Conditions styled on any style source applied to the element, from the
+ * selected element's existing states-by-source index.
+ */
+export const getStyledSelectors = (
+  statesByStyleSourceId: ReadonlyMap<StyleSource["id"], readonly string[]>
+) => {
   const selectors = new Set<string>();
-  for (const styleDecl of styles) {
-    if (
-      isEmptyState(styleDecl.state) === false &&
-      instanceStyleSourceIds.has(styleDecl.styleSourceId)
-    ) {
-      selectors.add(styleDecl.state);
+  for (const states of statesByStyleSourceId.values()) {
+    for (const state of states) {
+      if (isEmptyState(state) === false) {
+        selectors.add(state);
+      }
     }
   }
   return selectors;
@@ -105,21 +110,28 @@ export const getDefaultStyleConditions = ({
   );
 };
 
-/** Every condition offered for the element, for search. */
-export const getApplicableStyleConditions = ({
+/**
+ * Everything search offers for the element: its component states, the
+ * native states that apply to its tag and every condition from the short
+ * list, including custom selectors authored on applied sources.
+ *
+ * The full CSS catalog, including functional selectors which need arguments,
+ * is authored in the style source menu instead.
+ */
+export const getSearchableStyleConditions = ({
   tag,
   componentStates,
+  defaultConditions,
 }: {
   tag: undefined | string;
   componentStates: readonly ComponentState[];
+  defaultConditions: readonly StyleCondition[];
 }) => {
   const selectors = new Set([
     ...componentStates.map((state) => state.selector),
-    // states that apply to this element first
     ...pseudoClassesByTag["*"],
     ...(pseudoClassesByTag[tag ?? ""] ?? []),
-    ...Object.keys(pseudoClassDescriptions),
-    ...Object.keys(pseudoElementDescriptions),
+    ...defaultConditions.map((condition) => condition.selector),
   ]);
   return Array.from(selectors, (selector) =>
     getStyleCondition(selector, componentStates)

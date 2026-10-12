@@ -160,6 +160,26 @@ const StyleSourceButton = styled("button", {
   },
 });
 
+const StyleSourceState = styled(Text, {
+  padding: theme.spacing[3],
+  borderTopRightRadius: theme.borderRadius[3],
+  borderBottomRightRadius: theme.borderRadius[3],
+  cursor: "default",
+  variants: {
+    source: {
+      local: {
+        backgroundColor: styleSourceColors.local.background,
+      },
+      token: {
+        backgroundColor: styleSourceColors.local.background,
+      },
+      tag: {
+        backgroundColor: styleSourceColors.tag.background,
+      },
+    },
+  },
+});
+
 const LocalStyleIcon = ({ size = 16, showDot = true }) => {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} fill="none">
@@ -198,6 +218,8 @@ type StyleSourceControlProps = {
   label: string;
   menu: ReactNode;
   selected: boolean;
+  state: undefined | string;
+  stateLabel: undefined | string;
   disabled: boolean;
   isEditing: boolean;
   isDragging: boolean;
@@ -214,6 +236,8 @@ export const StyleSourceControl = ({
   id,
   menu,
   selected,
+  state,
+  stateLabel,
   error,
   disabled,
   isEditing,
@@ -244,9 +268,9 @@ export const StyleSourceControl = ({
       <StyleSourceContainer
         data-id={id}
         source={source}
-        selected={selected}
+        selected={selected && state === undefined}
         disabled={disabled}
-        aria-current={selected}
+        aria-current={selected && state === undefined}
         role="button"
         hasError={error !== undefined}
       >
@@ -282,6 +306,11 @@ export const StyleSourceControl = ({
             )}
           </StyleSourceButton>
         </Flex>
+        {stateLabel !== undefined && (
+          <Tooltip content={state || stateLabel} side="top">
+            <StyleSourceState source={source}>{stateLabel}</StyleSourceState>
+          </Tooltip>
+        )}
         {showMenu && menu}
       </StyleSourceContainer>
     </Tooltip>

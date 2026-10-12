@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   filterStyleConditions,
-  getApplicableStyleConditions,
   getDefaultStyleConditions,
+  getSearchableStyleConditions,
   getStyleCondition,
   getStyledSelectors,
 } from "./style-condition";
@@ -35,18 +35,13 @@ describe("getStyleCondition", () => {
 });
 
 describe("getStyledSelectors", () => {
-  test("includes conditions styled on applied sources only", () => {
-    const selectors = getStyledSelectors({
-      instanceStyleSourceIds: new Set(["local", "applied-token"]),
-      styles: [
-        { styleSourceId: "local", state: ":hover" },
-        { styleSourceId: "applied-token", state: "::before" },
-        { styleSourceId: "local", state: undefined },
-        { styleSourceId: "local", state: "  " },
-        // a token the element does not use
-        { styleSourceId: "other-token", state: ":focus-visible" },
-      ],
-    });
+  test("collects non-empty states of the element's applied sources", () => {
+    const selectors = getStyledSelectors(
+      new Map([
+        ["local", [":hover", "  "]],
+        ["applied-token", ["::before", ":hover"]],
+      ])
+    );
     expect(Array.from(selectors)).toEqual([":hover", "::before"]);
   });
 });
@@ -91,27 +86,64 @@ describe("getDefaultStyleConditions", () => {
   });
 });
 
-describe("getApplicableStyleConditions", () => {
-  test("offers component states and the element's own states first", () => {
-    const conditions = getApplicableStyleConditions({
+describe("getSearchableStyleConditions", () => {
+  test("offers component states first, then states for the tag", () => {
+    const selectors = getSearchableStyleConditions({
       tag: "a",
       componentStates: accordionStates,
-    });
-    const selectors = conditions.map((condition) => condition.selector);
+      defaultConditions: [],
+    }).map((condition) => condition.selector);
     expect(selectors.slice(0, 2)).toEqual([
       '[data-state="open"]',
       '[data-state="closed"]',
     ]);
+    expect(selectors).toContain(":hover");
     expect(selectors).toContain(":visited");
-    expect(selectors).toContain("::before");
     expect(new Set(selectors).size).toEqual(selectors.length);
+  });
+
+  test("does not offer states of other tags", () => {
+    const selectors = getSearchableStyleConditions({
+      tag: "div",
+      componentStates: [],
+      defaultConditions: [],
+    }).map((condition) => condition.selector);
+    expect(selectors).not.toContain(":visited");
+    expect(selectors).not.toContain(":checked");
+  });
+
+  test("never offers functional selectors without arguments", () => {
+    const selectors = getSearchableStyleConditions({
+      tag: "input",
+      componentStates: [],
+      defaultConditions: [],
+    }).map((condition) => condition.selector);
+    expect(selectors.filter((selector) => selector.endsWith("()"))).toEqual([]);
+  });
+
+  test("includes custom selectors already styled on the element", () => {
+    const conditions = getSearchableStyleConditions({
+      tag: "div",
+      componentStates: [],
+      defaultConditions: getDefaultStyleConditions({
+        styledSelectors: ['[data-label="Summer sale"]'],
+        selectedState: undefined,
+        componentStates: [],
+      }),
+    });
+    expect(
+      filterStyleConditions(conditions, "summer").map(
+        ({ selector }) => selector
+      )
+    ).toEqual(['[data-label="Summer sale"]']);
   });
 });
 
 describe("filterStyleConditions", () => {
-  const conditions = getApplicableStyleConditions({
+  const conditions = getSearchableStyleConditions({
     tag: undefined,
     componentStates: accordionStates,
+    defaultConditions: [],
   });
 
   test("matches selectors and component state labels", () => {

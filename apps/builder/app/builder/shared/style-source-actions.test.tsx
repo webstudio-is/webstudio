@@ -49,7 +49,7 @@ const setupBaseStores = () => {
   selectInstance(["instance"]);
 };
 
-test("deselects matching style source for selected instance", () => {
+test("deselects matching style source and keeps the condition", () => {
   setupBaseStores();
   $selectedStyleSources.set(new Map([["instance", "style-source"]]));
   $selectedStyleState.set(":hover");
@@ -57,7 +57,9 @@ test("deselects matching style source for selected instance", () => {
   deselectMatchingStyleSource("style-source");
 
   expect($selectedStyleSources.get().has("instance")).toBe(false);
-  expect($selectedStyleState.get()).toBeUndefined();
+  // detaching or deleting a token falls back to another source
+  // without silently switching edits to the base condition
+  expect($selectedStyleState.get()).toBe(":hover");
 });
 
 test("keeps selection when selected style source does not match", () => {

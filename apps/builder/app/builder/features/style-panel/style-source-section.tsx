@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
-import { type StyleSource, type StyleSourceToken } from "@webstudio-is/sdk";
+import { pseudoClassesByTag } from "@webstudio-is/html-data";
+import { isPseudoElement } from "@webstudio-is/css-data";
+import {
+  type StyleSource,
+  type StyleSourceToken,
+  type StyleDecl,
+} from "@webstudio-is/sdk";
 import { type RenameStyleSourceError } from "@webstudio-is/project-build/runtime";
 import { type ItemSource, StyleSourceInput } from "./style-source";
 import {
@@ -12,18 +18,22 @@ import {
   deselectMatchingStyleSource,
 } from "~/builder/shared/style-source-actions";
 import {
+  $registeredComponentMetas,
   $selectedInstanceStatesByStyleSourceId,
   $selectedInstanceStyleSources,
   $selectedOrLastStyleSourceSelector,
   $selectedStyleSources,
+  $selectedStyleState,
 } from "~/shared/nano-states";
 import {
   $styleSourceSelections,
   $styleSources,
+  $styles,
 } from "~/shared/sync/data-stores";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { subscribe } from "~/shared/pubsub";
 import { $selectedInstance } from "~/shared/nano-states";
+import { $instanceTags } from "./shared/model";
 import { StyleConditionSelect } from "./style-condition-select";
 
 // Declare command for this module
@@ -34,7 +44,11 @@ declare module "~/shared/pubsub" {
 }
 
 // picks where declarations are saved; the selected condition stays as is
-const selectStyleSource = (styleSourceId: StyleSource["id"]) => {
+// unless a state is picked explicitly in the source menu
+const selectStyleSource = (
+  styleSourceId: StyleSource["id"],
+  options?: { state: StyleDecl["state"] }
+) => {
   const instanceId = $selectedInstance.get()?.id;
   if (instanceId === undefined) {
     return;
@@ -42,6 +56,9 @@ const selectStyleSource = (styleSourceId: StyleSource["id"]) => {
   const selectedStyleSources = new Map($selectedStyleSources.get());
   selectedStyleSources.set(instanceId, styleSourceId);
   $selectedStyleSources.set(selectedStyleSources);
+  if (options !== undefined) {
+    $selectedStyleState.set(options.state);
+  }
 };
 
 const createStyleSource = (name: string) => {
@@ -170,6 +187,110 @@ const clearStyles = (styleSourceId: StyleSource["id"]) => {
   });
 };
 
+type SelectorConfig = {
+  type: "state" | "pseudoElement";
+  selector: string;
+  label: string;
+  source: "native" | "component" | "custom";
+};
+
+const getComponentStates = ({
+  predefinedStates,
+  componentStates,
+  instanceStyleSourceIds,
+  styles,
+  selectedStyleState,
+}: {
+  predefinedStates: string[];
+  componentStates: Array<{ label: string; selector: string }>;
+  instanceStyleSourceIds: Set<StyleSource["id"]>;
+  styles: Iterable<Pick<StyleDecl, "state" | "styleSourceId">>;
+  selectedStyleState: string | undefined;
+}): SelectorConfig[] => {
+  const allStates = [...pseudoClassesByTag["*"], ...predefinedStates];
+
+  const usedSelectors = new Set<string>();
+  for (const styleDecl of styles) {
+    if (
+      styleDecl.state &&
+      styleDecl.state.trim() &&
+      instanceStyleSourceIds.has(styleDecl.styleSourceId)
+    ) {
+      usedSelectors.add(styleDecl.state);
+    }
+  }
+
+  // Show selected state in menu immediately, before any styles are added
+  if (selectedStyleState && selectedStyleState.trim()) {
+    usedSelectors.add(selectedStyleState);
+  }
+
+  const componentStateSelectors = new Set(
+    componentStates.map((s) => s.selector)
+  );
+  const allStateSelectors = new Set([...allStates, ...usedSelectors]);
+
+  const toConfig = (selector: string): SelectorConfig => ({
+    type: isPseudoElement(selector) ? "pseudoElement" : "state",
+    label: selector,
+    selector,
+    source: allStates.includes(selector) ? "native" : "custom",
+  });
+
+  const states = Array.from(allStateSelectors)
+    .filter(
+      (state) => !isPseudoElement(state) && !componentStateSelectors.has(state)
+    )
+    .map(toConfig);
+
+  const pseudoElements = Array.from(allStateSelectors)
+    .filter(isPseudoElement)
+    .map(toConfig);
+
+  const componentStatesConfig = componentStates.map((item) => ({
+    type: "state" as const,
+    ...item,
+    source: "component" as const,
+  }));
+
+  return [...states, ...componentStatesConfig, ...pseudoElements];
+};
+
+const $componentStates = computed(
+  [
+    $selectedInstance,
+    $registeredComponentMetas,
+    $instanceTags,
+    $styles,
+    $selectedStyleState,
+    $styleSourceSelections,
+  ],
+  (
+    selectedInstance,
+    registeredComponentMetas,
+    instanceTags,
+    styles,
+    selectedStyleState,
+    styleSourceSelections
+  ) => {
+    if (selectedInstance === undefined) {
+      return;
+    }
+    const tag = instanceTags.get(selectedInstance.id);
+    const meta = registeredComponentMetas.get(selectedInstance.component);
+
+    return getComponentStates({
+      predefinedStates: pseudoClassesByTag[tag ?? ""] ?? [],
+      componentStates: meta?.states ?? [],
+      instanceStyleSourceIds: new Set(
+        styleSourceSelections.get(selectedInstance.id)?.values
+      ),
+      styles: styles.values(),
+      selectedStyleState,
+    });
+  }
+);
+
 type StyleSourceInputItem = {
   id: StyleSource["id"];
   label: string;
@@ -206,6 +327,7 @@ const $availableStyleSources = computed([$styleSources], (styleSources) => {
 
 export const StyleSourcesSection = () => {
   const [inputRef, setInputRef] = useState<HTMLInputElement | null>(null);
+  const componentStates = useStore($componentStates);
   const availableStyleSources = useStore($availableStyleSources);
   const selectedInstanceStyleSources = useStore($selectedInstanceStyleSources);
   const selectedInstanceStatesByStyleSourceId = useStore(
@@ -253,6 +375,7 @@ export const StyleSourcesSection = () => {
         items={availableStyleSources}
         value={value}
         selectedItemSelector={selectedOrLastStyleSourceSelector}
+        componentStates={componentStates}
         onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id }) => {
           addStyleSourceToInstance(id);
@@ -285,7 +408,13 @@ export const StyleSourcesSection = () => {
           reorderStyleSources(items.map((item) => item.id));
         }}
         onSelectItem={(styleSourceSelector) => {
-          selectStyleSource(styleSourceSelector.styleSourceId);
+          // chips pass only the source, the source menu passes a state too
+          selectStyleSource(
+            styleSourceSelector.styleSourceId,
+            "state" in styleSourceSelector
+              ? { state: styleSourceSelector.state }
+              : undefined
+          );
         }}
         // style source renaming
         editingItemId={editingItemId}
@@ -325,5 +454,6 @@ export const __testing__ = {
   clearStyles,
   convertLocalStyleSourceToToken,
   duplicateStyleSource,
+  getComponentStates,
   reorderStyleSources,
 };
