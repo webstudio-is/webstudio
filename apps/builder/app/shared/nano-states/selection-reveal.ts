@@ -36,9 +36,16 @@ export const getSelectionOverrides = ({
     return overrides;
   }
 
+  const path: { instance: Instance; key: string }[] = [];
+  const selectedKey = JSON.stringify(selectedSelector);
   // Collection occurrence indexes are selector tokens, not instances.
   for (const [position, id] of selectedSelector.entries()) {
-    if (instances.has(id)) {
+    const instance = instances.get(id);
+    if (instance !== undefined) {
+      path.push({
+        instance,
+        key: JSON.stringify(selectedSelector.slice(position)),
+      });
       continue;
     }
     const collectionId = selectedSelector[position + 1];
@@ -46,19 +53,10 @@ export const getSelectionOverrides = ({
       instances.get(collectionId)?.component !== collectionComponent ||
       !id.startsWith(`${collectionId}[`) ||
       !id.endsWith("]") ||
-      !propValues.has(JSON.stringify(selectedSelector))
+      !propValues.has(selectedKey)
     ) {
       return overrides;
     }
-  }
-  const path = selectedSelector.flatMap((id, position) => {
-    const instance = instances.get(id);
-    return instance === undefined
-      ? []
-      : [{ instance, key: JSON.stringify(selectedSelector.slice(position)) }];
-  });
-  if (path.at(-1)?.instance.id !== rootInstanceId) {
-    return overrides;
   }
   // A stale selector must not reveal an instance after deletion or reparenting.
   for (let index = 0; index < path.length - 1; index += 1) {
@@ -89,7 +87,8 @@ export const getSelectionOverrides = ({
     if (propValues.get(key)?.get(showAttribute) === false) {
       setOverride(key, showAttribute, true);
     }
-    for (const rule of metas.get(instance.component)?.selectionReveal ?? []) {
+    const rule = metas.get(instance.component)?.selectionReveal;
+    if (rule !== undefined) {
       const ownerPosition = path.findIndex(
         ({ instance: ancestor }, index) =>
           index > position && ancestor.component === rule.ancestor
@@ -102,14 +101,16 @@ export const getSelectionOverrides = ({
         setOverride(owner.key, rule.prop, rule.value);
         continue;
       }
-      const source =
+      const sourcePosition =
         rule.source === "self"
-          ? path[position]
-          : path
-              .slice(position + 1, ownerPosition)
-              .find(
-                ({ instance: ancestor }) => ancestor.component === rule.source
-              );
+          ? position
+          : path.findIndex(
+              ({ instance: ancestor }, index) =>
+                index > position &&
+                index < ownerPosition &&
+                ancestor.component === rule.source
+            );
+      const source = path[sourcePosition];
       if (source === undefined) {
         continue;
       }

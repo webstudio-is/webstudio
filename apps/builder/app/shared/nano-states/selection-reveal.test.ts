@@ -66,6 +66,17 @@ const resolve = (
     ]),
   });
 
+const setupPage = (instances: Instances) => {
+  $instances.set(instances);
+  $registeredComponentMetas.set(metas);
+  const pages = createDefaultPages({
+    homePageId: "home",
+    rootInstanceId: "page",
+  });
+  $pages.set(pages);
+  $selectedPageId.set(pages.homePageId);
+};
+
 afterEach(() => {
   selectInstance(undefined);
   $selectedPageId.set(undefined);
@@ -298,14 +309,7 @@ test("selection layer composes after unrelated memory props and Preview ignores 
     ["dialog", instance("dialog", component("Dialog"), "content")],
     ["content", instance("content", component("DialogContent"))],
   ]);
-  $instances.set(instances);
-  $registeredComponentMetas.set(metas);
-  const pages = createDefaultPages({
-    homePageId: "home",
-    rootInstanceId: "page",
-  });
-  $pages.set(pages);
-  $selectedPageId.set(pages.homePageId);
+  setupPage(instances);
   $propValuesByInstanceSelector.set(
     values([[["dialog", "page"], { open: false, title: "authored" }]])
   );
@@ -416,14 +420,7 @@ test("selected tab follows an authored expression and updated variable", async (
     ["tabs", instance("tabs", component("Tabs"), "content")],
     ["content", instance("content", component("TabsContent"))],
   ]);
-  $instances.set(instances);
-  $registeredComponentMetas.set(metas);
-  const pages = createDefaultPages({
-    homePageId: "home",
-    rootInstanceId: "page",
-  });
-  $pages.set(pages);
-  $selectedPageId.set(pages.homePageId);
+  setupPage(instances);
   $dataSources.set(
     new Map([
       [
@@ -476,14 +473,7 @@ test("resolved hidden feedback changes with selection without editing saved prop
     ["success", instance("success", "Box")],
     ["error", instance("error", "Box")],
   ]);
-  $instances.set(instances);
-  $registeredComponentMetas.set(metas);
-  const pages = createDefaultPages({
-    homePageId: "home",
-    rootInstanceId: "page",
-  });
-  $pages.set(pages);
-  $selectedPageId.set(pages.homePageId);
+  setupPage(instances);
   const baseProps = values([
     [["success", "form", "page"], { [showAttribute]: false }],
     [["error", "form", "page"], { [showAttribute]: false }],

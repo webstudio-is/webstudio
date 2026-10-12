@@ -84,15 +84,12 @@ export const metaNavigationMenuTrigger: WsComponentMeta = {
 };
 
 export const metaNavigationMenuContent: WsComponentMeta = {
-  selectionReveal: [
-    {
-      type: "value",
-      ancestor: getRadixComponentId("NavigationMenu"),
-      prop: "value",
-      source: getRadixComponentId("NavigationMenuItem"),
-      fallback: "indexWithinAncestor",
-    },
-  ],
+  selectionReveal: {
+    type: "value",
+    ancestor: getRadixComponentId("NavigationMenu"),
+    prop: "value",
+    source: getRadixComponentId("NavigationMenuItem"),
+  },
   icon: ContentIcon,
   label: "Menu Content",
   contentModel: {

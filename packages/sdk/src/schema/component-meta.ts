@@ -103,8 +103,7 @@ export const selectionReveal = z.discriminatedUnion("type", [
     type: z.literal("value"),
     ancestor: z.string(),
     prop: z.string(),
-    source: z.union([z.literal("self"), z.string()]),
-    fallback: z.literal("indexWithinAncestor"),
+    source: z.string(),
   }),
 ]);
 
@@ -116,7 +115,7 @@ export const wsComponentMeta = z.object({
   // important to automatically enumerate collections without
   // naming every item manually
   indexWithinAncestor: z.optional(z.string()),
-  selectionReveal: z.array(selectionReveal).optional(),
+  selectionReveal: selectionReveal.optional(),
   label: z.optional(z.string()),
   description: z.string().optional(),
   deprecated: z.boolean().optional(),
