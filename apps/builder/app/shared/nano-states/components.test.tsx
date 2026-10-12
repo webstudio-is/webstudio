@@ -6,7 +6,6 @@ import { canvasComponentLibraries } from "@webstudio-is/sdk-components-registry/
 import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import {
-  $registeredComponentHooks,
   $registeredComponentMetas,
   $registeredComponents,
   $registeredTemplates,
@@ -17,7 +16,6 @@ afterEach(() => {
   $registeredComponents.set(new Map());
   $registeredComponentMetas.set(new Map());
   $registeredTemplates.set(new Map());
-  $registeredComponentHooks.set([]);
 });
 
 test("renders templates that import an alternate registered implementation", () => {

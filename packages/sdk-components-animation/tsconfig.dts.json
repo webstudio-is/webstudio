@@ -3,8 +3,7 @@
   "include": [
     "src/private-src/components.ts",
     "src/components.ts",
-    "src/metas.ts",
-    "src/hooks.ts"
+    "src/metas.ts"
   ],
   "compilerOptions": {
     "declarationDir": "lib/types",

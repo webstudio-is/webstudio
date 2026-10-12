@@ -414,57 +414,63 @@ test("selection layer composes after unrelated memory props and Preview ignores 
   ).toBe("latest interaction");
 });
 
-test("selected tab follows an authored expression and updated variable", async () => {
-  const instances: Instances = new Map([
-    ["page", instance("page", "Body", "tabs")],
-    ["tabs", instance("tabs", component("Tabs"), "content")],
-    ["content", instance("content", component("TabsContent"))],
-  ]);
-  setupPage(instances);
-  $dataSources.set(
-    new Map([
-      [
-        "tabValue",
-        {
-          id: "tabValue",
-          scopeInstanceId: "tabs",
-          type: "variable",
-          name: "",
-          value: { type: "string", value: "first" },
-        },
-      ],
-    ])
-  );
-  $props.set(
-    new Map([
-      [
-        "contentValue",
-        {
-          id: "contentValue",
-          instanceId: "content",
-          name: "value",
-          type: "expression",
-          value: "$ws$dataSource$tabValue",
-        },
-      ],
-    ])
-  );
-  selectInstance(["content", "tabs", "page"]);
-  await expect
-    .poll(() =>
-      $selectionOverrides.get().get(key("tabs", "page"))?.get("value")
-    )
-    .toBe("first");
-  $dataSourceVariables.set(new Map([["tabValue", "second"]]));
-  await expect
-    .poll(() =>
-      $selectionOverrides.get().get(key("tabs", "page"))?.get("value")
-    )
-    .toBe("second");
-  expect($props.get().get("contentValue")?.type).toBe("expression");
-  $selectedPageId.set(undefined);
-  expect($selectionOverrides.get().size).toBe(0);
-});
+test.each([
+  [component("Tabs"), component("TabsContent")],
+  ["Select", "Option"],
+])(
+  "selected %s follows an authored expression and updated variable",
+  async (ownerComponent, itemComponent) => {
+    const instances: Instances = new Map([
+      ["page", instance("page", "Body", "tabs")],
+      ["tabs", instance("tabs", ownerComponent, "content")],
+      ["content", instance("content", itemComponent)],
+    ]);
+    setupPage(instances);
+    $dataSources.set(
+      new Map([
+        [
+          "tabValue",
+          {
+            id: "tabValue",
+            scopeInstanceId: "tabs",
+            type: "variable",
+            name: "",
+            value: { type: "string", value: "first" },
+          },
+        ],
+      ])
+    );
+    $props.set(
+      new Map([
+        [
+          "contentValue",
+          {
+            id: "contentValue",
+            instanceId: "content",
+            name: "value",
+            type: "expression",
+            value: "$ws$dataSource$tabValue",
+          },
+        ],
+      ])
+    );
+    selectInstance(["content", "tabs", "page"]);
+    await expect
+      .poll(() =>
+        $selectionOverrides.get().get(key("tabs", "page"))?.get("value")
+      )
+      .toBe("first");
+    $dataSourceVariables.set(new Map([["tabValue", "second"]]));
+    await expect
+      .poll(() =>
+        $selectionOverrides.get().get(key("tabs", "page"))?.get("value")
+      )
+      .toBe("second");
+    expect($props.get().get("contentValue")?.type).toBe("expression");
+    $selectedPageId.set(undefined);
+    expect($selectionOverrides.get().size).toBe(0);
+  }
+);
 
 test("resolved hidden feedback changes with selection without editing saved props", () => {
   const instances: Instances = new Map([
@@ -519,5 +525,170 @@ test("resolved hidden feedback changes with selection without editing saved prop
       ?.has(showAttribute)
   ).not.toBe(true);
   expect($props.get()).toBe(authoredProps);
+  expect($memoryProps.get().size).toBe(0);
+});
+
+test("native options reveal the closest select using effective values and HTML text fallback", () => {
+  for (const useElements of [false, true]) {
+    const select = instance(
+      "select",
+      useElements ? "ws:element" : "Select",
+      "option"
+    );
+    const option = instance("option", useElements ? "ws:element" : "Option");
+    if (useElements) {
+      select.tag = "select";
+      option.tag = "option";
+    }
+    option.children = [{ type: "text", value: "  Option\n label  " }];
+    const instances: Instances = new Map([
+      ["page", instance("page", "Body", "outer")],
+      ["outer", instance("outer", "Select", "select")],
+      ["select", select],
+      ["option", option],
+    ]);
+    const selector = ["option", "select", "outer", "page"];
+    for (const value of ["bound value", "", 0]) {
+      const result = resolve(
+        instances,
+        selector,
+        values([[selector, { value }]])
+      );
+      expect(result.get(key("select", "outer", "page"))?.get("value")).toBe(
+        value
+      );
+      expect(result.has(key("outer", "page"))).toBe(false);
+    }
+    expect(
+      resolve(instances, selector)
+        .get(key("select", "outer", "page"))
+        ?.get("value")
+    ).toBe("Option label");
+    option.children = [{ type: "text", value: "\u00a0Second\u00a0" }];
+    expect(
+      resolve(instances, selector)
+        .get(key("select", "outer", "page"))
+        ?.get("value")
+    ).toBe("\u00a0Second\u00a0");
+    expect(resolve(instances, ["select", "outer", "page"]).size).toBe(0);
+  }
+});
+
+test("HeadSlot reveals its selected path while animation only reveals an exact selection", () => {
+  const animation = "@webstudio-is/sdk-components-animation:AnimateChildren";
+  const animationProp = "data-ws-animation-can-play-on-canvas";
+  const instances: Instances = new Map([
+    ["page", instance("page", "Body", "head", "animation")],
+    ["head", instance("head", "HeadSlot", "meta")],
+    ["meta", instance("meta", "HeadMeta")],
+    ["animation", instance("animation", animation, "child")],
+    ["child", instance("child", "Box")],
+  ]);
+  setupPage(instances);
+  const base = values([
+    [["head", "page"], { "data-ws-expand": false }],
+    [["animation", "page"], { [animationProp]: false }],
+  ]);
+  $propValuesByInstanceSelector.set(base);
+  const authored = $props.get();
+  for (const selector of [
+    ["head", "page"],
+    ["meta", "head", "page"],
+  ]) {
+    selectInstance(selector);
+    expect(
+      $propValuesByInstanceSelectorWithMemoryProps
+        .get()
+        .get(key("head", "page"))
+        ?.get("data-ws-expand")
+    ).toBe(true);
+  }
+  selectInstance(["animation", "page"]);
+  expect(
+    $propValuesByInstanceSelectorWithMemoryProps
+      .get()
+      .get(key("head", "page"))
+      ?.get("data-ws-expand")
+  ).toBe(false);
+  expect(
+    $propValuesByInstanceSelectorWithMemoryProps
+      .get()
+      .get(key("animation", "page"))
+      ?.get(animationProp)
+  ).toBe(true);
+  $builderMode.set("preview");
+  expect($propValuesByInstanceSelectorWithMemoryProps.get()).toBe(base);
+  $builderMode.set("design");
+  selectInstance(["child", "animation", "page"]);
+  expect(
+    $propValuesByInstanceSelectorWithMemoryProps
+      .get()
+      .get(key("animation", "page"))
+      ?.get(animationProp)
+  ).toBe(false);
+  selectInstance(undefined);
+  expect($selectionOverrides.get().size).toBe(0);
+  expect($props.get()).toBe(authored);
+  expect($propValuesByInstanceSelector.get()).toBe(base);
+  expect($memoryProps.get().size).toBe(0);
+});
+
+test("native selection follows a bound value in one repeated occurrence and restores the base", () => {
+  const instances: Instances = new Map([
+    ["page", instance("page", "Body", "list")],
+    ["list", instance("list", collectionComponent, "select")],
+    ["select", instance("select", "Select", "option")],
+    ["option", instance("option", "Option")],
+  ]);
+  setupPage(instances);
+  const selector = ["option", "select", "list[1]", "list", "page"];
+  const selectedOwner = key("select", "list[1]", "list", "page");
+  const otherOwner = key("select", "list[0]", "list", "page");
+  const base = values([
+    [selector, { value: "bound" }],
+    [["select", "list[1]", "list", "page"], { value: "authored" }],
+    [["select", "list[0]", "list", "page"], { value: "other" }],
+  ]);
+  $propValuesByInstanceSelector.set(base);
+  selectInstance(selector);
+  expect(
+    $propValuesByInstanceSelectorWithMemoryProps
+      .get()
+      .get(selectedOwner)
+      ?.get("value")
+  ).toBe("bound");
+  expect(
+    $propValuesByInstanceSelectorWithMemoryProps
+      .get()
+      .get(otherOwner)
+      ?.get("value")
+  ).toBe("other");
+  const updated = new Map(base);
+  updated.set(key(...selector), new Map([["value", "updated binding"]]));
+  $propValuesByInstanceSelector.set(updated);
+  expect(
+    $propValuesByInstanceSelectorWithMemoryProps
+      .get()
+      .get(selectedOwner)
+      ?.get("value")
+  ).toBe("updated binding");
+  $builderMode.set("preview");
+  expect(
+    $propValuesByInstanceSelectorWithMemoryProps
+      .get()
+      .get(selectedOwner)
+      ?.get("value")
+  ).toBe("authored");
+  $builderMode.set("design");
+  const stale = new Map(instances);
+  stale.set("select", instance("select", "Select"));
+  $instances.set(stale);
+  expect($selectionOverrides.get().size).toBe(0);
+  expect(
+    $propValuesByInstanceSelectorWithMemoryProps
+      .get()
+      .get(selectedOwner)
+      ?.get("value")
+  ).toBe("authored");
   expect($memoryProps.get().size).toBe(0);
 });

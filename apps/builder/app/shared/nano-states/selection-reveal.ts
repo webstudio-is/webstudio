@@ -1,11 +1,12 @@
 import {
   collectionComponent,
+  elementComponent,
   type Instance,
   type Instances,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
-import { showAttribute } from "@webstudio-is/react-sdk";
+import { showAttribute, textContentAttribute } from "@webstudio-is/react-sdk";
 
 type PropValues = ReadonlyMap<string, ReadonlyMap<string, unknown>>;
 export type SelectionOverrides = Map<string, Map<string, unknown>>;
@@ -89,10 +90,53 @@ export const getSelectionOverrides = ({
     }
     const rule = metas.get(instance.component)?.selectionReveal;
     if (rule !== undefined) {
-      const ownerPosition = path.findIndex(
-        ({ instance: ancestor }, index) =>
-          index > position && ancestor.component === rule.ancestor
-      );
+      if (rule.type === "native-option") {
+        if (
+          instance.component !== "Option" &&
+          !(
+            instance.component === elementComponent && instance.tag === "option"
+          )
+        ) {
+          continue;
+        }
+        const owner = path
+          .slice(position + 1)
+          .find(
+            ({ instance }) =>
+              instance.component === "Select" ||
+              (instance.component === elementComponent &&
+                instance.tag === "select")
+          );
+        if (owner === undefined) {
+          continue;
+        }
+        const props = propValues.get(key);
+        // An option without a value uses its text, including evaluated bindings.
+        // HTML collapses ASCII whitespace in an option's fallback value.
+        const text =
+          props?.get(textContentAttribute) ??
+          instance.children
+            .filter((child) => child.type === "text")
+            .map((child) => child.value)
+            .join("");
+        const value =
+          props?.get("value") ??
+          String(text)
+            .replace(/[\t\n\f\r ]+/g, " ")
+            .replace(/^ | $/g, "");
+        setOverride(owner.key, "value", value);
+        continue;
+      }
+      if (rule.type === "fixed" && rule.selectedOnly && position !== 0) {
+        continue;
+      }
+      const ownerPosition =
+        rule.ancestor === "self"
+          ? position
+          : path.findIndex(
+              ({ instance: ancestor }, index) =>
+                index > position && ancestor.component === rule.ancestor
+            );
       if (ownerPosition === -1) {
         continue;
       }

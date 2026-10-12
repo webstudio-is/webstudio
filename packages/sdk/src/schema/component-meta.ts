@@ -91,11 +91,15 @@ export const contentModel = z.object({
 
 export type ContentModel = z.infer<typeof contentModel>;
 
-/** Temporary Builder prop overrides while a descendant is selected. */
+/** Temporary Builder prop overrides for the selected instance and its path. */
 export const selectionReveal = z.discriminatedUnion("type", [
+  // Native options use HTML value/text semantics and the closest select owner.
+  z.object({ type: z.literal("native-option") }),
   z.object({
     type: z.literal("fixed"),
+    // "self" addresses the instance declaring this rule.
     ancestor: z.string(),
+    selectedOnly: z.boolean().optional(),
     prop: z.string(),
     value: z.union([z.string(), z.number(), z.boolean()]),
   }),

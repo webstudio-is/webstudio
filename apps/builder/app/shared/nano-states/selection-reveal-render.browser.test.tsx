@@ -1,3 +1,12 @@
+import { useContext } from "react";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+import {
+  Select,
+  Option,
+  HeadSlot,
+} from "@webstudio-is/sdk-components-react/components";
+import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
+import { $builderMode } from "./misc";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { useStore } from "@nanostores/react";
@@ -10,7 +19,7 @@ import {
   DialogContent,
   DialogOverlay,
 } from "@webstudio-is/sdk-components-react-radix";
-import { $instances, $pages } from "../sync/data-stores";
+import { $instances, $pages, $props } from "../sync/data-stores";
 import { $selectedPageId } from "./pages";
 import { selectInstance } from "./instances";
 import { $registeredComponentMetas } from "./components";
@@ -68,9 +77,11 @@ afterEach(() => {
   container?.remove();
   container = undefined;
   selectInstance(undefined);
+  $builderMode.set("design");
   $selectedPageId.set(undefined);
   $pages.set(undefined);
   $instances.set(new Map());
+  $props.set(new Map());
   $registeredComponentMetas.set(new Map());
   $propValuesByInstanceSelector.set(new Map());
 });
@@ -150,4 +161,138 @@ test("selection overlay mounts nested closed Dialog portals and clears together"
   await expect
     .poll(() => document.body.textContent)
     .not.toContain("Selected portal content");
+});
+
+const NativeAndHeadHarness = () => {
+  const context = useContext(ReactSdkContext);
+  const values = useStore($propValuesByInstanceSelectorWithMemoryProps);
+  const mode = useStore($builderMode);
+  return (
+    <ReactSdkContext.Provider
+      value={{
+        ...context,
+        renderer: mode === "preview" ? "preview" : "canvas",
+      }}
+    >
+      <Select
+        value={
+          values.get(JSON.stringify(["select", "page"]))?.get("value") as string
+        }
+      >
+        <Option value="authored">Original option</Option>
+        <Option value="bound">Bound option</Option>
+        <Option>Text fallback</Option>
+      </Select>
+      <HeadSlot
+        data-ws-expand={
+          values
+            .get(JSON.stringify(["head", "page"]))
+            ?.get("data-ws-expand") as boolean
+        }
+      >
+        <span>Head content revealed</span>
+      </HeadSlot>
+    </ReactSdkContext.Provider>
+  );
+};
+
+test("native select and HeadSlot render the selected content and restore on deselection", async () => {
+  const textOption = instance("text", "Option");
+  textOption.children = [{ type: "text", value: "Text fallback" }];
+  $instances.set(
+    new Map([
+      ["page", instance("page", "Body", "select", "head")],
+      ["select", instance("select", "Select", "bound", "text")],
+      ["bound", instance("bound", "Option")],
+      ["text", textOption],
+      ["head", instance("head", "HeadSlot", "meta")],
+      ["meta", instance("meta", "HeadMeta")],
+    ])
+  );
+  $registeredComponentMetas.set(new Map(Object.entries(baseMetas)));
+  const pages = createDefaultPages({
+    homePageId: "home",
+    rootInstanceId: "page",
+  });
+  $pages.set(pages);
+  $selectedPageId.set(pages.homePageId);
+  $props.set(
+    new Map([
+      [
+        "selectValue",
+        {
+          id: "selectValue",
+          instanceId: "select",
+          name: "value",
+          type: "string",
+          value: "authored",
+        },
+      ],
+      [
+        "optionValue",
+        {
+          id: "optionValue",
+          instanceId: "bound",
+          name: "value",
+          type: "string",
+          value: "bound",
+        },
+      ],
+      [
+        "headExpand",
+        {
+          id: "headExpand",
+          instanceId: "head",
+          name: "data-ws-expand",
+          type: "boolean",
+          value: false,
+        },
+      ],
+    ])
+  );
+  await expect
+    .poll(() =>
+      $propValuesByInstanceSelector
+        .get()
+        .get(JSON.stringify(["bound", "select", "page"]))
+        ?.get("value")
+    )
+    .toBe("bound");
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => root?.render(<NativeAndHeadHarness />));
+  const selected = () => container?.querySelector("select")?.value;
+  await expect.poll(selected).toBe("authored");
+  await expect
+    .poll(() => container?.textContent)
+    .not.toContain("Head content revealed");
+  await act(async () => selectInstance(["bound", "select", "page"]));
+  expect(
+    $propValuesByInstanceSelectorWithMemoryProps
+      .get()
+      .get(JSON.stringify(["select", "page"]))
+      ?.get("value")
+  ).toBe("bound");
+  await expect.poll(selected).toBe("bound");
+  await act(async () => selectInstance(["text", "select", "page"]));
+  await expect.poll(selected).toBe("Text fallback");
+  await act(async () => selectInstance(["meta", "head", "page"]));
+  await expect.poll(selected).toBe("authored");
+  await expect
+    .poll(() => container?.textContent)
+    .toContain("Head content revealed");
+  await act(async () => $builderMode.set("preview"));
+  await expect
+    .poll(() => container?.textContent)
+    .not.toContain("Head content revealed");
+  await act(async () => $builderMode.set("design"));
+  await expect
+    .poll(() => container?.textContent)
+    .toContain("Head content revealed");
+  await act(async () => selectInstance(undefined));
+  await expect
+    .poll(() => container?.textContent)
+    .not.toContain("Head content revealed");
+  await expect.poll(selected).toBe("authored");
 });

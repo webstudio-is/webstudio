@@ -73,7 +73,6 @@ export const getComponentCatalogSources = () => {
         importSource,
         componentExport: exportName in library.components,
         templateExport: exportName in library.templates,
-        hooks: "hooks" in library && exportName in library.hooks,
         provenance,
       });
     }
