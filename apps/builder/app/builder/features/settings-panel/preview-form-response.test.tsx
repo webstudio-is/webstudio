@@ -65,7 +65,7 @@ test("Preview email response survives metadata refresh and editor reopening, but
       status: 200,
       statusText: "OK",
       headers: [{ name: "x-request-id", value: "email-service-request" }],
-      body: { id: "delivered-email" },
+      body: { id: "captured-email-service-response" },
       truncated: false,
     },
   };
@@ -77,7 +77,7 @@ test("Preview email response survives metadata refresh and editor reopening, but
         {
           resourceId: "email-resource",
           status: 200,
-          body: { id: "delivered-email" },
+          body: { id: "public-form-result" },
         },
       ],
       errors: [],
@@ -125,6 +125,12 @@ test("Preview email response survives metadata refresh and editor reopening, but
   try {
     await act(async () => root.render(editor));
     expect(
+      Array.from(
+        container.querySelectorAll('[role="tab"]'),
+        (tab) => tab.textContent
+      )
+    ).toEqual(["Request", "Response", "Diagnostics"]);
+    expect(
       container.querySelector('[role="tab"][data-state="active"]')?.textContent
     ).toBe("Request");
     await openResponse();
@@ -142,9 +148,16 @@ test("Preview email response survives metadata refresh and editor reopening, but
     expect($previewFormExchanges.get().get("email-resource")?.attempts).toEqual(
       [exchange]
     );
-    await expect.poll(() => container.textContent).toContain("delivered-email");
-    expect(container.textContent).toContain("email-service-request");
-    expect(container.textContent).not.toContain("Submit this Form in Preview");
+    const activePanel = () =>
+      container.querySelector('[role="tabpanel"][data-state="active"]');
+    await expect
+      .poll(() => activePanel()?.textContent)
+      .toContain("captured-email-service-response");
+    expect(activePanel()?.textContent).toContain("email-service-request");
+    expect(activePanel()?.textContent).not.toContain("public-form-result");
+    expect(activePanel()?.textContent).not.toContain(
+      "Submit this Form in Preview"
+    );
 
     recordResourcePreviewExchange("explicit-preview", exchange);
     await act(async () => {
@@ -154,7 +167,9 @@ test("Preview email response survives metadata refresh and editor reopening, but
     expect($resourcePreviewExchanges.get().has("explicit-preview")).toBe(true);
     await act(async () => root.render(editor));
     await openResponse();
-    await expect.poll(() => container.textContent).toContain("delivered-email");
+    await expect
+      .poll(() => activePanel()?.textContent)
+      .toContain("captured-email-service-response");
     expect(builderFetch).toHaveBeenCalledOnce();
     await act(async () => $project.set({ id: "another-project" } as never));
     expect($previewFormExchanges.get().size).toBe(0);
