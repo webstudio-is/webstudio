@@ -35,6 +35,14 @@ export const metaDialogTrigger: WsComponentMeta = {
 };
 
 export const metaDialogOverlay: WsComponentMeta = {
+  selectionReveal: [
+    {
+      type: "fixed",
+      ancestor: getRadixComponentId("Dialog"),
+      prop: "open",
+      value: true,
+    },
+  ],
   icon: OverlayIcon,
   contentModel: {
     category: "none",
@@ -50,6 +58,14 @@ export const metaDialogOverlay: WsComponentMeta = {
 };
 
 export const metaDialogContent: WsComponentMeta = {
+  selectionReveal: [
+    {
+      type: "fixed",
+      ancestor: getRadixComponentId("Dialog"),
+      prop: "open",
+      value: true,
+    },
+  ],
   icon: ContentIcon,
   contentModel: {
     category: "none",

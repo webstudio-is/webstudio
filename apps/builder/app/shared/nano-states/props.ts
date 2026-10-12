@@ -33,7 +33,12 @@ import type { InstanceSelector } from "@webstudio-is/project-build/runtime";
 import { $dataSourceVariables } from "./variables";
 import { uploadingFileDataToAsset } from "~/builder/shared/assets/asset-utils";
 import { $selectedPage } from "./pages";
-import { getInstanceKey } from "./instances";
+import { $selectedInstanceSelector, getInstanceKey } from "./instances";
+import {
+  $indexesWithinAncestors,
+  $registeredComponentMetas,
+} from "./components";
+import { getSelectionOverrides } from "./selection-reveal";
 import { computeExpression } from "@webstudio-is/project-build/runtime";
 import { $currentSystem } from "../system";
 import {
@@ -536,9 +541,39 @@ $propValuesInput.subscribe((input) => {
   });
 });
 
+export const $selectionOverrides = computed(
+  [
+    $selectedInstanceSelector,
+    $selectedPage,
+    $instances,
+    $registeredComponentMetas,
+    $propValuesByInstanceSelector,
+    $indexesWithinAncestors,
+  ],
+  (selectedSelector, page, instances, metas, propValues, indexes) =>
+    getSelectionOverrides({
+      selectedSelector,
+      rootInstanceId: page?.rootInstanceId,
+      instances,
+      metas,
+      propValues,
+      indexesWithinAncestors: indexes,
+    })
+);
+
 export const $propValuesByInstanceSelectorWithMemoryProps = computed(
-  [$propValuesByInstanceSelector, $memoryProps, $isPreviewMode],
-  (propValuesByInstanceSelector, memoryProps, isPreviewMode) => {
+  [
+    $propValuesByInstanceSelector,
+    $memoryProps,
+    $selectionOverrides,
+    $isPreviewMode,
+  ],
+  (
+    propValuesByInstanceSelector,
+    memoryProps,
+    selectionOverrides,
+    isPreviewMode
+  ) => {
     if (false === isPreviewMode) {
       const result = new Map(propValuesByInstanceSelector);
 
@@ -550,6 +585,13 @@ export const $propValuesByInstanceSelectorWithMemoryProps = computed(
         }
 
         result.set(memoryKey, propsBySelector);
+      }
+      for (const [selectionKey, selectionProps] of selectionOverrides) {
+        const propsBySelector = new Map(result.get(selectionKey));
+        for (const [name, value] of selectionProps) {
+          propsBySelector.set(name, value);
+        }
+        result.set(selectionKey, propsBySelector);
       }
       return result;
     }

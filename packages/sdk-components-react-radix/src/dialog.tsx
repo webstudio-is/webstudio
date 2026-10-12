@@ -11,11 +11,7 @@ import {
   useState,
 } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import {
-  ReactSdkContext,
-  getClosestInstance,
-  type Hook,
-} from "@webstudio-is/react-sdk/runtime";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import {
   getLinkActivation,
   NavigationOverlayContext,
@@ -129,41 +125,3 @@ export const DialogTitle = forwardRef<
 ));
 
 export const DialogDescription = DialogPrimitive.Description;
-
-/* BUILDER HOOKS */
-
-const namespace = "@webstudio-is/sdk-components-react-radix";
-
-// For each DialogOverlay component within the selection,
-// we identify its closest parent Dialog component
-// and update its open prop bound to variable.
-export const hooksDialog: Hook = {
-  onNavigatorUnselect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:DialogOverlay`) {
-        const dialog = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:Dialog`
-        );
-        if (dialog) {
-          context.setMemoryProp(dialog, "open", undefined);
-        }
-      }
-    }
-  },
-  onNavigatorSelect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:DialogOverlay`) {
-        const dialog = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:Dialog`
-        );
-        if (dialog) {
-          context.setMemoryProp(dialog, "open", true);
-        }
-      }
-    }
-  },
-};

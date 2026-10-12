@@ -1,7 +1,5 @@
 import { mergeRefs } from "@react-aria/utils";
-import { getCanvasFormVisibility } from "./form-selection-visibility";
 import { resolveManagedFormErrorSlot } from "@webstudio-is/sdk";
-import { $isPreviewMode } from "~/shared/nano-states";
 import { parseError } from "~/shared/error/error-parse";
 import {
   useEffect,
@@ -32,7 +30,6 @@ import {
   blockComponent,
   blockBodyComponent,
   blockTemplateComponent,
-  getIndexesWithinAncestors,
   getContentBlockSource,
   elementComponent,
 } from "@webstudio-is/sdk";
@@ -59,10 +56,10 @@ import {
   $propValuesByInstanceSelectorWithMemoryProps,
   getIndexedInstanceId,
   $registeredComponentMetas,
+  $indexesWithinAncestors,
   $variableValuesByInstanceSelector,
   $isDesignMode,
   $selectedInstanceRenderState,
-  $selectedInstanceSelector,
   $selectedPageHash,
 } from "~/shared/nano-states";
 import { $project, $props, $dataSources } from "~/shared/sync/data-stores";
@@ -76,7 +73,7 @@ import { findBlockSelector } from "@webstudio-is/project-build/runtime";
 import { inflateInstance } from "~/canvas/inflator";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { TextEditor } from "../text-editor";
-import { $selectedPage, getInstanceKey } from "~/shared/nano-states";
+import { getInstanceKey } from "~/shared/nano-states";
 import { selectInstance } from "~/shared/nano-states";
 import { $currentSystem } from "~/shared/system";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
@@ -369,17 +366,6 @@ const getInstanceSelector = (
   }
   return;
 };
-
-const $indexesWithinAncestors = computed(
-  [$registeredComponentMetas, $instances, $selectedPage],
-  (metas, instances, page) => {
-    return getIndexesWithinAncestors(
-      metas,
-      instances,
-      page ? [page.rootInstanceId] : []
-    );
-  }
-);
 
 const useInstanceProps = (instanceSelector: InstanceSelector) => {
   const instanceKey = getInstanceKey(instanceSelector);
@@ -708,8 +694,6 @@ const WebstudioComponentCanvasInner = forwardRef<
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instanceId = instance.id;
   const instances = useStore($instances);
-  const selectedSelector = useStore($selectedInstanceSelector);
-  const isPreviewMode = useStore($isPreviewMode);
   const dataSources = useStore($dataSources);
   const allProps = useStore($props);
   const resolvedInstance = resolveManagedFormErrorSlot(
@@ -750,8 +734,7 @@ const WebstudioComponentCanvasInner = forwardRef<
 
   useInflateOnNewElement(instanceId);
 
-  // this assumes presence of `useStore($selectedInstanceSelector)` above
-  // we rely on root re-rendering after selected instance changes
+  // The resolved prop store re-renders the root after selection changes.
   useEffect(() => {
     // 1 means root
     if (instanceSelector.length === 1) {
@@ -764,15 +747,7 @@ const WebstudioComponentCanvasInner = forwardRef<
     }
   });
 
-  if (
-    !getCanvasFormVisibility({
-      show,
-      isPreviewMode,
-      instanceSelector,
-      selectedSelector,
-      instances,
-    })
-  ) {
+  if (show === false) {
     return <></>;
   }
 

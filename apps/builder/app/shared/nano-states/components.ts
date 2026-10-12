@@ -1,6 +1,6 @@
 import { shallowEqual } from "shallow-equal";
 import type { ExoticComponent } from "react";
-import { atom } from "nanostores";
+import { atom, computed } from "nanostores";
 import type {
   AnyComponent,
   Hook,
@@ -166,6 +166,16 @@ export const $registeredComponentHooks = atom<Hook[]>([]);
 
 export const $registeredComponentMetas = atom(
   new Map<string, WsComponentMeta>()
+);
+
+export const $indexesWithinAncestors = computed(
+  [$registeredComponentMetas, $instances, $selectedPage],
+  (metas, instances, page) =>
+    getIndexesWithinAncestors(
+      metas,
+      instances,
+      page ? [page.rootInstanceId] : []
+    )
 );
 
 export const $registeredTemplates = atom(

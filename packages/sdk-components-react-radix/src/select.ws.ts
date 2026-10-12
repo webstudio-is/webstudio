@@ -64,6 +64,14 @@ export const metaSelectValue: WsComponentMeta = {
 };
 
 export const metaSelectContent: WsComponentMeta = {
+  selectionReveal: [
+    {
+      type: "fixed",
+      ancestor: getRadixComponentId("Select"),
+      prop: "open",
+      value: true,
+    },
+  ],
   icon: ContentIcon,
   contentModel: {
     category: "none",

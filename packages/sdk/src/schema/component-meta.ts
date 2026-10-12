@@ -91,6 +91,23 @@ export const contentModel = z.object({
 
 export type ContentModel = z.infer<typeof contentModel>;
 
+/** Temporary Builder prop overrides while a descendant is selected. */
+export const selectionReveal = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("fixed"),
+    ancestor: z.string(),
+    prop: z.string(),
+    value: z.union([z.string(), z.number(), z.boolean()]),
+  }),
+  z.object({
+    type: z.literal("value"),
+    ancestor: z.string(),
+    prop: z.string(),
+    source: z.union([z.literal("self"), z.string()]),
+    fallback: z.literal("indexWithinAncestor"),
+  }),
+]);
+
 export const wsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
   contentModel: contentModel.optional(),
@@ -99,6 +116,7 @@ export const wsComponentMeta = z.object({
   // important to automatically enumerate collections without
   // naming every item manually
   indexWithinAncestor: z.optional(z.string()),
+  selectionReveal: z.array(selectionReveal).optional(),
   label: z.optional(z.string()),
   description: z.string().optional(),
   deprecated: z.boolean().optional(),

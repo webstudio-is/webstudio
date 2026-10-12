@@ -29,6 +29,14 @@ export const metaPopoverTrigger: WsComponentMeta = {
 };
 
 export const metaPopoverContent: WsComponentMeta = {
+  selectionReveal: [
+    {
+      type: "fixed",
+      ancestor: getRadixComponentId("Popover"),
+      prop: "open",
+      value: true,
+    },
+  ],
   icon: ContentIcon,
   contentModel: {
     category: "none",

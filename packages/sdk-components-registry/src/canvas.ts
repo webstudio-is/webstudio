@@ -5,7 +5,6 @@ import { hooks as baseHooks } from "@webstudio-is/sdk-components-react/hooks";
 import * as baseTemplates from "@webstudio-is/sdk-components-react/templates";
 import { hooks as animationHooks } from "@webstudio-is/sdk-components-animation/hooks";
 import * as animationTemplates from "@webstudio-is/sdk-components-animation/templates";
-import { hooks as radixHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import * as radixTemplates from "@webstudio-is/sdk-components-react-radix/templates";
 import {
   animationComponentNamespace,
@@ -50,7 +49,6 @@ export const canvasComponentLibraries = [
     components: radixComponentLibrary.components,
     componentIds,
     metas: getLibraryMetas(radixComponentNamespace),
-    hooks: radixHooks,
     templates: radixTemplates,
   },
   {
