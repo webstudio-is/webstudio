@@ -308,8 +308,7 @@ export const createCloudflareManagedFormEmailSenderWithUrl = (
   const url = new URL(serviceUrl);
   if (
     url.protocol !== "https:" ||
-    (url.hostname !== "apps.webstudio.is" &&
-      url.hostname !== "apps-staging.webstudio.is") ||
+    url.hostname !== "apps.webstudio.is" ||
     url.port !== "" ||
     url.pathname !== "/v1/preview-send" ||
     url.username !== "" ||

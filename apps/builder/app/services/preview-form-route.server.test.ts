@@ -692,11 +692,11 @@ test("a webhook-only Form is independent of Email Service availability", async (
 
 test.each([
   ["production", "https://apps.webstudio.is/v1/preview-send"],
-  ["preview", "https://apps-staging.webstudio.is/v1/preview-send"],
-  ["development", "https://apps-staging.webstudio.is/v1/preview-send"],
-  [undefined, "https://apps-staging.webstudio.is/v1/preview-send"],
+  ["preview", "https://apps.webstudio.is/v1/preview-send"],
+  ["development", "https://apps.webstudio.is/v1/preview-send"],
+  [undefined, "https://apps.webstudio.is/v1/preview-send"],
 ] as const)(
-  "Preview email uses the %s endpoint and server credential",
+  "Preview email in %s uses the production endpoint and server credential",
   async (environment, endpoint) => {
     const previousEnvironment = env.DEPLOYMENT_ENVIRONMENT;
     env.DEPLOYMENT_ENVIRONMENT = environment;

@@ -205,7 +205,7 @@ test("visitor Email Resource includes files by default and respects opt-out", as
   await sendEmail(excluded, {});
   const [, excludedInit] = fetch.mock.calls[1] as unknown as [
     string,
-    RequestInit
+    RequestInit,
   ];
   expect(JSON.parse(excludedInit.body as string)).not.toHaveProperty(
     "attachments"
@@ -382,46 +382,40 @@ test("exposes the exact Email Service request only when inspection is enabled", 
   expect(fetch).toHaveBeenCalledOnce();
 });
 
-test.each([
-  "https://apps.webstudio.is/v1/preview-send",
-  "https://apps-staging.webstudio.is/v1/preview-send",
-])(
-  "sends Preview email to %s with server-only authorization",
-  async (endpoint) => {
-    const fetcher = vi.fn(async () => Response.json({ id: "preview-sent" }));
-    const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
-      endpoint,
-      "worker-secret",
-      new FormData(),
-      projectId,
-      fetcher
-    )!;
+test("sends Preview email to the approved endpoint with server-only authorization", async () => {
+  const fetcher = vi.fn(async () => Response.json({ id: "preview-sent" }));
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    cloudflareManagedFormPreviewEmailServiceUrl,
+    "worker-secret",
+    new FormData(),
+    projectId,
+    fetcher
+  )!;
 
-    const result = await sendEmail(request, {});
+  const result = await sendEmail(request, {});
 
-    expect(result).toMatchObject({
-      ok: true,
-      status: 200,
-      data: { id: "preview-sent" },
-    });
-    expect(fetcher).toHaveBeenCalledOnce();
-    const [url, init] = fetcher.mock.calls[0] as unknown as [
-      URL,
-      RequestInit & { redirect: RequestRedirect }
-    ];
-    expect(url.href).toBe(endpoint);
-    expect(init.method).toBe("POST");
-    expect(init.redirect).toBe("error");
-    const headers = new Headers(init.headers);
-    expect(headers.get("authorization")).toBe("Bearer worker-secret");
-    expect(headers.get("x-webstudio-project-id")).toBe(projectId);
-    expect(JSON.parse(init.body as string)).toMatchObject({
-      to: [{ address: "team@example.com", name: "Team" }],
-      subject: "New submission",
-      text: "Text body",
-    });
-  }
-);
+  expect(result).toMatchObject({
+    ok: true,
+    status: 200,
+    data: { id: "preview-sent" },
+  });
+  expect(fetcher).toHaveBeenCalledOnce();
+  const [url, init] = fetcher.mock.calls[0] as unknown as [
+    URL,
+    RequestInit & { redirect: RequestRedirect },
+  ];
+  expect(url.href).toBe(cloudflareManagedFormPreviewEmailServiceUrl);
+  expect(init.method).toBe("POST");
+  expect(init.redirect).toBe("error");
+  const headers = new Headers(init.headers);
+  expect(headers.get("authorization")).toBe("Bearer worker-secret");
+  expect(headers.get("x-webstudio-project-id")).toBe(projectId);
+  expect(JSON.parse(init.body as string)).toMatchObject({
+    to: [{ address: "team@example.com", name: "Team" }],
+    subject: "New submission",
+    text: "Text body",
+  });
+});
 
 test("Preview reports a rejected server credential with the failing action name", async () => {
   const fetcher = vi.fn(async () =>
@@ -481,6 +475,7 @@ test("rejects insecure or credential-bearing Preview service URLs", () => {
     "https://apps.webstudio.is/v1/preview-send?token=secret",
     "https://apps.webstudio.is/v1/preview-send#secret",
     "https://apps.webstudio.is:8443/v1/preview-send",
+    "https://apps-staging.webstudio.is/v1/preview-send",
     "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send",
     "https://another-account.workers.dev/v1/preview-send",
   ]) {
