@@ -22,7 +22,6 @@ import {
   FloatingPanel,
   Flex,
   Label,
-  ScrollArea,
   ScrollAreaNative,
   SmallIconButton,
   Text,
@@ -92,11 +91,16 @@ const BindingPanel = ({
   };
 
   return (
-    <ScrollArea
+    <ScrollAreaNative
       css={{
         display: "flex",
         flexDirection: "column",
-        width: theme.spacing[30],
+        // The floating panel includes a border, so its content is narrower
+        // than the sidebar width. A fixed sidebar width overflows the dialog
+        // itself and makes its title scroll horizontally.
+        width: "100%",
+        minWidth: 0,
+        overflowX: "hidden",
       }}
     >
       <Box css={{ paddingBottom: theme.spacing[5] }}>
@@ -192,7 +196,7 @@ const BindingPanel = ({
           />
         </InputErrorsTooltip>
       </PanelContent>
-    </ScrollArea>
+    </ScrollAreaNative>
   );
 };
 
