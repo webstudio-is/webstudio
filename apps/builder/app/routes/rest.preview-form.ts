@@ -294,7 +294,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       trustedIp: request.headers.get("cf-connecting-ip") ?? undefined,
       createEmailSender: (data) =>
         createCloudflareManagedFormEmailSenderWithUrl(
-          cloudflareManagedFormPreviewEmailServiceUrl,
+          env.DEPLOYMENT_ENVIRONMENT === "production"
+            ? cloudflareManagedFormPreviewEmailServiceUrl
+            : "https://apps-staging.webstudio.is/v1/preview-send",
           env.TRPC_SERVER_API_TOKEN,
           data,
           projectId

@@ -267,12 +267,12 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
       return timedOut
         ? failure(504, "EMAIL_TIMEOUT", "Email delivery timed out")
         : options.signal?.aborted
-          ? failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled")
-          : failure(
-              502,
-              "EMAIL_SERVICE_UNAVAILABLE",
-              "Email service is unavailable"
-            );
+        ? failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled")
+        : failure(
+            502,
+            "EMAIL_SERVICE_UNAVAILABLE",
+            "Email service is unavailable"
+          );
     } finally {
       if (timeout !== undefined) {
         clearTimeout(timeout);
@@ -308,7 +308,8 @@ export const createCloudflareManagedFormEmailSenderWithUrl = (
   const url = new URL(serviceUrl);
   if (
     url.protocol !== "https:" ||
-    url.hostname !== "apps.webstudio.is" ||
+    (url.hostname !== "apps.webstudio.is" &&
+      url.hostname !== "apps-staging.webstudio.is") ||
     url.port !== "" ||
     url.pathname !== "/v1/preview-send" ||
     url.username !== "" ||
