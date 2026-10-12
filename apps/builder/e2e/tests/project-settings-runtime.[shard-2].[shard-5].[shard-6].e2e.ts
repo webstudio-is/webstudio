@@ -391,7 +391,7 @@ test("Project settings site name and redirects persist after reload", async ({
   });
 });
 
-test("Project Emails Sender and named recipients persist after reload", async ({
+test("Project Emails Reply to and named recipients persist after reload", async ({
   page,
   context,
 }) => {
@@ -425,7 +425,7 @@ test("Project Emails Sender and named recipients persist after reload", async ({
   await waitForSyncStatus({ page, status: "idle" });
 
   save = waitForChangeToBeSaved({ page });
-  await page.getByRole("textbox", { name: "Sender" }).fill(sender);
+  await page.getByRole("textbox", { name: "Reply to" }).fill(sender);
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 
@@ -452,7 +452,7 @@ test("Project Emails Sender and named recipients persist after reload", async ({
   if (
     (await page.getByRole("textbox", { name: "Recipients" }).inputValue()) !==
       recipients ||
-    (await page.getByRole("textbox", { name: "Sender" }).inputValue()) !==
+    (await page.getByRole("textbox", { name: "Reply to" }).inputValue()) !==
       sender
   ) {
     throw new Error("Expected Project Emails settings to survive reload.");
