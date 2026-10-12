@@ -72,6 +72,7 @@ import { builderApi } from "~/shared/builder-api";
 import { useDebounceEffect } from "@webstudio-is/design-system";
 import { subscribeInstanceContextMenu } from "./instance-context-menu";
 import { startPointerTracking } from "~/shared/awareness";
+import { useCanvasTextDocumentFetch } from "./use-text-document-fetch";
 
 registerContainers();
 
@@ -262,6 +263,7 @@ export const Canvas = () => {
   useCanvasStore();
   const isDesignMode = useStore($isDesignMode);
   const isContentMode = useStore($isContentMode);
+  const isPreviewMode = useStore($isPreviewMode);
 
   useMount(() => {
     for (const library of canvasComponentLibraries) {
@@ -276,6 +278,8 @@ export const Canvas = () => {
   }, []);
 
   useEffect(subscribeStyles, []);
+
+  useCanvasTextDocumentFetch(isPreviewMode);
 
   // The canvas runs in a separate frame and needs its own resource documents
   // from the cache synchronized by the Builder.

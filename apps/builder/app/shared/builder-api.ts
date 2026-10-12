@@ -19,7 +19,9 @@ import { requireBuilderReload } from "./sync/reload-required";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
 import { createHttpAssetContentRepository } from "~/builder/shared/assets/mdx-content-repository";
 import { $authToken } from "./nano-states";
-import { asset, type Asset } from "@webstudio-is/sdk";
+import { asset, type Asset, type ResourceRequest } from "@webstudio-is/sdk";
+import { requestResourceList } from "./resource-list-client";
+import { getResourceKey } from "./resource-utils";
 import { commitAssetContentUpdate } from "~/builder/shared/assets/update-asset-content";
 import { disposeExternalContentProject } from "./external-content-roots";
 
@@ -76,6 +78,13 @@ const authorizeAssetContent = ({
 };
 
 const _builderApi = {
+  loadResourceRequest: async (
+    request: ResourceRequest,
+    signal?: AbortSignal
+  ) => {
+    const results = await requestResourceList([request], builderFetch, signal);
+    return results?.get(getResourceKey(request));
+  },
   isInitialized: () => true,
   isSafeMode: () => isSafeMode,
   toast: {

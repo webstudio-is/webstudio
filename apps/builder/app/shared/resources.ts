@@ -18,6 +18,7 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { fetch } from "./fetch.client";
 import { getResourceKey } from "./resource-utils";
+import { requestResourceList } from "./resource-list-client";
 import { type AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
 import {
   createResourceDiagnosticsResponseError,
@@ -141,15 +142,14 @@ const loadResources = async (requestFetch: typeof fetch = fetch) => {
 
   try {
     const startedAt = performance.now();
-    const response = await requestFetch(restResourcesLoader(), {
-      method: "POST",
-      body: JSON.stringify(list),
-      signal: controller.signal,
-    });
-    if (response.ok === false) {
+    const results = await requestResourceList(
+      list,
+      requestFetch,
+      controller.signal
+    );
+    if (results === undefined) {
       return;
     }
-    const results = new Map<string, unknown>(await response.json());
     const loaderDurationMs = performance.now() - startedAt;
     for (const [key, result] of results) {
       const request = dispatched.get(key);

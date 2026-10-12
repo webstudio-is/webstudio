@@ -21,7 +21,7 @@ export type PageMeta = {
   custom: Array<{ property: string; content: string }>;
 };
 
-const normalizeStringExpression = (expression: string) => {
+export const normalizeStringExpression = (expression: string) => {
   const trimmedExpression = expression.trim();
   if (isValidExpression(trimmedExpression)) {
     if (
