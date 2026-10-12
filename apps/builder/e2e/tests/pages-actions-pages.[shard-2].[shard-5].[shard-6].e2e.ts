@@ -229,7 +229,7 @@ test.beforeAll(async ({ browser }, workerInfo) => {
   });
 });
 
-test("Canvas switches away from text animation without reloading", async ({
+test("Canvas switches away from an AnimateText page without reloading", async ({
   browser,
   page,
 }, workerInfo) => {
@@ -303,7 +303,12 @@ test("Canvas switches away from text animation without reloading", async ({
   if (canvas === undefined) {
     throw new Error("Expected canvas frame");
   }
-  await canvas.locator("[data-ws-text-animate]").first().waitFor();
+  await canvas
+    .locator(
+      '[data-ws-component="@webstudio-is/sdk-components-animation:AnimateText"]'
+    )
+    .getByText("Animated page text")
+    .waitFor();
   await openPage({
     page,
     pageName: "Home",

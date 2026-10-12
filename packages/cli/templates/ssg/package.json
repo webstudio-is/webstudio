@@ -3,7 +3,7 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "build": "vite build && vike prerender",
+    "build": "vike build && vike prerender",
     "dev": "vite dev",
     "start": "vite preview",
     "typecheck": "tsc --noEmit"
@@ -20,14 +20,14 @@
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "shiki": "4.4.1",
-    "vike": "^0.4.229"
+    "vike": "0.4.267-commit-feffb0f"
   },
   "devDependencies": {
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
-    "@vitejs/plugin-react": "^4.4.1",
+    "@vitejs/plugin-react": "^4.7.0",
     "typescript": "7.0.2",
-    "vite": "^6.3.4"
+    "vite": "7.1.12"
   },
   "engines": {
     "node": ">=22.12.0"
