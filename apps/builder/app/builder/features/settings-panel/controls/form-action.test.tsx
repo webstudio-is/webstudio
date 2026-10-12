@@ -121,11 +121,11 @@ test("Action control handles an empty Resource list and can select an in-scope d
   expect(container.textContent).toContain("Navigation mode");
   await act(async () => userEvent.keyboard("{Escape}"));
   expect(
-    container.querySelector('[aria-label="About Navigation mode"]')
+    container.querySelector('[aria-label="About navigation mode"]')
   ).not.toBeNull();
   await act(async () =>
     container
-      .querySelector<SVGElement>('[aria-label="About Navigation mode"]')
+      .querySelector<SVGElement>('[aria-label="About navigation mode"]')
       ?.focus()
   );
   expect(document.body.textContent).toContain(
@@ -730,7 +730,7 @@ test.each([
     );
     if (mode) {
       expect(
-        container.querySelector('[aria-label="About Navigation mode"]')
+        container.querySelector('[aria-label="About navigation mode"]')
       ).not.toBeNull();
     }
     if (warning) {

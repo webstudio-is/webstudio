@@ -92,7 +92,7 @@ export const UrlField = ({
       >
         URL
         <InfoTooltip
-          label="About Resource URL"
+          label="About resource URL"
           content="You can paste a URL or cURL. cURL is a format that can be executed directly in your terminal because it contains the entire Resource configuration."
           disableHoverableContent={true}
         />
@@ -475,7 +475,7 @@ export const CacheMaxAge = ({
       <Flex align="center" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor="resource-panel-max-age">Cache max age</Label>
         <InfoTooltip
-          label="About Cache max age"
+          label="About cache max age"
           content="How long to cache the response, in seconds."
           disableHoverableContent={true}
         />

@@ -281,7 +281,7 @@ export const FormActionControl = ({
             <Flex align="center" justify="center" gap="1">
               <Text>Navigation mode</Text>
               <InfoTooltip
-                label="About Navigation mode"
+                label="About navigation mode"
                 content="Submits the form fields as URL query parameters and navigates without a full page reload. Use this for search and filters that update page Resources from the URL."
               />
             </Flex>

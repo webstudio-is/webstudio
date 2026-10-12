@@ -851,7 +851,7 @@ test.each([
     ],
   ],
 ])(
-  "authored Error Message renders actual errors without duplicate raw alerts: %j",
+  "authored error message renders actual errors without duplicate raw alerts: %j",
   async (actionErrors) => {
     const container = document.createElement("div");
     document.body.append(container);

@@ -25,7 +25,7 @@ export const meta: TemplateMeta = {
       }
     >
       {setInstanceMeta(
-        { label: "Form Content" },
+        { label: "Form content" },
         <div
           ws:show={expression`${formState} === 'initial' || ${formState} === 'error'`}
         >
@@ -61,7 +61,7 @@ export const meta: TemplateMeta = {
         </div>
       )}
       {setInstanceMeta(
-        { label: "Success Message" },
+        { label: "Success message" },
         <div ws:show={expression`${formState} === 'success'`}>
           {
             new PlaceholderValue(
@@ -71,7 +71,7 @@ export const meta: TemplateMeta = {
         </div>
       )}
       {setInstanceMeta(
-        { label: "Error Message" },
+        { label: "Error message" },
         <div ws:show={expression`${formState} === 'error'`}>
           {
             new PlaceholderValue(

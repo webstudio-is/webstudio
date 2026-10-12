@@ -163,10 +163,10 @@ test("generates ordered semantic defaults from their descriptors", () => {
   ]);
 });
 
-test("Form Error Message binds all errors through its authored container", () => {
+test("Form error message binds all errors through its authored container", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
   const error = fragment.instances.find(
-    ({ label }) => label === "Error Message"
+    ({ label }) => label === "Error message"
   )!;
   const errors = fragment.dataSources?.find(({ name }) => name === "errors")!;
   const collection = fragment.instances.find(
@@ -198,7 +198,7 @@ test("Form Error Message binds all errors through its authored container", () =>
 test("Form success and error feedback render without DOM markers", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
   const feedback = fragment.instances.filter(
-    ({ label }) => label === "Success Message" || label === "Error Message"
+    ({ label }) => label === "Success message" || label === "Error message"
   );
   expect(feedback).toHaveLength(2);
   expect(JSON.stringify(fragment)).not.toContain("data-ws-form-feedback");
@@ -220,11 +220,11 @@ test("Form state stays internal while feedback uses the formState variable", () 
   );
 });
 
-test("default Form leaves layout to its Form Content", () => {
+test("default Form leaves layout to its Form content", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
   const form = fragment.instances.find(({ component }) => component === "Form");
   const content = fragment.instances.find(
-    ({ label }) => label === "Form Content"
+    ({ label }) => label === "Form content"
   );
   expect(form).toBeDefined();
   expect(content).toBeDefined();
