@@ -25,38 +25,32 @@ test.each([false, true])(
       method: "POST",
       body: upload,
     });
-    const fetch = vi.fn(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
-        const outgoing =
-          input instanceof Request ? input : new Request(input, init);
-        const body = (await outgoing.json()) as {
-          attachments: {
-            filename: string;
-            contentType: string;
-            contentBase64: string;
-          }[];
-        };
-        expect(body.attachments.map(({ filename }) => filename)).toEqual([
-          "screenshot.png",
-          "encoded.png",
-        ]);
-        const received = Buffer.from(
-          body.attachments[0].contentBase64,
-          "base64"
-        );
-        expect(received).toEqual(png);
-        // The IDAT chunk decompresses to a filter byte and the original RGBA pixel.
-        expect(inflateSync(received.subarray(41, 54))).toEqual(
-          Buffer.from([0, 255, 0, 128, 255])
-        );
-        expect(
-          Buffer.from(body.attachments[1].contentBase64, "base64")
-        ).toEqual(Buffer.from(pngBase64));
-        return Response.json({ id: "sent" });
-      }
-    );
+    const rpc = vi.fn(async (projectId: string, payload: unknown) => {
+      expect(projectId).toBe("project-id");
+      const body = payload as {
+        attachments: {
+          filename: string;
+          contentType: string;
+          contentBase64: string;
+        }[];
+      };
+      expect(body.attachments.map(({ filename }) => filename)).toEqual([
+        "screenshot.png",
+        "encoded.png",
+      ]);
+      const received = Buffer.from(body.attachments[0].contentBase64, "base64");
+      expect(received).toEqual(png);
+      // The IDAT chunk decompresses to a filter byte and the original RGBA pixel.
+      expect(inflateSync(received.subarray(41, 54))).toEqual(
+        Buffer.from([0, 255, 0, 128, 255])
+      );
+      expect(Buffer.from(body.attachments[1].contentBase64, "base64")).toEqual(
+        Buffer.from(pngBase64)
+      );
+      return { ok: true as const, status: 200 as const, data: { id: "sent" } };
+    });
     const send = createCloudflareManagedFormEmailSender(
-      { fetch },
+      { sendEmail: rpc },
       await incoming.formData(),
       "project-id"
     )!;
@@ -81,7 +75,7 @@ test.each([false, true])(
       inspection ? { onEmailRequest: inspected } : {}
     );
     expect(result.ok).toBe(true);
-    expect(fetch).toHaveBeenCalledOnce();
-    expect(inspected).toHaveBeenCalledTimes(inspection ? 1 : 0);
+    expect(rpc).toHaveBeenCalledOnce();
+    expect(inspected).not.toHaveBeenCalled();
   }
 );

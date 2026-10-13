@@ -44,15 +44,21 @@ await writeFile(
 import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";
 import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
 
-// This test-only binding forwards the SDK's real Email Service envelope to
-// the loopback capture server. It never contacts the configured Email Service.
+// This test-only RPC binding records payloads through the loopback capture server.
 export const createManagedFormEmailSender = ({ formData, projectId }: { context: unknown; formData: FormData; projectId: string }) => createCloudflareManagedFormEmailSender({
-  fetch: async (input, init) => {
-    const outgoing = input instanceof Request ? input : new Request(input, init);
-    if (outgoing.url !== "https://email-service.internal/v1/send") {
-      throw new Error("Unexpected test Email Service URL");
+  sendEmail: async (sentProjectId, payload) => {
+    if (sentProjectId !== projectId) {
+      throw new Error("Unexpected test Email Service project ID");
     }
-    return fetch(new Request("http://127.0.0.1:${emailPort}/send", outgoing));
+    const response = await fetch("http://127.0.0.1:${emailPort}/send", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    return response.ok
+      ? { ok: true, status: 200, data }
+      : { ok: false, status: response.status, error: data.error };
   },
 }, formData, projectId);
 

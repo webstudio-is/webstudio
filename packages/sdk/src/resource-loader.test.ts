@@ -22,7 +22,7 @@ import {
   type ResourceRequestGraph,
 } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
-import { createCloudflareManagedFormEmailSender } from "./managed-form-email";
+import { createCloudflareManagedFormEmailSenderWithUrl } from "./managed-form-email";
 import {
   loadResourceWithEmail,
   loadResourcesWithEmail,
@@ -89,20 +89,20 @@ test("Email Resources use the feature transport without an HTTP fetch", async ()
 });
 
 test("Email exchange inspection retains actual Email Service response headers", async () => {
-  const sendEmail = createCloudflareManagedFormEmailSender(
-    {
-      fetch: async () =>
-        Response.json(
-          { id: "message-id" },
-          {
-            status: 202,
-            statusText: "Accepted",
-            headers: { "x-email-service-id": "message-id" },
-          }
-        ),
-    },
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    "https://webstudio-email-service.wstd.workers.dev",
+    "preview-token",
     new FormData(),
-    "project-id"
+    "project-id",
+    async () =>
+      Response.json(
+        { result: { data: { id: "message-id" } } },
+        {
+          status: 202,
+          statusText: "Accepted",
+          headers: { "x-email-service-id": "message-id" },
+        }
+      )
   );
   const exchanges: Array<{
     kind?: string;
@@ -168,12 +168,12 @@ test("Email inspection keeps raw HTTP response separate from failed delivery out
   });
   const readBody = vi.spyOn(providerResponse, "text");
   const cloneResponse = vi.spyOn(providerResponse, "clone");
-  const sendEmail = createCloudflareManagedFormEmailSender(
-    {
-      fetch: async () => providerResponse,
-    },
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    "https://webstudio-email-service.wstd.workers.dev",
+    "preview-token",
     new FormData(),
-    "project-id"
+    "project-id",
+    async () => providerResponse
   );
   const exchanges: Array<{
     response: { status: number; headers: Headers; data: unknown };
@@ -232,12 +232,12 @@ test("Email inspection preserves a non-JSON HTTP 200 error body", async () => {
   });
   const readBody = vi.spyOn(providerResponse, "text");
   const cloneResponse = vi.spyOn(providerResponse, "clone");
-  const sendEmail = createCloudflareManagedFormEmailSender(
-    {
-      fetch: async () => providerResponse,
-    },
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    "https://webstudio-email-service.wstd.workers.dev",
+    "preview-token",
     new FormData(),
-    "project-id"
+    "project-id",
+    async () => providerResponse
   );
   const exchanges: Array<{
     response: { status: number; data: unknown };
@@ -567,7 +567,9 @@ test("applies action request overrides after resolving remote dependencies", asy
         createRequest: (documents) => ({
           name: "Submit",
           method: "post",
-          url: `https://example.com/submit/${(documents.get("author") as { data: { id: string } }).data.id}`,
+          url: `https://example.com/submit/${
+            (documents.get("author") as { data: { id: string } }).data.id
+          }`,
           searchParams: [],
           headers: [],
           body: { stale: true },

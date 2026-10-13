@@ -22,6 +22,13 @@ import { createScope } from "./scope";
 
 const emailWorkerOrigin = "https://webstudio-email-service.wstd.workers.dev";
 const emailProcedureUrl = `${emailWorkerOrigin}/trpc/email.send`;
+type EmailService = NonNullable<Parameters<typeof createEmailSender>[0]>;
+const successfulSend = () =>
+  vi.fn<EmailService["sendEmail"]>(async () => ({
+    ok: true,
+    status: 200,
+    data: { id: "sent" },
+  }));
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const createCloudflareManagedFormEmailSender = (
   service: Parameters<typeof createEmailSender>[0],
@@ -177,9 +184,9 @@ test("visitor Email Resource includes files by default and respects opt-out", as
     "upload",
     new File(["hello"], "hello.txt", { type: "text/plain" })
   );
-  const fetch = vi.fn(async () => Response.json({ id: "sent" }));
+  const rpc = successfulSend();
   const sendEmail = createCloudflareManagedFormEmailSender(
-    { fetch },
+    { sendEmail: rpc },
     formData
   )!;
   const prepared = prepareVisitorEmailRequest(visitorRequest(), formData);
@@ -187,8 +194,8 @@ test("visitor Email Resource includes files by default and respects opt-out", as
   expect(prepared.email?.includeAttachments).toBe(true);
   validateCloudflareManagedFormEmail(prepared, formData);
   await sendEmail(prepared, {});
-  const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
-  expect(JSON.parse(init.body as string)).toMatchObject({
+  const [, payload] = rpc.mock.calls[0];
+  expect(payload).toMatchObject({
     attachments: [
       {
         filename: "hello.txt",
@@ -204,13 +211,8 @@ test("visitor Email Resource includes files by default and respects opt-out", as
   );
   expect(excluded.email?.includeAttachments).toBe(false);
   await sendEmail(excluded, {});
-  const [, excludedInit] = fetch.mock.calls[1] as unknown as [
-    string,
-    RequestInit,
-  ];
-  expect(JSON.parse(excludedInit.body as string)).not.toHaveProperty(
-    "attachments"
-  );
+  const [, excludedPayload] = rpc.mock.calls[1];
+  expect(excludedPayload).not.toHaveProperty("attachments");
 });
 
 test("visitor Email Resource rejects repeated, missing, and invalid addresses", () => {
@@ -226,16 +228,16 @@ test("visitor Email Resource rejects repeated, missing, and invalid addresses", 
   expect(prepare).toThrow("one valid email field");
 });
 
-test("sends the private worker envelope with files and no form internals", async () => {
+test("sends the native RPC payload with files and no form internals", async () => {
   const formData = new FormData();
   formData.append(
     "file",
     new File(["hello"], "hello.txt", { type: "text/plain" })
   );
   formData.append("ws--managed-form-id", "secret form id");
-  const fetch = vi.fn(async () => Response.json({ id: "sent" }));
+  const rpc = successfulSend();
   const sendEmail = createCloudflareManagedFormEmailSender(
-    { fetch },
+    { sendEmail: rpc },
     formData
   )!;
   const requestWithMessageId: ResourceRequest = {
@@ -247,14 +249,10 @@ test("sends the private worker envelope with files and no form internals", async
   };
   const result = await sendEmail(requestWithMessageId, {});
   expect(result).toMatchObject({ ok: true, status: 200, data: { id: "sent" } });
-  expect(fetch).toHaveBeenCalledTimes(1);
-  const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
-  expect(url).toBe("https://email-service.internal/v1/send");
-  expect(init.method).toBe("POST");
-  expect(new Headers(init.headers).get("x-webstudio-project-id")).toBe(
-    projectId
-  );
-  expect(JSON.parse(init.body as string)).toEqual({
+  expect(rpc).toHaveBeenCalledTimes(1);
+  const [sentProjectId, payload] = rpc.mock.calls[0];
+  expect(sentProjectId).toBe(projectId);
+  expect(payload).toEqual({
     to: [{ address: "team@example.com", name: "Team" }],
     subject: "New submission",
     text: "Text body",
@@ -316,17 +314,17 @@ test.each([
       "upload",
       new File(["hello"], "hello.txt", { type: "text/plain" })
     );
-    const fetch = vi.fn(async () => Response.json({ id: "sent" }));
+    const rpc = successfulSend();
     const sendEmail = createCloudflareManagedFormEmailSender(
-      { fetch },
+      { sendEmail: rpc },
       formData
     )!;
 
     expect(generatedRequest.email?.includeAttachments).toBe(true);
     await sendEmail(generatedRequest, {});
 
-    const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
-    expect(JSON.parse(init.body as string)).toMatchObject({
+    const [, payload] = rpc.mock.calls[0];
+    expect(payload).toMatchObject({
       attachments: [
         {
           filename: "hello.txt",
@@ -338,49 +336,18 @@ test.each([
   }
 );
 
-test("exposes the exact Email Service request only when inspection is enabled", async () => {
-  const formData = new FormData();
-  formData.append("email", "visitor@example.com");
-  formData.append(
-    "attachment",
-    new File(["submitted file"], "submission.txt", { type: "text/plain" })
-  );
-  const fetch = vi.fn(async (input: RequestInfo | URL) => {
-    expect(input).toBeInstanceOf(Request);
-    return Response.json({ id: "sent" });
-  });
+test("published RPC does not create an HTTP inspection request", async () => {
+  const rpc = successfulSend();
   const sendEmail = createCloudflareManagedFormEmailSender(
-    { fetch },
-    formData
+    { sendEmail: rpc },
+    new FormData()
   )!;
-  let inspectedRequest: Request | undefined;
-
-  await sendEmail(request, {
-    onEmailRequest: (outgoing) => {
-      inspectedRequest = outgoing;
-    },
-  });
-
-  expect(inspectedRequest?.method).toBe("POST");
-  expect(inspectedRequest?.url).toBe("https://email-service.internal/v1/send");
-  expect(inspectedRequest?.headers.get("content-type")).toBe(
-    "application/json"
-  );
-  expect(await inspectedRequest?.clone().json()).toEqual({
-    to: [{ address: "team@example.com", name: "Team" }],
-    subject: "New submission",
-    text: "Text body",
-    replyTo: { address: "reply@example.com", name: "Visitor replies" },
-    fromName: "Visitor replies",
-    attachments: [
-      {
-        filename: "submission.txt",
-        contentType: "text/plain",
-        contentBase64: "c3VibWl0dGVkIGZpbGU=",
-      },
-    ],
-  });
-  expect(fetch).toHaveBeenCalledOnce();
+  const onEmailRequest = vi.fn();
+  const onEmailResponse = vi.fn();
+  await sendEmail(request, { onEmailRequest, onEmailResponse });
+  expect(rpc).toHaveBeenCalledOnce();
+  expect(onEmailRequest).not.toHaveBeenCalled();
+  expect(onEmailResponse).not.toHaveBeenCalled();
 });
 
 test("sends Preview email to the approved endpoint with server-only authorization", async () => {
@@ -405,7 +372,7 @@ test("sends Preview email to the approved endpoint with server-only authorizatio
   expect(fetcher).toHaveBeenCalledOnce();
   const [url, init] = fetcher.mock.calls[0] as unknown as [
     URL,
-    RequestInit & { redirect: RequestRedirect },
+    RequestInit & { redirect: RequestRedirect }
   ];
   expect(url.href).toBe(emailProcedureUrl);
   expect(init.method).toBe("POST");
@@ -553,9 +520,9 @@ test("rejects insecure or credential-bearing email service origins", () => {
 });
 
 test("keeps an address-only Reply-To without a display name", async () => {
-  const fetch = vi.fn(async () => Response.json({ id: "sent" }));
+  const rpc = successfulSend();
   const sendEmail = createCloudflareManagedFormEmailSender(
-    { fetch },
+    { sendEmail: rpc },
     new FormData()
   )!;
   await sendEmail(
@@ -569,24 +536,23 @@ test("keeps an address-only Reply-To without a display name", async () => {
     },
     {}
   );
-  const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
-  expect(JSON.parse(init.body as string)).toMatchObject({
+  const [, payload] = rpc.mock.calls[0];
+  expect(payload).toMatchObject({
     replyTo: { address: "reply@example.com" },
   });
-  expect(JSON.parse(init.body as string)).not.toHaveProperty("fromName");
+  expect(payload).not.toHaveProperty("fromName");
 });
 
 test("omits attachments when disabled and preserves worker errors", async () => {
   const formData = new FormData();
   formData.append("file", new File(["hello"], "hello.txt"));
-  const fetch = vi.fn(async () =>
-    Response.json(
-      { error: { code: "EMAIL_REJECTED", message: "Rejected" } },
-      { status: 502 }
-    )
-  );
+  const rpc = vi.fn<EmailService["sendEmail"]>(async () => ({
+    ok: false,
+    status: 502,
+    error: { code: "EMAIL_REJECTED", message: "Rejected" },
+  }));
   const sendEmail = createCloudflareManagedFormEmailSender(
-    { fetch },
+    { sendEmail: rpc },
     formData
   )!;
   const result = await sendEmail(
@@ -599,24 +565,21 @@ test("omits attachments when disabled and preserves worker errors", async () => 
     statusText: "Rejected",
     data: { error: { code: "EMAIL_REJECTED" } },
   });
-  const [, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
-  expect(JSON.parse(init.body as string)).not.toHaveProperty("attachments");
+  const [, payload] = rpc.mock.calls[0];
+  expect(payload).not.toHaveProperty("attachments");
 });
 
 test("passes the Email Service per-site delivery limit back as a failed send", async () => {
-  const fetch = vi.fn(async () =>
-    Response.json(
-      {
-        error: {
-          code: "email_rate_limited",
-          message: "Email sending limit reached",
-        },
-      },
-      { status: 429 }
-    )
-  );
+  const rpc = vi.fn<EmailService["sendEmail"]>(async () => ({
+    ok: false,
+    status: 429,
+    error: {
+      code: "email_rate_limited",
+      message: "Email sending limit reached",
+    },
+  }));
   const sendEmail = createCloudflareManagedFormEmailSender(
-    { fetch },
+    { sendEmail: rpc },
     new FormData()
   )!;
   expect(await sendEmail(request, {})).toMatchObject({
@@ -625,21 +588,49 @@ test("passes the Email Service per-site delivery limit back as a failed send", a
     statusText: "Email sending limit reached",
     data: { error: { code: "email_rate_limited" } },
   });
-  expect(fetch).toHaveBeenCalledOnce();
+  expect(rpc).toHaveBeenCalledOnce();
 });
 
 test.each([undefined, null, "", "   ", 123])(
   "treats malformed successful Email ID %s as a provider error",
   async (id) => {
-    const fetch = vi.fn(async () =>
-      Response.json(id === undefined ? {} : { id })
-    );
+    const rpc = vi.fn<EmailService["sendEmail"]>().mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: id === undefined ? {} : { id },
+    } as unknown as Awaited<ReturnType<EmailService["sendEmail"]>>);
     const sendEmail = createCloudflareManagedFormEmailSender(
-      { fetch },
+      { sendEmail: rpc },
       new FormData()
     )!;
     const result = await sendEmail(request, {});
     expect(result).toMatchObject({
+      ok: false,
+      status: 502,
+      data: { error: { code: "EMAIL_SERVICE_ERROR" } },
+    });
+  }
+);
+
+test.each([
+  undefined,
+  null,
+  {},
+  { code: 123, message: "Rejected" },
+  { code: "REJECTED" },
+])(
+  "treats malformed failed RPC error %s as a provider error",
+  async (error) => {
+    const rpc = vi.fn<EmailService["sendEmail"]>().mockResolvedValue({
+      ok: false,
+      status: 400,
+      error,
+    } as unknown as Awaited<ReturnType<EmailService["sendEmail"]>>);
+    const sendEmail = createCloudflareManagedFormEmailSender(
+      { sendEmail: rpc },
+      new FormData()
+    )!;
+    expect(await sendEmail(request, {})).toMatchObject({
       ok: false,
       status: 502,
       data: { error: { code: "EMAIL_SERVICE_ERROR" } },
@@ -669,16 +660,13 @@ test("leaves mailbox and attachment metadata policy to the Email Service", () =>
 });
 
 test("propagates Worker rejection for mailbox or attachment policy", async () => {
-  const fetch = vi.fn(async () =>
-    Response.json(
-      {
-        error: { code: "EMAIL_INVALID", message: emailSettingsInvalidMessage },
-      },
-      { status: 400 }
-    )
-  );
+  const rpc = vi.fn<EmailService["sendEmail"]>(async () => ({
+    ok: false,
+    status: 400,
+    error: { code: "EMAIL_INVALID", message: emailSettingsInvalidMessage },
+  }));
   const sendEmail = createCloudflareManagedFormEmailSender(
-    { fetch },
+    { sendEmail: rpc },
     new FormData()
   )!;
   const result = await sendEmail(
@@ -697,32 +685,104 @@ test("propagates Worker rejection for mailbox or attachment policy", async () =>
     statusText: emailSettingsInvalidMessage,
     data: { error: { code: "EMAIL_INVALID" } },
   });
-  expect(fetch).toHaveBeenCalledOnce();
+  expect(rpc).toHaveBeenCalledOnce();
 });
 
 test("does not send after cancellation", async () => {
-  const fetch = vi.fn(async () => Response.json({ id: "sent" }));
+  const rpc = successfulSend();
   const sendEmail = createCloudflareManagedFormEmailSender(
-    { fetch },
+    { sendEmail: rpc },
     new FormData()
   )!;
   const result = await sendEmail(request, { signal: AbortSignal.abort() });
   expect(result).toMatchObject({ ok: false, status: 499 });
-  expect(fetch).not.toHaveBeenCalled();
+  expect(rpc).not.toHaveBeenCalled();
+});
+
+test("times out a hanging RPC and cleans up its cancellation listener", async () => {
+  vi.useFakeTimers();
+  const controller = new AbortController();
+  const removeListener = vi.spyOn(controller.signal, "removeEventListener");
+  const rpc = vi.fn<EmailService["sendEmail"]>(() => new Promise(() => {}));
+  const sendEmail = createCloudflareManagedFormEmailSender(
+    { sendEmail: rpc },
+    new FormData()
+  )!;
+  try {
+    const pending = sendEmail(request, {
+      timeoutMs: 20,
+      signal: controller.signal,
+    });
+    await vi.advanceTimersByTimeAsync(20);
+    expect(await pending).toMatchObject({
+      ok: false,
+      status: 504,
+      data: { error: { code: "EMAIL_TIMEOUT" } },
+    });
+    expect(rpc).toHaveBeenCalledOnce();
+    expect(removeListener).toHaveBeenCalledWith("abort", expect.any(Function));
+    expect(vi.getTimerCount()).toBe(0);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("cancels an in-flight RPC and ignores its later result", async () => {
+  const controller = new AbortController();
+  let finish!: (result: Awaited<ReturnType<EmailService["sendEmail"]>>) => void;
+  let started!: () => void;
+  const called = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  const rpc = vi.fn<EmailService["sendEmail"]>(() => {
+    started();
+    return new Promise((resolve) => {
+      finish = resolve;
+    });
+  });
+  const sendEmail = createCloudflareManagedFormEmailSender(
+    { sendEmail: rpc },
+    new FormData()
+  )!;
+  const pending = sendEmail(request, { signal: controller.signal });
+  await called;
+  controller.abort();
+  expect(await pending).toMatchObject({
+    ok: false,
+    status: 499,
+    data: { error: { code: "EMAIL_CANCELLED" } },
+  });
+  finish({ ok: true, status: 200, data: { id: "too-late" } });
+  expect(await pending).toMatchObject({ ok: false, status: 499 });
+  expect(rpc).toHaveBeenCalledOnce();
+});
+
+test("reports a rejected RPC as an unavailable Email Service", async () => {
+  const rpc = vi
+    .fn<EmailService["sendEmail"]>()
+    .mockRejectedValue(new Error("private failure"));
+  const sendEmail = createCloudflareManagedFormEmailSender(
+    { sendEmail: rpc },
+    new FormData()
+  )!;
+  expect(await sendEmail(request, {})).toMatchObject({
+    ok: false,
+    status: 502,
+    data: { error: { code: "EMAIL_SERVICE_UNAVAILABLE" } },
+  });
 });
 
 test("a failed Email root retries once and keeps sibling results", async () => {
-  const fetch = vi
-    .fn()
-    .mockResolvedValueOnce(
-      Response.json(
-        { error: { code: "UNAVAILABLE", message: "Unavailable" } },
-        { status: 503 }
-      )
-    )
-    .mockResolvedValueOnce(Response.json({ id: "sent" }));
+  const rpc = vi
+    .fn<EmailService["sendEmail"]>()
+    .mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      error: { code: "UNAVAILABLE", message: "Unavailable" },
+    })
+    .mockResolvedValueOnce({ ok: true, status: 200, data: { id: "sent" } });
   const sendEmail = createCloudflareManagedFormEmailSender(
-    { fetch },
+    { sendEmail: rpc },
     new FormData()
   );
   const results = await loadResourcesWithEmail(
@@ -753,7 +813,7 @@ test("a failed Email root retries once and keeps sibling results", async () => {
     undefined,
     { sendEmail, shouldRetryFailedRoot: shouldRetryManagedFormDestination }
   );
-  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(rpc).toHaveBeenCalledTimes(2);
   expect(results).toMatchObject({
     Email: { ok: true, data: { id: "sent" } },
     HTTP: { ok: true },
@@ -959,7 +1019,7 @@ test("oversize Email preflight stops both Email and HTTP destinations", async ()
   const file = new File([new Uint8Array(6 * 1024 * 1024)], "large.bin");
   const readFile = vi.spyOn(file, "arrayBuffer");
   formData.append("upload", file);
-  const emailFetch = vi.fn(async () => Response.json({ id: "sent" }));
+  const emailRpc = successfulSend();
   const httpFetch = vi.fn(async () => Response.json({ ok: true }));
   const graph = {
     rootIds: ["http", "email"],
@@ -989,7 +1049,7 @@ test("oversize Email preflight stops both Email and HTTP destinations", async ()
   await expect(
     loadManagedFormResources(httpFetch, prepared, undefined, {
       sendEmail: createCloudflareManagedFormEmailSender(
-        { fetch: emailFetch },
+        { sendEmail: emailRpc },
         formData
       ),
       validateEmail: (resource) =>
@@ -997,7 +1057,7 @@ test("oversize Email preflight stops both Email and HTTP destinations", async ()
     })
   ).rejects.toThrow("Email attachments are too large to encode");
   expect(httpFetch).not.toHaveBeenCalled();
-  expect(emailFetch).not.toHaveBeenCalled();
+  expect(emailRpc).not.toHaveBeenCalled();
   expect(readFile).not.toHaveBeenCalled();
 });
 

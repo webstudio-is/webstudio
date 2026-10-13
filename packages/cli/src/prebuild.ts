@@ -307,8 +307,8 @@ const getRouteCandidates = ({
       filter.operator === "eq" && typeof value === "string"
         ? [value]
         : filter.operator === "contains" && Array.isArray(value)
-          ? value.filter((item): item is string => typeof item === "string")
-          : [];
+        ? value.filter((item): item is string => typeof item === "string")
+        : [];
     if (values.length === 0) {
       continue;
     }
@@ -1055,8 +1055,8 @@ export const createManagedFormEmailSender = ({ context, formData, projectId }: {
     return createCloudflareManagedFormEmailSenderWithUrl(env.EMAIL_SERVICE_URL, env.TRPC_SERVER_API_TOKEN, formData, projectId);
   }
   const binding = env?.EMAIL_SERVICE;
-  const service = binding !== null && typeof binding === "object" && "fetch" in binding && typeof binding.fetch === "function"
-    ? binding as { fetch: typeof fetch }
+  const service = binding !== null && typeof binding === "object" && "sendEmail" in binding && typeof binding.sendEmail === "function"
+    ? binding as Parameters<typeof createCloudflareManagedFormEmailSender>[0]
     : undefined;
   return createCloudflareManagedFormEmailSender(service, formData, projectId);
 };
@@ -1853,7 +1853,11 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
 
       import { Fragment, useState } from "react";
       import { renderText, useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-      ${usedRuntimeHelpers.has("formatManagedFormErrors") ? 'import { formatManagedFormErrors } from "@webstudio-is/sdk";\n' : ""}${importsString}${componentBuildSetupString}
+      ${
+        usedRuntimeHelpers.has("formatManagedFormErrors")
+          ? 'import { formatManagedFormErrors } from "@webstudio-is/sdk";\n'
+          : ""
+      }${importsString}${componentBuildSetupString}
 
       export const projectId = "${siteData.build.projectId}";
 

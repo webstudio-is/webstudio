@@ -743,7 +743,7 @@ test("Email inspector shows raw HTTP response and failed delivery diagnostics se
       kind: "email",
       request: {
         method: "POST",
-        url: "https://email-service.internal/v1/send",
+        url: "https://webstudio-email-service.wstd.workers.dev/trpc/email.send",
         headers: [{ name: "content-type", value: "application/json" }],
         body: { subject: "Receipt", body: "Submitted" },
         truncated: false,

@@ -88,12 +88,12 @@ test("Preview exchange hides credentials and unknown server values while retaini
   });
 });
 
-test("an HTTP Resource targeting the Email Service URL keeps request-body redaction", async () => {
+test("an HTTP Resource keeps request-body redaction", async () => {
   const snapshot = await capturePreviewResourceExchange(
     "http-resource",
     {
       kind: "http",
-      request: new Request("https://email-service.internal/v1/send", {
+      request: new Request("https://api.example.test/send", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ message: "private request value" }),

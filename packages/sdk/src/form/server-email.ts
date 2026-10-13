@@ -9,7 +9,7 @@ import {
 } from "../email-resource";
 
 type EmailService = {
-  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  sendEmail: (projectId: string, payload: unknown) => Promise<unknown>;
 };
 type EmailServiceFetch = (
   input: RequestInfo | URL,
@@ -104,10 +104,10 @@ export const validateCloudflareManagedFormEmail = (
 };
 
 const failure = (status: number, code: string, message: string) => ({
-  ok: false,
+  ok: false as const,
   status,
   statusText: message,
-  data: { ok: false, error: { code, message } },
+  data: { ok: false as const, error: { code, message } },
 });
 
 const encodeFile = async (file: File) => {
@@ -123,13 +123,70 @@ const encodeFile = async (file: File) => {
   };
 };
 
+const prepareEmailPayload = async (
+  request: ResourceRequest,
+  formData: FormData,
+  signal: AbortSignal | undefined
+) => {
+  if (signal?.aborted) {
+    return {
+      error: failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled"),
+    };
+  }
+  const email = request.email;
+  if (
+    email === undefined ||
+    email.recipients.length === 0 ||
+    typeof email.body !== "string"
+  ) {
+    return {
+      error: failure(400, "EMAIL_INVALID", emailSettingsInvalidMessage),
+    };
+  }
+  const attachments = [];
+  try {
+    if (email.includeAttachments) {
+      for (const file of getEmailFiles(formData)) {
+        if (signal?.aborted) {
+          return {
+            error: failure(
+              499,
+              "EMAIL_CANCELLED",
+              "Email delivery was cancelled"
+            ),
+          };
+        }
+        attachments.push(await encodeFile(file));
+      }
+    }
+  } catch {
+    return {
+      error: failure(
+        400,
+        "EMAIL_ATTACHMENT_ERROR",
+        "Email attachment could not be read"
+      ),
+    };
+  }
+  return {
+    payload: {
+      to: email.recipients,
+      subject: email.subject,
+      text: email.body,
+      ...(email.headers === undefined ? {} : { headers: email.headers }),
+      ...(email.sender === undefined ? {} : { replyTo: email.sender }),
+      ...(email.fromName === undefined ? {} : { fromName: email.fromName }),
+      ...(attachments.length === 0 ? {} : { attachments }),
+    },
+  };
+};
+
 const createCloudflareManagedFormEmailSenderWithFetch = (
   sendRequest: EmailServiceFetch | undefined,
   formData: FormData,
   projectId: string,
-  additionalHeaders?: HeadersInit,
-  requestUrl: string | URL = "https://email-service.internal/v1/send",
-  transport: "binding" | "trpc" = "binding"
+  additionalHeaders: HeadersInit,
+  requestUrl: string | URL
 ): EmailResourceLoadOptions["sendEmail"] | undefined => {
   if (sendRequest === undefined) {
     return;
@@ -141,37 +198,13 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
     request: ResourceRequest,
     options: ResourceLoadOptions & EmailResourceLoadOptions
   ) => {
-    if (options.signal?.aborted) {
-      return failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled");
-    }
-    const email = request.email;
-    if (
-      email === undefined ||
-      email.recipients.length === 0 ||
-      typeof email.body !== "string"
-    ) {
-      return failure(400, "EMAIL_INVALID", emailSettingsInvalidMessage);
-    }
-    const attachments = [];
-    try {
-      if (email.includeAttachments) {
-        for (const file of getEmailFiles(formData)) {
-          if (options.signal?.aborted) {
-            return failure(
-              499,
-              "EMAIL_CANCELLED",
-              "Email delivery was cancelled"
-            );
-          }
-          attachments.push(await encodeFile(file));
-        }
-      }
-    } catch {
-      return failure(
-        400,
-        "EMAIL_ATTACHMENT_ERROR",
-        "Email attachment could not be read"
-      );
+    const prepared = await prepareEmailPayload(
+      request,
+      formData,
+      options.signal
+    );
+    if (prepared.error) {
+      return prepared.error;
     }
     const controller = new AbortController();
     let timedOut = false;
@@ -202,15 +235,7 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
       const init: RequestInit = {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          to: email.recipients,
-          subject: email.subject,
-          text: email.body,
-          ...(email.headers === undefined ? {} : { headers: email.headers }),
-          ...(email.sender === undefined ? {} : { replyTo: email.sender }),
-          ...(email.fromName === undefined ? {} : { fromName: email.fromName }),
-          ...(attachments.length === 0 ? {} : { attachments }),
-        }),
+        body: JSON.stringify(prepared.payload),
         signal: controller.signal,
       };
       const request = options.onEmailRequest
@@ -232,7 +257,7 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
         try {
           responseData = JSON.parse(responseText);
           data = responseData;
-          if (transport === "trpc" && isRecord(responseData)) {
+          if (isRecord(responseData)) {
             if (isRecord(responseData.result)) {
               data = responseData.result.data;
             } else if (isRecord(responseData.error)) {
@@ -300,12 +325,12 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
       return timedOut
         ? failure(504, "EMAIL_TIMEOUT", "Email delivery timed out")
         : options.signal?.aborted
-          ? failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled")
-          : failure(
-              502,
-              "EMAIL_SERVICE_UNAVAILABLE",
-              "Email service is unavailable"
-            );
+        ? failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled")
+        : failure(
+            502,
+            "EMAIL_SERVICE_UNAVAILABLE",
+            "Email service is unavailable"
+          );
     } finally {
       if (timeout !== undefined) {
         clearTimeout(timeout);
@@ -320,12 +345,142 @@ export const createCloudflareManagedFormEmailSender = (
   service: EmailService | undefined,
   formData: FormData,
   projectId: string
-): EmailResourceLoadOptions["sendEmail"] | undefined =>
-  createCloudflareManagedFormEmailSenderWithFetch(
-    service?.fetch.bind(service),
-    formData,
-    projectId
-  );
+): EmailResourceLoadOptions["sendEmail"] | undefined => {
+  if (service === undefined) {
+    return;
+  }
+  if (projectId.length === 0) {
+    throw new Error("Email service project ID is required");
+  }
+  return async (request, options) => {
+    const prepared = await prepareEmailPayload(
+      request,
+      formData,
+      options.signal
+    );
+    if (prepared.error) {
+      return prepared.error;
+    }
+    const cancelled = () =>
+      failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled");
+    if (options.signal?.aborted) {
+      return cancelled();
+    }
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let onAbort: (() => void) | undefined;
+    try {
+      // Cloudflare RPC cannot cancel a call after dispatch. This bounds how
+      // long the Form waits; a timed-out call may still deliver the email.
+      const result = await Promise.race([
+        Promise.resolve().then(() =>
+          options.signal?.aborted
+            ? cancelled()
+            : service.sendEmail(projectId, prepared.payload)
+        ),
+        new Promise<ReturnType<typeof failure>>((resolve) => {
+          onAbort = () => resolve(cancelled());
+          options.signal?.addEventListener("abort", onAbort, { once: true });
+          if (options.signal?.aborted) {
+            onAbort();
+          }
+          if (options.timeoutMs !== undefined) {
+            timeout = setTimeout(
+              () =>
+                resolve(
+                  failure(504, "EMAIL_TIMEOUT", "Email delivery timed out")
+                ),
+              options.timeoutMs
+            );
+          }
+        }),
+      ]);
+      if (options.signal?.aborted) {
+        return cancelled();
+      }
+      if (
+        !isRecord(result) ||
+        typeof result.status !== "number" ||
+        !Number.isInteger(result.status) ||
+        result.status < 100 ||
+        result.status > 599
+      ) {
+        return failure(
+          502,
+          "EMAIL_SERVICE_ERROR",
+          "Email service returned an invalid response"
+        );
+      }
+      if (result.ok === true) {
+        if (
+          !isRecord(result.data) ||
+          typeof result.data.id !== "string" ||
+          result.data.id.trim().length === 0
+        ) {
+          return failure(
+            502,
+            "EMAIL_SERVICE_ERROR",
+            "Email service returned an invalid response"
+          );
+        }
+        return {
+          ok: true,
+          status: result.status,
+          statusText: "OK",
+          data: result.data,
+        };
+      }
+      if (result.ok === false && isRecord(result.data)) {
+        const data = result.data;
+        if (
+          isRecord(data.error) &&
+          typeof data.error.code === "string" &&
+          typeof data.error.message === "string" &&
+          typeof result.statusText === "string"
+        ) {
+          return {
+            ok: false,
+            status: result.status,
+            statusText: result.statusText,
+            data,
+          };
+        }
+      }
+      if (
+        result.ok !== false ||
+        !isRecord(result.error) ||
+        typeof result.error.code !== "string" ||
+        typeof result.error.message !== "string"
+      ) {
+        return failure(
+          502,
+          "EMAIL_SERVICE_ERROR",
+          "Email service returned an invalid response"
+        );
+      }
+      return {
+        ok: false,
+        status: result.status,
+        statusText: result.error.message,
+        data: { error: result.error },
+      };
+    } catch {
+      return options.signal?.aborted
+        ? cancelled()
+        : failure(
+            502,
+            "EMAIL_SERVICE_UNAVAILABLE",
+            "Email service is unavailable"
+          );
+    } finally {
+      if (timeout !== undefined) {
+        clearTimeout(timeout);
+      }
+      if (onAbort !== undefined) {
+        options.signal?.removeEventListener("abort", onAbort);
+      }
+    }
+  };
+};
 
 /** Create an approved Preview sender using a private, server-side bearer token. */
 export const createCloudflareManagedFormEmailSenderWithUrl = (
@@ -358,8 +513,7 @@ export const createCloudflareManagedFormEmailSenderWithUrl = (
     formData,
     projectId,
     { authorization: `Bearer ${token}` },
-    new URL("/trpc/email.send", url),
-    "trpc"
+    new URL("/trpc/email.send", url)
   );
   if (sendEmail === undefined) {
     return;
