@@ -1054,8 +1054,8 @@ describe("project session mcp adapter", () => {
       Object.keys(
         insertFragmentTool === undefined
           ? {}
-          : (getDetailedProjectSessionMcpInputSchema(insertFragmentTool)
-              .properties ?? {})
+          : getDetailedProjectSessionMcpInputSchema(insertFragmentTool)
+              .properties ?? {}
       ).filter((property) => property !== "dryRun")
     ).toEqual(runtimeInsertFragmentProperties);
     expect(insertFragmentTool?.inputSchema.required).toEqual([
@@ -6114,6 +6114,44 @@ describe("project session mcp adapter", () => {
     const executeOperation = createExecuteOperation();
     const operations = [
       ...publicMcpOperations,
+      ...(["wrap-instance", "convert-instance"] as const).map((command) =>
+        publicOperation({
+          command,
+          id: `instances.${command}`,
+          description: command,
+          method: "mutation",
+          permit: "edit",
+          inputSchema: getTestInputSchema(
+            z.object({
+              instanceSelector: z.array(z.string()),
+              component: z.string(),
+            })
+          ),
+          writeNamespaces: ["instances"],
+        })
+      ),
+      publicOperation({
+        command: "update-text-tree",
+        id: "instances.updateTextTree",
+        description: "Update text tree",
+        method: "mutation",
+        permit: "edit",
+        inputSchema: getTestInputSchema(
+          z.object({ rootInstanceId: z.string(), instances: z.array(z.any()) })
+        ),
+        writeNamespaces: ["instances"],
+      }),
+      publicOperation({
+        command: "integrate-runtime-ui",
+        id: "runtimeUi.integrate",
+        description: "Integrate runtime UI",
+        method: "mutation",
+        permit: "edit",
+        inputSchema: getTestInputSchema(
+          z.object({ parentInstanceId: z.string(), structure: z.any() })
+        ),
+        writeNamespaces: ["instances"],
+      }),
       ...(
         ["insert-component", "insert-fragment", "insert-collection"] as const
       ).map((command) =>
@@ -6153,6 +6191,51 @@ describe("project session mcp adapter", () => {
         input: { parentInstanceId: "body", component: "WebhookForm" },
       })
     ).rejects.toThrow("Webhook Form is deprecated");
+    for (const name of ["wrap-instance", "convert-instance"] as const) {
+      await expect(
+        adapter.callTool({
+          name,
+          input: {
+            instanceSelector: ["instance", "body"],
+            component: "WebhookForm",
+          },
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+    }
+    for (const id of ["new-form", "existing-rich-text-child"]) {
+      await expect(
+        adapter.callTool({
+          name: "update-text-tree",
+          input: {
+            rootInstanceId: "rich-text-root",
+            instances: [
+              {
+                type: "instance",
+                id,
+                component: "WebhookForm",
+                children: [],
+              },
+            ],
+          },
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+    }
+    const legacyFragment = await parseWebstudioJsxFragment("<WebhookForm />");
+    for (const structure of [
+      { type: "fragment", fragment: legacyFragment },
+      {
+        type: "collection",
+        data: { type: "json", value: [{ name: "example" }] },
+        itemFragment: legacyFragment,
+      },
+    ]) {
+      await expect(
+        adapter.callTool({
+          name: "integrate-runtime-ui",
+          input: { parentInstanceId: "body", structure },
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+    }
     for (const name of [
       "insert-fragment",
       "insert-fragment-verified",
@@ -6194,21 +6277,41 @@ describe("project session mcp adapter", () => {
       throw new Error(`Unexpected mutation: ${command}`);
     });
     const adapter = createProjectSessionMcpCore({
-      operations: publicMcpOperations,
+      operations: [
+        ...publicMcpOperations,
+        publicOperation({
+          command: "duplicate-instance",
+          id: "instances.duplicateAfterItself",
+          description: "Duplicate instance",
+          method: "mutation",
+          permit: "edit",
+          inputSchema: getTestInputSchema(
+            z.object({
+              sourceInstanceId: z.string(),
+              parentInstanceId: z.string(),
+            })
+          ),
+          writeNamespaces: ["instances"],
+        }),
+      ],
       createProjectSession: createSessionFactory(),
       executeOperation,
     });
 
-    await expect(
-      adapter.callTool({
-        name: "clone-instance",
-        input: {
-          sourceInstanceId: "saved-form",
-          targetParentInstanceId: "body",
-        },
-      })
-    ).rejects.toThrow("Webhook Form is deprecated");
-    expect(executeOperation).toHaveBeenCalledExactlyOnceWith({
+    for (const name of ["clone-instance", "duplicate-instance"] as const) {
+      await expect(
+        adapter.callTool({
+          name,
+          input: {
+            sourceInstanceId: "saved-form",
+            ...(name === "clone-instance"
+              ? { targetParentInstanceId: "body" }
+              : { parentInstanceId: "body" }),
+          },
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+    }
+    expect(executeOperation).toHaveBeenNthCalledWith(1, {
       command: "list-instances",
       input: {
         rootInstanceId: "saved-form",
@@ -6217,6 +6320,266 @@ describe("project session mcp adapter", () => {
       },
       dryRun: false,
     });
+    expect(executeOperation).toHaveBeenNthCalledWith(2, {
+      command: "list-instances",
+      input: {
+        rootInstanceId: "saved-form",
+        component: "WebhookForm",
+        limit: 1,
+      },
+      dryRun: false,
+    });
+    expect(executeOperation).toHaveBeenCalledTimes(2);
+  });
+
+  test("rejects page and template copies that would create legacy Webhook Forms", async () => {
+    const inputs = [
+      ["insert-mdx-text", { parentInstanceId: "body", source: "<Contact />" }],
+      ["duplicate-page", { projectId: "project", pageId: "page" }],
+      [
+        "duplicate-page-template",
+        { projectId: "project", templateId: "template" },
+      ],
+      [
+        "create-page-from-template",
+        {
+          projectId: "project",
+          templateId: "template",
+          name: "Contact copy",
+          path: "/contact-copy",
+        },
+      ],
+      ["duplicate-folder", { projectId: "project", folderId: "folder" }],
+      ["insert-page-transfer-item", { projectId: "project" }],
+    ] as const;
+    const operations = [
+      ...publicMcpOperations,
+      ...inputs.map(([command]) =>
+        publicOperation({
+          command,
+          id: `test.${command}`,
+          description: command,
+          method: "mutation",
+          permit: "edit",
+          inputSchema: getTestInputSchema(
+            z.object({
+              projectId: z.string().optional(),
+              parentInstanceId: z.string().optional(),
+              source: z.string().optional(),
+              pageId: z.string().optional(),
+              templateId: z.string().optional(),
+              folderId: z.string().optional(),
+              name: z.string().optional(),
+              path: z.string().optional(),
+            })
+          ),
+          writeNamespaces: ["pages", "instances"],
+        })
+      ),
+    ];
+    const executeOperation = createExecuteOperation(
+      async ({ command, dryRun }) => {
+        if (dryRun === false) {
+          throw new Error(`Unexpected committed copy: ${command}`);
+        }
+        return createEnvelope({
+          operationId: command,
+          source: "dry-run",
+          result: {},
+          transaction: {
+            id: `planned-${command}`,
+            payload: [
+              {
+                namespace: "instances",
+                patches: [
+                  {
+                    op: "add",
+                    path: ["copied-form"],
+                    value: { id: "copied-form", component: "WebhookForm" },
+                  },
+                ],
+              },
+            ],
+          },
+        });
+      }
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    for (const [name, input] of inputs) {
+      await expect(adapter.callTool({ name, input })).rejects.toThrow(
+        "Webhook Form is deprecated"
+      );
+    }
+    expect(executeOperation).toHaveBeenCalledTimes(inputs.length);
+    expect(
+      vi
+        .mocked(executeOperation)
+        .mock.calls.every(([call]) => call.dryRun === true)
+    ).toBe(true);
+  });
+
+  test("rejects a copied legacy form in a root Map replacement", async () => {
+    const executeOperation = createExecuteOperation(async ({ dryRun }) => {
+      if (dryRun === false) {
+        throw new Error("Unexpected committed copy");
+      }
+      return createEnvelope({
+        operationId: "pages.duplicate",
+        source: "dry-run",
+        result: {},
+        transaction: {
+          id: "planned-page-copy",
+          payload: [
+            {
+              namespace: "instances",
+              patches: [
+                {
+                  op: "replace",
+                  path: [],
+                  value: new Map([
+                    [
+                      "copied-form",
+                      { id: "copied-form", component: "WebhookForm" },
+                    ],
+                  ]),
+                },
+              ],
+            },
+          ],
+        },
+      });
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: [
+        ...publicMcpOperations,
+        publicOperation({
+          command: "duplicate-page",
+          id: "pages.duplicate",
+          description: "Duplicate page",
+          method: "mutation",
+          permit: "edit",
+          inputSchema: getTestInputSchema(
+            z.object({ projectId: z.string(), pageId: z.string() })
+          ),
+          writeNamespaces: ["pages", "instances"],
+        }),
+      ],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "duplicate-page",
+        input: { projectId: "project", pageId: "source-page" },
+      })
+    ).rejects.toThrow("Webhook Form is deprecated");
+    expect(executeOperation).toHaveBeenCalledTimes(1);
+  });
+
+  test("keeps copying pages without legacy forms available through MCP", async () => {
+    const executeOperation = createExecuteOperation(async ({ dryRun }) =>
+      createEnvelope({
+        operationId: "pages.duplicate",
+        source: dryRun ? "dry-run" : "remote",
+        result: { pageId: "copied-page" },
+        ...(dryRun
+          ? {
+              transaction: {
+                id: "planned-page-copy",
+                payload: [
+                  {
+                    namespace: "instances" as const,
+                    patches: [
+                      {
+                        op: "add" as const,
+                        path: ["copied-box"],
+                        value: { id: "copied-box", component: "Box" },
+                      },
+                    ],
+                  },
+                ],
+              },
+            }
+          : {}),
+      })
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: [
+        ...publicMcpOperations,
+        publicOperation({
+          command: "duplicate-page",
+          id: "pages.duplicate",
+          description: "Duplicate page",
+          method: "mutation",
+          permit: "edit",
+          inputSchema: getTestInputSchema(
+            z.object({ projectId: z.string(), pageId: z.string() })
+          ),
+          writeNamespaces: ["pages", "instances"],
+        }),
+      ],
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    const result = await adapter.callTool({
+      name: "duplicate-page",
+      input: { projectId: "project", pageId: "source-page" },
+    });
+    expect(result.structuredContent.data).toEqual({ pageId: "copied-page" });
+    expect(
+      vi.mocked(executeOperation).mock.calls.map(([call]) => call.dryRun)
+    ).toEqual([true, false]);
+  });
+
+  test("rejects raw MCP patches that create a legacy Webhook Form", async () => {
+    const executeOperation = createExecuteOperation();
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    for (const patch of [
+      {
+        op: "add",
+        path: ["legacy-form"],
+        value: { id: "legacy-form", component: "WebhookForm" },
+      },
+      {
+        op: "replace",
+        path: ["existing", "component"],
+        value: "WebhookForm",
+      },
+      {
+        op: "replace",
+        path: [],
+        value: {
+          "legacy-form": { id: "legacy-form", component: "WebhookForm" },
+        },
+      },
+    ]) {
+      await expect(
+        adapter.callTool({
+          name: "apply-patch",
+          input: {
+            transactions: [
+              {
+                id: "legacy-form-insert",
+                payload: [{ namespace: "instances", patches: [patch] }],
+              },
+            ],
+          },
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+    }
+    expect(executeOperation).not.toHaveBeenCalled();
   });
 
   test("hides explicit hidden component metas even when templates are visible", async () => {
