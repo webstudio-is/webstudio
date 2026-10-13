@@ -39,7 +39,6 @@ export const loadEmailResource = async (
       status: 501,
       statusText: "Email delivery requires Webstudio Cloud",
       data: {
-        ok: false,
         error: {
           code: "EMAIL_NOT_CONFIGURED",
           message: "Email delivery requires Webstudio Cloud",

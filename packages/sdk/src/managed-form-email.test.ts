@@ -27,6 +27,7 @@ const successfulSend = () =>
   vi.fn<EmailService["sendEmail"]>(async () => ({
     ok: true,
     status: 200,
+    statusText: "OK",
     data: { id: "sent" },
   }));
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
@@ -352,7 +353,16 @@ test("published RPC does not create an HTTP inspection request", async () => {
 
 test("sends Preview email to the approved endpoint with server-only authorization", async () => {
   const fetcher = vi.fn(async () =>
-    Response.json({ result: { data: { id: "preview-sent" } } })
+    Response.json({
+      result: {
+        data: {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          data: { id: "preview-sent" },
+        },
+      },
+    })
   );
   const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
     emailWorkerOrigin,
@@ -391,7 +401,16 @@ test("sends Preview email to an approved Email Worker version URL", async () => 
   const versionUrl =
     "https://a1b2c3d4-webstudio-email-service.wstd.workers.dev";
   const fetcher = vi.fn(async (_input: RequestInfo | URL) =>
-    Response.json({ result: { data: { id: "version-sent" } } })
+    Response.json({
+      result: {
+        data: {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          data: { id: "version-sent" },
+        },
+      },
+    })
   );
   const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
     versionUrl,
@@ -472,6 +491,32 @@ test("Preview preserves the email service error code from tRPC", async () => {
   });
 });
 
+test("Preview preserves a delivery failure from a successful tRPC response", async () => {
+  const delivery = {
+    ok: false,
+    status: 429,
+    statusText: "Email sending limit reached",
+    data: {
+      error: {
+        code: "email_rate_limited",
+        message: "Email sending limit reached",
+      },
+    },
+  };
+  const fetcher = vi.fn(async () =>
+    Response.json({ result: { data: delivery } })
+  );
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    emailWorkerOrigin,
+    "worker-secret",
+    new FormData(),
+    projectId,
+    fetcher
+  )!;
+
+  expect(await sendEmail(request, {})).toEqual(delivery);
+});
+
 test("does not create a Preview sender without both URL and token", () => {
   expect(
     createCloudflareManagedFormEmailSenderWithUrl(
@@ -549,7 +594,8 @@ test("omits attachments when disabled and preserves worker errors", async () => 
   const rpc = vi.fn<EmailService["sendEmail"]>(async () => ({
     ok: false,
     status: 502,
-    error: { code: "EMAIL_REJECTED", message: "Rejected" },
+    statusText: "Rejected",
+    data: { error: { code: "EMAIL_REJECTED", message: "Rejected" } },
   }));
   const sendEmail = createCloudflareManagedFormEmailSender(
     { sendEmail: rpc },
@@ -573,9 +619,12 @@ test("passes the Email Service per-site delivery limit back as a failed send", a
   const rpc = vi.fn<EmailService["sendEmail"]>(async () => ({
     ok: false,
     status: 429,
-    error: {
-      code: "email_rate_limited",
-      message: "Email sending limit reached",
+    statusText: "Email sending limit reached",
+    data: {
+      error: {
+        code: "email_rate_limited",
+        message: "Email sending limit reached",
+      },
     },
   }));
   const sendEmail = createCloudflareManagedFormEmailSender(
@@ -597,6 +646,7 @@ test.each([undefined, null, "", "   ", 123])(
     const rpc = vi.fn<EmailService["sendEmail"]>().mockResolvedValue({
       ok: true,
       status: 200,
+      statusText: "OK",
       data: id === undefined ? {} : { id },
     } as unknown as Awaited<ReturnType<EmailService["sendEmail"]>>);
     const sendEmail = createCloudflareManagedFormEmailSender(
@@ -624,7 +674,8 @@ test.each([
     const rpc = vi.fn<EmailService["sendEmail"]>().mockResolvedValue({
       ok: false,
       status: 400,
-      error,
+      statusText: "Rejected",
+      data: { error },
     } as unknown as Awaited<ReturnType<EmailService["sendEmail"]>>);
     const sendEmail = createCloudflareManagedFormEmailSender(
       { sendEmail: rpc },
@@ -663,7 +714,10 @@ test("propagates Worker rejection for mailbox or attachment policy", async () =>
   const rpc = vi.fn<EmailService["sendEmail"]>(async () => ({
     ok: false,
     status: 400,
-    error: { code: "EMAIL_INVALID", message: emailSettingsInvalidMessage },
+    statusText: emailSettingsInvalidMessage,
+    data: {
+      error: { code: "EMAIL_INVALID", message: emailSettingsInvalidMessage },
+    },
   }));
   const sendEmail = createCloudflareManagedFormEmailSender(
     { sendEmail: rpc },
@@ -778,9 +832,15 @@ test("a failed Email root retries once and keeps sibling results", async () => {
     .mockResolvedValueOnce({
       ok: false,
       status: 503,
-      error: { code: "UNAVAILABLE", message: "Unavailable" },
+      statusText: "Unavailable",
+      data: { error: { code: "UNAVAILABLE", message: "Unavailable" } },
     })
-    .mockResolvedValueOnce({ ok: true, status: 200, data: { id: "sent" } });
+    .mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      data: { id: "sent" },
+    });
   const sendEmail = createCloudflareManagedFormEmailSender(
     { sendEmail: rpc },
     new FormData()

@@ -47,7 +47,12 @@ test.each([false, true])(
       expect(Buffer.from(body.attachments[1].contentBase64, "base64")).toEqual(
         Buffer.from(pngBase64)
       );
-      return { ok: true as const, status: 200 as const, data: { id: "sent" } };
+      return {
+        ok: true as const,
+        status: 200 as const,
+        statusText: "OK",
+        data: { id: "sent" },
+      };
     });
     const send = createCloudflareManagedFormEmailSender(
       { sendEmail: rpc },

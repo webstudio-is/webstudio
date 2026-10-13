@@ -107,8 +107,60 @@ const failure = (status: number, code: string, message: string) => ({
   ok: false as const,
   status,
   statusText: message,
-  data: { ok: false as const, error: { code, message } },
+  data: { error: { code, message } },
 });
+
+/** The Worker uses this result for both native RPC and tRPC delivery outcomes. */
+const normalizeDeliveryResult = (value: unknown) => {
+  if (
+    !isRecord(value) ||
+    typeof value.status !== "number" ||
+    !Number.isInteger(value.status) ||
+    value.status < 100 ||
+    value.status > 599 ||
+    typeof value.statusText !== "string" ||
+    !isRecord(value.data)
+  ) {
+    return failure(
+      502,
+      "EMAIL_SERVICE_ERROR",
+      "Email service returned an invalid response"
+    );
+  }
+  if (
+    value.ok === true &&
+    value.status >= 200 &&
+    value.status < 300 &&
+    typeof value.data.id === "string" &&
+    value.data.id.trim().length > 0
+  ) {
+    return {
+      ok: true as const,
+      status: value.status,
+      statusText: value.statusText,
+      data: value.data,
+    };
+  }
+  if (
+    value.ok === false &&
+    value.status >= 400 &&
+    isRecord(value.data.error) &&
+    typeof value.data.error.code === "string" &&
+    typeof value.data.error.message === "string"
+  ) {
+    return {
+      ok: false as const,
+      status: value.status,
+      statusText: value.statusText,
+      data: value.data,
+    };
+  }
+  return failure(
+    502,
+    "EMAIL_SERVICE_ERROR",
+    "Email service returned an invalid response"
+  );
+};
 
 const encodeFile = async (file: File) => {
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -252,25 +304,13 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
       );
       const responseText = await response.text().catch(() => undefined);
       let responseData: unknown;
-      let data: unknown;
+      let deliveryResult: unknown;
       if (responseText !== undefined) {
         try {
           responseData = JSON.parse(responseText);
-          data = responseData;
           if (isRecord(responseData)) {
             if (isRecord(responseData.result)) {
-              data = responseData.result.data;
-            } else if (isRecord(responseData.error)) {
-              const error = responseData.error;
-              const emailCode = isRecord(error.data)
-                ? error.data.emailCode
-                : undefined;
-              data = {
-                error: {
-                  code: typeof emailCode === "string" ? emailCode : error.code,
-                  message: error.message,
-                },
-              };
+              deliveryResult = responseData.result.data;
             }
           }
         } catch {
@@ -283,38 +323,22 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
       if (options.signal?.aborted) {
         return failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled");
       }
-      if (
-        response.ok &&
-        typeof data === "object" &&
-        data !== null &&
-        "id" in data &&
-        typeof data.id === "string" &&
-        data.id.trim().length > 0
-      ) {
-        return { ok: true, status: response.status, statusText: "OK", data };
-      }
       if (response.ok) {
-        return failure(
-          502,
-          "EMAIL_SERVICE_ERROR",
-          "Email service returned an invalid response"
-        );
+        return normalizeDeliveryResult(deliveryResult);
       }
-      if (
-        typeof data === "object" &&
-        data !== null &&
-        "error" in data &&
-        typeof data.error === "object" &&
-        data.error !== null &&
-        "message" in data.error &&
-        typeof data.error.message === "string"
-      ) {
-        return {
-          ok: false,
-          status: response.status,
-          statusText: data.error.message,
-          data,
-        };
+      if (isRecord(responseData) && isRecord(responseData.error)) {
+        const error = responseData.error;
+        const code =
+          isRecord(error.data) && typeof error.data.emailCode === "string"
+            ? error.data.emailCode
+            : typeof error.code === "string"
+            ? error.code
+            : "EMAIL_SERVICE_ERROR";
+        const message =
+          typeof error.message === "string"
+            ? error.message
+            : "Email service returned an invalid response";
+        return failure(response.status, code, message);
       }
       return failure(
         502,
@@ -397,72 +421,7 @@ export const createCloudflareManagedFormEmailSender = (
       if (options.signal?.aborted) {
         return cancelled();
       }
-      if (
-        !isRecord(result) ||
-        typeof result.status !== "number" ||
-        !Number.isInteger(result.status) ||
-        result.status < 100 ||
-        result.status > 599
-      ) {
-        return failure(
-          502,
-          "EMAIL_SERVICE_ERROR",
-          "Email service returned an invalid response"
-        );
-      }
-      if (result.ok === true) {
-        if (
-          !isRecord(result.data) ||
-          typeof result.data.id !== "string" ||
-          result.data.id.trim().length === 0
-        ) {
-          return failure(
-            502,
-            "EMAIL_SERVICE_ERROR",
-            "Email service returned an invalid response"
-          );
-        }
-        return {
-          ok: true,
-          status: result.status,
-          statusText: "OK",
-          data: result.data,
-        };
-      }
-      if (result.ok === false && isRecord(result.data)) {
-        const data = result.data;
-        if (
-          isRecord(data.error) &&
-          typeof data.error.code === "string" &&
-          typeof data.error.message === "string" &&
-          typeof result.statusText === "string"
-        ) {
-          return {
-            ok: false,
-            status: result.status,
-            statusText: result.statusText,
-            data,
-          };
-        }
-      }
-      if (
-        result.ok !== false ||
-        !isRecord(result.error) ||
-        typeof result.error.code !== "string" ||
-        typeof result.error.message !== "string"
-      ) {
-        return failure(
-          502,
-          "EMAIL_SERVICE_ERROR",
-          "Email service returned an invalid response"
-        );
-      }
-      return {
-        ok: false,
-        status: result.status,
-        statusText: result.error.message,
-        data: { error: result.error },
-      };
+      return normalizeDeliveryResult(result);
     } catch {
       return options.signal?.aborted
         ? cancelled()

@@ -96,7 +96,16 @@ test("Email exchange inspection retains actual Email Service response headers", 
     "project-id",
     async () =>
       Response.json(
-        { result: { data: { id: "message-id" } } },
+        {
+          result: {
+            data: {
+              ok: true,
+              status: 200,
+              statusText: "OK",
+              data: { id: "message-id" },
+            },
+          },
+        },
         {
           status: 202,
           statusText: "Accepted",
