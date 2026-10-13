@@ -382,7 +382,7 @@ test("sends Preview email to the approved endpoint with server-only authorizatio
   expect(fetcher).toHaveBeenCalledOnce();
   const [url, init] = fetcher.mock.calls[0] as unknown as [
     URL,
-    RequestInit & { redirect: RequestRedirect }
+    RequestInit & { redirect: RequestRedirect },
   ];
   expect(url.href).toBe(emailProcedureUrl);
   expect(init.method).toBe("POST");
@@ -640,7 +640,7 @@ test("passes the Email Service per-site delivery limit back as a failed send", a
   expect(rpc).toHaveBeenCalledOnce();
 });
 
-test.each([undefined, null, "", "   ", 123])(
+test.each([undefined, null, 123])(
   "treats malformed successful Email ID %s as a provider error",
   async (id) => {
     const rpc = vi.fn<EmailService["sendEmail"]>().mockResolvedValue({
@@ -661,6 +661,19 @@ test.each([undefined, null, "", "   ", 123])(
     });
   }
 );
+
+test.each(["", "   "])("rejects blank legacy Email ID %j", async (id) => {
+  const rpc = vi.fn<EmailService["sendEmail"]>().mockResolvedValue({ id });
+  const sendEmail = createCloudflareManagedFormEmailSender(
+    { sendEmail: rpc },
+    new FormData()
+  )!;
+  expect(await sendEmail(request, {})).toMatchObject({
+    ok: false,
+    status: 502,
+    data: { error: { code: "EMAIL_SERVICE_ERROR" } },
+  });
+});
 
 test.each([
   undefined,
@@ -826,7 +839,146 @@ test("reports a rejected RPC as an unavailable Email Service", async () => {
   });
 });
 
-test("a failed Email root retries once and keeps sibling results", async () => {
+test.each(["rpc", "preview"] as const)(
+  "%s normalizes legacy and canonical Email successes",
+  async (transport) => {
+    for (const reply of [
+      { id: "sent" },
+      { ok: true, status: 200, statusText: "OK", data: { id: "sent" } },
+      { ok: true, status: 200, statusText: "OK", data: { id: "" } },
+    ]) {
+      const dispatch = vi.fn(async () => reply);
+      const sendEmail =
+        transport === "rpc"
+          ? createCloudflareManagedFormEmailSender(
+              { sendEmail: dispatch },
+              new FormData()
+            )!
+          : createCloudflareManagedFormEmailSenderWithUrl(
+              emailWorkerOrigin,
+              "worker-secret",
+              new FormData(),
+              projectId,
+              async () => Response.json({ result: { data: await dispatch() } })
+            )!;
+      expect(await sendEmail(request, {})).toEqual({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        data: "data" in reply ? reply.data : { id: reply.id },
+      });
+      expect(dispatch).toHaveBeenCalledOnce();
+    }
+  }
+);
+
+test.each(
+  (["rpc", "preview"] as const).flatMap((transport) =>
+    (["failure", "timeout", "malformed"] as const).map((outcome) => ({
+      transport,
+      outcome,
+    }))
+  )
+)(
+  "$transport dispatches Email once after $outcome",
+  async ({ transport, outcome }) => {
+    vi.useFakeTimers();
+    try {
+      const dispatch = vi.fn(async () => {
+        if (outcome === "timeout") {
+          return new Promise<unknown>(() => {});
+        }
+        if (outcome === "failure") {
+          throw new Error("Delivery may already have occurred");
+        }
+        return { ok: true, status: 200, statusText: "OK", data: {} };
+      });
+      const sendEmail =
+        transport === "rpc"
+          ? createCloudflareManagedFormEmailSender(
+              { sendEmail: dispatch },
+              new FormData()
+            )!
+          : createCloudflareManagedFormEmailSenderWithUrl(
+              emailWorkerOrigin,
+              "worker-secret",
+              new FormData(),
+              projectId,
+              async (_input, init) => {
+                // Fetch rejects when the sender's timeout aborts the request.
+                const aborted = new Promise<never>((_resolve, reject) => {
+                  init?.signal?.addEventListener("abort", () =>
+                    reject(new Error("Aborted"))
+                  );
+                });
+                const reply = await Promise.race([dispatch(), aborted]);
+                return Response.json({ result: { data: reply } });
+              }
+            )!;
+      const pending = loadManagedFormResources(
+        vi.fn(),
+        {
+          rootIds: ["email"],
+          resources: [
+            {
+              id: "email",
+              outputName: "Email",
+              control: "email",
+              dependencies: [],
+              createRequest: () => request,
+            },
+          ],
+        },
+        undefined,
+        {
+          sendEmail,
+          timeoutMs: 10,
+          shouldRetryFailedRoot: shouldRetryManagedFormDestination,
+        }
+      );
+      await vi.advanceTimersByTimeAsync(10);
+      expect(await pending).toMatchObject({
+        Email: { ok: false, status: outcome === "timeout" ? 504 : 502 },
+      });
+      expect(dispatch).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  }
+);
+
+test("a managed HTTP action still retries after failure", async () => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response("Unavailable", { status: 503 }))
+    .mockResolvedValueOnce(Response.json({ recovered: true }));
+  const results = await loadManagedFormResources(
+    fetcher,
+    {
+      rootIds: ["http"],
+      resources: [
+        {
+          id: "http",
+          outputName: "HTTP",
+          dependencies: [],
+          createRequest: () => ({
+            ...request,
+            control: undefined,
+            url: "https://example.com/submit",
+          }),
+        },
+      ],
+    },
+    undefined,
+    { shouldRetryFailedRoot: shouldRetryManagedFormDestination }
+  );
+  expect(results).toMatchObject({
+    HTTP: { ok: true, data: { recovered: true } },
+  });
+  expect(fetcher).toHaveBeenCalledTimes(2);
+});
+
+test("a failed Email root is dispatched once and keeps sibling results", async () => {
   const rpc = vi
     .fn<EmailService["sendEmail"]>()
     .mockResolvedValueOnce({
@@ -873,15 +1025,15 @@ test("a failed Email root retries once and keeps sibling results", async () => {
     undefined,
     { sendEmail, shouldRetryFailedRoot: shouldRetryManagedFormDestination }
   );
-  expect(rpc).toHaveBeenCalledTimes(2);
+  expect(rpc).toHaveBeenCalledOnce();
   expect(results).toMatchObject({
-    Email: { ok: true, data: { id: "sent" } },
+    Email: { ok: false, status: 503 },
     HTTP: { ok: true },
   });
 });
 
 test.each(["New form submission", "Custom owner subject"])(
-  "owner subject %s stays unchanged while its message ID is stable on retry",
+  "owner subject %s stays unchanged with a new message ID per submission",
   async (subject) => {
     const sendEmail = vi
       .fn()
@@ -931,16 +1083,15 @@ test.each(["New form submission", "Custom owner subject"])(
     const messageIds = sendEmail.mock.calls.map(
       ([emailRequest]) => emailRequest.email!.headers?.["X-Message-ID"]
     );
-    expect(subjects).toHaveLength(3);
-    expect(subjects).toEqual([subject, subject, subject]);
+    expect(subjects).toHaveLength(2);
+    expect(subjects).toEqual([subject, subject]);
     expect(messageIds[0]).toHaveLength(16);
     expect(
       [...messageIds[0]!].every((character) =>
         "0123456789abcdef".includes(character)
       )
     ).toBe(true);
-    expect(messageIds[1]).toBe(messageIds[0]);
-    expect(messageIds[2]).not.toBe(messageIds[0]);
+    expect(messageIds[1]).not.toBe(messageIds[0]);
   }
 );
 

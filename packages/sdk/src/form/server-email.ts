@@ -112,6 +112,21 @@ const failure = (status: number, code: string, message: string) => ({
 
 /** The Worker uses this result for both native RPC and tRPC delivery outcomes. */
 const normalizeDeliveryResult = (value: unknown) => {
+  // Deployed Workers may still return the original success-only contract.
+  // Accept its exact shape so malformed canonical outcomes remain failures.
+  if (
+    isRecord(value) &&
+    Object.keys(value).length === 1 &&
+    typeof value.id === "string" &&
+    value.id.trim().length > 0
+  ) {
+    return {
+      ok: true as const,
+      status: 200,
+      statusText: "OK",
+      data: { id: value.id },
+    };
+  }
   if (
     !isRecord(value) ||
     typeof value.status !== "number" ||
@@ -131,8 +146,7 @@ const normalizeDeliveryResult = (value: unknown) => {
     value.ok === true &&
     value.status >= 200 &&
     value.status < 300 &&
-    typeof value.data.id === "string" &&
-    value.data.id.trim().length > 0
+    typeof value.data.id === "string"
   ) {
     return {
       ok: true as const,
@@ -332,8 +346,8 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
           isRecord(error.data) && typeof error.data.emailCode === "string"
             ? error.data.emailCode
             : typeof error.code === "string"
-            ? error.code
-            : "EMAIL_SERVICE_ERROR";
+              ? error.code
+              : "EMAIL_SERVICE_ERROR";
         const message =
           typeof error.message === "string"
             ? error.message
@@ -349,12 +363,12 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
       return timedOut
         ? failure(504, "EMAIL_TIMEOUT", "Email delivery timed out")
         : options.signal?.aborted
-        ? failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled")
-        : failure(
-            502,
-            "EMAIL_SERVICE_UNAVAILABLE",
-            "Email service is unavailable"
-          );
+          ? failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled")
+          : failure(
+              502,
+              "EMAIL_SERVICE_UNAVAILABLE",
+              "Email service is unavailable"
+            );
     } finally {
       if (timeout !== undefined) {
         clearTimeout(timeout);

@@ -48,14 +48,10 @@ export type ManagedFormResourceGraph = Omit<
   resources: readonly ManagedFormResource[];
 };
 
-/** Authentication and quota rejections cannot succeed on an immediate retry. */
+/** An Email failure may occur after delivery; replaying it can send duplicates. */
 export const shouldRetryManagedFormDestination: NonNullable<
   EmailResourceGraphLoadOptions["shouldRetryFailedRoot"]
-> = (_resourceId, request, result) =>
-  !(
-    request.control === "email" &&
-    (result.status === 401 || result.status === 429)
-  );
+> = (_resourceId, request) => request.control !== "email";
 
 const maxFormRequestBytes = 25 * 1024 * 1024;
 export const maxFormTeamEmailDeliveries = 5;
