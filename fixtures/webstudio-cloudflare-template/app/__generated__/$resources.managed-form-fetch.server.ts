@@ -10,8 +10,8 @@ export const createManagedFormEmailSender = ({ context, formData, projectId }: {
     return createCloudflareManagedFormEmailSenderWithUrl(env.EMAIL_SERVICE_URL, env.TRPC_SERVER_API_TOKEN, formData, projectId);
   }
   const binding = env?.EMAIL_SERVICE;
-  const service = binding !== null && typeof binding === "object" && "fetch" in binding && typeof binding.fetch === "function"
-    ? binding as { fetch: typeof fetch }
+  const service = binding !== null && typeof binding === "object" && "sendEmail" in binding && typeof binding.sendEmail === "function"
+    ? binding as Parameters<typeof createCloudflareManagedFormEmailSender>[0]
     : undefined;
   return createCloudflareManagedFormEmailSender(service, formData, projectId);
 };
