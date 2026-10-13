@@ -1070,10 +1070,6 @@ describe("Form modes evaluation", () => {
         },
         {
           name: "components.search",
-          arguments: { searchesForWebhookForm: true },
-        },
-        {
-          name: "components.search",
           arguments: { searchesForElement: true },
         },
         { name: "templates.get" },
@@ -2186,10 +2182,6 @@ describe("Form modes authoring evaluation", () => {
     {
       name: "components.search",
       arguments: { searchesForForm: true },
-    },
-    {
-      name: "components.search",
-      arguments: { searchesForWebhookForm: true },
     },
     {
       name: "components.search",

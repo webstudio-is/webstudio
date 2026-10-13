@@ -2085,11 +2085,6 @@ const validateFormModesAuthoring = (
       input.toolCalls.some(
         (call) =>
           call.name === "components.search" &&
-          call.arguments?.searchesForWebhookForm === true
-      ) &&
-      input.toolCalls.some(
-        (call) =>
-          call.name === "components.search" &&
           call.arguments?.searchesForElement === true
       ) &&
       input.toolCalls.some((call) => call.name === "templates.get") &&

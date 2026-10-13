@@ -6009,6 +6009,82 @@ describe("project session mcp adapter", () => {
     ).toHaveLength(1);
   });
 
+  test("omits the legacy Webhook Form from MCP discovery", async () => {
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const search = await adapter.callTool({
+      name: "components.search",
+      input: { brief: "form", limit: 25 },
+    });
+    const matches = (
+      search.structuredContent.data as {
+        components: { component: string; template?: string }[];
+      }
+    ).components;
+    expect(matches).toContainEqual(
+      expect.objectContaining({ template: "template:form" })
+    );
+    expect(matches.some(({ component }) => component === "WebhookForm")).toBe(
+      false
+    );
+
+    const details = await adapter.callTool({
+      name: "components.get",
+      input: { component: "WebhookForm" },
+    });
+    const template = await adapter.callTool({
+      name: "templates.get",
+      input: { component: "WebhookForm" },
+    });
+    expect(details.structuredContent.data).toEqual(
+      expect.objectContaining({ found: false })
+    );
+    expect(template.structuredContent.data).toEqual(
+      expect.objectContaining({ found: false })
+    );
+
+    for (const name of ["components.list", "templates.list"] as const) {
+      let offset = 0;
+      do {
+        const result = await adapter.callTool({
+          name,
+          input: { offset, limit: 100 },
+        });
+        const data = result.structuredContent.data as {
+          items: { meta: { component: string } }[];
+          pagination: { nextOffset?: number };
+        };
+        expect(
+          data.items.every(({ meta }) => meta.component !== "WebhookForm")
+        ).toBe(true);
+        offset = data.pagination.nextOffset ?? 0;
+      } while (offset !== 0);
+    }
+
+    let cursor: string | undefined;
+    do {
+      const query = new URLSearchParams({ limit: "100", verbose: "true" });
+      if (cursor !== undefined) {
+        query.set("cursor", cursor);
+      }
+      const resource = await adapter.readResource({
+        uri: `webstudio://project/components?${query}`,
+      });
+      const data = JSON.parse(resource.contents[0]?.text ?? "{}") as {
+        components: { component: string }[];
+        nextCursor?: string;
+      };
+      expect(
+        data.components.some(({ component }) => component === "WebhookForm")
+      ).toBe(false);
+      cursor = data.nextCursor;
+    } while (cursor !== undefined);
+  });
+
   test("hides explicit hidden component metas even when templates are visible", async () => {
     const component = "test:ConcealedWidget";
     const previousMeta = componentMetas.get(component);

@@ -840,10 +840,10 @@ After inserting its registered template, use the Form instance id for the
 Form-scoped Resource and Action settings.
 
 The new Form's canonical component id is `Form`. The deprecated legacy
-Webhook Form uses the `WebhookForm` identity and remains available until the
-next release. `RemixForm` is deprecated compatibility and should not be used
-for new projects. Always use registry discovery instead of assuming the display
-label is its component id.
+Webhook Form remains available in Builder for existing projects until the next
+release, but is omitted from MCP component discovery. `RemixForm` is deprecated
+compatibility and should not be used for new projects. Always use registry
+discovery instead of assuming the display label is its component id.
 
 The new Form has two modes derived from its Action array:
 
@@ -862,8 +862,8 @@ Resource selections, and the runtime derives the HTML action URL from it.
 Verify both modes through MCP in a real project: add Resource actions, remove
 all actions for a search/filter form, then reconnect them. Check the rendered
 action, query navigation without a full reload, and Resource execution. Also
-verify a plain form Element remains native and the legacy Webhook Form is still
-available. A saved project snapshot alone does not prove these runtime behaviors.
+verify a plain form Element remains native. A saved project snapshot alone does
+not prove these runtime behaviors.
 
 Commands:
 

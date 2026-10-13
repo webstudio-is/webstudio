@@ -11,6 +11,7 @@ import {
   inputJsonSchemaAcceptsType,
   parseComponentName,
   toInputJsonSchemaObject,
+  type WsComponentMeta,
   type ContentBlockDiagnostic,
   type InputJsonSchema,
   type InputJsonSchemaValue,
@@ -5231,14 +5232,20 @@ const getAnimationComponentGuidance = (component: string) =>
 const collectionComponentUsage =
   "Use Collection whenever an array or object from a resource or data variable should render a repeated list, grid, set of cards, table rows, options, tabs, or similar UI. Prefer insert-collection: pass the complete array/object plus one repeated-item JSX root, and it creates the Collection, private item/itemKey parameters, iterable binding, and item bindings atomically. External resource arrays are often nested below the scoped result's data field. Array iteration exposes `collectionItem`; object iteration also exposes `collectionItemKey`. Use expressions such as expression`collectionItem.name` in item JSX. Wrap multiple repeated siblings in one Element. For repeated Radix items, bind a stable unique id or slug to required value props. Do not create, replace, or delete internal Collection parameter records directly.";
 
+const isComponentAvailableInMcpCatalog = (
+  component: string,
+  meta: WsComponentMeta
+) =>
+  component !== "WebhookForm" &&
+  isComponentMetaUnavailableInCatalog(meta) === false;
+
 const getComponentCatalog = () => ({
   source: "@webstudio-is/sdk-components-registry/metas",
   usage:
     'Full component catalog. Prefer components.list({"source":"all"}), templates.list({}), components.search({"brief":"radix select"}), components.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}), and templates.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) for normal component discovery. Prefer insert-fragment for authored/styled sections. Use insert-component only when you want exactly one component template inserted automatically. Known components with contentModel.category "none" are not standalone-insertable; insert their root component template instead so required providers/parents are included.',
   components: [...componentMetas.entries()]
-    .filter(
-      ([_component, meta]) =>
-        isComponentMetaUnavailableInCatalog(meta) === false
+    .filter(([component, meta]) =>
+      isComponentAvailableInMcpCatalog(component, meta)
     )
     .map(([component, meta]) => {
       const [namespace, exportName] = parseComponentName(component);
@@ -5262,9 +5269,8 @@ const getComponentCatalog = () => ({
 
 const getCompactComponentCatalogEntries = () =>
   [...componentMetas.entries()]
-    .filter(
-      ([_component, meta]) =>
-        isComponentMetaUnavailableInCatalog(meta) === false
+    .filter(([component, meta]) =>
+      isComponentAvailableInMcpCatalog(component, meta)
     )
     .map(([component, meta]) => {
       const [parsedNamespace, exportName] = parseComponentName(component);
@@ -5312,7 +5318,7 @@ const getComponentSummaryEntry = ({
   const templateMeta = templates.get(component);
   const visibleCategory = templateMeta?.category ?? meta.category;
   if (
-    isComponentMetaUnavailableInCatalog(meta) ||
+    isComponentAvailableInMcpCatalog(component, meta) === false ||
     isComponentHiddenFromCatalog(meta, visibleCategory)
   ) {
     return;
@@ -5475,7 +5481,7 @@ const getComponentRegistryItems = () =>
     metas: componentMetas,
     templates: getComponentTemplates(),
     sources: getComponentCatalogSources(),
-  });
+  }).filter((item) => item.meta.component !== "WebhookForm");
 
 const filterRegistryItemsBySource = (
   items: readonly ComponentRegistryItem[],
