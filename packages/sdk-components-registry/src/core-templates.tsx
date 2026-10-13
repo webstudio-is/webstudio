@@ -57,8 +57,7 @@ const ownerEmail = new ResourceValue("Email to owner", {
     subject: expression`"Contact form: " + (${formData}.subject ?? "New message")`,
     body: expression`\`\${${browserInfo}.pageUrl ? \`Page: \${${browserInfo}.pageUrl}
 
-\` : ""}Submitted fields:
-\${${formData}}\``,
+\` : ""}\${${formData}}\``,
   },
   url: expression`""`,
   method: "post",

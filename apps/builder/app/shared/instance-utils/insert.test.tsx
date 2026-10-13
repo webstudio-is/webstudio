@@ -990,7 +990,7 @@ describe("insert webstudio component at", () => {
       ) {
         throw new Error("Expected owner Email body and Form parameters");
       }
-      expect(ownerBody).toContain("Submitted fields:\n");
+      expect(ownerBody).not.toContain("Submitted fields:");
       expect(
         lintExpression({
           expression: ownerBody,
@@ -1013,9 +1013,9 @@ describe("insert webstudio component at", () => {
             )
         );
       expect(evaluateOwnerBody("https://example.com/contact")).toBe(
-        "Page: https://example.com/contact\n\nSubmitted fields:\nName: Ada"
+        "Page: https://example.com/contact\n\nName: Ada"
       );
-      expect(evaluateOwnerBody("")).toBe("Submitted fields:\nName: Ada");
+      expect(evaluateOwnerBody("")).toBe("Name: Ada");
       expect(formProps.some(({ name }) => name === "onStateChange")).toBe(true);
       const resultProp = formProps.find(
         ({ name }) => name === "onResultChange"

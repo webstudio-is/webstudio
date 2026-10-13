@@ -283,7 +283,7 @@ test("new Form templates select project and visitor Email Resources", () => {
     expect.objectContaining({
       recipientMode: "project",
       subject: expect.stringContaining("Contact form: "),
-      body: expect.stringContaining("Submitted fields"),
+      body: expect.not.stringContaining("Submitted fields"),
     }),
     {
       recipientMode: "visitor",
