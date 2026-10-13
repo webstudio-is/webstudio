@@ -6032,7 +6032,11 @@ describe("project session mcp adapter", () => {
       false
     );
 
-    for (const component of ["form", "Form"]) {
+    const formResult = matches.find(
+      ({ template }) => template === "template:form"
+    );
+    expect(formResult?.component).toBe("form");
+    for (const component of [formResult!.component, "Form"]) {
       const formDetails = await adapter.callTool({
         name: "components.get",
         input: { component },
@@ -6045,6 +6049,13 @@ describe("project session mcp adapter", () => {
         })
       );
     }
+    const formTemplate = await adapter.callTool({
+      name: "templates.get",
+      input: { template: formResult!.template },
+    });
+    expect(formTemplate.structuredContent.data).toEqual(
+      expect.objectContaining({ found: true })
+    );
 
     const details = await adapter.callTool({
       name: "components.get",
