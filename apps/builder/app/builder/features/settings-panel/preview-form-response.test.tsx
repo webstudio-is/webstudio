@@ -56,7 +56,7 @@ test("Preview email response survives metadata refresh and editor reopening, but
     kind: "email" as const,
     request: {
       method: "POST",
-      url: "https://apps.webstudio.is/v1/preview-send",
+      url: "https://webstudio-email-service.wstd.workers.dev/trpc/email.send",
       headers: [{ name: "authorization", value: "[redacted]" }],
       body: { subject: "Contact", text: "Submitted message" },
       truncated: false,
