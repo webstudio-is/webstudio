@@ -21,7 +21,7 @@ test("HtmlEmbed fetch works on entering Preview and native fetch is restored on 
   document.body.appendChild(container);
   const root = createRoot(container);
   const dataPage = {
-    id: "data",
+    id: "data-text",
     name: "Data",
     title: "Data",
     path: "/data.txt",
@@ -37,7 +37,12 @@ test("HtmlEmbed fetch works on entering Preview and native fetch is restored on 
     folders: new Map([
       [
         "root",
-        { id: "root", name: "Root", slug: "", children: ["home", "data"] },
+        {
+          id: "root",
+          name: "Root",
+          slug: "",
+          children: ["home", "data-text", "data-json"],
+        },
       ],
     ]),
     pages: new Map<string, Page>([
@@ -52,7 +57,15 @@ test("HtmlEmbed fetch works on entering Preview and native fetch is restored on 
           meta: {},
         },
       ],
-      ["data", dataPage],
+      ["data-text", dataPage],
+      [
+        "data-json",
+        {
+          ...dataPage,
+          id: "data-json",
+          path: "/data.json",
+        },
+      ],
       [
         "docs-page",
         {
@@ -76,7 +89,7 @@ test("HtmlEmbed fetch works on entering Preview and native fetch is restored on 
   };
   pages.folders.get("root")!.children.push("docs-page", "docs-data");
   $pages.set(pages);
-  $selectedPageId.set("docs-page");
+  $selectedPageId.set("home");
   let setPreview: (value: boolean) => void = () => {};
   const Preview = () => {
     const [enabled, setEnabled] = useState(false);
@@ -95,10 +108,14 @@ test("HtmlEmbed fetch works on entering Preview and native fetch is restored on 
           },
         }}
       >
-        <HtmlEmbed
-          clientOnly
-          code={`<div id="text-document-fetch-result">Waiting</div><script>fetch("./data.txt").then(response => response.json()).then(data => { document.getElementById("text-document-fetch-result").textContent = data.message; }).catch(() => { document.getElementById("text-document-fetch-result").textContent = "Failed"; });</script>`}
-        />
+        <>
+          <p id="text-result">Waiting</p>
+          <p id="json-result">Waiting</p>
+          <HtmlEmbed
+            clientOnly
+            code={`<script>async function test(path, output) { const response = await fetch(path); const body = await response.text(); output.textContent = path + ' → HTTP ' + response.status; if (response.ok) output.textContent += ' | ' + JSON.parse(body).message; } test('./data.txt', document.getElementById('text-result')).catch(() => { document.getElementById('text-result').textContent = 'Failed'; }); test('./data.json', document.getElementById('json-result')).catch(() => { document.getElementById('json-result').textContent = 'Failed'; });</script>`}
+          />
+        </>
       </ReactSdkContext.Provider>
     ) : null;
   };
@@ -108,12 +125,22 @@ test("HtmlEmbed fetch works on entering Preview and native fetch is restored on 
     for (let index = 0; index < 2; index += 1) {
       await act(async () => setPreview(true));
       await vi.waitFor(() =>
-        expect(
-          container.querySelector("#text-document-fetch-result")?.textContent
-        ).toBe("Loaded")
+        expect(container.querySelector("#text-result")?.textContent).toBe(
+          "./data.txt → HTTP 200 | Loaded"
+        )
+      );
+      expect(container.querySelector("#json-result")?.textContent).toBe(
+        "./data.json → HTTP 200 | Loaded"
       );
       expect(window.fetch).not.toBe(originalFetch);
       const previewFetch = window.fetch;
+      expect((await window.fetch("./data.txt")).url).toBe(
+        new URL("/data.txt", location.href).href
+      );
+      expect((await window.fetch("./data.json")).url).toBe(
+        new URL("/data.json", location.href).href
+      );
+      $selectedPageId.set("docs-page");
       const nestedResponse = await window.fetch("./data.txt");
       expect(nestedResponse.url).toBe(
         new URL("/docs/data.txt", location.href).href
@@ -121,13 +148,9 @@ test("HtmlEmbed fetch works on entering Preview and native fetch is restored on 
       expect(nestedResponse.type).toBe("basic");
       expect(nestedResponse.redirected).toBe(false);
       $selectedPageId.set("home");
-      expect((await window.fetch("./data.txt")).url).toBe(
-        new URL("/data.txt", location.href).href
-      );
-      $selectedPageId.set("docs-page");
       $pages.set({
         ...pages,
-        pages: new Map(pages.pages).set("data", {
+        pages: new Map(pages.pages).set("data-text", {
           ...dataPage,
           meta: {
             documentType: "text",
