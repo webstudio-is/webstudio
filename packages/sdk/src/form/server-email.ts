@@ -19,8 +19,24 @@ type EmailServiceFetch = (
 // Bound the extra allocation caused by Base64 before the Worker validates the
 // complete Email payload. The Worker owns attachment policy and payload limits.
 const maxEncodedAttachmentBytes = 7 * 1024 * 1024;
-export const cloudflareManagedFormPreviewEmailServiceUrl =
-  "https://apps.webstudio.is/v1/preview-send";
+const emailWorkerHost = "webstudio-email-service.wstd.workers.dev";
+const emailWorkerVersionHostSuffix =
+  "-webstudio-email-service.wstd.workers.dev";
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+const isApprovedPreviewEmailHost = (hostname: string) => {
+  if (hostname === emailWorkerHost) {
+    return true;
+  }
+  if (!hostname.endsWith(emailWorkerVersionHostSuffix)) {
+    return false;
+  }
+  const version = hostname.slice(0, -emailWorkerVersionHostSuffix.length);
+  return (
+    version.length >= 8 &&
+    [...version].every((character) => "0123456789abcdef".includes(character))
+  );
+};
 const getEmailFiles = (formData: FormData) =>
   Array.from(formData).flatMap(([name, value]) =>
     internalFormFieldNames.has(name) === false &&
@@ -112,7 +128,8 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
   formData: FormData,
   projectId: string,
   additionalHeaders?: HeadersInit,
-  requestUrl: string | URL = "https://email-service.internal/v1/send"
+  requestUrl: string | URL = "https://email-service.internal/v1/send",
+  transport: "binding" | "trpc" = "binding"
 ): EmailResourceLoadOptions["sendEmail"] | undefined => {
   if (sendRequest === undefined) {
     return;
@@ -213,8 +230,24 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
       let data: unknown;
       if (responseText !== undefined) {
         try {
-          data = JSON.parse(responseText);
-          responseData = data;
+          responseData = JSON.parse(responseText);
+          data = responseData;
+          if (transport === "trpc" && isRecord(responseData)) {
+            if (isRecord(responseData.result)) {
+              data = responseData.result.data;
+            } else if (isRecord(responseData.error)) {
+              const error = responseData.error;
+              const emailCode = isRecord(error.data)
+                ? error.data.emailCode
+                : undefined;
+              data = {
+                error: {
+                  code: typeof emailCode === "string" ? emailCode : error.code,
+                  message: error.message,
+                },
+              };
+            }
+          }
         } catch {
           responseData = responseText;
         }
@@ -267,12 +300,12 @@ const createCloudflareManagedFormEmailSenderWithFetch = (
       return timedOut
         ? failure(504, "EMAIL_TIMEOUT", "Email delivery timed out")
         : options.signal?.aborted
-        ? failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled")
-        : failure(
-            502,
-            "EMAIL_SERVICE_UNAVAILABLE",
-            "Email service is unavailable"
-          );
+          ? failure(499, "EMAIL_CANCELLED", "Email delivery was cancelled")
+          : failure(
+              502,
+              "EMAIL_SERVICE_UNAVAILABLE",
+              "Email service is unavailable"
+            );
     } finally {
       if (timeout !== undefined) {
         clearTimeout(timeout);
@@ -308,15 +341,15 @@ export const createCloudflareManagedFormEmailSenderWithUrl = (
   const url = new URL(serviceUrl);
   if (
     url.protocol !== "https:" ||
-    url.hostname !== "apps.webstudio.is" ||
+    !isApprovedPreviewEmailHost(url.hostname) ||
     url.port !== "" ||
-    url.pathname !== "/v1/preview-send" ||
+    url.pathname !== "/" ||
     url.username !== "" ||
     url.password !== "" ||
     url.search !== "" ||
     url.hash !== ""
   ) {
-    throw new Error("Email service URL must be an approved Preview endpoint");
+    throw new Error("Email service URL must be an approved Worker origin");
   }
   const sendEmail = createCloudflareManagedFormEmailSenderWithFetch(
     (input, init) => {
@@ -325,7 +358,8 @@ export const createCloudflareManagedFormEmailSenderWithUrl = (
     formData,
     projectId,
     { authorization: `Bearer ${token}` },
-    url
+    new URL("/trpc/email.send", url),
+    "trpc"
   );
   if (sendEmail === undefined) {
     return;

@@ -31,6 +31,7 @@ vi.mock("~/env/env.server", () => ({
   default: {
     PUBLISHER_HOST: "wstd.work",
     TRPC_SERVER_API_TOKEN: "server-only-test-token",
+    EMAIL_SERVICE_URL: "https://webstudio-email-service.wstd.workers.dev",
   },
 }));
 
@@ -163,9 +164,8 @@ test("an unauthenticated request cannot load the project draft", async () => {
 });
 
 test("a cross-origin request cannot reach project authorization or actions", async () => {
-  const { preventCrossOriginCookie } = await import(
-    "~/services/no-cross-origin-cookie"
-  );
+  const { preventCrossOriginCookie } =
+    await import("~/services/no-cross-origin-cookie");
   vi.mocked(preventCrossOriginCookie).mockImplementationOnce(() => {
     throw new Response("Cross-origin request", { status: 403 });
   });
@@ -352,7 +352,7 @@ test.each([false, true])(
     const parentScript = getScript(parentBundle);
     const canvasScript = getScript(canvasBundle);
     const send = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
-      Response.json({ id: "sent" })
+      Response.json({ result: { data: { id: "sent" } } })
     );
     if (delayedSave) {
       vi.stubGlobal("fetch", send);
@@ -691,15 +691,18 @@ test("a webhook-only Form is independent of Email Service availability", async (
 });
 
 test.each([
-  ["production", "https://apps.webstudio.is/v1/preview-send"],
-  ["preview", "https://apps.webstudio.is/v1/preview-send"],
-  ["development", "https://apps.webstudio.is/v1/preview-send"],
-  [undefined, "https://apps.webstudio.is/v1/preview-send"],
+  ["production", "https://webstudio-email-service.wstd.workers.dev"],
+  ["preview", "https://webstudio-email-service.wstd.workers.dev"],
+  ["development", "https://webstudio-email-service.wstd.workers.dev"],
+  [undefined, "https://webstudio-email-service.wstd.workers.dev"],
+  ["preview", "https://a1b2c3d4-webstudio-email-service.wstd.workers.dev"],
 ] as const)(
-  "Preview email in %s uses the production endpoint and server credential",
+  "Preview email in %s uses the configured endpoint and server credential",
   async (environment, endpoint) => {
     const previousEnvironment = env.DEPLOYMENT_ENVIRONMENT;
+    const previousEmailServiceUrl = env.EMAIL_SERVICE_URL;
     env.DEPLOYMENT_ENVIRONMENT = environment;
+    env.EMAIL_SERVICE_URL = endpoint;
     vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
       ...draftBuild,
       dataSources: [
@@ -741,7 +744,7 @@ test.each([
       expect(body.text).not.toContain("203.0.113.77");
       expect(body.attachments).toMatchObject([{ filename: "hello.txt" }]);
       return Response.json(
-        { id: "sent" },
+        { result: { data: { id: "sent" } } },
         { headers: { "cache-control": "private, no-store" } }
       );
     });
@@ -765,7 +768,7 @@ test.each([
         kind: "email",
         request: {
           method: "POST",
-          url: endpoint,
+          url: `${endpoint}/trpc/email.send`,
           body: {
             to: [{ address: "team@example.com" }],
             replyTo: { address: "owner@example.com", name: "Site Owner" },
@@ -787,7 +790,7 @@ test.each([
             { name: "cache-control", value: "private, no-store" },
             { name: "content-type", value: "application/json" },
           ],
-          body: { id: "sent" },
+          body: { result: { data: { id: "sent" } } },
         },
       });
       expect(JSON.stringify(result.previewExchanges)).not.toContain(
@@ -814,10 +817,11 @@ test.each([
       expect(sentBody.text).not.toContain("authToken");
       expect(sentBody.text).toContain(`https://p-${projectId}.localhost/`);
       expect(sentBody.text).not.toContain("mode=design");
-      expect(sentRequest.url).toBe(endpoint);
+      expect(sentRequest.url).toBe(`${endpoint}/trpc/email.send`);
       expect(sentRequest.method).toBe("POST");
     } finally {
       env.DEPLOYMENT_ENVIRONMENT = previousEnvironment;
+      env.EMAIL_SERVICE_URL = previousEmailServiceUrl;
       vi.unstubAllGlobals();
     }
   }
@@ -1066,7 +1070,9 @@ test("Email Preview inspection retains user-authored Resource subject and body",
       },
     },
   } as never);
-  const send = vi.fn(async () => Response.json({ id: "sent" }));
+  const send = vi.fn(async () =>
+    Response.json({ result: { data: { id: "sent" } } })
+  );
   vi.stubGlobal("fetch", send);
   try {
     const response = await action({ request: request() } as never);
@@ -1081,7 +1087,9 @@ test("Email Preview inspection retains user-authored Resource subject and body",
       headers: { "X-Message-ID": expect.stringMatching(/^[a-f0-9]{16}$/) },
       text: "Configured Email body [redacted] public-example-token",
     });
-    expect(result.previewExchanges[0].response.body).toEqual({ id: "sent" });
+    expect(result.previewExchanges[0].response.body).toEqual({
+      result: { data: { id: "sent" } },
+    });
     expect(JSON.stringify(result.previewExchanges)).not.toContain(
       "server-only-test-token"
     );

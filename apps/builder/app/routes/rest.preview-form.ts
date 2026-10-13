@@ -22,7 +22,6 @@ import {
 import { createManagedFormDraftGraph } from "@webstudio-is/sdk/managed-form-draft-graph";
 import { getSystemSearch } from "@webstudio-is/sdk/runtime";
 import {
-  cloudflareManagedFormPreviewEmailServiceUrl,
   createCloudflareManagedFormEmailSenderWithUrl,
   getManagedFormFailure,
   handleManagedFormSubmission,
@@ -294,7 +293,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       trustedIp: request.headers.get("cf-connecting-ip") ?? undefined,
       createEmailSender: (data) =>
         createCloudflareManagedFormEmailSenderWithUrl(
-          cloudflareManagedFormPreviewEmailServiceUrl,
+          env.EMAIL_SERVICE_URL,
           env.TRPC_SERVER_API_TOKEN,
           data,
           projectId

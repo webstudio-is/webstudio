@@ -1,6 +1,5 @@
 import { expect, test, vi } from "vitest";
 import {
-  cloudflareManagedFormPreviewEmailServiceUrl,
   createCloudflareManagedFormEmailSender as createEmailSender,
   createCloudflareManagedFormEmailSenderWithUrl,
   prepareVisitorEmailRequest,
@@ -21,6 +20,8 @@ import {
 } from "./email-resource";
 import { createScope } from "./scope";
 
+const emailWorkerOrigin = "https://webstudio-email-service.wstd.workers.dev";
+const emailProcedureUrl = `${emailWorkerOrigin}/trpc/email.send`;
 const projectId = "090e6e14-ae50-4b2e-bd22-71733cec05bb";
 const createCloudflareManagedFormEmailSender = (
   service: Parameters<typeof createEmailSender>[0],
@@ -383,9 +384,11 @@ test("exposes the exact Email Service request only when inspection is enabled", 
 });
 
 test("sends Preview email to the approved endpoint with server-only authorization", async () => {
-  const fetcher = vi.fn(async () => Response.json({ id: "preview-sent" }));
+  const fetcher = vi.fn(async () =>
+    Response.json({ result: { data: { id: "preview-sent" } } })
+  );
   const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
-    cloudflareManagedFormPreviewEmailServiceUrl,
+    emailWorkerOrigin,
     "worker-secret",
     new FormData(),
     projectId,
@@ -404,7 +407,7 @@ test("sends Preview email to the approved endpoint with server-only authorizatio
     URL,
     RequestInit & { redirect: RequestRedirect },
   ];
-  expect(url.href).toBe(cloudflareManagedFormPreviewEmailServiceUrl);
+  expect(url.href).toBe(emailProcedureUrl);
   expect(init.method).toBe("POST");
   expect(init.redirect).toBe("error");
   const headers = new Headers(init.headers);
@@ -417,6 +420,27 @@ test("sends Preview email to the approved endpoint with server-only authorizatio
   });
 });
 
+test("sends Preview email to an approved Email Worker version URL", async () => {
+  const versionUrl =
+    "https://a1b2c3d4-webstudio-email-service.wstd.workers.dev";
+  const fetcher = vi.fn(async (_input: RequestInfo | URL) =>
+    Response.json({ result: { data: { id: "version-sent" } } })
+  );
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    versionUrl,
+    "worker-secret",
+    new FormData(),
+    projectId,
+    fetcher
+  )!;
+
+  expect(await sendEmail(request, {})).toMatchObject({ ok: true, status: 200 });
+  expect(fetcher).toHaveBeenCalledOnce();
+  expect(String(fetcher.mock.calls[0][0])).toBe(
+    `${versionUrl}/trpc/email.send`
+  );
+});
+
 test("Preview reports a rejected server credential with the failing action name", async () => {
   const fetcher = vi.fn(async () =>
     Response.json(
@@ -425,7 +449,7 @@ test("Preview reports a rejected server credential with the failing action name"
     )
   );
   const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
-    cloudflareManagedFormPreviewEmailServiceUrl,
+    emailWorkerOrigin,
     "local-server-token",
     new FormData(),
     projectId,
@@ -448,10 +472,43 @@ test("Preview reports a rejected server credential with the failing action name"
   expect(JSON.stringify(result)).not.toContain("local-server-token");
 });
 
+test("Preview preserves the email service error code from tRPC", async () => {
+  const fetcher = vi.fn(async () =>
+    Response.json(
+      {
+        error: {
+          message: "Email sending limit reached",
+          code: -32029,
+          data: { emailCode: "email_rate_limited" },
+        },
+      },
+      { status: 429 }
+    )
+  );
+  const sendEmail = createCloudflareManagedFormEmailSenderWithUrl(
+    emailWorkerOrigin,
+    "worker-secret",
+    new FormData(),
+    projectId,
+    fetcher
+  )!;
+
+  expect(await sendEmail(request, {})).toMatchObject({
+    ok: false,
+    status: 429,
+    data: {
+      error: {
+        code: "email_rate_limited",
+        message: "Email sending limit reached",
+      },
+    },
+  });
+});
+
 test("does not create a Preview sender without both URL and token", () => {
   expect(
     createCloudflareManagedFormEmailSenderWithUrl(
-      cloudflareManagedFormPreviewEmailServiceUrl,
+      emailWorkerOrigin,
       undefined,
       new FormData(),
       projectId
@@ -467,17 +524,22 @@ test("does not create a Preview sender without both URL and token", () => {
   ).toBeUndefined();
 });
 
-test("rejects insecure or credential-bearing Preview service URLs", () => {
+test("rejects insecure or credential-bearing email service origins", () => {
   for (const url of [
-    "http://apps.webstudio.is/v1/preview-send",
-    "https://user:password@apps.webstudio.is/v1/preview-send",
-    "https://apps.webstudio.is/prefix",
-    "https://apps.webstudio.is/v1/preview-send?token=secret",
-    "https://apps.webstudio.is/v1/preview-send#secret",
-    "https://apps.webstudio.is:8443/v1/preview-send",
-    "https://apps-staging.webstudio.is/v1/preview-send",
-    "https://staging-webstudio-email-service.wstd.workers.dev/v1/preview-send",
-    "https://another-account.workers.dev/v1/preview-send",
+    "http://webstudio-email-service.wstd.workers.dev",
+    "https://user:password@webstudio-email-service.wstd.workers.dev",
+    "https://webstudio-email-service.wstd.workers.dev/prefix",
+    "https://webstudio-email-service.wstd.workers.dev?token=secret",
+    "https://webstudio-email-service.wstd.workers.dev#secret",
+    "https://webstudio-email-service.wstd.workers.dev:8443",
+    "https://apps.webstudio.is/v1/preview-send",
+    "https://staging-webstudio-email-service.wstd.workers.dev",
+    "https://abc-webstudio-email-service.wstd.workers.dev",
+    "https://a1b2c3g4-webstudio-email-service.wstd.workers.dev",
+    "https://a1b2c3d4-other-email-service.wstd.workers.dev",
+    "https://a1b2c3d4-webstudio-email-service.other.workers.dev",
+    "https://a1b2c3d4-webstudio-email-service.wstd.workers.dev/v1/send",
+    "https://another-account.workers.dev",
   ]) {
     expect(() =>
       createCloudflareManagedFormEmailSenderWithUrl(
@@ -486,7 +548,7 @@ test("rejects insecure or credential-bearing Preview service URLs", () => {
         new FormData(),
         projectId
       )
-    ).toThrow("approved Preview endpoint");
+    ).toThrow("approved Worker origin");
   }
 });
 
