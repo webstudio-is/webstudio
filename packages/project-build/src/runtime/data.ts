@@ -1865,6 +1865,7 @@ const addEmailResourceIssues = (
   }
   const settings = fields.email;
   if (
+    !allowPartial &&
     settings?.recipientMode === "custom" &&
     settings.recipientsExpression === undefined &&
     (!settings.recipients || validateContactEmail(settings.recipients))
@@ -1876,6 +1877,7 @@ const addEmailResourceIssues = (
     });
   }
   if (
+    !allowPartial &&
     settings?.sender !== undefined &&
     settings.senderExpression === undefined &&
     (settings.sender === "" || validateEmailSender(settings.sender))
@@ -1887,6 +1889,10 @@ const addEmailResourceIssues = (
     });
   }
 };
+
+const emailSettingsInput = resourceFieldsInputBase
+  .pick({ control: true, email: true })
+  .superRefine(addEmailResourceIssues);
 
 export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
   (fields, context) => {
@@ -3153,6 +3159,9 @@ export const updateResource = (
   const nextResource = createResourceValue({
     ...resource,
     ...values,
+    ...(values.email === undefined
+      ? {}
+      : { email: { ...resource.email, ...values.email } }),
     ...(clearBody ? { body: undefined } : {}),
   });
   if (nextResource.control !== "email" && nextResource.email !== undefined) {
@@ -3160,6 +3169,12 @@ export const updateResource = (
       "BAD_REQUEST",
       "Email settings require an Email Resource."
     );
+  }
+  if (values.email !== undefined) {
+    emailSettingsInput.parse({
+      control: nextResource.control,
+      email: nextResource.email,
+    });
   }
   const dataSource = build.dataSources.find(
     (dataSource) =>

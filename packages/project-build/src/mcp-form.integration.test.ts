@@ -406,11 +406,8 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
       values: {
         name: "Visitor confirmation",
         email: {
-          recipientMode: "visitor",
-          visitorEmailField: "email",
           subject: JSON.stringify("Thanks for your message"),
           body: visitorEmail?.body,
-          includeAttachments: false,
         },
       },
     });

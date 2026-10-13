@@ -4585,6 +4585,113 @@ describe("resource patch helpers", () => {
     });
   });
 
+  test("preserves omitted Email settings during a partial update", () => {
+    const state = createResourceState();
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Visitor confirmation",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+      email: {
+        recipientMode: "visitor",
+        visitorEmailField: "email",
+        sender: "John <john@example.com>",
+        includeAttachments: false,
+        subject: '"Original"',
+      },
+    });
+
+    const result = updateResource(
+      state,
+      {
+        resourceId: "email-id",
+        values: { email: { subject: '"Updated"' } },
+      },
+      { createId: () => "unused-id" }
+    );
+    const resourcePatch = result.payload
+      .find(({ namespace }) => namespace === "resources")
+      ?.patches.find(({ path }) => path[0] === "email-id");
+
+    expect(resourcePatch).toMatchObject({
+      value: {
+        email: {
+          recipientMode: "visitor",
+          visitorEmailField: "email",
+          sender: "John <john@example.com>",
+          includeAttachments: false,
+          subject: '"Updated"',
+        },
+      },
+    });
+  });
+
+  test("validates the effective Email settings after a partial update", () => {
+    const state = createResourceState();
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Owner notification",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+      email: { recipientMode: "project" },
+    });
+
+    expect(() =>
+      updateResource(
+        state,
+        {
+          resourceId: "email-id",
+          values: { email: { recipientMode: "custom" } },
+        },
+        { createId: () => "unused-id" }
+      )
+    ).toThrow("Enter a valid recipient list");
+  });
+
+  test("accepts a partial Email update using existing custom recipients", () => {
+    const state = createResourceState();
+    state.resources.set("email-id", {
+      id: "email-id",
+      name: "Owner notification",
+      control: "email",
+      method: "post",
+      url: '""',
+      headers: [],
+      email: {
+        recipientMode: "custom",
+        recipients: "team@example.com",
+      },
+    });
+
+    const result = updateResource(
+      state,
+      {
+        resourceId: "email-id",
+        values: resourceFieldsUpdateInput.parse({
+          email: { recipientMode: "custom", subject: '"New message"' },
+        }),
+      },
+      { createId: () => "unused-id" }
+    );
+    const resourcePatch = result.payload
+      .find(({ namespace }) => namespace === "resources")
+      ?.patches.find(({ path }) => path[0] === "email-id");
+
+    expect(resourcePatch).toMatchObject({
+      value: {
+        email: {
+          recipientMode: "custom",
+          recipients: "team@example.com",
+          subject: '"New message"',
+        },
+      },
+    });
+  });
+
   test("keeps an empty resource update as a no-op", () => {
     const state = createResourceState();
     state.resources.set("resource", resource);
