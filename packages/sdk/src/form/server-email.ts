@@ -146,7 +146,8 @@ const normalizeDeliveryResult = (value: unknown) => {
     value.ok === true &&
     value.status >= 200 &&
     value.status < 300 &&
-    typeof value.data.id === "string"
+    typeof value.data.id === "string" &&
+    value.data.id.trim().length > 0
   ) {
     return {
       ok: true as const,

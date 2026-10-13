@@ -640,7 +640,7 @@ test("passes the Email Service per-site delivery limit back as a failed send", a
   expect(rpc).toHaveBeenCalledOnce();
 });
 
-test.each([undefined, null, 123])(
+test.each([undefined, null, "", "   ", 123])(
   "treats malformed successful Email ID %s as a provider error",
   async (id) => {
     const rpc = vi.fn<EmailService["sendEmail"]>().mockResolvedValue({
@@ -845,7 +845,6 @@ test.each(["rpc", "preview"] as const)(
     for (const reply of [
       { id: "sent" },
       { ok: true, status: 200, statusText: "OK", data: { id: "sent" } },
-      { ok: true, status: 200, statusText: "OK", data: { id: "" } },
     ]) {
       const dispatch = vi.fn(async () => reply);
       const sendEmail =
@@ -874,10 +873,12 @@ test.each(["rpc", "preview"] as const)(
 
 test.each(
   (["rpc", "preview"] as const).flatMap((transport) =>
-    (["failure", "timeout", "malformed"] as const).map((outcome) => ({
-      transport,
-      outcome,
-    }))
+    (["failure", "timeout", "malformed", "empty-id"] as const).map(
+      (outcome) => ({
+        transport,
+        outcome,
+      })
+    )
   )
 )(
   "$transport dispatches Email once after $outcome",
@@ -891,7 +892,12 @@ test.each(
         if (outcome === "failure") {
           throw new Error("Delivery may already have occurred");
         }
-        return { ok: true, status: 200, statusText: "OK", data: {} };
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          data: outcome === "empty-id" ? { id: "" } : {},
+        };
       });
       const sendEmail =
         transport === "rpc"
