@@ -1,7 +1,11 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect, test } from "vitest";
-import { encodeDataSourceVariable } from "@webstudio-is/sdk";
+import {
+  encodeDataSourceVariable,
+  resolveEmailResourceSettings,
+  resolveVisitorConfirmationCopy,
+} from "@webstudio-is/sdk";
 import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import { createProjectSessionMcpServer, type PublicMcpOperation } from "./mcp";
 import {
@@ -388,6 +392,7 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
     const visitorEmail = remote.state.resources?.get(
       visitorResource?.id ?? ""
     )?.email;
+    expect(visitorEmail?.confirmationBody).toBe("default");
     expect(
       remote.state.resources?.get(visitorResource?.id ?? "")
     ).toMatchObject({
@@ -407,7 +412,6 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
         name: "Visitor confirmation",
         email: {
           subject: JSON.stringify("Thanks for your message"),
-          body: visitorEmail?.body,
         },
       },
     });
@@ -437,6 +441,63 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
       },
     });
     expect(
+      remote.state.resources?.get(visitorResource?.id ?? "")?.email
+        ?.confirmationBody
+    ).toBe("default");
+    const bodyUpdate = await call("update-resource", {
+      resourceId: visitorResource?.id,
+      values: { email: { body: '"Custom visitor confirmation"' } },
+    });
+    expect(bodyUpdate.meta?.session?.committed).toBe(true);
+    const savedVisitorEmail = remote.state.resources?.get(
+      visitorResource?.id ?? ""
+    )?.email;
+    expect(savedVisitorEmail).toMatchObject({
+      recipientMode: "visitor",
+      visitorEmailField: "email",
+      subject: JSON.stringify("Thanks for your message"),
+      body: '"Custom visitor confirmation"',
+      includeAttachments: false,
+    });
+    expect(savedVisitorEmail).not.toHaveProperty("confirmationBody");
+    const resolvedVisitorEmail = resolveEmailResourceSettings({
+      settings: savedVisitorEmail,
+    });
+    expect(
+      resolveVisitorConfirmationCopy({
+        subject: "Thanks for your message",
+        body: JSON.parse(resolvedVisitorEmail.body),
+        fromName: resolvedVisitorEmail.fromName,
+        confirmationBody: resolvedVisitorEmail.confirmationBody,
+      }).body
+    ).toBe("Custom visitor confirmation");
+    const emptyBodyUpdate = await call("update-resource", {
+      resourceId: visitorResource?.id,
+      values: { email: { body: '""' } },
+    });
+    expect(emptyBodyUpdate.meta?.session?.committed).toBe(true);
+    const emptyBodyEmail = remote.state.resources?.get(
+      visitorResource?.id ?? ""
+    )?.email;
+    expect(emptyBodyEmail).toMatchObject({
+      recipientMode: "visitor",
+      visitorEmailField: "email",
+      body: '""',
+      includeAttachments: false,
+    });
+    expect(emptyBodyEmail).not.toHaveProperty("confirmationBody");
+    const resolvedEmptyBodyEmail = resolveEmailResourceSettings({
+      settings: emptyBodyEmail,
+    });
+    expect(
+      resolveVisitorConfirmationCopy({
+        subject: "Thanks for your message",
+        body: JSON.parse(resolvedEmptyBodyEmail.body),
+        fromName: resolvedEmptyBodyEmail.fromName,
+        confirmationBody: resolvedEmptyBodyEmail.confirmationBody,
+      }).body
+    ).toBe("");
+    expect(
       remote.state.resources?.get(projectResource?.id ?? "")
     ).toMatchObject({
       email: { recipientMode: "project" },
@@ -456,8 +517,8 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
       ],
     });
     expect(actionUpdate.meta?.session?.committed).toBe(true);
-    expect(commits).toBe(3);
-    expect(remote.version).toBe(4);
+    expect(commits).toBe(5);
+    expect(remote.version).toBe(6);
     await call("refresh");
     const committedForm = await call("inspect-instance", {
       instanceId: form?.id,

@@ -3156,12 +3156,17 @@ export const updateResource = (
       invalidatesNamespaces: [],
     });
   }
+  const updatedEmail =
+    values.email === undefined
+      ? resource.email
+      : { ...resource.email, ...values.email };
+  if (values.email?.body !== undefined && updatedEmail !== undefined) {
+    delete updatedEmail.confirmationBody;
+  }
   const nextResource = createResourceValue({
     ...resource,
     ...values,
-    ...(values.email === undefined
-      ? {}
-      : { email: { ...resource.email, ...values.email } }),
+    email: updatedEmail,
     ...(clearBody ? { body: undefined } : {}),
   });
   if (nextResource.control !== "email" && nextResource.email !== undefined) {
