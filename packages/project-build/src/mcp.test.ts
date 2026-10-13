@@ -6032,6 +6032,20 @@ describe("project session mcp adapter", () => {
       false
     );
 
+    for (const component of ["form", "Form"]) {
+      const formDetails = await adapter.callTool({
+        name: "components.get",
+        input: { component },
+      });
+      expect(formDetails.structuredContent.data).toEqual(
+        expect.objectContaining({
+          found: true,
+          component: "Form",
+          props: expect.objectContaining({ action: expect.any(Object) }),
+        })
+      );
+    }
+
     const details = await adapter.callTool({
       name: "components.get",
       input: { component: "WebhookForm" },

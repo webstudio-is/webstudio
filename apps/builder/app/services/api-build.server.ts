@@ -101,6 +101,8 @@ export const createBuildSnapshot = ({
     snapshot.homePageId = pages.homePageId;
     snapshot.rootFolderId = pages.rootFolderId;
     if (include.has("pages")) {
+      snapshot.formComponentIdentityVersion =
+        pages.formComponentIdentityVersion;
       snapshot.redirects = pages.redirects;
       snapshot.pageTemplates = pages.pageTemplates;
     }

@@ -1031,8 +1031,8 @@ describe("prebuild", () => {
                     name === "type"
                       ? "file"
                       : name === "name"
-                      ? "attachments"
-                      : "image/*,.pdf",
+                        ? "attachments"
+                        : "image/*,.pdf",
                 },
               ] as [string, Prop]
           ),
@@ -1416,7 +1416,7 @@ describe("prebuild", () => {
           (id) =>
             [id, { id, component: "ws:block", children: [] }] as [
               string,
-              Omit<Instance, "type">
+              Omit<Instance, "type">,
             ]
         ),
       ],
@@ -2702,7 +2702,9 @@ sitemap.map((page) => page.path);`
       await runGeneratedCommand("react-router", ["build"]);
       const serverBundle = (
         await Promise.all(
-          (await getFilePaths("build/server"))
+          (
+            await getFilePaths("build/server")
+          )
             .filter((path) => path.endsWith(".js"))
             .map((path) => readFile(path, "utf8"))
         )
@@ -2712,7 +2714,9 @@ sitemap.map((page) => page.path);`
       expect(serverBundle).toContain("post-revision");
       const clientBundle = (
         await Promise.all(
-          (await getFilePaths("build/client"))
+          (
+            await getFilePaths("build/client")
+          )
             .filter((path) => path.endsWith(".js"))
             .map((path) => readFile(path, "utf8"))
         )
@@ -3051,7 +3055,9 @@ sitemap.map((page) => page.path);`
 
     const serverBundle = (
       await Promise.all(
-        (await getFilePaths("build/server"))
+        (
+          await getFilePaths("build/server")
+        )
           .filter((path) => path.endsWith(".js"))
           .map((path) => readFile(path, "utf8"))
       )
@@ -3707,7 +3713,7 @@ sitemap.map((page) => page.path);`
             ([id]) =>
               [id, { id, component: "ResourceForm", children: [] }] as [
                 string,
-                Omit<Instance, "type">
+                Omit<Instance, "type">,
               ]
           ),
         ],
@@ -6458,6 +6464,7 @@ export const createManagedFormResourceFetch = () => {
 
   test("prerenders the canonical Form with its navigation action", async () => {
     const siteData = createSiteData({
+      formComponentIdentityVersion: 1,
       instances: [
         [
           "root",
@@ -6471,7 +6478,7 @@ export const createManagedFormResourceFetch = () => {
           "form",
           {
             id: "form",
-            component: "ResourceForm",
+            component: "Form",
             children: [],
           },
         ],
@@ -6540,6 +6547,12 @@ export const createManagedFormResourceFetch = () => {
     expect(form?.attrs.find(({ name }) => name === "method")?.value).toBe(
       "get"
     );
+    const generatedPage = await readFile(
+      join("app", "__generated__", "_index.tsx"),
+      "utf8"
+    );
+    expect(generatedPage).toContain("const formData: any = undefined");
+    expect(generatedPage).toContain("const browserInfo: any = undefined");
   }, 30_000);
 
   test("ignores dynamic SSG pages without enumerable Assets query paths", async () => {
@@ -6696,7 +6709,9 @@ export const createManagedFormResourceFetch = () => {
     ).resolves.toContain("<!DOCTYPE html>");
     const staticRuntimeOutput = (
       await Promise.all(
-        (await getFilePaths("dist/client"))
+        (
+          await getFilePaths("dist/client")
+        )
           .filter((path) => path.endsWith(".js") || path.endsWith(".json"))
           .map((path) => readFile(path, "utf8"))
       )

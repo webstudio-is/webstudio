@@ -1012,6 +1012,7 @@ describe("cli project session transport", () => {
           ],
           homePageId: "home",
           rootFolderId: "root",
+          formComponentIdentityVersion: 1,
           meta: { siteName: "Acme" },
           compiler: { atomicStyles: true },
           redirects: [{ old: "/old", new: "/new", status: "301" }],
@@ -1045,6 +1046,7 @@ describe("cli project session transport", () => {
     });
 
     expect(snapshot.state.pages?.pages.get("home")?.name).toBe("Home");
+    expect(snapshot.state.pages?.formComponentIdentityVersion).toBe(1);
     expect(snapshot.state.pages?.pageTemplates?.get("template-1")?.name).toBe(
       "Landing"
     );
@@ -1061,6 +1063,40 @@ describe("cli project session transport", () => {
       meta: { siteName: "Canonical Acme" },
       compiler: { atomicStyles: false },
     });
+  });
+
+  test("preserves an absent Form identity version in legacy public snapshots", async () => {
+    const transport = createCliProjectSessionTransport({
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+      getBuildSnapshot: async () => ({
+        projectId: "project-1",
+        buildId: "build-1",
+        version: 1,
+        homePageId: "home",
+        rootFolderId: "root",
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            path: "",
+            title: "Home",
+            rootInstanceId: "body",
+            meta: {},
+          },
+        ],
+        folders: [{ id: "root", name: "Root", slug: "", children: ["home"] }],
+      }),
+    });
+
+    const snapshot = await transport.fetchNamespaces({
+      projectId: "project-1",
+      namespaces: ["pages"],
+    });
+    expect(snapshot.state.pages?.formComponentIdentityVersion).toBeUndefined();
   });
 
   test("falls back to legacy page settings when the server rejects projectSettings", async () => {
