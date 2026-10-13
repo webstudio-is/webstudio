@@ -4612,6 +4612,29 @@ const normalizeMcpOperationInput = async (name: string, input: unknown) => {
   return input;
 };
 
+const assertNoLegacyWebhookFormInsertion = (name: string, input: unknown) => {
+  if (isRecord(input) === false) {
+    return;
+  }
+  const instances =
+    name === "insert-fragment" && isRecord(input.fragment)
+      ? input.fragment.instances
+      : name === "insert-collection" && isRecord(input.itemFragment)
+        ? input.itemFragment.instances
+        : undefined;
+  if (
+    (name === "insert-component" && input.component === "WebhookForm") ||
+    (Array.isArray(instances) &&
+      instances.some(
+        (instance) => isRecord(instance) && instance.component === "WebhookForm"
+      ))
+  ) {
+    throw new Error(
+      'Webhook Form is deprecated and cannot be inserted through MCP. Use component "Form".'
+    );
+  }
+};
+
 const coveragePlanDetailValues = ["summary", "roots", "parts", "full"] as const;
 type CoveragePlanDetail = (typeof coveragePlanDetailValues)[number];
 const coveragePlanDocumentTypes = ["html", "xml", "text"] as const;
@@ -8958,6 +8981,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           insertionOperation,
           await getInsertFragmentInput(transportInput.input)
         );
+        assertNoLegacyWebhookFormInsertion("insert-fragment", insertionInput);
         const verificationInput = getNormalizedOperationInput(
           verificationOperation,
           { pagePath: transportInput.input.pagePath, limit: 200 }
@@ -9069,6 +9093,27 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       const toolInput = transportInput.input;
       dryRun = dryRun || transportInput.dryRun;
       const normalizedInput = await normalizeMcpOperationInput(name, toolInput);
+      assertNoLegacyWebhookFormInsertion(name, normalizedInput);
+      if (
+        name === "clone-instance" &&
+        isRecord(normalizedInput) &&
+        typeof normalizedInput.sourceInstanceId === "string"
+      ) {
+        const source = await executeRead("list-instances", {
+          rootInstanceId: normalizedInput.sourceInstanceId,
+          component: "WebhookForm",
+          limit: 1,
+        });
+        if (
+          isRecord(source.result) &&
+          Array.isArray(source.result.instances) &&
+          source.result.instances.length > 0
+        ) {
+          throw new Error(
+            'Webhook Form is deprecated and cannot be cloned through MCP. Use component "Form".'
+          );
+        }
+      }
       const isAuditInput = name === "audit" && isRecord(toolInput);
       if (
         isAuditInput &&

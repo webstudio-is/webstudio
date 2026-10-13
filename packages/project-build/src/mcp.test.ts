@@ -6110,6 +6110,115 @@ describe("project session mcp adapter", () => {
     } while (cursor !== undefined);
   });
 
+  test("rejects new legacy Webhook Forms through MCP insertion paths", async () => {
+    const executeOperation = createExecuteOperation();
+    const operations = [
+      ...publicMcpOperations,
+      ...(
+        ["insert-component", "insert-fragment", "insert-collection"] as const
+      ).map((command) =>
+        publicOperation({
+          command,
+          id: `instances.${command}`,
+          description: command,
+          method: "mutation",
+          permit: "edit",
+          inputSchema: getTestInputSchema(
+            z.object({
+              parentInstanceId: z.string(),
+              component: z.string().optional(),
+              fragment: z.any().optional(),
+              itemFragment: z.any().optional(),
+              data: z.any().optional(),
+            })
+          ),
+          writeNamespaces: ["instances"],
+        })
+      ),
+      publicOperation({
+        command: "verify-bindings",
+        id: "project.verifyBindings",
+        description: "verify-bindings",
+      }),
+    ];
+    const adapter = createProjectSessionMcpCore({
+      operations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "insert-component",
+        input: { parentInstanceId: "body", component: "WebhookForm" },
+      })
+    ).rejects.toThrow("Webhook Form is deprecated");
+    for (const name of [
+      "insert-fragment",
+      "insert-fragment-verified",
+    ] as const) {
+      await expect(
+        adapter.callTool({
+          name,
+          input: {
+            parentInstanceId: "body",
+            ...(name === "insert-fragment-verified"
+              ? { pagePath: "/contact" }
+              : {}),
+            fragment: "<WebhookForm />",
+          },
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+    }
+    await expect(
+      adapter.callTool({
+        name: "insert-collection",
+        input: {
+          parentInstanceId: "body",
+          data: { type: "json", value: [{ name: "example" }] },
+          itemFragment: "<WebhookForm />",
+        },
+      })
+    ).rejects.toThrow("Webhook Form is deprecated");
+    expect(executeOperation).not.toHaveBeenCalled();
+  });
+
+  test("rejects cloning a saved legacy Webhook Form subtree through MCP", async () => {
+    const executeOperation = createExecuteOperation(async ({ command }) => {
+      if (command === "list-instances") {
+        return createEnvelope({
+          operationId: "instances.list",
+          result: { instances: [{ id: "legacy", component: "WebhookForm" }] },
+        });
+      }
+      throw new Error(`Unexpected mutation: ${command}`);
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+    });
+
+    await expect(
+      adapter.callTool({
+        name: "clone-instance",
+        input: {
+          sourceInstanceId: "saved-form",
+          targetParentInstanceId: "body",
+        },
+      })
+    ).rejects.toThrow("Webhook Form is deprecated");
+    expect(executeOperation).toHaveBeenCalledExactlyOnceWith({
+      command: "list-instances",
+      input: {
+        rootInstanceId: "saved-form",
+        component: "WebhookForm",
+        limit: 1,
+      },
+      dryRun: false,
+    });
+  });
+
   test("hides explicit hidden component metas even when templates are visible", async () => {
     const component = "test:ConcealedWidget";
     const previousMeta = componentMetas.get(component);
