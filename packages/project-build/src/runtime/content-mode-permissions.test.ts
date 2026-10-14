@@ -832,6 +832,7 @@ describe("content mode permissions", () => {
       selectedLocalStyleSourceIds: new Set<string>(),
       styledLocalStyleSourceIds: new Set<string>(),
       editableInstanceIds: new Set<string>(),
+      initialPropIds: new Set<string>(),
       copiedTemplatePropsByInstanceId: new Map(),
     };
 
@@ -890,6 +891,7 @@ describe("content mode permissions", () => {
         selectedLocalStyleSourceIds: new Set(),
         styledLocalStyleSourceIds: new Set(),
         editableInstanceIds: new Set(["block", "item"]),
+        initialPropIds: new Set(),
         copiedTemplatePropsByInstanceId: new Map(),
       })
     ).toEqual({
@@ -2339,6 +2341,53 @@ describe("content mode permissions", () => {
       validateContentModeTransaction({
         capabilities,
         transaction: changedTree,
+      }).success
+    ).toBe(false);
+    const mismatchedKey = insert(copiedWidth);
+    mismatchedKey.payload[1].patches[0].path = [sourceWidth.id];
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: mismatchedKey,
+      }).success
+    ).toBe(false);
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: insert({ ...copiedWidth, id: sourceWidth.id }),
+      }).success
+    ).toBe(false);
+    const duplicateKey = insert(copiedWidth);
+    duplicateKey.payload[1].patches.push(duplicateKey.payload[1].patches[0]);
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: duplicateKey,
+      }).success
+    ).toBe(false);
+    const otherBlockCapabilities = getContentModeCapabilities({
+      instances: new Map([
+        ...capabilities.instances,
+        [
+          "other-block",
+          {
+            type: "instance" as const,
+            id: "other-block",
+            component: blockComponent,
+            children: [],
+          },
+        ],
+      ]),
+      metas: capabilities.metas,
+      props: capabilities.props,
+      styleSources,
+    });
+    const crossBlockCopy = insert(copiedWidth);
+    crossBlockCopy.payload[0].patches[0].path = ["other-block", "children", 0];
+    expect(
+      validateContentModeTransaction({
+        capabilities: otherBlockCapabilities,
+        transaction: crossBlockCopy,
       }).success
     ).toBe(false);
   });

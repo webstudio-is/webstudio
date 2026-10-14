@@ -71,6 +71,7 @@ type ContentModeTransactionContext = {
   selectedLocalStyleSourceIds: Set<StyleSource["id"]>;
   styledLocalStyleSourceIds: Set<StyleSource["id"]>;
   editableInstanceIds: Set<Instance["id"]>;
+  initialPropIds: Set<Prop["id"]>;
   copiedTemplatePropsByInstanceId: Map<Instance["id"], Prop[]>;
 };
 
@@ -366,7 +367,8 @@ const getCopiedTemplateProps = ({
   );
   const sourcePropsByInstanceId = new Map<string, Prop[]>();
   for (const sourceProp of originalProps.values()) {
-    const sourceProps = sourcePropsByInstanceId.get(sourceProp.instanceId) ?? [];
+    const sourceProps =
+      sourcePropsByInstanceId.get(sourceProp.instanceId) ?? [];
     sourceProps.push(sourceProp);
     sourcePropsByInstanceId.set(sourceProp.instanceId, sourceProps);
   }
@@ -769,10 +771,12 @@ const validatePropPatch = (
   if (
     patch.op === "add" &&
     patch.path.length === 1 &&
+    context.initialPropIds.has(propId) === false &&
+    capabilities.props.has(propId) === false &&
     context.addedInstanceIds.has((patch.value as Prop)?.instanceId)
   ) {
     const parsed = prop.safeParse(patch.value);
-    if (parsed.success) {
+    if (parsed.success && parsed.data.id === propId) {
       const copiedProps = context.copiedTemplatePropsByInstanceId.get(
         parsed.data.instanceId
       );
@@ -1816,6 +1820,7 @@ export const applyContentModeTransaction = ({
     selectedLocalStyleSourceIds: new Set(),
     styledLocalStyleSourceIds: new Set(),
     editableInstanceIds: new Set(),
+    initialPropIds: new Set(capabilities.props.keys()),
     copiedTemplatePropsByInstanceId: new Map(),
   };
 
