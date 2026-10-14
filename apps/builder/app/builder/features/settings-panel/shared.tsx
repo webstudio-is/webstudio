@@ -378,6 +378,13 @@ export const $selectedInstancePropsMetas = computed(
       tag === undefined ? undefined : contentModePropNamesByTag.get(tag);
     const toAttributeMeta = (attribute: Attribute): PropMeta => {
       const propMeta = attributeToMeta(attribute);
+      if (
+        tag === "input" &&
+        attribute.name === "type" &&
+        propMeta.control === "select"
+      ) {
+        return { ...propMeta, defaultValue: "text" };
+      }
       if (contentModePropNames?.has(attribute.name)) {
         return { ...propMeta, contentMode: true };
       }

@@ -85,3 +85,34 @@ test("keeps rendered form attributes for components without the opt-out", () => 
   expect(propsMetas.has("id")).toBe(true);
   expect(propsMetas.has("aria-label")).toBe(true);
 });
+
+test.each(["ws:element", "Input"])(
+  "defaults the unset %s input type to text in Props metadata",
+  (component) => {
+    const input = {
+      type: "instance" as const,
+      id: "input",
+      component,
+      tag: "input",
+      children: [],
+    };
+    $instances.set(new Map([[input.id, input]]));
+    $props.set(new Map());
+    $registeredComponentMetas.set(
+      new Map([
+        ...Object.entries(coreMetas),
+        ["Input", { label: "Text Input" }],
+      ])
+    );
+    selectInstance([input.id]);
+
+    const typeMeta = $selectedInstancePropsMetas.get().get("type");
+
+    expect(typeMeta).toMatchObject({
+      control: "select",
+      defaultValue: "text",
+      options: expect.arrayContaining(["text", "email"]),
+    });
+    expect($props.get().size).toBe(0);
+  }
+);
