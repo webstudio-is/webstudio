@@ -98,6 +98,12 @@ export const cloneInstance = (
   if (source === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
+  if (source.id === ROOT_INSTANCE_ID) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Source instance could not be cloned"
+    );
+  }
   const targetParent =
     input.targetParentInstanceId === undefined
       ? findParentInstanceReference(before.instances, source.id)?.instance

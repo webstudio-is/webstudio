@@ -604,28 +604,6 @@ export const clonePropForInstance = ({
   instanceId,
 });
 
-export const createPropClonePatches = ({
-  nextIdById,
-  props,
-  createId,
-}: {
-  nextIdById: Map<Instance["id"], Instance["id"]>;
-  props: Iterable<Prop>;
-  createId: () => Prop["id"];
-}) =>
-  Array.from(props).flatMap((prop) => {
-    const nextInstanceId = nextIdById.get(prop.instanceId);
-    if (nextInstanceId === undefined) {
-      return [];
-    }
-    const nextProp = clonePropForInstance({
-      prop,
-      propId: createId(),
-      instanceId: nextInstanceId,
-    });
-    return [{ op: "add" as const, path: [nextProp.id], value: nextProp }];
-  });
-
 export const createPropUpsertPayload = ({
   props,
   nextProps,

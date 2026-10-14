@@ -79,7 +79,6 @@ import {
   validateStyleSourceName,
   updateVarReferencesInProps,
 } from "./styles";
-import { createLocalStyleSourceClonePlan } from "./style-utils";
 import { getInputSchemaMetadata } from "../contracts/input-schema";
 import { getZodValidationIssues } from "./errors";
 import {
@@ -3486,60 +3485,6 @@ describe("addStyleSourceToInstanceMutable", () => {
     expect(styleSourceSelections.get("instance")?.values).toEqual([
       "token",
       "local",
-    ]);
-  });
-});
-
-describe("createLocalStyleSourceClonePlan", () => {
-  test("clones local style sources and remaps copied selections", () => {
-    const plan = createLocalStyleSourceClonePlan({
-      styleSourceSelections: [
-        { instanceId: "source", values: ["token", "local"] },
-        { instanceId: "ignored", values: ["local"] },
-      ],
-      styleSources: [
-        { id: "token", type: "token", name: "Token" },
-        local("local"),
-      ],
-      newInstanceIds: new Map([["source", "copy"]]),
-      createId: () => "local-copy",
-    });
-
-    expect(plan.localStyleSourceIds).toEqual(
-      new Map([["local", "local-copy"]])
-    );
-    expect(plan.localStyleSources).toEqual([
-      { id: "local-copy", type: "local" },
-    ]);
-    expect(plan.selections).toEqual([
-      { instanceId: "copy", values: ["token", "local-copy"] },
-    ]);
-  });
-
-  test("reuses a cloned local style source across copied selections", () => {
-    let idIndex = 0;
-    const plan = createLocalStyleSourceClonePlan({
-      styleSourceSelections: [
-        { instanceId: "source-1", values: ["local"] },
-        { instanceId: "source-2", values: ["local"] },
-      ],
-      styleSources: [local("local")],
-      newInstanceIds: new Map([
-        ["source-1", "copy-1"],
-        ["source-2", "copy-2"],
-      ]),
-      createId: () => `local-copy-${idIndex++}`,
-    });
-
-    expect(plan.localStyleSourceIds).toEqual(
-      new Map([["local", "local-copy-0"]])
-    );
-    expect(plan.localStyleSources).toEqual([
-      { id: "local-copy-0", type: "local" },
-    ]);
-    expect(plan.selections).toEqual([
-      { instanceId: "copy-1", values: ["local-copy-0"] },
-      { instanceId: "copy-2", values: ["local-copy-0"] },
     ]);
   });
 });

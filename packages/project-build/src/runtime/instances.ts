@@ -51,11 +51,7 @@ import {
 import { createRuntimeMutation } from "./mutation";
 import { findSerializedPageByInput, getSerializedPages } from "./pages";
 import { validatePageSelector } from "./page-selector";
-import {
-  createPropClonePatches,
-  createPropDeletePayload,
-  createPropRenamePayload,
-} from "./props";
+import { createPropDeletePayload, createPropRenamePayload } from "./props";
 import {
   createTreeVariableRebindPayload,
   produceWebstudioDataMutation,
@@ -78,10 +74,7 @@ import {
   type InstancePath,
 } from "./slot";
 import { getReparentDropTargetMutable, type DroppableTarget } from "./tree";
-import {
-  createStyleClonePayload,
-  serializeStyleDeclarations,
-} from "./style-utils";
+import { serializeStyleDeclarations } from "./style-utils";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { mapAttributeNames } from "@webstudio-is/content-engine/jsx-attributes";
 import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
@@ -1567,90 +1560,6 @@ const remapTextTreeTemporaryIds = ({
         child.type === "id" ? { ...child, value: remapId(child.value) } : child
       ),
     })),
-  };
-};
-
-export const createInstanceClonePayload = ({
-  instances,
-  sourceInstanceId,
-  targetParent,
-  insertIndex,
-  props,
-  styleSourceSelections,
-  styleSources,
-  styles,
-  createId,
-}: {
-  instances: Map<Instance["id"], Instance>;
-  sourceInstanceId: Instance["id"];
-  targetParent: Instance;
-  insertIndex: number;
-  props: Iterable<Prop>;
-  styleSourceSelections: Iterable<StyleSourceSelection>;
-  styleSources: Iterable<StyleSource>;
-  styles: Map<string, StyleDecl>;
-  createId: () => string;
-}):
-  | {
-      clonedRootId: Instance["id"];
-      clonedInstanceIds: Instance["id"][];
-      payload: BuilderPatchChange[];
-    }
-  | undefined => {
-  const { clonedInstances, nextIdById } = cloneInstanceSubtree({
-    instances,
-    rootInstanceId: sourceInstanceId,
-    createId,
-  });
-  const clonedRootId = nextIdById.get(sourceInstanceId);
-  if (clonedRootId === undefined) {
-    return;
-  }
-  const instancesWithClones = new Map(instances);
-  for (const [instanceId, instance] of clonedInstances) {
-    instancesWithClones.set(instanceId, instance);
-  }
-  assignUniqueBlockTemplateNamesMutable({
-    instanceIds: [clonedRootId],
-    parent: targetParent,
-    instances: instancesWithClones,
-    components: componentMetas.keys(),
-  });
-  const propPatches = createPropClonePatches({
-    nextIdById,
-    props,
-    createId,
-  });
-  return {
-    clonedRootId,
-    clonedInstanceIds: clonedInstances.map(([instanceId]) => instanceId),
-    payload: compactBuilderPatchPayload([
-      {
-        namespace: "instances",
-        patches: [
-          ...clonedInstances.map(([instanceId, instance]) => ({
-            op: "add" as const,
-            path: [instanceId],
-            value: instance,
-          })),
-          {
-            op: "add" as const,
-            path: [targetParent.id, "children", insertIndex],
-            value: createInstanceChild(clonedRootId),
-          },
-        ],
-      },
-      ...(propPatches.length === 0
-        ? []
-        : [{ namespace: "props" as const, patches: propPatches }]),
-      ...createStyleClonePayload({
-        styleSourceSelections,
-        styleSources,
-        styles,
-        nextIdById,
-        createId,
-      }),
-    ]),
   };
 };
 

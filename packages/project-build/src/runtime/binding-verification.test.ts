@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { encodeDataVariableId } from "@webstudio-is/sdk";
+import { encodeDataVariableId, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
 import { executeBuilderRuntimeOperation } from "./registry";
 import { verifyBindings } from "./binding-verification";
@@ -216,7 +216,18 @@ describe("project.verifyBindings", () => {
   test("clones Collection parameters and binds each page to its own iterable", async () => {
     const state = createState();
     state.assets = new Map();
-    state.breakpoints = new Map();
+    state.assets.set("article-image", {
+      id: "article-image",
+      projectId: "project-id",
+      name: "article.png",
+      type: "image",
+      size: 1,
+      format: "png",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      description: null,
+      meta: { width: 100, height: 100 },
+    });
+    state.breakpoints = new Map([["base", { id: "base", label: "Base" }]]);
     state.styleSources = new Map();
     state.styleSourceSelections = new Map();
     state.styles = new Map();
@@ -225,10 +236,21 @@ describe("project.verifyBindings", () => {
       type: "token",
       name: "Article card",
     });
+    state.styleSources.set("article-local", {
+      id: "article-local",
+      type: "local",
+    });
     state.styleSourceSelections.set("collection", {
       instanceId: "collection",
-      values: ["article-token"],
+      values: ["article-token", "article-local"],
     });
+    const localStyle = {
+      styleSourceId: "article-local",
+      breakpointId: "base",
+      property: "color" as const,
+      value: { type: "keyword" as const, value: "red" },
+    };
+    state.styles.set(getStyleDeclKey(localStyle), localStyle);
     const sourceItems = encodeDataVariableId("source-items");
     const targetItems = encodeDataVariableId("target-items");
     state.dataSources?.set("source-items", {
@@ -258,6 +280,20 @@ describe("project.verifyBindings", () => {
       name: "data",
       type: "expression",
       value: sourceItems,
+    });
+    state.props?.set("collection-label", {
+      id: "collection-label",
+      instanceId: "collection",
+      name: "aria-label",
+      type: "string",
+      value: "Article list",
+    });
+    state.props?.set("item-image", {
+      id: "item-image",
+      instanceId: "item",
+      name: "src",
+      type: "asset",
+      value: "article-image",
     });
 
     let nextId = 0;
@@ -293,9 +329,17 @@ describe("project.verifyBindings", () => {
     );
     expect(clonedParameter?.id).toBeDefined();
     expect(clonedParameter?.id).not.toBe("collection-item");
-    expect(state.styleSourceSelections?.get(clonedCollectionId)?.values).toEqual(
-      ["article-token"]
-    );
+    const copiedStyles = state.styleSourceSelections?.get(clonedCollectionId);
+    expect(copiedStyles?.values[0]).toBe("article-token");
+    const copiedLocalId = copiedStyles?.values[1];
+    expect(copiedLocalId).toBeDefined();
+    expect(copiedLocalId).not.toBe("article-local");
+    expect(state.styleSources?.get(copiedLocalId ?? "")?.type).toBe("local");
+    expect(
+      state.styles?.get(
+        getStyleDeclKey({ ...localStyle, styleSourceId: copiedLocalId ?? "" })
+      )
+    ).toMatchObject({ value: localStyle.value });
     expect(state.dataSources?.get("source-items")).toMatchObject({
       value: { value: [{ name: "Source article" }] },
     });
@@ -308,6 +352,12 @@ describe("project.verifyBindings", () => {
       )
     ).toMatchObject({ value: targetItems });
     expect(state.props?.get("collection-data")?.value).toBe(sourceItems);
+    expect(
+      [...(state.props?.values() ?? [])].find(
+        (prop) =>
+          prop.instanceId === clonedCollectionId && prop.name === "aria-label"
+      )
+    ).toMatchObject({ value: "Article list" });
     expect(state.instances?.get("item")?.children[0]).toMatchObject({
       value: `${encodeDataVariableId("collection-item")}.name`,
     });
@@ -317,6 +367,11 @@ describe("project.verifyBindings", () => {
           prop.instanceId === clonedItemId.value && prop.type === "parameter"
       )
     ).toMatchObject({ value: clonedParameter?.id });
+    expect(
+      [...(state.props?.values() ?? [])].find(
+        (prop) => prop.instanceId === clonedItemId.value && prop.name === "src"
+      )
+    ).toMatchObject({ type: "asset", value: "article-image" });
     expect(state.instances?.get(clonedItemId.value)?.children[0]).toMatchObject(
       { value: `${encodeDataVariableId(clonedParameter?.id ?? "")}?.name` }
     );

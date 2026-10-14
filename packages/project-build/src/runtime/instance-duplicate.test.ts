@@ -1,11 +1,13 @@
 import { expect, test } from "vitest";
 import {
   getStyleDeclKey,
+  ROOT_INSTANCE_ID,
   type Instance,
   type StyleDecl,
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import {
+  cloneInstance,
   duplicateInstanceAfterItself,
   duplicateInstanceAfterItselfMutable,
 } from "./instance-duplicate";
@@ -120,6 +122,29 @@ test("duplicates an instance into another parent", () => {
   expect(newRootInstanceId).toBe("source-copy");
   expect(data.instances.get("target")?.children).toEqual([
     { type: "id", value: "source-copy" },
+  ]);
+});
+
+test("does not clone the shared global root into a page", () => {
+  const data = createWebstudioData();
+  data.instances.set(
+    ROOT_INSTANCE_ID,
+    createInstance(ROOT_INSTANCE_ID, [{ type: "id", value: "parent" }])
+  );
+
+  expect(() =>
+    cloneInstance(
+      data,
+      {
+        sourceInstanceId: ROOT_INSTANCE_ID,
+        targetParentInstanceId: "parent",
+      },
+      { createId: () => "unused", projectId: "project-id" }
+    )
+  ).toThrow("Source instance could not be cloned");
+  expect(data.instances.get("parent")?.children).toEqual([
+    { type: "id", value: "source" },
+    { type: "id", value: "sibling" },
   ]);
 });
 
