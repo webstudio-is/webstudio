@@ -59,7 +59,7 @@ test("MCP-authored new Form exposes Form controls and hides native rendered-tag 
     projectId: fixture.projectId,
     authToken: fixture.builderToken,
   });
-  await selectNavigatorItem({ page, name: "Form (new)" });
+  await selectNavigatorItem({ page, name: "Form (Beta)" });
   await page.getByRole("tab", { name: "Settings" }).click();
 
   await expect(page.getByText("Action", { exact: true }).first()).toBeVisible();

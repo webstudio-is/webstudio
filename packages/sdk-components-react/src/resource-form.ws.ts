@@ -10,7 +10,7 @@ const presetStyle = {
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
-  label: "Form (new)",
+  label: "Form (Beta)",
   htmlAttributes: "hide",
   states: [
     { label: "Success", selector: "[data-state=success]" },

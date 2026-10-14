@@ -5928,7 +5928,7 @@ describe("project session mcp adapter", () => {
 
     const formSearch = await adapter.callTool({
       name: "components.search",
-      input: { brief: "Form (new)" },
+      input: { brief: "Form (Beta)" },
     });
     expect(formSearch.structuredContent.data).toEqual(
       expect.objectContaining({
@@ -5936,7 +5936,7 @@ describe("project session mcp adapter", () => {
         components: expect.arrayContaining([
           expect.objectContaining({
             component: "form",
-            label: "Form (new)",
+            label: "Form (Beta)",
             template: "template:form",
             hasTemplate: true,
             standaloneInsertable: true,

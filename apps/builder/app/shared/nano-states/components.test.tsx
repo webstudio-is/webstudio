@@ -52,7 +52,7 @@ test("lists the managed Form while retaining deprecated Webhook Form", () => {
   expect(forms).toEqual([
     expect.objectContaining({
       name: "form",
-      label: "Form (new)",
+      label: "Form (Beta)",
       firstInstance: expect.objectContaining({ component: "Form" }),
     }),
   ]);

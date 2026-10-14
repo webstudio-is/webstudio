@@ -251,7 +251,7 @@ export const coreTemplates = {
   ...intrinsicCoreTemplates,
   form: {
     category: "forms",
-    label: "Form (new)",
+    label: "Form (Beta)",
     description: "Collect information and submit it to Resource actions.",
     template: (
       <Form

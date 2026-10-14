@@ -269,7 +269,9 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
         "update-project-settings",
       ])
     );
-    const discovered = await call("components.search", { brief: "Form (new)" });
+    const discovered = await call("components.search", {
+      brief: "Form (Beta)",
+    });
     const component = (
       discovered.data.components as Array<{
         component: string;

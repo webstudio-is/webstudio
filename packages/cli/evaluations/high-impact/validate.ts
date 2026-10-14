@@ -928,7 +928,7 @@ const validateManagedFormAuthoring = (
       insertionIndex > discoveryIndex &&
       templateInspectionIndex > discoveryIndex &&
       insertionIndex > templateInspectionIndex,
-    "Search for Form (new), inspect its template, and insert the registered Form template."
+    "Search for Form (Beta), inspect its template, and insert the registered Form template."
   );
   recordCheck(
     checks,

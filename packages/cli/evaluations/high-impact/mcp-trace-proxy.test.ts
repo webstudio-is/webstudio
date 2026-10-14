@@ -15,7 +15,7 @@ describe("bounded MCP tracing", () => {
         method: "tools/call",
         params: {
           name: "components.search",
-          arguments: { brief: "Form (new) with visitor email" },
+          arguments: { brief: "Form (Beta) with visitor email" },
         },
       })?.call
     ).toMatchObject({ arguments: { searchesForForm: true } });

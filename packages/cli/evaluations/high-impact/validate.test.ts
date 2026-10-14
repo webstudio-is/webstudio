@@ -352,7 +352,7 @@ const addManagedContactPage = (): EvaluationProject => {
 const managedFormCalls = () => [
   traceCall("meta.guide", {}),
   traceCall("insert-component", { component: "heading" }),
-  traceCall("components.search", { brief: "Form (new)" }),
+  traceCall("components.search", { brief: "Form (Beta)" }),
   traceCall("templates.get", { template: "template:form" }),
   traceCall("insert-component", { component: "form" }),
   traceCall("audit", {}),

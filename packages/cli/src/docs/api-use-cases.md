@@ -833,9 +833,9 @@ Commands:
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
 - MCP tool: replace-resource-text {"find":"api.old.example.com","replace":"api.example.com","fields":["url"],"limit":20}
 
-## Configure Form (new) through MCP
+## Configure Form (Beta) through MCP
 
-Use the exact component id returned by `components.search` for **Form (new)**.
+Use the exact component id returned by `components.search` for **Form (Beta)**.
 After inserting its registered template, use the Form instance id for the
 Form-scoped Resource and Action settings.
 
