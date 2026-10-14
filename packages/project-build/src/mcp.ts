@@ -108,6 +108,7 @@ import {
 import { z } from "zod";
 import {
   createConfirmationToken,
+  getConfirmationTokenInvalidReason,
   validateConfirmationToken,
 } from "./confirmation-token";
 
@@ -7645,7 +7646,7 @@ const toCallResult = (
   envelope: Parameters<typeof serializeProjectSessionMeta>[0],
   options: {
     verboseSession?: boolean;
-    error?: { code: string; message: string };
+    error?: McpStructuredError;
     next?: string[];
     confirmation?: DestructiveConfirmation;
   } = {}
@@ -7739,10 +7740,16 @@ const executeDestructiveMcpOperation = async <Command extends string>({
       }),
     ];
   }
-  const isConfirmed =
-    confirmDestructive &&
-    (await validateConfirmationToken(confirmationToken, confirmationPayload));
+  const invalidReason = confirmDestructive
+    ? await getConfirmationTokenInvalidReason(
+        confirmationToken,
+        confirmationPayload
+      )
+    : undefined;
+  const isConfirmed = confirmDestructive && invalidReason === undefined;
   if (isConfirmed === false) {
+    const message =
+      "Review the planned destructive mutation, then retry the unchanged call with confirmDestructive: true and the returned confirmationToken before it expires.";
     return [
       plannedEnvelope,
       toCallResult(plannedEnvelope, {
@@ -7750,8 +7757,19 @@ const executeDestructiveMcpOperation = async <Command extends string>({
           code: confirmDestructive
             ? "DESTRUCTIVE_CONFIRMATION_INVALID"
             : "DESTRUCTIVE_CONFIRMATION_REQUIRED",
-          message:
-            "Review the planned destructive mutation, then retry the unchanged call with confirmDestructive: true and the returned confirmationToken before it expires.",
+          message,
+          ...(invalidReason === undefined
+            ? {}
+            : {
+                issues: [
+                  {
+                    code: `DESTRUCTIVE_CONFIRMATION_${invalidReason.toUpperCase()}`,
+                    path: ["confirmationToken"],
+                    message,
+                    constraint: "unchanged_destructive_plan",
+                  },
+                ],
+              }),
         },
         confirmation: await confirmation(),
         next: [

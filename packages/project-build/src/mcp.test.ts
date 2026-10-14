@@ -2391,7 +2391,16 @@ describe("project session mcp adapter", () => {
     expect(altered).toMatchObject({
       structuredContent: {
         ok: false,
-        error: { code: "DESTRUCTIVE_CONFIRMATION_INVALID" },
+        error: {
+          code: "DESTRUCTIVE_CONFIRMATION_INVALID",
+          issues: [
+            {
+              code: "DESTRUCTIVE_CONFIRMATION_MISMATCH",
+              path: ["confirmationToken"],
+              constraint: "unchanged_destructive_plan",
+            },
+          ],
+        },
       },
     });
     expect(executeOperation).toHaveBeenCalledTimes(2);
