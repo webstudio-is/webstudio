@@ -191,7 +191,7 @@ test("copying a Form remaps its local Resource actions", () => {
     expect(copiedResource?.email).toEqual({
       senderExpression: encodeDataVariableId(copiedParameter?.id ?? ""),
       recipientsExpression: encodeDataVariableId(copiedParameter?.id ?? ""),
-      subject: `\`Submission \${${encodeDataVariableId(copiedParameter?.id ?? "")}?.name}\``,
+      subject: `\`Submission \${${encodeDataVariableId(copiedParameter?.id ?? "")}.name}\``,
       body: encodeDataVariableId(copiedParameter?.id ?? ""),
     });
     expect(copiedResource?.email?.senderExpression).not.toBe(

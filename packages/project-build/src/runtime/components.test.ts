@@ -528,7 +528,7 @@ test("inserts a semantic Collection with literal data and bound item expressions
         child.type === "expression" ? [child.value] : []
       )
     )
-  ).toContain(`${encodeDataVariableId(mutation.result.itemParameterId)}?.name`);
+  ).toContain(`${encodeDataVariableId(mutation.result.itemParameterId)}.name`);
 });
 
 test("binds semantic Collection data to outer scope and item props to its parameter", async () => {
@@ -559,7 +559,7 @@ test("binds semantic Collection data to outer scope and item props to its parame
       instanceId: mutation.result.collectionInstanceId,
       name: "data",
       type: "expression",
-      value: `${encodeDataVariableId("posts")}?.data?.items`,
+      value: `${encodeDataVariableId("posts")}.data.items`,
     })
   );
   expect(props).toContainEqual(
@@ -567,7 +567,7 @@ test("binds semantic Collection data to outer scope and item props to its parame
       instanceId: mutation.result.itemRootInstanceId,
       name: "title",
       type: "expression",
-      value: `${encodeDataVariableId(mutation.result.itemParameterId)}?.title`,
+      value: `${encodeDataVariableId(mutation.result.itemParameterId)}.title`,
     })
   );
 });
@@ -601,7 +601,7 @@ test("binds semantic Collection data to an HTTP resource result", async () => {
 
   expect(dataProp).toMatchObject({
     type: "expression",
-    value: `${encodeDataVariableId("posts")}?.data?.items`,
+    value: `${encodeDataVariableId("posts")}.data.items`,
   });
 });
 
