@@ -42,6 +42,53 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
+test("Action + explains how to add a resource when none are available", async () => {
+  $instances.set(
+    new Map([
+      [
+        "form",
+        {
+          type: "instance",
+          id: "form",
+          component: "Form",
+          children: [],
+        },
+      ],
+    ])
+  );
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const onChange = vi.fn();
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <FormActionControl
+          instanceId="form"
+          propName="action"
+          prop={undefined}
+          computedValue={undefined}
+          meta={{ type: "json", control: "form-action", required: false }}
+          onChange={onChange}
+        />
+      </TooltipProvider>
+    )
+  );
+
+  const addButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Add action"]'
+  )!;
+  expect(addButton.disabled).toBe(false);
+  await act(async () => userEvent.click(addButton));
+  expect(document.querySelector('[role="tooltip"]')?.textContent).toContain(
+    "Create a resource in the Variables section first."
+  );
+  expect(document.querySelector('[role="menu"]')).toBeNull();
+  expect(onChange).not.toHaveBeenCalled();
+});
+
 test("Action control handles an empty Resource list and can select an in-scope destination", async () => {
   $resources.set(new Map([["resource", requestResource("resource")]]));
   $instances.set(

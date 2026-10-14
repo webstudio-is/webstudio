@@ -1,4 +1,5 @@
 import { useStore } from "@nanostores/react";
+import { useState } from "react";
 import {
   Box,
   InteractiveListArrowFocus,
@@ -117,6 +118,8 @@ export const FormActionControl = ({
   prop,
   onChange,
 }: ControlProps<"form-action">) => {
+  const [showEmptyResourceTooltip, setShowEmptyResourceTooltip] =
+    useState(false);
   const instances = useStore($instances);
   const dataSources = useStore($dataSources);
   const resourcesById = useStore($resources);
@@ -199,46 +202,58 @@ export const FormActionControl = ({
         >
           Action
         </FieldLabel>
-        <DropdownMenu>
-          <Tooltip content="Add a resource to submit this Form.">
-            <span style={{ display: "flex" }}>
-              <DropdownMenuTrigger asChild>
-                <SmallIconButton
-                  aria-label="Add action"
-                  disabled={
-                    action.length >= maxFormActions || resources.length === 0
-                  }
-                  icon={<PlusIcon />}
-                />
-              </DropdownMenuTrigger>
-            </span>
+        {resources.length === 0 ? (
+          <Tooltip
+            content="Create a resource in the Variables section first."
+            open={showEmptyResourceTooltip}
+            onOpenChange={setShowEmptyResourceTooltip}
+          >
+            <SmallIconButton
+              aria-label="Add action"
+              icon={<PlusIcon />}
+              onClick={() => setShowEmptyResourceTooltip(true)}
+            />
           </Tooltip>
-          <DropdownMenuContent>
-            {resources.map((variable) => (
-              <DropdownMenuItem
-                key={variable.id}
-                disabled={action.some(
-                  ({ dataSourceId }) => dataSourceId === variable.id
-                )}
-                onSelect={() => {
-                  if (
-                    action.length < maxFormActions &&
-                    !action.some(
-                      ({ dataSourceId }) => dataSourceId === variable.id
-                    )
-                  ) {
-                    update([
-                      ...action,
-                      { dataSourceId: variable.id, enabled: true },
-                    ]);
-                  }
-                }}
-              >
-                {variable.name}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        ) : (
+          <DropdownMenu>
+            <Tooltip content="Add a resource to submit this Form.">
+              <span style={{ display: "flex" }}>
+                <DropdownMenuTrigger asChild>
+                  <SmallIconButton
+                    aria-label="Add action"
+                    disabled={action.length >= maxFormActions}
+                    icon={<PlusIcon />}
+                  />
+                </DropdownMenuTrigger>
+              </span>
+            </Tooltip>
+            <DropdownMenuContent>
+              {resources.map((variable) => (
+                <DropdownMenuItem
+                  key={variable.id}
+                  disabled={action.some(
+                    ({ dataSourceId }) => dataSourceId === variable.id
+                  )}
+                  onSelect={() => {
+                    if (
+                      action.length < maxFormActions &&
+                      !action.some(
+                        ({ dataSourceId }) => dataSourceId === variable.id
+                      )
+                    ) {
+                      update([
+                        ...action,
+                        { dataSourceId: variable.id, enabled: true },
+                      ]);
+                    }
+                  }}
+                >
+                  {variable.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </Flex>
       <Box css={{ py: theme.spacing[2] }}>
         <Flex direction="column" gap="2">
