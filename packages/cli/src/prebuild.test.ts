@@ -3700,7 +3700,8 @@ sitemap.map((page) => page.path);`
         ["missing", [{ dataSourceId: "missing", enabled: true }]],
         ["malformed", { destinations: "destination" }],
         ["native", { mode: "native", destinations: ["destination"] }],
-        ["valid", [{ dataSourceId: "destination", enabled: false }]],
+        ["disabled", [{ dataSourceId: "destination", enabled: false }]],
+        ["valid", [{ dataSourceId: "destination", enabled: true }]],
       ] as const;
       const siteData = createSiteData({
         instances: [
@@ -3853,6 +3854,15 @@ sitemap.map((page) => page.path);`
         success: false,
         errors: ["Invalid Form submission"],
       });
+      expect(outgoingFetch).not.toHaveBeenCalled();
+      await expect(
+        submit("disabled", {
+          [formBotFieldName]: "brave",
+          [managedFormArrayNamesFieldName]: "[]",
+        })
+      ).resolves.toEqual(
+        getManagedFormFailure("Form Resource graph not found")
+      );
       expect(outgoingFetch).not.toHaveBeenCalled();
       vi.stubGlobal("navigator", { brave: { isBrave: () => true } });
       await expect(

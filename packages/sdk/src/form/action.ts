@@ -5,7 +5,7 @@ export const navigationFormActionUrl = "?__webstudio__=navigate";
 export type FormAction = {
   /** Resource data source ID, stable across renames. */
   dataSourceId: string;
-  /** Kept for compatibility with saved Form settings; no longer controls execution. */
+  /** Kept for compatibility with saved Form settings and disabled actions. */
   enabled: boolean;
 };
 
@@ -38,4 +38,6 @@ export const validateFormSubmission = (actions: FormSubmission) => {
 };
 
 export const getFormActions = (actions: FormSubmission) =>
-  actions.map((action) => action.dataSourceId);
+  actions
+    .filter((action) => action.enabled)
+    .map((action) => action.dataSourceId);

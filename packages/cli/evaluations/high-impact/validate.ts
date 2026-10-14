@@ -813,7 +813,10 @@ const validateManagedFormAuthoring = (
   const orderedActions = selectedActions.map((selected) =>
     typeof selected === "object" &&
     selected !== null &&
-    "dataSourceId" in selected
+    "dataSourceId" in selected &&
+    typeof selected.dataSourceId === "string" &&
+    "enabled" in selected &&
+    typeof selected.enabled === "boolean"
       ? selected
       : undefined
   );
@@ -2210,7 +2213,9 @@ const validateManagedFormRuntime = (
           typeof action === "object" &&
           action !== null &&
           "dataSourceId" in action &&
-          typeof action.dataSourceId === "string"
+          typeof action.dataSourceId === "string" &&
+          "enabled" in action &&
+          typeof action.enabled === "boolean"
       )
     : [];
   const selectedSource = input.project.dataSources.find(
@@ -2230,6 +2235,8 @@ const validateManagedFormRuntime = (
     failures,
     "runtimeFormAction",
     form !== undefined &&
+      Array.isArray(actions) &&
+      selected.length === actions.length &&
       selected.length === 1 &&
       selectedResource?.method === "post" &&
       safeResourceUrl &&

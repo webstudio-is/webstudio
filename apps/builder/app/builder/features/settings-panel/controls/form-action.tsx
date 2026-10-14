@@ -40,22 +40,25 @@ const ActionItem = ({
   id,
   index,
   variable,
+  enabled,
   active,
   onRemove,
 }: {
   id: string;
   index: number;
   variable?: DataSource;
+  enabled: boolean;
   active: boolean;
   onRemove: () => void;
 }) => {
   const isResource = variable?.type === "resource";
   const name = isResource ? variable.name : "Deleted Resource";
+  const label = enabled ? name : `${name} (disabled in saved settings)`;
   return (
     <InteractiveListItem
       id={id}
       index={index}
-      aria-label={`Action ${name}`}
+      aria-label={`Action ${label}`}
       draggable
       active={active}
       onClick={(event) => {
@@ -71,7 +74,7 @@ const ActionItem = ({
       }}
       label={
         <Text variant="labels" truncate>
-          {name}
+          {label}
         </Text>
       }
       buttons={
@@ -143,7 +146,7 @@ export const FormActionControl = ({
           description={
             <Flex direction="column" gap="1">
               <Text>
-                Sends each form submission to all selected destinations at the
+                Sends each form submission to all enabled destinations at the
                 same time.
               </Text>
               <Box as="ul" css={{ margin: 0, paddingLeft: theme.spacing[4] }}>
@@ -245,12 +248,13 @@ export const FormActionControl = ({
                   marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
                 }}
               >
-                {action.map(({ dataSourceId: id }, index) => (
+                {action.map(({ dataSourceId: id, enabled }, index) => (
                   <ActionItem
                     key={id}
                     id={id}
                     index={index}
                     variable={dataSources.get(id)}
+                    enabled={enabled}
                     active={dragItemId === id}
                     onRemove={() =>
                       update(action.filter((item) => item.dataSourceId !== id))

@@ -322,7 +322,7 @@ test("server MCP simulation and Builder Preview use the same saved Form setup an
   });
 });
 
-test("Builder Preview executes a legacy disabled Action", async () => {
+test("Builder Preview does not execute a legacy disabled Action", async () => {
   vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
     ...draftBuild,
     props: [
@@ -333,10 +333,10 @@ test("Builder Preview executes a legacy disabled Action", async () => {
     ],
   } as never);
   const response = await action({ request: request() } as never);
-  expect((await response.json()).success).toBe(true);
+  expect((await response.json()).success).toBe(false);
   expect(
     vi.mocked(createNodeProtectedResourceFetch).mock.results[0].value
-  ).toHaveBeenCalledOnce();
+  ).not.toHaveBeenCalled();
 });
 
 test.each([

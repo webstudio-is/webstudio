@@ -5,7 +5,7 @@ import {
   validateFormSubmission,
 } from "./form-submission";
 
-test("all Actions preserve configured order, including legacy disabled Actions", () => {
+test("enabled Actions preserve configured order without running legacy disabled Actions", () => {
   const actions = [
     { dataSourceId: "third", enabled: true },
     { dataSourceId: "second", enabled: false },
@@ -13,7 +13,7 @@ test("all Actions preserve configured order, including legacy disabled Actions",
   ];
   expect(isFormSubmission(actions)).toBe(true);
   expect(validateFormSubmission(actions)).toBeUndefined();
-  expect(getFormActions(actions)).toEqual(["third", "second", "first"]);
+  expect(getFormActions(actions)).toEqual(["third", "first"]);
 });
 
 test("empty, duplicate and over-limit Actions are rejected", () => {

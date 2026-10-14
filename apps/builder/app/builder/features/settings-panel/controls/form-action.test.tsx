@@ -152,7 +152,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
     )!;
   await act(async () => userEvent.click(actionLabel()));
   expect(document.body.textContent).toContain(
-    "Sends each form submission to all selected destinations at the same time."
+    "Sends each form submission to all enabled destinations at the same time."
   );
   const variableBullets = Array.from(
     document.body.querySelectorAll('[role="tooltip"] ul li')
@@ -240,7 +240,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
   expect(container.textContent).toContain("Renamed request");
   await act(async () => userEvent.click(actionLabel()));
   expect(document.body.textContent).toContain(
-    "Sends each form submission to all selected destinations at the same time."
+    "Sends each form submission to all enabled destinations at the same time."
   );
   expect(document.body.textContent).toContain("Reset");
   expect(document.body.textContent).not.toContain("Reset value");
@@ -627,7 +627,9 @@ test("a legacy disabled Action stays visible and can be removed", async () => {
     )
   );
   const row = container.querySelector<HTMLElement>('[data-list-item="true"]');
-  expect(row?.getAttribute("aria-label")).toBe("Action Send request");
+  expect(row?.getAttribute("aria-label")).toBe(
+    "Action Send request (disabled in saved settings)"
+  );
   expect(row?.textContent).toContain("Send request");
   expect(row?.querySelector("label")).toBeNull();
   expect(row?.getClientRects().length).toBeGreaterThan(0);

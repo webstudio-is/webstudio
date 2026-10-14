@@ -761,6 +761,25 @@ describe("high-impact fixture validation", () => {
 });
 
 describe("managed Form evaluation", () => {
+  test.each([
+    (dataSourceId: string) => ({ dataSourceId }),
+    (dataSourceId: string) => ({ dataSourceId, enabled: "true" }),
+  ])("rejects a Form action without a boolean enabled field", (makeValue) => {
+    const project = addManagedContactPage();
+    const action = project.props.find(
+      ({ instanceId, name }) =>
+        instanceId === "contact-form" && name === "action"
+    )!;
+    const selected = action.value as Array<{ dataSourceId: string }>;
+    action.value = [makeValue(selected[0].dataSourceId), selected[1]];
+    const result = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project,
+      toolCalls: managedFormCalls(),
+    });
+    expect(result.checks.formActionsPreserved).toBe("failed");
+  });
+
   test("accepts contact heading text inside an inline child", () => {
     const project = addManagedContactPage();
     const heading = project.instances.find(

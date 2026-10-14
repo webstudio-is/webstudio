@@ -171,6 +171,31 @@ test("runtime validator requires the observed success, failure, recovery sequenc
   expect(result.checks.runtimeObservedStates).toBe("passed");
   expect(result.checks.runtimeSessionPreview).toBe("passed");
 
+  for (const action of [
+    { dataSourceId: "runtime-source" },
+    { dataSourceId: "runtime-source", enabled: "true" },
+    { dataSourceId: "runtime-source", enabled: true },
+  ]) {
+    const malformed = structuredClone(project);
+    malformed.props.find((prop) => prop.id === "action")!.value =
+      action.enabled === true
+        ? [action, { dataSourceId: "unexpected" }]
+        : [action];
+    expect(
+      evaluateHighImpactOutcome({
+        fixture: managedFormRuntimeFixture,
+        project: malformed,
+        toolCalls: [{ name: "meta.guide" }, ...submissions],
+        formRuntimeDeliveries: [
+          { path: "/submit", status: 200 },
+          { path: "/reject", status: 503 },
+          { path: "/reject", status: 503 },
+          { path: "/submit", status: 200 },
+        ],
+      }).checks.runtimeFormAction
+    ).toBe("failed");
+  }
+
   project.resources[0].url = '"https://somewhere-else.example/submit"';
   expect(
     evaluateHighImpactOutcome({
