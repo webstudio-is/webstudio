@@ -127,7 +127,8 @@ describe("api router build operation adapters", () => {
         actualResult: "The server contract replaced the CLI contract.",
         recoveryAttempts: ["Inspect the issue report."],
         userImpact: "The report is less useful.",
-        technicalContext: "The client and server may be on different contracts.",
+        technicalContext:
+          "The client and server may be on different contracts.",
         acceptanceCriteria: ["Both versions are reported separately."],
       },
     });

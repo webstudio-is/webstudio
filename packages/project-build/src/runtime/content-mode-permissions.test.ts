@@ -448,15 +448,17 @@ describe("content mode permissions", () => {
       )
     ).toBe(true);
     expect(
-      ([
-        "asset",
-        "page",
-        "parameter",
-        "resource",
-        "expression",
-        "action",
-        "animationAction",
-      ] as const).some(isContentModeTemplateDefaultPropType)
+      (
+        [
+          "asset",
+          "page",
+          "parameter",
+          "resource",
+          "expression",
+          "action",
+          "animationAction",
+        ] as const
+      ).some(isContentModeTemplateDefaultPropType)
     ).toBe(false);
   });
 

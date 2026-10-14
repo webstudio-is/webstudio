@@ -282,10 +282,7 @@ const publicOperationById = new Map(
 
 export const createIssueReportRuntime = (
   recentFailure?: IssueReportRecentFailure,
-  diagnostics?: Pick<
-    IssueReportRuntime,
-    "projectId" | "session" | "preview"
-  >
+  diagnostics?: Pick<IssueReportRuntime, "projectId" | "session" | "preview">
 ): IssueReportRuntime => ({
   cliVersion: packageJson.version,
   nodeVersion: process.versions.node,
