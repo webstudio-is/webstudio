@@ -31,6 +31,7 @@ import { DocumentSourceDiagnosticsError } from "@webstudio-is/content-engine/com
 import * as assetUploader from "@webstudio-is/asset-uploader/server";
 import { apiRouter, __testing__ } from "./api-router.server";
 import * as assetQueryPreview from "./asset-query-preview.server";
+import * as formSimulation from "./simulate-form.server";
 import * as db from "~/shared/db";
 import {
   getApiRouterProcedures,
@@ -95,6 +96,60 @@ const createCaller = (context: AppContext) =>
   apiRouter.createCaller(context) as ApiRouterCaller & RuntimeApiCaller;
 
 describe("api router build operation adapters", () => {
+  test("Form simulation requires API and build access before invoking the server engine", async () => {
+    const simulate = vi
+      .spyOn(formSimulation, "simulateFormSubmission")
+      .mockResolvedValue({
+        success: true,
+        status: 200,
+        results: [
+          {
+            status: 202,
+            resourceId: "resource-1",
+            resourceName: "Private resource name",
+            body: "Private response body",
+          },
+        ],
+        errors: [],
+      });
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    const input = {
+      projectId: "project-1",
+      formId: "form-1",
+      path: "/contact",
+      siteOrigin: "https://example.com",
+      values: [{ name: "email", value: "test@example.com" }],
+    };
+    await expect(
+      createCaller(createContext(false)).forms.simulateSubmission(input)
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    vi.mocked(authDb.getTokenInfo).mockResolvedValue(
+      createToken({ relation: "viewers" })
+    );
+    await expect(
+      createCaller(createContext(true)).forms.simulateSubmission(input)
+    ).rejects.toThrow("build permission");
+    vi.mocked(authDb.getTokenInfo).mockResolvedValue(
+      createToken({ projectId: "another-project" })
+    );
+    await expect(
+      createCaller(createContext(true)).forms.simulateSubmission(input)
+    ).rejects.toThrow("not valid for project");
+    vi.mocked(authDb.getTokenInfo).mockResolvedValue(createToken());
+    await expect(
+      createCaller(createContext(true)).forms.simulateSubmission(input)
+    ).resolves.toEqual({
+      success: true,
+      status: 200,
+      results: [{ status: 202, resourceId: "resource-1" }],
+      errors: [],
+    });
+    expect(simulate).toHaveBeenCalledTimes(1);
+    expect(simulate).toHaveBeenCalledWith(
+      expect.objectContaining({ projectId: "project-1", formId: "form-1" })
+    );
+  });
   test("enforces plan contact-address limits through project settings updates", async () => {
     server.use(postgrestDb.get("Project", () => json({ userId: "owner-1" })));
     const build = {

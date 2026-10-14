@@ -201,11 +201,13 @@ const runFixture = async ({
   const taskPath = join(directory, "task.json");
   const tracePath = join(directory, "mcp-calls.jsonl");
   const traceProxy = join(import.meta.dirname, "mcp-trace-proxy.ts");
-  const fixtureApi = await startHighImpactFixtureApi(fixture);
   const receiver =
     fixture.id === managedFormRuntimeFixture.id
       ? await startFormRuntimeReceiver()
       : undefined;
+  const fixtureApi = await startHighImpactFixtureApi(fixture, {
+    formReceiverPort: receiver?.port,
+  });
   let failed = false;
   await mkdir(projectDirectory, { recursive: true });
   if (fixture.id === fontAssetsFixture.id) {
@@ -219,9 +221,6 @@ const runFixture = async ({
   const env = {
     ...process.env,
     WEBSTUDIO_CONFIG_DIR: configDirectory,
-    ...(receiver === undefined
-      ? {}
-      : { WEBSTUDIO_FORM_EVALUATION_RECEIVER_PORT: String(receiver.port) }),
   };
   try {
     await execFileAsync(
@@ -235,11 +234,7 @@ const runFixture = async ({
         getMcpProxyArgs(traceProxy, localCli, tracePath)
       )}`,
       `mcp_servers.webstudio.cwd=${JSON.stringify(projectDirectory)}`,
-      `mcp_servers.webstudio.env={ WEBSTUDIO_CONFIG_DIR = ${JSON.stringify(configDirectory)}${
-        receiver === undefined
-          ? ""
-          : `, WEBSTUDIO_FORM_EVALUATION_RECEIVER_PORT = ${JSON.stringify(String(receiver.port))}`
-      } }`,
+      `mcp_servers.webstudio.env={ WEBSTUDIO_CONFIG_DIR = ${JSON.stringify(configDirectory)} }`,
       `mcp_servers.webstudio.enabled_tools=${JSON.stringify(
         getFixtureToolNames(fixture)
       )}`,

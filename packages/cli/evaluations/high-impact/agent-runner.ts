@@ -234,7 +234,7 @@ export const createMinimalAgentTask = (
       ...(isRuntimeFormFixture
         ? [
             "Use only synthetic values. Never use an Email Resource, a file value, or any endpoint except the fixture's exact /submit and /reject destinations.",
-            "Call forms.simulate-submission three times with path /contact-runtime, siteOrigin https://site.example, the saved Form instance ID, and synthetic named values. It evaluates the saved Form entirely on the server through the shared Form engine; do not start Preview or use a browser.",
+            "Call forms.simulate-submission three times with path /contact-runtime, the saved Form instance ID, and synthetic named values. The Builder server derives the site origin and evaluates the saved Form; do not start Preview or use a browser.",
             "Do not call audit, responsive verification, screenshot, publish, browser tabs, shell commands, or any external service in this runtime fixture.",
           ]
         : []),

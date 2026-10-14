@@ -113,7 +113,8 @@ export type HighImpactFixtureApi = {
 };
 
 export const startHighImpactFixtureApi = async (
-  fixture: HighImpactFixture
+  fixture: HighImpactFixture,
+  { formReceiverPort }: { formReceiverPort?: number } = {}
 ): Promise<HighImpactFixtureApi> => {
   Object.assign(globalThis, { React });
   const [stateAdapters, runtime, projectSession, restorePoints] =
@@ -125,8 +126,12 @@ export const startHighImpactFixtureApi = async (
     ]);
   const { createBuilderStateFromBuildData, applyBuilderPatchTransactions } =
     stateAdapters;
-  const { executeBuilderRuntimeOperation, createContentBlockApplication } =
-    runtime;
+  const {
+    executeBuilderRuntimeOperation,
+    createContentBlockApplication,
+    prepareManagedFormDraft,
+    simulateManagedFormDraftSubmission,
+  } = runtime;
   let contentBlockApplication: ReturnType<typeof createContentBlockApplication>;
   const { createLocalProjectBundleFromSessionSnapshot } = projectSession;
   const { hydrateRestorePointTransaction } = restorePoints;
@@ -426,6 +431,69 @@ export const startHighImpactFixtureApi = async (
         ).state;
         version += 1;
         data = { version };
+      } else if (operationPath === "forms.simulateSubmission") {
+        if (formReceiverPort === undefined) {
+          throw new Error("Form receiver is unavailable");
+        }
+        const input = (await readInput()) as {
+          projectId: string;
+          formId: string;
+          path: string;
+          values: { name: string; value: string }[];
+          arrayNames?: string[];
+        };
+        if (input.projectId !== projectId) {
+          throw new Error("Invalid project");
+        }
+        const pageUrl = new URL(input.path, "https://site.example");
+        const prepared = prepareManagedFormDraft({
+          formId: input.formId,
+          pageUrl,
+          pages: state.pages!,
+          instances: state.instances!,
+          props: state.props!,
+          dataSources: state.dataSources!,
+          resources: state.resources!,
+          projectMeta: state.projectSettings?.meta ?? state.pages?.meta,
+        });
+        const result = await simulateManagedFormDraftSubmission({
+          prepared,
+          formId: input.formId,
+          pageUrl,
+          values: input.values,
+          arrayNames: input.arrayNames,
+          resourceFetch: async (outgoingInput, init) => {
+            const outgoing = new Request(outgoingInput, init);
+            const target = new URL(outgoing.url);
+            if (
+              target.origin !== "https://mcp-delivery.example" ||
+              !["/submit", "/reject"].includes(target.pathname) ||
+              target.search !== "" ||
+              target.hash !== "" ||
+              outgoing.method !== "POST"
+            ) {
+              throw new Error("Unexpected evaluation Form destination");
+            }
+            return await fetch(
+              new Request(
+                `http://127.0.0.1:${formReceiverPort}${target.pathname}`,
+                outgoing
+              )
+            );
+          },
+        });
+        data = {
+          success: result.success,
+          status: result.status,
+          results: result.results.map(({ resourceId, status }) => ({
+            resourceId,
+            status,
+          })),
+          errors: result.errors.map(({ status, message }) => ({
+            status,
+            message,
+          })),
+        };
       } else if (operationPath === "build.get") {
         data = createRuntimeFixtureBuildSnapshot({
           state,

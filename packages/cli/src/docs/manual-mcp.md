@@ -38,20 +38,20 @@ While the server is running, stdout is reserved for MCP JSON-RPC messages. Do no
 ### Server-side Form simulation
 
 `forms.simulate-submission` evaluates a saved Form using synthetic string fields
-and the same server Form handler used by Builder Preview. Supply the saved Form
-instance ID, page path, and the site's exact HTTPS origin. It can trigger the
-Form's configured HTTP Resources, so use a controlled destination. Email actions
-are rejected by the CLI adapter. For dynamic checkbox or multiple-select fields,
+and the same trusted Builder server Form handler used by Builder Preview. Supply
+the saved Form instance ID and page path. The server uses this project's
+publisher origin. It can trigger the Form's configured HTTP and Email Resources, so verify
+every destination and recipient first. For dynamic checkbox or multiple-select fields,
 pass `arrayNames` to preserve an empty or single-value array when the saved
 field props do not identify the control. The result reports destination statuses
 and errors without Resource bodies. This server simulation does not exercise
 client validation, browser event handlers, navigation, file bytes, or actual
-browser information.
+browser information. The Builder server loads the saved draft and holds the
+Email service credentials; the CLI does not receive those credentials.
 
 ```json
 {
   "path": "/contact",
-  "siteOrigin": "https://example.com",
   "formId": "saved-form-instance-id",
   "values": [{ "name": "email", "value": "synthetic@example.com" }]
 }

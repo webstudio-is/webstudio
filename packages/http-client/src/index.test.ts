@@ -62,6 +62,7 @@ import {
   getBuildPatchSummary,
   getMarketplaceProduct,
   getProjectPermissions,
+  simulateFormSubmission,
   getProjectAsset,
   getProjectAssetFolder,
   getProjectSettings,
@@ -886,6 +887,12 @@ test("wraps project api trpc calls in named functions", async () => {
       folderId: null,
     });
     await getProjectPermissions(params);
+    await simulateFormSubmission({
+      ...params,
+      formId: "form-1",
+      path: "/contact",
+      values: [{ name: "email", value: "test@example.com" }],
+    });
     await listFolders({
       ...params,
       cursor: "20",
@@ -1079,6 +1086,10 @@ test("wraps project api trpc calls in named functions", async () => {
     ),
     expectBodyRequest("/trpc/api.assets.duplicate", '"folderId":null'),
     expectRequest("/trpc/api.projects.permissions"),
+    expectBodyRequest(
+      "/trpc/api.forms.simulateSubmission",
+      '"formId":"form-1"'
+    ),
     expectRequest("/trpc/api.folders.list"),
     expectBodyRequest("/trpc/api.build.patch", '"baseVersion":2'),
     expectBodyRequest("/trpc/build.restorePoint", '"baseVersion":3'),

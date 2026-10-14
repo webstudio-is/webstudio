@@ -682,6 +682,15 @@ const curatedPublicApiOperationDocumentation = [
     ],
   },
   {
+    command: "simulate-form-submission",
+    description:
+      "Submit synthetic values to a saved Form on the trusted Builder server. Executes configured actions, including Email, so verify destinations and recipients first.",
+    requiredOptions: ["input", "json"],
+    examples: [
+      "webstudio simulate-form-submission --input form-simulation.json --json",
+    ],
+  },
+  {
     command: "get-asset-field-catalog",
     description:
       "Get standard fields plus dynamic Markdown or MDX frontmatter and JSON fields with observed types, occurrence counts, optionality, and mixed-type state.",

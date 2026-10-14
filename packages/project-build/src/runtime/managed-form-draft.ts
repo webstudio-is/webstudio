@@ -151,6 +151,8 @@ export const simulateManagedFormDraftSubmission = async ({
   values,
   arrayNames: explicitArrayNames = [],
   resourceFetch,
+  createEmailSender,
+  validateEmail,
 }: {
   prepared: ReturnType<typeof prepareManagedFormDraft>;
   formId: string;
@@ -158,6 +160,12 @@ export const simulateManagedFormDraftSubmission = async ({
   values: readonly { name: string; value: string }[];
   arrayNames?: readonly string[];
   resourceFetch: typeof fetch;
+  createEmailSender?: Parameters<
+    typeof handleManagedFormSubmission
+  >[0]["createEmailSender"];
+  validateEmail?: Parameters<
+    typeof handleManagedFormSubmission
+  >[0]["validateEmail"];
 }): Promise<ManagedFormResponse> => {
   const formData = new FormData();
   formData.set(managedFormIdFieldName, formId);
@@ -197,6 +205,8 @@ export const simulateManagedFormDraftSubmission = async ({
           : undefined,
       getGraph: prepared.getGraph,
       resourceFetch,
+      createEmailSender,
+      validateEmail,
       validateDestination:
         "validateDestination" in resourceFetch &&
         typeof resourceFetch.validateDestination === "function"

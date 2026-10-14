@@ -15,6 +15,7 @@ import {
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
 import { action } from "../routes/rest.preview-form";
+import { simulateFormSubmission } from "./simulate-form.server";
 import type { PreviewFormExchange } from "~/shared/preview-form-inspection";
 
 vi.mock("@webstudio-is/trpc-interface/index.server", () => ({
@@ -202,6 +203,80 @@ test("an unpublished project's current draft executes its HTTP Resource", async 
     projectId
   );
   expect(response.headers.get("cache-control")).toContain("no-store");
+});
+
+test("server MCP simulation executes the saved draft with the Preview engine", async () => {
+  const result = await simulateFormSubmission({
+    context: { authorization: { type: "user" } } as never,
+    projectId,
+    formId: "form",
+    path: "/contact",
+    siteOrigin: "https://site.wstd.work",
+    values: [{ name: "email", value: "ada@example.com" }],
+    arrayNames: [],
+  });
+  expect(result).toMatchObject({
+    success: true,
+    results: [{ status: 201, body: { accepted: true } }],
+  });
+  expect(loadDevBuildByProjectId).toHaveBeenCalledOnce();
+  const [input, init] = vi.mocked(createNodeProtectedResourceFetch).mock
+    .results[0].value.mock.calls[0];
+  const outgoing = new Request(input, init);
+  expect(outgoing.url).toBe("https://example.com/contact");
+  expect(await outgoing.json()).toEqual({ email: "ada@example.com" });
+});
+
+test("server MCP simulation rejects a path that URL parsing would move to another origin", async () => {
+  await expect(
+    simulateFormSubmission({
+      context: { authorization: { type: "user" } } as never,
+      projectId,
+      formId: "form",
+      path: "/\n/example.com/contact",
+      values: [],
+      arrayNames: [],
+    })
+  ).rejects.toThrow("local page path");
+  expect(loadDevBuildByProjectId).not.toHaveBeenCalled();
+});
+
+test("server MCP simulation sends Email with Builder-held credentials", async () => {
+  vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
+    ...draftBuild,
+    resources: [
+      {
+        id: "webhook",
+        name: "Email",
+        control: "email",
+        method: "post",
+        url: '""',
+        headers: [],
+      },
+    ],
+    projectSettings: { meta: { contactEmail: "testing@webstudio.is" } },
+  } as never);
+  const send = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const outgoing =
+      input instanceof Request ? input : new Request(input, init);
+    expect(outgoing.headers.get("authorization")).toBe(
+      "Bearer server-only-test-token"
+    );
+    const body = (await outgoing.json()) as EmailServiceEnvelope;
+    expect(body.to).toEqual([{ address: "testing@webstudio.is" }]);
+    return Response.json({ result: { data: { id: "sent" } } });
+  });
+  vi.stubGlobal("fetch", send);
+  const result = await simulateFormSubmission({
+    context: { authorization: { type: "token" } } as never,
+    projectId,
+    formId: "form",
+    path: "/contact",
+    values: [{ name: "email", value: "ada@example.com" }],
+    arrayNames: [],
+  });
+  expect(result.success).toBe(true);
+  expect(send).toHaveBeenCalledOnce();
 });
 
 test("server MCP simulation and Builder Preview use the same saved Form setup and SDK outcome", async () => {

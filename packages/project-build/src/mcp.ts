@@ -302,7 +302,7 @@ type SubmitPreviewForm = (
 
 export type ProjectSessionSimulateFormInput = {
   path: string;
-  siteOrigin: string;
+  siteOrigin?: string;
   formId: string;
   values: readonly { name: string; value: string }[];
   arrayNames?: readonly string[];
@@ -4159,12 +4159,16 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
 const simulateFormTool = createProjectSessionMcpTool({
   name: "forms.simulate-submission",
   description:
-    "Submit synthetic string fields for a saved Form through the shared server Form engine. This can trigger configured HTTP Resources. Email actions are unavailable in the local CLI adapter.",
+    "Submit synthetic string fields for a saved Form through the trusted Builder server Form engine. This can trigger configured HTTP and Email Resources, so verify recipients before calling.",
   inputSchema: {
     type: "object",
     properties: {
       path: { type: "string" },
-      siteOrigin: { type: "string" },
+      siteOrigin: {
+        type: "string",
+        description:
+          "Optional check against the project's publisher origin; the Builder server determines the actual origin.",
+      },
       formId: { type: "string" },
       arrayNames: { type: "array", items: { type: "string" } },
       values: {
@@ -4177,7 +4181,7 @@ const simulateFormTool = createProjectSessionMcpTool({
         },
       },
     },
-    required: ["path", "siteOrigin", "formId", "values"],
+    required: ["path", "formId", "values"],
     additionalProperties: false,
   },
   outputSchema: getMcpOutputSchema({
@@ -9394,23 +9398,25 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
         const parsed = z
           .object({
             path: z.string().startsWith("/").max(2048),
-            siteOrigin: z.string().url().max(2048),
+            siteOrigin: z.string().url().max(2048).optional(),
             formId: z.string().min(1),
             values: z.array(values).max(100),
             arrayNames: z.array(z.string().min(1)).max(100).optional(),
           })
           .strict()
           .parse(input);
-        const origin = new URL(parsed.siteOrigin);
-        if (
-          origin.protocol !== "https:" ||
-          origin.username !== "" ||
-          origin.password !== "" ||
-          origin.pathname !== "/" ||
-          origin.search !== "" ||
-          origin.hash !== ""
-        ) {
-          throw new Error("siteOrigin must be a bare HTTPS origin.");
+        if (parsed.siteOrigin !== undefined) {
+          const origin = new URL(parsed.siteOrigin);
+          if (
+            origin.protocol !== "https:" ||
+            origin.username !== "" ||
+            origin.password !== "" ||
+            origin.pathname !== "/" ||
+            origin.search !== "" ||
+            origin.hash !== ""
+          ) {
+            throw new Error("siteOrigin must be a bare HTTPS origin.");
+          }
         }
         return toMetaResult(await simulateForm(parsed));
       }
