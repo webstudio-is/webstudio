@@ -95,7 +95,13 @@ export const SectionEmails = () => {
         </InputErrorsTooltip>
       </Grid>
       <Grid gap={1} css={sectionSpacing}>
-        <Label htmlFor="project-emailSender">Reply to</Label>
+        <Flex gap={1} align="center">
+          <Label htmlFor="project-emailSender">Reply to</Label>
+          <InfoTooltip
+            label="Reply to"
+            content="This is the default Reply to address for email resources. Its display name is used in visitor confirmation subjects and messages when the resource has no Reply to value. If no display name is set, “Site Owner” is used."
+          />
+        </Flex>
         <InputErrorsTooltip errors={replyToError ? [replyToError] : undefined}>
           <TextArea
             id="project-emailSender"
