@@ -40,6 +40,7 @@ import {
 import { type ControlProps } from "../shared";
 import { FieldLabel } from "../property-label";
 import { showVariable } from "../variable-navigation";
+import { UrlControl } from "./url";
 
 const ActionItem = ({
   id,
@@ -117,7 +118,10 @@ export const FormActionControl = ({
   instanceId,
   prop,
   onChange,
-}: ControlProps<"form-action">) => {
+  successRedirect,
+}: ControlProps<"form-action"> & {
+  successRedirect?: ControlProps<"url">;
+}) => {
   const [showEmptyResourceTooltip, setShowEmptyResourceTooltip] =
     useState(false);
   const instances = useStore($instances);
@@ -292,6 +296,9 @@ export const FormActionControl = ({
             </InteractiveListArrowFocus>
           )}
           {error && <Text>{error}</Text>}
+          {action.length > 0 && successRedirect && (
+            <UrlControl {...successRedirect} />
+          )}
           {!invalidSavedValue && action.length === 0 && (
             <Flex align="center" justify="center" gap="1">
               <Text>Navigation mode</Text>

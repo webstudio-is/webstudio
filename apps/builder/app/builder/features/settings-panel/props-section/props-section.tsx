@@ -51,6 +51,7 @@ import {
   getInstanceKey,
 } from "~/shared/nano-states";
 import { renderControl } from "../controls/combined";
+import { FormActionControl } from "../controls/form-action";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { AnimationSection } from "./animation/animation-section";
 import { $matchingBreakpoints } from "../../style-panel/shared/model";
@@ -213,6 +214,38 @@ const renderProperty = (
       : (propValuesByInstanceSelector.get(
           getInstanceKey(item.instanceSelector)
         ) ?? propValues);
+
+  if (component === "Form" && meta.control === "form-action") {
+    const redirect = logic.initialProps.find(
+      (item) => item.propName === "successRedirect"
+    );
+    return (
+      <FormActionControl
+        key={propName}
+        instanceId={targetInstanceId}
+        meta={meta}
+        prop={prop}
+        propName={propName}
+        computedValue={targetPropValues.get(propName) ?? meta.defaultValue}
+        onChange={(value) => logic.handleChange({ prop, propName }, value)}
+        successRedirect={
+          redirect?.meta.control === "url"
+            ? {
+                instanceId: targetInstanceId,
+                meta: redirect.meta,
+                prop: redirect.prop,
+                propName: redirect.propName,
+                computedValue:
+                  targetPropValues.get(redirect.propName) ??
+                  redirect.meta.defaultValue,
+                onChange: (value) =>
+                  logic.handleChangeByPropName(redirect.propName, value),
+              }
+            : undefined
+        }
+      />
+    );
+  }
 
   return renderControl({
     key: propName,
@@ -444,7 +477,13 @@ export const PropsSection = (props: PropsSectionProps) => {
               />
             )}
             {addedProps.map((item) => renderProperty(props, item))}
-            {initialProps.map((item) => renderProperty(props, item))}
+            {initialProps
+              .filter(
+                (item) =>
+                  props.component !== "Form" ||
+                  item.propName !== "successRedirect"
+              )
+              .map((item) => renderProperty(props, item))}
           </Flex>
         </CollapsibleSectionWithAddButton>
       )}
