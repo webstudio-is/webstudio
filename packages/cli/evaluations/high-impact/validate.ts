@@ -864,10 +864,7 @@ const validateManagedFormAuthoring = (
     selectedActions.length === 2 &&
     scopedResources.every(
       (resource, index) =>
-        orderedActions[index]?.dataSourceId === resource.dataSourceId &&
-        orderedActions[index] !== undefined &&
-        "enabled" in orderedActions[index] &&
-        orderedActions[index].enabled === true
+        orderedActions[index]?.dataSourceId === resource.dataSourceId
     );
   const managedFormStructureComplete =
     formInstances.length === 1 &&
@@ -2212,8 +2209,6 @@ const validateManagedFormRuntime = (
         (action) =>
           typeof action === "object" &&
           action !== null &&
-          "enabled" in action &&
-          action.enabled === true &&
           "dataSourceId" in action &&
           typeof action.dataSourceId === "string"
       )

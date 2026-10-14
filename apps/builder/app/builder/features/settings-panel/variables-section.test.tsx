@@ -629,17 +629,6 @@ test("clicking an Action opens its Resource editor and highlights its Variables 
     async () =>
       await userEvent.click(
         container.querySelector<HTMLButtonElement>(
-          '[aria-label="Disable action Request"]'
-        )!
-      )
-  );
-  expect($variableToFocus.get()).toBeUndefined();
-  expect($variableToOpen.get()).toBeUndefined();
-  expect(document.querySelector('[role="dialog"]')).toBeNull();
-  await act(
-    async () =>
-      await userEvent.click(
-        container.querySelector<HTMLButtonElement>(
           '[aria-label="Remove action Request"]'
         )!
       )

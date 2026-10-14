@@ -3700,7 +3700,7 @@ sitemap.map((page) => page.path);`
         ["missing", [{ dataSourceId: "missing", enabled: true }]],
         ["malformed", { destinations: "destination" }],
         ["native", { mode: "native", destinations: ["destination"] }],
-        ["valid", [{ dataSourceId: "destination", enabled: true }]],
+        ["valid", [{ dataSourceId: "destination", enabled: false }]],
       ] as const;
       const siteData = createSiteData({
         instances: [
@@ -3810,7 +3810,7 @@ sitemap.map((page) => page.path);`
 
       for (const [id, error] of [
         ["unknown", "Form submission settings not found"],
-        ["empty", "Enable at least one action"],
+        ["empty", "Select at least one Resource action"],
         ["too-many", "Select no more than 10 Resource actions"],
         ["duplicate", "Select each Resource only once"],
         ["missing", "Resource destination not found"],
@@ -4015,7 +4015,7 @@ sitemap.map((page) => page.path);`
         expect(result.status).toBe(400);
         expect(result.contentType).toContain("application/json");
         expect(result.body).toEqual(
-          getManagedFormFailure("Enable at least one action")
+          getManagedFormFailure("Select at least one Resource action")
         );
       }
     },

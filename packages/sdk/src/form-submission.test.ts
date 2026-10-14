@@ -1,11 +1,11 @@
 import { expect, test } from "vitest";
 import {
-  getEnabledFormActions,
+  getFormActions,
   isFormSubmission,
   validateFormSubmission,
 } from "./form-submission";
 
-test("enabled Actions preserve configured order", () => {
+test("all Actions preserve configured order, including legacy disabled Actions", () => {
   const actions = [
     { dataSourceId: "third", enabled: true },
     { dataSourceId: "second", enabled: false },
@@ -13,13 +13,14 @@ test("enabled Actions preserve configured order", () => {
   ];
   expect(isFormSubmission(actions)).toBe(true);
   expect(validateFormSubmission(actions)).toBeUndefined();
-  expect(getEnabledFormActions(actions)).toEqual(["third", "first"]);
+  expect(getFormActions(actions)).toEqual(["third", "second", "first"]);
 });
 
-test("all-disabled, duplicate and over-limit Actions are rejected", () => {
+test("empty, duplicate and over-limit Actions are rejected", () => {
   expect(
     validateFormSubmission([{ dataSourceId: "first", enabled: false }])
-  ).toBe("Enable at least one action");
+  ).toBeUndefined();
+  expect(validateFormSubmission([])).toBe("Select at least one Resource action");
   expect(
     validateFormSubmission([
       { dataSourceId: "first", enabled: true },

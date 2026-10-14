@@ -553,7 +553,7 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
   });
 });
 
-test("a disabled Action stays visible and can be enabled or removed", async () => {
+test("a legacy disabled Action stays visible and can be removed", async () => {
   $instances.set(
     new Map([
       [
@@ -607,17 +607,6 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
     )
   );
   await act(async () =>
-    container
-      .querySelector<HTMLButtonElement>(
-        '[aria-label="Disable action Send request"]'
-      )
-      ?.click()
-  );
-  expect(onChange).toHaveBeenLastCalledWith({
-    type: "json",
-    value: [{ dataSourceId: "send", enabled: false }],
-  });
-  await act(async () =>
     root?.render(
       <TooltipProvider>
         <FormActionControl
@@ -642,7 +631,7 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
   expect(row?.textContent).toContain("Send request");
   expect(row?.querySelector("label")).toBeNull();
   expect(row?.getClientRects().length).toBeGreaterThan(0);
-  expect(getComputedStyle(row!).opacity).toBe("0.2");
+  expect(getComputedStyle(row!).opacity).toBe("1");
   expect(row?.hasAttribute("disabled")).toBe(false);
   expect(row?.parentElement?.getBoundingClientRect().left).toBeLessThan(
     container.getBoundingClientRect().left
@@ -653,15 +642,6 @@ test("a disabled Action stays visible and can be enabled or removed", async () =
   await act(async () => addButton.focus());
   await act(async () => userEvent.tab());
   expect(document.activeElement).toBe(row);
-  await act(async () => userEvent.keyboard("{ArrowRight}"));
-  expect(document.activeElement?.getAttribute("aria-label")).toBe(
-    "Enable action Send request"
-  );
-  await act(async () => userEvent.keyboard("{Enter}"));
-  expect(onChange).toHaveBeenLastCalledWith({
-    type: "json",
-    value: [{ dataSourceId: "send", enabled: true }],
-  });
   await act(async () => userEvent.keyboard("{ArrowRight}"));
   expect(document.activeElement?.getAttribute("aria-label")).toBe(
     "Remove action Send request"
@@ -691,7 +671,7 @@ test.each([
   {
     actions: [{ dataSourceId: "first", enabled: false }],
     mode: undefined,
-    warning: "Enable at least one action",
+    warning: undefined,
   },
   {
     actions: [
@@ -702,7 +682,7 @@ test.each([
     warning: undefined,
   },
 ])(
-  "an empty Action list selects Navigation mode; a non-empty disabled list does not",
+  "an empty Action list selects Navigation mode; a non-empty legacy list does not",
   async ({ actions, mode, warning }) => {
     $instances.set(
       new Map([

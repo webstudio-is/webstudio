@@ -848,12 +848,11 @@ discovery instead of assuming the display label is its component id.
 The new Form has two modes derived from its Action array:
 
 - One or more connected Resources: the rendered action is
-  `?__webstudio__=resources` and submission runs the enabled Resource actions.
+  `?__webstudio__=resources` and submission runs the Resource actions.
 - No connected Resources (`action: []`): the rendered action is
   `?__webstudio__=navigate` and submission updates URL query parameters through
   client-side navigation. Use this for search and filters with page Resources
-  bound to `system.search`. Removing the last Action switches to Navigation mode;
-  disabling an Action does not remove it.
+  bound to `system.search`. Removing the last Action switches to Navigation mode.
 - For ordinary browser submission, insert an `Element` with `tag: "form"`.
   It has no managed action marker and retains native browser behavior.
 
@@ -875,7 +874,7 @@ Commands:
 
 Notes:
 
-- Use `update-props` with a JSON Action array to add, order, enable, disable, or remove destinations. The Action entries use `{ "dataSourceId": "...", "enabled": true }` and support up to ten Resources, matching the Builder control.
+- Use `update-props` with a JSON Action array to add, order, or remove destinations. The Action entries use `{ "dataSourceId": "...", "enabled": true }` and support up to ten Resources, matching the Builder control. The `enabled` field remains required for saved configuration compatibility, but its value no longer affects execution.
 - Create each destination Resource in the Form's scope so it can use `formData` and `browserInfo`. Set `exposeAsDataSource:true` to receive the data-source id used by the Action array. When a Resource uses Form-only parameters, it is kept out of page-load requests and runs with the Form submission.
 - `update-resource` accepts the same Email settings as the Builder: project, custom, or visitor recipients; sender; subject; body; and submitted-file attachments. Use expressions in string fields for dynamic values.
 - `update-project-settings` edits the project-wide Email recipients and Reply to. `update-props` also sets Form fields and Success redirect, while `bind-props` supplies dynamic expressions. `insert-component` uses the registered Form template, including its default contact fields and Email Actions. Set subject and body on each Email Resource.

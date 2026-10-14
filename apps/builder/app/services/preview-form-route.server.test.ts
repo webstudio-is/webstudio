@@ -322,6 +322,23 @@ test("server MCP simulation and Builder Preview use the same saved Form setup an
   });
 });
 
+test("Builder Preview executes a legacy disabled Action", async () => {
+  vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
+    ...draftBuild,
+    props: [
+      {
+        ...draftBuild.props[0],
+        value: [{ dataSourceId: "destination", enabled: false }],
+      },
+    ],
+  } as never);
+  const response = await action({ request: request() } as never);
+  expect((await response.json()).success).toBe(true);
+  expect(
+    vi.mocked(createNodeProtectedResourceFetch).mock.results[0].value
+  ).toHaveBeenCalledOnce();
+});
+
 test.each([
   [[], []],
   [["news"], ["news"]],

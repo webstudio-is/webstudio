@@ -1,12 +1,11 @@
 export const maxFormActions = 10;
-export const noEnabledFormActionMessage = "Enable at least one action";
 export const resourceFormActionUrl = "?__webstudio__=resources";
 export const navigationFormActionUrl = "?__webstudio__=navigate";
 
 export type FormAction = {
   /** Resource data source ID, stable across renames. */
   dataSourceId: string;
-  /** Disabled Actions retain their configured position but do not execute. */
+  /** Kept for compatibility with saved Form settings; no longer controls execution. */
   enabled: boolean;
 };
 
@@ -24,8 +23,8 @@ export const isFormSubmission = (value: unknown): value is FormSubmission =>
   );
 
 export const validateFormSubmission = (actions: FormSubmission) => {
-  if (getEnabledFormActions(actions).length === 0) {
-    return noEnabledFormActionMessage;
+  if (actions.length === 0) {
+    return "Select at least one Resource action";
   }
   if (actions.length > maxFormActions) {
     return `Select no more than ${maxFormActions} Resource actions`;
@@ -38,7 +37,5 @@ export const validateFormSubmission = (actions: FormSubmission) => {
   }
 };
 
-export const getEnabledFormActions = (actions: FormSubmission) =>
-  actions
-    .filter((action) => action.enabled)
-    .map((action) => action.dataSourceId);
+export const getFormActions = (actions: FormSubmission) =>
+  actions.map((action) => action.dataSourceId);

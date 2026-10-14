@@ -204,7 +204,10 @@ test("managed Form reveals a persistent configuration error", async () => {
     const [errors, setErrors] = useState<Array<{ message: string }>>([]);
     return (
       <Form
-        action={[{ dataSourceId: "disabled-resource", enabled: false }]}
+        action={[
+          { dataSourceId: "resource", enabled: true },
+          { dataSourceId: "resource", enabled: true },
+        ]}
         state={state}
         onStateChange={setState}
         onResultChange={(result) => setErrors(result.errors)}
@@ -235,7 +238,9 @@ test("managed Form reveals a persistent configuration error", async () => {
       await act(async () => view.container.querySelector("button")?.click());
       await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(attempt));
       const currentAlert = view.container.querySelector('[role="alert"]');
-      expect(currentAlert?.textContent).toContain("Enable at least one action");
+      expect(currentAlert?.textContent).toContain(
+        "Select each Resource only once"
+      );
       if (alert !== null) {
         expect(currentAlert).toBe(alert);
       }

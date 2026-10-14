@@ -53,7 +53,7 @@ test("the shared handler executes a Form graph from the supplied runtime configu
       search: {},
     },
     configuration: () => ({
-      action: [{ dataSourceId: "source", enabled: true }],
+      action: [{ dataSourceId: "source", enabled: false }],
       resourceIds: ["http"],
     }),
     getGraph,

@@ -11,19 +11,13 @@ import {
   Flex,
   Grid,
   SmallIconButton,
-  SmallToggleButton,
   Text,
   Tooltip,
   InfoTooltip,
   useSortable,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  EyeClosedIcon,
-  EyeOpenIcon,
-  MinusIcon,
-  PlusIcon,
-} from "@webstudio-is/icons";
+import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import {
   isFormSubmission,
   maxFormActions,
@@ -46,17 +40,13 @@ const ActionItem = ({
   id,
   index,
   variable,
-  isEnabled,
   active,
-  onToggle,
   onRemove,
 }: {
   id: string;
   index: number;
   variable?: DataSource;
-  isEnabled: boolean;
   active: boolean;
-  onToggle: () => void;
   onRemove: () => void;
 }) => {
   const isResource = variable?.type === "resource";
@@ -68,7 +58,6 @@ const ActionItem = ({
       aria-label={`Action ${name}`}
       draggable
       active={active}
-      css={{ opacity: isEnabled ? undefined : 0.2 }}
       onClick={(event) => {
         const target = event.target;
         if (
@@ -86,29 +75,16 @@ const ActionItem = ({
         </Text>
       }
       buttons={
-        <>
-          <Tooltip content={isEnabled ? "Disable action" : "Enable action"}>
-            <SmallToggleButton
-              tabIndex={-1}
-              variant="normal"
-              pressed={!isEnabled}
-              aria-label={`${isEnabled ? "Disable" : "Enable"} action ${name}`}
-              icon={isEnabled ? <EyeOpenIcon /> : <EyeClosedIcon />}
-              onClick={(event) => event.stopPropagation()}
-              onPressedChange={onToggle}
-            />
-          </Tooltip>
-          <SmallIconButton
-            tabIndex={-1}
-            variant="destructive"
-            aria-label={`Remove action ${name}`}
-            icon={<MinusIcon />}
-            onClick={(event) => {
-              event.stopPropagation();
-              onRemove();
-            }}
-          />
-        </>
+        <SmallIconButton
+          tabIndex={-1}
+          variant="destructive"
+          aria-label={`Remove action ${name}`}
+          icon={<MinusIcon />}
+          onClick={(event) => {
+            event.stopPropagation();
+            onRemove();
+          }}
+        />
       }
     />
   );
@@ -269,23 +245,13 @@ export const FormActionControl = ({
                   marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
                 }}
               >
-                {action.map(({ dataSourceId: id, enabled }, index) => (
+                {action.map(({ dataSourceId: id }, index) => (
                   <ActionItem
                     key={id}
                     id={id}
                     index={index}
                     variable={dataSources.get(id)}
-                    isEnabled={enabled}
                     active={dragItemId === id}
-                    onToggle={() =>
-                      update(
-                        action.map((item) =>
-                          item.dataSourceId === id
-                            ? { ...item, enabled: !item.enabled }
-                            : item
-                        )
-                      )
-                    }
                     onRemove={() =>
                       update(action.filter((item) => item.dataSourceId !== id))
                     }
