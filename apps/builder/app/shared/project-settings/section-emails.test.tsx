@@ -124,7 +124,7 @@ test("keyboard users can open the recipients helper", async () => {
 
 test("Reply to helper explains the visitor confirmation display name", async () => {
   const replyToHelp =
-    "This is the default Reply to address for email resources. Its display name is used in visitor confirmation subjects and messages when the resource has no Reply to value. If no display name is set, “Site Owner” is used.";
+    "This is the default Reply to address for email resources. Its display name is used in generated default visitor confirmation subjects and messages when the resource has no Reply to value. Custom subjects and messages stay unchanged. If no display name is set, “Site Owner” is used.";
   act(() =>
     root.render(
       <TooltipProvider delayDuration={0}>
