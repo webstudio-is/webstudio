@@ -874,7 +874,7 @@ Commands:
 
 Notes:
 
-- Use `update-props` with a JSON Action array to add, order, or remove destinations. The Action entries use `{ "dataSourceId": "...", "enabled": true }` and support up to ten Resources, matching the Builder control. The `enabled` field remains required for saved configuration compatibility, but its value no longer affects execution.
+- Use `update-props` with a JSON Action array to add, order, or remove destinations. The Action entries use `{ "dataSourceId": "...", "enabled": true }` and support up to ten Resources, matching the Builder control. The `enabled` field is required and must be `true` for an Action to run. Saved Actions with `enabled: false` remain inactive until removed and added again.
 - Create each destination Resource in the Form's scope so it can use `formData` and `browserInfo`. Set `exposeAsDataSource:true` to receive the data-source id used by the Action array. When a Resource uses Form-only parameters, it is kept out of page-load requests and runs with the Form submission.
 - `update-resource` accepts the same Email settings as the Builder: project, custom, or visitor recipients; sender; subject; body; and submitted-file attachments. Use expressions in string fields for dynamic values.
 - `update-project-settings` edits the project-wide Email recipients and Reply to. `update-props` also sets Form fields and Success redirect, while `bind-props` supplies dynamic expressions. `insert-component` uses the registered Form template, including its default contact fields and Email Actions. Set subject and body on each Email Resource.
