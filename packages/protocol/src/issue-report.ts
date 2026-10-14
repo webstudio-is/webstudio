@@ -146,6 +146,7 @@ const issueReportRuntime = z
     architecture: z.string().trim().min(1).max(100),
     executionMode: z.enum(["mcp"]),
     apiContractVersion: z.string().trim().min(1).max(100),
+    serverApiContractVersion: z.string().trim().min(1).max(100).optional(),
     bundleVersion: z.string().trim().min(1).max(100).optional(),
     projectId: issueReportId.optional(),
     recentFailure: issueReportRecentFailureSchema.optional(),

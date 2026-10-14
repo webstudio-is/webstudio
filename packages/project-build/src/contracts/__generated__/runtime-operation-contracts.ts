@@ -41692,6 +41692,7 @@ export const runtimeOperationContractData = [
                   },
                 },
                 required: ["name", "method", "url", "headers"],
+                additionalProperties: false,
               },
               dataSourceName: {
                 type: "string",
@@ -75576,6 +75577,7 @@ export const runtimeOperationContractData = [
             },
           },
           required: ["name", "method", "url", "headers"],
+          additionalProperties: false,
         },
         scopeInstanceId: {
           description: 'Instance ID or ":root" for Global Root.',
@@ -75832,6 +75834,7 @@ export const runtimeOperationContractData = [
                 'One dynamic Webstudio JavaScript expression, or { type: "literal", value: string } for fixed text. Read webstudio://project/expressions for syntax, scope, resource-result shape, and supported methods.',
             },
           },
+          additionalProperties: false,
           required: [],
         },
         dataSourceName: {
@@ -76191,6 +76194,7 @@ export const runtimeOperationContractData = [
             },
           },
           required: ["name", "method", "url", "headers"],
+          additionalProperties: false,
         },
         dataSourceId: {
           type: "string",
@@ -76394,6 +76398,7 @@ export const runtimeOperationContractData = [
             },
           },
           required: ["name", "method", "url", "headers"],
+          additionalProperties: false,
         },
         scopeInstanceId: {
           type: "string",

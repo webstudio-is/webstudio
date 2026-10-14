@@ -1744,17 +1744,20 @@ const resourceExpressionEntryInput = z.object({
   value: resourceExpressionInput,
 });
 
-const resourceFieldsInputBase = resource.omit({ id: true }).extend({
-  control: z.enum(["system", "graphql"]).optional(),
-  url: z.preprocess(
-    (value) =>
-      typeof value === "string" ? normalizeResourceUrlInput(value) : value,
-    z.string()
-  ),
-  searchParams: z.array(resourceExpressionEntryInput).optional(),
-  headers: z.array(resourceExpressionEntryInput),
-  body: resourceExpressionInput.optional(),
-});
+const resourceFieldsInputBase = resource
+  .omit({ id: true })
+  .extend({
+    control: z.enum(["system", "graphql"]).optional(),
+    url: z.preprocess(
+      (value) =>
+        typeof value === "string" ? normalizeResourceUrlInput(value) : value,
+      z.string()
+    ),
+    searchParams: z.array(resourceExpressionEntryInput).optional(),
+    headers: z.array(resourceExpressionEntryInput),
+    body: resourceExpressionInput.optional(),
+  })
+  .strict();
 
 export const resourceFieldsInput = resourceFieldsInputBase.superRefine(
   (fields, context) => {
