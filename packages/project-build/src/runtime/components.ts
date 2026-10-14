@@ -270,6 +270,23 @@ export const getRequiredComponentInsertData = (
   };
 };
 
+const isBlockTemplateFragment = ({
+  data,
+  fragment,
+}: {
+  data: Omit<WebstudioData, "pages">;
+  fragment: WebstudioFragment;
+}) =>
+  Array.from(data.instances.values()).some(
+    (instance) =>
+      instance.component === blockTemplateComponent &&
+      instance.children.some(
+        (child) =>
+          child.type === "id" &&
+          equal(extractWebstudioFragment(data, child.value), fragment)
+      )
+  );
+
 const cloneFragmentData = (
   state: ReturnType<typeof getRequiredComponentInsertState>
 ): Omit<WebstudioData, "pages"> => {
@@ -777,18 +794,10 @@ const createInsertFragmentMutation = <
   const nextData = cloneFragmentData(mutationState);
   const copiesContentBlockTemplate =
     contentMode &&
-    Array.from(mutationState.instances.values()).some(
-      (instance) =>
-        instance.component === blockTemplateComponent &&
-        instance.children.some(
-          (child) =>
-            child.type === "id" &&
-            equal(
-              extractWebstudioFragment(mutationState, child.value),
-              fragment
-            )
-        )
-    );
+    isBlockTemplateFragment({
+      data: mutationState,
+      fragment,
+    });
   const normalizedSlotDropTarget = getSlotFragmentDropTargetMutable(
     nextData.instances,
     { parentSelector: [originalParent.id], position: "end" },
