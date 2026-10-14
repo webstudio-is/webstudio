@@ -1101,6 +1101,31 @@ describe("rich text tree", () => {
     ).toBeTruthy();
   });
 
+  test("does not edit mixed text and image as rich text", () => {
+    expect(
+      isRichTextTree({
+        ...renderData(
+          <Paragraph ws:id="instanceId">
+            Heading <Image ws:id="imageId" />
+          </Paragraph>
+        ),
+        metas: defaultMetas,
+        instanceId: "instanceId",
+      })
+    ).toBeFalsy();
+    expect(
+      isRichTextTree({
+        ...renderData(
+          <ws.element ws:tag="h2" ws:id="instanceId">
+            Heading <ws.element ws:tag="img" ws:id="imageId" />
+          </ws.element>
+        ),
+        metas: defaultMetas,
+        instanceId: "instanceId",
+      })
+    ).toBeFalsy();
+  });
+
   test("rich text content tags can be edited", () => {
     expect(
       isRichTextTree({

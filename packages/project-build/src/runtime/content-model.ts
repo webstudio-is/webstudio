@@ -738,7 +738,18 @@ export const isRichTextTree = ({
   }
   for (const child of instance.children) {
     if (child.type === "text" || child.type === "expression") {
-      return true;
+      const contentTags = findContentTags({
+        instances,
+        props,
+        metas,
+        instance,
+        htmlTagsByInstanceId,
+      });
+      const contentComponents = findContentComponents({ instances, instance });
+      return (
+        contentTags.has("img") === false &&
+        contentComponents.has("Image") === false
+      );
     }
   }
   const contentTags = findContentTags({
