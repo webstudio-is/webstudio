@@ -18,7 +18,7 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import {
   ActionValue,
-  FormSubmissionValue,
+  FormActionsValue,
   css,
   expression,
   Parameter,
@@ -255,7 +255,7 @@ export const coreTemplates = {
     description: "Collect information and submit it to Resource actions.",
     template: (
       <Form
-        action={new FormSubmissionValue([ownerEmail, visitorEmail])}
+        action={new FormActionsValue([ownerEmail, visitorEmail])}
         formData={formData}
         browserInfo={browserInfo}
         onStateChange={

@@ -153,7 +153,7 @@ export class ResourceValue {
   }
 }
 
-export class FormSubmissionValue {
+export class FormActionsValue {
   resources: ResourceValue[];
   constructor(resources: ResourceValue[]) {
     this.resources = resources;
@@ -766,7 +766,7 @@ export const renderTemplate = (
         props.push({ ...base, type: "resource", value: resourceId });
         continue;
       }
-      if (value instanceof FormSubmissionValue) {
+      if (value instanceof FormActionsValue) {
         props.push({
           ...base,
           type: "json",

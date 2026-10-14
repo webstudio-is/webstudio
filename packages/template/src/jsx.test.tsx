@@ -5,7 +5,7 @@ import type { WsComponentMeta } from "@webstudio-is/sdk";
 import {
   ActionValue,
   AssetValue,
-  FormSubmissionValue,
+  FormActionsValue,
   expression,
   PageValue,
   Parameter,
@@ -1191,7 +1191,7 @@ test("render Form actions with local Email Resources", () => {
     method: "post",
   });
   const { props, dataSources, resources } = renderTemplate(
-    <Body ws:id="form" action={new FormSubmissionValue([project, visitor])} />
+    <Body ws:id="form" action={new FormActionsValue([project, visitor])} />
   );
   expect(props.find(({ name }) => name === "action")).toMatchObject({
     type: "json",
