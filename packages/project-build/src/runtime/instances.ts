@@ -204,12 +204,6 @@ export const reparentInstanceInput = z.object({
   }),
 });
 
-export const cloneInstanceInput = z.object({
-  sourceInstanceId: z.string(),
-  targetParentInstanceId: z.string().optional(),
-  insertIndex: insertIndexInput.optional(),
-});
-
 export const deleteInstancesInput = z.object({
   instanceIds: z.array(z.string()).min(1),
   templateNameConfirmation: blockTemplateNameConfirmationInput.optional(),
@@ -3575,64 +3569,6 @@ export const updateTextTree = (
       idMap: Object.fromEntries(remapped.idMap),
     },
     invalidatesNamespaces: treeInvalidates,
-  });
-};
-
-export const cloneInstance = (
-  state: TreeMutationState,
-  input: z.infer<typeof cloneInstanceInput>,
-  context: BuilderRuntimeContext
-) => {
-  const mutationState = getRequiredTreeMutationState(state);
-  const source = mutationState.instances.get(input.sourceInstanceId);
-  if (source === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
-  }
-  const targetParent =
-    input.targetParentInstanceId === undefined
-      ? findParentInstanceReference(mutationState.instances, source.id)
-          ?.instance
-      : mutationState.instances.get(input.targetParentInstanceId);
-  if (targetParent === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
-  }
-  const insertIndex = input.insertIndex ?? targetParent.children.length;
-  if (insertIndex > targetParent.children.length) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Insert index is outside parent children"
-    );
-  }
-  const clone = createInstanceClonePayload({
-    instances: mutationState.instances,
-    sourceInstanceId: source.id,
-    targetParent,
-    insertIndex,
-    props: mutationState.props.values(),
-    styleSourceSelections: mutationState.styleSourceSelections.values(),
-    styleSources: mutationState.styleSources.values(),
-    styles: mutationState.styles,
-    createId: context.createId,
-  });
-  if (clone === undefined) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Source instance could not be cloned"
-    );
-  }
-  return createRuntimeMutation({
-    payload: clone.payload,
-    result: {
-      instanceId: clone.clonedRootId,
-      instanceIds: clone.clonedInstanceIds,
-    },
-    invalidatesNamespaces: [
-      "instances",
-      "props",
-      "styleSourceSelections",
-      "styleSources",
-      "styles",
-    ],
   });
 };
 

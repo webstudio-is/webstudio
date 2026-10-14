@@ -1,4 +1,9 @@
-import type { Instance, WebstudioData } from "@webstudio-is/sdk";
+import {
+  assignUniqueBlockTemplateNamesMutable,
+  ROOT_INSTANCE_ID,
+  type Instance,
+  type WebstudioData,
+} from "@webstudio-is/sdk";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderRuntimeContext } from "./context";
 import { findAvailableVariables, produceWebstudioDataMutation } from "./data";
@@ -7,7 +12,12 @@ import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
 } from "./fragment";
-import { findChildReferenceIndex } from "./instances";
+import {
+  findChildReferenceIndex,
+  findParentInstanceReference,
+  insertIndexInput,
+} from "./instances";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { isAutoGridPlacement, resetGridChildPlacement } from "./style-utils";
 import { createRuntimeMutation } from "./mutation";
 import { getSlotFragmentDropTargetMutable } from "./slot";
@@ -16,6 +26,12 @@ import { z } from "zod";
 export const duplicateInstanceAfterItselfInput = z.object({
   sourceInstanceId: z.string(),
   parentInstanceId: z.string(),
+});
+
+export const cloneInstanceInput = z.object({
+  sourceInstanceId: z.string(),
+  targetParentInstanceId: z.string().optional(),
+  insertIndex: insertIndexInput.optional(),
 });
 
 export const instanceDuplicateNamespaces = [
@@ -48,6 +64,96 @@ const getRequiredInstanceDuplicateState = (state: InstanceDuplicateState) => {
   return state as WebstudioData;
 };
 
+const copyInstanceSubtreeMutable = ({
+  data,
+  sourceInstanceId,
+  targetParentInstanceId,
+  projectId,
+  createId,
+}: {
+  data: Omit<WebstudioData, "pages">;
+  sourceInstanceId: Instance["id"];
+  targetParentInstanceId: Instance["id"];
+  projectId: string;
+  createId?: () => string;
+}) =>
+  insertWebstudioFragmentCopy({
+    data,
+    fragment: extractWebstudioFragment(data, sourceInstanceId),
+    availableVariables: findAvailableVariables({
+      ...data,
+      startingInstanceId: targetParentInstanceId,
+    }),
+    projectId,
+    createId,
+  }).newInstanceIds;
+
+export const cloneInstance = (
+  state: InstanceDuplicateState,
+  input: z.infer<typeof cloneInstanceInput>,
+  context: BuilderRuntimeContext
+) => {
+  const before = getRequiredInstanceDuplicateState(state);
+  const source = before.instances.get(input.sourceInstanceId);
+  if (source === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const targetParent =
+    input.targetParentInstanceId === undefined
+      ? findParentInstanceReference(before.instances, source.id)?.instance
+      : before.instances.get(input.targetParentInstanceId);
+  if (targetParent === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const insertIndex = input.insertIndex ?? targetParent.children.length;
+  if (insertIndex > targetParent.children.length) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Insert index is outside parent children"
+    );
+  }
+
+  let clonedRootId: Instance["id"] | undefined;
+  let clonedInstanceIds: Instance["id"][] = [];
+  const { payload } = produceWebstudioDataMutation(before, (draft) => {
+    const newInstanceIds = copyInstanceSubtreeMutable({
+      data: draft,
+      sourceInstanceId: source.id,
+      targetParentInstanceId: targetParent.id,
+      projectId: context.projectId ?? "",
+      createId: context.createId,
+    });
+    clonedRootId = newInstanceIds.get(source.id);
+    if (clonedRootId === undefined) {
+      return;
+    }
+    clonedInstanceIds = [...newInstanceIds.values()].filter(
+      (instanceId) => instanceId !== ROOT_INSTANCE_ID
+    );
+    assignUniqueBlockTemplateNamesMutable({
+      instanceIds: [clonedRootId],
+      parent: targetParent,
+      instances: draft.instances,
+      components: componentMetas.keys(),
+    });
+    draft.instances.get(targetParent.id)?.children.splice(insertIndex, 0, {
+      type: "id",
+      value: clonedRootId,
+    });
+  });
+  if (clonedRootId === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Source instance could not be cloned"
+    );
+  }
+  return createRuntimeMutation({
+    payload,
+    result: { instanceId: clonedRootId, instanceIds: clonedInstanceIds },
+    invalidatesNamespaces: instanceDuplicateNamespaces,
+  });
+};
+
 export const duplicateInstanceAfterItselfMutable = ({
   data,
   sourceInstanceId,
@@ -61,14 +167,10 @@ export const duplicateInstanceAfterItselfMutable = ({
   projectId: string;
   createId?: () => string;
 }) => {
-  const fragment = extractWebstudioFragment(data, sourceInstanceId);
-  const { newInstanceIds } = insertWebstudioFragmentCopy({
+  const newInstanceIds = copyInstanceSubtreeMutable({
     data,
-    fragment,
-    availableVariables: findAvailableVariables({
-      ...data,
-      startingInstanceId: parentInstanceId,
-    }),
+    sourceInstanceId,
+    targetParentInstanceId: parentInstanceId,
     projectId,
     createId,
   });
