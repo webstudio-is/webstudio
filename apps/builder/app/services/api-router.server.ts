@@ -981,7 +981,7 @@ export const apiRouter = router({
                   ...(ctx.apiClient.version === undefined
                     ? {}
                     : { cliVersion: ctx.apiClient.version }),
-                  apiContractVersion: publicApiContractVersion,
+                  serverApiContractVersion: publicApiContractVersion,
                 },
               }),
         });

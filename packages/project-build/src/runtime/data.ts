@@ -1831,17 +1831,20 @@ const resourceExpressionEntryInput = z.object({
   value: resourceExpressionInput,
 });
 
-const resourceFieldsInputBase = resource.omit({ id: true }).extend({
-  control: z.enum(["system", "graphql", "email"]).optional(),
-  url: z.preprocess(
-    (value) =>
-      typeof value === "string" ? normalizeResourceUrlInput(value) : value,
-    z.string()
-  ),
-  searchParams: z.array(resourceExpressionEntryInput).optional(),
-  headers: z.array(resourceExpressionEntryInput),
-  body: resourceExpressionInput.optional(),
-});
+const resourceFieldsInputBase = resource
+  .omit({ id: true })
+  .extend({
+    control: z.enum(["system", "graphql", "email"]).optional(),
+    url: z.preprocess(
+      (value) =>
+        typeof value === "string" ? normalizeResourceUrlInput(value) : value,
+      z.string()
+    ),
+    searchParams: z.array(resourceExpressionEntryInput).optional(),
+    headers: z.array(resourceExpressionEntryInput),
+    body: resourceExpressionInput.optional(),
+  })
+  .strict();
 
 const addEmailResourceIssues = (
   fields: { control?: Resource["control"]; email?: Resource["email"] },

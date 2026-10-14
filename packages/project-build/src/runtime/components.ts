@@ -50,10 +50,12 @@ import {
 } from "./collection";
 import type { BuilderRuntimeContext } from "./context";
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
+import { isContentModeTemplateDefaultPropType } from "./content-mode-permissions";
 import { findAvailableVariables } from "./data";
 import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import {
   detectFragmentTokenConflicts,
+  extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   webstudioFragmentMutationInput,
 } from "./fragment";
@@ -268,6 +270,23 @@ export const getRequiredComponentInsertData = (
     assets: required.assets,
   };
 };
+
+const isBlockTemplateFragment = ({
+  data,
+  fragment,
+}: {
+  data: Omit<WebstudioData, "pages">;
+  fragment: WebstudioFragment;
+}) =>
+  Array.from(data.instances.values()).some(
+    (instance) =>
+      instance.component === blockTemplateComponent &&
+      instance.children.some(
+        (child) =>
+          child.type === "id" &&
+          equal(extractWebstudioFragment(data, child.value), fragment)
+      )
+  );
 
 const cloneFragmentData = (
   state: ReturnType<typeof getRequiredComponentInsertState>
@@ -774,6 +793,12 @@ const createInsertFragmentMutation = <
   }
 
   const nextData = cloneFragmentData(mutationState);
+  const copiesContentBlockTemplate =
+    contentMode &&
+    isBlockTemplateFragment({
+      data: mutationState,
+      fragment,
+    });
   const normalizedSlotDropTarget = getSlotFragmentDropTargetMutable(
     nextData.instances,
     { parentSelector: [originalParent.id], position: "end" },
@@ -830,7 +855,10 @@ const createInsertFragmentMutation = <
       conflictResolution,
       createId: context.createId,
       metas: componentMetas,
-      contentModeCopyableProp: isFragmentContentModeCopyableProp,
+      contentModeCopyableProp: (input) =>
+        isFragmentContentModeCopyableProp(input) ||
+        (copiesContentBlockTemplate &&
+          isContentModeTemplateDefaultPropType(input.prop.type)),
       contentMode,
     });
   for (const instanceId of newInstanceIds.values()) {

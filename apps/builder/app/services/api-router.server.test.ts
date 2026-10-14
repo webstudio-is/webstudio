@@ -29,6 +29,7 @@ import { blockComponent } from "@webstudio-is/sdk";
 import { AssetIndexRevisionError } from "@webstudio-is/content-engine";
 import { DocumentSourceDiagnosticsError } from "@webstudio-is/content-engine/compiler";
 import * as assetUploader from "@webstudio-is/asset-uploader/server";
+import * as issueReportService from "./github-issue-report.server";
 import { apiRouter, __testing__ } from "./api-router.server";
 import * as assetQueryPreview from "./asset-query-preview.server";
 import * as formSimulation from "./simulate-form.server";
@@ -211,6 +212,68 @@ describe("api router build operation adapters", () => {
       })
     ).resolves.toMatchObject({ version: 2, updated: true });
     expect(patchBuild).toHaveBeenCalledTimes(2);
+  });
+  test("keeps the CLI contract and adds the server contract to issue reports", async () => {
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    const publishIssueReport = vi
+      .spyOn(issueReportService, "publishConfiguredIssueReport")
+      .mockResolvedValue({
+        status: "created",
+        issueNumber: 1,
+        issueUrl: "https://example.com/issues/1",
+      });
+    const caller = createCaller({
+      ...createContext(true),
+      apiClient: {
+        type: "cli",
+        version: "1.0.0",
+        contractVersion: "public-api:client",
+      },
+    });
+
+    await caller.reports.issue({
+      projectId: "project-1",
+      trigger: "user-requested",
+      category: "tool-failure",
+      deduplicationKey: "contract-report",
+      title: "fix: Preserve CLI contract metadata",
+      agent: {
+        client: "Codex",
+        model: "test-model",
+        reasoningEffort: "medium",
+      },
+      runtime: {
+        cliVersion: "1.0.0",
+        nodeVersion: process.versions.node,
+        os: process.platform,
+        osVersion: "1",
+        architecture: process.arch,
+        executionMode: "mcp",
+        apiContractVersion: "public-api:client",
+      },
+      report: {
+        userStory: "Report an issue.",
+        summary: "The contracts should be distinguishable.",
+        attemptedWorkflow: ["Submit the report."],
+        expectedBehavior: "Both contract versions are included.",
+        actualResult: "The server contract replaced the CLI contract.",
+        recoveryAttempts: ["Inspect the issue report."],
+        userImpact: "The report is less useful.",
+        technicalContext:
+          "The client and server may be on different contracts.",
+        acceptanceCriteria: ["Both versions are reported separately."],
+      },
+    });
+
+    expect(publishIssueReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtime: expect.objectContaining({
+          apiContractVersion: "public-api:client",
+          serverApiContractVersion: publicApiContractVersion,
+        }),
+      })
+    );
   });
 
   test("submits only configured marketplace products for review", async () => {

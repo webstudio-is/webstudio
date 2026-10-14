@@ -511,6 +511,87 @@ test("persists sanitized issue-report failure diagnostics for the next CLI proce
   });
 });
 
+test("preserves a destructive confirmation failure reason without the token or plan", async () => {
+  const projectRoot = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-confirmation-report-")
+  );
+  tempDirs.push(projectRoot);
+  const filePath = getIssueReportFailureFile(projectRoot, "project-1");
+  const operation = publicApiOperations.find(
+    ({ command }) => command === "delete-resource"
+  );
+  if (operation === undefined) {
+    throw new Error("Expected delete-resource operation");
+  }
+  const core = createProjectSessionMcpCore({
+    operations: [operation],
+    createProjectSession: () => {
+      throw new Error("Unexpected session access");
+    },
+    executeOperation: async () => ({
+      operationId: "resources.delete",
+      projectId: "project-1",
+      buildId: "build-1",
+      version: 1,
+      source: "dry-run",
+      result: { resourceId: "resource-1" },
+      state: { committed: false, freshness: {} },
+      namespaces: { read: [], write: [], invalidated: [], missing: [] },
+      diagnostics: [],
+      transaction: {
+        id: "plan-1",
+        payload: [
+          {
+            namespace: "resources",
+            patches: [{ op: "remove", path: ["resource-1"] }],
+          },
+        ],
+      },
+    }),
+  });
+  const planned = await core.callTool({
+    name: "delete-resource",
+    input: { resourceId: "resource-1", dryRun: true },
+  });
+  const token = planned.structuredContent.meta.confirmation?.token;
+  if (token === undefined) {
+    throw new Error("Expected confirmation token");
+  }
+  const input = {
+    resourceId: "resource-2",
+    confirmDestructive: true,
+    confirmationToken: token,
+  };
+  const rejected = await core.callTool({ name: "delete-resource", input });
+  const firstProcess = createIssueReportFailureTracker();
+  firstProcess.record(
+    "delete-resource",
+    getMcpToolCallError(rejected),
+    100,
+    input
+  );
+  await persistIssueReportFailure(filePath, firstProcess.snapshot());
+
+  const secondProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, secondProcess);
+  expect(secondProcess.get()).toMatchObject({
+    tool: "delete-resource",
+    code: "DESTRUCTIVE_CONFIRMATION_INVALID",
+    entityIds: [{ field: "resourceId", id: "resource-2" }],
+    issues: [
+      {
+        path: ["confirmationToken"],
+        code: "DESTRUCTIVE_CONFIRMATION_MISMATCH",
+        constraint: "unchanged_destructive_plan",
+      },
+    ],
+  });
+  const persisted = await readFile(filePath, "utf8");
+  expect(persisted).not.toContain(token);
+  expect(persisted).not.toContain("resource-1");
+  expect(persisted).not.toContain("plan-1");
+});
+
 const getArraySchemasWithoutItems = (schema: unknown): unknown[] => {
   if (schema === null || typeof schema !== "object") {
     return [];

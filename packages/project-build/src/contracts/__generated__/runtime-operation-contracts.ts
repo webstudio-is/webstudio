@@ -42051,6 +42051,7 @@ export const runtimeOperationContractData = [
                   },
                 },
                 required: ["name", "method", "url", "headers"],
+                additionalProperties: false,
               },
               dataSourceName: {
                 type: "string",
@@ -64965,9 +64966,11 @@ export const runtimeOperationContractData = [
       "props",
       "dataSources",
       "resources",
-      "styles",
       "styleSources",
       "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
     ],
     writeNamespaces: [
       "pages",
@@ -64975,9 +64978,11 @@ export const runtimeOperationContractData = [
       "props",
       "dataSources",
       "resources",
-      "styles",
       "styleSources",
       "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
     ],
     invalidatesNamespaces: [
       "pages",
@@ -64985,11 +64990,14 @@ export const runtimeOperationContractData = [
       "props",
       "dataSources",
       "resources",
-      "styles",
       "styleSources",
       "styleSourceSelections",
+      "styles",
+      "breakpoints",
+      "assets",
     ],
     retryOnConflict: false,
+    requiresAssets: true,
   },
   {
     id: "instances.duplicateAfterItself",
@@ -76174,6 +76182,7 @@ export const runtimeOperationContractData = [
             },
           },
           required: ["name", "method", "url", "headers"],
+          additionalProperties: false,
         },
         scopeInstanceId: {
           description: 'Instance ID or ":root" for Global Root.',
@@ -76476,6 +76485,7 @@ export const runtimeOperationContractData = [
               enum: ["auto", "json", "multipart"],
             },
           },
+          additionalProperties: false,
           required: [],
         },
         dataSourceName: {
@@ -76881,6 +76891,7 @@ export const runtimeOperationContractData = [
             },
           },
           required: ["name", "method", "url", "headers"],
+          additionalProperties: false,
         },
         dataSourceId: {
           type: "string",
@@ -77130,6 +77141,7 @@ export const runtimeOperationContractData = [
             },
           },
           required: ["name", "method", "url", "headers"],
+          additionalProperties: false,
         },
         scopeInstanceId: {
           type: "string",

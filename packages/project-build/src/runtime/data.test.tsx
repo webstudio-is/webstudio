@@ -2565,6 +2565,34 @@ test("delete unused data variables is a noop when all variables are used", () =>
 });
 
 describe("createResourceValue", () => {
+  test("rejects unsupported resource fields instead of silently discarding updates", () => {
+    const unsupported = {
+      unsupportedField: "value",
+    };
+    const update = resourceFieldsUpdateInput.safeParse({
+      name: "Updated",
+      ...unsupported,
+    });
+    expect(update.success).toBe(false);
+    if (update.success === false) {
+      expect(update.error.issues).toContainEqual(
+        expect.objectContaining({
+          code: "unrecognized_keys",
+          keys: ["unsupportedField"],
+        })
+      );
+    }
+    expect(
+      resourceFieldsInput.safeParse({
+        name: "Users",
+        method: "get",
+        url: '"https://example.com/users"',
+        headers: [],
+        ...unsupported,
+      }).success
+    ).toBe(false);
+  });
+
   test("parse resource create and update inputs used by the API", () => {
     expect(
       resourceFieldsInput.parse({
