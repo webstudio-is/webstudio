@@ -5212,6 +5212,40 @@ describe("project session mcp adapter", () => {
     expect(session.initialize).not.toHaveBeenCalled();
   });
 
+  test("gets metadata for a hidden required template child", async () => {
+    const session = createSession({
+      initialize: vi.fn(),
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(session),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const details = await adapter.callTool({
+      name: "components.get",
+      input: { component: "VimeoPreviewImage" },
+    });
+    const listing = await adapter.callTool({
+      name: "components.list",
+      input: { source: "all" },
+    });
+
+    expect(details.structuredContent.data).toEqual(
+      expect.objectContaining({
+        found: true,
+        component: "VimeoPreviewImage",
+        standaloneInsertable: false,
+        contentModel: expect.objectContaining({ category: "none" }),
+      })
+    );
+    expect(JSON.stringify(listing.structuredContent.data)).not.toContain(
+      "VimeoPreviewImage"
+    );
+  });
+
   test("exposes structured component discovery without full resource parsing", async () => {
     const session = createSession({
       initialize: vi.fn(),

@@ -54,6 +54,7 @@ import { findAvailableVariables } from "./data";
 import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import {
   detectFragmentTokenConflicts,
+  extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   webstudioFragmentMutationInput,
 } from "./fragment";
@@ -774,6 +775,20 @@ const createInsertFragmentMutation = <
   }
 
   const nextData = cloneFragmentData(mutationState);
+  const copiesContentBlockTemplate =
+    contentMode &&
+    Array.from(mutationState.instances.values()).some(
+      (instance) =>
+        instance.component === blockTemplateComponent &&
+        instance.children.some(
+          (child) =>
+            child.type === "id" &&
+            equal(
+              extractWebstudioFragment(mutationState, child.value),
+              fragment
+            )
+        )
+    );
   const normalizedSlotDropTarget = getSlotFragmentDropTargetMutable(
     nextData.instances,
     { parentSelector: [originalParent.id], position: "end" },
@@ -830,7 +845,14 @@ const createInsertFragmentMutation = <
       conflictResolution,
       createId: context.createId,
       metas: componentMetas,
-      contentModeCopyableProp: isFragmentContentModeCopyableProp,
+      contentModeCopyableProp: (input) =>
+        isFragmentContentModeCopyableProp(input) ||
+        (copiesContentBlockTemplate &&
+          (input.prop.type === "string" ||
+            input.prop.type === "number" ||
+            input.prop.type === "boolean" ||
+            input.prop.type === "json" ||
+            input.prop.type === "string[]")),
       contentMode,
     });
   for (const instanceId of newInstanceIds.values()) {

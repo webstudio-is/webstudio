@@ -1,4 +1,5 @@
 import type { Patch } from "immer";
+import equal from "fast-deep-equal";
 import { isRecord } from "../shared/type-utils";
 import {
   instance,
@@ -70,6 +71,7 @@ type ContentModeTransactionContext = {
   selectedLocalStyleSourceIds: Set<StyleSource["id"]>;
   styledLocalStyleSourceIds: Set<StyleSource["id"]>;
   editableInstanceIds: Set<Instance["id"]>;
+  copiedTemplatePropsByInstanceId: Map<Instance["id"], Prop[]>;
 };
 
 export type ContentModeValidationResult =
@@ -286,6 +288,168 @@ const getBlockTemplateChildIdsByInstanceId = (
     }
   }
   return childIdsByInstanceId;
+};
+
+const getCopiedTemplateProps = ({
+  originalInstances,
+  originalProps,
+  instances,
+  addedInstanceIds,
+  editableInstanceRootIds,
+  transaction,
+}: {
+  originalInstances: Map<Instance["id"], Instance>;
+  originalProps: Props;
+  instances: Map<Instance["id"], Instance>;
+  addedInstanceIds: Set<Instance["id"]>;
+  editableInstanceRootIds: Map<Instance["id"], Instance["id"]>;
+  transaction: ContentModePatchTransaction;
+}) => {
+  const copiedProps = new Map<Instance["id"], Prop[]>();
+  if (addedInstanceIds.size === 0) {
+    return copiedProps;
+  }
+
+  // A newly inserted tree may carry design-only props only when it is an exact
+  // copy of an authored template in the same Content Block.
+  const templateRootsByContentRootId = new Map<string, string[]>();
+  for (const block of originalInstances.values()) {
+    if (block.component !== blockComponent) {
+      continue;
+    }
+    const bodyContainers = findContentBlockBodyContainers({
+      blockInstance: block,
+      instances: originalInstances,
+    });
+    const contentRootId =
+      bodyContainers.length === 1 ? bodyContainers[0].id : block.id;
+    for (const child of block.children ?? []) {
+      if (child.type !== "id") {
+        continue;
+      }
+      const container = originalInstances.get(child.value);
+      if (container?.component !== blockTemplateComponent) {
+        continue;
+      }
+      const roots = templateRootsByContentRootId.get(contentRootId) ?? [];
+      roots.push(
+        ...container.children.flatMap((entry) =>
+          entry.type === "id" ? [entry.value] : []
+        )
+      );
+      templateRootsByContentRootId.set(contentRootId, roots);
+    }
+  }
+
+  const nestedAddedIds = new Set(
+    Array.from(addedInstanceIds).flatMap(
+      (id) =>
+        instances
+          .get(id)
+          ?.children.flatMap((child) =>
+            child.type === "id" && addedInstanceIds.has(child.value)
+              ? [child.value]
+              : []
+          ) ?? []
+    )
+  );
+  const addedProps = transaction.payload.flatMap((change) =>
+    change.namespace === "props"
+      ? change.patches.flatMap((patch) => {
+          if (patch.op !== "add" || patch.path.length !== 1) {
+            return [];
+          }
+          const parsed = prop.safeParse(patch.value);
+          return parsed.success ? [parsed.data] : [];
+        })
+      : []
+  );
+  const sourcePropsByInstanceId = new Map<string, Prop[]>();
+  for (const sourceProp of originalProps.values()) {
+    const sourceProps = sourcePropsByInstanceId.get(sourceProp.instanceId) ?? [];
+    sourceProps.push(sourceProp);
+    sourcePropsByInstanceId.set(sourceProp.instanceId, sourceProps);
+  }
+
+  const matchTree = (
+    sourceId: string,
+    targetId: string,
+    sourceIdsByTargetId: Map<string, string>
+  ): boolean => {
+    if (addedInstanceIds.has(targetId) === false) {
+      return false;
+    }
+    const source = originalInstances.get(sourceId);
+    const target = instances.get(targetId);
+    if (source === undefined || target === undefined) {
+      return false;
+    }
+    const { id: _sourceId, children: sourceChildren, ...sourceFields } = source;
+    const { id: _targetId, children: targetChildren, ...targetFields } = target;
+    if (
+      equal(sourceFields, targetFields) === false ||
+      sourceChildren.length !== targetChildren.length
+    ) {
+      return false;
+    }
+    sourceIdsByTargetId.set(targetId, sourceId);
+    for (let index = 0; index < sourceChildren.length; index += 1) {
+      const sourceChild = sourceChildren[index];
+      const targetChild = targetChildren[index];
+      if (sourceChild.type === "id" && targetChild.type === "id") {
+        if (
+          matchTree(
+            sourceChild.value,
+            targetChild.value,
+            sourceIdsByTargetId
+          ) === false
+        ) {
+          return false;
+        }
+      } else if (equal(sourceChild, targetChild) === false) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  for (const targetRootId of addedInstanceIds) {
+    if (nestedAddedIds.has(targetRootId)) {
+      continue;
+    }
+    const contentRootId = editableInstanceRootIds.get(targetRootId);
+    for (const sourceRootId of templateRootsByContentRootId.get(
+      contentRootId ?? ""
+    ) ?? []) {
+      const sourceIdsByTargetId = new Map<string, string>();
+      if (
+        matchTree(sourceRootId, targetRootId, sourceIdsByTargetId) === false
+      ) {
+        continue;
+      }
+      const allAddedPropsMatch = addedProps.every((addedProp) => {
+        const sourceId = sourceIdsByTargetId.get(addedProp.instanceId);
+        if (sourceId === undefined) {
+          return true;
+        }
+        return (sourcePropsByInstanceId.get(sourceId) ?? []).some(
+          (sourceProp) =>
+            sourceProp.name === addedProp.name &&
+            sourceProp.type === addedProp.type &&
+            sourceProp.required === addedProp.required &&
+            equal(sourceProp.value, addedProp.value)
+        );
+      });
+      if (allAddedPropsMatch === false) {
+        continue;
+      }
+      for (const [targetId, sourceId] of sourceIdsByTargetId) {
+        copiedProps.set(targetId, sourcePropsByInstanceId.get(sourceId) ?? []);
+      }
+      break;
+    }
+  }
+  return copiedProps;
 };
 
 const getInstancePropMetas = ({
@@ -600,6 +764,37 @@ const validatePropPatch = (
     capabilities.editablePropIds.add(propId);
     capabilities.props.set(propId, patch.value as Prop);
     return { success: true };
+  }
+
+  if (
+    patch.op === "add" &&
+    patch.path.length === 1 &&
+    context.addedInstanceIds.has((patch.value as Prop)?.instanceId)
+  ) {
+    const parsed = prop.safeParse(patch.value);
+    if (parsed.success) {
+      const copiedProps = context.copiedTemplatePropsByInstanceId.get(
+        parsed.data.instanceId
+      );
+      const copiedProp = copiedProps?.find(
+        (candidate) =>
+          candidate.name === parsed.data.name &&
+          candidate.type === parsed.data.type &&
+          candidate.required === parsed.data.required &&
+          equal(candidate.value, parsed.data.value)
+      );
+      if (
+        copiedProp !== undefined &&
+        (parsed.data.type === "string" ||
+          parsed.data.type === "number" ||
+          parsed.data.type === "boolean" ||
+          parsed.data.type === "json" ||
+          parsed.data.type === "string[]")
+      ) {
+        capabilities.props.set(propId, parsed.data);
+        return { success: true };
+      }
+    }
   }
 
   return {
@@ -1621,6 +1816,7 @@ export const applyContentModeTransaction = ({
     selectedLocalStyleSourceIds: new Set(),
     styledLocalStyleSourceIds: new Set(),
     editableInstanceIds: new Set(),
+    copiedTemplatePropsByInstanceId: new Map(),
   };
 
   for (const change of transaction.payload) {
@@ -1671,6 +1867,17 @@ export const applyContentModeTransaction = ({
     props: transactionCapabilities.props,
   });
   transactionCapabilities.editableInstanceIds = context.editableInstanceIds;
+  context.copiedTemplatePropsByInstanceId = getCopiedTemplateProps({
+    originalInstances: capabilities.instances,
+    originalProps: capabilities.props,
+    instances: transactionCapabilities.instances,
+    addedInstanceIds: context.addedInstanceIds,
+    editableInstanceRootIds: getContentModeEditableInstanceRootIds({
+      contentRootIds: transactionCapabilities.contentRootIds,
+      instances: transactionCapabilities.instances,
+    }),
+    transaction,
+  });
   transactionCapabilities.frontmatterBoundPropIds = frontmatterTargets.propIds;
   transactionCapabilities.frontmatterBoundTextInstanceIds =
     frontmatterTargets.textInstanceIds;

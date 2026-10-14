@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { deleteContentBlockChildAfterCanvasText } from "../flows/block-outline";
 import {
   openProjectBuilder,
@@ -300,6 +300,10 @@ test("Editor can edit text and content props but not design props", async ({
     page,
     alt: fixture.contentPropsTemplateImageAlt,
   });
+  const canvas = await waitForCanvasFrame({ page });
+  await expect(
+    canvas.getByRole("img", { name: fixture.contentPropsTemplateImageAlt })
+  ).toHaveAttribute("width", "120");
   await waitForCanvasVideoSource({
     page,
     sourceName: fixture.contentPropsTemplateVideoName,
@@ -417,6 +421,10 @@ test("Editor can edit text and content props but not design props", async ({
     value: editedImageAlt,
   });
   await expectTextHidden({ page, text: "Width" });
+  const reloadedCanvas = await waitForCanvasFrame({ page });
+  await expect(
+    reloadedCanvas.getByRole("img", { name: editedImageAlt })
+  ).toHaveAttribute("width", "120");
 
   await selectCanvasVideoSource({
     page,

@@ -5300,9 +5300,11 @@ const getComponentCatalogOverview = () => {
 const getComponentSummaryEntry = ({
   component,
   templates,
+  includeHiddenRequiredPart = false,
 }: {
   component: string;
   templates: ComponentTemplateRegistry;
+  includeHiddenRequiredPart?: boolean;
 }) => {
   const meta = componentMetas.get(component);
   if (meta === undefined) {
@@ -5310,9 +5312,20 @@ const getComponentSummaryEntry = ({
   }
   const templateMeta = templates.get(component);
   const visibleCategory = templateMeta?.category ?? meta.category;
+  const hiddenRequiredPart =
+    includeHiddenRequiredPart &&
+    meta.deprecated !== true &&
+    meta.category === "hidden" &&
+    meta.contentModel?.category === "none" &&
+    Array.from(templates.values()).some((entry) =>
+      entry.template.instances.some(
+        (instance) => instance.component === component
+      )
+    );
   if (
-    isComponentMetaUnavailableInCatalog(meta) ||
-    isComponentHiddenFromCatalog(meta, visibleCategory)
+    hiddenRequiredPart === false &&
+    (isComponentMetaUnavailableInCatalog(meta) ||
+      isComponentHiddenFromCatalog(meta, visibleCategory))
   ) {
     return;
   }
@@ -6128,7 +6141,11 @@ const findComponents = async (
 
 const getComponentDetails = (component: string) => {
   const templates = getComponentTemplates();
-  const entry = getComponentSummaryEntry({ component, templates });
+  const entry = getComponentSummaryEntry({
+    component,
+    templates,
+    includeHiddenRequiredPart: true,
+  });
   const meta = componentMetas.get(component);
   const stateUsage = getComponentStateUsage(meta?.states);
   const animationUsage = getAnimationComponentGuidance(component);
