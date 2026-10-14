@@ -923,33 +923,6 @@ export const replaceTextInput = z
   })
   .superRefine(validatePageSelector);
 
-export const cloneInstanceSubtree = ({
-  instances,
-  rootInstanceId,
-  createId,
-}: {
-  instances: Map<Instance["id"], Instance>;
-  rootInstanceId: Instance["id"];
-  createId: () => Instance["id"];
-}) => {
-  const instanceIds = collectInstanceIds(instances, rootInstanceId);
-  const nextIdById = new Map(instanceIds.map((id) => [id, createId()]));
-  const clonedInstances = instanceIds.flatMap((instanceId) => {
-    const instance = instances.get(instanceId);
-    const nextId = nextIdById.get(instanceId);
-    if (instance === undefined || nextId === undefined) {
-      return [];
-    }
-    return [
-      [
-        nextId,
-        cloneInstanceWithNewIds({ instance, newInstanceIds: nextIdById }),
-      ] satisfies [string, Instance],
-    ];
-  });
-  return { clonedInstances, instanceIds, nextIdById };
-};
-
 export const findLocalStyleSourcesWithinInstances = (
   styleSources: Iterable<StyleSource>,
   styleSourceSelections: Iterable<StyleSourceSelection>,

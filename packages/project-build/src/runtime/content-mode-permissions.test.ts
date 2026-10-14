@@ -832,8 +832,7 @@ describe("content mode permissions", () => {
       selectedLocalStyleSourceIds: new Set<string>(),
       styledLocalStyleSourceIds: new Set<string>(),
       editableInstanceIds: new Set<string>(),
-      initialPropIds: new Set<string>(),
-      copiedTemplatePropsByInstanceId: new Map(),
+      copiedTemplateProps: new Map(),
     };
 
     expect(hasOnlyAddedInstancesInSubtree(context, "new-root")).toBe(true);
@@ -891,8 +890,7 @@ describe("content mode permissions", () => {
         selectedLocalStyleSourceIds: new Set(),
         styledLocalStyleSourceIds: new Set(),
         editableInstanceIds: new Set(["block", "item"]),
-        initialPropIds: new Set(),
-        copiedTemplatePropsByInstanceId: new Map(),
+        copiedTemplateProps: new Map(),
       })
     ).toEqual({
       success: false,

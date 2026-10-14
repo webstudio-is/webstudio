@@ -71,8 +71,7 @@ type ContentModeTransactionContext = {
   selectedLocalStyleSourceIds: Set<StyleSource["id"]>;
   styledLocalStyleSourceIds: Set<StyleSource["id"]>;
   editableInstanceIds: Set<Instance["id"]>;
-  initialPropIds: Set<Prop["id"]>;
-  copiedTemplatePropsByInstanceId: Map<Instance["id"], Prop[]>;
+  copiedTemplateProps: Map<Patch, Prop>;
 };
 
 export type ContentModeValidationResult =
@@ -306,7 +305,8 @@ const getCopiedTemplateProps = ({
   editableInstanceRootIds: Map<Instance["id"], Instance["id"]>;
   transaction: ContentModePatchTransaction;
 }) => {
-  const copiedProps = new Map<Instance["id"], Prop[]>();
+  // Approve individual patches so later validation does not match props again.
+  const copiedProps = new Map<Patch, Prop>();
   if (addedInstanceIds.size === 0) {
     return copiedProps;
   }
@@ -361,7 +361,7 @@ const getCopiedTemplateProps = ({
             return [];
           }
           const parsed = prop.safeParse(patch.value);
-          return parsed.success ? [parsed.data] : [];
+          return parsed.success ? [{ patch, prop: parsed.data }] : [];
         })
       : []
   );
@@ -429,7 +429,7 @@ const getCopiedTemplateProps = ({
       ) {
         continue;
       }
-      const allAddedPropsMatch = addedProps.every((addedProp) => {
+      const allAddedPropsMatch = addedProps.every(({ prop: addedProp }) => {
         const sourceId = sourceIdsByTargetId.get(addedProp.instanceId);
         if (sourceId === undefined) {
           return true;
@@ -445,8 +445,19 @@ const getCopiedTemplateProps = ({
       if (allAddedPropsMatch === false) {
         continue;
       }
-      for (const [targetId, sourceId] of sourceIdsByTargetId) {
-        copiedProps.set(targetId, sourcePropsByInstanceId.get(sourceId) ?? []);
+      for (const { patch, prop } of addedProps) {
+        if (
+          sourceIdsByTargetId.has(prop.instanceId) &&
+          prop.id === patch.path[0] &&
+          originalProps.has(prop.id) === false &&
+          (prop.type === "string" ||
+            prop.type === "number" ||
+            prop.type === "boolean" ||
+            prop.type === "json" ||
+            prop.type === "string[]")
+        ) {
+          copiedProps.set(patch, prop);
+        }
       }
       break;
     }
@@ -768,37 +779,10 @@ const validatePropPatch = (
     return { success: true };
   }
 
-  if (
-    patch.op === "add" &&
-    patch.path.length === 1 &&
-    context.initialPropIds.has(propId) === false &&
-    capabilities.props.has(propId) === false &&
-    context.addedInstanceIds.has((patch.value as Prop)?.instanceId)
-  ) {
-    const parsed = prop.safeParse(patch.value);
-    if (parsed.success && parsed.data.id === propId) {
-      const copiedProps = context.copiedTemplatePropsByInstanceId.get(
-        parsed.data.instanceId
-      );
-      const copiedProp = copiedProps?.find(
-        (candidate) =>
-          candidate.name === parsed.data.name &&
-          candidate.type === parsed.data.type &&
-          candidate.required === parsed.data.required &&
-          equal(candidate.value, parsed.data.value)
-      );
-      if (
-        copiedProp !== undefined &&
-        (parsed.data.type === "string" ||
-          parsed.data.type === "number" ||
-          parsed.data.type === "boolean" ||
-          parsed.data.type === "json" ||
-          parsed.data.type === "string[]")
-      ) {
-        capabilities.props.set(propId, parsed.data);
-        return { success: true };
-      }
-    }
+  const copiedProp = context.copiedTemplateProps.get(patch);
+  if (copiedProp !== undefined && capabilities.props.has(propId) === false) {
+    capabilities.props.set(propId, copiedProp);
+    return { success: true };
   }
 
   return {
@@ -1820,8 +1804,7 @@ export const applyContentModeTransaction = ({
     selectedLocalStyleSourceIds: new Set(),
     styledLocalStyleSourceIds: new Set(),
     editableInstanceIds: new Set(),
-    initialPropIds: new Set(capabilities.props.keys()),
-    copiedTemplatePropsByInstanceId: new Map(),
+    copiedTemplateProps: new Map(),
   };
 
   for (const change of transaction.payload) {
@@ -1863,24 +1846,22 @@ export const applyContentModeTransaction = ({
     }
   }
 
-  context.editableInstanceIds = getContentModeEditableInstanceIds({
+  const editableInstanceRootIds = getContentModeEditableInstanceRootIds({
     contentRootIds: transactionCapabilities.contentRootIds,
     instances: transactionCapabilities.instances,
   });
+  context.editableInstanceIds = new Set(editableInstanceRootIds.keys());
   const frontmatterTargets = getContentModeFrontmatterBoundTargets({
     instances: transactionCapabilities.instances,
     props: transactionCapabilities.props,
   });
   transactionCapabilities.editableInstanceIds = context.editableInstanceIds;
-  context.copiedTemplatePropsByInstanceId = getCopiedTemplateProps({
+  context.copiedTemplateProps = getCopiedTemplateProps({
     originalInstances: capabilities.instances,
     originalProps: capabilities.props,
     instances: transactionCapabilities.instances,
     addedInstanceIds: context.addedInstanceIds,
-    editableInstanceRootIds: getContentModeEditableInstanceRootIds({
-      contentRootIds: transactionCapabilities.contentRootIds,
-      instances: transactionCapabilities.instances,
-    }),
+    editableInstanceRootIds,
     transaction,
   });
   transactionCapabilities.frontmatterBoundPropIds = frontmatterTargets.propIds;

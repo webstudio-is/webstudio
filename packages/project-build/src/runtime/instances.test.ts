@@ -19,7 +19,6 @@ import {
   canUnwrapInstancePath,
   canWrapInstance,
   canConvertInstance,
-  cloneInstanceSubtree,
   cloneInstanceWithNewIds,
   convertInstance,
   createInstanceAppendPayload,
@@ -2121,44 +2120,6 @@ test("clone instance with mapped id children", () => {
       { type: "id", value: "child-clone" },
       { type: "text", value: "Text" },
       { type: "expression", value: "value" },
-    ],
-  });
-});
-
-test("clones an instance subtree with new ids", () => {
-  const instances = new Map([
-    [
-      "root",
-      createInstance("root", elementComponent, [
-        { type: "id", value: "child" },
-        { type: "text", value: "Text" },
-      ]),
-    ],
-    ["child", createInstance("child", elementComponent)],
-  ]);
-  const ids = ["root-copy", "child-copy"];
-
-  expect(
-    cloneInstanceSubtree({
-      instances,
-      rootInstanceId: "root",
-      createId: () => ids.shift() ?? "missing",
-    })
-  ).toEqual({
-    instanceIds: ["root", "child"],
-    nextIdById: new Map([
-      ["root", "root-copy"],
-      ["child", "child-copy"],
-    ]),
-    clonedInstances: [
-      [
-        "root-copy",
-        createInstance("root-copy", elementComponent, [
-          { type: "id", value: "child-copy" },
-          { type: "text", value: "Text" },
-        ]),
-      ],
-      ["child-copy", createInstance("child-copy", elementComponent)],
     ],
   });
 });

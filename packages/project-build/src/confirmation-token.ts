@@ -52,11 +52,13 @@ export const getConfirmationTokenInvalidReason = async (
   if (Number.isSafeInteger(expiresAt) === false) {
     return "malformed";
   }
+  const hasCanonicalExpiry =
+    expiresAt.toString(36) === encodedExpiresAt.toLowerCase();
   if (expiresAt < Date.now()) {
-    return "expired";
+    return hasCanonicalExpiry ? "expired" : "malformed";
   }
   if (digest !== (await getConfirmationDigest(payload, expiresAt))) {
-    return "mismatch";
+    return hasCanonicalExpiry ? "mismatch" : "malformed";
   }
 };
 
