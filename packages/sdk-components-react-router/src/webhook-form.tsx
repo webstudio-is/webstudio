@@ -109,7 +109,10 @@ export const WebhookForm = forwardRef<
     const handleSubmitAndAddHiddenJsField = (
       event: React.FormEvent<HTMLFormElement>
     ) => {
-      const hiddenInput = document.createElement("input");
+      const hiddenInput =
+        event.currentTarget.querySelector<HTMLInputElement>(
+          `input[name="${formBotFieldName}"]`
+        ) ?? document.createElement("input");
       hiddenInput.type = "hidden";
       hiddenInput.name = formBotFieldName;
       // Skip bot detection for Brave - Shields blocks matchMedia fingerprinting detection
