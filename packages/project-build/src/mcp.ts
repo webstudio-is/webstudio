@@ -108,6 +108,7 @@ import {
 import { z } from "zod";
 import {
   createConfirmationToken,
+  getConfirmationTokenInvalidReason,
   validateConfirmationToken,
 } from "./confirmation-token";
 
@@ -5299,9 +5300,11 @@ const getComponentCatalogOverview = () => {
 const getComponentSummaryEntry = ({
   component,
   templates,
+  includeHiddenRequiredPart = false,
 }: {
   component: string;
   templates: ComponentTemplateRegistry;
+  includeHiddenRequiredPart?: boolean;
 }) => {
   const meta = componentMetas.get(component);
   if (meta === undefined) {
@@ -5309,9 +5312,20 @@ const getComponentSummaryEntry = ({
   }
   const templateMeta = templates.get(component);
   const visibleCategory = templateMeta?.category ?? meta.category;
+  const hiddenRequiredPart =
+    includeHiddenRequiredPart &&
+    meta.deprecated !== true &&
+    meta.category === "hidden" &&
+    meta.contentModel?.category === "none" &&
+    Array.from(templates.values()).some((entry) =>
+      entry.template.instances.some(
+        (instance) => instance.component === component
+      )
+    );
   if (
-    isComponentMetaUnavailableInCatalog(meta) ||
-    isComponentHiddenFromCatalog(meta, visibleCategory)
+    hiddenRequiredPart === false &&
+    (isComponentMetaUnavailableInCatalog(meta) ||
+      isComponentHiddenFromCatalog(meta, visibleCategory))
   ) {
     return;
   }
@@ -6127,7 +6141,11 @@ const findComponents = async (
 
 const getComponentDetails = (component: string) => {
   const templates = getComponentTemplates();
-  const entry = getComponentSummaryEntry({ component, templates });
+  const entry = getComponentSummaryEntry({
+    component,
+    templates,
+    includeHiddenRequiredPart: true,
+  });
   const meta = componentMetas.get(component);
   const stateUsage = getComponentStateUsage(meta?.states);
   const animationUsage = getAnimationComponentGuidance(component);
@@ -7645,7 +7663,7 @@ const toCallResult = (
   envelope: Parameters<typeof serializeProjectSessionMeta>[0],
   options: {
     verboseSession?: boolean;
-    error?: { code: string; message: string };
+    error?: McpStructuredError;
     next?: string[];
     confirmation?: DestructiveConfirmation;
   } = {}
@@ -7739,10 +7757,16 @@ const executeDestructiveMcpOperation = async <Command extends string>({
       }),
     ];
   }
-  const isConfirmed =
-    confirmDestructive &&
-    (await validateConfirmationToken(confirmationToken, confirmationPayload));
+  const invalidReason = confirmDestructive
+    ? await getConfirmationTokenInvalidReason(
+        confirmationToken,
+        confirmationPayload
+      )
+    : undefined;
+  const isConfirmed = confirmDestructive && invalidReason === undefined;
   if (isConfirmed === false) {
+    const message =
+      "Review the planned destructive mutation, then retry the unchanged call with confirmDestructive: true and the returned confirmationToken before it expires.";
     return [
       plannedEnvelope,
       toCallResult(plannedEnvelope, {
@@ -7750,8 +7774,19 @@ const executeDestructiveMcpOperation = async <Command extends string>({
           code: confirmDestructive
             ? "DESTRUCTIVE_CONFIRMATION_INVALID"
             : "DESTRUCTIVE_CONFIRMATION_REQUIRED",
-          message:
-            "Review the planned destructive mutation, then retry the unchanged call with confirmDestructive: true and the returned confirmationToken before it expires.",
+          message,
+          ...(invalidReason === undefined
+            ? {}
+            : {
+                issues: [
+                  {
+                    code: `DESTRUCTIVE_CONFIRMATION_${invalidReason.toUpperCase()}`,
+                    path: ["confirmationToken"],
+                    message,
+                    constraint: "unchanged_destructive_plan",
+                  },
+                ],
+              }),
         },
         confirmation: await confirmation(),
         next: [

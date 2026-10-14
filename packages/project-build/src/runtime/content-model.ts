@@ -736,11 +736,6 @@ export const isRichTextTree = ({
   if (instance.children.length === 0) {
     return isRichText;
   }
-  for (const child of instance.children) {
-    if (child.type === "text" || child.type === "expression") {
-      return true;
-    }
-  }
   const contentTags = findContentTags({
     instances,
     props,
@@ -752,11 +747,20 @@ export const isRichTextTree = ({
     instances,
     instance,
   });
+  const supportsRichTextContent =
+    setIsSubsetOf(contentTags, richTextContentTags) &&
+    setIsSubsetOf(contentComponents, richTextContentComponents);
+  if (
+    instance.children.some(
+      (child) => child.type === "text" || child.type === "expression"
+    )
+  ) {
+    return contentTags.has("img") === false;
+  }
   return (
     isRichText &&
     // rich text must contain only supported elements in editor
-    setIsSubsetOf(contentTags, richTextContentTags) &&
-    setIsSubsetOf(contentComponents, richTextContentComponents) &&
+    supportsRichTextContent &&
     // rich text cannot contain only span and only link
     // those links and spans are containers in such cases
     !setIsSubsetOf(contentTags, new Set(richTextPlaceholders.keys()))

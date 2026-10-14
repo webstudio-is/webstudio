@@ -188,6 +188,11 @@ export const serverOnlyRouterOperationMetadata = {
               minLength: 1,
               maxLength: 100,
             },
+            serverApiContractVersion: {
+              type: "string",
+              minLength: 1,
+              maxLength: 100,
+            },
             bundleVersion: {
               type: "string",
               minLength: 1,

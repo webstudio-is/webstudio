@@ -404,12 +404,15 @@ const Player = ({
   useEffect(() => {
     const videoId = getVideoId(videoUrl);
     if (!videoId || !showPreview) {
-      onPreviewImageUrlChange(undefined);
+      if (previewImageUrl !== undefined) {
+        onPreviewImageUrlChange(undefined);
+      }
       return;
     }
 
-    if (!previewImageUrl) {
-      onPreviewImageUrlChange(getPreviewImageUrl(videoId));
+    const nextPreviewImageUrl = getPreviewImageUrl(videoId);
+    if (previewImageUrl?.href !== nextPreviewImageUrl.href) {
+      onPreviewImageUrlChange(nextPreviewImageUrl);
     }
   }, [onPreviewImageUrlChange, showPreview, videoUrl, previewImageUrl]);
 

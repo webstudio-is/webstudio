@@ -1459,12 +1459,12 @@ export const builderRuntimeOperations = [
     "instances.clone",
     api("clone-instance", "cloneInstance"),
     mutationContract({
-      readNamespaces: treeMutationNamespaces,
-      writeNamespaces: treeMutationNamespaces,
+      readNamespaces: instanceDuplicate.instanceDuplicateNamespaces,
+      writeNamespaces: instanceDuplicate.instanceDuplicateNamespaces,
     }),
-    instances.cloneInstanceInput,
+    instanceDuplicate.cloneInstanceInput,
     ({ state, input, context }) =>
-      instances.cloneInstance(state, input, context)
+      instanceDuplicate.cloneInstance(state, input, context)
   ),
   runtimeOperation(
     "instances.duplicateAfterItself",

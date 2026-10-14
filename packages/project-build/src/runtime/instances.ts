@@ -51,11 +51,7 @@ import {
 import { createRuntimeMutation } from "./mutation";
 import { findSerializedPageByInput, getSerializedPages } from "./pages";
 import { validatePageSelector } from "./page-selector";
-import {
-  createPropClonePatches,
-  createPropDeletePayload,
-  createPropRenamePayload,
-} from "./props";
+import { createPropDeletePayload, createPropRenamePayload } from "./props";
 import {
   createTreeVariableRebindPayload,
   produceWebstudioDataMutation,
@@ -78,10 +74,7 @@ import {
   type InstancePath,
 } from "./slot";
 import { getReparentDropTargetMutable, type DroppableTarget } from "./tree";
-import {
-  createStyleClonePayload,
-  serializeStyleDeclarations,
-} from "./style-utils";
+import { serializeStyleDeclarations } from "./style-utils";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { mapAttributeNames } from "@webstudio-is/content-engine/jsx-attributes";
 import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
@@ -202,12 +195,6 @@ export const reparentInstanceInput = z.object({
     parentSelector: z.array(z.string()).min(1),
     position: z.union([insertIndexInput, instanceEndPositionInput]),
   }),
-});
-
-export const cloneInstanceInput = z.object({
-  sourceInstanceId: z.string(),
-  targetParentInstanceId: z.string().optional(),
-  insertIndex: insertIndexInput.optional(),
 });
 
 export const deleteInstancesInput = z.object({
@@ -936,33 +923,6 @@ export const replaceTextInput = z
   })
   .superRefine(validatePageSelector);
 
-export const cloneInstanceSubtree = ({
-  instances,
-  rootInstanceId,
-  createId,
-}: {
-  instances: Map<Instance["id"], Instance>;
-  rootInstanceId: Instance["id"];
-  createId: () => Instance["id"];
-}) => {
-  const instanceIds = collectInstanceIds(instances, rootInstanceId);
-  const nextIdById = new Map(instanceIds.map((id) => [id, createId()]));
-  const clonedInstances = instanceIds.flatMap((instanceId) => {
-    const instance = instances.get(instanceId);
-    const nextId = nextIdById.get(instanceId);
-    if (instance === undefined || nextId === undefined) {
-      return [];
-    }
-    return [
-      [
-        nextId,
-        cloneInstanceWithNewIds({ instance, newInstanceIds: nextIdById }),
-      ] satisfies [string, Instance],
-    ];
-  });
-  return { clonedInstances, instanceIds, nextIdById };
-};
-
 export const findLocalStyleSourcesWithinInstances = (
   styleSources: Iterable<StyleSource>,
   styleSourceSelections: Iterable<StyleSourceSelection>,
@@ -1573,90 +1533,6 @@ const remapTextTreeTemporaryIds = ({
         child.type === "id" ? { ...child, value: remapId(child.value) } : child
       ),
     })),
-  };
-};
-
-export const createInstanceClonePayload = ({
-  instances,
-  sourceInstanceId,
-  targetParent,
-  insertIndex,
-  props,
-  styleSourceSelections,
-  styleSources,
-  styles,
-  createId,
-}: {
-  instances: Map<Instance["id"], Instance>;
-  sourceInstanceId: Instance["id"];
-  targetParent: Instance;
-  insertIndex: number;
-  props: Iterable<Prop>;
-  styleSourceSelections: Iterable<StyleSourceSelection>;
-  styleSources: Iterable<StyleSource>;
-  styles: Map<string, StyleDecl>;
-  createId: () => string;
-}):
-  | {
-      clonedRootId: Instance["id"];
-      clonedInstanceIds: Instance["id"][];
-      payload: BuilderPatchChange[];
-    }
-  | undefined => {
-  const { clonedInstances, nextIdById } = cloneInstanceSubtree({
-    instances,
-    rootInstanceId: sourceInstanceId,
-    createId,
-  });
-  const clonedRootId = nextIdById.get(sourceInstanceId);
-  if (clonedRootId === undefined) {
-    return;
-  }
-  const instancesWithClones = new Map(instances);
-  for (const [instanceId, instance] of clonedInstances) {
-    instancesWithClones.set(instanceId, instance);
-  }
-  assignUniqueBlockTemplateNamesMutable({
-    instanceIds: [clonedRootId],
-    parent: targetParent,
-    instances: instancesWithClones,
-    components: componentMetas.keys(),
-  });
-  const propPatches = createPropClonePatches({
-    nextIdById,
-    props,
-    createId,
-  });
-  return {
-    clonedRootId,
-    clonedInstanceIds: clonedInstances.map(([instanceId]) => instanceId),
-    payload: compactBuilderPatchPayload([
-      {
-        namespace: "instances",
-        patches: [
-          ...clonedInstances.map(([instanceId, instance]) => ({
-            op: "add" as const,
-            path: [instanceId],
-            value: instance,
-          })),
-          {
-            op: "add" as const,
-            path: [targetParent.id, "children", insertIndex],
-            value: createInstanceChild(clonedRootId),
-          },
-        ],
-      },
-      ...(propPatches.length === 0
-        ? []
-        : [{ namespace: "props" as const, patches: propPatches }]),
-      ...createStyleClonePayload({
-        styleSourceSelections,
-        styleSources,
-        styles,
-        nextIdById,
-        createId,
-      }),
-    ]),
   };
 };
 
@@ -3575,64 +3451,6 @@ export const updateTextTree = (
       idMap: Object.fromEntries(remapped.idMap),
     },
     invalidatesNamespaces: treeInvalidates,
-  });
-};
-
-export const cloneInstance = (
-  state: TreeMutationState,
-  input: z.infer<typeof cloneInstanceInput>,
-  context: BuilderRuntimeContext
-) => {
-  const mutationState = getRequiredTreeMutationState(state);
-  const source = mutationState.instances.get(input.sourceInstanceId);
-  if (source === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
-  }
-  const targetParent =
-    input.targetParentInstanceId === undefined
-      ? findParentInstanceReference(mutationState.instances, source.id)
-          ?.instance
-      : mutationState.instances.get(input.targetParentInstanceId);
-  if (targetParent === undefined) {
-    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
-  }
-  const insertIndex = input.insertIndex ?? targetParent.children.length;
-  if (insertIndex > targetParent.children.length) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Insert index is outside parent children"
-    );
-  }
-  const clone = createInstanceClonePayload({
-    instances: mutationState.instances,
-    sourceInstanceId: source.id,
-    targetParent,
-    insertIndex,
-    props: mutationState.props.values(),
-    styleSourceSelections: mutationState.styleSourceSelections.values(),
-    styleSources: mutationState.styleSources.values(),
-    styles: mutationState.styles,
-    createId: context.createId,
-  });
-  if (clone === undefined) {
-    return throwBuilderRuntimeError(
-      "BAD_REQUEST",
-      "Source instance could not be cloned"
-    );
-  }
-  return createRuntimeMutation({
-    payload: clone.payload,
-    result: {
-      instanceId: clone.clonedRootId,
-      instanceIds: clone.clonedInstanceIds,
-    },
-    invalidatesNamespaces: [
-      "instances",
-      "props",
-      "styleSourceSelections",
-      "styleSources",
-      "styles",
-    ],
   });
 };
 

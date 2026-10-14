@@ -821,6 +821,14 @@ export const insertWebstudioFragmentCopy = ({
     maskedIdByName.set(dataSource.name, dataSource.id);
   }
   const newResourceIds = new Map<Resource["id"], Resource["id"]>();
+  const getNewResourceId = (resourceId: Resource["id"]) => {
+    let newResourceId = newResourceIds.get(resourceId);
+    if (newResourceId === undefined) {
+      newResourceId = createId();
+      newResourceIds.set(resourceId, newResourceId);
+    }
+    return newResourceId;
+  };
   if (contentMode === false) {
     for (let dataSource of fragment.dataSources) {
       const scopeInstanceId = dataSource.scopeInstanceId ?? "";
@@ -843,9 +851,7 @@ export const insertWebstudioFragmentCopy = ({
         dataSource.scopeInstanceId =
           newInstanceIds.get(scopeInstanceId) ?? scopeInstanceId;
         if (dataSource.type === "resource") {
-          const newResourceId = createId();
-          newResourceIds.set(dataSource.resourceId, newResourceId);
-          dataSource.resourceId = newResourceId;
+          dataSource.resourceId = getNewResourceId(dataSource.resourceId);
         }
         dataSources.set(dataSource.id, dataSource);
       }
@@ -897,9 +903,7 @@ export const insertWebstudioFragmentCopy = ({
       prop.value = newDataSourceIds.get(prop.value) ?? prop.value;
     }
     if (prop.type === "resource") {
-      const newResourceId = createId();
-      newResourceIds.set(prop.value, newResourceId);
-      prop.value = newResourceId;
+      prop.value = getNewResourceId(prop.value);
     }
     props.set(prop.id, prop);
   }

@@ -3,6 +3,7 @@ import { cleanup, render, waitFor } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { YouTube } from "./youtube";
+import { VimeoPreviewImage } from "./vimeo-preview-image";
 
 const sdkContext = {
   assetBaseUrl: "/assets/",
@@ -65,4 +66,47 @@ test("preconnect is consent-aware and only warms the player", async () => {
     expect(getPreconnectOrigins()).toContain("https://www.youtube-nocookie.com")
   );
   expect(getPreconnectOrigins()).not.toContain("https://img.youtube.com");
+});
+
+test("updates the preview image when the video URL changes", async () => {
+  const firstId = "dQw4w9WgXcQ";
+  const secondId = "jNQXAC9IVRw";
+  const props = {
+    showPreview: true,
+    children: <VimeoPreviewImage alt="Video preview" />,
+  };
+  const { getByAltText, rerender } = render(
+    renderYouTube({
+      ...props,
+      url: `https://www.youtube.com/watch?v=${firstId}`,
+    })
+  );
+
+  await waitFor(() =>
+    expect(getByAltText("Video preview").getAttribute("src")).toContain(firstId)
+  );
+
+  rerender(
+    renderYouTube({
+      ...props,
+      url: `https://www.youtube.com/watch?v=${secondId}`,
+    })
+  );
+
+  await waitFor(() =>
+    expect(getByAltText("Video preview").getAttribute("src")).toContain(
+      secondId
+    )
+  );
+
+  rerender(
+    renderYouTube({
+      ...props,
+      url: `https://www.youtube.com/watch?v=${firstId}`,
+    })
+  );
+
+  await waitFor(() =>
+    expect(getByAltText("Video preview").getAttribute("src")).toContain(firstId)
+  );
 });

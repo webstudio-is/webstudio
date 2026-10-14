@@ -19,12 +19,10 @@ import {
   canUnwrapInstancePath,
   canWrapInstance,
   canConvertInstance,
-  cloneInstanceSubtree,
   cloneInstanceWithNewIds,
   convertInstance,
   createInstanceAppendPayload,
   createInstanceChild,
-  createInstanceClonePayload,
   createInstanceCleanupPayload,
   createInstanceDeletePayload,
   createInstanceMovePatches,
@@ -417,157 +415,6 @@ test("collects shared descendants when all owners are requested", () => {
   ).toEqual(
     new Set(["first-root", "shared-child", "shared-leaf", "second-root"])
   );
-});
-const createCloneInstance = (
-  id: Instance["id"],
-  children: Instance["children"] = []
-): Instance => ({
-  type: "instance",
-  id,
-  component: elementComponent,
-  children,
-});
-
-test("creates instance clone payload with child references and props", () => {
-  const targetParent = createCloneInstance("parent", []);
-  const props: Prop[] = [
-    {
-      id: "prop",
-      instanceId: "source",
-      name: "title",
-      type: "expression",
-      value: "document.frontmatter.title",
-      mode: "readwrite",
-    },
-  ];
-  const ids = ["source-copy", "child-copy", "prop-copy"];
-
-  const result = createInstanceClonePayload({
-    instances: new Map([
-      [
-        "source",
-        createCloneInstance("source", [
-          { type: "id", value: "child" },
-          { type: "text", value: "Text" },
-          {
-            type: "expression",
-            value: "document.frontmatter.title",
-            mode: "readwrite",
-          },
-        ]),
-      ],
-      ["child", createCloneInstance("child")],
-      [targetParent.id, targetParent],
-    ]),
-    sourceInstanceId: "source",
-    targetParent,
-    insertIndex: 0,
-    props,
-    styleSourceSelections: [],
-    styleSources: [],
-    styles: new Map(),
-    createId: () => ids.shift() ?? "missing",
-  });
-
-  expect(result).toEqual({
-    clonedRootId: "source-copy",
-    clonedInstanceIds: ["source-copy", "child-copy"],
-    payload: [
-      {
-        namespace: "instances",
-        patches: [
-          {
-            op: "add",
-            path: ["source-copy"],
-            value: createCloneInstance("source-copy", [
-              { type: "id", value: "child-copy" },
-              { type: "text", value: "Text" },
-              {
-                type: "expression",
-                value: "document.frontmatter.title",
-                mode: "readwrite",
-              },
-            ]),
-          },
-          {
-            op: "add",
-            path: ["child-copy"],
-            value: createCloneInstance("child-copy"),
-          },
-          {
-            op: "add",
-            path: ["parent", "children", 0],
-            value: { type: "id", value: "source-copy" },
-          },
-        ],
-      },
-      {
-        namespace: "props",
-        patches: [
-          {
-            op: "add",
-            path: [expect.any(String)],
-            value: {
-              ...props[0],
-              id: expect.any(String),
-              instanceId: "source-copy",
-            },
-          },
-        ],
-      },
-    ],
-  });
-});
-
-test("preserves asset references when cloning instance props", () => {
-  const ids = ["source-copy", "asset-prop-copy"];
-  const result = createInstanceClonePayload({
-    instances: new Map([
-      ["source", createCloneInstance("source")],
-      ["parent", createCloneInstance("parent")],
-    ]),
-    sourceInstanceId: "source",
-    targetParent: createCloneInstance("parent"),
-    insertIndex: 0,
-    props: [
-      {
-        id: "image-src",
-        instanceId: "source",
-        name: "src",
-        type: "asset",
-        value: "hero-image",
-      },
-    ],
-    styleSourceSelections: [],
-    styleSources: [],
-    styles: new Map(),
-    createId: () => ids.shift() ?? "missing",
-  });
-
-  if (result === undefined) {
-    throw new Error(
-      "Expected valid source instance to produce a clone payload"
-    );
-  }
-  const propsPayload = result.payload.find(
-    (item) => item.namespace === "props"
-  );
-  expect(propsPayload).toEqual({
-    namespace: "props",
-    patches: [
-      {
-        op: "add",
-        path: [expect.any(String)],
-        value: {
-          id: expect.any(String),
-          instanceId: "source-copy",
-          name: "src",
-          type: "asset",
-          value: "hero-image",
-        },
-      },
-    ],
-  });
 });
 describe("text content utils", () => {
   test("creates text and expression children", () => {
@@ -2273,44 +2120,6 @@ test("clone instance with mapped id children", () => {
       { type: "id", value: "child-clone" },
       { type: "text", value: "Text" },
       { type: "expression", value: "value" },
-    ],
-  });
-});
-
-test("clones an instance subtree with new ids", () => {
-  const instances = new Map([
-    [
-      "root",
-      createInstance("root", elementComponent, [
-        { type: "id", value: "child" },
-        { type: "text", value: "Text" },
-      ]),
-    ],
-    ["child", createInstance("child", elementComponent)],
-  ]);
-  const ids = ["root-copy", "child-copy"];
-
-  expect(
-    cloneInstanceSubtree({
-      instances,
-      rootInstanceId: "root",
-      createId: () => ids.shift() ?? "missing",
-    })
-  ).toEqual({
-    instanceIds: ["root", "child"],
-    nextIdById: new Map([
-      ["root", "root-copy"],
-      ["child", "child-copy"],
-    ]),
-    clonedInstances: [
-      [
-        "root-copy",
-        createInstance("root-copy", elementComponent, [
-          { type: "id", value: "child-copy" },
-          { type: "text", value: "Text" },
-        ]),
-      ],
-      ["child-copy", createInstance("child-copy", elementComponent)],
     ],
   });
 });

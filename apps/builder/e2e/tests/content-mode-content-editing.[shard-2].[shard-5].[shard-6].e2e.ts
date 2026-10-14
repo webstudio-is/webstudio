@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { deleteContentBlockChildAfterCanvasText } from "../flows/block-outline";
 import {
   openProjectBuilder,
@@ -28,6 +28,7 @@ import {
   expectContentModeTemplateActionsUnavailable,
   openPagesPanel,
 } from "../flows/pages-panel";
+import { selectNavigatorItem } from "../flows/navigator";
 import { waitForSyncStatus } from "../flows/sync-status";
 import { insertTemplateAfterCanvasText } from "../flows/template-insertion";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
@@ -276,6 +277,44 @@ test("Editor can edit text and content props but not design props", async ({
   });
   await waitForCanvasText({ page, text: "Initial link" });
   await waitForSyncStatus({ page, status: "idle" });
+  const canvas = await waitForCanvasFrame({ page });
+
+  await insertTemplateAfterCanvasText({
+    page,
+    anchorText: "Initial content",
+    templateName: fixture.styledHeadingTemplateName,
+  });
+  const styledTemplateHeading = canvas
+    .locator("h2")
+    .filter({ hasText: fixture.styledHeadingTemplateText });
+  await expect(styledTemplateHeading).toHaveCSS(
+    "font-size",
+    fixture.styledHeadingTemplateFontSize
+  );
+  const templateSvg = styledTemplateHeading.locator("xpath=..").locator("svg");
+  await expect(templateSvg).toHaveAttribute("viewBox", "0 0 24 24");
+  await expect(templateSvg).toHaveAttribute("width", "24");
+  await expect(templateSvg.locator("path")).toHaveAttribute(
+    "d",
+    "M12 2 2 22h20L12 2Z"
+  );
+  await expect(templateSvg.locator("path")).toHaveAttribute("fill", "#123456");
+
+  const protectedHeading = canvas
+    .locator("h2")
+    .filter({ hasText: fixture.inlineImageHeadingText });
+  const protectedImage = protectedHeading.getByRole("img", {
+    name: "Protected icon",
+  });
+  await expect(protectedImage).toHaveAttribute("width", "16");
+  await selectNavigatorItem({
+    page,
+    name: "Heading with protected image",
+  });
+  await page.keyboard.press("Enter");
+  await expect(canvas.locator("[contenteditable]")).toHaveCount(0);
+  await waitForSyncStatus({ page, status: "idle" });
+  await expect(protectedImage).toBeVisible();
 
   await insertTemplateAfterCanvasText({
     page,
@@ -300,6 +339,9 @@ test("Editor can edit text and content props but not design props", async ({
     page,
     alt: fixture.contentPropsTemplateImageAlt,
   });
+  await expect(
+    canvas.getByRole("img", { name: fixture.contentPropsTemplateImageAlt })
+  ).toHaveAttribute("width", "120");
   await waitForCanvasVideoSource({
     page,
     sourceName: fixture.contentPropsTemplateVideoName,
@@ -387,6 +429,28 @@ test("Editor can edit text and content props but not design props", async ({
   });
   await waitForCanvasText({ page, text: editedContent });
   await waitForSyncStatus({ page, status: "idle" });
+  const reloadedCanvas = await waitForCanvasFrame({ page });
+  const reloadedHeading = reloadedCanvas
+    .locator("h2")
+    .filter({ hasText: fixture.inlineImageHeadingText });
+  await expect(
+    reloadedHeading.getByRole("img", { name: "Protected icon" })
+  ).toBeVisible();
+  await expect(
+    reloadedCanvas
+      .locator("h2")
+      .filter({ hasText: fixture.styledHeadingTemplateText })
+  ).toHaveCSS("font-size", fixture.styledHeadingTemplateFontSize);
+  const reloadedTemplateSvg = reloadedCanvas
+    .locator("h2")
+    .filter({ hasText: fixture.styledHeadingTemplateText })
+    .locator("xpath=..")
+    .locator("svg");
+  await expect(reloadedTemplateSvg).toHaveAttribute("viewBox", "0 0 24 24");
+  await expect(reloadedTemplateSvg.locator("path")).toHaveAttribute(
+    "fill",
+    "#123456"
+  );
 
   await selectCanvasTextInstanceForProps({
     page,
@@ -417,6 +481,9 @@ test("Editor can edit text and content props but not design props", async ({
     value: editedImageAlt,
   });
   await expectTextHidden({ page, text: "Width" });
+  await expect(
+    reloadedCanvas.getByRole("img", { name: editedImageAlt })
+  ).toHaveAttribute("width", "120");
 
   await selectCanvasVideoSource({
     page,

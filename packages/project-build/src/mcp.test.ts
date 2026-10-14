@@ -2391,7 +2391,16 @@ describe("project session mcp adapter", () => {
     expect(altered).toMatchObject({
       structuredContent: {
         ok: false,
-        error: { code: "DESTRUCTIVE_CONFIRMATION_INVALID" },
+        error: {
+          code: "DESTRUCTIVE_CONFIRMATION_INVALID",
+          issues: [
+            {
+              code: "DESTRUCTIVE_CONFIRMATION_MISMATCH",
+              path: ["confirmationToken"],
+              constraint: "unchanged_destructive_plan",
+            },
+          ],
+        },
       },
     });
     expect(executeOperation).toHaveBeenCalledTimes(2);
@@ -5201,6 +5210,40 @@ describe("project session mcp adapter", () => {
       "workflow.next input.phase must be one of discovery, page-creation, dry-run-section, commit-section, coverage-batch, presentation-pass."
     );
     expect(session.initialize).not.toHaveBeenCalled();
+  });
+
+  test("gets metadata for a hidden required template child", async () => {
+    const session = createSession({
+      initialize: vi.fn(),
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(session),
+      executeOperation: createExecuteOperation(),
+    });
+
+    const details = await adapter.callTool({
+      name: "components.get",
+      input: { component: "VimeoPreviewImage" },
+    });
+    const listing = await adapter.callTool({
+      name: "components.list",
+      input: { source: "all" },
+    });
+
+    expect(details.structuredContent.data).toEqual(
+      expect.objectContaining({
+        found: true,
+        component: "VimeoPreviewImage",
+        standaloneInsertable: false,
+        contentModel: expect.objectContaining({ category: "none" }),
+      })
+    );
+    expect(JSON.stringify(listing.structuredContent.data)).not.toContain(
+      "VimeoPreviewImage"
+    );
   });
 
   test("exposes structured component discovery without full resource parsing", async () => {
