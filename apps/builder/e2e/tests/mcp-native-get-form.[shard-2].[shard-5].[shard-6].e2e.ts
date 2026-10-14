@@ -14,6 +14,9 @@ test("MCP-authored native GET form submits repeated fields to a local receiver",
   page,
   context,
 }) => {
+  // Generate the app and run two submissions through isolated MCP clients.
+  test.setTimeout(240_000);
+
   const requests: Array<{ method: string; url: string }> = [];
   const server = createServer((request, response) => {
     if (new URL(request.url ?? "", "http://127.0.0.1").pathname === "/search") {

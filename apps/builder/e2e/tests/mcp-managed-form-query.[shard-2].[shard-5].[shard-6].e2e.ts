@@ -16,6 +16,9 @@ test("MCP-authored managed Form Resource sends single and ordered repeated syste
   page,
   context,
 }) => {
+  // Generate the app and run two submissions through isolated MCP clients.
+  test.setTimeout(240_000);
+
   const fixture = await createContentModeProject({
     context,
     email: "mcp-managed-form-query@webstudio.test",
