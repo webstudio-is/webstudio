@@ -755,7 +755,10 @@ export const isRichTextTree = ({
       (child) => child.type === "text" || child.type === "expression"
     )
   ) {
-    return supportsRichTextContent;
+    return (
+      contentTags.has("img") === false &&
+      contentComponents.has("Image") === false
+    );
   }
   return (
     isRichText &&
