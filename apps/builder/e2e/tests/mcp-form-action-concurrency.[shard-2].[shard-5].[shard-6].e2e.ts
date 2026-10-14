@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { withGeneratedFormDeliveryPreview } from "../flows/generated-form-delivery";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -76,7 +77,6 @@ const startBarrierReceiver = async () => {
 };
 
 test("MCP-authored Form starts both selected Actions before either receiver responds", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -123,29 +123,37 @@ test("MCP-authored Form starts both selected Actions before either receiver resp
       projectId: fixture.projectId,
       receiverPort: receiver.port,
       callback: async ({ url }) => {
-        await page.route("**/*", (route) =>
-          new URL(route.request().url()).hostname === "127.0.0.1"
-            ? route.continue()
-            : route.abort()
-        );
-        await page.goto(url);
-        const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-        await form.locator('input[name="name"]').fill("Ada");
-        await form.locator('input[name="email"]').fill("ada@example.com");
-        await form.locator('input[name="subject"]').fill("Parallel Actions");
-        await form.locator('textarea[name="message"]').fill("Both receivers");
-        const responsePromise = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
-        );
-        await form.getByRole("button", { name: "Submit" }).click();
-        const response = await responsePromise;
-        const submission = await response.json();
+        const submission = (
+          await submitPreviewFormViaMcp({
+            url,
+            input: {
+              path: "/",
+              selector: `[data-ws-managed-form-id="${formId}"]`,
+              values: [
+                { name: "name", value: "Ada" },
+                { name: "email", value: "ada@example.com" },
+                { name: "subject", value: "Parallel Actions" },
+                { name: "message", value: "Both receivers" },
+              ],
+              submitter: "button[type=submit]",
+              timeout: 30_000,
+            },
+          })
+        ).data;
         expect(receiver.barrierReached).toBe(true);
-        expect(response.status()).toBe(200);
-        expect(submission.success).toBe(true);
-        expect(submission.errors).toEqual([]);
+        expect(submission).toMatchObject({
+          status: "submitted",
+          formState: "success",
+          errors: [],
+        });
+        expect(submission.exchanges).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              status: 200,
+              url: expect.stringContaining("/__ws-form"),
+            }),
+          ])
+        );
         expect(submission.results).toEqual([
           expect.objectContaining({
             resourceId: graphqlResourceId,
@@ -163,7 +171,6 @@ test("MCP-authored Form starts both selected Actions before either receiver resp
             body.includes('"subject":"Parallel Actions"')
           )
         ).toBe(true);
-        await expect(form).toHaveAttribute("data-state", "success");
       },
     });
   } finally {

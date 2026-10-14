@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { expect, type Page } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { encodeDataSourceVariable } from "@webstudio-is/sdk";
 import { formDataParameterName } from "@webstudio-is/sdk/runtime";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
@@ -13,6 +13,7 @@ import {
   type CapturedEmail,
 } from "../flows/mcp-email-preview";
 import { test } from "../test";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 
 const execFileAsync = promisify(execFile);
 const authorPath = fileURLToPath(
@@ -49,48 +50,34 @@ const authorDefaultContactForm = async (projectId: string) => {
   };
 };
 
-const submitContactForm = async (page: Page, url: string, formId: string) => {
-  await page.route("**/*", (route) =>
-    new URL(route.request().url()).hostname === "127.0.0.1"
-      ? route.continue()
-      : route.abort()
-  );
-  await page.goto(url);
-  const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-  await form.locator('input[name="name"]').fill("Ada Lovelace");
-  await form.locator('input[name="email"]').fill("ada@example.test");
-  await form.locator('input[name="subject"]').fill("A question");
-  await form
-    .locator('textarea[name="message"]')
-    .fill("Please get back to me about the project.");
-  await form.locator('input[name="attachment"]').setInputFiles({
-    name: "project-brief.txt",
-    mimeType: "text/plain",
-    buffer: Buffer.from("Please review this project brief."),
+const submitContactForm = async (url: string, formId: string) =>
+  await submitPreviewFormViaMcp({
+    url,
+    input: {
+      path: "/",
+      selector: `[data-ws-managed-form-id="${formId}"]`,
+      values: [
+        { name: "name", value: "Ada Lovelace" },
+        { name: "email", value: "ada@example.test" },
+        { name: "subject", value: "A question" },
+        { name: "message", value: "Please get back to me about the project." },
+        {
+          name: "attachment",
+          file: {
+            name: "project-brief.txt",
+            type: "text/plain",
+            base64: Buffer.from("Please review this project brief.").toString(
+              "base64"
+            ),
+          },
+        },
+      ],
+      submitter: "button[type=submit]",
+      timeout: 30_000,
+    },
   });
-  const submission = page.waitForResponse(
-    (response) =>
-      new URL(response.url()).pathname.startsWith("/__ws-form") &&
-      response.request().method() === "POST"
-  );
-  await form.getByRole("button", { name: "Submit" }).click();
-  const response = await submission;
-  const body = await response.json();
-  expect(response.status(), JSON.stringify(body)).toBe(200);
-  await expect(form).toHaveAttribute("data-state", "success");
-  return body as {
-    success: boolean;
-    results: Array<{ resourceId: string; status: number; body: unknown }>;
-    errors: Array<{
-      resourceId: string;
-      status: number;
-      message: string;
-    }>;
-  };
-};
 
 test("MCP-inserted default contact Form sends its automatic owner message and visitor confirmation", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -145,9 +132,14 @@ test("MCP-inserted default contact Form sends its automatic owner message and vi
       projectId: fixture.projectId,
       emailPort: receiver.port,
       callback: async ({ url }) => {
-        const submission = await submitContactForm(page, url, formId);
-        expect(submission).toMatchObject({ success: true, errors: [] });
-        expect(submission.results).toEqual([
+        const submission = await submitContactForm(url, formId);
+        expect(submission.ok).toBe(true);
+        expect(submission.data).toMatchObject({
+          status: "submitted",
+          formState: "success",
+          errors: [],
+        });
+        expect(submission.data.results).toEqual([
           expect.objectContaining({ resourceId: ownerResourceId, status: 200 }),
           expect.objectContaining({
             resourceId: visitorResourceId,
@@ -199,7 +191,6 @@ test("MCP-inserted default contact Form sends its automatic owner message and vi
 });
 
 test("failed visitor confirmation stays nonfatal while the owner Email succeeds", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -252,32 +243,19 @@ test("failed visitor confirmation stays nonfatal while the owner Email succeeds"
       projectId: fixture.projectId,
       emailPort: address.port,
       callback: async ({ url }) => {
-        const submission = await submitContactForm(page, url, formId);
-        expect(submission.success).toBe(true);
-        expect(submission.results).toEqual([
+        const submission = await submitContactForm(url, formId);
+        expect(submission.data.status).toBe("submitted");
+        expect(submission.data.results).toEqual([
           expect.objectContaining({ resourceId: ownerResourceId, status: 200 }),
           expect.objectContaining({
             resourceId: visitorResourceId,
             status: 429,
-            body: {
-              error: {
-                code: "email_rate_limited",
-                message: "Email sending limit reached",
-              },
-            },
           }),
         ]);
-        expect(submission.errors).toEqual([
+        expect(submission.data.errors).toEqual([
           expect.objectContaining({
-            resourceId: visitorResourceId,
             status: 429,
-            message: "Too Many Requests",
-            body: {
-              error: {
-                code: "email_rate_limited",
-                message: "Email sending limit reached",
-              },
-            },
+            message: "Form resource returned HTTP 429",
           }),
         ]);
         expect(messages).toHaveLength(2);

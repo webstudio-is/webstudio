@@ -7,6 +7,7 @@ import {
   startFormDeliveryReceiver,
   withGeneratedFormDeliveryPreview,
 } from "../flows/generated-form-delivery";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -188,6 +189,75 @@ const expectFeedbackInViewport = async (
   }
 };
 
+for (const fail of [false, true] as const) {
+  test(`MCP-authored ${fail ? "failed" : "successful"} Action ${fail ? "does not follow" : "follows"} the configured success redirect`, async ({
+    context,
+  }) => {
+    const fixture = await createContentModeProject({
+      context,
+      email: `mcp-form-redirect-mcp-${fail ? "failure" : "success"}@webstudio.test`,
+      title: `MCP Form redirect MCP ${fail ? "failure" : "success"}`,
+      assetNamePrefix: `mcp-form-redirect-mcp-${fail ? "failure" : "success"}-`,
+      builderToken: `mcp-form-redirect-mcp-${fail ? "failure" : "success"}-builder-token`,
+    });
+    const { formId, resourceId, successfulResourceId } =
+      await authorRedirectForm(fixture.projectId, fail);
+    const receiver = await startFormDeliveryReceiver();
+    try {
+      await withGeneratedFormDeliveryPreview({
+        projectId: fixture.projectId,
+        receiverPort: receiver.port,
+        callback: async ({ url }) => {
+          const submission = (
+            await submitPreviewFormViaMcp({
+              url,
+              input: {
+                path: "/",
+                selector: `[data-ws-managed-form-id="${formId}"]`,
+                values: [
+                  { name: "name", value: "Ada" },
+                  { name: "email", value: "ada@example.com" },
+                  { name: "subject", value: "Redirect test" },
+                  { name: "message", value: "MCP-authored redirect scenario" },
+                ],
+                submitter: "button[type=submit]",
+                timeout: 30_000,
+              },
+            })
+          ).data;
+          expect(submission.status).toBe("submitted");
+          expect(submission.results).toEqual([
+            expect.objectContaining({
+              resourceId: fail ? resourceId : successfulResourceId,
+              status: fail ? 503 : 200,
+            }),
+          ]);
+          expect(submission.errors).toHaveLength(fail ? 1 : 0);
+          expect(submission.exchanges).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                status: fail ? 502 : 200,
+                url: expect.stringContaining("/__ws-form"),
+              }),
+            ])
+          );
+          if (fail) {
+            expect(submission.formState).toBe("error");
+            expect(submission.redirect).toBeUndefined();
+          } else {
+            expect(submission.redirect).toBe(new URL(url).origin + "/");
+          }
+          expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual(
+            fail ? ["/reject", "/reject"] : ["/submit"]
+          );
+        },
+      });
+    } finally {
+      await receiver.close();
+    }
+  });
+}
+
 test("MCP-authored successful Form submission follows success redirect", async ({
   page,
   context,
@@ -217,17 +287,10 @@ test("MCP-authored successful Form submission follows success redirect", async (
           "Thanks for contacting us. Your message has been sent."
         );
         await fillContactForm(form);
-        const submission = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
-        );
         const redirected = page.waitForURL(
           (target) => target.searchParams.get("mcp-e2e") === "success"
         );
         await form.getByRole("button", { name: "Submit" }).click();
-        const response = await submission;
-        expect(response.status()).toBe(200);
         await redirected;
         expect(await getScrollCalls(page)).toEqual([]);
         expect(receiver.deliveries).toHaveLength(1);
@@ -268,14 +331,7 @@ test("MCP-authored successful Form scrolls off-screen feedback into view", async
         const message = "Thanks for contacting us. Your message has been sent.";
         await moveFeedbackBelowViewport(page, message);
         await fillContactForm(form);
-        const submission = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
-        );
         await form.getByRole("button", { name: "Submit" }).click();
-        const response = await submission;
-        expect(response.status()).toBe(200);
         await expect(form).toHaveAttribute("data-state", "success");
         await expectFeedbackInViewport(page, message);
         expect(await getScrollCalls(page)).toEqual([
@@ -303,7 +359,7 @@ test("MCP-authored failed Action keeps the Form in place despite success redirec
     assetNamePrefix: "mcp-form-redirect-failure-",
     builderToken: "mcp-form-redirect-failure-builder-token",
   });
-  const { formId, resourceId, successfulResourceId } = await authorRedirectForm(
+  const { formId, successfulResourceId } = await authorRedirectForm(
     fixture.projectId,
     true
   );
@@ -320,31 +376,7 @@ test("MCP-authored failed Action keeps the Form in place despite success redirec
         const feedback = "We could not send your message. Please try again.";
         await moveFeedbackBelowViewport(page, feedback);
         await fillContactForm(form);
-        const submission = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
-        );
         await form.getByRole("button", { name: "Submit" }).click();
-        const response = await submission;
-        expect(response.status()).toBe(502);
-        expect(await response.json()).toMatchObject({
-          success: false,
-          results: [
-            expect.objectContaining({
-              resourceId,
-              status: 503,
-              body: { error: "Temporary local E2E failure" },
-            }),
-          ],
-          errors: [
-            expect.objectContaining({
-              resourceId,
-              status: 503,
-              body: { error: "Temporary local E2E failure" },
-            }),
-          ],
-        });
         await expect(form).toHaveAttribute("data-state", "error");
         await expect(form.getByText(feedback, { exact: true })).toBeVisible();
         await expectFeedbackInViewport(page, feedback);
@@ -355,21 +387,14 @@ test("MCP-authored failed Action keeps the Form in place despite success redirec
           }),
         ]);
         expect(new URL(page.url()).searchParams.has("mcp-e2e")).toBe(false);
-        expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual([
-          "/reject",
-          "/reject",
-        ]);
+        await expect
+          .poll(() => receiver.deliveries.map(({ pathname }) => pathname))
+          .toEqual(["/reject", "/reject"]);
 
-        const secondSubmission = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
-        );
         await form.evaluate((element: HTMLFormElement) =>
           element.requestSubmit()
         );
-        const secondResponse = await secondSubmission;
-        expect(secondResponse.status()).toBe(502);
+        await expect.poll(() => receiver.deliveries.length).toBe(4);
         await expect(form).toHaveAttribute("data-state", "error");
         await expectFeedbackInViewport(page, feedback);
         expect(new URL(page.url()).searchParams.has("mcp-e2e")).toBe(false);

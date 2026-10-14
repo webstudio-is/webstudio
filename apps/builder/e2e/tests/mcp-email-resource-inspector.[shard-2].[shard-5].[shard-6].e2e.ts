@@ -68,8 +68,8 @@ test("MCP Email inspector loads Request without sending and shows the captured s
   expect(ownerResourceId).toBeDefined();
   expect(emailResourceIds).toContain(ownerResourceId);
 
-  // The only submission response in this test is a local browser mock. No
-  // Builder request reaches an Email Service, including after Form submission.
+  // The Builder inspection store lives in this browser session. Keep this
+  // local UI mock to verify its Request and Response tabs.
   let submissions = 0;
   let resourceLoads = 0;
   await page.route(

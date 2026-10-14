@@ -23,6 +23,7 @@ import {
   type BrowserScreenshotLayout,
   type BrowserScreenshotNavigation,
   type BrowserScreenshotOptions,
+  type BrowserFormSubmitOptions,
 } from "@webstudio-is/vision/browser";
 
 const webstudioPageInstrumentation = {
@@ -975,6 +976,23 @@ export const createScreenshotCaptureSession = (
     });
   };
   return {
+    async submitForm(
+      options: BrowserFormSubmitOptions &
+        Pick<CaptureScreenshotOptions, "browser" | "browserPath">
+    ) {
+      const { session } = await getReadyBrowser({
+        url: options.url,
+        browser: options.browser,
+        browserPath: options.browserPath,
+        width: 1280,
+        height: 800,
+        timeout: options.timeout,
+      });
+      if (session.submitForm === undefined) {
+        throw new Error("Browser form submission is unavailable.");
+      }
+      return await session.submitForm(options);
+    },
     async capture(options: CaptureScreenshotOptions) {
       const { browser, session } = await getReadyBrowser(options);
       return await captureResolvedScreenshot(

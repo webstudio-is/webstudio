@@ -7,6 +7,7 @@ import {
   startFormDeliveryReceiver,
   withGeneratedFormDeliveryPreview,
 } from "../flows/generated-form-delivery";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -49,7 +50,10 @@ test("MCP-authored managed Form Resource sends single and ordered repeated syste
       },
     }
   );
-  const { formId } = JSON.parse(stdout) as { formId: string };
+  const { formId, resourceId } = JSON.parse(stdout) as {
+    formId: string;
+    resourceId: string;
+  };
   const receiver = await startFormDeliveryReceiver();
   try {
     await withGeneratedFormDeliveryPreview({
@@ -94,19 +98,40 @@ test("MCP-authored managed Form Resource sends single and ordered repeated syste
               )
             )
             .toBe(documentMarker);
-          await form.locator('input[name="name"]').fill("Ada");
-          await form.locator('input[name="email"]').fill("ada@example.com");
-          await form.locator('input[name="subject"]').fill("Query shape");
-          await form.locator('textarea[name="message"]').fill("Hello");
-          const responsePromise = page.waitForResponse(
-            (response) =>
-              new URL(response.url()).pathname.startsWith("/__ws-form") &&
-              response.request().method() === "POST"
+          const submission = (
+            await submitPreviewFormViaMcp({
+              url,
+              input: {
+                path: scenario.path,
+                selector: `[data-ws-managed-form-id="${formId}"]`,
+                values: [
+                  { name: "name", value: "Ada" },
+                  { name: "email", value: "ada@example.com" },
+                  { name: "subject", value: "Query shape" },
+                  { name: "message", value: "Hello" },
+                ],
+                submitter: "button[type=submit]",
+                timeout: 30_000,
+              },
+            })
+          ).data;
+          expect(submission).toMatchObject({
+            status: "submitted",
+            formState: "success",
+            errors: [],
+          });
+          expect(submission.pageUrl).toBe(new URL("/form-query", url).href);
+          expect(submission.results).toEqual([
+            expect.objectContaining({ resourceId, status: 200 }),
+          ]);
+          expect(submission.exchanges).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                status: 200,
+                url: expect.stringContaining("/__ws-form"),
+              }),
+            ])
           );
-          await form.getByRole("button", { name: "Submit" }).click();
-          const response = await responsePromise;
-          expect(response.status()).toBe(200);
-          await expect(form).toHaveAttribute("data-state", "success");
           const delivery = receiver.deliveries.at(-1);
           expect(delivery).toMatchObject({
             pathname: "/submit",

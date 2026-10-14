@@ -6,12 +6,12 @@ import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { startFormDeliveryReceiver } from "../flows/generated-form-delivery";
 import { startLocalEmailReceiver } from "../flows/mcp-email-preview";
 import { withMcpEmailHttpPreview } from "../flows/mcp-email-http-preview";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
 
 test("MCP-authored Form delivers Email and HTTP Actions in configured result order", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -65,30 +65,28 @@ test("MCP-authored Form delivers Email and HTTP Actions in configured result ord
       emailPort: emailReceiver.port,
       httpPort: httpReceiver.port,
       callback: async ({ url }) => {
-        await page.route("**/*", (route) =>
-          new URL(route.request().url()).hostname === "127.0.0.1"
-            ? route.continue()
-            : route.abort()
-        );
-        await page.goto(url);
-        const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-        await form.locator('input[name="name"]').fill("Ada Lovelace");
-        await form.locator('input[name="email"]').fill("ada@example.test");
-        await form.locator('input[name="subject"]').fill("Combined delivery");
-        await form
-          .locator('textarea[name="message"]')
-          .fill("One Form, two Actions");
-        const submissionPromise = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
-        );
-        await form.getByRole("button", { name: "Submit" }).click();
-        const response = await submissionPromise;
-        const submission = await response.json();
-        expect(response.status(), JSON.stringify(submission)).toBe(200);
-        expect(submission).toMatchObject({ success: true, errors: [] });
-        expect(submission.results).toEqual([
+        const submission = await submitPreviewFormViaMcp({
+          url,
+          input: {
+            path: "/",
+            selector: `[data-ws-managed-form-id="${formId}"]`,
+            values: [
+              { name: "name", value: "Ada Lovelace" },
+              { name: "email", value: "ada@example.test" },
+              { name: "subject", value: "Combined delivery" },
+              { name: "message", value: "One Form, two Actions" },
+            ],
+            submitter: "button[type=submit]",
+            timeout: 30_000,
+          },
+        });
+        expect(submission.ok).toBe(true);
+        expect(submission.data).toMatchObject({
+          status: "submitted",
+          formState: "success",
+          errors: [],
+        });
+        expect(submission.data.results).toEqual([
           expect.objectContaining({
             resourceId: emailResourceId,
             resourceName: "Email to owner",
@@ -100,7 +98,14 @@ test("MCP-authored Form delivers Email and HTTP Actions in configured result ord
             status: 200,
           }),
         ]);
-        await expect(form).toHaveAttribute("data-state", "success");
+        expect(submission.data.exchanges).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              status: 200,
+              url: expect.stringContaining("/__ws-form"),
+            }),
+          ])
+        );
 
         expect(emailReceiver.messages).toHaveLength(1);
         expect(emailReceiver.messages[0]?.to).toEqual([

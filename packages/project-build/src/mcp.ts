@@ -269,6 +269,37 @@ export type ProjectSessionPreviewStatusResult = {
   mode?: ProjectSessionPreviewMode;
 };
 
+export type ProjectSessionPreviewSubmitFormInput = {
+  path: string;
+  selector: string;
+  values: readonly {
+    name: string;
+    value?: string;
+    file?: { name: string; base64: string; type?: string };
+  }[];
+  submitter?: string;
+  timeout?: number;
+};
+
+export type ProjectSessionPreviewSubmitFormResult = {
+  status: "validation_failed" | "submitted" | "unknown";
+  formState?: string;
+  results: readonly {
+    status: number;
+    resourceId?: string;
+    resourceName?: string;
+  }[];
+  errors: readonly { status?: number; name?: string; message: string }[];
+  exchanges: readonly { status: number; url: string }[];
+  pageUrl: string;
+  redirect?: string;
+  correlationId: string;
+};
+
+type SubmitPreviewForm = (
+  input: ProjectSessionPreviewSubmitFormInput
+) => Promise<ProjectSessionPreviewSubmitFormResult>;
+
 type StartPreview = (
   input: ProjectSessionPreviewInput,
   progress?: McpToolProgress
@@ -1054,7 +1085,11 @@ export const getMcpTextAssetDescriptorIssues = ({
       issues.push({
         path: [...assetPath, "format"],
         code: "asset_filename_format_mismatch",
-        message: `Asset filename and format must match. ${JSON.stringify(name)} has extension ${JSON.stringify(filenameFormat ?? "(none)")} but format is ${JSON.stringify(declaredFormat)}.`,
+        message: `Asset filename and format must match. ${JSON.stringify(
+          name
+        )} has extension ${JSON.stringify(
+          filenameFormat ?? "(none)"
+        )} but format is ${JSON.stringify(declaredFormat)}.`,
         constraint: "asset_filename_format_mismatch",
       });
     }
@@ -1066,7 +1101,9 @@ export const getMcpTextAssetDescriptorIssues = ({
       issues.push({
         path: [...assetPath, "type"],
         code: "markdown_asset_type_mismatch",
-        message: `Markdown and MDX Assets must use type "file", not ${JSON.stringify(asset.type)}.`,
+        message: `Markdown and MDX Assets must use type "file", not ${JSON.stringify(
+          asset.type
+        )}.`,
         constraint: "markdown_asset_type_mismatch",
       });
     }
@@ -1278,7 +1315,9 @@ const collectInputSchemaIssues = ({
     return [
       issue({
         code: "invalid_value",
-        message: `must be one of ${schema.enum.map((value) => JSON.stringify(value)).join(", ")}.`,
+        message: `must be one of ${schema.enum
+          .map((value) => JSON.stringify(value))
+          .join(", ")}.`,
         constraint: "enum",
         example: schema.enum[0],
       }),
@@ -1363,7 +1402,9 @@ const collectInputSchemaIssues = ({
       issues.push({
         code: "invalid_type",
         path: [...path, requiredField],
-        message: `${command} ${["input", ...path, requiredField].join(".")} is required.`,
+        message: `${command} ${["input", ...path, requiredField].join(
+          "."
+        )} is required.`,
         constraint: "required",
       });
     }
@@ -2115,6 +2156,54 @@ const previewInputSchema = {
   },
 } as const satisfies ProjectSessionMcpInputSchema;
 
+const previewSubmitFormInputSchema = {
+  type: "object",
+  properties: {
+    path: {
+      type: "string",
+      description:
+        "Path on this session's local Preview, for example /contact.",
+    },
+    selector: {
+      type: "string",
+      description: "CSS selector identifying the rendered form.",
+    },
+    values: {
+      type: "array",
+      maxItems: 100,
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          value: { type: "string" },
+          file: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              base64: {
+                type: "string",
+                description: "Base64 file bytes, at most 1 MiB.",
+              },
+              type: { type: "string" },
+            },
+            required: ["name", "base64"],
+            additionalProperties: false,
+          },
+        },
+        required: ["name"],
+        additionalProperties: false,
+      },
+    },
+    submitter: {
+      type: "string",
+      description: "Optional CSS selector for the submit button.",
+    },
+    timeout: { type: "integer", minimum: 1, maximum: 60000 },
+  },
+  required: ["path", "selector", "values"],
+  additionalProperties: false,
+} as const satisfies ProjectSessionMcpInputSchema;
+
 const importInputSchema = {
   ...emptyInputSchema,
   description:
@@ -2339,6 +2428,13 @@ export const mcpArgumentExamples: Record<
     { assetId: "asset-id", folderId: "target-folder-id" },
   ],
   "preview.start": [{ source: "session" }],
+  "preview.submit-form": [
+    {
+      path: "/contact",
+      selector: "form",
+      values: [{ name: "email", value: "me@example.com" }],
+    },
+  ],
   "preview.status": [{}],
   "preview.stop": [{}],
   status: [{}, { verbose: true }],
@@ -3042,6 +3138,67 @@ const previewDataSchema = {
     },
   },
   required: ["running", "mode"],
+} as const satisfies InputJsonSchema;
+
+const previewSubmitFormDataSchema = {
+  type: "object",
+  properties: {
+    status: {
+      type: "string",
+      enum: ["validation_failed", "submitted", "unknown"],
+    },
+    formState: { type: "string" },
+    results: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          status: { type: "integer" },
+          resourceId: { type: "string" },
+          resourceName: { type: "string" },
+        },
+        required: ["status"],
+        additionalProperties: false,
+      },
+    },
+    errors: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          status: { type: "integer" },
+          name: { type: "string" },
+          message: { type: "string" },
+        },
+        required: ["message"],
+        additionalProperties: false,
+      },
+    },
+    exchanges: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          status: { type: "integer" },
+          url: { type: "string" },
+        },
+        required: ["status", "url"],
+        additionalProperties: false,
+      },
+    },
+    pageUrl: { type: "string" },
+    redirect: { type: "string" },
+    correlationId: { type: "string" },
+  },
+  required: [
+    "status",
+    "results",
+    "errors",
+    "exchanges",
+    "pageUrl",
+    "correlationId",
+  ],
+  additionalProperties: false,
 } as const satisfies InputJsonSchema;
 
 const restorePointSummaryDataSchema = getZodObjectSchema(
@@ -3899,6 +4056,26 @@ const downloadAssetTool = createProjectSessionMcpTool({
 
 const previewTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
+    name: "preview.submit-form",
+    description:
+      "Submit a rendered form in this session's local Preview browser. Native validation runs before dispatch. Unknown outcomes are never retried; inspect the correlationId before deciding what to do next.",
+    inputSchema: previewSubmitFormInputSchema,
+    outputSchema: getMcpOutputSchema(previewSubmitFormDataSchema),
+    mcpExamples: getMcpExamples("preview.submit-form"),
+    annotations: {
+      command: "preview.submit-form",
+      operationId: "preview.submit-form",
+      method: "session",
+      permit: "api",
+      localCapable: false,
+      serverOnly: true,
+      readNamespaces: [],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
     name: "preview.start",
     description:
       "Start or refresh a generated-site preview. The iterative default keeps the server and browser alive and normally reloads the generated route after each MCP edit; production mode performs the full build used by audits.",
@@ -4064,6 +4241,7 @@ export const listProjectSessionMcpTools = (
     includeScreenshotDiff?: boolean;
     includeInstallOcr?: boolean;
     includePreview?: boolean;
+    includePreviewSubmitForm?: boolean;
     includeRestorePoints?: boolean;
   } = {}
 ): ProjectSessionMcpTool[] => [
@@ -4142,7 +4320,13 @@ export const listProjectSessionMcpTools = (
     : []),
   ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
   ...(options.includeInstallOcr ? [installOcrTool] : []),
-  ...(options.includePreview ? previewTools : []),
+  ...(options.includePreview
+    ? previewTools.filter(
+        (tool) =>
+          tool.name !== "preview.submit-form" ||
+          options.includePreviewSubmitForm === true
+      )
+    : []),
 ];
 
 const toMetaResult = (data: unknown): ProjectSessionMcpToolResult => {
@@ -4387,7 +4571,9 @@ const getOptionalStringInput = (
   const value = input[field];
   if (typeof value !== "string") {
     throw new Error(
-      `${toolName} input.${field} must be a string when provided. Received ${Array.isArray(value) ? "array" : typeof value}.`
+      `${toolName} input.${field} must be a string when provided. Received ${
+        Array.isArray(value) ? "array" : typeof value
+      }.`
     );
   }
   return value;
@@ -4419,7 +4605,9 @@ const getOptionalBooleanInput = (
   const value = input[field];
   if (typeof value !== "boolean") {
     throw new Error(
-      `${toolName} input.${field} must be a boolean when provided. Received ${Array.isArray(value) ? "array" : typeof value}.`
+      `${toolName} input.${field} must be a boolean when provided. Received ${
+        Array.isArray(value) ? "array" : typeof value
+      }.`
     );
   }
   return value;
@@ -4438,7 +4626,9 @@ const getMetaGuideInput = (input: unknown) => {
     getOptionalStringInput(input, "workflow", "meta.guide") || "general";
   if (metaGuideWorkflows.includes(workflow as MetaGuideWorkflow) === false) {
     throw new Error(
-      `meta.guide input.workflow must be one of ${metaGuideWorkflows.join(", ")}.`
+      `meta.guide input.workflow must be one of ${metaGuideWorkflows.join(
+        ", "
+      )}.`
     );
   }
   return {
@@ -4730,7 +4920,9 @@ const getOptionalNumberInput = (
   const value = input[field];
   if (typeof value !== "number" || Number.isFinite(value) === false) {
     throw new Error(
-      `${toolName} input.${field} must be a finite number when provided. Received ${Array.isArray(value) ? "array" : typeof value}.`
+      `${toolName} input.${field} must be a finite number when provided. Received ${
+        Array.isArray(value) ? "array" : typeof value
+      }.`
     );
   }
   return value;
@@ -4770,7 +4962,9 @@ const getCoveragePlanInput = (input: unknown) => {
     coveragePlanDetailValues.includes(detail as CoveragePlanDetail) === false
   ) {
     throw new Error(
-      `components.coverage-plan input.detail must be one of ${coveragePlanDetailValues.join(", ")}.`
+      `components.coverage-plan input.detail must be one of ${coveragePlanDetailValues.join(
+        ", "
+      )}.`
     );
   }
   const documentType =
@@ -4782,7 +4976,9 @@ const getCoveragePlanInput = (input: unknown) => {
     ) === false
   ) {
     throw new Error(
-      `components.coverage-plan input.documentType must be one of ${coveragePlanDocumentTypes.join(", ")}.`
+      `components.coverage-plan input.documentType must be one of ${coveragePlanDocumentTypes.join(
+        ", "
+      )}.`
     );
   }
   const { offset, limit } = getOffsetPaginationInput({
@@ -4817,7 +5013,9 @@ const getCoverageStatusInput = (input: unknown) => {
     ) === false
   ) {
     throw new Error(
-      `components.coverage-status input.documentType must be one of ${coveragePlanDocumentTypes.join(", ")}.`
+      `components.coverage-status input.documentType must be one of ${coveragePlanDocumentTypes.join(
+        ", "
+      )}.`
     );
   }
   const pageId = getOptionalStringInput(
@@ -6395,7 +6593,9 @@ const getMetaIndex = (
         "Do not call every discovery tool up front. Use this meta.index response for orientation, then call at most one focused discovery tool before acting.",
       tools:
         'Use meta.get-more-tools({"tools":["insert-fragment"]}) for the primary authored/styled insertion tool. Use {"brief":"style updates"} only for search. Page through webstudio://project/tools only when broader operation discovery is necessary.',
-      insertFragment: `Primary authored/styled insertion command shape: save ${JSON.stringify(insertFragmentInputFileExample)} as ${insertFragmentInputFilePath}, then run node packages/cli/local.js insert-fragment --input-file ${insertFragmentInputFilePath} --dry-run. Use parentInstanceId, not parentId. Use lowercase HTML elements, direct registered component identifiers, and helpers such as css, token, expression, and ActionValue. Use ws:style={css\`...\`} for Webstudio-native CSS, or style={{ padding: 24 }} for React-style object syntax converted into editable Webstudio styles. Use node packages/cli/local.js mcp single-op-call insert-fragment only when you need the explicit MCP form.`,
+      insertFragment: `Primary authored/styled insertion command shape: save ${JSON.stringify(
+        insertFragmentInputFileExample
+      )} as ${insertFragmentInputFilePath}, then run node packages/cli/local.js insert-fragment --input-file ${insertFragmentInputFilePath} --dry-run. Use parentInstanceId, not parentId. Use lowercase HTML elements, direct registered component identifiers, and helpers such as css, token, expression, and ActionValue. Use ws:style={css\`...\`} for Webstudio-native CSS, or style={{ padding: 24 }} for React-style object syntax converted into editable Webstudio styles. Use node packages/cli/local.js mcp single-op-call insert-fragment only when you need the explicit MCP form.`,
       resources:
         "Use MCP resources/list to discover overview and full resources.",
       projectSearch:
@@ -7197,7 +7397,9 @@ const getWorkflowInput = (input: unknown) => {
     workflowPhaseNames.includes(phase as WorkflowPhaseName) === false
   ) {
     throw new Error(
-      `workflow.next input.phase must be one of ${workflowPhaseNames.join(", ")}.`
+      `workflow.next input.phase must be one of ${workflowPhaseNames.join(
+        ", "
+      )}.`
     );
   }
   return { goal, phase: phase as WorkflowPhaseName };
@@ -8310,6 +8512,41 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
   };
 };
 
+const getPreviewSubmitFormInput = (
+  input: unknown
+): ProjectSessionPreviewSubmitFormInput =>
+  z
+    .object({
+      path: z.string().min(1),
+      selector: z.string().min(1).max(500),
+      values: z
+        .array(
+          z
+            .object({
+              name: z.string().min(1),
+              value: z.string().optional(),
+              file: z
+                .object({
+                  name: z.string().min(1),
+                  base64: z.string().max(1_400_000),
+                  type: z.string().optional(),
+                })
+                .strict()
+                .optional(),
+            })
+            .strict()
+            .refine(
+              (value) =>
+                (value.value === undefined) !== (value.file === undefined)
+            )
+        )
+        .max(100),
+      submitter: z.string().min(1).max(500).optional(),
+      timeout: z.number().int().min(1).max(60_000).optional(),
+    })
+    .strict()
+    .parse(input);
+
 const slowOperationConfirmationTtlMs = 5 * 60 * 1000;
 
 const getProductionPreviewPreflight = async (input: unknown) => {
@@ -8407,6 +8644,7 @@ type ProjectSessionMcpCoreOptions<Command extends string> = {
   diffScreenshots?: DiffScreenshots;
   installOcr?: InstallOcr;
   startPreview?: StartPreview;
+  submitPreviewForm?: SubmitPreviewForm;
   getPreviewStatus?: GetPreviewStatus;
   stopPreview?: StopPreview;
   guidance?: ProjectSessionMcpGuidance;
@@ -8441,6 +8679,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   diffScreenshots,
   installOcr,
   startPreview,
+  submitPreviewForm,
   getPreviewStatus,
   stopPreview,
   guidance,
@@ -8470,6 +8709,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
     includeInstallOcr: installOcr !== undefined,
     includePreview:
       startPreview !== undefined && getPreviewStatus !== undefined,
+    includePreviewSubmitForm: submitPreviewForm !== undefined,
     includeRestorePoints: restorePoints !== undefined,
   });
   const listTools = () => [...tools];
@@ -9040,6 +9280,11 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           })
         );
       }
+      if (name === "preview.submit-form" && submitPreviewForm !== undefined) {
+        return toMetaResult(
+          await submitPreviewForm(getPreviewSubmitFormInput(input))
+        );
+      }
       if (name === "preview.status" && getPreviewStatus !== undefined) {
         return toMetaResult(await getPreviewStatus());
       }
@@ -9514,6 +9759,7 @@ export const createProjectSessionMcpServer = async <
   diffScreenshots,
   installOcr,
   startPreview,
+  submitPreviewForm,
   getPreviewStatus,
   stopPreview,
   guidance,
@@ -9558,11 +9804,19 @@ export const createProjectSessionMcpServer = async <
   );
   const sendLog = (level: "info" | "error", data: string) => {
     reportLog?.(level, data);
-    void server.sendLoggingMessage({
-      level,
-      logger: "webstudio",
-      data,
-    } satisfies (typeof LoggingMessageNotificationSchema._output)["params"]);
+    void server
+      .sendLoggingMessage({
+        level,
+        logger: "webstudio",
+        data,
+      } satisfies (typeof LoggingMessageNotificationSchema._output)["params"])
+      .catch(() => {
+        // Heartbeats can finish after the client disconnects. A logging
+        // notification is best effort and must not crash the MCP server.
+        if (server.transport !== undefined) {
+          reportLog?.("error", "MCP logging notification failed");
+        }
+      });
   };
   const core = createProjectSessionMcpCore({
     operations,
@@ -9574,6 +9828,7 @@ export const createProjectSessionMcpServer = async <
     diffScreenshots,
     installOcr,
     startPreview,
+    submitPreviewForm,
     getPreviewStatus,
     stopPreview,
     guidance,
@@ -9602,7 +9857,9 @@ export const createProjectSessionMcpServer = async <
         continue;
       }
       throw new Error(
-        `MCP tool names ${canonicalNames.join(" and ")} both map to ${exposedName}.`
+        `MCP tool names ${canonicalNames.join(
+          " and "
+        )} both map to ${exposedName}.`
       );
     }
   }
@@ -9610,7 +9867,9 @@ export const createProjectSessionMcpServer = async <
     onInitialized?.(server.getClientVersion()?.name);
     sendLog(
       "info",
-      `ready with ${core.listTools().length} tools; use tools/list, meta.index, or webstudio://project/guide`
+      `ready with ${
+        core.listTools().length
+      } tools; use tools/list, meta.index, or webstudio://project/guide`
     );
   };
 

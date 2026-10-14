@@ -20,6 +20,7 @@ import {
   highImpactFixtures,
   markdownBlogFixture,
   markdownReferencesDiscoveryFixture,
+  managedFormRuntimeFixture,
   mdxArticleFixture,
   type HighImpactFixture,
 } from "./fixtures";
@@ -37,6 +38,7 @@ import type { EvaluationToolCall } from "./validate";
 import type { McpCatalogObservation } from "./evaluation-metrics";
 import { writeFontAssetFixtureFiles } from "./font-assets-fixture";
 import { writeMarkdownBlogFixtureFiles } from "./markdown-blog-fixture";
+import { startFormRuntimeReceiver } from "./form-runtime-receiver";
 import {
   createCliProjectSessionStorage,
   getCliProjectSessionFile,
@@ -200,6 +202,11 @@ const runFixture = async ({
   const tracePath = join(directory, "mcp-calls.jsonl");
   const traceProxy = join(import.meta.dirname, "mcp-trace-proxy.ts");
   const fixtureApi = await startHighImpactFixtureApi(fixture);
+  const receiver =
+    fixture.id === managedFormRuntimeFixture.id
+      ? await startFormRuntimeReceiver()
+      : undefined;
+  let failed = false;
   await mkdir(projectDirectory, { recursive: true });
   if (fixture.id === fontAssetsFixture.id) {
     await writeFontAssetFixtureFiles(projectDirectory);
@@ -209,7 +216,13 @@ const runFixture = async ({
   ) {
     await writeMarkdownBlogFixtureFiles(projectDirectory);
   }
-  const env = { ...process.env, WEBSTUDIO_CONFIG_DIR: configDirectory };
+  const env = {
+    ...process.env,
+    WEBSTUDIO_CONFIG_DIR: configDirectory,
+    ...(receiver === undefined
+      ? {}
+      : { WEBSTUDIO_FORM_EVALUATION_RECEIVER_PORT: String(receiver.port) }),
+  };
   try {
     await execFileAsync(
       process.execPath,
@@ -222,9 +235,11 @@ const runFixture = async ({
         getMcpProxyArgs(traceProxy, localCli, tracePath)
       )}`,
       `mcp_servers.webstudio.cwd=${JSON.stringify(projectDirectory)}`,
-      `mcp_servers.webstudio.env={ WEBSTUDIO_CONFIG_DIR = ${JSON.stringify(
-        configDirectory
-      )} }`,
+      `mcp_servers.webstudio.env={ WEBSTUDIO_CONFIG_DIR = ${JSON.stringify(configDirectory)}${
+        receiver === undefined
+          ? ""
+          : `, WEBSTUDIO_FORM_EVALUATION_RECEIVER_PORT = ${JSON.stringify(String(receiver.port))}`
+      } }`,
       `mcp_servers.webstudio.enabled_tools=${JSON.stringify(
         getFixtureToolNames(fixture)
       )}`,
@@ -255,7 +270,7 @@ const runFixture = async ({
         .split("\n")
         .filter(Boolean)
         .map((line) => JSON.parse(line) as EvaluationTraceEvent);
-    return await runHighImpactAgentEvaluation({
+    const result = await runHighImpactAgentEvaluation({
       fixture,
       target,
       agentCommand,
@@ -280,6 +295,9 @@ const runFixture = async ({
           fixture,
           project: fixtureApi.getProject(),
           toolCalls,
+          ...(receiver === undefined
+            ? {}
+            : { formRuntimeDeliveries: [...receiver.deliveries] }),
           artifacts: await collectHighImpactArtifacts(projectDirectory),
           ...(fixture.id === mdxArticleFixture.id
             ? {
@@ -298,9 +316,47 @@ const runFixture = async ({
         });
       },
     });
+    failed = result.outcome !== "passed";
+    if (failed) {
+      process.stderr.write(
+        `Evaluation checks failed: ${Object.entries(result.checks)
+          .filter(([, status]) => status === "failed")
+          .map(([name]) => name)
+          .join(", ")}\n`
+      );
+      if (receiver !== undefined) {
+        process.stderr.write(
+          `Form receiver outcomes: ${JSON.stringify(receiver.deliveries)}\n`
+        );
+      }
+    }
+    return result;
+  } catch (error) {
+    failed = true;
+    // The trace contains bounded tool names and outcomes, never submitted values.
+    const events = (await readFile(tracePath, "utf8").catch(() => ""))
+      .split("\n")
+      .filter(Boolean);
+    const recent = events.slice(-20).flatMap((line) => {
+      try {
+        const event = JSON.parse(line) as EvaluationTraceEvent;
+        return [
+          isCatalogObservation(event)
+            ? "tools-list"
+            : `${event.name}${event.isError ? ":error" : ""}${event.formState ? `:${event.formState}` : ""}`,
+        ];
+      } catch {
+        return ["invalid-trace-event"];
+      }
+    });
+    process.stderr.write(
+      `Evaluation failed after ${events.length} MCP trace events; recent: ${recent.join(", ") || "none"}\n`
+    );
+    throw error;
   } finally {
+    await receiver?.close();
     await fixtureApi.close();
-    if (process.env.WEBSTUDIO_HIGH_IMPACT_KEEP_WORKSPACE === "1") {
+    if (failed || process.env.WEBSTUDIO_HIGH_IMPACT_KEEP_WORKSPACE === "1") {
       process.stderr.write(`Preserved evaluation workspace: ${directory}\n`);
     } else {
       await rm(directory, { recursive: true, force: true });

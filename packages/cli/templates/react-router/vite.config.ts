@@ -1,4 +1,6 @@
-import { defineConfig } from "vite";
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 import { reactRouter } from "@react-router/dev/vite";
 
 const sourceConditions =
@@ -10,6 +12,16 @@ export default defineConfig({
   plugins: [reactRouter()],
   server: {
     hmr: process.env.WEBSTUDIO_PREVIEW_HMR === "disabled" ? false : undefined,
+    // The local CLI links node_modules from its source workspace. Vite must
+    // serve React Router's client entry from that workspace to hydrate Preview.
+    fs: {
+      allow: [
+        fileURLToPath(new URL(".", import.meta.url)),
+        searchForWorkspaceRoot(
+          realpathSync(new URL("./node_modules", import.meta.url))
+        ),
+      ],
+    },
   },
   resolve: {
     conditions: [

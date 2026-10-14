@@ -7,12 +7,12 @@ import {
   startFormDeliveryReceiver,
   withGeneratedFormDeliveryPreview,
 } from "../flows/generated-form-delivery";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
 
 test("MCP-authored Form dispatches enabled HTTP and GraphQL Actions in configured result order", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -66,28 +66,36 @@ test("MCP-authored Form dispatches enabled HTTP and GraphQL Actions in configure
       projectId: fixture.projectId,
       receiverPort: receiver.port,
       callback: async ({ url }) => {
-        await page.route("**/*", (route) =>
-          new URL(route.request().url()).hostname === "127.0.0.1"
-            ? route.continue()
-            : route.abort()
+        const submission = (
+          await submitPreviewFormViaMcp({
+            url,
+            input: {
+              path: "/",
+              selector: `[data-ws-managed-form-id="${formId}"]`,
+              values: [
+                { name: "name", value: "Ada" },
+                { name: "email", value: "ada@example.com" },
+                { name: "subject", value: "Action combination" },
+                { name: "message", value: "Two receivers" },
+              ],
+              submitter: "button[type=submit]",
+              timeout: 30_000,
+            },
+          })
+        ).data;
+        expect(submission).toMatchObject({
+          status: "submitted",
+          formState: "success",
+          errors: [],
+        });
+        expect(submission.exchanges).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              status: 200,
+              url: expect.stringContaining("/__ws-form"),
+            }),
+          ])
         );
-        await page.goto(url);
-        const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-        await form.locator('input[name="name"]').fill("Ada");
-        await form.locator('input[name="email"]').fill("ada@example.com");
-        await form.locator('input[name="subject"]').fill("Action combination");
-        await form.locator('textarea[name="message"]').fill("Two receivers");
-        const responsePromise = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
-        );
-        await form.getByRole("button", { name: "Submit" }).click();
-        const response = await responsePromise;
-        const submission = await response.json();
-        expect(response.status()).toBe(200);
-        expect(submission.success).toBe(true);
-        expect(submission.errors).toEqual([]);
         expect(submission.results).toEqual([
           expect.objectContaining({
             resourceId: graphqlResourceId,
@@ -101,7 +109,6 @@ test("MCP-authored Form dispatches enabled HTTP and GraphQL Actions in configure
           }),
         ]);
         expect(JSON.stringify(submission)).not.toContain(disabledResourceId);
-        await expect(form).toHaveAttribute("data-state", "success");
         expect(receiver.deliveries).toHaveLength(2);
         expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual([
           "/submit",

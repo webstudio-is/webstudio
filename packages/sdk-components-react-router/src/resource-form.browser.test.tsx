@@ -78,7 +78,7 @@ test("an empty Resource list submits query values through client navigation", as
       );
     });
     expect(router.state.location.pathname).toBe("/catalog");
-    expect(container.querySelector("output")?.textContent).toBe(
+    expect(container.querySelector(":scope > output")?.textContent).toBe(
       "?query=chairs&tag=wood&tag=blue"
     );
   } finally {

@@ -5,6 +5,7 @@ import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { withGeneratedPreview } from "../flows/generated-app";
 import { startLegacyFormQueryReceiver } from "../flows/legacy-form-query-receiver";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -103,15 +104,25 @@ test("MCP-edited saved legacy Webhook Form preserves single and repeated query b
               )
             )
             .toBe(documentMarker);
-          await form.locator('input[name="message"]').fill(scenario.message);
-          const responsePromise = page.waitForResponse(
-            (response) =>
-              response.request().method() === "POST" &&
-              new URL(response.url()).origin === new URL(url).origin
+          const submission = await submitPreviewFormViaMcp({
+            url,
+            input: {
+              path: scenario.path,
+              selector: "#legacy-query-form",
+              values: [{ name: "message", value: scenario.message }],
+              submitter: 'button[type="submit"]',
+              timeout: 10_000,
+            },
+          });
+          expect(submission.ok).toBe(true);
+          expect(submission.data).toMatchObject({
+            status: "submitted",
+            formState: "success",
+            errors: [],
+          });
+          expect(submission.data.exchanges).toEqual(
+            expect.arrayContaining([expect.objectContaining({ status: 200 })])
           );
-          await form.locator('button[type="submit"]').click();
-          const response = await responsePromise;
-          expect(response.status()).toBe(200);
           expect(receiver.deliveries.at(-1)).toMatchObject({
             method: "POST",
             tag: scenario.tag,

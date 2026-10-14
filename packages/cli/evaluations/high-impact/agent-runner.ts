@@ -62,6 +62,22 @@ const fixtureToolNames = {
     "audit",
     "verify-page-responsive",
   ],
+  "managed-form-runtime-v1": [
+    "meta.guide",
+    "meta.get-more-tools",
+    "components.search",
+    "templates.get",
+    "create-page",
+    "insert-component",
+    "list-instances",
+    "inspect-instance",
+    "create-resource",
+    "update-resource",
+    "update-props",
+    "preview.start",
+    "preview.submit-form",
+    "preview.stop",
+  ],
   "form-modes-authoring-v1": [
     "meta.guide",
     "meta.get-more-tools",
@@ -169,6 +185,7 @@ export const createMinimalAgentTask = (
     fixture.id === "markdown-references-discovery-v1";
   const isMdxArticleFixture = fixture.id === "mdx-article-editing-v1";
   const isManagedFormFixture = fixture.id === "managed-form-authoring-v1";
+  const isRuntimeFormFixture = fixture.id === "managed-form-runtime-v1";
   return {
     schemaVersion: 2,
     fixtureId: fixture.id,
@@ -193,7 +210,11 @@ export const createMinimalAgentTask = (
       "Never use broad project reads: snapshot, components.list, or components.coverage-plan.",
       "Do not persist or report credentials or private session data.",
       "Treat mutation meta.next steps as required. Do not report completion until audit and requested visual evidence pass.",
-      "Finish all visual polish before evidence capture. Run the planned verify-page-responsive calls consecutively, once per route with all requested viewports and that route's static audit. During this final verification sequence, make no mutations, discovery calls, preview restarts, or separate evidence calls. After the last planned route verification, make no more tool calls.",
+      ...(isRuntimeFormFixture
+        ? []
+        : [
+            "Finish all visual polish before evidence capture. Run the planned verify-page-responsive calls consecutively, once per route with all requested viewports and that route's static audit. During this final verification sequence, make no mutations, discovery calls, preview restarts, or separate evidence calls. After the last planned route verification, make no more tool calls.",
+          ]),
       ...(isMarkdownBlogFixture
         ? [
             "Treat the supplied asset manifest as input inventory. Derive operation payloads from the MCP schemas and the markdown-blog guide instead of a fixture-specific answer.",
@@ -210,6 +231,13 @@ export const createMinimalAgentTask = (
       ...(isManagedFormFixture
         ? [
             "Keep the Form's existing Resource actions unchanged. Never submit the Form, trigger a Resource action, or use a browser interaction that could submit it. The project is an isolated local fixture and has no external delivery destination.",
+          ]
+        : []),
+      ...(isRuntimeFormFixture
+        ? [
+            "Use only synthetic values. Never use an Email Resource, a file value, or any endpoint except the fixture's exact /submit and /reject destinations.",
+            "Before each preview.submit-form, call preview.start with mode production for this session's latest project version. Use path /contact-runtime and the rendered Form selector. Stop Preview after the final observation.",
+            "Do not call audit, responsive verification, screenshot, publish, browser tabs, shell commands, or any external service in this runtime fixture.",
           ]
         : []),
     ],
@@ -275,6 +303,8 @@ export const runHighImpactAgentEvaluation = async ({
     "utf8"
   );
   let usage: AgentUsage | undefined;
+  let agentEventCount = 0;
+  const recentAgentEventTypes: string[] = [];
   const execution = await runAgentCommand({
     command: agentCommand,
     cwd,
@@ -288,11 +318,27 @@ export const runHighImpactAgentEvaluation = async ({
       } catch {
         return;
       }
+      if (typeof value !== "object" || value === null) {
+        return;
+      }
+      const type = "type" in value ? value.type : undefined;
+      if (typeof type === "string" && /^[a-z_.]+$/.test(type)) {
+        agentEventCount += 1;
+        recentAgentEventTypes.push(type);
+        if (recentAgentEventTypes.length > 12) {
+          recentAgentEventTypes.shift();
+        }
+      }
       const eventUsage = getAgentUsageEvent(value);
       if (eventUsage !== undefined) {
         usage = addAgentUsage(usage, eventUsage);
       }
     },
+  }).catch((error: unknown) => {
+    throw new Error(
+      `${String(error)}; observed ${agentEventCount} agent events; recent types: ${recentAgentEventTypes.join(", ") || "none"}`,
+      { cause: error }
+    );
   });
   const evaluation = await evaluate();
   const toolCalls = getToolCalls();

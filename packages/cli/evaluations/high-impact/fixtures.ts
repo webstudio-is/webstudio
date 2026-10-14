@@ -106,6 +106,7 @@ export type HighImpactFixture = {
   id:
     | "authenticated-page-v1"
     | "managed-form-authoring-v1"
+    | "managed-form-runtime-v1"
     | "form-modes-authoring-v1"
     | "design-input-v1"
     | "font-assets-v1"
@@ -217,6 +218,14 @@ export const managedFormAuthoringFixture: HighImpactFixture = {
     reasoningEffort: "low",
     guidance: { workflow: "general" },
   },
+  project: emptyProject(),
+};
+
+export const managedFormRuntimeFixture: HighImpactFixture = {
+  id: "managed-form-runtime-v1",
+  objective:
+    "Create /contact-runtime with the registered Form (new) template. Replace every default Email action before any submission: create one POST HTTP Resource at the fixed test destination https://mcp-delivery.example/submit with scopeInstanceId set to the inserted Form and exposeAsDataSource true. Select its returned dataSourceId (not resourceId) as the Form action. Keep named name, email, subject, and message fields and visible success/error feedback. Start this MCP session's generated Preview in production mode so client hydration is complete before submission. Submit synthetic fields using preview.submit-form at /contact-runtime and inspect the success state. Change only the Resource URL to https://mcp-delivery.example/reject, restart production Preview, submit again, and inspect the error state. Restore /submit, restart production Preview, submit a third time, and inspect recovery to success. Use only these two test destinations; do not publish, send Email, open a user browser tab, attach files, or use real personal data. Stop Preview when finished.",
+  agent: { reasoningEffort: "low", guidance: { workflow: "general" } },
   project: emptyProject(),
 };
 
@@ -442,6 +451,7 @@ export const mdxArticleFixture: HighImpactFixture = {
 export const highImpactFixtures = [
   authenticatedPageFixture,
   managedFormAuthoringFixture,
+  managedFormRuntimeFixture,
   formModesAuthoringFixture,
   designInputFixture,
   fontAssetsFixture,

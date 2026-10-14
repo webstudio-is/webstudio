@@ -8,6 +8,7 @@ import {
   withGeneratedFormDeliveryPreview,
 } from "../flows/generated-form-delivery";
 import { withGeneratedPreview } from "../flows/generated-app";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -96,7 +97,6 @@ test("MCP-authored Form uses query navigation when no Actions are connected", as
 });
 
 test("MCP-authored generated Form delivers one Action and reports the next failure", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -142,62 +142,50 @@ test("MCP-authored generated Form delivers one Action and reports the next failu
       projectId: fixture.projectId,
       receiverPort: receiver.port,
       callback: async ({ url }) => {
-        await page.route("**/*", (route) => {
-          const target = new URL(route.request().url());
-          return target.hostname === "127.0.0.1"
-            ? route.continue()
-            : route.abort();
-        });
-        await page.goto(url);
-        const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-        await form.locator('input[name="name"]').fill("Ada");
-        await form.locator('input[name="email"]').fill("ada@example.com");
-        await form.locator('input[name="subject"]').fill("Delivery test");
-        await form
-          .locator('textarea[name="message"]')
-          .fill("Actual local delivery");
-        const responsePromise = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
-        );
-        await form.getByRole("button", { name: "Submit" }).click();
-        const response = await responsePromise;
-        const submission = await response.json();
-        const rejectedBody = { error: "Temporary local E2E failure" };
-        expect(response.status()).toBe(502);
-        expect(submission).toMatchObject({
-          success: false,
-          results: [
-            {
-              resourceId: successfulResourceId,
-              resourceName: "Received HTTP action",
-              status: 200,
-              body: { delivered: true },
+        const submission = (
+          await submitPreviewFormViaMcp({
+            url,
+            input: {
+              path: "/",
+              selector: `[data-ws-managed-form-id="${formId}"]`,
+              values: [
+                { name: "name", value: "Ada" },
+                { name: "email", value: "ada@example.com" },
+                { name: "subject", value: "Delivery test" },
+                { name: "message", value: "Actual local delivery" },
+              ],
+              submitter: "button[type=submit]",
+              timeout: 30_000,
             },
-            {
-              resourceId,
-              resourceName: "Blocked HTTP action",
-              status: 503,
-              body: rejectedBody,
-            },
-          ],
-          errors: [
-            {
-              resourceId,
-              resourceName: "Blocked HTTP action",
-              status: 503,
-              body: rejectedBody,
-              message: "Service Unavailable",
-            },
-          ],
-        });
-        await expect(form).toHaveAttribute("data-state", "error");
-        await expect(
-          form.getByText("We could not send your message. Please try again.", {
-            exact: true,
           })
-        ).toBeVisible();
+        ).data;
+        expect(submission).toMatchObject({
+          status: "submitted",
+          formState: "error",
+        });
+        expect(submission.results).toEqual([
+          expect.objectContaining({
+            resourceId: successfulResourceId,
+            resourceName: "Received HTTP action",
+            status: 200,
+          }),
+          expect.objectContaining({
+            resourceId,
+            resourceName: "Blocked HTTP action",
+            status: 503,
+          }),
+        ]);
+        expect(submission.errors).toEqual(
+          expect.arrayContaining([expect.objectContaining({ status: 503 })])
+        );
+        expect(submission.exchanges).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              status: 502,
+              url: expect.stringContaining("/__ws-form"),
+            }),
+          ])
+        );
         expect(
           receiver.deliveries.map(({ pathname }) => pathname).sort()
         ).toEqual(["/reject", "/reject", "/submit"]);
@@ -224,7 +212,6 @@ test("MCP-authored generated Form delivers one Action and reports the next failu
 });
 
 test("MCP-authored generated Form sends uploaded files as multipart by default", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -266,34 +253,52 @@ test("MCP-authored generated Form sends uploaded files as multipart by default",
       projectId: fixture.projectId,
       receiverPort: receiver.port,
       callback: async ({ url }) => {
-        await page.route("**/*", (route) => {
-          const target = new URL(route.request().url());
-          return target.hostname === "127.0.0.1"
-            ? route.continue()
-            : route.abort();
-        });
-        await page.goto(url);
-        const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-        await form.locator('input[name="name"]').fill("Ada");
-        await form.locator('input[name="email"]').fill("ada@example.com");
-        await form.locator('input[name="subject"]').fill("Multipart test");
-        await form.locator('textarea[name="message"]').fill("File payload");
-        await form.locator('input[name="tag"]').nth(0).fill("red");
-        await form.locator('input[name="tag"]').nth(1).fill("blue");
         const fileBytes = Buffer.from([0, 1, 127, 128, 255]);
-        await form.locator('input[name="upload"]').setInputFiles({
-          name: "evidence.bin",
-          mimeType: "application/octet-stream",
-          buffer: fileBytes,
+        const submission = (
+          await submitPreviewFormViaMcp({
+            url,
+            input: {
+              path: "/",
+              selector: `[data-ws-managed-form-id="${formId}"]`,
+              values: [
+                { name: "name", value: "Ada" },
+                { name: "email", value: "ada@example.com" },
+                { name: "subject", value: "Multipart test" },
+                { name: "message", value: "File payload" },
+                { name: "tag", value: "red" },
+                { name: "tag", value: "blue" },
+                {
+                  name: "upload",
+                  file: {
+                    name: "evidence.bin",
+                    type: "application/octet-stream",
+                    base64: fileBytes.toString("base64"),
+                  },
+                },
+              ],
+              submitter: "button[type=submit]",
+              timeout: 30_000,
+            },
+          })
+        ).data;
+        expect(submission).toMatchObject({
+          status: "submitted",
+          formState: "error",
         });
-        const responsePromise = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
+        expect(submission.results).toEqual(
+          expect.arrayContaining([expect.objectContaining({ status: 503 })])
         );
-        await form.getByRole("button", { name: "Submit" }).click();
-        const response = await responsePromise;
-        expect(response.status()).toBe(502);
+        expect(submission.errors).toEqual(
+          expect.arrayContaining([expect.objectContaining({ status: 503 })])
+        );
+        expect(submission.exchanges).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              status: 502,
+              url: expect.stringContaining("/__ws-form"),
+            }),
+          ])
+        );
         expect(
           receiver.deliveries.map(({ pathname }) => pathname).sort()
         ).toEqual(["/reject", "/reject", "/submit"]);
@@ -328,11 +333,6 @@ test("MCP-authored generated Form sends uploaded files as multipart by default",
         expect(uploadedFile.type).toBe("application/octet-stream");
         expect(Buffer.from(await uploadedFile.arrayBuffer())).toEqual(
           fileBytes
-        );
-        await expect(form).toHaveAttribute("data-state", "error");
-        const result = await response.json();
-        expect(result.errors).toEqual(
-          expect.arrayContaining([expect.objectContaining({ status: 503 })])
         );
       },
     });

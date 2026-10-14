@@ -10,6 +10,7 @@ import {
   withMcpEmailPreview,
 } from "../flows/mcp-email-preview";
 import { test } from "../test";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 
 const execFileAsync = promisify(execFile);
 const authorPath = fileURLToPath(
@@ -20,7 +21,6 @@ const reactGlobalPath = fileURLToPath(
 );
 
 test("MCP-authored contact Form delivers customized Email messages locally", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -89,42 +89,45 @@ test("MCP-authored contact Form delivers customized Email messages locally", asy
       projectId: fixture.projectId,
       emailPort: receiver.port,
       callback: async ({ url }) => {
-        await page.route("**/*", (route) => {
-          const target = new URL(route.request().url());
-          return target.hostname === "127.0.0.1"
-            ? route.continue()
-            : route.abort();
+        const submission = await submitPreviewFormViaMcp({
+          url,
+          input: {
+            path: "/",
+            selector: `[data-ws-managed-form-id="${formId}"]`,
+            values: [
+              { name: "name", value: "Ada Lovelace" },
+              { name: "email", value: "ada@example.test" },
+              { name: "subject", value: "MCP email test" },
+              {
+                name: "message",
+                value: "This submission should become two local messages.",
+              },
+              {
+                name: "upload",
+                file: {
+                  name: "notes.txt",
+                  type: "text/plain",
+                  base64: Buffer.from("MCP attachment payload").toString(
+                    "base64"
+                  ),
+                },
+              },
+            ],
+            submitter: "button[type=submit]",
+            timeout: 30_000,
+          },
         });
-        await page.goto(url);
-        const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-        await form.locator('input[name="name"]').fill("Ada Lovelace");
-        await form.locator('input[name="email"]').fill("ada@example.test");
-        await form.locator('input[name="subject"]').fill("MCP email test");
-        await form
-          .locator('textarea[name="message"]')
-          .fill("This submission should become two local messages.");
-        const upload = form.locator('input[name="upload"]');
-        await expect(upload).toHaveCount(1);
-        await upload.setInputFiles({
-          name: "notes.txt",
-          mimeType: "text/plain",
-          buffer: Buffer.from("MCP attachment payload"),
+        expect(submission.data).toMatchObject({
+          status: "submitted",
+          formState: "success",
+          errors: [],
         });
-
-        const submission = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
+        expect(submission.data.results).toEqual(
+          emailResourceIds.map((resourceId) =>
+            expect.objectContaining({ resourceId, status: 200 })
+          )
         );
-        await form.getByRole("button", { name: "Submit" }).click();
-        const submissionResponse = await submission;
-        const submissionBody = await submissionResponse.json();
-        expect(
-          submissionResponse.status(),
-          JSON.stringify(submissionBody)
-        ).toBe(200);
-        await expect(form).toHaveAttribute("data-state", "success");
-        await expect.poll(() => receiver.messages.length).toBe(2);
+        expect(receiver.messages).toHaveLength(2);
 
         const ownerMessage = receiver.messages.find((message) =>
           message.to.some(({ address }) => address === "owner@mcp.test")
@@ -166,7 +169,6 @@ test("MCP-authored contact Form delivers customized Email messages locally", asy
 });
 
 test("custom recipients and Email overrides stay isolated between Forms", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -219,54 +221,42 @@ test("custom recipients and Email overrides stay isolated between Forms", async 
       projectId: fixture.projectId,
       emailPort: receiver.port,
       callback: async ({ url }) => {
-        await page.route("**/*", (route) => {
-          const target = new URL(route.request().url());
-          return target.hostname === "127.0.0.1"
-            ? route.continue()
-            : route.abort();
-        });
-        await page.goto(url);
-
         for (const [id, expected] of [
-          [
-            formId,
-            {
-              address: "first-form@mcp.test",
-              subject: "First Form message",
-              body: "Body override for the first Form.",
-            },
-          ],
-          [
-            secondFormId,
-            {
-              address: "second-form@mcp.test",
-              subject: "Second Form message",
-              body: "Body override for the second Form.",
-            },
-          ],
+          [formId, { subject: "First Form message" }],
+          [secondFormId, { subject: "Second Form message" }],
         ] as const) {
-          const form = page.locator(`[data-ws-managed-form-id="${id}"]`);
-          await form.locator('input[name="name"]').fill("MCP E2E visitor");
-          await form
-            .locator('input[name="email"]')
-            .fill("visitor@example.test");
-          await form
-            .locator('input[name="subject"]')
-            .fill(`Visitor subject: ${expected.subject}`);
-          await form
-            .locator('textarea[name="message"]')
-            .fill(`Submitted through ${expected.subject}`);
-
-          const submission = page.waitForResponse(
-            (response) =>
-              new URL(response.url()).pathname.startsWith("/__ws-form") &&
-              response.request().method() === "POST"
-          );
-          await form.getByRole("button", { name: "Submit" }).click();
-          const response = await submission;
-          const responseBody = await response.json();
-          expect(response.status(), JSON.stringify(responseBody)).toBe(200);
-          await expect(form).toHaveAttribute("data-state", "success");
+          const submission = await submitPreviewFormViaMcp({
+            url,
+            input: {
+              path: "/",
+              selector: `[data-ws-managed-form-id="${id}"]`,
+              values: [
+                { name: "name", value: "MCP E2E visitor" },
+                { name: "email", value: "visitor@example.test" },
+                {
+                  name: "subject",
+                  value: `Visitor subject: ${expected.subject}`,
+                },
+                {
+                  name: "message",
+                  value: `Submitted through ${expected.subject}`,
+                },
+              ],
+              submitter: "button[type=submit]",
+              timeout: 30_000,
+            },
+          });
+          expect(submission.data).toMatchObject({
+            status: "submitted",
+            formState: "success",
+            errors: [],
+          });
+          expect(submission.data.results).toEqual([
+            expect.objectContaining({
+              resourceId: emailResourceIdsByForm[id === formId ? 0 : 1],
+              status: 200,
+            }),
+          ]);
         }
 
         await expect.poll(() => receiver.messages.length).toBe(2);
@@ -290,7 +280,6 @@ test("custom recipients and Email overrides stay isolated between Forms", async 
 });
 
 test("Email provider failure is not replayed, sibling succeeds, and a new submission gets a new message ID", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -375,29 +364,29 @@ test("Email provider failure is not replayed, sibling succeeds, and a new submis
       projectId: fixture.projectId,
       emailPort: address.port,
       callback: async ({ url }) => {
-        await page.route("**/*", (route) => {
-          const target = new URL(route.request().url());
-          return target.hostname === "127.0.0.1"
-            ? route.continue()
-            : route.abort();
-        });
-        await page.goto(url);
-        const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-        await form.locator('input[name="name"]').fill("First local submission");
-        await form.locator('input[name="email"]').fill("visitor@example.test");
-        await form.locator('input[name="subject"]').fill("Message ID test");
-        await form.locator('textarea[name="message"]').fill("First submission");
-
-        const firstResponse = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
+        const submit = async (name: string, message: string) =>
+          await submitPreviewFormViaMcp({
+            url,
+            input: {
+              path: "/",
+              selector: `[data-ws-managed-form-id="${formId}"]`,
+              values: [
+                { name: "name", value: name },
+                { name: "email", value: "visitor@example.test" },
+                { name: "subject", value: "Message ID test" },
+                { name: "message", value: message },
+              ],
+              submitter: "button[type=submit]",
+              timeout: 30_000,
+            },
+          });
+        const firstSubmission = await submit(
+          "First local submission",
+          "First submission"
         );
-        await form.getByRole("button", { name: "Submit" }).click();
-        const firstSubmission = await firstResponse;
-        expect(firstSubmission.status()).toBe(502);
-        expect(await firstSubmission.json()).toMatchObject({
-          success: false,
+        expect(firstSubmission.data).toMatchObject({
+          status: "submitted",
+          formState: "error",
           results: [
             expect.objectContaining({
               resourceId: emailResourceIds[0],
@@ -408,41 +397,24 @@ test("Email provider failure is not replayed, sibling succeeds, and a new submis
               status: 200,
             }),
           ],
-          errors: [
-            expect.objectContaining({
-              resourceId: emailResourceIds[0],
-              status: 503,
-            }),
-          ],
+          errors: [expect.objectContaining({ status: 503 })],
         });
-        await expect(form).toHaveAttribute("data-state", "error");
-        await expect.poll(() => requests.length).toBe(2);
-
-        await page.reload();
-        const secondForm = page.locator(
-          `[data-ws-managed-form-id="${formId}"]`
+        expect(requests).toHaveLength(2);
+        const secondSubmission = await submit(
+          "Second local submission",
+          "Second submission"
         );
-        await secondForm
-          .locator('input[name="name"]')
-          .fill("Second local submission");
-        await secondForm
-          .locator('input[name="email"]')
-          .fill("visitor@example.test");
-        await secondForm
-          .locator('input[name="subject"]')
-          .fill("Message ID test");
-        await secondForm
-          .locator('textarea[name="message"]')
-          .fill("Second submission");
-        const secondResponse = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
+        expect(secondSubmission.data).toMatchObject({
+          status: "submitted",
+          formState: "success",
+          errors: [],
+        });
+        expect(secondSubmission.data.results).toEqual(
+          emailResourceIds.map((resourceId) =>
+            expect.objectContaining({ resourceId, status: 200 })
+          )
         );
-        await secondForm.getByRole("button", { name: "Submit" }).click();
-        expect((await secondResponse).status()).toBe(200);
-        await expect(secondForm).toHaveAttribute("data-state", "success");
-        await expect.poll(() => requests.length).toBe(4);
+        expect(requests).toHaveLength(4);
 
         const firstMessageId = requests[0].headers["X-Message-ID"];
         expect(firstMessageId).not.toBe("");

@@ -7,6 +7,7 @@ import {
   startFormDeliveryReceiver,
   withGeneratedFormDeliveryPreview,
 } from "../flows/generated-form-delivery";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -27,7 +28,6 @@ const formats = [
 
 for (const [mode, contentType] of formats) {
   test(`MCP-authored Form sends HTTP body with ${mode}`, async ({
-    page,
     context,
   }) => {
     const fixture = await createContentModeProject({
@@ -61,29 +61,39 @@ for (const [mode, contentType] of formats) {
         projectId: fixture.projectId,
         receiverPort: receiver.port,
         callback: async ({ url }) => {
-          await page.route("**/*", (route) => {
-            const target = new URL(route.request().url());
-            return target.hostname === "127.0.0.1"
-              ? route.continue()
-              : route.abort();
+          const submission = (
+            await submitPreviewFormViaMcp({
+              url,
+              input: {
+                path: "/",
+                selector: `[data-ws-managed-form-id="${formId}"]`,
+                values: [
+                  { name: "name", value: "Ada" },
+                  { name: "email", value: "ada@example.com" },
+                  { name: "subject", value: "Format test" },
+                  { name: "message", value: "Exact body text" },
+                ],
+                submitter: "button[type=submit]",
+                timeout: 30_000,
+              },
+            })
+          ).data;
+          expect(submission).toMatchObject({
+            status: "submitted",
+            formState: "success",
+            errors: [],
           });
-          await page.goto(url);
-          const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-          await form.locator('input[name="name"]').fill("Ada");
-          await form.locator('input[name="email"]').fill("ada@example.com");
-          await form.locator('input[name="subject"]').fill("Format test");
-          await form
-            .locator('textarea[name="message"]')
-            .fill("Exact body text");
-          const responsePromise = page.waitForResponse(
-            (response) =>
-              new URL(response.url()).pathname.startsWith("/__ws-form") &&
-              response.request().method() === "POST"
+          expect(submission.exchanges).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                status: 200,
+                url: expect.stringContaining("/__ws-form"),
+              }),
+            ])
           );
-          await form.getByRole("button", { name: "Submit" }).click();
-          const response = await responsePromise;
-          expect(response.status()).toBe(200);
-          await expect(form).toHaveAttribute("data-state", "success");
+          expect(submission.results).toEqual([
+            expect.objectContaining({ status: 200 }),
+          ]);
           expect(receiver.deliveries).toHaveLength(1);
           const delivery = receiver.deliveries[0];
           expect(delivery).toBeDefined();

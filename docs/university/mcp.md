@@ -902,6 +902,21 @@ source of truth. For tools with no required arguments, pass `{}`.
 }
 ```
 
+### preview.submit-form
+
+```json
+{
+  "path": "/contact",
+  "selector": "form",
+  "values": [
+    {
+      "name": "email",
+      "value": "me@example.com"
+    }
+  ]
+}
+```
+
 ### status
 
 ```json

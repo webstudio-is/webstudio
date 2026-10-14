@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { expect } from "@playwright/test";
+import { encodeDataSourceVariable } from "@webstudio-is/sdk";
 import {
   migratePages,
   serializePages,
@@ -37,6 +38,7 @@ const commands = new Set([
   "inspect-instance",
   "refresh",
   "create-resource",
+  "create-variable",
   "update-resource",
   "update-props",
   "inspect-instance",
@@ -322,6 +324,12 @@ const author = async () => {
       dataSourceName: "Legacy query receiver",
       exposeAsDataSource: true,
     });
+    const state = await call("create-variable", {
+      scopeInstanceId: rootInstanceId,
+      name: "legacyFormState",
+      value: { type: "string", value: "initial" },
+    });
+    const stateCode = encodeDataSourceVariable(state.dataSourceId as string);
     await call("update-resource", {
       resourceId: resource.resourceId,
       scopeInstanceId: formId,
@@ -343,6 +351,20 @@ const author = async () => {
           name: "action",
           type: "resource",
           value: resource.resourceId,
+        },
+        {
+          instanceId: formId,
+          name: "state",
+          type: "expression",
+          value: stateCode,
+        },
+        {
+          instanceId: formId,
+          name: "onStateChange",
+          type: "action",
+          value: [
+            { type: "execute", args: ["state"], code: `${stateCode} = state` },
+          ],
         },
       ],
     });

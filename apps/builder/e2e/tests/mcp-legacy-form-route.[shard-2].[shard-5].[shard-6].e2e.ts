@@ -5,6 +5,7 @@ import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { withGeneratedPreview } from "../flows/generated-app";
 import { startLegacyFormRouteReceiver } from "../flows/legacy-form-route-receiver";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -92,15 +93,25 @@ test("MCP-edited saved legacy Webhook Form action uses current dynamic route par
           )
           .toBe(documentMarker);
 
-        await form.locator('input[name="message"]').fill("Current route");
-        const responsePromise = page.waitForResponse(
-          (response) =>
-            response.request().method() === "POST" &&
-            new URL(response.url()).origin === new URL(url).origin
+        const submission = await submitPreviewFormViaMcp({
+          url,
+          input: {
+            path: "/legacy-route/second",
+            selector: "#legacy-route-form",
+            values: [{ name: "message", value: "Current route" }],
+            submitter: 'button[type="submit"]',
+            timeout: 10_000,
+          },
+        });
+        expect(submission.ok).toBe(true);
+        expect(submission.data).toMatchObject({
+          status: "submitted",
+          formState: "success",
+          errors: [],
+        });
+        expect(submission.data.exchanges).toEqual(
+          expect.arrayContaining([expect.objectContaining({ status: 200 })])
         );
-        await form.locator('button[type="submit"]').click();
-        const response = await responsePromise;
-        expect(response.status()).toBe(200);
         expect(receiver.deliveries).toEqual([
           {
             method: "POST",

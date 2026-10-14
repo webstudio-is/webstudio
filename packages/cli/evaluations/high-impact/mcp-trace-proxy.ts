@@ -28,7 +28,17 @@ export type BoundedMcpCall = {
     assetQuerySha256?: string;
     assetQueryShapeSha256?: string;
     pageSettingsSha256?: string;
+    formValueNames?: string[];
+    hasFormFile?: true;
   };
+  formStatus?: "validation_failed" | "submitted" | "unknown";
+  formState?:
+    | "initial"
+    | "pending"
+    | "success"
+    | "error"
+    | "invalid"
+    | "unknown";
   startedAtMs: number;
   durationMs?: number;
   responseBytes?: number;
@@ -169,6 +179,36 @@ export const getMcpTraceRequest = (
         args.path = path;
       }
     }
+    if (params.name === "preview.submit-form") {
+      const path = getBoundedRoutePath(params.arguments.path);
+      if (path !== undefined) {
+        args.path = path;
+      }
+      if (
+        Array.isArray(params.arguments.values) &&
+        params.arguments.values.length <= 16
+      ) {
+        const names = params.arguments.values.flatMap((value) =>
+          isPlainRecord(value) &&
+          (value.name === "name" ||
+            value.name === "email" ||
+            value.name === "subject" ||
+            value.name === "message")
+            ? [value.name]
+            : []
+        );
+        if (names.length === params.arguments.values.length) {
+          args.formValueNames = names;
+        }
+        if (
+          params.arguments.values.some(
+            (value) => isPlainRecord(value) && value.file !== undefined
+          )
+        ) {
+          args.hasFormFile = true;
+        }
+      }
+    }
     const viewport = params.arguments.viewport;
     if (
       params.name === "screenshot" &&
@@ -264,6 +304,26 @@ export const getMcpTraceResponse = (
     isPlainRecord(result) && isPlainRecord(result.structuredContent)
       ? result.structuredContent
       : undefined;
+  const formData =
+    call.name === "preview.submit-form" &&
+    isPlainRecord(structuredContent?.data)
+      ? structuredContent.data
+      : undefined;
+  const formStatus: BoundedMcpCall["formStatus"] =
+    formData?.status === "validation_failed" ||
+    formData?.status === "submitted" ||
+    formData?.status === "unknown"
+      ? (formData.status as BoundedMcpCall["formStatus"])
+      : undefined;
+  const formState: BoundedMcpCall["formState"] =
+    formData?.formState === "initial" ||
+    formData?.formState === "pending" ||
+    formData?.formState === "success" ||
+    formData?.formState === "error" ||
+    formData?.formState === "invalid" ||
+    formData?.formState === "unknown"
+      ? (formData.formState as BoundedMcpCall["formState"])
+      : undefined;
   const meta =
     structuredContent !== undefined && isPlainRecord(structuredContent.meta)
       ? structuredContent.meta
@@ -291,6 +351,8 @@ export const getMcpTraceResponse = (
     ...(isError === undefined ? {} : { isError }),
     ...(errorCode === undefined ? {} : { errorCode }),
     ...(errorIssues === undefined ? {} : { errorIssues }),
+    ...(formStatus === undefined ? {} : { formStatus }),
+    ...(formState === undefined ? {} : { formState }),
   };
 };
 

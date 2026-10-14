@@ -8,6 +8,7 @@ import {
   withMcpEmailPreview,
 } from "../flows/mcp-email-preview";
 import { test } from "../test";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 
 const execFileAsync = promisify(execFile);
 const reactGlobalPath = fileURLToPath(
@@ -50,7 +51,6 @@ const author = async (
 };
 
 test("MCP Email bindings deliver values and full reset restores project recipients and reply-to", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -68,30 +68,30 @@ test("MCP Email bindings deliver values and full reset restores project recipien
   await author(fixture.projectId, bindingAuthorPath, "bind", formId);
   const receiver = await startLocalEmailReceiver();
   try {
-    await page.route("**/*", (route) =>
-      new URL(route.request().url()).hostname === "127.0.0.1"
-        ? route.continue()
-        : route.abort()
-    );
     const submit = async (url: string) => {
-      await page.goto(url);
-      const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-      await form.locator('input[name="name"]').fill("Ada Lovelace");
-      await form.locator('input[name="email"]').fill("ada@example.test");
-      await form.locator('input[name="subject"]').fill("Account question");
-      await form
-        .locator('textarea[name="message"]')
-        .fill("Please send the project details.");
-      const responsePromise = page.waitForResponse(
-        (response) =>
-          new URL(response.url()).pathname.startsWith("/__ws-form") &&
-          response.request().method() === "POST"
-      );
-      await form.getByRole("button", { name: "Submit" }).click();
-      const response = await responsePromise;
-      const result = await response.json();
-      expect(response.status(), JSON.stringify(result)).toBe(200);
-      await expect(form).toHaveAttribute("data-state", "success");
+      const submission = await submitPreviewFormViaMcp({
+        url,
+        input: {
+          path: "/",
+          selector: `[data-ws-managed-form-id="${formId}"]`,
+          values: [
+            { name: "name", value: "Ada Lovelace" },
+            { name: "email", value: "ada@example.test" },
+            { name: "subject", value: "Account question" },
+            { name: "message", value: "Please send the project details." },
+          ],
+          submitter: "button[type=submit]",
+          timeout: 30_000,
+        },
+      });
+      expect(submission.data).toMatchObject({
+        status: "submitted",
+        formState: "success",
+        errors: [],
+      });
+      expect(submission.data.results).toEqual([
+        expect.objectContaining({ status: 200 }),
+      ]);
     };
 
     await withMcpEmailPreview({
@@ -126,7 +126,6 @@ test("MCP Email bindings deliver values and full reset restores project recipien
 });
 
 test("MCP partial Email body updates preserve recipient, sender, and attachment settings", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -144,33 +143,40 @@ test("MCP partial Email body updates preserve recipient, sender, and attachment 
   await author(fixture.projectId, bindingAuthorPath, "partial", formId);
   const receiver = await startLocalEmailReceiver();
   try {
-    await page.route("**/*", (route) =>
-      new URL(route.request().url()).hostname === "127.0.0.1"
-        ? route.continue()
-        : route.abort()
-    );
     const submit = async (url: string) => {
-      await page.goto(url);
-      const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-      await form.locator('input[name="name"]').fill("Ada Lovelace");
-      await form.locator('input[name="email"]').fill("ada@example.test");
-      await form.locator('input[name="subject"]').fill("Account question");
-      await form.locator('textarea[name="message"]').fill("Hello");
-      await form.locator('input[name="upload"]').setInputFiles({
-        name: "private-note.txt",
-        mimeType: "text/plain",
-        buffer: Buffer.from("Do not attach this file"),
+      const submission = await submitPreviewFormViaMcp({
+        url,
+        input: {
+          path: "/",
+          selector: `[data-ws-managed-form-id="${formId}"]`,
+          values: [
+            { name: "name", value: "Ada Lovelace" },
+            { name: "email", value: "ada@example.test" },
+            { name: "subject", value: "Account question" },
+            { name: "message", value: "Hello" },
+            {
+              name: "upload",
+              file: {
+                name: "private-note.txt",
+                type: "text/plain",
+                base64: Buffer.from("Do not attach this file").toString(
+                  "base64"
+                ),
+              },
+            },
+          ],
+          submitter: "button[type=submit]",
+          timeout: 30_000,
+        },
       });
-      const responsePromise = page.waitForResponse(
-        (response) =>
-          new URL(response.url()).pathname.startsWith("/__ws-form") &&
-          response.request().method() === "POST"
-      );
-      await form.getByRole("button", { name: "Submit" }).click();
-      const response = await responsePromise;
-      expect(response.status(), JSON.stringify(await response.json())).toBe(
-        200
-      );
+      expect(submission.data).toMatchObject({
+        status: "submitted",
+        formState: "success",
+        errors: [],
+      });
+      expect(submission.data.results).toEqual([
+        expect.objectContaining({ status: 200 }),
+      ]);
     };
     await withMcpEmailPreview({
       projectId: fixture.projectId,

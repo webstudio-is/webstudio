@@ -31,6 +31,7 @@ import {
   designInputFixture,
   fontAssetsFixture,
   managedFormAuthoringFixture,
+  managedFormRuntimeFixture,
   formModesAuthoringFixture,
   markdownBlogFixture,
   markdownReferencesDiscoveryFixture,
@@ -65,6 +66,14 @@ export type EvaluationToolCall = {
   isError?: boolean;
   errorCode?: string;
   errorIssues?: Array<{ code: string; path: string }>;
+  formStatus?: "validation_failed" | "submitted" | "unknown";
+  formState?:
+    | "initial"
+    | "pending"
+    | "success"
+    | "error"
+    | "invalid"
+    | "unknown";
 };
 
 export type EvaluationArtifact = {
@@ -92,6 +101,10 @@ export type HighImpactEvaluationInput = {
     documentGraphEdgeCount: number;
     embeddedContentBytes: number;
   };
+  formRuntimeDeliveries?: Array<{
+    path: "/submit" | "/reject";
+    status: 200 | 503;
+  }>;
 };
 
 export type HighImpactEvaluationResult = {
@@ -2156,6 +2169,146 @@ const validateFormModesAuthoring = (
   );
 };
 
+const validateManagedFormRuntime = (
+  input: HighImpactEvaluationInput,
+  checks: Record<string, "passed" | "failed">,
+  failures: string[]
+) => {
+  const route = input.project.pages.find(
+    ({ path }) => path === "/contact-runtime"
+  );
+  const form =
+    route === undefined
+      ? undefined
+      : descendants(input.project, route.rootInstanceId).find(
+          ({ component }) => component === "Form"
+        );
+  const formDescendants =
+    form === undefined ? [] : descendants(input.project, form.id);
+  const fieldsComplete = ["name", "email", "subject", "message"].every((name) =>
+    formDescendants.some(
+      (instance) =>
+        ["Input", "Textarea"].includes(instance.component) &&
+        input.project.props.some(
+          (prop) =>
+            prop.instanceId === instance.id &&
+            prop.name === "name" &&
+            prop.value === name
+        )
+    )
+  );
+  recordCheck(
+    checks,
+    failures,
+    "runtimeFormFields",
+    form !== undefined && fieldsComplete,
+    "Keep the four named fields inside the managed Form."
+  );
+  const actions = input.project.props.find(
+    ({ instanceId, name }) => instanceId === form?.id && name === "action"
+  )?.value;
+  const selected = Array.isArray(actions)
+    ? actions.filter(
+        (action) =>
+          typeof action === "object" &&
+          action !== null &&
+          "enabled" in action &&
+          action.enabled === true &&
+          "dataSourceId" in action &&
+          typeof action.dataSourceId === "string"
+      )
+    : [];
+  const selectedSource = input.project.dataSources.find(
+    (source) =>
+      source.id ===
+      (selected[0] as { dataSourceId?: string } | undefined)?.dataSourceId
+  );
+  const selectedResource = input.project.resources.find(
+    (resource) => resource.id === selectedSource?.resourceId
+  );
+  const resourceUrl = selectedResource?.url;
+  const safeResourceUrl =
+    resourceUrl === "https://mcp-delivery.example/submit" ||
+    resourceUrl === '"https://mcp-delivery.example/submit"';
+  recordCheck(
+    checks,
+    failures,
+    "runtimeFormAction",
+    form !== undefined &&
+      selected.length === 1 &&
+      selectedResource?.method === "post" &&
+      safeResourceUrl &&
+      input.project.resources.every(
+        (resource) =>
+          resource.control === "email" ||
+          resource.url === "https://mcp-delivery.example/submit" ||
+          resource.url === '"https://mcp-delivery.example/submit"'
+      ),
+    "The runtime Form must retain only its fixed local-test HTTP action."
+  );
+
+  const calls = input.toolCalls;
+  const submissions = calls.filter(
+    ({ name }) => name === "preview.submit-form"
+  );
+  const starts = calls
+    .map((call, index) => ({ call, index }))
+    .filter(
+      ({ call }) => call.name === "preview.start" && call.isError !== true
+    );
+  const submissionIndices = submissions.map((submission) =>
+    calls.indexOf(submission)
+  );
+  recordCheck(
+    checks,
+    failures,
+    "runtimeSessionPreview",
+    submissions.length === 3 &&
+      starts.length >= 1 &&
+      submissionIndices.every((index) =>
+        starts.some((start) => start.index < index)
+      ) &&
+      calls.some(
+        (call, index) =>
+          call.name === "preview.stop" &&
+          call.isError !== true &&
+          index > submissionIndices[2]
+      ),
+    "Start the session Preview, submit three times, then stop it."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "runtimeSyntheticInputs",
+    submissions.length === 3 &&
+      submissions.every(
+        (call) =>
+          call.arguments?.path === "/contact-runtime" &&
+          call.arguments?.hasFormFile !== true &&
+          Array.isArray(call.arguments?.formValueNames) &&
+          ["name", "email", "subject", "message"].every((name) =>
+            (call.arguments?.formValueNames as string[]).includes(name)
+          )
+      ),
+    "Submit only the named synthetic fields without files."
+  );
+  recordCheck(
+    checks,
+    failures,
+    "runtimeObservedStates",
+    submissions.length === 3 &&
+      submissions.every(
+        (call) => call.isError !== true && call.formStatus === "submitted"
+      ) &&
+      submissions.map(({ formState }) => formState).join(",") ===
+        "success,error,success" &&
+      input.formRuntimeDeliveries
+        ?.map(({ path, status }) => `${path}:${status}`)
+        .join(",") === "/submit:200,/reject:503,/reject:503,/submit:200",
+    "Observe success, one explicit 503 retry, and recovery in both Preview and the local receiver."
+  );
+};
+
 export const evaluateHighImpactOutcome = (
   input: HighImpactEvaluationInput
 ): HighImpactEvaluationResult => {
@@ -2164,6 +2317,8 @@ export const evaluateHighImpactOutcome = (
   validateCommon(input, checks, failures);
   if (input.fixture.id === formModesAuthoringFixture.id) {
     validateFormModesAuthoring(input, checks, failures);
+  } else if (input.fixture.id === managedFormRuntimeFixture.id) {
+    validateManagedFormRuntime(input, checks, failures);
   } else if (input.fixture.id === mdxArticleFixture.id) {
     validateMdxArticle(input, checks, failures);
   } else if (input.fixture.id === managedFormAuthoringFixture.id) {

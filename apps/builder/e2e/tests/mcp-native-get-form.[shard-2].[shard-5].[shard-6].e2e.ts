@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { withGeneratedPreview } from "../flows/generated-app";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -15,7 +16,9 @@ test("MCP-authored native GET form submits repeated fields to a local receiver",
 }) => {
   const requests: Array<{ method: string; url: string }> = [];
   const server = createServer((request, response) => {
-    requests.push({ method: request.method ?? "", url: request.url ?? "" });
+    if (new URL(request.url ?? "", "http://127.0.0.1").pathname === "/search") {
+      requests.push({ method: request.method ?? "", url: request.url ?? "" });
+    }
     response.writeHead(200, { "content-type": "text/html" });
     response.end('<!doctype html><p id="received">Received</p>');
   });
@@ -80,15 +83,50 @@ test("MCP-authored native GET form submits repeated fields to a local receiver",
         const form = page.locator("#native-get-form");
         await expect(form).toHaveAttribute("method", "get");
         await expect(form).toHaveAttribute("action", receiverUrl);
-        await form.getByRole("button", { name: "Search" }).click();
+        const invalid = await submitPreviewFormViaMcp({
+          url,
+          input: {
+            path: "/",
+            selector: "#native-get-form",
+            values: [],
+            submitter: 'button[type="submit"]',
+            timeout: 30_000,
+          },
+        });
+        expect(invalid.ok).toBe(true);
+        expect(invalid.data).toMatchObject({
+          status: "validation_failed",
+          formState: "invalid",
+          results: [],
+          exchanges: [],
+        });
         await expect(page).toHaveURL(url);
         expect(requests).toHaveLength(0);
 
-        const select = form.locator('select[name="tag"]');
-        await select.selectOption(["second", "first"]);
-        await form.getByRole("button", { name: "Search" }).click();
-        await expect(page.locator("#received")).toHaveText("Received");
-        await expect(page).toHaveURL(`${receiverUrl}?tag=second&tag=first`);
+        const submitted = await submitPreviewFormViaMcp({
+          url,
+          input: {
+            path: "/",
+            selector: "#native-get-form",
+            values: [
+              { name: "tag", value: "second" },
+              { name: "tag", value: "first" },
+            ],
+            submitter: 'button[type="submit"]',
+            timeout: 30_000,
+          },
+        });
+        expect(submitted.ok).toBe(true);
+        expect(submitted.data).toMatchObject({
+          status: "submitted",
+          results: [],
+          errors: [],
+          redirect: receiverUrl,
+        });
+        expect(submitted.data.exchanges).toEqual(
+          expect.arrayContaining([expect.objectContaining({ status: 200 })])
+        );
+        expect(submitted.data.pageUrl).toBe(receiverUrl);
         expect(requests).toHaveLength(1);
         expect(requests[0].method).toBe("GET");
         expect(

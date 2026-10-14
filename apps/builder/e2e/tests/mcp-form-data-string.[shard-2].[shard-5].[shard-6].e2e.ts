@@ -8,6 +8,7 @@ import {
   startLocalEmailReceiver,
   withMcpEmailPreview,
 } from "../flows/mcp-email-preview";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -22,7 +23,6 @@ const cliTsconfigPath = fileURLToPath(
 );
 
 test("MCP Email body serializes Form data as readable text without private fields", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -69,40 +69,53 @@ test("MCP Email body serializes Form data as readable text without private field
       projectId: fixture.projectId,
       emailPort: receiver.port,
       callback: async ({ url }) => {
-        await page.route("**/*", (route) =>
-          new URL(route.request().url()).hostname === "127.0.0.1"
-            ? route.continue()
-            : route.abort()
-        );
-        await page.goto(url);
-        const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-        await form.locator('input[name="name"]').fill("Ada Lovelace");
-        await form.locator('input[name="email"]').fill("ada@example.test");
-        await form.locator('input[name="subject"]').fill("Readable fields");
-        await form
-          .locator('textarea[name="message"]')
-          .fill("Hello from Lisbon");
-        await form.locator('input[name="profile.city"]').fill("Porto");
-        await form.locator('input[name="tag"]').nth(0).fill("red");
-        await form.locator('input[name="tag"]').nth(1).fill("blue");
-        await form.locator('input[name="password"]').fill("private-secret-734");
-        await form.locator('input[name="upload"]').setInputFiles({
-          name: "project-brief.txt",
-          mimeType: "text/plain",
-          buffer: Buffer.from("A local-only attachment."),
+        const submission = (
+          await submitPreviewFormViaMcp({
+            url,
+            input: {
+              path: "/",
+              selector: `[data-ws-managed-form-id="${formId}"]`,
+              values: [
+                { name: "name", value: "Ada Lovelace" },
+                { name: "email", value: "ada@example.test" },
+                { name: "subject", value: "Readable fields" },
+                { name: "message", value: "Hello from Lisbon" },
+                { name: "profile.city", value: "Porto" },
+                { name: "tag", value: "red" },
+                { name: "tag", value: "blue" },
+                { name: "password", value: "private-secret-734" },
+                {
+                  name: "upload",
+                  file: {
+                    name: "project-brief.txt",
+                    type: "text/plain",
+                    base64: Buffer.from("A local-only attachment.").toString(
+                      "base64"
+                    ),
+                  },
+                },
+              ],
+              submitter: "button[type=submit]",
+              timeout: 30_000,
+            },
+          })
+        ).data;
+        expect(submission).toMatchObject({
+          status: "submitted",
+          formState: "success",
+          errors: [],
         });
-
-        const submission = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
+        expect(submission.exchanges).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              status: 200,
+              url: expect.stringContaining("/__ws-form"),
+            }),
+          ])
         );
-        await form.getByRole("button", { name: "Submit" }).click();
-        const response = await submission;
-        expect(response.status(), JSON.stringify(await response.json())).toBe(
-          200
-        );
-        await expect(form).toHaveAttribute("data-state", "success");
+        expect(submission.results).toEqual([
+          expect.objectContaining({ resourceId: ownerResourceId, status: 200 }),
+        ]);
         await expect.poll(() => receiver.messages.length).toBe(1);
 
         const message = receiver.messages[0];

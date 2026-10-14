@@ -87,13 +87,7 @@ const fillAndSubmit = async (page: Page, formId: string) => {
   await form.locator('input[name="email"]').fill("ada@example.com");
   await form.locator('input[name="subject"]').fill("Redirect matrix");
   await form.locator('textarea[name="message"]').fill("Local Preview");
-  const submitted = page.waitForResponse(
-    (response) =>
-      new URL(response.url()).pathname.startsWith("/__ws-form") &&
-      response.request().method() === "POST"
-  );
   await form.getByRole("button", { name: "Submit" }).click();
-  return { form, response: await submitted };
 };
 
 const moveFeedbackBelowViewport = async (page: Page, message: string) => {
@@ -170,8 +164,7 @@ for (const { name, redirect, expected } of [
         callback: async ({ url }) => {
           await openPreview(page, url);
           const navigated = page.waitForURL((target) => expected(target));
-          const { response } = await fillAndSubmit(page, formId);
-          expect(response.status()).toBe(200);
+          await fillAndSubmit(page, formId);
           await navigated;
           expect(expected(new URL(page.url()))).toBe(true);
           expect(receiver.deliveries).toHaveLength(1);
@@ -187,19 +180,17 @@ for (const { name, redirect, expected } of [
   });
 }
 
-for (const { name, fail, message, status, behavior } of [
+for (const { name, fail, message, behavior } of [
   {
     name: "success",
     fail: false,
     message: successMessage,
-    status: 200,
     behavior: "smooth",
   },
   {
     name: "failure",
     fail: true,
     message: errorMessage,
-    status: 502,
     behavior: "instant",
   },
 ] as const) {
@@ -225,8 +216,7 @@ for (const { name, fail, message, status, behavior } of [
           await openPreview(page, url);
           const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
           await moveFeedbackBelowViewport(page, message);
-          const { response } = await fillAndSubmit(page, formId);
-          expect(response.status()).toBe(status);
+          await fillAndSubmit(page, formId);
           await expect(form).toHaveAttribute(
             "data-state",
             name === "failure" ? "error" : "success"

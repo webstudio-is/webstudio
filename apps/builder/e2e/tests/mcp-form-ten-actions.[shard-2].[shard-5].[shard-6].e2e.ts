@@ -7,6 +7,7 @@ import {
   startFormDeliveryReceiver,
   withGeneratedFormDeliveryPreview,
 } from "../flows/generated-form-delivery";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
@@ -18,7 +19,6 @@ const reactGlobalPath = fileURLToPath(
 );
 
 test("generated Form executes ten distinct Actions in configured result order and rejects an eleventh", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -67,28 +67,36 @@ test("generated Form executes ten distinct Actions in configured result order an
       projectId: fixture.projectId,
       receiverPort: receiver.port,
       callback: async ({ url }) => {
-        await page.route("**/*", (route) =>
-          new URL(route.request().url()).hostname === "127.0.0.1"
-            ? route.continue()
-            : route.abort()
+        const submission = (
+          await submitPreviewFormViaMcp({
+            url,
+            input: {
+              path: "/",
+              selector: `[data-ws-managed-form-id="${formId}"]`,
+              values: [
+                { name: "name", value: "Ada" },
+                { name: "email", value: "ada@example.com" },
+                { name: "subject", value: "Ten actions" },
+                { name: "message", value: "All actions" },
+              ],
+              submitter: "button[type=submit]",
+              timeout: 30_000,
+            },
+          })
+        ).data;
+        expect(submission).toMatchObject({
+          status: "submitted",
+          formState: "success",
+          errors: [],
+        });
+        expect(submission.exchanges).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              status: 200,
+              url: expect.stringContaining("/__ws-form"),
+            }),
+          ])
         );
-        await page.goto(url);
-        const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-        await form.locator('input[name="name"]').fill("Ada");
-        await form.locator('input[name="email"]').fill("ada@example.com");
-        await form.locator('input[name="subject"]').fill("Ten actions");
-        await form.locator('textarea[name="message"]').fill("All actions");
-        const responsePromise = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
-        );
-        await form.getByRole("button", { name: "Submit" }).click();
-        const response = await responsePromise;
-        const submission = await response.json();
-        expect(response.status()).toBe(200);
-        expect(submission.success).toBe(true);
-        expect(submission.errors).toEqual([]);
         expect(submission.results).toEqual(
           resourceIds.map((resourceId, index) =>
             expect.objectContaining({
@@ -99,7 +107,6 @@ test("generated Form executes ten distinct Actions in configured result order an
           )
         );
         expect(JSON.stringify(submission)).not.toContain(rejectedResourceId);
-        await expect(form).toHaveAttribute("data-state", "success");
         expect(receiver.deliveries).toHaveLength(10);
         expect(
           receiver.deliveries

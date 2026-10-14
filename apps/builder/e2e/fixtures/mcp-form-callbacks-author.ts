@@ -62,6 +62,7 @@ if (projectId === undefined) {
 
 const mode = process.argv[3];
 const receiverUrl = process.argv[4];
+const verifyFieldChange = process.argv[5] === "field-change";
 if ((mode !== "legacy" && mode !== "managed") || receiverUrl === undefined) {
   throw new Error("Expected legacy/managed mode and a local receiver URL");
 }
@@ -267,7 +268,16 @@ const author = async () => {
       name: "callbackErrors",
       value: { type: "json", value: [] },
     });
+    const changeCount = verifyFieldChange
+      ? await call("create-variable", {
+          scopeInstanceId: home.rootInstanceId,
+          name: "fieldChangeCount",
+          value: { type: "number", value: 0 },
+        })
+      : undefined;
     let formId: string;
+    let inputId: string | undefined;
+    let effectId: string | undefined;
     let auditId: string;
     let errorId: string;
     if (mode === "legacy") {
@@ -313,10 +323,19 @@ const author = async () => {
     } else {
       const fragment = await call("insert-fragment", {
         parentInstanceId: home.rootInstanceId,
-        fragment:
-          '<Form id="callback-form"><Input name="outcome" /><Button type="submit">Submit callback form</Button></Form><Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>',
+        fragment: verifyFieldChange
+          ? '<Form id="callback-form" /><Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>'
+          : '<Form id="callback-form"><Input name="outcome" /><Button type="submit">Submit callback form</Button></Form><Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>',
       });
       [formId, auditId, errorId] = fragment.rootInstanceIds as string[];
+      if (verifyFieldChange) {
+        const controls = await call("insert-fragment", {
+          parentInstanceId: formId,
+          fragment:
+            '<Input name="outcome" /><Input name="changeCount" type="hidden" /><Button type="submit">Submit callback form</Button>',
+        });
+        [inputId, effectId] = controls.rootInstanceIds as string[];
+      }
     }
     const resource = await call("create-resource", {
       resource: {
@@ -338,6 +357,7 @@ const author = async () => {
     const historyCode = encoded(history);
     const resultsCode = encoded(results);
     const errorsCode = encoded(errors);
+    const changeCountCode = changeCount && encoded(changeCount);
     await call("update-props", {
       updates: [
         {
@@ -356,6 +376,28 @@ const author = async () => {
           type: "expression",
           value: stateCode,
         },
+        ...(changeCountCode && inputId && effectId
+          ? [
+              {
+                instanceId: inputId,
+                name: "onChange",
+                type: "action",
+                value: [
+                  {
+                    type: "execute",
+                    args: [],
+                    code: `${changeCountCode} = ${changeCountCode} + 1`,
+                  },
+                ],
+              },
+              {
+                instanceId: effectId,
+                name: "value",
+                type: "expression",
+                value: changeCountCode,
+              },
+            ]
+          : []),
         {
           instanceId: formId,
           name: "onStateChange",
@@ -405,6 +447,17 @@ const author = async () => {
       text: 'callbackErrors[0]?.message ?? "no errors"',
     });
     await call("refresh");
+    if (inputId) {
+      const inputInspection = await call("inspect-instance", {
+        instanceId: inputId,
+        include: ["props"],
+      });
+      expect(inputInspection.props).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "onChange", type: "action" }),
+        ])
+      );
+    }
     const inspection = await call("inspect-instance", {
       instanceId: formId,
       include: ["props"],

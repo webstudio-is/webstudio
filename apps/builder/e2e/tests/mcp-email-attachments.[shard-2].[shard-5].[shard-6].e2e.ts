@@ -9,6 +9,7 @@ import {
   withMcpEmailPreview,
 } from "../flows/mcp-email-preview";
 import { test } from "../test";
+import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 
 const execFileAsync = promisify(execFile);
 const authorPath = fileURLToPath(
@@ -22,7 +23,6 @@ const cliTsconfigPath = fileURLToPath(
 );
 
 test("MCP-authored Email Resources deliver multiple files and honor attachment opt-out", async ({
-  page,
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -88,38 +88,48 @@ test("MCP-authored Email Resources deliver multiple files and honor attachment o
       projectId: fixture.projectId,
       emailPort: receiver.port,
       callback: async ({ url }) => {
-        await page.route("**/*", (route) =>
-          new URL(route.request().url()).hostname === "127.0.0.1"
-            ? route.continue()
-            : route.abort()
-        );
-        await page.goto(url);
-        const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
-        await form.locator('input[name="name"]').fill("Ada Lovelace");
-        await form.locator('input[name="email"]').fill("ada@example.test");
-        await form
-          .locator('input[name="subject"]')
-          .fill("Attachment opt-out test");
-        await form
-          .locator('textarea[name="message"]')
-          .fill("Checking separate file delivery settings.");
-        const upload = form.locator('input[name="upload"]');
-        await expect(upload).toHaveAttribute("type", "file");
-        await expect(upload).toHaveAttribute("multiple", "");
-        await upload.setInputFiles(files);
-
-        const submission = page.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname.startsWith("/__ws-form") &&
-            response.request().method() === "POST"
-        );
-        await form.getByRole("button", { name: "Submit" }).click();
-        const response = await submission;
-        expect(response.status(), JSON.stringify(await response.json())).toBe(
-          200
-        );
-        await expect(form).toHaveAttribute("data-state", "success");
-        await expect.poll(() => receiver.messages.length).toBe(2);
+        const submission = await submitPreviewFormViaMcp({
+          url,
+          input: {
+            path: "/",
+            selector: `[data-ws-managed-form-id="${formId}"]`,
+            values: [
+              { name: "name", value: "Ada Lovelace" },
+              { name: "email", value: "ada@example.test" },
+              { name: "subject", value: "Attachment opt-out test" },
+              {
+                name: "message",
+                value: "Checking separate file delivery settings.",
+              },
+              ...files.map((file) => ({
+                name: "upload",
+                file: {
+                  name: file.name,
+                  type: file.mimeType,
+                  base64: file.buffer.toString("base64"),
+                },
+              })),
+            ],
+            submitter: "button[type=submit]",
+            timeout: 30_000,
+          },
+        });
+        expect(submission.data).toMatchObject({
+          status: "submitted",
+          formState: "success",
+          errors: [],
+        });
+        expect(submission.data.results).toEqual([
+          expect.objectContaining({
+            resourceId: emailResourceIds[0],
+            status: 200,
+          }),
+          expect.objectContaining({
+            resourceId: emailResourceIds[1],
+            status: 200,
+          }),
+        ]);
+        expect(receiver.messages).toHaveLength(2);
 
         const owner = receiver.messages.find((message) =>
           message.to.some(({ address }) => address === "owner@mcp.test")

@@ -7843,6 +7843,53 @@ describe("project session mcp adapter", () => {
     );
   });
 
+  test("exposes Preview form submission only with a handler and preserves repeated inputs", async () => {
+    const submitPreviewForm = vi.fn(async () => ({
+      status: "submitted" as const,
+      formState: "success",
+      results: [],
+      errors: [],
+      exchanges: [],
+      pageUrl: "http://127.0.0.1:5173/contact",
+      correlationId: "form-1",
+    }));
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      startPreview: vi.fn(),
+      getPreviewStatus: vi.fn(),
+      submitPreviewForm,
+    });
+    expect(adapter.listTools().map((tool) => tool.name)).toContain(
+      "preview.submit-form"
+    );
+    const result = await adapter.callTool({
+      name: "preview.submit-form",
+      input: {
+        path: "/contact",
+        selector: "form",
+        values: [
+          { name: "tag", value: "first" },
+          { name: "tag", value: "second" },
+        ],
+        submitter: "button[type=submit]",
+      },
+    });
+    expect(submitPreviewForm).toHaveBeenCalledWith({
+      path: "/contact",
+      selector: "form",
+      values: [
+        { name: "tag", value: "first" },
+        { name: "tag", value: "second" },
+      ],
+      submitter: "button[type=submit]",
+    });
+    expect(result.structuredContent.data).toMatchObject({
+      status: "submitted",
+    });
+  });
+
   test("uses proportional verification for small value corrections", async () => {
     const searchOperation = publicOperation({
       command: "search-project",
@@ -9411,6 +9458,93 @@ describe("project session mcp adapter", () => {
         expect.stringMatching(/^tool list-pages succeeded in \d+ms$/)
       );
     } finally {
+      await client.close();
+      await server.close();
+    }
+  });
+
+  test("does not crash when a tool heartbeat outlives its MCP connection", async () => {
+    let finishOperation: ((value: ProjectSessionEnvelope) => void) | undefined;
+    const reportLog = vi.fn();
+    const executeOperation = createExecuteOperation(
+      async () =>
+        await new Promise<ProjectSessionEnvelope>((resolve) => {
+          finishOperation = resolve;
+        })
+    );
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation,
+      reportLog,
+      toolHeartbeatIntervalMs: 5,
+    });
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+    await Promise.all([
+      server.connect(serverTransport),
+      client.connect(clientTransport),
+    ]);
+
+    try {
+      const pending = client
+        .callTool({ name: "list-pages", arguments: { includeFolders: true } })
+        .catch(() => undefined);
+      await vi.waitFor(() => expect(finishOperation).toBeTypeOf("function"));
+      const countHeartbeats = () =>
+        reportLog.mock.calls.filter(
+          ([, message]) =>
+            typeof message === "string" &&
+            message.startsWith("tool list-pages still running after ")
+        ).length;
+      const beforeDisconnect = countHeartbeats();
+      await client.close();
+      await vi.waitFor(() =>
+        expect(countHeartbeats()).toBeGreaterThan(beforeDisconnect)
+      );
+      finishOperation?.(
+        createEnvelope({ operationId: "pages.list", result: [] })
+      );
+      await pending;
+    } finally {
+      await server.close();
+    }
+  });
+
+  test("reports logging notification failure while MCP remains connected", async () => {
+    const reportLog = vi.fn();
+    const server = await createProjectSessionMcpServer({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      reportLog,
+    });
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+    await Promise.all([
+      server.connect(serverTransport),
+      client.connect(clientTransport),
+    ]);
+
+    const sendLoggingMessage = vi
+      .spyOn(server, "sendLoggingMessage")
+      .mockRejectedValue(new Error("transport failed"));
+    try {
+      await client.callTool({
+        name: "list-pages",
+        arguments: { includeFolders: true },
+      });
+      await vi.waitFor(() =>
+        expect(reportLog).toHaveBeenCalledWith(
+          "error",
+          "MCP logging notification failed"
+        )
+      );
+      expect(sendLoggingMessage).toHaveBeenCalled();
+    } finally {
+      sendLoggingMessage.mockRestore();
       await client.close();
       await server.close();
     }

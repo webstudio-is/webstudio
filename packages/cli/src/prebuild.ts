@@ -307,8 +307,8 @@ const getRouteCandidates = ({
       filter.operator === "eq" && typeof value === "string"
         ? [value]
         : filter.operator === "contains" && Array.isArray(value)
-        ? value.filter((item): item is string => typeof item === "string")
-        : [];
+          ? value.filter((item): item is string => typeof item === "string")
+          : [];
     if (values.length === 0) {
       continue;
     }
@@ -1040,6 +1040,30 @@ export const prebuild = async (options: {
       template
     )
   );
+  const evaluationReceiverPort =
+    process.env.WEBSTUDIO_FORM_EVALUATION_RECEIVER_PORT;
+  const evaluationTransport =
+    evaluationReceiverPort !== undefined &&
+    /^(?:[1-9][0-9]{0,4})$/.test(evaluationReceiverPort) &&
+    Number(evaluationReceiverPort) <= 65535 &&
+    isCloudflareTemplate === false
+      ? `const protectedFetch = createNodeProtectedResourceFetch({ deniedHostnames: getDeniedResourceHostnames([new URL(request.url).hostname, projectDomain]) });
+  const testFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const outgoing = new Request(input, init);
+    const url = new URL(outgoing.url);
+    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || url.search !== "" || url.hash !== "" || outgoing.method !== "POST") {
+      throw new Error("Unexpected evaluation Form destination");
+    }
+    protectedFetch.validateDestination(url);
+    return fetch(new Request("http://127.0.0.1:${evaluationReceiverPort}" + url.pathname, outgoing));
+  };
+  return Object.assign(testFetch, { validateDestination: (url: URL) => {
+    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || url.search !== "" || url.hash !== "") {
+      throw new Error("Unexpected evaluation Form destination");
+    }
+    protectedFetch.validateDestination(url);
+  } });`
+      : undefined;
   await writeGeneratedFile(
     managedFormResourceFetchFile,
     isCloudflareTemplate
@@ -1076,12 +1100,15 @@ export const createManagedFormEmailSender = (_input: { context: unknown; formDat
 export const validateManagedFormEmail = (_request: unknown, _formData: FormData) => undefined;
 export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
   void context;
-  return createNodeProtectedResourceFetch({
+  ${
+    evaluationTransport ??
+    `return createNodeProtectedResourceFetch({
     deniedHostnames: getDeniedResourceHostnames([
       new URL(request.url).hostname,
       projectDomain,
     ]),
-  });
+  });`
+  }
 };
 `
   );
