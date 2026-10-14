@@ -30,6 +30,7 @@ type Attribute = {
   required?: boolean;
   type: "string" | "boolean" | "number" | "select" | "url";
   options?: string[];
+  defaultValue?: string;
 };
 
 const overrides: Record<string, Record<string, false | Partial<Attribute>>> = {
@@ -87,7 +88,7 @@ const overrides: Record<string, Record<string, false | Partial<Attribute>>> = {
     name: { required: true },
     value: { required: true },
     checked: { required: true },
-    type: { required: true },
+    type: { required: true, defaultValue: "text" },
     placeholder: { required: true },
     required: { required: true },
     autofocus: { required: true },
@@ -341,7 +342,8 @@ let attributesContent = `type Attribute = {
   description: string,
   required?: boolean,
   type: 'string' | 'boolean' | 'number' | 'select' | 'url',
-  options?: string[]
+  options?: string[],
+  defaultValue?: string
 }
 
 `;

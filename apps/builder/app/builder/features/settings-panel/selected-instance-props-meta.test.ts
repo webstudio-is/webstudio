@@ -1,5 +1,7 @@
 import { afterEach, expect, test } from "vitest";
 import { coreMetas, type WsComponentMeta } from "@webstudio-is/sdk";
+import { Input as inputMeta } from "@webstudio-is/sdk-components-react/metas";
+import { attributesByTag } from "@webstudio-is/html-data";
 import { showAttribute } from "@webstudio-is/react-sdk";
 import { $selectedInstancePropsMetas } from "./shared";
 import {
@@ -87,7 +89,7 @@ test("keeps rendered form attributes for components without the opt-out", () => 
 });
 
 test.each(["ws:element", "Input"])(
-  "defaults the unset %s input type to text in Props metadata",
+  "inherits the unset %s input type from HTML metadata",
   (component) => {
     const input = {
       type: "instance" as const,
@@ -99,10 +101,7 @@ test.each(["ws:element", "Input"])(
     $instances.set(new Map([[input.id, input]]));
     $props.set(new Map());
     $registeredComponentMetas.set(
-      new Map([
-        ...Object.entries(coreMetas),
-        ["Input", { label: "Text Input" }],
-      ])
+      new Map([...Object.entries(coreMetas), ["Input", inputMeta]])
     );
     selectInstance([input.id]);
 
@@ -116,3 +115,14 @@ test.each(["ws:element", "Input"])(
     expect($props.get().size).toBe(0);
   }
 );
+
+test("keeps the implicit type default on the input attribute only", () => {
+  expect(
+    attributesByTag.input?.find(({ name }) => name === "type")
+  ).toMatchObject({
+    defaultValue: "text",
+  });
+  expect(
+    attributesByTag.button?.find(({ name }) => name === "type")
+  ).not.toHaveProperty("defaultValue");
+});

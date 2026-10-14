@@ -295,7 +295,7 @@ export const humanizeAttribute = (string: string) => {
   return humanizeString(standardAttributesToReactProps[string] ?? string);
 };
 
-type Attribute = (typeof ariaAttributes)[number];
+type Attribute = (typeof ariaAttributes)[number] & { defaultValue?: string };
 
 const attributeToMeta = (attribute: Attribute): PropMeta => {
   const required = attribute.required ?? false;
@@ -308,6 +308,7 @@ const attributeToMeta = (attribute: Attribute): PropMeta => {
       required,
       options,
       description,
+      defaultValue: attribute.defaultValue,
     };
   }
   if (attribute.type === "url") {
@@ -378,13 +379,6 @@ export const $selectedInstancePropsMetas = computed(
       tag === undefined ? undefined : contentModePropNamesByTag.get(tag);
     const toAttributeMeta = (attribute: Attribute): PropMeta => {
       const propMeta = attributeToMeta(attribute);
-      if (
-        tag === "input" &&
-        attribute.name === "type" &&
-        propMeta.control === "select"
-      ) {
-        return { ...propMeta, defaultValue: "text" };
-      }
       if (contentModePropNames?.has(attribute.name)) {
         return { ...propMeta, contentMode: true };
       }
