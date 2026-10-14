@@ -41,3 +41,6 @@ export const getFormActions = (actions: FormSubmission) =>
   actions
     .filter((action) => action.enabled)
     .map((action) => action.dataSourceId);
+
+/** @deprecated Use getFormActions instead. */
+export const getEnabledFormActions = getFormActions;

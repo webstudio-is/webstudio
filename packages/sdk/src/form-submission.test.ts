@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import {
+  getEnabledFormActions,
   getFormActions,
   isFormSubmission,
   validateFormSubmission,
@@ -14,6 +15,7 @@ test("enabled Actions preserve configured order without running legacy disabled 
   expect(isFormSubmission(actions)).toBe(true);
   expect(validateFormSubmission(actions)).toBeUndefined();
   expect(getFormActions(actions)).toEqual(["third", "first"]);
+  expect(getEnabledFormActions(actions)).toEqual(["third", "first"]);
 });
 
 test("empty, duplicate and over-limit Actions are rejected", () => {
