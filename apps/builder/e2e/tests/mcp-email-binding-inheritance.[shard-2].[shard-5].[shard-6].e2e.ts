@@ -10,6 +10,9 @@ import {
 import { test } from "../test";
 import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 
+// Both tests run two MCP authoring and generated preview phases.
+const twoPhaseTimeout = 240_000;
+
 const execFileAsync = promisify(execFile);
 const reactGlobalPath = fileURLToPath(
   new URL("../../../../scripts/register-react-global.ts", import.meta.url)
@@ -53,6 +56,7 @@ const author = async (
 test("MCP Email bindings deliver values and full reset restores project recipients and reply-to", async ({
   context,
 }) => {
+  test.setTimeout(twoPhaseTimeout);
   const fixture = await createContentModeProject({
     context,
     email: "mcp-email-binding@webstudio.test",
@@ -128,6 +132,7 @@ test("MCP Email bindings deliver values and full reset restores project recipien
 test("MCP partial Email body updates preserve recipient, sender, and attachment settings", async ({
   context,
 }) => {
+  test.setTimeout(twoPhaseTimeout);
   const fixture = await createContentModeProject({
     context,
     email: "mcp-email-partial@webstudio.test",

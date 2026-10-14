@@ -1,10 +1,12 @@
-import { realpathSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defineConfig, searchForWorkspaceRoot } from "vite";
 import { reactRouter } from "@react-router/dev/vite";
 
 const sourceConditions =
   process.env.WEBSTUDIO_LOCAL_CLI_BOOTSTRAPPED === "1" ? ["webstudio"] : [];
+const templateDirectory = fileURLToPath(new URL(".", import.meta.url));
+const templateNodeModules = new URL("./node_modules", import.meta.url);
 
 export default defineConfig({
   // Local previews share node_modules, but must not share optimizer state.
@@ -16,10 +18,10 @@ export default defineConfig({
     // serve React Router's client entry from that workspace to hydrate Preview.
     fs: {
       allow: [
-        fileURLToPath(new URL(".", import.meta.url)),
-        searchForWorkspaceRoot(
-          realpathSync(new URL("./node_modules", import.meta.url))
-        ),
+        templateDirectory,
+        ...(existsSync(templateNodeModules)
+          ? [searchForWorkspaceRoot(realpathSync(templateNodeModules))]
+          : []),
       ],
     },
   },
