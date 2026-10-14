@@ -16,6 +16,7 @@ export type BoundedMcpCall = {
   name: string;
   arguments?: {
     path?: string;
+    siteOrigin?: string;
     searchesForForm?: true;
     searchesForElement?: true;
     inspectsFormTemplate?: true;
@@ -179,10 +180,13 @@ export const getMcpTraceRequest = (
         args.path = path;
       }
     }
-    if (params.name === "preview.submit-form") {
+    if (params.name === "forms.simulate-submission") {
       const path = getBoundedRoutePath(params.arguments.path);
       if (path !== undefined) {
         args.path = path;
+      }
+      if (params.arguments.siteOrigin === "https://site.example") {
+        args.siteOrigin = "https://site.example";
       }
       if (
         Array.isArray(params.arguments.values) &&
@@ -305,25 +309,18 @@ export const getMcpTraceResponse = (
       ? result.structuredContent
       : undefined;
   const formData =
-    call.name === "preview.submit-form" &&
+    call.name === "forms.simulate-submission" &&
     isPlainRecord(structuredContent?.data)
       ? structuredContent.data
       : undefined;
   const formStatus: BoundedMcpCall["formStatus"] =
-    formData?.status === "validation_failed" ||
-    formData?.status === "submitted" ||
-    formData?.status === "unknown"
-      ? (formData.status as BoundedMcpCall["formStatus"])
-      : undefined;
+    typeof formData?.success === "boolean" ? "submitted" : undefined;
   const formState: BoundedMcpCall["formState"] =
-    formData?.formState === "initial" ||
-    formData?.formState === "pending" ||
-    formData?.formState === "success" ||
-    formData?.formState === "error" ||
-    formData?.formState === "invalid" ||
-    formData?.formState === "unknown"
-      ? (formData.formState as BoundedMcpCall["formState"])
-      : undefined;
+    formData?.success === true
+      ? "success"
+      : formData?.success === false
+        ? "error"
+        : undefined;
   const meta =
     structuredContent !== undefined && isPlainRecord(structuredContent.meta)
       ? structuredContent.meta

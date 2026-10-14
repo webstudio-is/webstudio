@@ -35,6 +35,28 @@ While the server is running, stdout is reserved for MCP JSON-RPC messages. Do no
 
 ## One-Shot Tool Calls
 
+### Server-side Form simulation
+
+`forms.simulate-submission` evaluates a saved Form using synthetic string fields
+and the same server Form handler used by Builder Preview. Supply the saved Form
+instance ID, page path, and the site's exact HTTPS origin. It can trigger the
+Form's configured HTTP Resources, so use a controlled destination. Email actions
+are rejected by the CLI adapter. For dynamic checkbox or multiple-select fields,
+pass `arrayNames` to preserve an empty or single-value array when the saved
+field props do not identify the control. The result reports destination statuses
+and errors without Resource bodies. This server simulation does not exercise
+client validation, browser event handlers, navigation, file bytes, or actual
+browser information.
+
+```json
+{
+  "path": "/contact",
+  "siteOrigin": "https://example.com",
+  "formId": "saved-form-instance-id",
+  "values": [{ "name": "email", "value": "synthetic@example.com" }]
+}
+```
+
 Use the shortcut `webstudio <tool> '<json>'` when you are operating from a shell and need one MCP tool result. The explicit form `webstudio mcp single-op-call <tool> '<json>'` is equivalent and avoids writing temporary Node.js stdio client scripts.
 
 Examples:

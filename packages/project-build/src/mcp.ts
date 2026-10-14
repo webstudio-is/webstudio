@@ -300,6 +300,25 @@ type SubmitPreviewForm = (
   input: ProjectSessionPreviewSubmitFormInput
 ) => Promise<ProjectSessionPreviewSubmitFormResult>;
 
+export type ProjectSessionSimulateFormInput = {
+  path: string;
+  siteOrigin: string;
+  formId: string;
+  values: readonly { name: string; value: string }[];
+  arrayNames?: readonly string[];
+};
+
+export type ProjectSessionSimulateFormResult = {
+  success: boolean;
+  status: number;
+  results: readonly { status: number; resourceId?: string }[];
+  errors: readonly { status?: number; message: string }[];
+};
+
+type SimulateForm = (
+  input: ProjectSessionSimulateFormInput
+) => Promise<ProjectSessionSimulateFormResult>;
+
 type StartPreview = (
   input: ProjectSessionPreviewInput,
   progress?: McpToolProgress
@@ -4137,6 +4156,84 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
   }),
 ];
 
+const simulateFormTool = createProjectSessionMcpTool({
+  name: "forms.simulate-submission",
+  description:
+    "Submit synthetic string fields for a saved Form through the shared server Form engine. This can trigger configured HTTP Resources. Email actions are unavailable in the local CLI adapter.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      path: { type: "string" },
+      siteOrigin: { type: "string" },
+      formId: { type: "string" },
+      arrayNames: { type: "array", items: { type: "string" } },
+      values: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: { name: { type: "string" }, value: { type: "string" } },
+          required: ["name", "value"],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["path", "siteOrigin", "formId", "values"],
+    additionalProperties: false,
+  },
+  outputSchema: getMcpOutputSchema({
+    type: "object",
+    properties: {
+      success: { type: "boolean" },
+      status: { type: "integer" },
+      results: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            status: { type: "integer" },
+            resourceId: { type: "string" },
+          },
+          required: ["status"],
+          additionalProperties: false,
+        },
+      },
+      errors: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            status: { type: "integer" },
+            message: { type: "string" },
+          },
+          required: ["message"],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["success", "status", "results", "errors"],
+    additionalProperties: false,
+  }),
+  annotations: {
+    command: "forms.simulate-submission",
+    operationId: "forms.simulate-submission",
+    method: "session",
+    permit: "api",
+    localCapable: false,
+    serverOnly: true,
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "projectSettings",
+    ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+});
+
 type McpStructuredError = {
   code: string;
   message: string;
@@ -4242,6 +4339,7 @@ export const listProjectSessionMcpTools = (
     includeInstallOcr?: boolean;
     includePreview?: boolean;
     includePreviewSubmitForm?: boolean;
+    includeSimulateForm?: boolean;
     includeRestorePoints?: boolean;
   } = {}
 ): ProjectSessionMcpTool[] => [
@@ -4320,6 +4418,7 @@ export const listProjectSessionMcpTools = (
     : []),
   ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
   ...(options.includeInstallOcr ? [installOcrTool] : []),
+  ...(options.includeSimulateForm ? [simulateFormTool] : []),
   ...(options.includePreview
     ? previewTools.filter(
         (tool) =>
@@ -8645,6 +8744,7 @@ type ProjectSessionMcpCoreOptions<Command extends string> = {
   installOcr?: InstallOcr;
   startPreview?: StartPreview;
   submitPreviewForm?: SubmitPreviewForm;
+  simulateForm?: SimulateForm;
   getPreviewStatus?: GetPreviewStatus;
   stopPreview?: StopPreview;
   guidance?: ProjectSessionMcpGuidance;
@@ -8680,6 +8780,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   installOcr,
   startPreview,
   submitPreviewForm,
+  simulateForm,
   getPreviewStatus,
   stopPreview,
   guidance,
@@ -8710,6 +8811,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
     includePreview:
       startPreview !== undefined && getPreviewStatus !== undefined,
     includePreviewSubmitForm: submitPreviewForm !== undefined,
+    includeSimulateForm: simulateForm !== undefined,
     includeRestorePoints: restorePoints !== undefined,
   });
   const listTools = () => [...tools];
@@ -9285,6 +9387,33 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           await submitPreviewForm(getPreviewSubmitFormInput(input))
         );
       }
+      if (name === "forms.simulate-submission" && simulateForm !== undefined) {
+        const values = z
+          .object({ name: z.string().min(1), value: z.string() })
+          .strict();
+        const parsed = z
+          .object({
+            path: z.string().startsWith("/").max(2048),
+            siteOrigin: z.string().url().max(2048),
+            formId: z.string().min(1),
+            values: z.array(values).max(100),
+            arrayNames: z.array(z.string().min(1)).max(100).optional(),
+          })
+          .strict()
+          .parse(input);
+        const origin = new URL(parsed.siteOrigin);
+        if (
+          origin.protocol !== "https:" ||
+          origin.username !== "" ||
+          origin.password !== "" ||
+          origin.pathname !== "/" ||
+          origin.search !== "" ||
+          origin.hash !== ""
+        ) {
+          throw new Error("siteOrigin must be a bare HTTPS origin.");
+        }
+        return toMetaResult(await simulateForm(parsed));
+      }
       if (name === "preview.status" && getPreviewStatus !== undefined) {
         return toMetaResult(await getPreviewStatus());
       }
@@ -9760,6 +9889,7 @@ export const createProjectSessionMcpServer = async <
   installOcr,
   startPreview,
   submitPreviewForm,
+  simulateForm,
   getPreviewStatus,
   stopPreview,
   guidance,
@@ -9829,6 +9959,7 @@ export const createProjectSessionMcpServer = async <
     installOcr,
     startPreview,
     submitPreviewForm,
+    simulateForm,
     getPreviewStatus,
     stopPreview,
     guidance,

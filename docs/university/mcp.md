@@ -917,6 +917,25 @@ source of truth. For tools with no required arguments, pass `{}`.
 }
 ```
 
+### forms.simulate-submission
+
+Runs a saved canvas Form entirely server-side through the managed Form engine.
+It can trigger configured HTTP Resources; use a controlled destination. The CLI
+rejects Email actions. Supply the site's exact HTTPS origin. Static checkbox
+and multiple-select fields retain array semantics; use `arrayNames` for dynamic
+fields when an empty or single selection must remain an array. This operation
+does not exercise browser validation, event handlers, navigation, file bytes,
+or actual browser information.
+
+```json
+{
+  "path": "/contact",
+  "siteOrigin": "https://example.com",
+  "formId": "saved-form-instance-id",
+  "values": [{ "name": "email", "value": "synthetic@example.com" }]
+}
+```
+
 ### status
 
 ```json

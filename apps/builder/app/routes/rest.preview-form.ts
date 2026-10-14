@@ -5,22 +5,14 @@ import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
-import { evaluateExpressionSync } from "@webstudio-is/project-build/runtime";
+import { prepareManagedFormDraft } from "@webstudio-is/project-build/runtime";
 import * as projectApi from "@webstudio-is/project/index.server";
 import {
-  findTreeInstanceIds,
-  decodeDataVariableId,
-  getEnabledFormActions,
-  isFormSubmission,
-  getAllPages,
-  getPagePath,
   getFormEmailStringifyOptions,
   defaultEmailBody,
   defaultEmailConfirmationSubject,
   defaultEmailSubject,
 } from "@webstudio-is/sdk";
-import { createManagedFormDraftGraph } from "@webstudio-is/sdk/managed-form-draft-graph";
-import { getSystemSearch } from "@webstudio-is/sdk/runtime";
 import {
   createCloudflareManagedFormEmailSenderWithUrl,
   getManagedFormFailure,
@@ -33,8 +25,6 @@ import {
 import { managedFormIdFieldName } from "@webstudio-is/sdk/form-fields";
 import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
 import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";
-import { matchPathnameRoutes } from "@webstudio-is/wsauth";
-import { toWebstudioParams } from "@webstudio-is/react-sdk";
 import { preventCrossOriginCookie } from "~/services/no-cross-origin-cookie";
 import { checkCsrf } from "~/services/csrf-session.server";
 import { privateNoStoreResponseHeaders } from "~/services/cache-control.server";
@@ -111,31 +101,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       path,
       `https://${project.domain}.${env.PUBLISHER_HOST}`
     );
-    const match = matchPathnameRoutes(
-      getAllPages(build.pages).map((page) => ({
-        pattern: getPagePath(page.id, build.pages),
-        value: page,
-      })),
-      pageUrl.pathname
-    );
     const instances = new Map(
       build.instances.map((instance) => [instance.id, instance])
     );
-    if (
-      match === undefined ||
-      !findTreeInstanceIds(instances, match.value.rootInstanceId).has(formId)
-    ) {
-      throw new Error("Form not found on this page");
-    }
-    const system = {
-      params: toWebstudioParams(
-        getPagePath(match.value.id, build.pages),
-        match.params
-      ),
-      ...getSystemSearch(pageUrl.searchParams),
-      origin: pageUrl.origin,
-      pathname: pageUrl.pathname,
-    };
     const props = new Map(build.props.map((prop) => [prop.id, prop]));
     const dataSources = new Map(
       build.dataSources.map((source) => [source.id, source])
@@ -143,13 +111,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const resources = new Map(
       build.resources.map((resource) => [resource.id, resource])
     );
-    const actionProp = build.props
-      .filter((prop) => prop.instanceId === formId && prop.name === "action")
-      .at(-1);
-    const action = actionProp?.type === "json" ? actionProp.value : undefined;
-    const destinations = isFormSubmission(action)
-      ? getEnabledFormActions(action)
-      : [];
+    const owner =
+      project.userId === null
+        ? undefined
+        : await getUserById(context, project.userId);
+    const { system, action, destinations, resourceIds, getGraph } =
+      prepareManagedFormDraft({
+        formId,
+        pageUrl,
+        pages: build.pages,
+        instances,
+        props,
+        dataSources,
+        resources,
+        projectMeta: build.projectSettings?.meta ?? build.pages.meta,
+        ownerEmail: owner?.email ?? undefined,
+      });
     if (
       !env.TRPC_SERVER_API_TOKEN &&
       destinations.some((id) => {
@@ -173,12 +150,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ],
       });
     }
-    const resourceIds = destinations.map((id) => {
-      const source = dataSources.get(id);
-      return source?.type === "resource" && resources.has(source.resourceId)
-        ? source.resourceId
-        : null;
-    });
     const resourceNames = new Map(
       destinations.flatMap((id) => {
         const source = dataSources.get(id);
@@ -187,32 +158,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           : [];
       })
     );
-    const owner =
-      project.userId === null
-        ? undefined
-        : await getUserById(context, project.userId);
-    const ownerEmail = owner?.email ?? undefined;
-    const projectMeta = build.projectSettings?.meta ?? build.pages.meta;
     const resourceFetch = createNodeProtectedResourceFetch({
       deniedHostnames: getDeniedResourceHostnames([
         pageUrl.hostname,
         project.domain,
       ]),
     });
-    const evaluateExpression = (
-      expression: string,
-      values: ReadonlyMap<string, unknown>
-    ) =>
-      evaluateExpressionSync(
-        expression,
-        new Map(
-          Array.from(values, ([name, value]) => [
-            decodeDataVariableId(name) ?? name,
-            value,
-          ])
-        ),
-        { throwOnError: true }
-      );
     const exchanges: PreviewFormExchange[] = [];
     let previewBrowserInfo: Record<string, unknown> | undefined;
     const privacy = getFormEmailStringifyOptions(instances, props, formId);
@@ -274,21 +225,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         id === formId ? { action, resourceIds } : undefined,
       getGraph: (id, values) => {
         previewBrowserInfo = values.browserInfo as Record<string, unknown>;
-        return createManagedFormDraftGraph({
-          formId: id,
-          destinationDataSourceIds: destinations,
-          instances,
-          props,
-          dataSources,
-          resources,
-          projectMeta,
-          ownerEmail,
-          system: values.system,
-          systemDataSourceId: match.value.systemDataSourceId,
-          formData: values.formData as Record<string, unknown>,
-          browserInfo: values.browserInfo as Record<string, unknown>,
-          evaluateExpression,
-        });
+        return getGraph(id, values);
       },
       trustedIp: request.headers.get("cf-connecting-ip") ?? undefined,
       createEmailSender: (data) =>

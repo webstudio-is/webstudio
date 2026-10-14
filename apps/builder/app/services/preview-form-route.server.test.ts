@@ -8,6 +8,10 @@ import * as projectApi from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
 import { encodeDataSourceVariable } from "@webstudio-is/sdk";
+import {
+  prepareManagedFormDraft,
+  simulateManagedFormDraftSubmission,
+} from "@webstudio-is/project-build/runtime";
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
 import { action } from "../routes/rest.preview-form";
@@ -200,6 +204,129 @@ test("an unpublished project's current draft executes its HTTP Resource", async 
   expect(response.headers.get("cache-control")).toContain("no-store");
 });
 
+test("server MCP simulation and Builder Preview use the same saved Form setup and SDK outcome", async () => {
+  const browserResponse = await action({ request: request() } as never);
+  const browserResult = (await browserResponse.json()) as {
+    success: boolean;
+    status: number;
+    results: { status: number; resourceId: string; body: unknown }[];
+  };
+  const instances = new Map(
+    draftBuild.instances.map((item) => [item.id, item])
+  );
+  const props = new Map(draftBuild.props.map((item) => [item.id, item]));
+  const dataSources = new Map(
+    draftBuild.dataSources.map((item) => [item.id, item])
+  );
+  const resources = new Map(
+    draftBuild.resources.map((item) => [item.id, item])
+  );
+  const pageUrl = new URL("https://site.wstd.work/contact");
+  const prepared = prepareManagedFormDraft({
+    formId: "form",
+    pageUrl,
+    pages: draftBuild.pages as never,
+    instances: instances as never,
+    props: props as never,
+    dataSources: dataSources as never,
+    resources: resources as never,
+    projectMeta: draftBuild.projectSettings.meta,
+  });
+  const simulated = await simulateManagedFormDraftSubmission({
+    prepared,
+    formId: "form",
+    pageUrl,
+    values: [{ name: "email", value: "ada@example.com" }],
+    resourceFetch: vi.mocked(createNodeProtectedResourceFetch).mock.results[0]
+      .value,
+  });
+  expect(simulated).toMatchObject({
+    success: browserResult.success,
+    status: browserResult.status,
+    results: browserResult.results,
+  });
+});
+
+test.each([
+  [[], []],
+  [["news"], ["news"]],
+  [
+    ["news", "events"],
+    ["news", "events"],
+  ],
+])(
+  "server simulation preserves saved checkbox array semantics for %j",
+  async (selected, expected) => {
+    const pageUrl = new URL("https://site.wstd.work/contact");
+    const instances = new Map(
+      [
+        ...draftBuild.instances,
+        {
+          type: "instance",
+          id: "choices",
+          component: "Checkbox",
+          children: [],
+        },
+      ].map((item) => [item.id, item])
+    );
+    instances.set("form", {
+      ...instances.get("form")!,
+      children: [{ type: "id", value: "choices" }],
+    });
+    const props = new Map(
+      [
+        ...draftBuild.props,
+        {
+          id: "choices-name",
+          instanceId: "choices",
+          name: "name",
+          type: "string",
+          value: "interests",
+        },
+      ].map((item) => [item.id, item])
+    );
+    const resources = new Map([
+      [
+        "webhook",
+        {
+          ...draftBuild.resources[0],
+          body: "({ interests: $ws$dataSource$formData.interests })",
+        },
+      ],
+    ]);
+    const prepared = prepareManagedFormDraft({
+      formId: "form",
+      pageUrl,
+      pages: draftBuild.pages as never,
+      instances: instances as never,
+      props: props as never,
+      dataSources: new Map(
+        draftBuild.dataSources.map((item) => [item.id, item])
+      ) as never,
+      resources: resources as never,
+      projectMeta: draftBuild.projectSettings.meta,
+    });
+    expect(prepared.arrayNames.has("interests")).toBe(true);
+    const sent: unknown[] = [];
+    const resourceFetch = Object.assign(
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        sent.push(await new Request(input, init).json());
+        return Response.json({ accepted: true }, { status: 201 });
+      }),
+      { validateDestination: vi.fn() }
+    );
+    const response = await simulateManagedFormDraftSubmission({
+      prepared,
+      formId: "form",
+      pageUrl,
+      values: selected.map((value) => ({ name: "interests", value })),
+      resourceFetch,
+    });
+    expect(response.success).toBe(true);
+    expect(sent).toEqual([{ interests: expected }]);
+  }
+);
+
 test("Preview uses the final effective Form action when props are duplicated", async () => {
   vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
     ...draftBuild,
@@ -216,7 +343,7 @@ test("Preview uses the final effective Form action when props are duplicated", a
 });
 
 test("Preview Actions resolve the matched page's legacy System binding", async () => {
-  vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
+  const originBuild = {
     ...draftBuild,
     pages: {
       ...draftBuild.pages,
@@ -245,7 +372,8 @@ test("Preview Actions resolve the matched page's legacy System binding", async (
         body: "({ pathname: $ws$dataSource$pageSystem.pathname, origin: $ws$dataSource$pageSystem.origin })",
       },
     ],
-  } as never);
+  };
+  vi.mocked(loadDevBuildByProjectId).mockResolvedValue(originBuild as never);
   const response = await action({ request: request() } as never);
   expect(await response.json()).toMatchObject({ success: true });
   const fetch = vi.mocked(createNodeProtectedResourceFetch).mock.results[0]
@@ -253,6 +381,36 @@ test("Preview Actions resolve the matched page's legacy System binding", async (
   expect(fetch).toHaveBeenCalledOnce();
   const outgoing = fetch.mock.calls[0][0] as Request;
   expect(await outgoing.json()).toEqual({
+    pathname: "/contact",
+    origin: "https://site.wstd.work",
+  });
+  const pageUrl = new URL("https://site.wstd.work/contact");
+  const prepared = prepareManagedFormDraft({
+    formId: "form",
+    pageUrl,
+    pages: originBuild.pages as never,
+    instances: new Map(
+      originBuild.instances.map((item) => [item.id, item])
+    ) as never,
+    props: new Map(originBuild.props.map((item) => [item.id, item])) as never,
+    dataSources: new Map(
+      originBuild.dataSources.map((item) => [item.id, item])
+    ) as never,
+    resources: new Map(
+      originBuild.resources.map((item) => [item.id, item])
+    ) as never,
+    projectMeta: originBuild.projectSettings.meta,
+  });
+  const simulated = await simulateManagedFormDraftSubmission({
+    prepared,
+    formId: "form",
+    pageUrl,
+    values: [{ name: "email", value: "ada@example.com" }],
+    resourceFetch: fetch,
+  });
+  expect(simulated.success).toBe(true);
+  const [simulatedInput, simulatedInit] = fetch.mock.calls[1];
+  expect(await new Request(simulatedInput, simulatedInit).json()).toEqual({
     pathname: "/contact",
     origin: "https://site.wstd.work",
   });

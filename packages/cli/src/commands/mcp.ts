@@ -38,9 +38,13 @@ import type { ProjectSessionSnapshot } from "@webstudio-is/project-build/project
 import {
   formatValidationErrorMessage,
   getZodValidationIssues,
+  prepareManagedFormDraft,
   prefixValidationIssuePaths,
+  simulateManagedFormDraftSubmission,
   type SemanticValidationIssue,
 } from "@webstudio-is/project-build/runtime";
+import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
+import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";
 import {
   inspectMdxAssetSource,
   mdxAssetInspectionNamespaces,
@@ -2203,6 +2207,119 @@ const createCliMcpHost = async ({
     },
     async submitPreviewForm(input) {
       return await previewHandlers.submitForm(input);
+    },
+    async simulateForm(input) {
+      await session.assertPermit("api");
+      await session.assertPermit("build");
+      if (
+        input.path.startsWith("//") ||
+        input.path.includes("\\") ||
+        input.path.split(/[?#]/, 1)[0]?.split("/").includes("..")
+      ) {
+        throw new Error("Form simulation requires a local page path.");
+      }
+      const snapshot = await session.ensureNamespaces([
+        "pages",
+        "instances",
+        "props",
+        "dataSources",
+        "resources",
+        "projectSettings",
+      ]);
+      const {
+        pages,
+        instances,
+        props,
+        dataSources,
+        resources,
+        projectSettings,
+      } = snapshot.state;
+      if (
+        pages === undefined ||
+        instances === undefined ||
+        props === undefined ||
+        dataSources === undefined ||
+        resources === undefined
+      ) {
+        throw new Error(
+          "Form simulation requires a complete project snapshot."
+        );
+      }
+      const pageUrl = new URL(input.path, input.siteOrigin);
+      const prepared = prepareManagedFormDraft({
+        formId: input.formId,
+        pageUrl,
+        pages,
+        instances,
+        props,
+        dataSources,
+        resources,
+        projectMeta: projectSettings?.meta ?? pages.meta,
+      });
+      if (
+        prepared.resourceIds.some(
+          (id) => id !== null && resources.get(id)?.control === "email"
+        )
+      ) {
+        throw new Error(
+          "Email actions cannot be simulated by this MCP session; replace them with a controlled HTTP Resource before submitting."
+        );
+      }
+      const resourceFetch = createNodeProtectedResourceFetch({
+        deniedHostnames: getDeniedResourceHostnames([
+          new URL(apiConnection.origin).hostname,
+          pageUrl.hostname,
+        ]),
+      });
+      const receiverPort = process.env.WEBSTUDIO_FORM_EVALUATION_RECEIVER_PORT;
+      const evaluationFetch =
+        receiverPort !== undefined &&
+        /^(?:[1-9][0-9]{0,4})$/.test(receiverPort) &&
+        Number(receiverPort) <= 65535
+          ? Object.assign(
+              async (input: RequestInfo | URL, init?: RequestInit) => {
+                const outgoing = new Request(input, init);
+                const url = new URL(outgoing.url);
+                if (
+                  url.origin !== "https://mcp-delivery.example" ||
+                  !["/submit", "/reject"].includes(url.pathname) ||
+                  url.search !== "" ||
+                  url.hash !== "" ||
+                  outgoing.method !== "POST"
+                ) {
+                  throw new Error("Unexpected evaluation Form destination");
+                }
+                resourceFetch.validateDestination(url);
+                return await fetch(
+                  new Request(
+                    `http://127.0.0.1:${receiverPort}${url.pathname}`,
+                    outgoing
+                  )
+                );
+              },
+              { validateDestination: resourceFetch.validateDestination }
+            )
+          : undefined;
+      const result = await simulateManagedFormDraftSubmission({
+        prepared,
+        formId: input.formId,
+        pageUrl,
+        values: input.values,
+        arrayNames: input.arrayNames,
+        resourceFetch: evaluationFetch ?? resourceFetch,
+      });
+      return {
+        success: result.success,
+        status: result.status,
+        results: result.results.map(({ status, resourceId }) => ({
+          status,
+          resourceId,
+        })),
+        errors: result.errors.map(({ status, message }) => ({
+          status,
+          message,
+        })),
+      };
     },
     async getPreviewStatus() {
       return { ...preview.status(), ...previewFreshness.status() };

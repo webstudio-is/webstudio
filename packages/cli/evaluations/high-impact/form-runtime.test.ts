@@ -5,10 +5,11 @@ import { createMinimalAgentTask, getFixtureToolNames } from "./agent-runner";
 import { getMcpTraceRequest, getMcpTraceResponse } from "./mcp-trace-proxy";
 import { evaluateHighImpactOutcome } from "./validate";
 
-test("runtime fixture exposes only the Form authoring and session Preview tools", () => {
+test("runtime fixture exposes server-side Form simulation without Preview tools", () => {
   const names = getFixtureToolNames(managedFormRuntimeFixture);
-  expect(names).toContain("preview.submit-form");
-  expect(names).toContain("preview.start");
+  expect(names).toContain("forms.simulate-submission");
+  expect(names).not.toContain("preview.submit-form");
+  expect(names).not.toContain("preview.start");
   expect(names).not.toContain("publish");
   expect(names).not.toContain("screenshot");
   const task = createMinimalAgentTask(managedFormRuntimeFixture, {
@@ -39,9 +40,10 @@ test("MCP trace drops Form values, file bytes, and response bodies", () => {
     id: 7,
     method: "tools/call",
     params: {
-      name: "preview.submit-form",
+      name: "forms.simulate-submission",
       arguments: {
         path: "/contact-runtime",
+        siteOrigin: "https://site.example",
         selector: "form",
         values: [
           { name: "message", value: "private message body" },
@@ -52,6 +54,7 @@ test("MCP trace drops Form values, file bytes, and response bodies", () => {
   });
   expect(request?.call.arguments).toEqual({
     path: "/contact-runtime",
+    siteOrigin: "https://site.example",
     hasFormFile: true,
   });
   const response = getMcpTraceResponse(
@@ -60,8 +63,8 @@ test("MCP trace drops Form values, file bytes, and response bodies", () => {
       result: {
         structuredContent: {
           data: {
-            status: "submitted",
-            formState: "error",
+            success: false,
+            status: 502,
             errors: [{ message: "private server response" }],
           },
         },
@@ -142,9 +145,10 @@ test("runtime validator requires the observed success, failure, recovery sequenc
   });
   const submissions = (["success", "error", "success"] as const).map(
     (formState) => ({
-      name: "preview.submit-form",
+      name: "forms.simulate-submission",
       arguments: {
         path: "/contact-runtime",
+        siteOrigin: "https://site.example",
         formValueNames: ["name", "email", "subject", "message"],
       },
       formStatus: "submitted" as const,
@@ -154,12 +158,7 @@ test("runtime validator requires the observed success, failure, recovery sequenc
   const result = evaluateHighImpactOutcome({
     fixture: managedFormRuntimeFixture,
     project,
-    toolCalls: [
-      { name: "meta.guide" },
-      { name: "preview.start" },
-      ...submissions,
-      { name: "preview.stop" },
-    ],
+    toolCalls: [{ name: "meta.guide" }, ...submissions],
     formRuntimeDeliveries: [
       { path: "/submit", status: 200 },
       { path: "/reject", status: 503 },

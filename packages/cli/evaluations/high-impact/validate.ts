@@ -2249,32 +2249,20 @@ const validateManagedFormRuntime = (
 
   const calls = input.toolCalls;
   const submissions = calls.filter(
-    ({ name }) => name === "preview.submit-form"
-  );
-  const starts = calls
-    .map((call, index) => ({ call, index }))
-    .filter(
-      ({ call }) => call.name === "preview.start" && call.isError !== true
-    );
-  const submissionIndices = submissions.map((submission) =>
-    calls.indexOf(submission)
+    ({ name }) => name === "forms.simulate-submission"
   );
   recordCheck(
     checks,
     failures,
     "runtimeSessionPreview",
     submissions.length === 3 &&
-      starts.length >= 1 &&
-      submissionIndices.every((index) =>
-        starts.some((start) => start.index < index)
-      ) &&
-      calls.some(
-        (call, index) =>
-          call.name === "preview.stop" &&
-          call.isError !== true &&
-          index > submissionIndices[2]
+      calls.every(
+        ({ name }) =>
+          name !== "preview.start" &&
+          name !== "preview.submit-form" &&
+          name !== "preview.stop"
       ),
-    "Start the session Preview, submit three times, then stop it."
+    "Run three server-side simulations without Preview or browser submission."
   );
   recordCheck(
     checks,
@@ -2284,6 +2272,7 @@ const validateManagedFormRuntime = (
       submissions.every(
         (call) =>
           call.arguments?.path === "/contact-runtime" &&
+          call.arguments?.siteOrigin === "https://site.example" &&
           call.arguments?.hasFormFile !== true &&
           Array.isArray(call.arguments?.formValueNames) &&
           ["name", "email", "subject", "message"].every((name) =>
@@ -2305,7 +2294,7 @@ const validateManagedFormRuntime = (
       input.formRuntimeDeliveries
         ?.map(({ path, status }) => `${path}:${status}`)
         .join(",") === "/submit:200,/reject:503,/reject:503,/submit:200",
-    "Observe success, one explicit 503 retry, and recovery in both Preview and the local receiver."
+    "Observe success, one explicit 503 retry, and recovery in the server result and local receiver."
   );
 };
 

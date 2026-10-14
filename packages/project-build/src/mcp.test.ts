@@ -7890,6 +7890,50 @@ describe("project session mcp adapter", () => {
     });
   });
 
+  test("exposes server-side Form simulation only with a handler and preserves synthetic repeated fields", async () => {
+    const simulateForm = vi.fn(async () => ({
+      success: true,
+      status: 200,
+      results: [{ status: 201, resourceId: "receiver" }],
+      errors: [],
+    }));
+    const withoutHandler = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+    });
+    expect(withoutHandler.listTools().map((tool) => tool.name)).not.toContain(
+      "forms.simulate-submission"
+    );
+    const adapter = createProjectSessionMcpCore({
+      operations: publicMcpOperations,
+      createProjectSession: createSessionFactory(),
+      executeOperation: createExecuteOperation(),
+      simulateForm,
+    });
+    expect(adapter.listTools().map((tool) => tool.name)).toContain(
+      "forms.simulate-submission"
+    );
+    const input = {
+      path: "/contact",
+      siteOrigin: "https://site.example",
+      formId: "saved-form",
+      values: [
+        { name: "tag", value: "first" },
+        { name: "tag", value: "second" },
+      ],
+    };
+    const result = await adapter.callTool({
+      name: "forms.simulate-submission",
+      input,
+    });
+    expect(simulateForm).toHaveBeenCalledWith(input);
+    expect(result.structuredContent.data).toMatchObject({
+      success: true,
+      results: [{ resourceId: "receiver", status: 201 }],
+    });
+  });
+
   test("uses proportional verification for small value corrections", async () => {
     const searchOperation = publicOperation({
       command: "search-project",

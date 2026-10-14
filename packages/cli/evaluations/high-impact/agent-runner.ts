@@ -74,9 +74,7 @@ const fixtureToolNames = {
     "create-resource",
     "update-resource",
     "update-props",
-    "preview.start",
-    "preview.submit-form",
-    "preview.stop",
+    "forms.simulate-submission",
   ],
   "form-modes-authoring-v1": [
     "meta.guide",
@@ -236,7 +234,7 @@ export const createMinimalAgentTask = (
       ...(isRuntimeFormFixture
         ? [
             "Use only synthetic values. Never use an Email Resource, a file value, or any endpoint except the fixture's exact /submit and /reject destinations.",
-            "Before each preview.submit-form, call preview.start with mode production for this session's latest project version. Use path /contact-runtime and the rendered Form selector. Stop Preview after the final observation.",
+            "Call forms.simulate-submission three times with path /contact-runtime, siteOrigin https://site.example, the saved Form instance ID, and synthetic named values. It evaluates the saved Form entirely on the server through the shared Form engine; do not start Preview or use a browser.",
             "Do not call audit, responsive verification, screenshot, publish, browser tabs, shell commands, or any external service in this runtime fixture.",
           ]
         : []),
