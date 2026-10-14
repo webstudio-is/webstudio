@@ -1648,7 +1648,10 @@ test("shows and submits the selected HTTP body format", async () => {
   await expect
     .poll(() => descriptions?.lastElementChild?.textContent)
     .toContain("Sends fields as form data, including files.");
-  await act(async () => userEvent.keyboard("{ArrowUp}{Enter}"));
+  await act(async () => userEvent.keyboard("{ArrowUp}"));
+  // Radix moves keyboard focus in a timeout, so wait before selecting it.
+  await expect.poll(() => document.activeElement).toBe(options[1]);
+  await act(async () => userEvent.keyboard("{Enter}"));
   expect(
     container.querySelector<HTMLInputElement>('input[name="body-format"]')
       ?.value
