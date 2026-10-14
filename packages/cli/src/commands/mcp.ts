@@ -1948,7 +1948,6 @@ const createCliMcpHost = async ({
               getBuilderStateNamespacesByStatus(snapshot.freshness, status);
       return createIssueReportRuntime(failureTracker.get(), {
         projectId: connection.projectId,
-        serverApiContractVersion: apiContract.serverVersion,
         ...(namespacesByStatus === undefined
           ? {}
           : {

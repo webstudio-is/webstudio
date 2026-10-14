@@ -50,6 +50,7 @@ import {
 } from "./collection";
 import type { BuilderRuntimeContext } from "./context";
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
+import { isContentModeTemplateDefaultPropType } from "./content-mode-permissions";
 import { findAvailableVariables } from "./data";
 import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import {
@@ -857,11 +858,7 @@ const createInsertFragmentMutation = <
       contentModeCopyableProp: (input) =>
         isFragmentContentModeCopyableProp(input) ||
         (copiesContentBlockTemplate &&
-          (input.prop.type === "string" ||
-            input.prop.type === "number" ||
-            input.prop.type === "boolean" ||
-            input.prop.type === "json" ||
-            input.prop.type === "string[]")),
+          isContentModeTemplateDefaultPropType(input.prop.type)),
       contentMode,
     });
   for (const instanceId of newInstanceIds.values()) {

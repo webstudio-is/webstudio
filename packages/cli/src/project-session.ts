@@ -284,7 +284,7 @@ export const createIssueReportRuntime = (
   recentFailure?: IssueReportRecentFailure,
   diagnostics?: Pick<
     IssueReportRuntime,
-    "projectId" | "serverApiContractVersion" | "session" | "preview"
+    "projectId" | "session" | "preview"
   >
 ): IssueReportRuntime => ({
   cliVersion: packageJson.version,

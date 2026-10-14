@@ -290,6 +290,89 @@ const getBlockTemplateChildIdsByInstanceId = (
   return childIdsByInstanceId;
 };
 
+// Decide explicitly when a new Prop type is added whether its template default
+// can be retained without carrying a reference or behavior into content mode.
+export const isContentModeTemplateDefaultPropType = (
+  propType: Prop["type"]
+) => {
+  switch (propType) {
+    case "string":
+    case "number":
+    case "boolean":
+    case "json":
+    case "string[]":
+      return true;
+    case "asset":
+    case "page":
+    case "parameter":
+    case "resource":
+    case "expression":
+    case "action":
+    case "animationAction":
+      return false;
+    default:
+      propType satisfies never;
+      return false;
+  }
+};
+
+const contentModeNonCopyablePropTypes = new Set<Prop["type"]>([
+  "resource",
+  "parameter",
+  "expression",
+  "action",
+  "animationAction",
+]);
+
+const getMatchingTemplateInstanceIds = ({
+  sourceId,
+  targetId,
+  originalInstances,
+  instances,
+  addedInstanceIds,
+}: {
+  sourceId: Instance["id"];
+  targetId: Instance["id"];
+  originalInstances: Map<Instance["id"], Instance>;
+  instances: Map<Instance["id"], Instance>;
+  addedInstanceIds: Set<Instance["id"]>;
+}) => {
+  const sourceIdsByTargetId = new Map<Instance["id"], Instance["id"]>();
+  const matchTree = (sourceId: Instance["id"], targetId: Instance["id"]) => {
+    if (addedInstanceIds.has(targetId) === false) {
+      return false;
+    }
+    const source = originalInstances.get(sourceId);
+    const target = instances.get(targetId);
+    if (source === undefined || target === undefined) {
+      return false;
+    }
+    const { id: _sourceId, children: sourceChildren, ...sourceFields } = source;
+    const { id: _targetId, children: targetChildren, ...targetFields } = target;
+    if (
+      equal(sourceFields, targetFields) === false ||
+      sourceChildren.length !== targetChildren.length
+    ) {
+      return false;
+    }
+    sourceIdsByTargetId.set(targetId, sourceId);
+    for (let index = 0; index < sourceChildren.length; index += 1) {
+      const sourceChild = sourceChildren[index];
+      const targetChild = targetChildren[index];
+      if (sourceChild.type === "id" && targetChild.type === "id") {
+        if (matchTree(sourceChild.value, targetChild.value) === false) {
+          return false;
+        }
+      } else if (equal(sourceChild, targetChild) === false) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  return matchTree(sourceId, targetId) ? sourceIdsByTargetId : undefined;
+};
+
 const getCopiedTemplateProps = ({
   originalInstances,
   originalProps,
@@ -373,48 +456,6 @@ const getCopiedTemplateProps = ({
     sourcePropsByInstanceId.set(sourceProp.instanceId, sourceProps);
   }
 
-  const matchTree = (
-    sourceId: string,
-    targetId: string,
-    sourceIdsByTargetId: Map<string, string>
-  ): boolean => {
-    if (addedInstanceIds.has(targetId) === false) {
-      return false;
-    }
-    const source = originalInstances.get(sourceId);
-    const target = instances.get(targetId);
-    if (source === undefined || target === undefined) {
-      return false;
-    }
-    const { id: _sourceId, children: sourceChildren, ...sourceFields } = source;
-    const { id: _targetId, children: targetChildren, ...targetFields } = target;
-    if (
-      equal(sourceFields, targetFields) === false ||
-      sourceChildren.length !== targetChildren.length
-    ) {
-      return false;
-    }
-    sourceIdsByTargetId.set(targetId, sourceId);
-    for (let index = 0; index < sourceChildren.length; index += 1) {
-      const sourceChild = sourceChildren[index];
-      const targetChild = targetChildren[index];
-      if (sourceChild.type === "id" && targetChild.type === "id") {
-        if (
-          matchTree(
-            sourceChild.value,
-            targetChild.value,
-            sourceIdsByTargetId
-          ) === false
-        ) {
-          return false;
-        }
-      } else if (equal(sourceChild, targetChild) === false) {
-        return false;
-      }
-    }
-    return true;
-  };
-
   for (const targetRootId of addedInstanceIds) {
     if (nestedAddedIds.has(targetRootId)) {
       continue;
@@ -423,10 +464,14 @@ const getCopiedTemplateProps = ({
     for (const sourceRootId of templateRootsByContentRootId.get(
       contentRootId ?? ""
     ) ?? []) {
-      const sourceIdsByTargetId = new Map<string, string>();
-      if (
-        matchTree(sourceRootId, targetRootId, sourceIdsByTargetId) === false
-      ) {
+      const sourceIdsByTargetId = getMatchingTemplateInstanceIds({
+        sourceId: sourceRootId,
+        targetId: targetRootId,
+        originalInstances,
+        instances,
+        addedInstanceIds,
+      });
+      if (sourceIdsByTargetId === undefined) {
         continue;
       }
       const allAddedPropsMatch = addedProps.every(({ prop: addedProp }) => {
@@ -450,11 +495,7 @@ const getCopiedTemplateProps = ({
           sourceIdsByTargetId.has(prop.instanceId) &&
           prop.id === patch.path[0] &&
           originalProps.has(prop.id) === false &&
-          (prop.type === "string" ||
-            prop.type === "number" ||
-            prop.type === "boolean" ||
-            prop.type === "json" ||
-            prop.type === "string[]")
+          isContentModeTemplateDefaultPropType(prop.type)
         ) {
           copiedProps.set(patch, prop);
         }
@@ -597,14 +638,6 @@ const isContentModePropForInstance = ({
   instance: Instance;
   prop: Prop;
 }) => getContentModePropEligibility({ capabilities, instance, prop }).editable;
-
-const contentModeNonCopyablePropTypes = new Set<Prop["type"]>([
-  "resource",
-  "parameter",
-  "expression",
-  "action",
-  "animationAction",
-]);
 
 export const isContentModeCopyableProp = ({
   capabilities,

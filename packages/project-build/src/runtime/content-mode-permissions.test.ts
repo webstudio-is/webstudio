@@ -24,6 +24,7 @@ import {
   getContentModePropNamesByTag,
   isContentModeCopyableProp,
   isContentModePagePath,
+  isContentModeTemplateDefaultPropType,
   validateContentModeTransaction,
   type ContentModePatchTransaction,
 } from "./content-mode-permissions";
@@ -440,6 +441,25 @@ const transaction = (
 });
 
 describe("content mode permissions", () => {
+  test("only retains self-contained template default prop types", () => {
+    expect(
+      (["string", "number", "boolean", "json", "string[]"] as const).every(
+        isContentModeTemplateDefaultPropType
+      )
+    ).toBe(true);
+    expect(
+      ([
+        "asset",
+        "page",
+        "parameter",
+        "resource",
+        "expression",
+        "action",
+        "animationAction",
+      ] as const).some(isContentModeTemplateDefaultPropType)
+    ).toBe(false);
+  });
+
   test("allows only static page paths in content mode", () => {
     expect(isContentModePagePath("/about")).toBe(true);
     expect(isContentModePagePath("")).toBe(true);
