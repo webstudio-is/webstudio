@@ -1,3 +1,4 @@
+import { draftPersistence } from "./draft-persistence";
 import type { Project } from "@webstudio-is/project";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { SyncEmitter } from "@webstudio-is/sync-client";
@@ -172,6 +173,7 @@ export const initializeClientSync = ({
   };
 
   const connectClient = (initialData?: LoadedBuilderData) => {
+    draftPersistence.reset(projectId);
     registerContainers();
     const object = createObjectPool();
     const nextModeClient: SyncModeClient =
@@ -244,6 +246,7 @@ export const initializeClientSync = ({
  * Call this when closing the builder or switching between projects.
  */
 export const destroyClientSync = () => {
+  draftPersistence.reset();
   initializationVersion += 1;
   modeClient?.destroy();
   modeClient = undefined;

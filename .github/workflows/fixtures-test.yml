@@ -58,7 +58,8 @@ jobs:
         shell: bash
         run: |
           set +e
-          pnpm --filter='./fixtures/*' --sequential run fixtures:sync 2>&1 | tee fixtures-sync.log
+          # Build webstudio-features from its checked-in snapshot; its remote data is mutable.
+          pnpm --filter='./fixtures/*' --filter='!./fixtures/webstudio-features' --sequential run fixtures:sync 2>&1 | tee fixtures-sync.log
           sync_status=${PIPESTATUS[0]}
           if [ "$sync_status" -ne 0 ]; then
             message=$(tail -n 40 fixtures-sync.log | sed -e 's/%/%25/g' -e 's/\r/%0D/g' -e 's/$/%0A/' | tr -d '\n')

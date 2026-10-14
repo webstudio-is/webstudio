@@ -8,7 +8,6 @@ import {
   useEffect,
 } from "react";
 import { Root, Trigger, Content } from "@radix-ui/react-collapsible";
-import { type Hook, getClosestInstance } from "@webstudio-is/react-sdk/runtime";
 
 export const Collapsible = forwardRef<
   HTMLDivElement,
@@ -49,41 +48,3 @@ export const CollapsibleContent = forwardRef<
   const contentProps = forceMount ? { forceMount: true as const } : {};
   return <Content ref={ref} {...contentProps} {...props} />;
 });
-
-/* BUILDER HOOKS */
-
-const namespace = "@webstudio-is/sdk-components-react-radix";
-
-// For each CollapsibleContent component within the selection,
-// we identify its closest parent Collapsible component
-// and update its open prop bound to variable.
-export const hooksCollapsible: Hook = {
-  onNavigatorSelect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:CollapsibleContent`) {
-        const collapsible = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:Collapsible`
-        );
-        if (collapsible) {
-          context.setMemoryProp(collapsible, "open", true);
-        }
-      }
-    }
-  },
-  onNavigatorUnselect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:CollapsibleContent`) {
-        const collapsible = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:Collapsible`
-        );
-        if (collapsible) {
-          context.setMemoryProp(collapsible, "open", undefined);
-        }
-      }
-    }
-  },
-};

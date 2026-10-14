@@ -37,6 +37,7 @@ export const createDefaultPages = ({
     systemDataSourceId,
   };
   return {
+    formComponentIdentityVersion: 1,
     meta: {},
     homePageId,
     rootFolderId: ROOT_FOLDER_ID,

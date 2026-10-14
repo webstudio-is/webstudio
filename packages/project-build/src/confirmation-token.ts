@@ -33,12 +33,12 @@ export const createConfirmationToken = async (
   return { token: `${expiresAt.toString(36)}.${digest}`, expiresAt };
 };
 
-export const validateConfirmationToken = async (
+export const getConfirmationTokenInvalidReason = async (
   token: string | undefined,
   payload: unknown
 ) => {
   if (token === undefined) {
-    return false;
+    return "missing";
   }
   const [encodedExpiresAt, digest, ...extra] = token.split(".");
   if (
@@ -46,11 +46,27 @@ export const validateConfirmationToken = async (
     digest === undefined ||
     extra.length > 0
   ) {
-    return false;
+    return "malformed";
   }
   const expiresAt = Number.parseInt(encodedExpiresAt, 36);
-  if (Number.isSafeInteger(expiresAt) === false || expiresAt < Date.now()) {
-    return false;
+  if (Number.isSafeInteger(expiresAt) === false) {
+    return "malformed";
   }
-  return digest === (await getConfirmationDigest(payload, expiresAt));
+  const hasCanonicalExpiry =
+    expiresAt.toString(36) === encodedExpiresAt.toLowerCase();
+  if (expiresAt < Date.now()) {
+    return hasCanonicalExpiry ? "expired" : "malformed";
+  }
+  if (digest !== (await getConfirmationDigest(payload, expiresAt))) {
+    return hasCanonicalExpiry ? "mismatch" : "malformed";
+  }
+};
+
+export const validateConfirmationToken = async (
+  token: string | undefined,
+  payload: unknown
+) => {
+  return (
+    (await getConfirmationTokenInvalidReason(token, payload)) === undefined
+  );
 };

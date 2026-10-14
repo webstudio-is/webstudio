@@ -38,6 +38,9 @@ const formatRuntime = (runtime: IssueReportInput["runtime"]) =>
           `- Operating system: ${runtime.os} ${runtime.osVersion} (${runtime.architecture})`,
           `- Execution mode: ${runtime.executionMode}`,
           `- API contract: ${runtime.apiContractVersion}`,
+          ...(runtime.serverApiContractVersion === undefined
+            ? []
+            : [`- Server API contract: ${runtime.serverApiContractVersion}`]),
           `- Bundle contract: ${runtime.bundleVersion ?? "unknown"}`,
         ]),
     ...(runtime?.session === undefined

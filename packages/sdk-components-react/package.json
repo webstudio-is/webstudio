@@ -48,11 +48,6 @@
       "types": "./lib/types/metas.d.ts",
       "import": "./lib/metas.js"
     },
-    "./hooks": {
-      "webstudio": "./src/hooks.ts",
-      "types": "./lib/types/hooks.d.ts",
-      "import": "./lib/hooks.js"
-    },
     "./markdown": {
       "webstudio": "./src/markdown.ts",
       "types": "./lib/types/markdown.d.ts",

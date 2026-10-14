@@ -150,12 +150,14 @@ export const FieldLabel = ({
   description,
   resettable = false,
   resetDisabled = false,
+  resetLabel,
   onReset,
   children,
 }: {
   description?: string | ReactNode;
   resettable?: boolean;
   resetDisabled?: boolean;
+  resetLabel?: string;
   onReset?: () => void;
   children: string;
 }) => (
@@ -163,6 +165,7 @@ export const FieldLabel = ({
     color={resettable ? "local" : "default"}
     onReset={resettable ? onReset : undefined}
     resetDisabled={resetDisabled}
+    resetLabel={resetLabel}
     description={
       typeof description === "string" ? (
         <Text

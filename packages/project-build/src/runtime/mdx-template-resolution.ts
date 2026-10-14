@@ -165,10 +165,21 @@ export const resolveMdxTemplates = ({
 
   const visit = (
     nodes: readonly MdxAuthoredNode[],
-    parentPath: readonly number[]
+    parentPath: readonly number[],
+    withinNamedTemplate = false
   ) => {
     for (const [index, node] of nodes.entries()) {
       const path = [...parentPath, index];
+      // A <div> inside <Video> belongs to Video, not an unrelated div template.
+      if (
+        withinNamedTemplate &&
+        node.type === "element" &&
+        node.syntax === "mdx"
+      ) {
+        visit(node.children, path, true);
+        continue;
+      }
+      let resolvedNamedTemplate = false;
       if (node.type === "template") {
         const standard = getMdxStandardTemplateBinding(node);
         const templateIds =
@@ -199,6 +210,7 @@ export const resolveMdxTemplates = ({
           continue;
         }
         if (templateIds?.length === 1) {
+          resolvedNamedTemplate = true;
           const templateInstance = instances.get(templateIds[0]);
           const componentBinding =
             templateInstance === undefined
@@ -331,7 +343,11 @@ export const resolveMdxTemplates = ({
         node.type !== "comment" &&
         node.type !== "opaque"
       ) {
-        visit(node.children, path);
+        visit(
+          node.children,
+          path,
+          withinNamedTemplate || resolvedNamedTemplate
+        );
       }
     }
   };

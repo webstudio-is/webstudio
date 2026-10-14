@@ -27,9 +27,15 @@ The **Code** property is also available in Content mode when the HTML Embed is i
 
 The "Code" section has a text area for adding your custom code. After you paste your code here, it will be rendered on the canvas. You can add anything to your site including custom widgets, third-party services, API integrations, animations, and interactive content.
 
+### Use assets from your project
+
+When an HTML Embed contains a root-relative URL that matches a unique asset path in your project, Webstudio replaces it with that asset's current URL when rendering the embed. This works for `src` on `<audio>`, `<embed>`, `<img>`, `<input>`, `<script>`, `<source>`, `<track>`, and `<video>`; `srcset` on `<img>` and `<source>`; `href` on `<link>`; `data` on `<object>`; and `poster` on `<video>`. If more than one asset has the same path, Webstudio leaves that URL unchanged.
+
+This applies to those HTML attributes only. It does not rewrite URLs inside script content, such as `fetch("/data.json")`, or CSS, such as `url("/image.png")`.
+
 ## Run script on canvas
 
-The "Run Script on Canvas" toggle allows you to not only render the HTML embed directly on the canvas, but also execute scripts. It will look exactly the same way as when you publish the site.
+The "Run Script on Canvas" toggle lets you execute scripts in the canvas preview. It helps you check how an embed behaves, but the preview is not guaranteed to match the published page exactly.
 
 ## Client only
 

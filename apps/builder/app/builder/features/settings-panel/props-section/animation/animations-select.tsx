@@ -7,14 +7,14 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   rawTheme,
-  CssValueListItem,
+  InteractiveListItem,
   SmallToggleButton,
   SmallIconButton,
   Box,
   Label,
   Grid,
   useSortable,
-  CssValueListArrowFocus,
+  InteractiveListArrowFocus,
   FloatingPanel,
   DialogTitle,
   Tooltip,
@@ -297,7 +297,7 @@ export const AnimationsSelect = ({
           </SectionTitle>
         }
       >
-        <CssValueListArrowFocus dragItemId={dragItemId}>
+        <InteractiveListArrowFocus dragItemId={dragItemId}>
           <Grid ref={sortableRefCallback}>
             {value.animations.map((animation, index) => {
               const isEnabled = isAnimationEnabled(animation.enabled) ?? true;
@@ -333,7 +333,7 @@ export const AnimationsSelect = ({
                   }
                   offset={floatingPanelOffset}
                 >
-                  <CssValueListItem
+                  <InteractiveListItem
                     key={index}
                     {...{ [copyAttribute]: index }}
                     label={
@@ -413,7 +413,7 @@ export const AnimationsSelect = ({
             })}
             {placementIndicator}
           </Grid>
-        </CssValueListArrowFocus>
+        </InteractiveListArrowFocus>
       </CollapsibleSectionRoot>
     </AnimationContextMenu>
   );

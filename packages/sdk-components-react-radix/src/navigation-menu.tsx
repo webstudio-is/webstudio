@@ -9,11 +9,7 @@ import {
 } from "react";
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
 import { getIndexWithinAncestorFromProps } from "@webstudio-is/sdk/runtime";
-import {
-  getClosestInstance,
-  ReactSdkContext,
-  type Hook,
-} from "@webstudio-is/react-sdk/runtime";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import {
   getLinkActivation,
   NavigationOverlayContext,
@@ -151,50 +147,3 @@ export const NavigationMenuTrigger = forwardRef<
     </NavigationMenuPrimitive.Trigger>
   );
 });
-
-const namespace = "@webstudio-is/sdk-components-react-radix";
-
-// For each NavigationMenuItem component within the selection,
-// we identify its closest parent NavigationMenu component
-// and update its open prop bound to variable.
-export const hooksNavigationMenu: Hook = {
-  onNavigatorUnselect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:NavigationMenuContent`) {
-        const menu = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:NavigationMenu`
-        );
-        if (menu) {
-          context.setMemoryProp(menu, "value", undefined);
-        }
-      }
-    }
-  },
-  onNavigatorSelect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:NavigationMenuContent`) {
-        const menu = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:NavigationMenu`
-        );
-        const menuItem = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:NavigationMenuItem`
-        );
-        if (menuItem === undefined || menu === undefined) {
-          return;
-        }
-        const contentValue =
-          context.getPropValue(menuItem, "value") ??
-          context.indexesWithinAncestors.get(menuItem.id)?.toString();
-        if (contentValue) {
-          context.setMemoryProp(menu, "value", contentValue);
-        }
-      }
-    }
-  },
-};

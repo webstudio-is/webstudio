@@ -516,7 +516,7 @@ Notes:
 - Use direct static paths. Property access is already safe. Fallbacks and formatted expressions, such as `document.frontmatter.title ?? "Untitled"`, remain read-only.
 - Keep every intended editable value in its own text element with a single direct read-write binding. For reading time, use three inline siblings: static `— `, the bound reading-time value, and static ` min read`. Preserve whitespace and the stored field type. Do not combine them into a template literal or concatenate strings, and do not put literal siblings inside the value element itself. Keep fixed wording protected in the designed shell.
 - Prefer component formatting controls, such as Date Time formatting with a directly bound date prop, over transforming the expression. Do not silently sacrifice editability for formatting or a fallback; explain unsupported cases and ask before making an intended editable field read-only.
-- A direct writable binding such as `document.frontmatter.author.name` can edit a shared author loaded through `../authors/oleg.md#frontmatter`. The edit saves to the author file and affects every article using it; preserve the article's `$ref` marker.
+- A direct writable binding such as `document.frontmatter.author.name` can edit a shared author loaded through `../authors/acme.md#frontmatter`. The edit saves to the author file and affects every article using it; preserve the article's `$ref` marker.
 - Before handoff, inventory every article-owned field, including header text, author details, dates, reading time, categories, hero and inline image sources, alternative text, captions, links, and custom-component content. For each field, inspect its binding and source, edit it through the Content-mode UI, verify the saved MDX or referenced file, reload, and restore the test value. Record passed, failed, or not tested for each field. A correct preview, a successful MCP write, and one representative text edit do not prove the whole article is editable. Do not claim completion while required fields fail or remain untested.
 - Bind the Image source directly to `document.frontmatter.featureImage.src` with `binding.mode:"readwrite"` using `bind-props`. Content mode's **Choose source** replaces the article's frontmatter image `$ref`; the resolved URL stays read-only. Verify selection, the saved reference, and reload instead of treating a missing write mode as a platform limitation. For alternative text bound to `.description`, use **Choose source → asset actions → Settings → Description** to edit shared Asset metadata. This affects every use of the Asset and is separate from replacing an article's image.
 
@@ -824,7 +824,7 @@ Notes:
 - Add `scopeInstanceId` and `dataSourceName` when the resource result should be exposed as a scoped read data variable. Scoped resources are generated into the page resource `data` map and may be loaded during page rendering. Use this for read-oriented resources such as GET CMS/API data.
 - For submit/write/action resources, create the resource without `scopeInstanceId`, then bind a component prop such as a Form `action` with `bind-props` and `binding.type: "resource"`. Prop-bound resources are generated into the page resource `action` map instead of the read `data` map. Use this for POST, PUT, DELETE, webhooks, GraphQL submissions, and other explicit action flows.
 - Resource `method` can be `get`, `post`, `put`, or `delete`. Use GET for read data, POST for creates/GraphQL/webhooks/form submissions, PUT for full updates or replacements, and DELETE for deletion actions.
-- Optional `control` values are `graphql` and `system`. Use `graphql` for GraphQL-style requests, usually POST with a query body. Use `system` for built-in resources such as `"/$resources/sitemap.xml"`, `"/$resources/current-date"`, and `"/$resources/assets"` and when the resource should use the built-in `system` parameter. System fields are `system.origin`, `system.pathname`, `system.params`, and `system.search`.
+- Optional `control` values are `graphql` and `system`. Use `graphql` for GraphQL-style requests, usually POST with a query body. Use `system` for built-in resources such as `"/$resources/sitemap.xml"`, `"/$resources/current-date"`, and `"/$resources/assets"` and when the resource should use the built-in `system` parameter. System fields are `system.origin`, `system.pathname`, `system.params`, and `system.search`. A query key with one value is a string; repeated values are an ordered array. For `?tag=red&tag=blue`, `system.search.tag` is `["red", "blue"]`.
 
 ## Update resource
 
@@ -832,6 +832,54 @@ Commands:
 
 - MCP tool: update-resource {"resourceId":"<resourceId>","values":{"url":"https://api.example.com/posts"}}
 - MCP tool: replace-resource-text {"find":"api.old.example.com","replace":"api.example.com","fields":["url"],"limit":20}
+
+## Configure Form (Beta) through MCP
+
+Use the exact component id returned by `components.search` for **Form (Beta)**.
+After inserting its registered template, use the Form instance id for the
+Form-scoped Resource and Action settings.
+
+The new Form's canonical component id is `Form`. The deprecated legacy
+Webhook Form remains available in Builder for existing projects until the next
+release, but is omitted from MCP component discovery. `RemixForm` is deprecated
+compatibility and should not be used for new projects. Always use registry
+discovery instead of assuming the display label is its component id.
+
+The new Form has two modes derived from its Action array:
+
+- One or more connected Resources: the rendered action is
+  `?__webstudio__=resources` and submission runs the enabled Resource actions.
+- No connected Resources (`action: []`): the rendered action is
+  `?__webstudio__=navigate` and submission updates URL query parameters through
+  client-side navigation. Use this for search and filters with page Resources
+  bound to `system.search`. Removing the last Action switches to Navigation mode;
+  disabling an Action does not remove it.
+- For ordinary browser submission, insert an `Element` with `tag: "form"`.
+  It has no managed action marker and retains native browser behavior.
+
+Do not write the `__webstudio__` marker as a project Action value: that prop holds
+Resource selections, and the runtime derives the HTML action URL from it.
+Verify both modes through MCP in a real project: add Resource actions, remove
+all actions for a search/filter form, then reconnect them. Check the rendered
+action, query navigation without a full reload, and Resource execution. Also
+verify a plain form Element remains native. A saved project snapshot alone does
+not prove these runtime behaviors.
+
+Commands:
+
+- MCP tool: insert-component {"parentInstanceId":"<parentInstanceId>","component":"<componentId from components.search>"}
+- MCP tool: create-resource {"resource":{"name":"Send submission","method":"post","url":"https://api.example.com/submit","headers":[],"body":"formData"},"scopeInstanceId":"<formInstanceId>","dataSourceName":"Send submission","exposeAsDataSource":true}
+- MCP tool: update-props {"updates":[{"instanceId":"<formInstanceId>","name":"action","type":"json","value":[{"dataSourceId":"<returned dataSourceId>","enabled":true}]}]}
+- MCP tool: update-resource {"resourceId":"<emailResourceId>","values":{"email":{"recipientMode":"visitor","visitorEmailField":"email","includeAttachments":true}}}
+- MCP tool: update-project-settings {"meta":{"emailSender":"Acme <hello@example.com>"}}
+
+Notes:
+
+- Use `update-props` with a JSON Action array to add, order, enable, disable, or remove destinations. The Action entries use `{ "dataSourceId": "...", "enabled": true }` and support up to ten Resources, matching the Builder control.
+- Create each destination Resource in the Form's scope so it can use `formData` and `browserInfo`. Set `exposeAsDataSource:true` to receive the data-source id used by the Action array. When a Resource uses Form-only parameters, it is kept out of page-load requests and runs with the Form submission.
+- `update-resource` accepts the same Email settings as the Builder: project, custom, or visitor recipients; sender; subject; body; and submitted-file attachments. Use expressions in string fields for dynamic values.
+- `update-project-settings` edits the project-wide Email recipients and Reply to. `update-props` also sets Form fields and Success redirect, while `bind-props` supplies dynamic expressions. `insert-component` uses the registered Form template, including its default contact fields and Email Actions. Set subject and body on each Email Resource.
+- MCP mutations update saved project configuration. To test real delivery, submit the Form in Preview or on a published test site and inspect the configured destinations.
 
 ## Query Markdown assets
 

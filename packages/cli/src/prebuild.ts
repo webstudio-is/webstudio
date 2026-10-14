@@ -16,7 +16,7 @@ import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import deepEqual from "fast-deep-equal";
 import {
-  generateWebstudioComponent,
+  generateManagedFormComponent,
   type PublishedContentBlock,
   type Params,
   normalizeProps,
@@ -30,7 +30,10 @@ import {
   isAssetsResource,
   getPagePath,
   getPublishablePages,
-  generateResources,
+  managedFormEndpointPrefix,
+  managedFormRequestParamName,
+  generatePageResources,
+  generateManagedFormResources,
   generatePageMeta,
   getStaticSiteMapXml,
   replaceFormActionsWithResources,
@@ -61,8 +64,13 @@ import {
   type Pages,
   type ComponentBuildContribution,
   isPublishedDeployment,
+  isFormSubmission,
+  getEnabledFormActions,
 } from "@webstudio-is/sdk";
-import { migratePages } from "@webstudio-is/project-migrations/pages";
+import {
+  migratePages,
+  migrateResourceFormInstancesMutable,
+} from "@webstudio-is/project-migrations";
 import {
   collectFontFamiliesFromStyleDecls,
   createWebstudioDataFromFragment,
@@ -980,6 +988,11 @@ export const prebuild = async (options: {
   }
   const siteData = parsedSiteData.data;
   const pages = migratePages(siteData.build.pages);
+  const migratedInstances = new Map(siteData.build.instances);
+  migrateResourceFormInstancesMutable(
+    migratedInstances.values(),
+    pages.formComponentIdentityVersion === undefined
+  );
   const publicationBuild = { ...siteData.build, pages };
   const allAssetIds = new Set(siteData.assets.map(({ id }) => id));
   const allMdxAssetIds = getPublishedMdxAssetIds(siteData.assets);
@@ -1017,6 +1030,88 @@ export const prebuild = async (options: {
     await createFileIfNotExists(file, content);
     return true;
   };
+
+  const managedFormResourceFetchFile = join(
+    generatedDir,
+    "$resources.managed-form-fetch.server.ts"
+  );
+  const isCloudflareTemplate = options.template.some((template) =>
+    ["cloudflare", "cloudflare-new", "react-router-cloudflare"].includes(
+      template
+    )
+  );
+  const evaluationReceiverPort =
+    process.env.WEBSTUDIO_FORM_EVALUATION_RECEIVER_PORT;
+  const evaluationTransport =
+    evaluationReceiverPort !== undefined &&
+    /^(?:[1-9][0-9]{0,4})$/.test(evaluationReceiverPort) &&
+    Number(evaluationReceiverPort) <= 65535 &&
+    isCloudflareTemplate === false
+      ? `const protectedFetch = createNodeProtectedResourceFetch({ deniedHostnames: getDeniedResourceHostnames([new URL(request.url).hostname, projectDomain]) });
+  const testFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const outgoing = new Request(input, init);
+    const url = new URL(outgoing.url);
+    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || url.search !== "" || url.hash !== "" || outgoing.method !== "POST") {
+      throw new Error("Unexpected evaluation Form destination");
+    }
+    protectedFetch.validateDestination(url);
+    return fetch(new Request("http://127.0.0.1:${evaluationReceiverPort}" + url.pathname, outgoing));
+  };
+  return Object.assign(testFetch, { validateDestination: (url: URL) => {
+    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || url.search !== "" || url.hash !== "") {
+      throw new Error("Unexpected evaluation Form destination");
+    }
+    protectedFetch.validateDestination(url);
+  } });`
+      : undefined;
+  await writeGeneratedFile(
+    managedFormResourceFetchFile,
+    isCloudflareTemplate
+      ? `import {
+  createCloudflareProtectedResourceFetch,
+  getDeniedResourceHostnames,
+} from "@webstudio-is/sdk/protected-resource-fetch";
+import { createCloudflareManagedFormEmailSender, createCloudflareManagedFormEmailSenderWithUrl, validateCloudflareManagedFormEmail } from "@webstudio-is/sdk/form/server";
+export const validateManagedFormEmail = validateCloudflareManagedFormEmail;
+export const createManagedFormEmailSender = ({ context, formData, projectId }: { context: unknown; formData: FormData; projectId: string }) => {
+  const env = (context as { cloudflare?: { env?: { EMAIL_SERVICE?: unknown; EMAIL_SERVICE_URL?: string; TRPC_SERVER_API_TOKEN?: string } } } | null)?.cloudflare?.env;
+  if (env?.EMAIL_SERVICE_URL !== undefined) {
+    return createCloudflareManagedFormEmailSenderWithUrl(env.EMAIL_SERVICE_URL, env.TRPC_SERVER_API_TOKEN, formData, projectId);
+  }
+  const binding = env?.EMAIL_SERVICE;
+  const service = binding !== null && typeof binding === "object" && "sendEmail" in binding && typeof binding.sendEmail === "function"
+    ? binding as Parameters<typeof createCloudflareManagedFormEmailSender>[0]
+    : undefined;
+  return createCloudflareManagedFormEmailSender(service, formData, projectId);
+};
+export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
+  void context;
+  return createCloudflareProtectedResourceFetch({
+    ownZoneHostnames: getDeniedResourceHostnames([
+      new URL(request.url).hostname,
+      projectDomain,
+    ]) as [string, ...string[]],
+  });
+};
+`
+      : `import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";
+import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
+export const createManagedFormEmailSender = (_input: { context: unknown; formData: FormData; projectId: string }) => undefined;
+export const validateManagedFormEmail = (_request: unknown, _formData: FormData) => undefined;
+export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
+  void context;
+  ${
+    evaluationTransport ??
+    `return createNodeProtectedResourceFetch({
+    deniedHostnames: getDeniedResourceHostnames([
+      new URL(request.url).hostname,
+      projectDomain,
+    ]),
+  });`
+  }
+};
+`
+  );
 
   // force npm to install with not matching peer dependencies
   await writeFile(join(cwd(), ".npmrc"), npmrc);
@@ -1135,9 +1230,8 @@ export const prebuild = async (options: {
   );
 
   for (const page of generatedPages) {
-    const instanceMap = new Map(siteData.build.instances);
     const pageInstanceSet = findTreeInstanceIdsExcludingStaticHidden({
-      instances: instanceMap,
+      instances: migratedInstances,
       props: normalizedPropsMap,
       rootInstanceId: page.rootInstanceId,
     });
@@ -1145,7 +1239,7 @@ export const prebuild = async (options: {
     pageInstanceSet.add(ROOT_INSTANCE_ID);
     // collect used instances and metas
     const instances: [Instance["id"], Instance][] = [];
-    for (const [_instanceId, instance] of siteData.build.instances) {
+    for (const instance of migratedInstances.values()) {
       if (pageInstanceSet.has(instance.id)) {
         instances.push([instance.id, instance]);
         const meta = framework.metas[instance.component];
@@ -1590,6 +1684,7 @@ export const prebuild = async (options: {
       "Fragment",
       "useResource",
       "useVariableState",
+      "formatManagedFormErrors",
       "Page",
       "_props",
     ]);
@@ -1699,7 +1794,41 @@ export const prebuild = async (options: {
       resources,
       props,
     });
-    const pageComponent = generateWebstudioComponent({
+    const formInstances = Array.from(instances.values());
+    const managedFormSubmissions = formInstances
+      .filter((instance) => instance.component === "Form")
+      .map((instance) => {
+        const actionProp = Array.from(props.values())
+          .filter(
+            (prop) => prop.instanceId === instance.id && prop.name === "action"
+          )
+          .at(-1);
+        const action =
+          actionProp?.type === "json" ? actionProp.value : undefined;
+        const resourceIds = isFormSubmission(action)
+          ? getEnabledFormActions(action).map((id) => {
+              const dataSource = dataSources.get(id);
+              return dataSource?.type === "resource" &&
+                resources.has(dataSource.resourceId)
+                ? dataSource.resourceId
+                : null;
+            })
+          : [];
+        return [instance.id, { action, resourceIds }] as const;
+      });
+    const managedFormResourceSelections = managedFormSubmissions.map(
+      ([formId, { action }]) => ({
+        formId,
+        destinationDataSourceIds: isFormSubmission(action)
+          ? getEnabledFormActions(action)
+          : [],
+      })
+    );
+    const usedRuntimeHelpers = new Set<
+      "renderText" | "formatManagedFormErrors"
+    >();
+    const pageComponent = generateManagedFormComponent({
+      usedRuntimeHelpers,
       scope,
       name: "Page",
       rootInstanceId,
@@ -1751,7 +1880,11 @@ export const prebuild = async (options: {
 
       import { Fragment, useState } from "react";
       import { renderText, useResource, useVariableState } from "@webstudio-is/react-sdk/runtime";
-      ${importsString}${componentBuildSetupString}
+      ${
+        usedRuntimeHelpers.has("formatManagedFormErrors")
+          ? 'import { formatManagedFormErrors } from "@webstudio-is/sdk";\n'
+          : ""
+      }${importsString}${componentBuildSetupString}
 
       export const projectId = "${siteData.build.projectId}";
 
@@ -1824,7 +1957,7 @@ export const prebuild = async (options: {
 
       import type { PageMeta } from "@webstudio-is/sdk";
       import { toWebstudioParams } from "@webstudio-is/react-sdk";
-      ${generateResources({
+      ${generatePageResources({
         scope,
         // XML generation removes the body wrapper from the instance map.
         page: { ...page, rootInstanceId },
@@ -1851,6 +1984,18 @@ export const prebuild = async (options: {
         ),
       })}
 
+      ${generateManagedFormResources({
+        scope,
+        systemDataSourceId: page.systemDataSourceId,
+        instances,
+        dataSources,
+        resources,
+        forms: managedFormResourceSelections,
+        projectMeta,
+        props,
+        ownerEmail: siteData.user?.email ?? undefined,
+      })}
+
       ${generatePageMeta({
         globalScope: scope,
         page,
@@ -1859,6 +2004,11 @@ export const prebuild = async (options: {
       })}
 
       ${generateRemixParams(page.path)}
+
+      export const getManagedFormSubmissions = () =>
+        new Map<string, { action: unknown; resourceIds: (string | null)[] }>(
+          ${JSON.stringify(managedFormSubmissions)}
+        );
 
       export const contactEmail = ${JSON.stringify(contactEmail)};
     `;
@@ -1904,6 +2054,13 @@ export const prebuild = async (options: {
           importFrom(`./app/__generated__/$resources.asset-query-runtime`, file)
         )
         .replaceAll(
+          "__MANAGED_FORM_FETCH__",
+          importFrom(
+            "./app/__generated__/$resources.managed-form-fetch.server",
+            file
+          )
+        )
+        .replaceAll(
           "__ASSET_RESOURCE_FETCH__",
           importFrom("./app/asset-resource-fetch", file)
         )
@@ -1924,6 +2081,44 @@ export const prebuild = async (options: {
           importFrom(`./app/__generated__/index.css`, file)
         );
       await writeGeneratedFile(file, content);
+    }
+    if (
+      isStaticBuild === false &&
+      documentType === "html" &&
+      managedFormSubmissions.length > 0
+    ) {
+      for (const authoredPage of generatedPages) {
+        const path = getPagePath(authoredPage.id, pages);
+        const lowerPath = path.toLowerCase();
+        if (
+          lowerPath === managedFormEndpointPrefix ||
+          lowerPath.startsWith(`${managedFormEndpointPrefix}/`)
+        ) {
+          throw new Error(
+            `Page path ${path} uses the reserved Form endpoint ${managedFormEndpointPrefix}`
+          );
+        }
+      }
+      const endpointRoute = generateRemixRoute(
+        pagePath === "/"
+          ? managedFormEndpointPrefix
+          : `${managedFormEndpointPrefix}${pagePath}`
+      );
+      const endpointFile = join(routesDir, `${endpointRoute}.tsx`);
+      await writeGeneratedFile(
+        endpointFile,
+        `import { action as pageAction } from "./${generatedBasename}";
+
+export const action = async (args: Parameters<typeof pageAction>[0]) => {
+  const url = new URL(args.request.url);
+  url.pathname = url.pathname.slice(${managedFormEndpointPrefix.length}) || "/";
+  url.searchParams.set(${JSON.stringify(managedFormRequestParamName)}, "1");
+  const request = new Request(url, args.request);
+  const result = await pageAction({ ...args, request });
+  return Response.json(result, { status: "status" in result ? result.status : 200 });
+};
+`
+      );
     }
   }
 

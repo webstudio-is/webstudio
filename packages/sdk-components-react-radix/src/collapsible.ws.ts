@@ -47,6 +47,12 @@ export const metaCollapsibleTrigger: WsComponentMeta = {
 };
 
 export const metaCollapsibleContent: WsComponentMeta = {
+  selectionReveal: {
+    type: "fixed",
+    ancestor: getRadixComponentId("Collapsible"),
+    prop: "open",
+    value: true,
+  },
   icon: ContentIcon,
   contentModel: {
     category: "none",

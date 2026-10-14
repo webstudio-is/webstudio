@@ -94,7 +94,7 @@ const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
 
 const openNewVariablePanel = async ({ page }: { page: Page }) => {
   await page.getByRole("tab", { name: "Settings" }).click();
-  await page.getByRole("button", { name: "Add data variable" }).click();
+  await page.getByRole("button", { name: "Add variable" }).click();
   await page.getByText("New variable", { exact: true }).waitFor();
 };
 
@@ -179,7 +179,7 @@ const expectVariableListItem = async ({
 }: {
   page: Page;
   name: string;
-  badge: "Static variable" | "Dynamic data variable";
+  badge: "Static variable" | "Dynamic variable";
 }) => {
   const itemButton = page
     .getByText(name, { exact: true })
@@ -443,17 +443,17 @@ test("Builder-created data variables and resources persist after reload", async 
   await expectVariableListItem({
     page,
     name: httpName,
-    badge: "Dynamic data variable",
+    badge: "Dynamic variable",
   });
   await expectVariableListItem({
     page,
     name: graphqlName,
-    badge: "Dynamic data variable",
+    badge: "Dynamic variable",
   });
   await expectVariableListItem({
     page,
     name: systemName,
-    badge: "Dynamic data variable",
+    badge: "Dynamic variable",
   });
 
   await measure("data variables runtime reload builder", async () => {
@@ -474,17 +474,17 @@ test("Builder-created data variables and resources persist after reload", async 
   await expectVariableListItem({
     page,
     name: httpName,
-    badge: "Dynamic data variable",
+    badge: "Dynamic variable",
   });
   await expectVariableListItem({
     page,
     name: graphqlName,
-    badge: "Dynamic data variable",
+    badge: "Dynamic variable",
   });
   await expectVariableListItem({
     page,
     name: systemName,
-    badge: "Dynamic data variable",
+    badge: "Dynamic variable",
   });
 
   await expectPersistedDataVariables({

@@ -27,6 +27,7 @@ const report: IssueReportInput = {
     architecture: "arm64",
     executionMode: "mcp",
     apiContractVersion: "public-api:client",
+    serverApiContractVersion: "public-api:server",
     bundleVersion: "bundle:client",
     recentFailure: {
       entityIds: [
@@ -87,6 +88,7 @@ describe("GitHub issue reports", () => {
     expect(body).toContain("- Operating system: linux 6 (arm64)");
     expect(body).toContain("- Execution mode: mcp");
     expect(body).toContain("- API contract: public-api:client");
+    expect(body).toContain("- Server API contract: public-api:server");
     expect(body).toContain("- Bundle contract: bundle:client");
     expect(body).toContain("## Captured failure diagnostics");
     expect(body).toContain("- Tool: `preview.start`");

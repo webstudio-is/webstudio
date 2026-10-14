@@ -8,7 +8,6 @@
     "src/build-hooks.ts",
     "src/canvas-components.ts",
     "src/metas.ts",
-    "src/hooks.ts",
     "src/create-link.tsx"
   ],
   "compilerOptions": {

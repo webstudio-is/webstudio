@@ -13,7 +13,7 @@ import {
   coreMetas,
   generateCss,
 } from "@webstudio-is/sdk";
-import { generateWebstudioComponent } from "@webstudio-is/react-sdk";
+import { generateManagedFormComponent } from "@webstudio-is/react-sdk";
 import { renderTemplate, type TemplateMeta } from "@webstudio-is/template";
 
 export type StoryTemplate = {
@@ -75,10 +75,22 @@ const generateComponentImports = ({
   return componentImports;
 };
 
-const getStoriesImports = ({ hasState }: { hasState: boolean }) =>
-  hasState
+const getStoriesImports = ({
+  hasState,
+  usedRuntimeHelpers,
+}: {
+  hasState: boolean;
+  usedRuntimeHelpers: Set<"renderText" | "formatManagedFormErrors">;
+}) =>
+  (usedRuntimeHelpers.has("renderText")
+    ? `import { renderText } from "@webstudio-is/react-sdk/runtime";\n`
+    : "") +
+  (usedRuntimeHelpers.has("formatManagedFormErrors")
+    ? `import { formatManagedFormErrors } from "@webstudio-is/sdk";\n`
+    : "") +
+  (hasState
     ? `import { useVariableState } from "@webstudio-is/react-sdk/runtime";\n`
-    : "";
+    : "");
 
 const getStoriesExports = (name: string, css: string) => `
 export default {
@@ -236,20 +248,24 @@ export const generateStories = async ({
       assetBaseUrl: "/",
       atomic: false,
     });
-    const scope = createScope(["Component", "Story", "props", "useState"]);
-    let content = "";
-    content += getStoriesImports({
-      hasState: data.dataSources.some(
-        (dataSource) => dataSource.type === "variable"
-      ),
-    });
-    content += generateComponentImports({
+    const scope = createScope([
+      "Component",
+      "Story",
+      "props",
+      "useState",
+      "renderText",
+      "formatManagedFormErrors",
+    ]);
+    const componentImports = generateComponentImports({
       scope,
       packageName: packageJson.name,
       components,
     });
-    content += `\n`;
-    content += generateWebstudioComponent({
+    const usedRuntimeHelpers = new Set<
+      "renderText" | "formatManagedFormErrors"
+    >();
+    const component = generateManagedFormComponent({
+      usedRuntimeHelpers,
       classesMap: classes,
       scope,
       name: `Component`,
@@ -260,6 +276,16 @@ export const generateStories = async ({
       dataSources: new Map(data.dataSources.map((prop) => [prop.id, prop])),
       metas: usedMetas,
     });
+    let content = "";
+    content += getStoriesImports({
+      usedRuntimeHelpers,
+      hasState: data.dataSources.some(
+        (dataSource) => dataSource.type === "variable"
+      ),
+    });
+    content += componentImports;
+    content += `\n`;
+    content += component;
 
     content += getStoriesExports(name, cssText);
     await writeFile(join(storiesDir, storyFile), content);

@@ -166,6 +166,29 @@ const normalizeSettlements = (
   });
 
 describe("document graph query resolution", () => {
+  test("resolves references across more than 20 matching candidates", async () => {
+    const { artifact, graph, sources } = await createCategorizedGraphFixture({
+      categoryCounts: { News: 29 },
+    });
+    const load = vi.fn(async (node: (typeof graph.nodes)[number]) => ({
+      format: "json" as const,
+      revision: node.revision,
+      source: sources[node.id],
+    }));
+    const database = createContentDatabase({ artifact });
+
+    const result = await database.queryWithDocumentGraph({
+      request: createCategoryRequests(["News"])[0],
+      load,
+    });
+
+    expect(result.items).toHaveLength(20);
+    expect(result.items[0]).toMatchObject({
+      properties: { author: { name: "author" } },
+    });
+    expect(load).toHaveBeenCalledTimes(30);
+  });
+
   test("matches independent query policy for materialized results and errors", async () => {
     const entry = createCanonicalAssetFileEntry({
       projectId: "project",

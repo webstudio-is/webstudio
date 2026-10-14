@@ -181,6 +181,13 @@ describe("registerCommands", () => {
     ]);
     expect(getTopLevelMcpToolForwardArgs(["permissions"])).toBeUndefined();
     expect(getTopLevelMcpToolForwardArgs(["audit"])).toBeUndefined();
+    expect(
+      getTopLevelMcpToolForwardArgs([
+        "simulate-form-submission",
+        "--input",
+        "form.json",
+      ])
+    ).toBeUndefined();
     for (const command of [
       "get-marketplace-product",
       "update-marketplace-product",

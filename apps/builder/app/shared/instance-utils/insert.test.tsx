@@ -9,6 +9,7 @@ import { insertWebstudioElementAt } from "./insert";
 import { enableMapSet } from "immer";
 import { describe, test, expect, beforeEach, vi } from "vitest";
 import { toast } from "@webstudio-is/design-system";
+import { lintExpression } from "@webstudio-is/expression";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
@@ -19,14 +20,20 @@ import {
   renderTemplate,
   renderData,
   token,
+  type TemplateMeta,
 } from "@webstudio-is/template";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
-import type { WebstudioData, WebstudioFragment } from "@webstudio-is/sdk";
+import { coreTemplates } from "@webstudio-is/sdk-components-registry/core-templates";
+import { componentIds } from "@webstudio-is/sdk-components-registry/components";
+import type { Prop, WebstudioData, WebstudioFragment } from "@webstudio-is/sdk";
 import {
   blockBodyComponent,
   blockComponent,
   coreMetas,
   elementComponent,
+  encodeDataSourceVariable,
+  executeExpression,
+  isFormSubmission,
 } from "@webstudio-is/sdk";
 import {
   $registeredComponentMetas,
@@ -46,11 +53,18 @@ import {
   $resources,
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "../sync/sync-stores";
-import { getInstancePath } from "@webstudio-is/project-build/runtime";
-import { selectPage } from "../nano-states";
+import {
+  findAvailableVariables,
+  getInstancePath,
+} from "@webstudio-is/project-build/runtime";
+import { getInstanceKey, selectPage } from "../nano-states";
 import { selectInstance } from "../nano-states";
+import { $propValuesByInstanceSelector } from "../nano-states/props";
+import { $dataSourceVariables } from "../nano-states/variables";
 import { $selectedPageId } from "../nano-states/pages";
 import { expectSlotsShareFragment } from "../slot-test-utils";
+import { $selectedInstancePropsMetas } from "~/builder/features/settings-panel/shared";
+import { $instanceTags } from "~/builder/features/style-panel/shared/model";
 
 const Body = createTemplateComponentFixture("Body");
 const Bold = createTemplateComponentFixture("Bold");
@@ -787,6 +801,377 @@ describe("insert webstudio component at", () => {
     $resources.set(new Map());
     $props.set(new Map());
     $assets.set(new Map());
+  });
+
+  test("inserts a File Input and keeps its upload controls after reopening saved props", async () => {
+    const previousTemplates = $registeredTemplates.get();
+    $registeredTemplates.set(
+      new Map([
+        [
+          "file_input",
+          {
+            category: "forms",
+            template: renderTemplate(
+              (coreTemplates as Record<string, TemplateMeta>).file_input
+                .template,
+              undefined,
+              [],
+              {
+                componentIds,
+                componentMetas: defaultMetasMap,
+              }
+            ),
+          },
+        ],
+      ])
+    );
+    try {
+      expect(
+        await insertWebstudioComponentAt("file_input", {
+          parentSelector: ["bodyId"],
+          position: "end",
+        })
+      ).toBe(true);
+      const child = $instances.get().get("bodyId")?.children[0];
+      const inputId = child?.type === "id" ? child.value : "";
+      expect($instances.get().get(inputId)).toMatchObject({
+        component: elementComponent,
+        tag: "input",
+        label: "File Input",
+      });
+      const configuredProps = new Map($props.get());
+      const nameProp = Array.from(configuredProps.values()).find(
+        ({ instanceId, name }) => instanceId === inputId && name === "name"
+      );
+      if (nameProp?.type !== "string") {
+        throw new Error("Expected a named file input");
+      }
+      configuredProps.set(nameProp.id, { ...nameProp, value: "attachments" });
+      for (const prop of [
+        {
+          id: "upload-accept",
+          instanceId: inputId,
+          name: "accept",
+          type: "string" as const,
+          value: "image/*,.pdf",
+        },
+        ...(["required", "multiple"] as const).map((name) => ({
+          id: `upload-${name}`,
+          instanceId: inputId,
+          name,
+          type: "boolean" as const,
+          value: true,
+        })),
+      ]) {
+        configuredProps.set(prop.id, prop);
+      }
+      $props.set(configuredProps);
+      const savedProps = new Map(
+        JSON.parse(JSON.stringify(Array.from($props.get()))) as Array<
+          [string, Prop]
+        >
+      );
+      $props.set(savedProps);
+      expect(
+        Array.from(savedProps.values())
+          .filter(({ instanceId }) => instanceId === inputId)
+          .map(({ name, value }) => [name, value])
+      ).toEqual(
+        expect.arrayContaining([
+          ["type", "file"],
+          ["name", "attachments"],
+          ["accept", "image/*,.pdf"],
+          ["required", true],
+          ["multiple", true],
+        ])
+      );
+      selectInstance([inputId, "bodyId"]);
+      expect($instanceTags.get().get(inputId)).toBe("input");
+      expect(Array.from($selectedInstancePropsMetas.get().keys())).toEqual(
+        expect.arrayContaining([
+          "type",
+          "name",
+          "required",
+          "accept",
+          "multiple",
+        ])
+      );
+    } finally {
+      $registeredTemplates.set(previousTemplates);
+    }
+  });
+
+  test("inserts the Forms tile as a contact form with two Email actions", async () => {
+    const previousTemplates = $registeredTemplates.get();
+    $registeredTemplates.set(
+      new Map([
+        [
+          "form",
+          {
+            category: "forms",
+            template: renderTemplate(
+              coreTemplates.form.template,
+              undefined,
+              [],
+              {
+                componentIds,
+                componentMetas: defaultMetasMap,
+              }
+            ),
+          },
+        ],
+      ])
+    );
+
+    try {
+      expect(
+        await insertWebstudioComponentAt("form", {
+          parentSelector: ["bodyId"],
+          position: "end",
+        })
+      ).toBe(true);
+
+      const body = $instances.get().get("bodyId");
+      const formId =
+        body?.children[0]?.type === "id" ? body.children[0].value : "";
+      expect($instances.get().get(formId)?.component).toBe("Form");
+      const formProps = Array.from($props.get().values()).filter(
+        ({ instanceId }) => instanceId === formId
+      );
+      const action = formProps.find(({ name }) => name === "action");
+      expect(action?.type).toBe("json");
+      if (action?.type !== "json") {
+        throw new Error("Expected configured Form actions");
+      }
+      if (!isFormSubmission(action.value)) {
+        throw new Error("Expected valid Form actions");
+      }
+      expect(action.value).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ enabled: true }),
+          expect.objectContaining({ enabled: true }),
+        ])
+      );
+      expect(action.value).toHaveLength(2);
+      expect(
+        action.value.map(
+          ({ dataSourceId }: { dataSourceId: string }) =>
+            $dataSources.get().get(dataSourceId)?.scopeInstanceId
+        )
+      ).toEqual([formId, formId]);
+      const insertedEmailSubjects = action.value.map(({ dataSourceId }) => {
+        const dataSource = $dataSources.get().get(dataSourceId);
+        if (dataSource?.type !== "resource") {
+          throw new Error("Expected an Email Resource on the new Form");
+        }
+        return $resources.get().get(dataSource.resourceId)?.email?.subject;
+      });
+      expect(insertedEmailSubjects).toHaveLength(2);
+      for (const subject of insertedEmailSubjects) {
+        expect(subject).toContain(".subject");
+        expect(subject).not.toContain("?.");
+      }
+      const ownerDataSource = $dataSources
+        .get()
+        .get(action.value[0].dataSourceId);
+      if (ownerDataSource?.type !== "resource") {
+        throw new Error("Expected owner Email Resource");
+      }
+      const ownerBody = $resources.get().get(ownerDataSource.resourceId)
+        ?.email?.body;
+      const formDataProp = formProps.find(({ name }) => name === "formData");
+      const browserInfoProp = formProps.find(
+        ({ name }) => name === "browserInfo"
+      );
+      if (
+        ownerBody === undefined ||
+        formDataProp?.type !== "parameter" ||
+        browserInfoProp?.type !== "parameter"
+      ) {
+        throw new Error("Expected owner Email body and Form parameters");
+      }
+      expect(ownerBody).not.toContain("Submitted fields:");
+      expect(
+        lintExpression({
+          expression: ownerBody,
+          availableVariables: new Set([
+            encodeDataSourceVariable(formDataProp.value),
+            encodeDataSourceVariable(browserInfoProp.value),
+          ]),
+        })
+      ).toEqual([]);
+      const evaluateOwnerBody = (pageUrl: string) =>
+        executeExpression(
+          ownerBody
+            .replaceAll(
+              encodeDataSourceVariable(browserInfoProp.value),
+              JSON.stringify({ pageUrl })
+            )
+            .replaceAll(
+              encodeDataSourceVariable(formDataProp.value),
+              JSON.stringify("Name: Ada")
+            )
+        );
+      expect(evaluateOwnerBody("https://example.com/contact")).toBe(
+        "Page: https://example.com/contact\n\nName: Ada"
+      );
+      expect(evaluateOwnerBody("")).toBe("Name: Ada");
+      expect(formProps.some(({ name }) => name === "onStateChange")).toBe(true);
+      const resultProp = formProps.find(
+        ({ name }) => name === "onResultChange"
+      );
+      expect(resultProp?.type).toBe("action");
+      if (resultProp?.type !== "action") {
+        throw new Error("Expected a Form result action");
+      }
+      const [resultAction] = resultProp.value;
+      expect(resultAction?.type).toBe("execute");
+      if (resultAction?.type !== "execute") {
+        throw new Error("Expected an executable Form result action");
+      }
+      expect(
+        lintExpression({
+          expression: resultAction.code,
+          allowAssignment: true,
+          availableVariables: new Set([
+            "result",
+            ...Array.from($dataSources.get().keys()).map(
+              encodeDataSourceVariable
+            ),
+          ]),
+        })
+      ).toEqual([]);
+      for (const name of ["results", "errors"]) {
+        expect(
+          Array.from($dataSources.get().values()).some(
+            (dataSource) =>
+              dataSource.type === "variable" && dataSource.name === name
+          )
+        ).toBe(true);
+      }
+      const result = {
+        success: false,
+        status: 502,
+        results: [{ resourceId: "first", status: 200, body: "ok" }],
+        errors: [
+          {
+            resourceId: "second",
+            status: 502,
+            body: "failed",
+            message: "failed",
+          },
+        ],
+      };
+      await vi.waitFor(() => {
+        expect(
+          $propValuesByInstanceSelector
+            .get()
+            .get(getInstanceKey([formId, "bodyId"]))
+            ?.get("onResultChange")
+        ).toBeTypeOf("function");
+      });
+      const onResultChange = $propValuesByInstanceSelector
+        .get()
+        .get(getInstanceKey([formId, "bodyId"]))
+        ?.get("onResultChange") as (value: unknown) => void;
+      onResultChange(result);
+      const onStateChange = $propValuesByInstanceSelector
+        .get()
+        .get(getInstanceKey([formId, "bodyId"]))
+        ?.get("onStateChange") as (state: string) => void;
+      expect(onStateChange).toBeTypeOf("function");
+      onStateChange("error");
+      const variables = new Map(
+        Array.from($dataSources.get().values())
+          .filter((dataSource) => dataSource.type === "variable")
+          .map((dataSource) => [
+            dataSource.name,
+            $dataSourceVariables.get().get(dataSource.id),
+          ])
+      );
+      expect(variables.has("status")).toBe(false);
+      expect(variables.get("formState")).toBe("error");
+      expect(variables.get("results")).toBe(result.results);
+      expect(variables.get("errors")).toBe(result.errors);
+      for (const child of $instances.get().get(formId)?.children ?? []) {
+        if (child.type !== "id") {
+          continue;
+        }
+        const availableNames = findAvailableVariables({
+          startingInstanceId: child.value,
+          instances: $instances.get(),
+          dataSources: $dataSources.get(),
+        }).map(({ name }) => name);
+        expect(availableNames).toEqual(
+          expect.arrayContaining(["results", "errors"])
+        );
+      }
+      for (const name of ["formData", "browserInfo"]) {
+        const prop = formProps.find((prop) => prop.name === name);
+        expect(prop?.type).toBe("parameter");
+        if (prop?.type === "parameter") {
+          expect($dataSources.get().get(prop.value)).toMatchObject({
+            type: "parameter",
+            name,
+            scopeInstanceId: formId,
+          });
+        }
+      }
+      const childIds = Array.from($instances.get().values())
+        .filter(
+          ({ component }) =>
+            component === "Input" ||
+            component === "Textarea" ||
+            component === "Button"
+        )
+        .map(({ id }) => id);
+      expect(
+        Array.from($props.get().values())
+          .filter(
+            ({ instanceId, name }) =>
+              childIds.includes(instanceId) && name === "name"
+          )
+          .map(({ value }) => value)
+      ).toEqual(["name", "email", "subject", "message", "attachment"]);
+      expect(
+        Array.from($props.get().values()).some(
+          ({ instanceId, name, value }) =>
+            childIds.includes(instanceId) &&
+            name === "type" &&
+            value === "submit"
+        )
+      ).toBe(true);
+
+      expect(
+        await insertWebstudioComponentAt("form", {
+          parentSelector: ["bodyId"],
+          position: "end",
+        })
+      ).toBe(true);
+      const secondFormChild = $instances.get().get("bodyId")?.children[1];
+      const secondFormId =
+        secondFormChild?.type === "id" ? secondFormChild.value : "";
+      expect(secondFormId).not.toBe(formId);
+      const secondAction = Array.from($props.get().values()).find(
+        ({ instanceId, name }) =>
+          instanceId === secondFormId && name === "action"
+      );
+      expect(secondAction?.type).toBe("json");
+      if (secondAction?.type === "json") {
+        if (!isFormSubmission(secondAction.value)) {
+          throw new Error("Expected valid Form actions");
+        }
+        expect(secondAction.value).toHaveLength(2);
+        expect(
+          secondAction.value.map(
+            ({ dataSourceId }: { dataSourceId: string }) =>
+              $dataSources.get().get(dataSourceId)?.scopeInstanceId
+          )
+        ).toEqual([secondFormId, secondFormId]);
+      }
+    } finally {
+      $registeredTemplates.set(previousTemplates);
+    }
   });
 
   test("inserts component through runtime template application", async () => {

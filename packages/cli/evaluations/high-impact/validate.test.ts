@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   collectionComponent,
+  defaultVisitorConfirmationBody,
   createStructuredAssetQueryResourceBody,
   encodeDataSourceVariable,
   parseStructuredAssetQueryResourceBody,
@@ -12,6 +13,8 @@ import {
   designInputFixture,
   fontAssetsFixture,
   highImpactFixtures,
+  managedFormAuthoringFixture,
+  formModesAuthoringFixture,
   markdownBlogFixture,
   markdownReferencesDiscoveryFixture,
   validateHighImpactFixture,
@@ -26,6 +29,341 @@ import { getMcpTraceRequest, getMcpTraceResponse } from "./mcp-trace-proxy";
 import { evaluateHighImpactOutcome, type EvaluationToolCall } from "./validate";
 
 const clone = <Value>(value: Value): Value => structuredClone(value);
+
+const addManagedContactPage = (): EvaluationProject => {
+  const formId = "contact-form";
+  const formStateId = "contact-form-state";
+  const resultsId = "contact-form-results";
+  const errorsId = "contact-form-errors";
+  const projectDataSourceId = "contact-project-email-source";
+  const visitorDataSourceId = "contact-visitor-email-source";
+  const formDataBinding = encodeDataSourceVariable("contact-form-data");
+  const browserInfoBinding = encodeDataSourceVariable("contact-browser-info");
+  const formStateBinding = encodeDataSourceVariable(formStateId);
+  const resultsBinding = encodeDataSourceVariable(resultsId);
+  const errorsBinding = encodeDataSourceVariable(errorsId);
+  const formFields = [
+    { name: "name", component: "Input" },
+    { name: "email", component: "Input", type: "email" },
+    { name: "subject", component: "Input" },
+    { name: "message", component: "Textarea" },
+  ];
+  const instances = [
+    {
+      id: formId,
+      component: "Form",
+      children: [
+        { type: "id" as const, value: "form-content" },
+        { type: "id" as const, value: "form-success" },
+        { type: "id" as const, value: "form-error" },
+      ],
+    },
+    {
+      id: "form-content",
+      component: "Box",
+      children: [
+        ...formFields.map(({ name }) => ({
+          type: "id" as const,
+          value: `label-${name}`,
+        })),
+        { type: "id" as const, value: "submit-button" },
+      ],
+    },
+    ...formFields.flatMap(({ name, component }) => [
+      {
+        id: `label-${name}`,
+        component: "Label",
+        children: [
+          { type: "text" as const, value: name },
+          { type: "id" as const, value: `field-${name}` },
+        ],
+      },
+      {
+        id: `field-${name}`,
+        component,
+        children: [],
+      },
+    ]),
+    {
+      id: "submit-button",
+      component: "Button",
+      children: [{ type: "text" as const, value: "Send message" }],
+    },
+    {
+      id: "form-success",
+      component: "Box",
+      label: "Success message",
+      children: [
+        {
+          type: "text" as const,
+          value:
+            "Thanks, we received your message. Our team will reply within one business day.",
+        },
+      ],
+    },
+    {
+      id: "form-error",
+      component: "Box",
+      label: "Error message",
+      children: [
+        { type: "id" as const, value: "form-error-list" },
+        {
+          type: "text" as const,
+          value: "We couldn't send your message. Please try again.",
+        },
+      ],
+    },
+    { id: "form-error-list", component: collectionComponent, children: [] },
+  ];
+  const resources = [
+    {
+      id: "project-email",
+      name: "Email to owner",
+      control: "email",
+      method: "post",
+      url: '""',
+      email: {
+        recipientMode: "project",
+        subject: `"Contact form: " + (${formDataBinding}.subject ?? "New message")`,
+        body:
+          "`" +
+          "${" +
+          browserInfoBinding +
+          ".pageUrl ? `Page: ${" +
+          browserInfoBinding +
+          '.pageUrl}\n\n` : ""}${' +
+          formDataBinding +
+          "}`",
+      },
+    },
+    {
+      id: "visitor-email",
+      name: "Email to visitor",
+      control: "email",
+      method: "post",
+      url: '""',
+      email: {
+        recipientMode: "visitor",
+        visitorEmailField: "email",
+        subject: `${formDataBinding}.subject ?? "Your message"`,
+        body: JSON.stringify(defaultVisitorConfirmationBody),
+        confirmationSubject: "formSubject",
+        confirmationBody: "default",
+        includeAttachments: false,
+      },
+    },
+  ];
+  return {
+    ...managedFormAuthoringFixture.project,
+    pages: [
+      ...managedFormAuthoringFixture.project.pages,
+      {
+        id: "contact",
+        name: "Contact",
+        path: "/contact",
+        rootInstanceId: "contact-root",
+      },
+    ],
+    instances: [
+      ...managedFormAuthoringFixture.project.instances,
+      {
+        id: "contact-root",
+        component: "Body",
+        tag: "body",
+        children: [
+          { type: "id" as const, value: "contact-heading" },
+          { type: "id" as const, value: "contact-intro" },
+          { type: "id" as const, value: formId },
+        ],
+      },
+      {
+        id: "contact-heading",
+        component: "Heading",
+        tag: "h1",
+        children: [{ type: "text" as const, value: "Contact Northstar" }],
+      },
+      {
+        id: "contact-intro",
+        component: "Paragraph",
+        tag: "p",
+        children: [
+          { type: "text" as const, value: "Tell our team how we can help." },
+        ],
+      },
+      ...instances,
+    ],
+    props: [
+      {
+        id: "form-action",
+        instanceId: formId,
+        name: "action",
+        type: "json",
+        value: [
+          { dataSourceId: projectDataSourceId, enabled: true },
+          { dataSourceId: visitorDataSourceId, enabled: true },
+        ],
+      },
+      {
+        id: "form-data",
+        instanceId: formId,
+        name: "formData",
+        type: "parameter",
+        value: "contact-form-data",
+      },
+      {
+        id: "browser-info",
+        instanceId: formId,
+        name: "browserInfo",
+        type: "parameter",
+        value: "contact-browser-info",
+      },
+      {
+        id: "form-state-change",
+        instanceId: formId,
+        name: "onStateChange",
+        type: "action",
+        value: [
+          {
+            type: "execute",
+            args: ["state"],
+            code: `${formStateBinding} = state`,
+          },
+        ],
+      },
+      {
+        id: "form-result-change",
+        instanceId: formId,
+        name: "onResultChange",
+        type: "action",
+        value: [
+          {
+            type: "execute",
+            args: ["result"],
+            code: `({results: ${resultsBinding} = result?.results, errors: ${errorsBinding} = result?.errors})`,
+          },
+        ],
+      },
+      ...formFields.flatMap(({ name, type }) => [
+        {
+          id: `field-${name}-name`,
+          instanceId: `field-${name}`,
+          name: "name",
+          type: "string",
+          value: name,
+        },
+        {
+          id: `field-${name}-required`,
+          instanceId: `field-${name}`,
+          name: "required",
+          type: "boolean",
+          value: true,
+        },
+        ...(type === undefined
+          ? []
+          : [
+              {
+                id: `field-${name}-type`,
+                instanceId: `field-${name}`,
+                name: "type",
+                type: "string",
+                value: type,
+              },
+            ]),
+      ]),
+      {
+        id: "button-type",
+        instanceId: "submit-button",
+        name: "type",
+        type: "string",
+        value: "submit",
+      },
+      {
+        id: "success-show",
+        instanceId: "form-success",
+        name: "data-ws-show",
+        type: "expression",
+        value: `${formStateBinding} === 'success'`,
+      },
+      {
+        id: "error-show",
+        instanceId: "form-error",
+        name: "data-ws-show",
+        type: "expression",
+        value: `${formStateBinding} === 'error'`,
+      },
+      {
+        id: "errors-data",
+        instanceId: "form-error-list",
+        name: "data",
+        type: "expression",
+        value: errorsBinding,
+      },
+    ],
+    dataSources: [
+      {
+        id: "contact-form-data",
+        type: "parameter",
+        name: "formData",
+        scopeInstanceId: formId,
+      },
+      {
+        id: "contact-browser-info",
+        type: "parameter",
+        name: "browserInfo",
+        scopeInstanceId: formId,
+      },
+      {
+        id: formStateId,
+        type: "variable",
+        name: "formState",
+        scopeInstanceId: formId,
+      },
+      {
+        id: resultsId,
+        type: "variable",
+        name: "results",
+        scopeInstanceId: formId,
+      },
+      {
+        id: errorsId,
+        type: "variable",
+        name: "errors",
+        scopeInstanceId: formId,
+      },
+      {
+        id: projectDataSourceId,
+        type: "resource",
+        name: "Email to owner",
+        resourceId: "project-email",
+        scopeInstanceId: formId,
+      },
+      {
+        id: visitorDataSourceId,
+        type: "resource",
+        name: "Email to visitor",
+        resourceId: "visitor-email",
+        scopeInstanceId: formId,
+      },
+    ],
+    resources,
+  };
+};
+
+const managedFormCalls = () => [
+  traceCall("meta.guide", {}),
+  traceCall("insert-component", { component: "heading" }),
+  traceCall("components.search", { brief: "Form (Beta)" }),
+  traceCall("templates.get", { template: "template:form" }),
+  traceCall("insert-component", { component: "form" }),
+  traceCall("audit", {}),
+  traceCall("verify-page-responsive", {
+    path: "/contact",
+    viewports: [
+      { width: 1440, height: 900 },
+      { width: 390, height: 844 },
+    ],
+  }),
+];
 
 let traceRequestId = 0;
 const traceCall = (
@@ -420,6 +758,422 @@ describe("high-impact fixture validation", () => {
       expect(validateHighImpactFixture(broken).valid).toBe(false);
     }
   );
+});
+
+describe("managed Form evaluation", () => {
+  test("accepts contact heading text inside an inline child", () => {
+    const project = addManagedContactPage();
+    const heading = project.instances.find(
+      ({ id }) => id === "contact-heading"
+    )!;
+    project.instances.push({
+      id: "heading-text",
+      component: "ws:element",
+      tag: "span",
+      children: heading.children,
+    });
+    heading.children = [{ type: "id", value: "heading-text" }];
+    const result = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project,
+      toolCalls: managedFormCalls(),
+    });
+    expect(result.checks.contactPage).toBe("passed");
+  });
+
+  test("accepts harmless formatting in unchanged Email expressions", () => {
+    const project = addManagedContactPage();
+    const formData = encodeDataSourceVariable("contact-form-data");
+    project.resources = project.resources.map((resource) => ({
+      ...resource,
+      email: {
+        ...(resource.email as object),
+        subject:
+          resource.name === "Email to owner"
+            ? `'Contact form: '+(${formData}.subject??'New message')`
+            : `(${formData}.subject??'Your message')`,
+      },
+    }));
+    const result = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project,
+      toolCalls: managedFormCalls(),
+    });
+    expect(result.checks.formActionsPreserved).toBe("passed");
+  });
+
+  test("rejects restoring externally controlled Form state", () => {
+    const project = addManagedContactPage();
+    project.props.push({
+      id: "controlled-state",
+      instanceId: "contact-form",
+      name: "state",
+      type: "expression",
+      value: encodeDataSourceVariable("contact-form-state"),
+    });
+    const result = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project,
+      toolCalls: managedFormCalls(),
+    });
+    expect(result.checks.formStateBinding).toBe("failed");
+  });
+
+  test("accepts Form discovery after an unrelated component and checks contact-route structure", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project: addManagedContactPage(),
+      toolCalls: managedFormCalls(),
+    });
+    expect(result.checks.formTemplateDiscovery).toBe("passed");
+    expect(result.checks.managedFormStructure).toBe("passed");
+    expect(result.checks.formActionsPreserved).toBe("passed");
+    expect(result.checks.responsiveEvidence).toBe("passed");
+  });
+
+  test.each(["name", "email", "subject", "message"])(
+    "rejects an empty %s label wrapper",
+    (name) => {
+      const project = addManagedContactPage();
+      const result = evaluateHighImpactOutcome({
+        fixture: managedFormAuthoringFixture,
+        project: {
+          ...project,
+          instances: project.instances.map((instance) =>
+            instance.id === `label-${name}`
+              ? {
+                  ...instance,
+                  children: instance.children.filter(
+                    (child) => child.type !== "text"
+                  ),
+                }
+              : instance
+          ),
+        },
+        toolCalls: managedFormCalls(),
+      });
+      expect(result.checks.managedFormFields).toBe("failed");
+      expect(result.checks.managedFormStructure).toBe("failed");
+    }
+  );
+
+  test.each([
+    ["missing subject", "subject", undefined],
+    ["changed subject", "subject", JSON.stringify("Another subject")],
+    ["missing body", "body", undefined],
+    ["changed body", "body", JSON.stringify("Another message")],
+  ])("rejects visitor confirmation with %s", (_case, key, value) => {
+    const project = addManagedContactPage();
+    const result = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project: {
+        ...project,
+        resources: project.resources.map((resource) => {
+          if (resource.name !== "Email to visitor") {
+            return resource;
+          }
+          const email = { ...(resource.email as Record<string, unknown>) };
+          if (value === undefined) {
+            delete email[key];
+          } else {
+            email[key] = value;
+          }
+          return { ...resource, email };
+        }),
+      },
+      toolCalls: managedFormCalls(),
+    });
+    expect(result.checks.formActionsPreserved).toBe("failed");
+  });
+
+  test("rejects a changed project recipient mode", () => {
+    const project = addManagedContactPage();
+    const result = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project: {
+        ...project,
+        resources: project.resources.map((resource) =>
+          resource.name === "Email to owner"
+            ? { ...resource, email: { recipientMode: "custom" } }
+            : resource
+        ),
+      },
+      toolCalls: managedFormCalls(),
+    });
+    expect(result.checks.formActionsPreserved).toBe("failed");
+  });
+
+  test("rejects a wrong route, missing submit button, disconnected feedback, or changed email recipient", () => {
+    const project = addManagedContactPage();
+    const calls = managedFormCalls();
+    const form = project.instances.find(
+      ({ component }) => component === "Form"
+    )!;
+    const button = project.instances.find(
+      ({ component }) => component === "Button"
+    )!;
+    const buttonType = project.props.find(
+      ({ instanceId, name }) => instanceId === button.id && name === "type"
+    )!;
+    const success = project.instances.find(
+      ({ label }) => label === "Success message"
+    )!;
+    const successVisibility = project.props.find(
+      ({ instanceId, name }) =>
+        instanceId === success.id && name === "data-ws-show"
+    )!;
+    const visitor = project.resources.find(
+      ({ name }) => name === "Email to visitor"
+    )!;
+    const visitorEmail = visitor.email as Record<string, unknown>;
+    const responsive = calls.find(
+      ({ name }) => name === "verify-page-responsive"
+    )!;
+
+    const changed = clone(project);
+    changed.props = changed.props.map((prop) =>
+      prop.instanceId === button.id && prop.name === "type"
+        ? { ...prop, value: "button" }
+        : prop
+    );
+    changed.resources = changed.resources.map((resource) =>
+      resource.id === visitor.id
+        ? { ...resource, email: { ...visitorEmail, visitorEmailField: "name" } }
+        : resource
+    );
+    const badCalls = calls.map((call) =>
+      call === responsive
+        ? { ...call, arguments: { ...call.arguments, path: "/" } }
+        : call
+    );
+    const wrongRoute = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project,
+      toolCalls: badCalls,
+    });
+    expect(wrongRoute.checks.responsiveEvidence).toBe("failed");
+
+    const missingSubmit = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project: {
+        ...project,
+        props: project.props.map((prop) =>
+          prop.instanceId === buttonType.instanceId && prop.name === "type"
+            ? { ...prop, value: "button" }
+            : prop
+        ),
+      },
+      toolCalls: calls,
+    });
+    expect(missingSubmit.checks.managedFormStructure).toBe("failed");
+
+    const disconnectedFeedback = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project: {
+        ...project,
+        props: project.props.map((prop) =>
+          prop.instanceId === successVisibility.instanceId &&
+          prop.name === "data-ws-show"
+            ? { ...prop, value: "true" }
+            : prop
+        ),
+      },
+      toolCalls: calls,
+    });
+    expect(disconnectedFeedback.checks.managedFormStructure).toBe("failed");
+
+    const changedRecipient = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project: changed,
+      toolCalls: calls,
+    });
+    expect(changedRecipient.checks.formActionsPreserved).toBe("failed");
+    expect(form).toBeDefined();
+  });
+
+  test.each([
+    [
+      "inverted success comparison",
+      "success-show",
+      "!== 'success'",
+      "feedbackVisibility",
+    ],
+    [
+      "inverted error comparison",
+      "error-show",
+      "!== 'error'",
+      "feedbackVisibility",
+    ],
+    ["state callback reference", "form-state-change", "", "formStateBinding"],
+    [
+      "result callback references",
+      "form-result-change",
+      "",
+      "actionResultBindings",
+    ],
+    [
+      "state callback assigning the wrong source",
+      "form-state-change",
+      "",
+      "formStateBinding",
+    ],
+    [
+      "result callback assigning swapped fields",
+      "form-result-change",
+      "",
+      "actionResultBindings",
+    ],
+  ])("rejects %s", (_description, propId, replacement, check) => {
+    const project = addManagedContactPage();
+    const formState = encodeDataSourceVariable("contact-form-state");
+    const results = encodeDataSourceVariable("contact-form-results");
+    const errors = encodeDataSourceVariable("contact-form-errors");
+    const value =
+      _description === "state callback assigning the wrong source"
+        ? `${formState} = result`
+        : _description === "result callback assigning swapped fields"
+          ? `${results} = result?.errors; ${errors} = result?.results`
+          : propId === "success-show" || propId === "error-show"
+            ? `${formState} ${replacement}`
+            : propId === "form-state-change"
+              ? `${formState}; state`
+              : `${results}; ${errors}; result.results; result.errors`;
+    const actionValue =
+      propId === "form-state-change" || propId === "form-result-change"
+        ? [
+            {
+              type: "execute",
+              args: [propId === "form-state-change" ? "state" : "result"],
+              code: value,
+            },
+          ]
+        : value;
+    const result = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project: {
+        ...project,
+        props: project.props.map((prop) =>
+          prop.id === propId ? { ...prop, value: actionValue } : prop
+        ),
+      },
+      toolCalls: managedFormCalls(),
+    });
+    expect(result.checks[check]).toBe("failed");
+    expect(result.checks.feedbackBindings).toBe("failed");
+  });
+
+  test.each(["form-state-change", "form-result-change", "errors-data"])(
+    "fails gracefully when %s has no binding value",
+    (propId) => {
+      const project = addManagedContactPage();
+      const result = evaluateHighImpactOutcome({
+        fixture: managedFormAuthoringFixture,
+        project: {
+          ...project,
+          props: project.props.filter((prop) => prop.id !== propId),
+        },
+        toolCalls: managedFormCalls(),
+      });
+      expect(result.checks.feedbackBindings).toBe("failed");
+    }
+  );
+
+  test("requires successful Form-template search and insertion, not unrelated insertions", () => {
+    const project = addManagedContactPage();
+    const calls = managedFormCalls().filter(
+      ({ name }) => name !== "components.search"
+    );
+    const result = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project,
+      toolCalls: calls,
+    });
+    expect(result.checks.formTemplateDiscovery).toBe("failed");
+  });
+});
+
+describe("Form modes evaluation", () => {
+  test("recognizes labeled MCP instances and the native Element form tag", () => {
+    const project = clone(formModesAuthoringFixture.project);
+    project.instances.push(
+      {
+        id: "mode-contact",
+        component: "Form",
+        children: [],
+      },
+      {
+        id: "mode-search",
+        component: "Form",
+        children: [],
+      },
+      {
+        id: "mode-native",
+        component: "ws:element",
+        tag: "form",
+        children: [],
+      }
+    );
+    project.props.push(
+      {
+        id: "mode-contact-label",
+        instanceId: "mode-contact",
+        name: "aria-label",
+        type: "string",
+        value: "Contact",
+      },
+      {
+        id: "mode-search-label",
+        instanceId: "mode-search",
+        name: "aria-label",
+        type: "string",
+        value: "Search",
+      },
+      {
+        id: "mode-native-label",
+        instanceId: "mode-native",
+        name: "aria-label",
+        type: "string",
+        value: "Native",
+      },
+      {
+        id: "mode-contact-actions",
+        instanceId: "mode-contact",
+        name: "action",
+        type: "json",
+        value: [{ dataSourceId: "email-owner", enabled: true }],
+      },
+      {
+        id: "mode-search-actions",
+        instanceId: "mode-search",
+        name: "action",
+        type: "json",
+        value: [],
+      }
+    );
+    const result = evaluateHighImpactOutcome({
+      fixture: formModesAuthoringFixture,
+      project,
+      toolCalls: [
+        { name: "meta.guide" },
+        {
+          name: "components.search",
+          arguments: { searchesForForm: true },
+        },
+        {
+          name: "components.search",
+          arguments: { searchesForElement: true },
+        },
+        { name: "templates.get" },
+        { name: "insert-component" },
+        { name: "insert-component" },
+        { name: "insert-component" },
+      ],
+    });
+    expect(result.checks.resourceFormMode).toBe("passed");
+    expect(result.checks.navigationFormMode).toBe("passed");
+    expect(result.checks.nativeFormMode).toBe("passed");
+    expect(result.checks.formModesRegistryDiscovery).toBe("passed");
+  });
 });
 
 describe("font-assets evaluation", () => {
@@ -1471,5 +2225,99 @@ describe("design-input evaluation", () => {
     });
 
     expect(result.checks.audit).toBe("passed");
+  });
+});
+
+describe("Form modes authoring evaluation", () => {
+  const project = (): EvaluationProject => ({
+    ...formModesAuthoringFixture.project,
+    instances: [
+      {
+        id: "contact",
+        component: "Form",
+        label: "Contact",
+        children: [],
+      },
+      {
+        id: "search",
+        component: "Form",
+        label: "Search",
+        children: [],
+      },
+      {
+        id: "native",
+        component: "Element",
+        tag: "form",
+        label: "Native",
+        children: [],
+      },
+    ],
+    props: [
+      {
+        id: "contact-action",
+        instanceId: "contact",
+        name: "action",
+        type: "json",
+        value: [{ dataSourceId: "email", enabled: true }],
+      },
+      {
+        id: "search-action",
+        instanceId: "search",
+        name: "action",
+        type: "json",
+        value: [],
+      },
+    ],
+  });
+  const calls = [
+    {
+      name: "components.search",
+      arguments: { searchesForForm: true },
+    },
+    {
+      name: "components.search",
+      arguments: { searchesForElement: true },
+    },
+    { name: "templates.get" },
+    ...Array.from({ length: 3 }, () => ({ name: "insert-component" })),
+  ];
+  test("accepts distinct Resource, navigation, and native forms", () => {
+    const result = evaluateHighImpactOutcome({
+      fixture: formModesAuthoringFixture,
+      project: project(),
+      toolCalls: calls,
+    });
+    expect(result.checks.resourceFormMode).toBe("passed");
+    expect(result.checks.navigationFormMode).toBe("passed");
+    expect(result.checks.nativeFormMode).toBe("passed");
+    expect(result.checks.formModesRegistryDiscovery).toBe("passed");
+  });
+  test("rejects the legacy identity and navigation with connected actions", () => {
+    const invalid = project();
+    invalid.instances[0].component = "WebhookForm";
+    invalid.props[1].value = [{ dataSourceId: "email", enabled: true }];
+    const result = evaluateHighImpactOutcome({
+      fixture: formModesAuthoringFixture,
+      project: invalid,
+      toolCalls: calls,
+    });
+    expect(result.checks.resourceFormMode).toBe("failed");
+    expect(result.checks.navigationFormMode).toBe("failed");
+  });
+  test("rejects a managed marker on the native form", () => {
+    const invalid = project();
+    invalid.props.push({
+      id: "native-action",
+      instanceId: "native",
+      name: "action",
+      type: "string",
+      value: "?__webstudio__=navigate",
+    });
+    const result = evaluateHighImpactOutcome({
+      fixture: formModesAuthoringFixture,
+      project: invalid,
+      toolCalls: calls,
+    });
+    expect(result.checks.nativeFormMode).toBe("failed");
   });
 });

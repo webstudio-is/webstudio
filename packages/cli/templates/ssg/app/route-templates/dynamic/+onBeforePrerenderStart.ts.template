@@ -1,0 +1,1 @@
+export const onBeforePrerenderStart = () => __PRERENDER_PATHS__;

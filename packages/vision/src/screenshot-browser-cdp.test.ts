@@ -688,6 +688,391 @@ test("ignores lifecycle readiness from child frames", async () => {
   });
 });
 
+test("does not replay a form after an ambiguous browser failure", async () => {
+  const socket = new FakeWebSocket();
+  const send = socket.send;
+  let submitCalls = 0;
+  socket.send = (data: string) => {
+    const message = JSON.parse(data) as {
+      id: number;
+      method: string;
+      params?: { expression?: string };
+    };
+    if (
+      message.method === "Runtime.evaluate" &&
+      message.params?.expression?.includes(":scope > fieldset[disabled]")
+    ) {
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              id: message.id,
+              result: {
+                result: {
+                  value: {
+                    ready: true,
+                    pageUrl: "http://127.0.0.1:5173/contact",
+                  },
+                },
+              },
+            }),
+          }),
+        0
+      );
+      return;
+    }
+    if (
+      message.method === "Runtime.evaluate" &&
+      message.params?.expression?.includes("requestSubmit")
+    ) {
+      submitCalls += 1;
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              id: message.id,
+              error: { message: "Browser connection lost" },
+            }),
+          }),
+        0
+      );
+      return;
+    }
+    send(data);
+    if (message.method === "Page.navigate") {
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              method: "Page.lifecycleEvent",
+              params: {
+                name: "load",
+                frameId: "main",
+                loaderId: "main-loader",
+              },
+            }),
+          }),
+        1
+      );
+    }
+  };
+  const session = await createBrowserScreenshotSession(
+    {
+      url: "http://127.0.0.1:5173/contact",
+      output: "/tmp/form.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "load",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({ socket })
+  );
+
+  const result = await session.submitForm!({
+    url: "http://127.0.0.1:5173/contact",
+    selector: "form",
+    values: [{ name: "email", value: "me@example.com" }],
+    timeout: 1000,
+  });
+  expect(result).toMatchObject({
+    status: "unknown",
+    correlationId: expect.any(String),
+  });
+  expect(submitCalls).toBe(1);
+  await session.close();
+});
+
+const createFormSubmissionSocket = (
+  initialUrl: string,
+  observe: () => { pageUrl: string; formState: string; busy?: boolean },
+  preSubmitFormState: string | null = "initial",
+  navigationOnSubmit: "main" | "child" | false = false
+) => {
+  const socket = new FakeWebSocket(200, initialUrl);
+  const send = socket.send;
+  socket.send = (data: string) => {
+    const message = JSON.parse(data) as {
+      id: number;
+      method: string;
+      params?: { expression?: string };
+    };
+    const respond = (value: unknown) =>
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              id: message.id,
+              result: { result: { value } },
+            }),
+          }),
+        0
+      );
+    if (message.method === "Runtime.evaluate") {
+      const expression = message.params?.expression ?? "";
+      if (expression.includes(":scope > fieldset[disabled]")) {
+        respond({ ready: true, pageUrl: initialUrl });
+        return;
+      }
+      if (expression.includes("requestSubmit")) {
+        respond({ status: "dispatched", errors: [], preSubmitFormState });
+        if (navigationOnSubmit) {
+          setTimeout(
+            () =>
+              socket.emit("message", {
+                data: JSON.stringify({
+                  method: "Page.navigatedWithinDocument",
+                  params: {
+                    url: initialUrl,
+                    frameId: navigationOnSubmit === "main" ? "main" : "child",
+                  },
+                }),
+              }),
+            1
+          );
+        }
+        return;
+      }
+      if (expression.includes("aria-busy")) {
+        respond(observe());
+        return;
+      }
+    }
+    send(data);
+    if (message.method === "Page.navigate") {
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              method: "Page.lifecycleEvent",
+              params: {
+                name: "load",
+                frameId: "main",
+                loaderId: "main-loader",
+              },
+            }),
+          }),
+        1
+      );
+    }
+  };
+  return socket;
+};
+
+const createFormBrowserSession = (socket: FakeWebSocket) =>
+  createBrowserScreenshotSession(
+    {
+      url: "http://127.0.0.1:5173/contact",
+      output: "/tmp/form.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "load",
+      waitForTimeout: 0,
+      timeout: 30_000,
+    },
+    createDependencies({ socket })
+  );
+
+test("initial route canonicalization is not reported as a form redirect", async () => {
+  const canonicalUrl = "http://127.0.0.1:5173/contact/";
+  let observations = 0;
+  const socket = createFormSubmissionSocket(canonicalUrl, () => ({
+    pageUrl: canonicalUrl,
+    formState: "success",
+    busy: ++observations < 3,
+  }));
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 30_000,
+    });
+    expect(result).toMatchObject({
+      status: "submitted",
+      formState: "success",
+      pageUrl: canonicalUrl,
+    });
+    expect(result.redirect).toBeUndefined();
+    expect(observations).toBe(3);
+  } finally {
+    await session.close();
+  }
+});
+
+test("reports query-only navigation without exposing query values", async () => {
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(url, () => ({
+    pageUrl: `${url}?tag=one&tag=two&token=secret`,
+    formState: "initial",
+    busy: false,
+  }));
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 30_000,
+    });
+    expect(result).toMatchObject({
+      status: "submitted",
+      pageUrl: url,
+      redirect: url,
+    });
+    expect(JSON.stringify(result)).not.toContain("secret");
+  } finally {
+    await session.close();
+  }
+});
+
+test("recognizes submission navigation even when URL stays the same", async () => {
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(
+    url,
+    () => ({ pageUrl: url, formState: "initial", busy: false }),
+    "initial",
+    "main"
+  );
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 1000,
+    });
+    expect(result).toMatchObject({ status: "submitted", formState: "initial" });
+    expect(result.redirect).toBeUndefined();
+  } finally {
+    await session.close();
+  }
+});
+
+test("ignores child-frame navigation when the Form stays idle", async () => {
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(
+    url,
+    () => ({ pageUrl: url, formState: "initial", busy: false }),
+    "initial",
+    "child"
+  );
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 300,
+    });
+    expect(result.status).toBe("unknown");
+  } finally {
+    await session.close();
+  }
+});
+
+test("recognizes a synchronous terminal error caused by submission", async () => {
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(url, () => ({
+    pageUrl: url,
+    formState: "error",
+    busy: false,
+  }));
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 30_000,
+    });
+    expect(result).toMatchObject({ status: "submitted", formState: "error" });
+  } finally {
+    await session.close();
+  }
+});
+
+test("does not accept an authored terminal state present before submission", async () => {
+  const url = "http://127.0.0.1:5173/contact";
+  let clock: ReturnType<typeof vi.spyOn> | undefined;
+  const socket = createFormSubmissionSocket(
+    url,
+    () => {
+      clock = vi.spyOn(Date, "now").mockReturnValue(Date.now() + 31_000);
+      return { pageUrl: url, formState: "error", busy: false };
+    },
+    "error"
+  );
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 30_000,
+    });
+    expect(result).toMatchObject({ status: "unknown", formState: "error" });
+  } finally {
+    clock?.mockRestore();
+    await session.close();
+  }
+});
+
+test("keeps observing beyond ten seconds when the caller timeout allows it", async () => {
+  let observations = 0;
+  let clock: ReturnType<typeof vi.spyOn> | undefined;
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(url, () => {
+    observations += 1;
+    if (observations === 1) {
+      const later = Date.now() + 11_000;
+      clock = vi.spyOn(Date, "now").mockReturnValue(later);
+      return { pageUrl: url, formState: "initial", busy: true };
+    }
+    return { pageUrl: url, formState: "success", busy: false };
+  });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 30_000,
+    });
+    expect(result).toMatchObject({ status: "submitted", formState: "success" });
+    expect(observations).toBe(2);
+  } finally {
+    clock?.mockRestore();
+    await session.close();
+  }
+});
+
+test("returns unknown when the caller observation deadline expires", async () => {
+  let clock: ReturnType<typeof vi.spyOn> | undefined;
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(url, () => {
+    const later = Date.now() + 31_000;
+    clock = vi.spyOn(Date, "now").mockReturnValue(later);
+    return { pageUrl: url, formState: "initial" };
+  });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url,
+      selector: "form",
+      values: [],
+      timeout: 30_000,
+    });
+    expect(result).toMatchObject({ status: "unknown", formState: "initial" });
+  } finally {
+    clock?.mockRestore();
+    await session.close();
+  }
+});
+
 test("reuses one browser process across screenshot captures", async () => {
   const browserProcess = new FakeBrowserProcess();
   const dependencies = createDependencies({ browserProcess });
@@ -1692,7 +2077,15 @@ test("rejects after the DevTools socket closes twice", async () => {
       },
       dependencies
     )
-  ).rejects.toThrow("Browser DevTools connection closed.");
+  ).rejects.toMatchObject({
+    code: "BROWSER_SESSION_CLOSED",
+    issues: [
+      {
+        code: "browser_devtools_connection_closed",
+        constraint: "devtools_connection_available",
+      },
+    ],
+  });
 
   expect(dependencies.spawnBrowser).toHaveBeenCalledTimes(2);
   expect(firstProcess.kill).toHaveBeenCalledOnce();

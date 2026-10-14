@@ -17,6 +17,7 @@ export type SeededContentModeProject = {
   linkInstanceId: string;
   imageInstanceId: string;
   videoInstanceId: string;
+  inlineImageHeadingText: string;
   assetTemplateImageAssetId: string;
   assetTemplateImageName: string;
   assetTemplateName: string;
@@ -104,6 +105,7 @@ const nestedTemplateText = "Nested content descendant";
 const pageTemplateName = "Content Page Template";
 const pageTemplateText = "Content page template heading";
 const pageTemplateFontSize = "38px";
+const inlineImageHeadingText = "Heading with protected image";
 
 const getBaseBreakpointId = (breakpoints: string) => {
   const parsedBreakpoints = JSON.parse(breakpoints) as Array<{
@@ -143,6 +145,8 @@ const createContentModeBuildData = ({
   const rootInstanceId = "body";
   const contentBlockId = "content-block";
   const contentBlockTemplateId = "content-block-template";
+  const inlineImageHeadingId = "inline-image-heading";
+  const inlineImageId = "inline-image";
   const assetTemplateId = "asset-template";
   const assetTemplateImageInstanceId = "asset-template-image";
   const assetTemplateVideoInstanceId = "asset-template-video";
@@ -157,6 +161,9 @@ const createContentModeBuildData = ({
   const shareLinkEditableInstanceId = "share-link-editable-content";
   const collaborationTemplateId = "collaboration-template";
   const styledHeadingTemplateId = "styled-heading-template";
+  const styledHeadingTemplateHeadingId = "styled-heading-template-heading";
+  const styledHeadingTemplateSvgId = "styled-heading-template-svg";
+  const styledHeadingTemplatePathId = "styled-heading-template-path";
   const styledHeadingTemplateLocalStyleSourceId =
     "styled-heading-template-local-style-source";
   const isolatedLocalTemplateId = "isolated-local-template";
@@ -201,6 +208,7 @@ const createContentModeBuildData = ({
       component: "ws:block",
       children: [
         { type: "id", value: listItemInstanceId },
+        { type: "id", value: inlineImageHeadingId },
         { type: "id", value: linkInstanceId },
         { type: "id", value: imageInstanceId },
         { type: "id", value: videoInstanceId },
@@ -293,6 +301,25 @@ const createContentModeBuildData = ({
     },
     {
       type: "instance",
+      id: inlineImageHeadingId,
+      component: "ws:element",
+      tag: "h2",
+      label: "Heading with protected image",
+      children: [
+        { type: "text", value: inlineImageHeadingText },
+        { type: "id", value: inlineImageId },
+      ],
+    },
+    {
+      type: "instance",
+      id: inlineImageId,
+      component: "ws:element",
+      tag: "img",
+      label: "Protected heading image",
+      children: [],
+    },
+    {
+      type: "instance",
       id: linkInstanceId,
       component: "Link",
       label: "Link",
@@ -358,9 +385,33 @@ const createContentModeBuildData = ({
       type: "instance",
       id: styledHeadingTemplateId,
       component: "ws:element",
-      tag: "h2",
+      tag: "section",
       label: styledHeadingTemplateName,
+      children: [
+        { type: "id", value: styledHeadingTemplateHeadingId },
+        { type: "id", value: styledHeadingTemplateSvgId },
+      ],
+    },
+    {
+      type: "instance",
+      id: styledHeadingTemplateHeadingId,
+      component: "ws:element",
+      tag: "h2",
       children: [{ type: "text", value: styledHeadingTemplateText }],
+    },
+    {
+      type: "instance",
+      id: styledHeadingTemplateSvgId,
+      component: "ws:element",
+      tag: "svg",
+      children: [{ type: "id", value: styledHeadingTemplatePathId }],
+    },
+    {
+      type: "instance",
+      id: styledHeadingTemplatePathId,
+      component: "ws:element",
+      tag: "path",
+      children: [],
     },
     {
       type: "instance",
@@ -408,7 +459,7 @@ const createContentModeBuildData = ({
     {
       type: "instance",
       id: dataResourceHttpFormId,
-      component: "Form",
+      component: "WebhookForm",
       label: "HTTP Resource Form",
       children: [{ type: "id", value: dataResourceHttpFormTextId }],
     },
@@ -423,7 +474,7 @@ const createContentModeBuildData = ({
     {
       type: "instance",
       id: dataResourceGraphqlFormId,
-      component: "Form",
+      component: "WebhookForm",
       label: "GraphQL Resource Form",
       children: [{ type: "id", value: dataResourceGraphqlFormTextId }],
     },
@@ -447,7 +498,9 @@ const createContentModeBuildData = ({
         { type: "text", value: "System resource variable configured" },
         {
           type: "expression",
-          value: `${encodeDataSourceVariable(dataResourceSystemDataSourceId)}.data.year`,
+          value: `${encodeDataSourceVariable(
+            dataResourceSystemDataSourceId
+          )}.data.year`,
         },
       ],
     },
@@ -496,6 +549,63 @@ const createContentModeBuildData = ({
   ];
 
   const props = [
+    {
+      id: "styled-heading-template-svg-width",
+      instanceId: styledHeadingTemplateSvgId,
+      name: "width",
+      type: "number",
+      value: 24,
+    },
+    {
+      id: "styled-heading-template-svg-height",
+      instanceId: styledHeadingTemplateSvgId,
+      name: "height",
+      type: "number",
+      value: 24,
+    },
+    {
+      id: "styled-heading-template-svg-viewbox",
+      instanceId: styledHeadingTemplateSvgId,
+      name: "viewBox",
+      type: "string",
+      value: "0 0 24 24",
+    },
+    {
+      id: "styled-heading-template-path-d",
+      instanceId: styledHeadingTemplatePathId,
+      name: "d",
+      type: "string",
+      value: "M12 2 2 22h20L12 2Z",
+    },
+    {
+      id: "styled-heading-template-path-fill",
+      instanceId: styledHeadingTemplatePathId,
+      name: "fill",
+      type: "string",
+      value: "#123456",
+    },
+    {
+      id: "inline-image-src-prop",
+      instanceId: inlineImageId,
+      name: "src",
+      type: "string",
+      value:
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Ccircle cx='8' cy='8' r='8' fill='%23000'/%3E%3C/svg%3E",
+    },
+    {
+      id: "inline-image-alt-prop",
+      instanceId: inlineImageId,
+      name: "alt",
+      type: "string",
+      value: "Protected icon",
+    },
+    {
+      id: "inline-image-width-prop",
+      instanceId: inlineImageId,
+      name: "width",
+      type: "number",
+      value: 16,
+    },
     {
       id: "link-href-prop",
       instanceId: linkInstanceId,
@@ -692,6 +802,7 @@ const createContentModeBuildData = ({
 
   const nextPages = JSON.parse(pages) as {
     homePageId: string;
+    formComponentIdentityVersion?: number;
     pages: Array<{ id: string; rootInstanceId: string }>;
     pageTemplates?: Array<{
       id: string;
@@ -708,6 +819,9 @@ const createContentModeBuildData = ({
     throw new Error("Expected existing build to have a home page");
   }
   homePage.rootInstanceId = rootInstanceId;
+  // Tests insert canonical managed Forms later. The seeded resource examples
+  // remain WebhookForms because their action props use the legacy format.
+  nextPages.formComponentIdentityVersion = 1;
   nextPages.pageTemplates = [
     ...(nextPages.pageTemplates ?? []),
     {
@@ -749,7 +863,7 @@ const createContentModeBuildData = ({
     ]),
     styleSourceSelections: JSON.stringify([
       {
-        instanceId: styledHeadingTemplateId,
+        instanceId: styledHeadingTemplateHeadingId,
         values: [styledHeadingTemplateLocalStyleSourceId],
       },
       {
@@ -972,6 +1086,7 @@ export const prepareExistingContentModeProject = async ({
     linkInstanceId,
     imageInstanceId,
     videoInstanceId,
+    inlineImageHeadingText,
     assetTemplateImageAssetId: seededAssetTemplateImageAssetId,
     assetTemplateImageName: seededAssetTemplateImageName,
     assetTemplateName,

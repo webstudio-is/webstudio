@@ -23,6 +23,7 @@ import {
   createCanonicalAssetFileEntry,
 } from "@webstudio-is/content-engine/compiler";
 import { bundleVersion } from "@webstudio-is/protocol";
+import { MissingJsonPropValueError } from "@webstudio-is/http-client";
 import {
   createImageAssetFixture,
   createPublishedProjectBundleFixture,
@@ -529,7 +530,9 @@ test("hosted sync compiles metadata-only dynamic MDX into a server-rendered page
             children: [
               {
                 type: "expression",
-                value: `${encodeDataSourceVariable("document")}.frontmatter.title`,
+                value: `${encodeDataSourceVariable(
+                  "document"
+                )}.frontmatter.title`,
               },
             ],
           },
@@ -791,6 +794,34 @@ test("explains unpublished project bundle errors when synchronizing by build id"
     [
       "The selected build cannot be exported.",
       "Run `webstudio sync` without --buildId to export the current saved project without publishing.",
+    ].join("\n"),
+    2
+  );
+});
+
+test("shows actionable diagnostics for JSON props with no value", async () => {
+  loadProjectBundleByBuildId.mockRejectedValue(
+    new MissingJsonPropValueError([
+      "“Projects” (ws:collection): JSON prop “data” has no value",
+    ])
+  );
+
+  await expect(
+    sync(
+      {
+        authToken: "token-1",
+        buildId: "build-1",
+        origin: "https://example.com",
+      },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+
+  expect(indicator.stop).toHaveBeenCalledWith(
+    [
+      "This build cannot be published because it contains JSON props with no value:",
+      "- “Projects” (ws:collection): JSON prop “data” has no value",
+      "Open the project in Webstudio, set or reset the affected prop, then publish again.",
     ].join("\n"),
     2
   );

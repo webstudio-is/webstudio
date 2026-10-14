@@ -11,7 +11,6 @@ import {
   clonePropForInstance,
   createPropDeletePayload,
   createPropBindingFromInput,
-  createPropClonePatches,
   createStartingPropValueFromMeta,
   createPropRenamePayload,
   createPropUpsertPayload,
@@ -451,33 +450,6 @@ describe("clonePropForInstance", () => {
       type: "string",
       value: "Title",
     });
-  });
-});
-
-describe("createPropClonePatches", () => {
-  test("clones props for copied instances", () => {
-    expect(
-      createPropClonePatches({
-        nextIdById: new Map([[image.id, "new-instance"]]),
-        props: [
-          prop("title", { value: "Title" }),
-          prop("ignored", { instanceId: "other-instance" }),
-        ],
-        createId: () => "new-prop",
-      })
-    ).toEqual([
-      {
-        op: "add",
-        path: ["new-prop"],
-        value: {
-          id: "new-prop",
-          instanceId: "new-instance",
-          name: "title",
-          type: "string",
-          value: "Title",
-        },
-      },
-    ]);
   });
 });
 

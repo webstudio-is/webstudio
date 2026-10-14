@@ -16,6 +16,121 @@ import {
   startMcpPreview,
 } from "./mcp-preview";
 
+test("ambiguous form failure returns unknown without submitting twice", async () => {
+  const submitForm = vi.fn(async () => {
+    throw new Error("CDP disconnected after dispatch");
+  });
+  const close = vi.fn(async () => undefined);
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: () => ({
+        running: true,
+        url: "http://127.0.0.1:53124/",
+        mode: "iterative",
+      }),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(),
+    } as never,
+    isStale: () => false,
+    createCaptureSession: () =>
+      ({
+        submitForm,
+        close,
+        capture: vi.fn(),
+        capturePage: vi.fn(),
+      }) as never,
+  });
+
+  const result = await handlers.submitForm({
+    path: "/contact?token=secret#private",
+    selector: "form",
+    values: [{ name: "email", value: "me@example.com" }],
+  });
+  expect(result).toMatchObject({
+    status: "unknown",
+    formState: "unknown",
+    pageUrl: "http://127.0.0.1:53124/contact",
+    correlationId: expect.any(String),
+  });
+  expect(JSON.stringify(result)).not.toContain("secret");
+  expect(JSON.stringify(result)).not.toContain("private");
+  expect(submitForm).toHaveBeenCalledOnce();
+  expect(close).toHaveBeenCalledOnce();
+});
+
+test("form submission rejects nonlocal Preview targets before opening a browser", async () => {
+  const createCaptureSession = vi.fn();
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: () => ({
+        running: true,
+        url: "https://example.com/",
+        mode: "iterative",
+      }),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(),
+    } as never,
+    isStale: () => false,
+    createCaptureSession,
+  });
+  await expect(
+    handlers.submitForm({
+      path: "/contact",
+      selector: "form",
+      values: [],
+    })
+  ).rejects.toThrow("session-owned local Preview");
+  expect(createCaptureSession).not.toHaveBeenCalled();
+});
+
+test("form submission accepts same-origin query and hash paths", async () => {
+  const submitForm = vi.fn(async () => ({
+    status: "submitted" as const,
+    formState: "success",
+    results: [],
+    errors: [],
+    exchanges: [],
+    pageUrl: "http://127.0.0.1:53124/contact",
+    correlationId: "test",
+  }));
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: () => ({
+        running: true,
+        url: "http://127.0.0.1:53124/",
+        mode: "iterative",
+      }),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(),
+    } as never,
+    isStale: () => false,
+    createCaptureSession: () =>
+      ({
+        submitForm,
+        close: vi.fn(),
+        capture: vi.fn(),
+        capturePage: vi.fn(),
+      }) as never,
+  });
+  await handlers.submitForm({
+    path: "/contact?tag=one&tag=two#done",
+    selector: "form",
+    values: [],
+  });
+  expect(submitForm).toHaveBeenCalledWith(
+    expect.objectContaining({
+      url: "http://127.0.0.1:53124/contact?tag=one&tag=two#done",
+    })
+  );
+  await expect(
+    handlers.submitForm({
+      path: "/../admin?tag=one",
+      selector: "form",
+      values: [],
+    })
+  ).rejects.toThrow("session-owned local Preview");
+});
+
 test("always allocates the MCP preview host and port", async () => {
   const getAvailablePort = vi.fn(async () => 53124);
 
@@ -744,6 +859,33 @@ test("times out a stalled screenshot after preview start and releases its sessio
 
   await expect(handlers.stopPreview()).resolves.toEqual({ running: false });
   expect(stop).toHaveBeenCalledOnce();
+});
+
+test("preserves browser phase timeout details instead of the outer watchdog", async () => {
+  const phaseError = Object.assign(
+    new Error("Page did not reach load within 5ms."),
+    { code: "SCREENSHOT_TIMEOUT" }
+  );
+  const captureScreenshot = vi.fn(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    throw phaseError;
+  });
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: vi.fn(() => ({ running: false as const })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(),
+    },
+    captureScreenshot,
+  });
+
+  await expect(
+    handlers.captureScreenshot({
+      url: "https://example.com",
+      viewport: { width: 1280, height: 720 },
+      timeout: 5,
+    })
+  ).rejects.toBe(phaseError);
 });
 
 test("leaves time to start a fallback browser within the MCP timeout", async () => {

@@ -6,29 +6,76 @@ import {
   blockComponent,
   contentBlockDocumentProp,
   contentBlockMdxTemplateDescriptors,
+  defaultVisitorConfirmationBody,
   elementComponent,
   getDefaultContentBlockTemplateName,
   type ContentBlockMdxTemplateDescriptor,
 } from "@webstudio-is/sdk";
 import { intrinsicCoreTemplates } from "@webstudio-is/sdk/core-templates";
 import {
+  browserInfoParameterName,
+  formDataParameterName,
+} from "@webstudio-is/sdk/runtime";
+import {
+  ActionValue,
+  FormActionsValue,
   css,
+  expression,
   Parameter,
   PlaceholderValue,
+  ResourceValue,
   setInstanceMeta,
   setTemplateMeta,
   type TemplateMeta,
+  Variable,
   ws,
 } from "@webstudio-is/template";
 import {
+  Button,
   CodeText,
   HtmlEmbed,
+  Input,
+  Label,
+  Form,
   Paragraph,
+  Textarea,
 } from "@webstudio-is/sdk-components-react/components";
 import { componentsById } from "./components";
 
 const BlockTemplate = ws.blockTemplate;
 const blockDocument = new Parameter(contentBlockDocumentProp);
+const formData = new Parameter(formDataParameterName);
+const browserInfo = new Parameter(browserInfoParameterName);
+const formState = new Variable("formState", "initial");
+const formResults = new Variable("results", []);
+const formErrors = new Variable("errors", []);
+const formError = new Parameter("collectionItem");
+const ownerEmail = new ResourceValue("Email to owner", {
+  control: "email",
+  email: {
+    recipientMode: "project",
+    subject: expression`"Contact form: " + (${formData}.subject ?? "New message")`,
+    body: expression`\`\${${browserInfo}.pageUrl ? \`Page: \${${browserInfo}.pageUrl}
+
+\` : ""}\${${formData}}\``,
+  },
+  url: expression`""`,
+  method: "post",
+});
+const visitorEmail = new ResourceValue("Email to visitor", {
+  control: "email",
+  email: {
+    recipientMode: "visitor",
+    visitorEmailField: "email",
+    subject: expression`${formData}.subject ?? "Your message"`,
+    body: JSON.stringify(defaultVisitorConfirmationBody),
+    confirmationSubject: "formSubject",
+    confirmationBody: "default",
+    includeAttachments: false,
+  },
+  url: expression`""`,
+  method: "post",
+});
 
 const listItemMdxTemplateDescriptor = contentBlockMdxTemplateDescriptors.find(
   ({ resolutionKey }) => resolutionKey === "element:li"
@@ -202,6 +249,125 @@ const builtWithWebstudioMeta: TemplateMeta = {
 
 export const coreTemplates = {
   ...intrinsicCoreTemplates,
+  form: {
+    category: "forms",
+    label: "Form (Beta)",
+    description: "Collect information and submit it to Resource actions.",
+    template: (
+      <Form
+        action={new FormActionsValue([ownerEmail, visitorEmail])}
+        formData={formData}
+        browserInfo={browserInfo}
+        onStateChange={
+          new ActionValue(["state"], expression`${formState} = state`)
+        }
+        onResultChange={
+          new ActionValue(
+            ["result"],
+            expression`({results: ${formResults} = result.results, errors: ${formErrors} = result.errors})`
+          )
+        }
+      >
+        {setInstanceMeta(
+          { label: "Form content" },
+          <div
+            ws:show={expression`${formState} === 'initial' || ${formState} === 'error'`}
+            ws:style={css`
+              display: flex;
+              flex-direction: column;
+              align-items: start;
+              gap: 16px;
+            `}
+          >
+            <Label>
+              {new PlaceholderValue("Name")}
+              <Input name="name" autoComplete="name" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Email")}
+              <Input name="email" type="email" autoComplete="email" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Subject")}
+              <Input name="subject" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Message")}
+              <Textarea name="message" required />
+            </Label>
+            <Label>
+              {new PlaceholderValue("Attachment")}
+              <Input
+                name="attachment"
+                type="file"
+                ws:style={css`
+                  border-style: none;
+                `}
+              />
+            </Label>
+            <Button type="submit">{new PlaceholderValue("Submit")}</Button>
+          </div>
+        )}
+        {setInstanceMeta(
+          { label: "Success message" },
+          <div ws:show={expression`${formState} === 'success'`} role="status">
+            {
+              new PlaceholderValue(
+                "Thanks for contacting us. Your message has been sent."
+              )
+            }
+          </div>
+        )}
+        {setInstanceMeta(
+          { label: "Error message" },
+          <div
+            ws:show={expression`${formState} === 'error'`}
+            role="alert"
+            ws:style={css`
+              margin-block-start: 12px;
+              padding: 12px 16px;
+              border: 1px solid #f1c5c2;
+              border-inline-start: 4px solid #c52a28;
+              border-radius: 6px;
+              background-color: #fff7f6;
+              color: #7f1d1d;
+            `}
+          >
+            <p
+              ws:style={css`
+                margin: 0 0 8px;
+                font-weight: 600;
+              `}
+            >
+              {
+                new PlaceholderValue(
+                  "We could not send your message. Please try again."
+                )
+              }
+            </p>
+            <ul
+              ws:style={css`
+                display: grid;
+                gap: 4px;
+                margin: 0;
+                padding-inline-start: 20px;
+              `}
+            >
+              <ws.collection data={expression`${formErrors}`} item={formError}>
+                <li
+                  ws:style={css`
+                    overflow-wrap: anywhere;
+                  `}
+                >
+                  {expression`${formError}.message` as unknown as ReactNode}
+                </li>
+              </ws.collection>
+            </ul>
+          </div>
+        )}
+      </Form>
+    ),
+  },
   [blockComponent]: blockMeta,
   code_text: {
     category: "typography",

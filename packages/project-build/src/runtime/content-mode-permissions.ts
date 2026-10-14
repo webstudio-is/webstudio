@@ -1,4 +1,5 @@
 import type { Patch } from "immer";
+import equal from "fast-deep-equal";
 import { isRecord } from "../shared/type-utils";
 import {
   instance,
@@ -70,6 +71,7 @@ type ContentModeTransactionContext = {
   selectedLocalStyleSourceIds: Set<StyleSource["id"]>;
   styledLocalStyleSourceIds: Set<StyleSource["id"]>;
   editableInstanceIds: Set<Instance["id"]>;
+  copiedTemplateProps: Map<Patch, Prop>;
 };
 
 export type ContentModeValidationResult =
@@ -288,6 +290,222 @@ const getBlockTemplateChildIdsByInstanceId = (
   return childIdsByInstanceId;
 };
 
+// Decide explicitly when a new Prop type is added whether its template default
+// can be retained without carrying a reference or behavior into content mode.
+export const isContentModeTemplateDefaultPropType = (
+  propType: Prop["type"]
+) => {
+  switch (propType) {
+    case "string":
+    case "number":
+    case "boolean":
+    case "json":
+    case "string[]":
+      return true;
+    case "asset":
+    case "page":
+    case "parameter":
+    case "resource":
+    case "expression":
+    case "action":
+    case "animationAction":
+      return false;
+    default:
+      propType satisfies never;
+      return false;
+  }
+};
+
+const contentModeNonCopyablePropTypes = new Set<Prop["type"]>([
+  "resource",
+  "parameter",
+  "expression",
+  "action",
+  "animationAction",
+]);
+
+const getMatchingTemplateInstanceIds = ({
+  sourceId,
+  targetId,
+  originalInstances,
+  instances,
+  addedInstanceIds,
+}: {
+  sourceId: Instance["id"];
+  targetId: Instance["id"];
+  originalInstances: Map<Instance["id"], Instance>;
+  instances: Map<Instance["id"], Instance>;
+  addedInstanceIds: Set<Instance["id"]>;
+}) => {
+  const sourceIdsByTargetId = new Map<Instance["id"], Instance["id"]>();
+  const matchTree = (sourceId: Instance["id"], targetId: Instance["id"]) => {
+    if (addedInstanceIds.has(targetId) === false) {
+      return false;
+    }
+    const source = originalInstances.get(sourceId);
+    const target = instances.get(targetId);
+    if (source === undefined || target === undefined) {
+      return false;
+    }
+    const { id: _sourceId, children: sourceChildren, ...sourceFields } = source;
+    const { id: _targetId, children: targetChildren, ...targetFields } = target;
+    if (
+      equal(sourceFields, targetFields) === false ||
+      sourceChildren.length !== targetChildren.length
+    ) {
+      return false;
+    }
+    sourceIdsByTargetId.set(targetId, sourceId);
+    for (let index = 0; index < sourceChildren.length; index += 1) {
+      const sourceChild = sourceChildren[index];
+      const targetChild = targetChildren[index];
+      if (sourceChild.type === "id" && targetChild.type === "id") {
+        if (matchTree(sourceChild.value, targetChild.value) === false) {
+          return false;
+        }
+      } else if (equal(sourceChild, targetChild) === false) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  return matchTree(sourceId, targetId) ? sourceIdsByTargetId : undefined;
+};
+
+const getCopiedTemplateProps = ({
+  originalInstances,
+  originalProps,
+  instances,
+  addedInstanceIds,
+  editableInstanceRootIds,
+  transaction,
+}: {
+  originalInstances: Map<Instance["id"], Instance>;
+  originalProps: Props;
+  instances: Map<Instance["id"], Instance>;
+  addedInstanceIds: Set<Instance["id"]>;
+  editableInstanceRootIds: Map<Instance["id"], Instance["id"]>;
+  transaction: ContentModePatchTransaction;
+}) => {
+  // Approve individual patches so later validation does not match props again.
+  const copiedProps = new Map<Patch, Prop>();
+  if (addedInstanceIds.size === 0) {
+    return copiedProps;
+  }
+
+  // A newly inserted tree may carry design-only props only when it is an exact
+  // copy of an authored template in the same Content Block.
+  const templateRootsByContentRootId = new Map<string, string[]>();
+  for (const block of originalInstances.values()) {
+    if (block.component !== blockComponent) {
+      continue;
+    }
+    const bodyContainers = findContentBlockBodyContainers({
+      blockInstance: block,
+      instances: originalInstances,
+    });
+    const contentRootId =
+      bodyContainers.length === 1 ? bodyContainers[0].id : block.id;
+    for (const child of block.children ?? []) {
+      if (child.type !== "id") {
+        continue;
+      }
+      const container = originalInstances.get(child.value);
+      if (container?.component !== blockTemplateComponent) {
+        continue;
+      }
+      const roots = templateRootsByContentRootId.get(contentRootId) ?? [];
+      roots.push(
+        ...container.children.flatMap((entry) =>
+          entry.type === "id" ? [entry.value] : []
+        )
+      );
+      templateRootsByContentRootId.set(contentRootId, roots);
+    }
+  }
+
+  const nestedAddedIds = new Set(
+    Array.from(addedInstanceIds).flatMap(
+      (id) =>
+        instances
+          .get(id)
+          ?.children.flatMap((child) =>
+            child.type === "id" && addedInstanceIds.has(child.value)
+              ? [child.value]
+              : []
+          ) ?? []
+    )
+  );
+  const addedProps = transaction.payload.flatMap((change) =>
+    change.namespace === "props"
+      ? change.patches.flatMap((patch) => {
+          if (patch.op !== "add" || patch.path.length !== 1) {
+            return [];
+          }
+          const parsed = prop.safeParse(patch.value);
+          return parsed.success ? [{ patch, prop: parsed.data }] : [];
+        })
+      : []
+  );
+  const sourcePropsByInstanceId = new Map<string, Prop[]>();
+  for (const sourceProp of originalProps.values()) {
+    const sourceProps =
+      sourcePropsByInstanceId.get(sourceProp.instanceId) ?? [];
+    sourceProps.push(sourceProp);
+    sourcePropsByInstanceId.set(sourceProp.instanceId, sourceProps);
+  }
+
+  for (const targetRootId of addedInstanceIds) {
+    if (nestedAddedIds.has(targetRootId)) {
+      continue;
+    }
+    const contentRootId = editableInstanceRootIds.get(targetRootId);
+    for (const sourceRootId of templateRootsByContentRootId.get(
+      contentRootId ?? ""
+    ) ?? []) {
+      const sourceIdsByTargetId = getMatchingTemplateInstanceIds({
+        sourceId: sourceRootId,
+        targetId: targetRootId,
+        originalInstances,
+        instances,
+        addedInstanceIds,
+      });
+      if (sourceIdsByTargetId === undefined) {
+        continue;
+      }
+      const allAddedPropsMatch = addedProps.every(({ prop: addedProp }) => {
+        const sourceId = sourceIdsByTargetId.get(addedProp.instanceId);
+        if (sourceId === undefined) {
+          return true;
+        }
+        return (sourcePropsByInstanceId.get(sourceId) ?? []).some(
+          (sourceProp) =>
+            sourceProp.name === addedProp.name &&
+            sourceProp.type === addedProp.type &&
+            sourceProp.required === addedProp.required &&
+            equal(sourceProp.value, addedProp.value)
+        );
+      });
+      if (allAddedPropsMatch === false) {
+        continue;
+      }
+      for (const { patch, prop } of addedProps) {
+        if (
+          sourceIdsByTargetId.has(prop.instanceId) &&
+          prop.id === patch.path[0] &&
+          originalProps.has(prop.id) === false &&
+          isContentModeTemplateDefaultPropType(prop.type)
+        ) {
+          copiedProps.set(patch, prop);
+        }
+      }
+      break;
+    }
+  }
+  return copiedProps;
+};
+
 const getInstancePropMetas = ({
   capabilities,
   instance,
@@ -420,14 +638,6 @@ const isContentModePropForInstance = ({
   instance: Instance;
   prop: Prop;
 }) => getContentModePropEligibility({ capabilities, instance, prop }).editable;
-
-const contentModeNonCopyablePropTypes = new Set<Prop["type"]>([
-  "resource",
-  "parameter",
-  "expression",
-  "action",
-  "animationAction",
-]);
 
 export const isContentModeCopyableProp = ({
   capabilities,
@@ -599,6 +809,12 @@ const validatePropPatch = (
   ) {
     capabilities.editablePropIds.add(propId);
     capabilities.props.set(propId, patch.value as Prop);
+    return { success: true };
+  }
+
+  const copiedProp = context.copiedTemplateProps.get(patch);
+  if (copiedProp !== undefined && capabilities.props.has(propId) === false) {
+    capabilities.props.set(propId, copiedProp);
     return { success: true };
   }
 
@@ -1621,6 +1837,7 @@ export const applyContentModeTransaction = ({
     selectedLocalStyleSourceIds: new Set(),
     styledLocalStyleSourceIds: new Set(),
     editableInstanceIds: new Set(),
+    copiedTemplateProps: new Map(),
   };
 
   for (const change of transaction.payload) {
@@ -1662,15 +1879,24 @@ export const applyContentModeTransaction = ({
     }
   }
 
-  context.editableInstanceIds = getContentModeEditableInstanceIds({
+  const editableInstanceRootIds = getContentModeEditableInstanceRootIds({
     contentRootIds: transactionCapabilities.contentRootIds,
     instances: transactionCapabilities.instances,
   });
+  context.editableInstanceIds = new Set(editableInstanceRootIds.keys());
   const frontmatterTargets = getContentModeFrontmatterBoundTargets({
     instances: transactionCapabilities.instances,
     props: transactionCapabilities.props,
   });
   transactionCapabilities.editableInstanceIds = context.editableInstanceIds;
+  context.copiedTemplateProps = getCopiedTemplateProps({
+    originalInstances: capabilities.instances,
+    originalProps: capabilities.props,
+    instances: transactionCapabilities.instances,
+    addedInstanceIds: context.addedInstanceIds,
+    editableInstanceRootIds,
+    transaction,
+  });
   transactionCapabilities.frontmatterBoundPropIds = frontmatterTargets.propIds;
   transactionCapabilities.frontmatterBoundTextInstanceIds =
     frontmatterTargets.textInstanceIds;

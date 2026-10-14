@@ -80,6 +80,7 @@ const isJSDom = () => {
   return hasMatchMedia === false;
 };
 
+/** @deprecated Legacy Webhook Form is supported through the next release. Use Form for new forms. */
 export const WebhookForm = forwardRef<
   ElementRef<typeof defaultTag>,
   Omit<ComponentProps<typeof defaultTag>, "action"> & {
@@ -95,6 +96,7 @@ export const WebhookForm = forwardRef<
     ref
   ) => {
     const fetcher = useFetcher<{ success: boolean }>();
+    const hiddenJsInput = useRef<HTMLInputElement>(null);
 
     useOnFetchEnd(fetcher, (data) => {
       const state: State = data?.success === true ? "success" : "error";
@@ -102,16 +104,18 @@ export const WebhookForm = forwardRef<
     });
 
     /**
-     * Add hidden field generated using js with simple jsdom detector.
+     * Refresh the hidden field using js with simple jsdom detector.
      * This is used to protect form submission against very simple bots.
      * Skipped for Brave browser due to: https://github.com/brave/brave-browser/issues/46541
      */
     const handleSubmitAndAddHiddenJsField = (
       event: React.FormEvent<HTMLFormElement>
     ) => {
-      const hiddenInput = document.createElement("input");
-      hiddenInput.type = "hidden";
-      hiddenInput.name = formBotFieldName;
+      const hiddenInput = hiddenJsInput.current;
+      if (hiddenInput === null) {
+        event.preventDefault();
+        return;
+      }
       // Skip bot detection for Brave - Shields blocks matchMedia fingerprinting detection
       if (isBraveBrowser()) {
         hiddenInput.value = "brave";
@@ -119,7 +123,6 @@ export const WebhookForm = forwardRef<
         // Non-numeric values are utilized for logging purposes.
         hiddenInput.value = isJSDom() ? "jsdom" : Date.now().toString(16);
       }
-      event.currentTarget.appendChild(hiddenInput);
     };
 
     return (
@@ -135,6 +138,7 @@ export const WebhookForm = forwardRef<
           name={formIdFieldName}
           value={action?.toString()}
         />
+        <input type="hidden" name={formBotFieldName} ref={hiddenJsInput} />
         {children}
       </fetcher.Form>
     );

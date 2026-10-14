@@ -3,6 +3,7 @@ import {
   isInternalHref,
   isLocalLinkActive,
   resolveLocalLinkUrl,
+  resolveRedirectUrl,
 } from "./index";
 
 test("href is local unless it is absolute, protocol-relative, or an asset", () => {
@@ -142,4 +143,25 @@ test("path local link uses router resolved path", () => {
       resolvedPath
     )
   ).toBe(resolvedPath);
+});
+
+test("success redirect accepts link destinations and rejects executable schemes", () => {
+  const base = "https://example.com/contact/start?old=1";
+  expect(resolveRedirectUrl("../thanks", base)).toBe(
+    "https://example.com/thanks"
+  );
+  expect(resolveRedirectUrl("https://other.example/thanks", base)).toBe(
+    "https://other.example/thanks"
+  );
+  expect(resolveRedirectUrl("mailto:hello@example.com", base)).toBe(
+    "mailto:hello@example.com"
+  );
+  for (const value of [
+    undefined,
+    "",
+    "javascript:alert(1)",
+    "data:text/html,hi",
+  ]) {
+    expect(resolveRedirectUrl(value, base)).toBeUndefined();
+  }
 });

@@ -49,7 +49,19 @@ const a = ${jsonResourceVariable?.data?.args}
 const b = ${jsonVar}
 
 console.log(a, b);
-</script>`}
+</script>` == null ? `<script>
+const a = ${jsonResourceVariable?.data?.args}
+
+const b = ${jsonVar}
+
+console.log(a, b);
+</script>` : String(`<script>
+const a = ${jsonResourceVariable?.data?.args}
+
+const b = ${jsonVar}
+
+console.log(a, b);
+</script>`)}
 className={`w-html-embed`} />
 <Box
 className={`w-box`}>

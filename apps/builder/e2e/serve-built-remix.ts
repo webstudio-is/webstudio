@@ -11,6 +11,9 @@ import { pathToFileURL } from "node:url";
 installGlobals({ nativeFetch: true });
 
 const start = async () => {
+  // Resource E2E fixtures use loopback URLs. Keep this exception limited to
+  // the dedicated test server; production uses the public-address guard.
+  process.env.E2E_ALLOW_LOCAL_RESOURCE_URLS = "true";
   const serverDirectory = path.resolve("build/server");
   const builds = await Promise.all(
     readdirSync(serverDirectory, { withFileTypes: true })

@@ -2,6 +2,13 @@ import { access } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
+import {
+  createTestServer,
+  db as postgrestDb,
+  json,
+  testContext,
+} from "@webstudio-is/postgrest/testing";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { CompactBuild } from "@webstudio-is/project-build";
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
@@ -22,8 +29,10 @@ import { blockComponent } from "@webstudio-is/sdk";
 import { AssetIndexRevisionError } from "@webstudio-is/content-engine";
 import { DocumentSourceDiagnosticsError } from "@webstudio-is/content-engine/compiler";
 import * as assetUploader from "@webstudio-is/asset-uploader/server";
+import * as issueReportService from "./github-issue-report.server";
 import { apiRouter, __testing__ } from "./api-router.server";
 import * as assetQueryPreview from "./asset-query-preview.server";
+import * as formSimulation from "./simulate-form.server";
 import * as db from "~/shared/db";
 import {
   getApiRouterProcedures,
@@ -37,6 +46,7 @@ import {
 } from "./api-permits.server";
 
 const servicesDir = new URL(".", import.meta.url);
+const server = createTestServer();
 
 const { assertContentOrBuildPayload, assertApiPublishDomains } = __testing__;
 
@@ -46,14 +56,22 @@ const createContext = (
     type: "token",
     authToken: "secret-token",
     ownerId: "user-1",
-  }
+  },
+  maxContactEmailsPerProject = 5,
+  ownerMaxContactEmailsPerProject = maxContactEmailsPerProject
 ) =>
   ({
+    ...testContext,
     authorization,
     planFeatures: {
       allowAdditionalPermissions,
+      maxContactEmailsPerProject,
     },
-  }) as AppContext;
+    getOwnerPlanFeatures: async () => ({
+      ...defaultPlanFeatures,
+      maxContactEmailsPerProject: ownerMaxContactEmailsPerProject,
+    }),
+  }) as unknown as AppContext;
 
 const createToken = (
   overrides: Partial<Awaited<ReturnType<typeof authDb.getTokenInfo>>> = {}
@@ -79,6 +97,185 @@ const createCaller = (context: AppContext) =>
   apiRouter.createCaller(context) as ApiRouterCaller & RuntimeApiCaller;
 
 describe("api router build operation adapters", () => {
+  test("Form simulation requires API and build access before invoking the server engine", async () => {
+    const simulate = vi
+      .spyOn(formSimulation, "simulateFormSubmission")
+      .mockResolvedValue({
+        success: true,
+        status: 200,
+        results: [
+          {
+            status: 202,
+            resourceId: "resource-1",
+            resourceName: "Private resource name",
+            body: "Private response body",
+          },
+        ],
+        errors: [],
+      });
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    const input = {
+      projectId: "project-1",
+      formId: "form-1",
+      path: "/contact",
+      siteOrigin: "https://example.com",
+      values: [{ name: "email", value: "test@example.com" }],
+    };
+    await expect(
+      createCaller(createContext(false)).forms.simulateSubmission(input)
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    vi.mocked(authDb.getTokenInfo).mockResolvedValue(
+      createToken({ relation: "viewers" })
+    );
+    await expect(
+      createCaller(createContext(true)).forms.simulateSubmission(input)
+    ).rejects.toThrow("build permission");
+    vi.mocked(authDb.getTokenInfo).mockResolvedValue(
+      createToken({ projectId: "another-project" })
+    );
+    await expect(
+      createCaller(createContext(true)).forms.simulateSubmission(input)
+    ).rejects.toThrow("not valid for project");
+    vi.mocked(authDb.getTokenInfo).mockResolvedValue(createToken());
+    await expect(
+      createCaller(createContext(true)).forms.simulateSubmission(input)
+    ).resolves.toEqual({
+      success: true,
+      status: 200,
+      results: [{ status: 202, resourceId: "resource-1" }],
+      errors: [],
+    });
+    expect(simulate).toHaveBeenCalledTimes(1);
+    expect(simulate).toHaveBeenCalledWith(
+      expect.objectContaining({ projectId: "project-1", formId: "form-1" })
+    );
+  });
+  test("enforces plan contact-address limits through project settings updates", async () => {
+    server.use(postgrestDb.get("Project", () => json({ userId: "owner-1" })));
+    const build = {
+      id: "build-1",
+      projectId: "project-1",
+      version: 1,
+      pages: createDefaultPages({ rootInstanceId: "root" }),
+      projectSettings: { meta: {}, compiler: {} },
+    } as unknown as Awaited<
+      ReturnType<typeof projectBuild.loadDevBuildByProjectId>
+    >;
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
+    const patchBuild = vi
+      .spyOn(projectApi, "patchBuild")
+      .mockResolvedValue({ status: "ok", version: 2 });
+
+    const freeCaller = createCaller(createContext(true, undefined, 5, 0));
+    await expect(
+      freeCaller.projectSettings.update({
+        projectId: "project-1",
+        meta: { contactEmail: "team@example.com" },
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(patchBuild).not.toHaveBeenCalled();
+
+    const paidCaller = createCaller(createContext(true, undefined, 0, 2));
+    await expect(
+      paidCaller.projectSettings.update({
+        projectId: "project-1",
+        meta: {
+          contactEmail:
+            '"Team, West" <team@example.com>, team@example.com, third@example.com',
+        },
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(patchBuild).not.toHaveBeenCalled();
+
+    await expect(
+      paidCaller.projectSettings.update({
+        projectId: "project-1",
+        meta: {
+          contactEmail: '"Team, West" <team@example.com>, team@example.com',
+        },
+      })
+    ).resolves.toMatchObject({ version: 2, updated: true });
+    expect(patchBuild).toHaveBeenCalledTimes(1);
+
+    build.projectSettings.meta.contactEmail = "legacy@example.com";
+    const downgradedCaller = createCaller(createContext(true, undefined, 0, 0));
+    await expect(
+      downgradedCaller.projectSettings.update({
+        projectId: "project-1",
+        meta: {
+          contactEmail: "legacy@example.com",
+          siteName: "Updated site",
+        },
+      })
+    ).resolves.toMatchObject({ version: 2, updated: true });
+    expect(patchBuild).toHaveBeenCalledTimes(2);
+  });
+  test("keeps the CLI contract and adds the server contract to issue reports", async () => {
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    const publishIssueReport = vi
+      .spyOn(issueReportService, "publishConfiguredIssueReport")
+      .mockResolvedValue({
+        status: "created",
+        issueNumber: 1,
+        issueUrl: "https://example.com/issues/1",
+      });
+    const caller = createCaller({
+      ...createContext(true),
+      apiClient: {
+        type: "cli",
+        version: "1.0.0",
+        contractVersion: "public-api:client",
+      },
+    });
+
+    await caller.reports.issue({
+      projectId: "project-1",
+      trigger: "user-requested",
+      category: "tool-failure",
+      deduplicationKey: "contract-report",
+      title: "fix: Preserve CLI contract metadata",
+      agent: {
+        client: "Codex",
+        model: "test-model",
+        reasoningEffort: "medium",
+      },
+      runtime: {
+        cliVersion: "1.0.0",
+        nodeVersion: process.versions.node,
+        os: process.platform,
+        osVersion: "1",
+        architecture: process.arch,
+        executionMode: "mcp",
+        apiContractVersion: "public-api:client",
+      },
+      report: {
+        userStory: "Report an issue.",
+        summary: "The contracts should be distinguishable.",
+        attemptedWorkflow: ["Submit the report."],
+        expectedBehavior: "Both contract versions are included.",
+        actualResult: "The server contract replaced the CLI contract.",
+        recoveryAttempts: ["Inspect the issue report."],
+        userImpact: "The report is less useful.",
+        technicalContext:
+          "The client and server may be on different contracts.",
+        acceptanceCriteria: ["Both versions are reported separately."],
+      },
+    });
+
+    expect(publishIssueReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtime: expect.objectContaining({
+          apiContractVersion: "public-api:client",
+          serverApiContractVersion: publicApiContractVersion,
+        }),
+      })
+    );
+  });
+
   test("submits only configured marketplace products for review", async () => {
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
     vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);

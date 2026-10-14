@@ -15,6 +15,7 @@ import { isRootFolder, ROOT_FOLDER_ID } from "@webstudio-is/sdk";
 import { z } from "zod";
 
 type LegacyPages = {
+  formComponentIdentityVersion?: Pages["formComponentIdentityVersion"];
   meta?: Pages["meta"];
   compiler?: Pages["compiler"];
   redirects?: Pages["redirects"];
@@ -33,6 +34,7 @@ export type SerializedPages = Omit<
 };
 
 export const serializedPages: z.ZodType<SerializedPages, unknown> = z.object({
+  formComponentIdentityVersion: z.number().int().optional(),
   meta: projectMeta.optional(),
   compiler: compilerSettings.optional(),
   redirects: z.array(pageRedirect).optional(),
@@ -113,6 +115,7 @@ const removeOrphanFolderChildren = (
 export const serializePages = (pagesData: Pages): SerializedPages => {
   const parsedPages = pages.parse(pagesData);
   return {
+    formComponentIdentityVersion: parsedPages.formComponentIdentityVersion,
     meta: parsedPages.meta,
     compiler: parsedPages.compiler,
     redirects: parsedPages.redirects,
@@ -152,6 +155,7 @@ export const migratePages = (pagesData: unknown): Pages => {
     const nextPages = toMap<Page>(pagesData.pages, normalizePage);
     const nextFolders = toMap<Folder>(pagesData.folders);
     return {
+      formComponentIdentityVersion: pagesData.formComponentIdentityVersion,
       meta: pagesData.meta,
       compiler: pagesData.compiler,
       redirects: pagesData.redirects,
@@ -226,6 +230,7 @@ export const migratePages = (pagesData: unknown): Pages => {
   }
 
   return {
+    formComponentIdentityVersion: pagesData.formComponentIdentityVersion,
     meta: pagesData.meta,
     compiler: pagesData.compiler,
     redirects: pagesData.redirects,

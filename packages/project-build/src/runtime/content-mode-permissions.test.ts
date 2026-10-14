@@ -24,6 +24,7 @@ import {
   getContentModePropNamesByTag,
   isContentModeCopyableProp,
   isContentModePagePath,
+  isContentModeTemplateDefaultPropType,
   validateContentModeTransaction,
   type ContentModePatchTransaction,
 } from "./content-mode-permissions";
@@ -440,6 +441,27 @@ const transaction = (
 });
 
 describe("content mode permissions", () => {
+  test("only retains self-contained template default prop types", () => {
+    expect(
+      (["string", "number", "boolean", "json", "string[]"] as const).every(
+        isContentModeTemplateDefaultPropType
+      )
+    ).toBe(true);
+    expect(
+      (
+        [
+          "asset",
+          "page",
+          "parameter",
+          "resource",
+          "expression",
+          "action",
+          "animationAction",
+        ] as const
+      ).some(isContentModeTemplateDefaultPropType)
+    ).toBe(false);
+  });
+
   test("allows only static page paths in content mode", () => {
     expect(isContentModePagePath("/about")).toBe(true);
     expect(isContentModePagePath("")).toBe(true);
@@ -832,6 +854,7 @@ describe("content mode permissions", () => {
       selectedLocalStyleSourceIds: new Set<string>(),
       styledLocalStyleSourceIds: new Set<string>(),
       editableInstanceIds: new Set<string>(),
+      copiedTemplateProps: new Map(),
     };
 
     expect(hasOnlyAddedInstancesInSubtree(context, "new-root")).toBe(true);
@@ -889,6 +912,7 @@ describe("content mode permissions", () => {
         selectedLocalStyleSourceIds: new Set(),
         styledLocalStyleSourceIds: new Set(),
         editableInstanceIds: new Set(["block", "item"]),
+        copiedTemplateProps: new Map(),
       })
     ).toEqual({
       success: false,
@@ -2208,6 +2232,184 @@ describe("content mode permissions", () => {
       success: false,
       error: "Instance patch is not editable in content mode.",
     });
+  });
+
+  test("allows exact fixed template props only on a newly copied subtree", () => {
+    const sourceImage: Instance = {
+      type: "instance",
+      id: "source-image",
+      component: "Image",
+      children: [],
+    };
+    const sourceWidth: Prop = {
+      id: "source-width",
+      instanceId: sourceImage.id,
+      name: "width",
+      type: "number",
+      value: 120,
+    };
+    const capabilities = getContentModeCapabilities({
+      instances: new Map([
+        [
+          "block",
+          {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [{ type: "id", value: "templates" }],
+          },
+        ],
+        [
+          "templates",
+          {
+            type: "instance",
+            id: "templates",
+            component: blockTemplateComponent,
+            children: [{ type: "id", value: sourceImage.id }],
+          },
+        ],
+        [sourceImage.id, sourceImage],
+      ]),
+      metas: new Map([
+        [
+          "Image",
+          {
+            props: {
+              width: { type: "number", control: "number", required: false },
+            },
+          },
+        ],
+      ]),
+      props: new Map([[sourceWidth.id, sourceWidth]]),
+      styleSources,
+    });
+    const copiedWidth: Prop = {
+      ...sourceWidth,
+      id: "copied-width",
+      instanceId: "copied-image",
+    };
+    const insert = (width: Prop): ContentModePatchTransaction => ({
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "add",
+              path: ["block", "children", 0],
+              value: { type: "id", value: "copied-image" },
+            },
+            {
+              op: "add",
+              path: ["copied-image"],
+              value: { ...sourceImage, id: "copied-image" },
+            },
+          ],
+        },
+        {
+          namespace: "props",
+          patches: [{ op: "add", path: [width.id], value: width }],
+        },
+      ],
+    });
+
+    const inserted = applyContentModeTransaction({
+      capabilities,
+      transaction: insert(copiedWidth),
+    });
+    expect(inserted.success).toBe(true);
+    if (inserted.success) {
+      expect(inserted.capabilities.props.get(copiedWidth.id)).toEqual(
+        copiedWidth
+      );
+      expect(
+        validateContentModeTransaction({
+          capabilities: inserted.capabilities,
+          transaction: transaction("props", [
+            {
+              op: "replace",
+              path: [copiedWidth.id, "value"],
+              value: 240,
+            },
+          ]),
+        }).success
+      ).toBe(false);
+    }
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: insert({ ...copiedWidth, value: 240 }),
+      }).success
+    ).toBe(false);
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: insert({
+          ...copiedWidth,
+          name: "class",
+          type: "string",
+          value: "arbitrary-class",
+        }),
+      }).success
+    ).toBe(false);
+    const changedTree = insert(copiedWidth);
+    changedTree.payload[0].patches[1] = {
+      op: "add",
+      path: ["copied-image"],
+      value: { ...sourceImage, id: "copied-image", label: "Changed" },
+    };
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: changedTree,
+      }).success
+    ).toBe(false);
+    const mismatchedKey = insert(copiedWidth);
+    mismatchedKey.payload[1].patches[0].path = [sourceWidth.id];
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: mismatchedKey,
+      }).success
+    ).toBe(false);
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: insert({ ...copiedWidth, id: sourceWidth.id }),
+      }).success
+    ).toBe(false);
+    const duplicateKey = insert(copiedWidth);
+    duplicateKey.payload[1].patches.push(duplicateKey.payload[1].patches[0]);
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: duplicateKey,
+      }).success
+    ).toBe(false);
+    const otherBlockCapabilities = getContentModeCapabilities({
+      instances: new Map([
+        ...capabilities.instances,
+        [
+          "other-block",
+          {
+            type: "instance" as const,
+            id: "other-block",
+            component: blockComponent,
+            children: [],
+          },
+        ],
+      ]),
+      metas: capabilities.metas,
+      props: capabilities.props,
+      styleSources,
+    });
+    const crossBlockCopy = insert(copiedWidth);
+    crossBlockCopy.payload[0].patches[0].path = ["other-block", "children", 0];
+    expect(
+      validateContentModeTransaction({
+        capabilities: otherBlockCapabilities,
+        transaction: crossBlockCopy,
+      }).success
+    ).toBe(false);
   });
 
   test("allows cleaning up any props from removed editable instances", () => {

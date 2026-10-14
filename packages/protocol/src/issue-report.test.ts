@@ -61,6 +61,16 @@ const report = {
 } as const;
 
 describe("issue report contract", () => {
+  test("preserves the negotiated server contract alongside the CLI contract", () => {
+    const runtime = {
+      ...report.runtime,
+      serverApiContractVersion: "public-api:server",
+    };
+    expect(issueReportInput.parse({ ...report, runtime }).runtime).toEqual(
+      runtime
+    );
+  });
+
   test("advertised entity ID fields enforce the privacy rule", () => {
     const schema = z.toJSONSchema(issueReportEntityIdField);
     expect(schema.enum).toContain("pageId");

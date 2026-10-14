@@ -3,7 +3,7 @@ import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
 import "../colors/colors.css";
 import { Button, LinkButton } from "./button";
-import { Dialog, DialogContent, DialogTitle } from "./dialog";
+import { Dialog, DialogContent, DialogMaximize, DialogTitle } from "./dialog";
 import { useState } from "react";
 import { userEvent } from "@vitest/browser/context";
 import {
@@ -23,6 +23,33 @@ afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   document.body.innerHTML = "";
+});
+
+test("keeps the maximize button background transparent when hovered", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      <Dialog open>
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle>
+            Editor
+            <DialogMaximize />
+          </DialogTitle>
+        </DialogContent>
+      </Dialog>
+    );
+  });
+
+  const maximizeButton = document.querySelector<HTMLButtonElement>(
+    '[aria-label="Expand"]'
+  );
+  expect(maximizeButton).not.toBeNull();
+  await userEvent.hover(maximizeButton!);
+  expect(getComputedStyle(maximizeButton!).backgroundColor).toBe(
+    "rgba(0, 0, 0, 0)"
+  );
 });
 
 test("keeps the first and subsequent drag positions when only the title must remain visible", async () => {

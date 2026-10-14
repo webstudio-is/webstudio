@@ -14,6 +14,7 @@ import {
   createIssueReportFailure,
   createIssueReportFailureTracker,
   addIssueReportRuntime,
+  assertCliEditingContractVersion,
   getCliServerApiContract,
   getCliProjectSessionFile,
   getCliProjectRestorePointsFile,
@@ -238,6 +239,15 @@ test("keeps a failed mutation available after a successful diagnostic read", () 
   tracker.record("screenshot", new Error("Browser failed"), 120);
   tracker.succeed("report-issue");
   expect(tracker.get()).toBeUndefined();
+
+  const restored = createIssueReportFailureTracker(() => now);
+  restored.restore({ tool: "update-text", code: "MCP_TOOL_FAILED" }, now + 1);
+  expect(restored.get()).toBeUndefined();
+  restored.restore(
+    { tool: "update-text", code: "MCP_TOOL_FAILED" },
+    now - 10 * 60_000 - 1
+  );
+  expect(restored.get()).toBeUndefined();
 });
 
 test("reports only the shape of an untransformable server response", () => {
@@ -300,6 +310,32 @@ test("reports browser family and exit signal without executable paths", () => {
       ],
     })
   ).toEqual({ tool: "screenshot", code: "BROWSER_STARTUP_FAILED" });
+});
+
+test("reports a browser DevTools disconnect without including private details", () => {
+  const failure = createIssueReportFailure("verify-page-responsive", {
+    code: "BROWSER_SESSION_CLOSED",
+    issues: [
+      {
+        code: "browser_devtools_connection_closed",
+        path: [],
+        message: "The browser DevTools connection closed during capture.",
+        constraint: "devtools_connection_available",
+      },
+    ],
+  });
+
+  expect(failure).toEqual({
+    tool: "verify-page-responsive",
+    code: "BROWSER_SESSION_CLOSED",
+    issues: [
+      {
+        path: [],
+        code: "browser_devtools_connection_closed",
+        constraint: "devtools_connection_available",
+      },
+    ],
+  });
 });
 
 test("scopes project session files for explicitly selected projects", () => {
@@ -678,6 +714,38 @@ describe("CLI/server operation contract", () => {
     ).toBe(false);
     expect(operations.some((operation) => operation.serverOnly)).toBe(false);
   });
+
+  test("rejects edits early when the MCP CLI uses a different API contract", () => {
+    expect(() =>
+      assertCliEditingContractVersion({
+        clientVersion: "public-api:client",
+        serverVersion: "public-api:server",
+        supportedOperationIds: new Set(),
+        missingServerOperationIds: [],
+        negotiated: true,
+      })
+    ).toThrow(
+      "The Webstudio CLI and API use different editing contracts. Expected public-api:server, received public-api:client. Restart the MCP server with the latest CLI; if it is already current, retry after the Webstudio API deployment is updated."
+    );
+
+    expect(() =>
+      assertCliEditingContractVersion({
+        clientVersion: "public-api:client",
+        serverVersion: "public-api:client",
+        supportedOperationIds: new Set(),
+        missingServerOperationIds: [],
+        negotiated: true,
+      })
+    ).not.toThrow();
+    expect(() =>
+      assertCliEditingContractVersion({
+        clientVersion: "public-api:client",
+        supportedOperationIds: new Set(),
+        missingServerOperationIds: [],
+        negotiated: false,
+      })
+    ).not.toThrow();
+  });
 });
 
 const previewMarketplaceProduct = {
@@ -970,6 +1038,7 @@ describe("cli project session transport", () => {
           ],
           homePageId: "home",
           rootFolderId: "root",
+          formComponentIdentityVersion: 1,
           meta: { siteName: "Acme" },
           compiler: { atomicStyles: true },
           redirects: [{ old: "/old", new: "/new", status: "301" }],
@@ -1003,6 +1072,7 @@ describe("cli project session transport", () => {
     });
 
     expect(snapshot.state.pages?.pages.get("home")?.name).toBe("Home");
+    expect(snapshot.state.pages?.formComponentIdentityVersion).toBe(1);
     expect(snapshot.state.pages?.pageTemplates?.get("template-1")?.name).toBe(
       "Landing"
     );
@@ -1019,6 +1089,40 @@ describe("cli project session transport", () => {
       meta: { siteName: "Canonical Acme" },
       compiler: { atomicStyles: false },
     });
+  });
+
+  test("preserves an absent Form identity version in legacy public snapshots", async () => {
+    const transport = createCliProjectSessionTransport({
+      connection: {
+        projectId: "project-1",
+        origin: "https://example.com",
+        authToken: "token",
+      },
+      getBuildSnapshot: async () => ({
+        projectId: "project-1",
+        buildId: "build-1",
+        version: 1,
+        homePageId: "home",
+        rootFolderId: "root",
+        pages: [
+          {
+            id: "home",
+            name: "Home",
+            path: "",
+            title: "Home",
+            rootInstanceId: "body",
+            meta: {},
+          },
+        ],
+        folders: [{ id: "root", name: "Root", slug: "", children: ["home"] }],
+      }),
+    });
+
+    const snapshot = await transport.fetchNamespaces({
+      projectId: "project-1",
+      namespaces: ["pages"],
+    });
+    expect(snapshot.state.pages?.formComponentIdentityVersion).toBeUndefined();
   });
 
   test("falls back to legacy page settings when the server rejects projectSettings", async () => {

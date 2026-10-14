@@ -128,6 +128,60 @@ describe("shared asset index", () => {
     ).resolves.toMatchObject({ items: [{ id: "alpha" }] });
   });
 
+  test("keeps MDX source identity for runtime queries without content", async () => {
+    const mdxDocument = {
+      ...entry({ id: "article" }).document,
+      name: "article.mdx",
+      path: "articles/article.mdx",
+      extension: "mdx",
+      mimeType: "text/mdx",
+      revision: "article-revision",
+      contentRef: "articles/article.mdx",
+      properties: { title: "Article" },
+    };
+    const query = assetQuery.parse({
+      where: { all: [{ field: ["extension"], operator: "eq", value: "mdx" }] },
+      limit: 1,
+      output: {
+        mode: "fields",
+        includeMetadata: false,
+        fields: [["properties", "title"]],
+      },
+      content: { mode: "none" },
+    });
+    const plan = createContentCompilationPlan([
+      {
+        ...createLiteralContentCompilationQuery({ id: "article", query }),
+        limit: { type: "dynamic" },
+      },
+    ]);
+    if (plan === undefined) {
+      throw new Error("Expected a dynamic content compilation plan");
+    }
+
+    const artifact = await createAssetIndex({
+      projectId: "project",
+      entries: [
+        createCanonicalAssetFileEntry({
+          projectId: "project",
+          document: mdxDocument,
+        }),
+      ],
+      plan,
+    });
+
+    expect(artifact.documents).toMatchObject([
+      {
+        _id: "article",
+        extension: "mdx",
+        revision: "article-revision",
+        contentRef: "articles/article.mdx",
+        properties: { title: "Article" },
+      },
+    ]);
+    expect(artifact.contents).toBeUndefined();
+  });
+
   test("materializes a static overview query without storing candidate documents", async () => {
     const posts = [
       {

@@ -7,6 +7,7 @@ import {
   type RefObject,
 } from "react";
 import { useStore } from "@nanostores/react";
+import { formatManagedFormErrors } from "@webstudio-is/sdk";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "@webstudio-is/react-sdk";
 import { renderText as renderTextValue } from "@webstudio-is/react-sdk/runtime";
@@ -70,10 +71,12 @@ const renderText = (text: string): Array<JSX.Element> => {
 };
 
 const AsyncTextExpression = ({
+  managedFormErrors = false,
   expression,
   instanceSelector,
 }: {
   expression: string;
+  managedFormErrors?: boolean;
   instanceSelector: InstanceSelector;
 }) => {
   const variableValuesByInstanceSelector = useStore(
@@ -94,8 +97,23 @@ const AsyncTextExpression = ({
     [expression, variableValues],
     undefined
   );
-  return renderText(String(renderTextValue(value)));
+  return renderText(
+    managedFormErrors
+      ? formatManagedFormErrors(value)
+      : String(renderTextValue(value))
+  );
 };
+
+export const createManagedFormErrorElements = (
+  expression: string,
+  instanceSelector: InstanceSelector
+) => (
+  <AsyncTextExpression
+    expression={expression}
+    instanceSelector={instanceSelector}
+    managedFormErrors
+  />
+);
 
 export const createInstanceChildrenElements = ({
   instances,

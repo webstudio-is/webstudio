@@ -138,9 +138,15 @@ test("requires the exact generated project even when build assets match", async 
       },
       createDependencies({ fetch })
     )
-  ).rejects.toThrow(
-    "Preview server at http://127.0.0.1:5173/ did not serve the expected generated project."
-  );
+  ).rejects.toMatchObject({
+    code: "PREVIEW_PROJECT_MISMATCH",
+    issues: [
+      {
+        code: "preview_project_mismatch",
+        constraint: "latest_generated_project_served",
+      },
+    ],
+  });
 });
 
 test("accepts the generated preview with the expected project marker", async () => {
@@ -165,24 +171,24 @@ test("accepts the generated preview with the expected project marker", async () 
   ).resolves.toBeUndefined();
 });
 
-test("uses the static identity marker when page authentication blocks readiness", async () => {
-  const fetch = vi
-    .fn()
-    .mockResolvedValueOnce(new Response("Unauthorized", { status: 401 }))
-    .mockResolvedValueOnce(Response.json({ projectId: "project", version: 5 }));
+test("uses the static identity marker instead of compiling an iterative route", async () => {
+  const fetch = vi.fn(async () =>
+    Response.json({ projectId: "project", version: 5 })
+  );
 
   await expect(
     waitForPreviewReady(
-      "http://127.0.0.1:5173/",
+      "http://127.0.0.1:5173/newly-authored-route",
       {
         timeoutMs: 1000,
         requiredProject: { projectId: "project", version: 5 },
+        probeIdentityOnly: true,
       },
       createDependencies({ fetch })
     )
   ).resolves.toBeUndefined();
-  expect(fetch).toHaveBeenNthCalledWith(
-    2,
+  expect(fetch).toHaveBeenCalledOnce();
+  expect(fetch).toHaveBeenCalledWith(
     new URL("http://127.0.0.1:5173/__webstudio/preview.json"),
     expect.objectContaining({ method: "GET" })
   );
@@ -191,16 +197,8 @@ test("uses the static identity marker when page authentication blocks readiness"
 test("waits for the exact generated session version", async () => {
   const fetch = vi
     .fn()
-    .mockResolvedValueOnce(
-      new Response(
-        '<html data-ws-project="project" data-ws-version="4"></html>'
-      )
-    )
-    .mockResolvedValueOnce(
-      new Response(
-        '<html data-ws-project="project" data-ws-version="5"></html>'
-      )
-    );
+    .mockResolvedValueOnce(Response.json({ projectId: "project", version: 4 }))
+    .mockResolvedValueOnce(Response.json({ projectId: "project", version: 5 }));
 
   await waitForPreviewReady(
     "http://127.0.0.1:5173/",
@@ -208,11 +206,31 @@ test("waits for the exact generated session version", async () => {
       timeoutMs: 1000,
       intervalMs: 5,
       requiredProject: { projectId: "project", version: 5 },
+      probeIdentityOnly: true,
     },
     createDependencies({ fetch })
   );
 
   expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+test("checks the production route when there are no CSS assets", async () => {
+  const url = "http://127.0.0.1:5173/";
+  const fetch = vi.fn(
+    async () => new Response('<html data-ws-project="project"></html>')
+  );
+
+  await expect(
+    waitForPreviewReady(
+      url,
+      { timeoutMs: 1000, requiredProject: { projectId: "project" } },
+      createDependencies({ fetch })
+    )
+  ).resolves.toBeUndefined();
+  expect(fetch).toHaveBeenCalledWith(
+    url,
+    expect.objectContaining({ method: "GET" })
+  );
 });
 
 test("rejects stale preview servers that serve a previous build", async () => {
@@ -233,7 +251,48 @@ test("rejects stale preview servers that serve a previous build", async () => {
       },
       createDependencies({ fetch })
     )
-  ).rejects.toThrow(
-    "Preview server at http://127.0.0.1:5173/ did not serve the latest build assets."
+  ).rejects.toMatchObject({
+    code: "PREVIEW_ASSETS_STALE",
+    message: expect.stringContaining(
+      "The preview server did not serve the latest generated build assets. Stop the existing preview server on this port, then retry."
+    ),
+    issues: [
+      {
+        code: "preview_assets_stale",
+        path: [],
+        constraint: "latest_generated_assets_served",
+      },
+    ],
+  });
+});
+
+test("reports when a regenerated session version is not served", async () => {
+  const fetch = vi.fn(async () =>
+    Response.json({ projectId: "project", version: 4 })
   );
+
+  await expect(
+    waitForPreviewReady(
+      "http://127.0.0.1:5173/",
+      {
+        timeoutMs: 1,
+        intervalMs: 5,
+        requiredProject: { projectId: "project", version: 5 },
+        probeIdentityOnly: true,
+      },
+      createDependencies({ fetch })
+    )
+  ).rejects.toMatchObject({
+    code: "PREVIEW_PROJECT_MISMATCH",
+    message: expect.stringContaining(
+      "The preview server did not serve the generated project version just prepared."
+    ),
+    issues: [
+      {
+        code: "preview_project_mismatch",
+        path: [],
+        constraint: "latest_generated_project_served",
+      },
+    ],
+  });
 });

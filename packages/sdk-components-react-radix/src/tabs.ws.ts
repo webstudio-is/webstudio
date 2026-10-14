@@ -41,6 +41,12 @@ export const metaTabsList: WsComponentMeta = {
 };
 
 export const metaTabsTrigger: WsComponentMeta = {
+  selectionReveal: {
+    type: "value",
+    ancestor: getRadixComponentId("Tabs"),
+    prop: "value",
+    source: "self",
+  },
   icon: TriggerIcon,
   label: "Tab Trigger",
   indexWithinAncestor: getRadixComponentId("Tabs"),
@@ -59,6 +65,12 @@ export const metaTabsTrigger: WsComponentMeta = {
 };
 
 export const metaTabsContent: WsComponentMeta = {
+  selectionReveal: {
+    type: "value",
+    ancestor: getRadixComponentId("Tabs"),
+    prop: "value",
+    source: "self",
+  },
   label: "Tab Content",
   icon: ContentIcon,
   indexWithinAncestor: getRadixComponentId("Tabs"),

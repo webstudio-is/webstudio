@@ -190,8 +190,20 @@ GraphQL-style resource, usually POST with a query body; `system` marks a
 resource intended to use the built-in `system` parameter or one of the built-in
 local resource URLs: `"/$resources/sitemap.xml"`,
 `"/$resources/current-date"`, and `"/$resources/assets"`. The system parameter
-fields are `system.origin`, `system.pathname`, `system.params`, and
-`system.search`.
+fields are `system.origin`, `system.pathname`, `system.params`,
+`system.search`. A query key with one value is a string; a repeated key is an
+array of values in their original order. For `?tag=red&tag=blue`,
+`system.search.tag` is `["red", "blue"]`; missing keys are absent.
+
+For a saved Webhook Form on `/products/:slug`, a Resource URL can use
+`"https://api.example.com/products/" + system.params.slug + "/comments"`.
+On `/products/chair?source=newsletter&tag=red&tag=blue`, use
+`system.search.source` for `"newsletter"` and `system.search.tag` for
+`["red", "blue"]` in a header or object body expression. A missing key stays
+absent; use `system.search.source ?? "direct"` when a fallback is needed.
+These values come from the page being submitted, including after navigation.
+For a saved Webhook Form action, object body bindings are combined with the
+submitted fields; a submitted field wins when both use the same key.
 
 Use prop bindings for dynamic values that read variables or resources; use
 direct props for static values.

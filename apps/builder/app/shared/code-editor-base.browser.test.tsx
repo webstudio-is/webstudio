@@ -3,9 +3,14 @@ import { createRoot, type Root } from "react-dom/client";
 import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { userEvent } from "@vitest/browser/context";
 import { cssVar } from "@webstudio-is/design-system";
 import "@webstudio-is/design-system/global.css";
-import { EditorContent } from "./code-editor-base";
+import {
+  EditorContent,
+  EditorDialogButton,
+  EditorDialogControl,
+} from "./code-editor-base";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -136,4 +141,33 @@ test("scopes disabled styles to the Webstudio code editor", () => {
 
   expect(getComputedStyle(editors[0]).opacity).toBe("0.3");
   expect(getComputedStyle(foreignEditor).opacity).toBe("1");
+});
+
+test("keeps the editor maximize button background transparent when hovered", async () => {
+  act(() => {
+    root.render(
+      <div style={{ width: 320, height: 160 }}>
+        <EditorDialogControl>
+          <EditorContent
+            value="editor content"
+            onChange={() => {}}
+            onChangeComplete={() => {}}
+          />
+          <EditorDialogButton aria-label="Expand" />
+        </EditorDialogControl>
+      </div>
+    );
+  });
+
+  const maximizeButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Expand"]'
+  );
+  if (maximizeButton === null) {
+    throw new Error("Expected the maximize button");
+  }
+  await userEvent.hover(maximizeButton.parentElement!);
+  await userEvent.hover(maximizeButton);
+  expect(getComputedStyle(maximizeButton).backgroundColor).toBe(
+    "rgba(0, 0, 0, 0)"
+  );
 });

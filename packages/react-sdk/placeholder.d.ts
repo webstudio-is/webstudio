@@ -47,6 +47,16 @@ declare module "__SERVER__" {
     contentData?: Map<string, ResourceRequest>;
   };
 
+  export const getManagedFormSubmissions: () => Map<
+    string,
+    { action: unknown; resourceIds: (string | null)[] }
+  >;
+
+  export const getManagedFormResourceGraph: (
+    formId: string,
+    props: { system: System; formData: unknown; browserInfo: unknown }
+  ) => ResourceRequestGraph | undefined;
+
   export const getPageMeta: (props: {
     system: System;
     resources: Record<string, any>;
@@ -56,6 +66,15 @@ declare module "__SERVER__" {
   export const getRemixParams: ({ ...params }: Params) => Params;
 
   export const contactEmail: undefined | string;
+  export const emailDefaults: {
+    sender: string;
+    recipients: string;
+    subject: string;
+    body: string;
+    confirmationSubject: string;
+    confirmationBody: string;
+    confirmationBodyIsDefault: boolean;
+  };
 }
 
 declare module "__AUTH__" {

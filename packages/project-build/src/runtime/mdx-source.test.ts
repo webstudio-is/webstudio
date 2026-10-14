@@ -9,6 +9,9 @@ import {
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { componentIds } from "@webstudio-is/sdk-components-registry/components";
+import { renderTemplate } from "@webstudio-is/template";
+import { meta as youtubeTemplate } from "../../../sdk-components-react/src/youtube.template";
 import {
   rebaseMdxAuthoredContent,
   serializeMdxAuthoredContent,
@@ -121,6 +124,112 @@ const createAssetSourceData = () => {
 };
 
 describe("materializeMdxSource", () => {
+  test("preserves template component descendants when editing a default prop", async () => {
+    const sourceData = createSourceData();
+    const templateFragment = renderTemplate(
+      youtubeTemplate.template,
+      undefined,
+      [],
+      { componentIds }
+    );
+    const templateRoot = templateFragment.instances.find(
+      ({ label }) => label === "YouTube"
+    );
+    if (templateRoot === undefined) {
+      throw new Error("Expected YouTube template root");
+    }
+    templateRoot.label = "Video";
+    for (const instance of templateFragment.instances) {
+      sourceData.instances.set(instance.id, instance);
+    }
+    for (const [id, label] of [
+      ["html-embed-template", "HtmlEmbed"],
+      ["other-div-template", "Other div template"],
+    ]) {
+      sourceData.instances.set(id, {
+        type: "instance",
+        id,
+        component: elementComponent,
+        tag: "div",
+        label,
+        children: [],
+      });
+      sourceData.instances.get("templates")?.children.push({
+        type: "id",
+        value: id,
+      });
+    }
+    for (const prop of templateFragment.props) {
+      sourceData.props.set(prop.id, prop);
+    }
+    sourceData.instances.get("templates")?.children.push({
+      type: "id",
+      value: templateRoot.id,
+    });
+
+    const result = await materializeMdxSource({
+      source: "<Video />\n",
+      identity,
+      data: sourceData,
+      metas: componentMetas,
+      projectId: "project",
+    });
+    const previewImage = result.root.fragment.instances.find(
+      ({ component }) => component === "VimeoPreviewImage"
+    );
+    if (previewImage === undefined) {
+      throw new Error("Expected YouTube preview image");
+    }
+    const edited = structuredClone(result.root.fragment);
+    edited.props.push({
+      id: "replacement-preview-image-src",
+      instanceId: previewImage.id,
+      name: "src",
+      type: "string",
+      value: "/replacement.png",
+    });
+
+    const serialized = await serializeMdxAuthoredContent({
+      root: result.root,
+      fragment: edited,
+    });
+
+    expect(serialized).toContain('<img src="/replacement.png" />');
+
+    const reloaded = await materializeMdxSource({
+      source: serialized,
+      identity,
+      data: sourceData,
+      metas: componentMetas,
+      projectId: "project",
+    });
+    expect(reloaded.diagnostics).toEqual([]);
+    expect(
+      reloaded.root.fragment.instances.map(({ component }) => component)
+    ).toEqual(
+      expect.arrayContaining([
+        "VimeoPreviewImage",
+        "VimeoSpinner",
+        "VimeoPlayButton",
+      ])
+    );
+    expect(reloaded.root.fragment.props).toContainEqual(
+      expect.objectContaining({
+        instanceId: reloaded.root.fragment.instances.find(
+          ({ component }) => component === "VimeoPreviewImage"
+        )?.id,
+        name: "src",
+        value: "/replacement.png",
+      })
+    );
+    await expect(
+      serializeMdxAuthoredContent({
+        root: reloaded.root,
+        fragment: reloaded.root.fragment,
+      })
+    ).resolves.toBe(serialized);
+  });
+
   test.each([
     ["without", 0],
     ["with multiple", 2],

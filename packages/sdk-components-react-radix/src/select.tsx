@@ -20,11 +20,7 @@ import {
   Portal,
   Viewport,
 } from "@radix-ui/react-select";
-import {
-  type Hook,
-  getClosestInstance,
-  ReactSdkContext,
-} from "@webstudio-is/react-sdk/runtime";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 
 export const Select: ForwardRefExoticComponent<
   ComponentPropsWithRef<typeof Root>
@@ -101,41 +97,3 @@ export const SelectItemIndicator: ForwardRefExoticComponent<
 export const SelectItemText: ForwardRefExoticComponent<
   ComponentProps<typeof ItemText> & RefAttributes<HTMLSpanElement>
 > = ItemText;
-
-/* BUILDER HOOKS */
-
-const namespace = "@webstudio-is/sdk-components-react-radix";
-
-// For each SelectContent component within the selection,
-// we identify its closest parent Select component
-// and update its open prop bound to variable.
-export const hooksSelect: Hook = {
-  onNavigatorUnselect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:SelectContent`) {
-        const select = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:Select`
-        );
-        if (select) {
-          context.setMemoryProp(select, "open", undefined);
-        }
-      }
-    }
-  },
-  onNavigatorSelect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:SelectContent`) {
-        const select = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:Select`
-        );
-        if (select) {
-          context.setMemoryProp(select, "open", true);
-        }
-      }
-    }
-  },
-};

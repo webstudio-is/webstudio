@@ -14,9 +14,22 @@ import {
   hiddenMcpOperationCommands,
   listProjectSessionMcpTools,
 } from "@webstudio-is/project-build/mcp";
+import {
+  createDefaultProjectSessionCompatibility,
+  createProjectSession,
+} from "@webstudio-is/project-build/project-session";
+import {
+  createBuilderStateFromSnapshot,
+  createBuilderStateFreshness,
+} from "@webstudio-is/project-build/state";
 import { publicApiOperations } from "@webstudio-is/protocol";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { updatePersistedMcpCheckpoint } from "./mcp-checkpoint";
+import {
+  createCliProjectSessionStorage,
+  createIssueReportFailureTracker,
+} from "../project-session";
 import {
   __testing__,
   mcpOptions,
@@ -26,6 +39,9 @@ import {
 
 const {
   getMcpDownloadAsset,
+  getIssueReportFailureFile,
+  persistIssueReportFailure,
+  restoreIssueReportFailure,
   assertSingleOpCallToolSupported,
   applyMcpRunOptions,
   createMcpResourceErrorPayload,
@@ -33,6 +49,7 @@ const {
   createMcpRunErrorPayload,
   createMcpSingleOpCallErrorPayload,
   createMcpStatusReporter,
+  assertMcpToolServerSupport,
   getCliUpdateInstructions,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
@@ -63,6 +80,26 @@ test("instructs connected agents to update an outdated MCP CLI", () => {
     "This MCP server runs Webstudio CLI 0.299.0, but 0.301.0 is available. Tell the user before editing and recommend restarting this MCP server with the latest CLI, for example `npx -y webstudio@latest mcp`. Do not try to update or restart the CLI yourself. The existing API compatibility check remains the authority for whether writes are supported."
   );
   expect(getCliUpdateInstructions(undefined)).toBeUndefined();
+});
+
+test("checks API contract compatibility before committing MCP edits", () => {
+  const contract = {
+    clientVersion: "public-api:client",
+    serverVersion: "public-api:server",
+    supportedOperationIds: new Set<string>(),
+    missingServerOperationIds: [],
+    negotiated: true,
+  } as const;
+
+  expect(() => assertMcpToolServerSupport("update-page", contract)).toThrow(
+    /Restart the MCP server with the latest CLI/
+  );
+  expect(() =>
+    assertMcpToolServerSupport("update-page", contract, true)
+  ).not.toThrow();
+  expect(() =>
+    assertMcpToolServerSupport("list-pages", contract)
+  ).not.toThrow();
 });
 
 test("disposes an MCP host when its operation fails", async () => {
@@ -232,6 +269,327 @@ afterEach(async () => {
   await Promise.all(
     tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true }))
   );
+});
+
+test("confirms a resource deletion across persisted CLI sessions only for the unchanged plan", async () => {
+  const operation = publicApiOperations.find(
+    ({ command }) => command === "delete-resource"
+  );
+  if (operation === undefined) {
+    throw new Error("Expected delete-resource MCP operation");
+  }
+  const compatibility = createDefaultProjectSessionCompatibility("test");
+
+  for (const change of ["none", "version", "plan"] as const) {
+    const directory = await mkdtemp(
+      path.join(tmpdir(), "webstudio-mcp-delete-confirmation-")
+    );
+    tempDirs.push(directory);
+    const storagePath = path.join(directory, "project-session.json");
+    const storage = createCliProjectSessionStorage(storagePath);
+    const createSnapshot = (version: number, addDataSource: boolean) => {
+      const state = createBuilderStateFromSnapshot({
+        pages: {
+          homePageId: "home",
+          rootFolderId: "root",
+          pages: new Map([
+            [
+              "home",
+              {
+                id: "home",
+                name: "Home",
+                path: "",
+                title: "Home",
+                rootInstanceId: "body",
+                meta: {},
+              },
+            ],
+          ]),
+          folders: new Map([
+            [
+              "root",
+              { id: "root", name: "Root", slug: "", children: ["home"] },
+            ],
+          ]),
+        },
+        instances: [
+          [
+            ROOT_INSTANCE_ID,
+            {
+              type: "instance",
+              id: ROOT_INSTANCE_ID,
+              component: "Root",
+              children: [{ type: "id", value: "body" }],
+            },
+          ],
+          [
+            "body",
+            { type: "instance", id: "body", component: "Body", children: [] },
+          ],
+        ],
+        props: [],
+        dataSources: addDataSource
+          ? [
+              [
+                "resource-data",
+                {
+                  id: "resource-data",
+                  name: "resourceData",
+                  type: "resource",
+                  resourceId: "resource",
+                  scopeInstanceId: "body",
+                },
+              ],
+            ]
+          : [],
+        resources: [
+          [
+            "resource",
+            {
+              id: "resource",
+              name: "Test resource",
+              method: "get",
+              url: '"https://example.com"',
+              headers: [],
+            },
+          ],
+        ],
+      });
+      return {
+        projectId: "project-1",
+        buildId: "build-1",
+        version,
+        state,
+        freshness: createBuilderStateFreshness({ state, version }),
+        compatibilityVersion: "test",
+        compatibility,
+      };
+    };
+    await storage.save(createSnapshot(1, false), {});
+
+    let commits = 0;
+    const createCore = async () => {
+      const session = createProjectSession({
+        projectId: "project-1",
+        storage: createCliProjectSessionStorage(storagePath),
+        compatibilityVersion: "test",
+        runtimeContext: { createId: () => crypto.randomUUID() },
+        transport: {
+          async fetchNamespaces() {
+            throw new Error("The complete persisted snapshot should be used");
+          },
+          async commitPatch({ baseVersion }) {
+            commits += 1;
+            return { version: baseVersion + 1 };
+          },
+          async commitRestorePoint() {
+            throw new Error("Resource deletion must use patch commits");
+          },
+          async getPermissions() {
+            return {
+              canView: true,
+              canEdit: true,
+              canBuild: true,
+              canAdmin: false,
+              canUseApi: true,
+            };
+          },
+          async getCompatibility() {
+            return compatibility;
+          },
+        },
+      });
+      await session.initialize();
+      return createProjectSessionMcpCore({
+        operations: [operation],
+        createProjectSession: () => session,
+        executeOperation: ({ input, dryRun }) =>
+          session.mutate("resources.delete", input as { resourceId: string }, {
+            dryRun,
+          }),
+      });
+    };
+
+    const planned = await (
+      await createCore()
+    ).callTool({
+      name: "delete-resource",
+      input: { resourceId: "resource", dryRun: true },
+    });
+    expect(planned.structuredContent).toMatchObject({
+      ok: true,
+      meta: { confirmation: { token: expect.any(String) } },
+    });
+    const token = planned.structuredContent.meta.confirmation?.token;
+    if (token === undefined) {
+      throw new Error("Expected a deletion confirmation token");
+    }
+
+    if (change !== "none") {
+      const persisted = await storage.load();
+      await storage.save(
+        createSnapshot(change === "version" ? 2 : 1, change === "plan"),
+        {
+          expectedRevision: persisted?.revision,
+        }
+      );
+    }
+
+    const result = await (
+      await createCore()
+    ).callTool({
+      name: "delete-resource",
+      input: {
+        resourceId: "resource",
+        confirmDestructive: true,
+        confirmationToken: token,
+      },
+    });
+    if (change === "none") {
+      expect(result.structuredContent.ok).toBe(true);
+      expect(commits).toBe(1);
+      expect((await storage.load())?.state.resources?.has("resource")).toBe(
+        false
+      );
+    } else {
+      expect(result.structuredContent).toMatchObject({
+        ok: false,
+        error: { code: "DESTRUCTIVE_CONFIRMATION_INVALID" },
+      });
+      expect(commits).toBe(0);
+      expect((await storage.load())?.state.resources?.has("resource")).toBe(
+        true
+      );
+    }
+  }
+});
+
+test("persists sanitized issue-report failure diagnostics for the next CLI process", async () => {
+  const projectRoot = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-issue-report-")
+  );
+  tempDirs.push(projectRoot);
+  const filePath = getIssueReportFailureFile(projectRoot, "project-1");
+  const firstProcess = createIssueReportFailureTracker();
+  firstProcess.record(
+    "update-text",
+    new Error("Unable to transform response from server"),
+    125,
+    { instanceId: "instance-1", text: "private customer content" }
+  );
+
+  await persistIssueReportFailure(filePath, firstProcess.snapshot());
+
+  const secondProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, secondProcess);
+  expect(secondProcess.get()).toMatchObject({
+    tool: "update-text",
+    elapsedMs: 125,
+    entityIds: [{ field: "instanceId", id: "instance-1" }],
+  });
+  expect(await readFile(filePath, "utf8")).not.toContain(
+    "private customer content"
+  );
+
+  await persistIssueReportFailure(filePath, undefined);
+  const clearedProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, clearedProcess);
+  expect(clearedProcess.get()).toBeUndefined();
+
+  await writeFile(
+    filePath,
+    JSON.stringify({
+      at: Date.now(),
+      failure: { tool: "update-text", code: "MCP_TOOL_FAILED", private: true },
+    })
+  );
+  const malformedProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, malformedProcess);
+  expect(malformedProcess.get()).toBeUndefined();
+  await expect(readFile(filePath, "utf8")).rejects.toMatchObject({
+    code: "ENOENT",
+  });
+});
+
+test("preserves a destructive confirmation failure reason without the token or plan", async () => {
+  const projectRoot = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-confirmation-report-")
+  );
+  tempDirs.push(projectRoot);
+  const filePath = getIssueReportFailureFile(projectRoot, "project-1");
+  const operation = publicApiOperations.find(
+    ({ command }) => command === "delete-resource"
+  );
+  if (operation === undefined) {
+    throw new Error("Expected delete-resource operation");
+  }
+  const core = createProjectSessionMcpCore({
+    operations: [operation],
+    createProjectSession: () => {
+      throw new Error("Unexpected session access");
+    },
+    executeOperation: async () => ({
+      operationId: "resources.delete",
+      projectId: "project-1",
+      buildId: "build-1",
+      version: 1,
+      source: "dry-run",
+      result: { resourceId: "resource-1" },
+      state: { committed: false, freshness: {} },
+      namespaces: { read: [], write: [], invalidated: [], missing: [] },
+      diagnostics: [],
+      transaction: {
+        id: "plan-1",
+        payload: [
+          {
+            namespace: "resources",
+            patches: [{ op: "remove", path: ["resource-1"] }],
+          },
+        ],
+      },
+    }),
+  });
+  const planned = await core.callTool({
+    name: "delete-resource",
+    input: { resourceId: "resource-1", dryRun: true },
+  });
+  const token = planned.structuredContent.meta.confirmation?.token;
+  if (token === undefined) {
+    throw new Error("Expected confirmation token");
+  }
+  const input = {
+    resourceId: "resource-2",
+    confirmDestructive: true,
+    confirmationToken: token,
+  };
+  const rejected = await core.callTool({ name: "delete-resource", input });
+  const firstProcess = createIssueReportFailureTracker();
+  firstProcess.record(
+    "delete-resource",
+    getMcpToolCallError(rejected),
+    100,
+    input
+  );
+  await persistIssueReportFailure(filePath, firstProcess.snapshot());
+
+  const secondProcess = createIssueReportFailureTracker();
+  await restoreIssueReportFailure(filePath, secondProcess);
+  expect(secondProcess.get()).toMatchObject({
+    tool: "delete-resource",
+    code: "DESTRUCTIVE_CONFIRMATION_INVALID",
+    entityIds: [{ field: "resourceId", id: "resource-2" }],
+    issues: [
+      {
+        path: ["confirmationToken"],
+        code: "DESTRUCTIVE_CONFIRMATION_MISMATCH",
+        constraint: "unchanged_destructive_plan",
+      },
+    ],
+  });
+  const persisted = await readFile(filePath, "utf8");
+  expect(persisted).not.toContain(token);
+  expect(persisted).not.toContain("resource-1");
+  expect(persisted).not.toContain("plan-1");
 });
 
 const getArraySchemasWithoutItems = (schema: unknown): unknown[] => {

@@ -88,6 +88,7 @@ import {
   serializeProjectSummary,
 } from "./api-build.server";
 import { throwApiError } from "./api-errors.server";
+import { validateProjectSettingsUpdate } from "./project-settings-mutation.server";
 import {
   createBuilderRuntimeState,
   executeApiRuntimeMutation,
@@ -95,6 +96,7 @@ import {
 } from "./api-runtime.server";
 import { createAssetClient } from "../shared/asset-client";
 import { previewProjectAssetQuery } from "./asset-query-preview.server";
+import { simulateFormSubmission } from "./simulate-form.server";
 import { publishConfiguredIssueReport } from "./github-issue-report.server";
 import { loadContentDatabasePublishDiagnostics } from "./content-database-publish-diagnostics.server";
 
@@ -444,14 +446,36 @@ const runtimeBuildMutation = <Result extends Record<string, unknown> = {}>(
 ) =>
   buildMutation(
     runtimeMutationInput(id, requiresConfirm),
-    async ({ input, build, commit }) =>
-      commitRuntimeMutation<Result>({
+    async ({ ctx, input, build, commit }) => {
+      const error = await runtimeMutationValidators[id]?.({
+        input,
+        build,
+        context: ctx,
+      });
+      if (error !== undefined) {
+        return throwApiError("BAD_REQUEST", error);
+      }
+      return commitRuntimeMutation<Result>({
         id,
         build,
         input,
         commit,
-      })
+      });
+    }
   );
+
+const runtimeMutationValidators: Partial<
+  Record<
+    RuntimeOperationId,
+    (args: {
+      input: unknown;
+      build: CompactBuild;
+      context: AppContext;
+    }) => Promise<string | undefined>
+  >
+> = {
+  "projectSettings.update": validateProjectSettingsUpdate,
+};
 
 type BuildCommit = <CommitResult extends Record<string, unknown> = {}>(
   payload: z.infer<typeof buildPatchTransaction>["payload"],
@@ -796,6 +820,51 @@ export const apiRouter = router({
       }),
   }),
 
+  forms: router({
+    simulateSubmission: projectMutation(
+      projectIdInput.extend({
+        formId: z.string().min(1),
+        path: z.string().min(1).max(2048),
+        siteOrigin: z.string().url().optional(),
+        values: z
+          .array(
+            z.object({
+              name: z.string().min(1).max(256),
+              value: z.string().max(10_000),
+            })
+          )
+          .max(100),
+        arrayNames: z.array(z.string().min(1).max(256)).max(100).default([]),
+      }),
+      "build",
+      async ({ ctx, input }) => {
+        if (
+          new TextEncoder().encode(JSON.stringify(input.values)).byteLength >
+          100_000
+        ) {
+          throw new Error("Form simulation values are too large");
+        }
+        const result = await simulateFormSubmission({
+          context: ctx,
+          ...input,
+        });
+        return {
+          success: result.success,
+          status: result.status,
+          results: result.results.map(({ status, resourceId }) => ({
+            status,
+            resourceId,
+          })),
+          errors: result.errors.map(({ status, message }) => ({
+            status,
+            message,
+          })),
+        };
+      },
+      { command: "simulate-form-submission", client: "simulateFormSubmission" }
+    ),
+  }),
+
   projects: router({
     permissions: procedure
       .meta(
@@ -912,7 +981,7 @@ export const apiRouter = router({
                   ...(ctx.apiClient.version === undefined
                     ? {}
                     : { cliVersion: ctx.apiClient.version }),
-                  apiContractVersion: publicApiContractVersion,
+                  serverApiContractVersion: publicApiContractVersion,
                 },
               }),
         });

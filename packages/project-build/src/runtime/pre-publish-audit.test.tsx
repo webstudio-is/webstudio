@@ -98,6 +98,25 @@ test("warns without blocking legacy invalid HTML", () => {
   );
 });
 
+test("blocks publishing when a JSON prop has no value", () => {
+  const { instances, props } = renderData(<Body ws:id="body" />);
+  props.set("missing-value", {
+    id: "missing-value",
+    instanceId: "body",
+    name: "data",
+    type: "json",
+    value: undefined,
+  });
+
+  expect(runAudit({ instances, props })).toContainEqual({
+    ruleId: "json-prop-value",
+    severity: "error",
+    message:
+      "JSON prop “data” on “Body” has no value. Set or reset it before publishing.",
+    location: { instanceId: "body", propId: "missing-value" },
+  });
+});
+
 test("allows valid publishable pages and ignores invalid drafts", () => {
   const { instances, props } = renderData(
     <>

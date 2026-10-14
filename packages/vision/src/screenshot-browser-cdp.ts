@@ -67,6 +67,35 @@ export type BrowserScreenshotOptions = {
   scale?: number;
 };
 
+export type BrowserFormValue = {
+  name: string;
+  value?: string;
+  file?: { name: string; base64: string; type?: string };
+};
+
+export type BrowserFormSubmitOptions = {
+  url: string;
+  selector: string;
+  values: readonly BrowserFormValue[];
+  submitter?: string;
+  timeout: number;
+};
+
+export type BrowserFormSubmitResult = {
+  status: "validation_failed" | "submitted" | "unknown";
+  formState?: string;
+  results: readonly {
+    status: number;
+    resourceId?: string;
+    resourceName?: string;
+  }[];
+  errors: readonly { status?: number; name?: string; message: string }[];
+  exchanges: readonly { status: number; url: string }[];
+  pageUrl: string;
+  redirect?: string;
+  correlationId: string;
+};
+
 const getNavigationUrl = (options: BrowserScreenshotOptions) => {
   if (options.httpCredentials === undefined) {
     return options.url;
@@ -173,20 +202,29 @@ export type BrowserStartupDiagnostic = {
 };
 
 type BrowserProcessExit = { code?: number; signal?: string };
+type BrowserDiagnosticIssue = {
+  code: string;
+  path: string[];
+  message: string;
+  constraint: string;
+};
 
 export class BrowserSessionClosedError extends Error {
   readonly code = "BROWSER_SESSION_CLOSED";
   readonly diagnostic?: BrowserStartupDiagnostic;
-  readonly processExit?: BrowserProcessExit;
+  processExit?: BrowserProcessExit;
+  readonly issues?: BrowserDiagnosticIssue[];
 
   constructor(
     message: string,
     diagnostic?: BrowserStartupDiagnostic,
-    processExit?: BrowserProcessExit
+    processExit?: BrowserProcessExit,
+    issues?: BrowserSessionClosedError["issues"]
   ) {
     super(message);
     this.diagnostic = diagnostic;
     this.processExit = processExit;
+    this.issues = issues;
   }
 }
 
@@ -215,7 +253,19 @@ class CdpSession {
     this.#socket = socket;
     this.#socket.addEventListener("close", () => {
       this.#rejectPending(
-        new BrowserSessionClosedError("Browser DevTools connection closed.")
+        new BrowserSessionClosedError(
+          "Browser DevTools connection closed.",
+          undefined,
+          undefined,
+          [
+            {
+              code: "browser_devtools_connection_closed",
+              path: [],
+              message: "The browser DevTools connection closed during capture.",
+              constraint: "devtools_connection_available",
+            },
+          ]
+        )
       );
     });
     this.#socket.addEventListener("message", (event) => {
@@ -445,7 +495,9 @@ const waitForSelector = async (
   while (Date.now() < deadline) {
     const result = await withDeadline(
       cdp.send<{ result?: { value?: boolean } }>("Runtime.evaluate", {
-        expression: `document.querySelector(${JSON.stringify(selector)}) !== null`,
+        expression: `document.querySelector(${JSON.stringify(
+          selector
+        )}) !== null`,
         returnByValue: true,
       }),
       `Selector ${selector} was not found`,
@@ -463,7 +515,9 @@ const getSelectorText = async (cdp: CdpSession, selector: string) => {
   const result = await cdp.send<{ result?: { value?: unknown } }>(
     "Runtime.evaluate",
     {
-      expression: `document.querySelector(${JSON.stringify(selector)})?.textContent`,
+      expression: `document.querySelector(${JSON.stringify(
+        selector
+      )})?.textContent`,
       returnByValue: true,
     }
   );
@@ -491,7 +545,9 @@ const waitForFontsAndFrames = async (
     try {
       response = await withDeadline(
         cdp.send<{ result?: { value?: unknown } }>("Runtime.evaluate", {
-          expression: `Promise.resolve(${waitForFonts ? "document.fonts?.ready" : "undefined"}).then(() => {
+          expression: `Promise.resolve(${
+            waitForFonts ? "document.fonts?.ready" : "undefined"
+          }).then(() => {
           const metadata = ${JSON.stringify(pageMetadata)};
           const root = document.documentElement;
           const id = metadata?.idAttribute === undefined
@@ -555,7 +611,9 @@ const waitForFontsAndFrames = async (
           )
         : [];
       throw createTimeoutError(
-        `Page fonts and layout sample were not ready${names.length > 0 ? `; loading fonts: ${names.join(", ")}` : ""}`,
+        `Page fonts and layout sample were not ready${
+          names.length > 0 ? `; loading fonts: ${names.join(", ")}` : ""
+        }`,
         timeout
       );
     }
@@ -1322,12 +1380,7 @@ export class BrowserStartupError extends Error {
   readonly code = "BROWSER_STARTUP_FAILED";
   readonly diagnostic?: BrowserStartupDiagnostic;
   readonly processExit?: BrowserProcessExit;
-  readonly issues?: Array<{
-    code: string;
-    path: string[];
-    message: string;
-    constraint: string;
-  }>;
+  readonly issues?: BrowserDiagnosticIssue[];
 
   constructor(
     message: string,
@@ -1386,6 +1439,7 @@ type BrowserRuntime = {
   browserClosed: Promise<string | undefined>;
   port: string;
   running: boolean;
+  processExit?: BrowserProcessExit;
   close: () => Promise<void>;
 };
 
@@ -1521,6 +1575,9 @@ const startBrowserRuntimeOnce = async (
       port,
       get running() {
         return running;
+      },
+      get processExit() {
+        return processExit;
       },
       close: async () => {
         closePromise ??= (async () => {
@@ -2019,7 +2076,561 @@ const captureWithBrowserRuntime = async (
   return layout;
 };
 
+export const isRenderedFormReady = (selector: string) => {
+  const form = document.querySelector(selector);
+  return (
+    form instanceof HTMLFormElement &&
+    form.querySelector(":scope > fieldset[disabled]") === null &&
+    // Generated pages are server rendered. Native requestSubmit before React
+    // attaches its props can silently bypass the managed Form handler.
+    Object.getOwnPropertyNames(form).some((key) =>
+      key.startsWith("__reactProps$")
+    )
+  );
+};
+
+export const submitRenderedForm = (input: BrowserFormSubmitOptions) => {
+  // A generated page can redirect during navigation. Check in the same browser
+  // evaluation that fills the controls so supplied values stay on this Preview.
+  if (window.location.origin !== new URL(input.url).origin) {
+    return { status: "off_origin" };
+  }
+  if (document.querySelector("[data-ws-project]") === null) {
+    throw new Error("This route did not render a generated Webstudio site.");
+  }
+  const form = document.querySelector(input.selector);
+  if (!(form instanceof HTMLFormElement)) {
+    throw new Error("Generated Preview Form was not found.");
+  }
+  const byName = new Map<string, BrowserFormValue[]>();
+  for (const item of input.values) {
+    const items = byName.get(item.name) ?? [];
+    items.push(item);
+    byName.set(item.name, items);
+  }
+  for (const [name, items] of byName) {
+    const controls = Array.from(form.elements).filter(
+      (element) =>
+        (element instanceof HTMLInputElement ||
+          element instanceof HTMLTextAreaElement ||
+          element instanceof HTMLSelectElement) &&
+        element.name === name
+    ) as Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+    if (controls.length === 0) {
+      throw new Error("Form field " + name + " was not found.");
+    }
+    const files = items.filter((item) => item.file !== undefined);
+    if (files.length > 0) {
+      const control = controls.find(
+        (item) => item instanceof HTMLInputElement && item.type === "file"
+      );
+      if (!(control instanceof HTMLInputElement)) {
+        throw new Error("File field " + name + " was not found.");
+      }
+      const transfer = new DataTransfer();
+      for (const item of files) {
+        const file = item.file;
+        if (file === undefined) {
+          continue;
+        }
+        const bytes = Uint8Array.from(atob(file.base64), (char) =>
+          char.charCodeAt(0)
+        );
+        transfer.items.add(new File([bytes], file.name, { type: file.type }));
+      }
+      control.files = transfer.files;
+      control.dispatchEvent(new Event("change", { bubbles: true }));
+      continue;
+    }
+    if (
+      controls[0] instanceof HTMLInputElement &&
+      (controls[0].type === "checkbox" || controls[0].type === "radio")
+    ) {
+      const selected = new Set(items.map((item) => item.value));
+      for (const control of controls) {
+        if (control instanceof HTMLInputElement) {
+          const shouldCheck = selected.has(control.value);
+          if (
+            (control.type === "radio" && shouldCheck && !control.checked) ||
+            (control.type === "checkbox" && control.checked !== shouldCheck)
+          ) {
+            // A real click updates checked and fires React's checkbox/radio
+            // change handler through its delegated click listener.
+            control.click();
+          }
+        }
+      }
+      continue;
+    }
+    if (controls[0] instanceof HTMLSelectElement && controls[0].multiple) {
+      const selected = new Set(items.map((item) => item.value));
+      for (const option of controls[0].options) {
+        option.selected = selected.has(option.value);
+      }
+      controls[0].dispatchEvent(new Event("change", { bubbles: true }));
+      continue;
+    }
+    items.forEach((item, index) => {
+      const control = controls[index];
+      if (control === undefined) {
+        throw new Error("Not enough controls for " + name + ".");
+      }
+      if (control instanceof HTMLSelectElement) {
+        control.value = item.value ?? "";
+        control.dispatchEvent(new Event("change", { bubbles: true }));
+      } else {
+        // React tracks value on the element itself. The native setter lets its
+        // delegated input handler observe the change when the event bubbles.
+        const prototype =
+          control instanceof HTMLTextAreaElement
+            ? HTMLTextAreaElement.prototype
+            : HTMLInputElement.prototype;
+        const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+        if (setter === undefined) {
+          throw new Error("Form field cannot accept a value.");
+        }
+        setter.call(control, item.value ?? "");
+        control.dispatchEvent(new Event("input", { bubbles: true }));
+        control.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+  }
+  const submitter =
+    input.submitter === undefined
+      ? undefined
+      : form.querySelector(input.submitter);
+  if (
+    input.submitter !== undefined &&
+    !(
+      submitter instanceof HTMLButtonElement ||
+      (submitter instanceof HTMLInputElement && submitter.type === "submit")
+    )
+  ) {
+    throw new Error("Form submitter was not found.");
+  }
+  if (
+    !form.noValidate &&
+    !(
+      submitter instanceof HTMLElement &&
+      "formNoValidate" in submitter &&
+      submitter.formNoValidate
+    ) &&
+    !form.checkValidity()
+  ) {
+    return {
+      status: "validation_failed",
+      errors: (
+        Array.from(form.elements).filter(
+          (element) =>
+            (element instanceof HTMLInputElement ||
+              element instanceof HTMLTextAreaElement ||
+              element instanceof HTMLSelectElement) &&
+            !element.validity.valid
+        ) as Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+      ).map((element) => {
+        const validity = element.validity;
+        return {
+          name: element.name,
+          message: validity.valueMissing
+            ? "A value is required."
+            : validity.typeMismatch
+              ? "Enter a valid value for this field."
+              : validity.patternMismatch
+                ? "Value does not match the required pattern."
+                : validity.tooLong
+                  ? "Value is too long."
+                  : validity.tooShort
+                    ? "Value is too short."
+                    : validity.rangeUnderflow
+                      ? "Value is below the allowed range."
+                      : validity.rangeOverflow
+                        ? "Value is above the allowed range."
+                        : validity.stepMismatch
+                          ? "Value does not match the required step."
+                          : validity.badInput
+                            ? "Enter a valid value for this field."
+                            : "This field is invalid.",
+        };
+      }),
+    };
+  }
+  const preSubmitFormState = form.getAttribute("data-state");
+  form.requestSubmit(
+    submitter as HTMLButtonElement | HTMLInputElement | undefined
+  );
+  return { status: "dispatched", errors: [], preSubmitFormState };
+};
+
+const submitFormWithBrowserRuntime = async (
+  runtime: BrowserRuntime,
+  options: BrowserFormSubmitOptions,
+  dependencies: BrowserScreenshotDependencies
+): Promise<BrowserFormSubmitResult> => {
+  const correlationId = crypto.randomUUID();
+  const deadline = Date.now() + options.timeout;
+  const remaining = () => {
+    const duration = deadline - Date.now();
+    if (duration <= 0) {
+      throw createTimeoutError(
+        "Preview Form submission did not finish",
+        options.timeout
+      );
+    }
+    return duration;
+  };
+  let cdp: CdpSession | undefined;
+  let targetId: string | undefined;
+  let initialPageUrl = options.url;
+  const exchanges: { status: number; url: string }[] = [];
+  let managedResponseId: string | undefined;
+  const submissionRequestIds = new Set<string>();
+  const completedRequestIds = new Set<string>();
+  let navigationObserved = false;
+  let mainFrameId: string | undefined;
+  let sawPending = false;
+  const redactUrl = (value: string) => {
+    const url = new URL(value);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return "[non-http URL]";
+    }
+    return `${url.origin}${url.pathname}`;
+  };
+  const unknown = (): BrowserFormSubmitResult => ({
+    status: "unknown",
+    formState: "unknown",
+    results: [],
+    errors: [],
+    exchanges,
+    pageUrl: redactUrl(initialPageUrl),
+    correlationId,
+  });
+  let dispatchStarted = false;
+  try {
+    const target = await getPageWebSocketUrl({
+      port: runtime.port,
+      dependencies,
+      timeout: remaining(),
+    });
+    targetId = target.id;
+    cdp = await CdpSession.connect(
+      target.webSocketDebuggerUrl,
+      dependencies,
+      remaining()
+    );
+    const send = async <Result = unknown>(
+      method: string,
+      params: Record<string, unknown> = {}
+    ) => {
+      const timeout = remaining();
+      return await withDeadline(
+        cdp?.send<Result>(method, params) ??
+          Promise.reject(new Error("Browser DevTools session is closed.")),
+        `Browser command ${method} did not finish`,
+        timeout
+      );
+    };
+    cdp.on("Network.requestWillBeSent", (params) => {
+      if (
+        dispatchStarted &&
+        typeof params === "object" &&
+        params !== null &&
+        "requestId" in params &&
+        typeof params.requestId === "string" &&
+        "request" in params &&
+        typeof params.request === "object" &&
+        params.request !== null &&
+        "method" in params.request &&
+        params.request.method === "POST"
+      ) {
+        submissionRequestIds.add(params.requestId);
+      }
+    });
+    for (const event of [
+      "Page.navigatedWithinDocument",
+      "Page.frameNavigated",
+    ]) {
+      cdp.on(event, (params) => {
+        if (
+          !dispatchStarted ||
+          mainFrameId === undefined ||
+          typeof params !== "object" ||
+          params === null
+        ) {
+          return;
+        }
+        const frameId =
+          event === "Page.navigatedWithinDocument"
+            ? "frameId" in params
+              ? params.frameId
+              : undefined
+            : "frame" in params &&
+                typeof params.frame === "object" &&
+                params.frame !== null &&
+                "id" in params.frame
+              ? params.frame.id
+              : undefined;
+        if (frameId === mainFrameId) {
+          navigationObserved = true;
+        }
+      });
+    }
+    cdp.on("Network.loadingFinished", (params) => {
+      if (
+        typeof params === "object" &&
+        params !== null &&
+        "requestId" in params &&
+        typeof params.requestId === "string" &&
+        submissionRequestIds.has(params.requestId)
+      ) {
+        completedRequestIds.add(params.requestId);
+      }
+    });
+    cdp.on("Network.responseReceived", (params) => {
+      if (
+        dispatchStarted &&
+        typeof params === "object" &&
+        params !== null &&
+        "type" in params &&
+        ["XHR", "Fetch", "Document"].includes(String(params.type)) &&
+        "response" in params &&
+        typeof params.response === "object" &&
+        params.response !== null &&
+        "status" in params.response &&
+        typeof params.response.status === "number" &&
+        "url" in params.response &&
+        typeof params.response.url === "string"
+      ) {
+        exchanges.push({
+          status: params.response.status,
+          url: redactUrl(params.response.url),
+        });
+        if (
+          "requestId" in params &&
+          typeof params.requestId === "string" &&
+          new URL(params.response.url).pathname.startsWith("/__ws-form")
+        ) {
+          managedResponseId = params.requestId;
+        }
+      }
+    });
+    await Promise.all([
+      send("Page.enable"),
+      send("Runtime.enable"),
+      send("Network.enable", {
+        enableDurableMessages: true,
+        maxTotalBufferSize: 4_000_000,
+        maxResourceBufferSize: 1_000_000,
+      }),
+      send("Page.setLifecycleEventsEnabled", { enabled: true }),
+    ]);
+    const navigation = await navigateAndWaitForLifecycle(
+      cdp,
+      "load",
+      remaining(),
+      () => send<NavigationResult>("Page.navigate", { url: options.url })
+    );
+    if (navigation.errorText !== undefined) {
+      throw new Error(`Browser navigation failed: ${navigation.errorText}`);
+    }
+    mainFrameId = navigation.frameId;
+    // The generated route may canonicalize during initial navigation.
+    // Capture that location before the only requestSubmit call.
+    while (true) {
+      const readiness = await send<{
+        result?: { value?: { ready?: boolean; pageUrl?: string } };
+      }>("Runtime.evaluate", {
+        expression: `({ready: (${isRenderedFormReady})(${JSON.stringify(
+          options.selector
+        )}), pageUrl: window.location.href})`,
+        returnByValue: true,
+      });
+      initialPageUrl = readiness.result?.value?.pageUrl ?? initialPageUrl;
+      if (readiness.result?.value?.ready === true) {
+        break;
+      }
+      await delay(Math.min(50, remaining()));
+    }
+    const expression = `(${submitRenderedForm})(${JSON.stringify(options)})`;
+    // There is deliberately one requestSubmit call and no browser reconnect or retry here.
+    dispatchStarted = true;
+    const evaluated = await send<{
+      result?: {
+        value?: {
+          status?: string;
+          errors?: { name: string; message: string }[];
+          preSubmitFormState?: string | null;
+        };
+      };
+      exceptionDetails?: unknown;
+    }>("Runtime.evaluate", {
+      expression,
+      awaitPromise: true,
+      returnByValue: true,
+    });
+    if (evaluated.exceptionDetails !== undefined) {
+      throw new Error("Browser could not prepare the generated Preview Form.");
+    }
+    const value = evaluated.result?.value;
+    if (value?.status === "off_origin") {
+      dispatchStarted = false;
+      throw new Error("Generated Preview navigated to another origin.");
+    }
+    if (value?.status === "validation_failed") {
+      return {
+        status: "validation_failed",
+        formState: "invalid",
+        results: [],
+        errors: value.errors ?? [],
+        exchanges: [],
+        pageUrl: redactUrl(initialPageUrl),
+        correlationId,
+      };
+    }
+    if (value?.status !== "dispatched") {
+      return unknown();
+    }
+    let pageUrl = redactUrl(initialPageUrl);
+    let formState = "unknown";
+    let didNavigate = false;
+    let lastBusy = false;
+    let terminalTransition = false;
+    while (Date.now() < deadline) {
+      await delay(Math.min(100, remaining()));
+      const observed = await send<{
+        result?: {
+          value?: {
+            pageUrl?: string;
+            formState?: string | null;
+            busy?: boolean;
+          };
+        };
+      }>("Runtime.evaluate", {
+        expression: `({pageUrl: window.location.href, formState: document.querySelector(${JSON.stringify(
+          options.selector
+        )})?.getAttribute("data-state"), busy: document.querySelector(${JSON.stringify(
+          options.selector
+        )})?.getAttribute("aria-busy") === "true"})`,
+        returnByValue: true,
+      });
+      const current = observed.result?.value;
+      pageUrl = redactUrl(current?.pageUrl ?? initialPageUrl);
+      didNavigate =
+        current?.pageUrl !== undefined && current.pageUrl !== initialPageUrl;
+      formState = current?.formState ?? "unknown";
+      terminalTransition =
+        (formState === "success" || formState === "error") &&
+        formState !== value.preSubmitFormState;
+      lastBusy = current?.busy === true;
+      sawPending ||= current?.busy === true;
+      const requestCompleted = completedRequestIds.size > 0;
+      const pendingFinished = sawPending && current?.busy === false;
+      if (
+        ((didNavigate || navigationObserved) && !lastBusy) ||
+        ((requestCompleted || pendingFinished || terminalTransition) &&
+          current?.busy === false &&
+          (formState === "success" || formState === "error"))
+      ) {
+        break;
+      }
+    }
+    const results: {
+      status: number;
+      resourceId?: string;
+      resourceName?: string;
+    }[] = [];
+    const errors: { status?: number; name?: string; message: string }[] = [];
+    if (managedResponseId !== undefined && Date.now() < deadline) {
+      const body = await send<{ body?: string; base64Encoded?: boolean }>(
+        "Network.getResponseBody",
+        { requestId: managedResponseId }
+      ).catch(() => undefined);
+      if (body?.body !== undefined && body.body.length < 1_000_000) {
+        try {
+          const parsed: unknown = JSON.parse(
+            body.base64Encoded
+              ? Buffer.from(body.body, "base64").toString("utf8")
+              : body.body
+          );
+          if (typeof parsed === "object" && parsed !== null) {
+            const response = parsed as Record<string, unknown>;
+            if (Array.isArray(response.results)) {
+              for (const item of response.results.slice(0, 100)) {
+                if (
+                  typeof item === "object" &&
+                  item !== null &&
+                  typeof item.status === "number"
+                ) {
+                  results.push({
+                    status: item.status,
+                    ...(typeof item.resourceId === "string"
+                      ? { resourceId: item.resourceId }
+                      : {}),
+                    ...(typeof item.resourceName === "string"
+                      ? { resourceName: item.resourceName }
+                      : {}),
+                  });
+                }
+              }
+            }
+            if (Array.isArray(response.errors)) {
+              for (const item of response.errors.slice(0, 100)) {
+                if (typeof item === "object" && item !== null) {
+                  errors.push({
+                    ...(typeof item.status === "number"
+                      ? { status: item.status }
+                      : {}),
+                    ...(typeof item.resourceName === "string"
+                      ? { name: item.resourceName }
+                      : {}),
+                    message:
+                      typeof item.status === "number"
+                        ? `Form resource returned HTTP ${item.status}`
+                        : "Form resource failed",
+                  });
+                }
+              }
+            }
+          }
+        } catch {
+          // An unreadable response leaves the outcome based on rendered state.
+        }
+      }
+    }
+    return {
+      status:
+        ((didNavigate || navigationObserved) && !lastBusy) ||
+        ((completedRequestIds.size > 0 || sawPending || terminalTransition) &&
+          !lastBusy &&
+          (formState === "success" || formState === "error"))
+          ? "submitted"
+          : "unknown",
+      formState,
+      results,
+      errors,
+      exchanges,
+      pageUrl,
+      ...(didNavigate ? { redirect: pageUrl } : {}),
+      correlationId,
+    };
+  } catch (error) {
+    if (dispatchStarted) {
+      return unknown();
+    }
+    throw error;
+  } finally {
+    cdp?.close();
+    if (targetId !== undefined && runtime.running) {
+      await dependencies
+        .fetch(`http://127.0.0.1:${runtime.port}/json/close/${targetId}`)
+        .catch(() => undefined);
+    }
+  }
+};
+
 export type BrowserScreenshotSession = {
+  submitForm?: (
+    options: BrowserFormSubmitOptions
+  ) => Promise<BrowserFormSubmitResult>;
   capture: (
     options: BrowserScreenshotOptions
   ) => Promise<BrowserScreenshotLayout>;
@@ -2086,6 +2697,9 @@ export const createBrowserScreenshotSession = async (
       try {
         return await capture(activeRuntime);
       } catch (error) {
+        if (error instanceof BrowserSessionClosedError) {
+          error.processExit ??= activeRuntime.processExit;
+        }
         if (
           closed ||
           attempt === 1 ||
@@ -2100,6 +2714,19 @@ export const createBrowserScreenshotSession = async (
     throw new Error("Browser screenshot retry was exhausted.");
   };
   return {
+    async submitForm(submitOptions) {
+      if (closed) {
+        throw new BrowserSessionClosedError(
+          "Browser screenshot session was closed."
+        );
+      }
+      // A form submission can have external effects. Never use captureWithRestart.
+      return await submitFormWithBrowserRuntime(
+        runtime,
+        submitOptions,
+        dependencies
+      );
+    },
     async capture(captureOptions) {
       return await captureWithRestart(
         async (activeRuntime) =>

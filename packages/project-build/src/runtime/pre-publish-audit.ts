@@ -141,8 +141,23 @@ const checkBuildIntegrity: PrePublishAuditCheck = ({
     },
   }));
 
+const checkJsonPropValues: PrePublishAuditCheck = ({ props, instances }) =>
+  [...props.values()]
+    .filter((prop) => prop.type === "json" && prop.value === undefined)
+    .map((prop) => {
+      const instance = instances.get(prop.instanceId);
+      const owner = instance?.label ?? instance?.component ?? prop.instanceId;
+      return {
+        ruleId: "json-prop-value",
+        severity: "error",
+        message: `JSON prop “${prop.name}” on “${owner}” has no value. Set or reset it before publishing.`,
+        location: { instanceId: prop.instanceId, propId: prop.id },
+      };
+    });
+
 const prePublishAuditChecks: PrePublishAuditCheck[] = [
   checkHtmlContentModel,
+  checkJsonPropValues,
   checkBuildIntegrity,
 ];
 

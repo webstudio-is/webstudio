@@ -452,15 +452,12 @@ test("small toggle selections remain distinguishable", () => {
       throw new Error("Expected rendered small toggle states");
     }
 
-    const backgroundColor = readColor(
-      getComputedStyle(background).backgroundColor
-    );
     const selectedStyle = getComputedStyle(smallSelected);
     const inactiveStyle = getComputedStyle(smallInactive);
     expect(
-      contrast(readColor(selectedStyle.backgroundColor), backgroundColor),
-      `${mode} selected surface`
-    ).toBeGreaterThanOrEqual(1.2);
+      readColor(selectedStyle.backgroundColor)[3],
+      `${mode} selected background alpha`
+    ).toBe(0);
     expect(
       contrast(readColor(selectedStyle.color), readColor(inactiveStyle.color)),
       `${mode} foreground states`

@@ -18,6 +18,7 @@ const presetStyle = {
 } satisfies PresetStyle<"option">;
 
 export const meta: WsComponentMeta = {
+  selectionReveal: { type: "native-option" },
   category: "hidden",
   contentModel: {
     category: "none",

@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/react";
 import {
   Grid,
   InputField,
+  InfoTooltip,
   Label,
   theme,
   Text,
@@ -10,20 +11,14 @@ import {
   Button,
   css,
   Flex,
-  Tooltip,
-  InputErrorsTooltip,
-  ProChip,
-  TextArea,
   IconButton,
   cssVar,
 } from "@webstudio-is/design-system";
-import { CopyIcon, InfoCircleIcon } from "@webstudio-is/icons";
+import { CopyIcon } from "@webstudio-is/icons";
 import { getImageAttributes, wsImageLoader } from "@webstudio-is/image";
 import type { ProjectMeta } from "@webstudio-is/sdk";
-import { validateContactEmail } from "@webstudio-is/project-build/contracts";
 import { ImageControl } from "./image-control";
 import { $assets, $project } from "~/shared/sync/data-stores";
-import { $permissions } from "~/shared/nano-states";
 import { $projectSettings } from "~/shared/sync/data-stores";
 import { sectionSpacing } from "./utils";
 import { CodeEditor } from "~/shared/code-editor";
@@ -42,7 +37,6 @@ const imgStyle = css({
 
 const defaultMetaSettings: ProjectMeta = {
   siteName: "",
-  contactEmail: "",
   faviconAssetId: "",
   code: "",
 };
@@ -58,8 +52,6 @@ const saveSetting = <Name extends keyof ProjectMeta>(
 };
 
 export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
-  const { maxContactEmailsPerProject } = useStore($permissions);
-  const allowContactEmail = maxContactEmailsPerProject > 0;
   const projectSettings = useStore($projectSettings);
   const project = useStore($project);
   const assets = useStore($assets);
@@ -67,7 +59,6 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
     () => projectSettings?.meta ?? defaultMetaSettings
   );
   const siteNameId = useId();
-  const contactEmailId = useId();
 
   // Update meta when project settings load (important for dashboard mode)
   useEffect(() => {
@@ -76,10 +67,6 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
     }
   }, [projectSettings?.meta]);
 
-  const contactEmailError = validateContactEmail(
-    meta.contactEmail ?? "",
-    maxContactEmailsPerProject
-  );
   const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
 
@@ -116,15 +103,10 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
       <Grid gap={1} css={sectionSpacing}>
         <Flex gap={1} align="center">
           <Label htmlFor={siteNameId}>Site name</Label>
-          <Tooltip
-            variant="wrapped"
+          <InfoTooltip
+            label="About site name"
             content="Used in search results and social previews."
-          >
-            <InfoCircleIcon
-              color={cssVar("--foreground-secondary")}
-              tabIndex={0}
-            />
-          </Tooltip>
+          />
         </Flex>
         <InputField
           id={siteNameId}
@@ -136,45 +118,6 @@ export const SectionGeneral = ({ projectId }: { projectId?: string }) => {
           }}
         />
       </Grid>
-
-      <Grid gap={1} css={sectionSpacing}>
-        <Flex gap={1} align="center">
-          <Label htmlFor={contactEmailId}>Contact email</Label>
-          <Tooltip
-            variant="wrapped"
-            content="Used as the email recipient when submitting a webhook form without an action."
-          >
-            <InfoCircleIcon
-              color={cssVar("--foreground-secondary")}
-              tabIndex={0}
-            />
-          </Tooltip>
-          {allowContactEmail === false && <ProChip>Pro</ProChip>}
-        </Flex>
-        <InputErrorsTooltip
-          errors={contactEmailError ? [contactEmailError] : undefined}
-        >
-          <TextArea
-            id={contactEmailId}
-            color={contactEmailError ? "error" : undefined}
-            placeholder="john@company.com, jane@company.com"
-            autoGrow={true}
-            rows={1}
-            value={meta.contactEmail ?? ""}
-            onChange={(value) => {
-              setMeta({ ...meta, contactEmail: value });
-              if (
-                validateContactEmail(value, maxContactEmailsPerProject) ===
-                undefined
-              ) {
-                saveSetting("contactEmail", value);
-              }
-            }}
-          />
-        </InputErrorsTooltip>
-      </Grid>
-
-      <Separator />
 
       <Grid gap={2} css={sectionSpacing} justify={"start"}>
         <Label>Favicon</Label>

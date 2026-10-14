@@ -23,11 +23,6 @@
       "types": "./lib/types/metas.d.ts",
       "import": "./lib/metas.js"
     },
-    "./hooks": {
-      "webstudio": "./src/hooks.ts",
-      "types": "./lib/types/hooks.d.ts",
-      "import": "./lib/hooks.js"
-    },
     "./templates": {
       "webstudio": "./src/templates.ts",
       "types": "./lib/types/templates.d.ts",

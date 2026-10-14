@@ -62,6 +62,7 @@ import {
   getBuildPatchSummary,
   getMarketplaceProduct,
   getProjectPermissions,
+  simulateFormSubmission,
   getProjectAsset,
   getProjectAssetFolder,
   getProjectSettings,
@@ -886,6 +887,12 @@ test("wraps project api trpc calls in named functions", async () => {
       folderId: null,
     });
     await getProjectPermissions(params);
+    await simulateFormSubmission({
+      ...params,
+      formId: "form-1",
+      path: "/contact",
+      values: [{ name: "email", value: "test@example.com" }],
+    });
     await listFolders({
       ...params,
       cursor: "20",
@@ -1079,6 +1086,10 @@ test("wraps project api trpc calls in named functions", async () => {
     ),
     expectBodyRequest("/trpc/api.assets.duplicate", '"folderId":null'),
     expectRequest("/trpc/api.projects.permissions"),
+    expectBodyRequest(
+      "/trpc/api.forms.simulateSubmission",
+      '"formId":"form-1"'
+    ),
     expectRequest("/trpc/api.folders.list"),
     expectBodyRequest("/trpc/api.build.patch", '"baseVersion":2'),
     expectBodyRequest("/trpc/build.restorePoint", '"baseVersion":3'),
@@ -1301,6 +1312,54 @@ test("loads project bundle by build id without auth headers", async () => {
   expect((init.headers as Record<string, string>).authorization).toBe(
     undefined
   );
+});
+
+test("reports json props without a value when loading a published bundle", async () => {
+  const project = JSON.parse(
+    JSON.stringify(createPublishedProjectBundleFixture())
+  );
+  project.build.instances = [
+    [
+      "instance-id",
+      {
+        id: "instance-id",
+        type: "instance",
+        component: "ws:collection",
+        label: "Projects",
+      },
+    ],
+  ];
+  project.build.props = [
+    [
+      "json-prop-id",
+      {
+        id: "json-prop-id",
+        instanceId: "instance-id",
+        name: "data",
+        type: "json",
+      },
+    ],
+  ];
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify([{ result: { data: project } }]), {
+      headers: { "content-type": "application/json" },
+    })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    loadProjectBundleByBuildId({
+      buildId: project.build.id,
+      origin: "https://example.com",
+    })
+  ).rejects.toMatchObject({
+    name: "MissingJsonPropValueError",
+    message: [
+      "This build cannot be published because it contains JSON props with no value:",
+      "- “Projects” (ws:collection): JSON prop “data” has no value",
+      "Open the project in Webstudio, set or reset the affected prop, then publish again.",
+    ].join("\n"),
+  });
 });
 
 test("requests local content preparation for the publish runner", async () => {

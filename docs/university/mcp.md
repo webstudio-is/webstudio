@@ -62,6 +62,28 @@ While the server is running, stdout is reserved for MCP JSON-RPC messages. Do no
 
 ## One-Shot Tool Calls
 
+### Server-side Form simulation
+
+`forms.simulate-submission` evaluates a saved Form using synthetic string fields
+and the same trusted Builder server Form handler used by Builder Preview. Supply
+the saved Form instance ID and page path. The server uses this project's
+publisher origin. It can trigger the Form's configured HTTP and Email Resources, so verify
+every destination and recipient first. For dynamic checkbox or multiple-select fields,
+pass `arrayNames` to preserve an empty or single-value array when the saved
+field props do not identify the control. The result reports destination statuses
+and errors without Resource bodies. This server simulation does not exercise
+client validation, browser event handlers, navigation, file bytes, or actual
+browser information. The Builder server loads the saved draft and holds the
+Email service credentials; the CLI does not receive those credentials.
+
+```json
+{
+  "path": "/contact",
+  "formId": "saved-form-instance-id",
+  "values": [{ "name": "email", "value": "synthetic@example.com" }]
+}
+```
+
 Use the shortcut `webstudio <tool> '<json>'` when you are operating from a shell and need one MCP tool result. The explicit form `webstudio mcp single-op-call <tool> '<json>'` is equivalent and avoids writing temporary Node.js stdio client scripts.
 
 Examples:
@@ -495,6 +517,12 @@ Use `node packages/cli/local.js mcp` from the Webstudio monorepo root for local 
 - Read `meta.session.commitStatus` before interpreting durability. Read-only results report `not-applicable` and retain `committed:false` for compatibility; dry-run plans report `planned`; failed mutations report `failed`; no-op mutations report `unchanged`; durable mutations report `committed` with `meta.session.committed:true`.
 - Never run visual verification automatically. Ask first unless the user explicitly requested screenshots, visual verification, or a rendered audit; if they do not opt in, use focused non-visual assertions.
 
+### Converting a composite component to HTML
+
+`convert-instance` changes one instance and validates its entire descendant tree after that change. For a Tabs tree, changing `Tabs` to a `div` first fails because `TabsList`, `TabsTrigger`, and `TabsContent` still require their composite parents. Convert from the leaves upward instead: `TabsTrigger` to `ws:element` with tag `button`, `TabsContent` to `ws:element` with tag `div`, `TabsList` to `ws:element` with tag `div`, then `Tabs` to `ws:element` with tag `div`. Pass the complete, current `instanceSelector` for each call, starting with the target. Read the actual tree first; convert every remaining required part before its parent. Each step is a separate mutation, so this recipe is not atomic.
+
+Conversion retains instance ids, children (including editable copy), styles, and most props; it removes a legacy `tag` prop and normalizes React prop aliases when converting to `ws:element`. Review component-specific props and behavior afterward: replacing Tabs with HTML does not recreate tab selection, keyboard behavior, or accessibility semantics. If a project requires the whole tree to change in one commit, use `snapshot` to read the current build version and exact records, then a single versioned `apply-patch` transaction for the existing instance component/tag fields. Preserve all existing ids and child references, include any needed prop changes in that same transaction, and verify the final tree.
+
 ## Vision Verification Loop
 
 Vision-capable AI can use MCP to see what it is building:
@@ -899,6 +927,21 @@ source of truth. For tools with no required arguments, pass `{}`.
 ```json
 {
   "source": "session"
+}
+```
+
+### preview.submit-form
+
+```json
+{
+  "path": "/contact",
+  "selector": "form",
+  "values": [
+    {
+      "name": "email",
+      "value": "me@example.com"
+    }
+  ]
 }
 ```
 
@@ -2237,6 +2280,7 @@ Resolve paths relative to the file containing the reference. JSON Pointer uses `
 | Default result count | 20 |
 | Maximum result count | 1000 |
 | Candidate documents | 1000 |
+| Documents in a reference graph | 2000 |
 | Serialized query result | 16 MiB |
 | Published content database | 500 KiB |
 

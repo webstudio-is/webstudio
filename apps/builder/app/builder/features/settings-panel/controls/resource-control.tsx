@@ -40,8 +40,8 @@ import {
   UrlField,
   MethodField,
   Headers,
-  getResourceScopeForInstance,
-} from "../resource-panel";
+} from "../variable-editors/shared/resource-fields";
+import { getResourceScopeForInstance } from "../resource-scope";
 import { useDraftValue } from "~/builder/shared/use-draft-value";
 import { type ControlProps, VerticalLayout } from "../shared";
 import { PropertyLabel } from "../property-label";

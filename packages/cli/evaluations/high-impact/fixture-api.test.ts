@@ -15,6 +15,7 @@ import {
 } from "@webstudio-is/content-engine/asset-content-repository";
 import {
   authenticatedPageFixture,
+  managedFormAuthoringFixture,
   fontAssetsFixture,
   markdownBlogFixture,
   mdxArticleFixture,
@@ -37,6 +38,44 @@ import { evaluateHighImpactOutcome } from "./validate";
 const execFileAsync = promisify(execFile);
 
 describe("high-impact fixture API", () => {
+  test("preserves current Form identity metadata through CLI initialization", async () => {
+    const api = await startHighImpactFixtureApi(managedFormAuthoringFixture);
+    const directory = await mkdtemp(
+      join(tmpdir(), "managed-form-identity-fixture-")
+    );
+    const cli = resolve(import.meta.dirname, "../../local.js");
+    try {
+      await execFileAsync(
+        process.execPath,
+        [cli, "init", "--link", api.shareLink, "--json"],
+        {
+          cwd: directory,
+          env: {
+            ...process.env,
+            WEBSTUDIO_CONFIG_DIR: join(directory, "config"),
+          },
+        }
+      );
+      await execFileAsync(process.execPath, [cli, "list-pages", "{}"], {
+        cwd: directory,
+        env: {
+          ...process.env,
+          WEBSTUDIO_CONFIG_DIR: join(directory, "config"),
+        },
+      });
+      const snapshot = JSON.parse(
+        await readFile(
+          join(directory, ".webstudio/project-session.json"),
+          "utf8"
+        )
+      );
+      expect(snapshot.state.pages.formComponentIdentityVersion).toBe(1);
+    } finally {
+      await api.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  }, 60_000);
+
   test("connects, edits, and reloads the MDX article through the source CLI", async () => {
     const api = await startHighImpactFixtureApi(mdxArticleFixture);
     const initialProject = api.getProject();

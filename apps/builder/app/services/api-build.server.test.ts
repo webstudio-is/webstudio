@@ -436,6 +436,7 @@ describe("api build snapshot", () => {
         version: 7,
         homePageId: build.pages.homePageId,
         rootFolderId: build.pages.rootFolderId,
+        formComponentIdentityVersion: 1,
         projectSettings: {
           meta: { siteName: "Acme" },
           compiler: { atomicStyles: true },
@@ -456,6 +457,22 @@ describe("api build snapshot", () => {
         marketplaceProduct: { categories: ["template"] },
       })
     );
+  });
+
+  test("does not assign a Form identity version to an unmarked legacy build", () => {
+    const pages = createDefaultPages({ rootInstanceId: "root-1" });
+    pages.formComponentIdentityVersion = undefined;
+    const snapshot = createBuildSnapshot({
+      build: {
+        id: "build-1",
+        version: 1,
+        pages,
+      } as SnapshotBuildInput,
+      include: new Set(["pages"]),
+      projectId: "project-1",
+    });
+
+    expect(snapshot.formComponentIdentityVersion).toBeUndefined();
   });
 });
 
