@@ -291,7 +291,7 @@ test("Editor can edit text and content props but not design props", async ({
     "font-size",
     fixture.styledHeadingTemplateFontSize
   );
-  const templateSvg = styledTemplateHeading.locator("svg");
+  const templateSvg = styledTemplateHeading.locator("xpath=..").locator("svg");
   await expect(templateSvg).toHaveAttribute("viewBox", "0 0 24 24");
   await expect(templateSvg).toHaveAttribute("width", "24");
   await expect(templateSvg.locator("path")).toHaveAttribute(
@@ -444,6 +444,7 @@ test("Editor can edit text and content props but not design props", async ({
   const reloadedTemplateSvg = reloadedCanvas
     .locator("h2")
     .filter({ hasText: fixture.styledHeadingTemplateText })
+    .locator("xpath=..")
     .locator("svg");
   await expect(reloadedTemplateSvg).toHaveAttribute("viewBox", "0 0 24 24");
   await expect(reloadedTemplateSvg.locator("path")).toHaveAttribute(

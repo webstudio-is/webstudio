@@ -161,6 +161,7 @@ const createContentModeBuildData = ({
   const shareLinkEditableInstanceId = "share-link-editable-content";
   const collaborationTemplateId = "collaboration-template";
   const styledHeadingTemplateId = "styled-heading-template";
+  const styledHeadingTemplateHeadingId = "styled-heading-template-heading";
   const styledHeadingTemplateSvgId = "styled-heading-template-svg";
   const styledHeadingTemplatePathId = "styled-heading-template-path";
   const styledHeadingTemplateLocalStyleSourceId =
@@ -384,12 +385,19 @@ const createContentModeBuildData = ({
       type: "instance",
       id: styledHeadingTemplateId,
       component: "ws:element",
-      tag: "h2",
+      tag: "section",
       label: styledHeadingTemplateName,
       children: [
-        { type: "text", value: styledHeadingTemplateText },
+        { type: "id", value: styledHeadingTemplateHeadingId },
         { type: "id", value: styledHeadingTemplateSvgId },
       ],
+    },
+    {
+      type: "instance",
+      id: styledHeadingTemplateHeadingId,
+      component: "ws:element",
+      tag: "h2",
+      children: [{ type: "text", value: styledHeadingTemplateText }],
     },
     {
       type: "instance",
@@ -851,7 +859,7 @@ const createContentModeBuildData = ({
     ]),
     styleSourceSelections: JSON.stringify([
       {
-        instanceId: styledHeadingTemplateId,
+        instanceId: styledHeadingTemplateHeadingId,
         values: [styledHeadingTemplateLocalStyleSourceId],
       },
       {
