@@ -20,7 +20,9 @@ test("empty, duplicate and over-limit Actions are rejected", () => {
   expect(
     validateFormSubmission([{ dataSourceId: "first", enabled: false }])
   ).toBeUndefined();
-  expect(validateFormSubmission([])).toBe("Select at least one Resource action");
+  expect(validateFormSubmission([])).toBe(
+    "Select at least one Resource action"
+  );
   expect(
     validateFormSubmission([
       { dataSourceId: "first", enabled: true },
