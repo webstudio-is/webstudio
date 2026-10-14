@@ -147,6 +147,9 @@ test("Builder animation UI creates supported animation props that persist and bu
   page,
   context,
 }) => {
+  // Includes two Builder loads and a generated app build on shared CI CPUs.
+  test.setTimeout(180_000);
+
   const email = "animation-runtime@webstudio.test";
   const fixture = await createContentModeProject({
     context: context,

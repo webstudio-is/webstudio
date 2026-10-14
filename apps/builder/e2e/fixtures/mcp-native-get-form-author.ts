@@ -26,7 +26,11 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { loadDevBuild, updateBuild } from "../db";
 
-const commands = new Set(["insert-fragment", "list-instances", "update-props"]);
+const commands = new Set([
+  "insert-fragment",
+  "inspect-instance",
+  "update-props",
+]);
 const operations: PublicMcpOperation[] = runtimeOperationContracts
   .filter(({ command }) => commands.has(command))
   .map((contract) => ({
@@ -262,11 +266,24 @@ const author = async () => {
         },
       ],
     });
-    const inspection = await call("list-instances", {
-      pagePath: "/",
-      component: "ws:element",
+    const inspection = await call("inspect-instance", {
+      instanceId: formInstanceId,
+      include: ["props"],
     });
-    expect(JSON.stringify(inspection)).toContain(formInstanceId);
+    expect(inspection.props).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "method",
+          type: "string",
+          value: "get",
+        }),
+        expect.objectContaining({
+          name: "action",
+          type: "string",
+          value: receiverUrl,
+        }),
+      ])
+    );
     process.stdout.write(`${JSON.stringify({ formInstanceId })}\n`);
   } finally {
     await client.close();

@@ -417,6 +417,9 @@ test("Preview links expose current page state for components and element anchors
 test("Generated preview renders and navigates linked routes", async ({
   page,
 }) => {
+  // Each assertion starts and compiles a separate production preview.
+  test.setTimeout(300_000);
+
   await expectGeneratedAppToRender({
     projectId: fixture.projectId,
     path: "/my-page",

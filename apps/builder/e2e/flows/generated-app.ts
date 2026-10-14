@@ -44,7 +44,8 @@ export const waitForGeneratedPreview = async ({
   url: string;
   output: () => string;
 }) => {
-  const deadline = Date.now() + 60_000;
+  // Preview also compiles the production app while other E2E workers are active.
+  const deadline = Date.now() + 120_000;
   while (Date.now() < deadline) {
     if (process.exitCode !== null || process.signalCode !== null) {
       throw new Error(
