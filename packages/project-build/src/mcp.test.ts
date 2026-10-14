@@ -1054,8 +1054,8 @@ describe("project session mcp adapter", () => {
       Object.keys(
         insertFragmentTool === undefined
           ? {}
-          : getDetailedProjectSessionMcpInputSchema(insertFragmentTool)
-              .properties ?? {}
+          : (getDetailedProjectSessionMcpInputSchema(insertFragmentTool)
+              .properties ?? {})
       ).filter((property) => property !== "dryRun")
     ).toEqual(runtimeInsertFragmentProperties);
     expect(insertFragmentTool?.inputSchema.required).toEqual([
@@ -6055,6 +6055,17 @@ describe("project session mcp adapter", () => {
     });
     expect(formTemplate.structuredContent.data).toEqual(
       expect.objectContaining({ found: true })
+    );
+    const formTemplateByRoot = await adapter.callTool({
+      name: "templates.get",
+      input: { component: "Form" },
+    });
+    expect(formTemplateByRoot.structuredContent.data).toEqual(
+      expect.objectContaining({
+        found: true,
+        name: "template:form",
+        meta: expect.objectContaining({ component: "form" }),
+      })
     );
 
     const details = await adapter.callTool({

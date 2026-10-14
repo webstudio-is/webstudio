@@ -5656,18 +5656,40 @@ const listRegistryItems = ({
   };
 };
 
+const getTemplateRootComponent = (
+  templates: ComponentTemplateRegistry,
+  name: string
+) => {
+  const template = templates.get(name)?.template;
+  const child =
+    template?.children.length === 1 ? template.children[0] : undefined;
+  return child?.type === "id"
+    ? template?.instances.find((instance) => instance.id === child.value)
+        ?.component
+    : undefined;
+};
+
 const getTemplateDetails = (input: unknown) => {
   const requested = getTemplateInput(input);
   const templateName = requested.startsWith("template:")
     ? requested
     : `template:${requested}`;
-  const item = getComponentRegistryItems().find(
-    (candidate) =>
-      candidate.meta.source === "template" &&
-      (candidate.name === requested ||
-        candidate.name === templateName ||
-        candidate.meta.component === requested)
-  );
+  const templates = getComponentTemplates();
+  const items = getComponentRegistryItems();
+  const item =
+    items.find(
+      (candidate) =>
+        candidate.meta.source === "template" &&
+        (candidate.name === requested ||
+          candidate.name === templateName ||
+          candidate.meta.component === requested)
+    ) ??
+    items.find(
+      (candidate) =>
+        candidate.meta.source === "template" &&
+        getTemplateRootComponent(templates, candidate.meta.component) ===
+          requested
+    );
   if (item === undefined) {
     return {
       found: false,
@@ -5676,7 +5698,7 @@ const getTemplateDetails = (input: unknown) => {
         'Template was not found in the shared registry. Use templates.list or components.list with source:"template" to discover exact template ids.',
     };
   }
-  const template = getComponentTemplates().get(item.meta.component);
+  const template = templates.get(item.meta.component);
   return {
     found: true,
     ...item,
@@ -6271,27 +6293,19 @@ const getComponentDetails = (component: string) => {
       ? 'Prefer placing JsonLd inside HeadSlot. Insert it with insert-component using the HeadSlot instance as parentInstanceId and component "JsonLd". For fixed structured data, set code with update-props using type "string" and a compact JSON object or array string. For structured data containing runtime values, use bind-props with an expression that evaluates directly to an object or array. The binding value stores expression source text, but the evaluated result must not be a string. Do not call JSON.stringify or assemble JSON with string concatenation; JsonLd validates and serializes the evaluated value. Fixed values with structurally invalid JSON-LD are rejected. Run audit with the seo scope after editing to find unknown, superseded, unsupported, or incompatible Schema.org terms; vocabulary findings are warnings because custom vocabularies remain valid.'
       : undefined;
   if (entry === undefined || meta === undefined) {
-    const getTemplateRootComponent = (name: string) => {
-      const template = templates.get(name)?.template;
-      const child =
-        template?.children.length === 1 ? template.children[0] : undefined;
-      return child?.type === "id"
-        ? template?.instances.find((instance) => instance.id === child.value)
-            ?.component
-        : undefined;
-    };
     const templateItem = getComponentRegistryItems().find((item) => {
       if (item.meta.source !== "template") {
         return false;
       }
       return (
         item.meta.component === component ||
-        getTemplateRootComponent(item.meta.component) === component
+        getTemplateRootComponent(templates, item.meta.component) === component
       );
     });
     if (templateItem !== undefined) {
       const template = templates.get(templateItem.meta.component)?.template;
       const rootComponent = getTemplateRootComponent(
+        templates,
         templateItem.meta.component
       );
       const rootMeta = componentMetas.get(rootComponent ?? "");

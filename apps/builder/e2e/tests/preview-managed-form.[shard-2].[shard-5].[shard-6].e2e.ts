@@ -6,7 +6,7 @@ import {
 } from "@webstudio-is/sdk";
 import { loadDevBuild, updateBuild } from "../db";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
-import { waitForCanvasFrame } from "../flows/builder";
+import { getCanvasFrame, waitForCanvasFrame } from "../flows/builder";
 import { getProjectBuilderUrl, test } from "../test";
 
 test("Preview Form posts to the authenticated Builder and sets error state without publishing", async ({
@@ -620,6 +620,21 @@ test("Preview Form preserves browser FormData and renders configured failure res
     mimeType: "application/octet-stream",
     buffer: bytes,
   });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await form.evaluate((element) => {
+    element.style.paddingBlockEnd = "1600px";
+    const calls: ScrollIntoViewOptions[] = [];
+    (
+      window as Window & { __previewFeedbackScroll?: typeof calls }
+    ).__previewFeedbackScroll = calls;
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (options) {
+      if (this === element) {
+        calls.push(typeof options === "object" ? options : {});
+      }
+      original.call(this, options);
+    };
+  });
   const responsePromise = page.waitForResponse(
     (response) =>
       new URL(response.url()).pathname === "/rest/preview-form" &&
@@ -662,4 +677,139 @@ test("Preview Form preserves browser FormData and renders configured failure res
   await expect(form.getByRole("alert")).toContainText(result.errors[0].message);
   await expect(form.getByText("First,Last")).toBeVisible();
   await expect(form.getByText("Sent successfully")).toHaveCount(0);
+  await expect
+    .poll(() =>
+      canvas.evaluate(
+        () =>
+          (
+            window as Window & {
+              __previewFeedbackScroll?: ScrollIntoViewOptions[];
+            }
+          ).__previewFeedbackScroll
+      )
+    )
+    .toContainEqual({ block: "end", behavior: "instant" });
+});
+
+test("Preview Form with no Actions navigates query values without a Resource POST or canvas reload", async ({
+  page,
+  context,
+}) => {
+  const fixture = await createContentModeProject({
+    context,
+    email: "preview-navigation-form@webstudio.test",
+    title: "Preview Form navigation",
+    assetNamePrefix: "preview-navigation-form-",
+    builderToken: "preview-navigation-form-builder-token",
+  });
+  const build = await loadDevBuild({ projectId: fixture.projectId });
+  const instances = JSON.parse(build.instances) as Instance[];
+  const body = instances.find((instance) => instance.id === "body");
+  if (!body) {
+    throw new Error("Expected the fixture's body instance");
+  }
+  const formId = createId("nano");
+  const firstInputId = createId("nano");
+  const secondInputId = createId("nano");
+  const buttonId = createId("nano");
+  const outputId = createId("nano");
+  body.children.push({ type: "id", value: formId });
+  body.children.push({ type: "id", value: outputId });
+  await updateBuild(build.id, {
+    instances: JSON.stringify([
+      ...instances,
+      {
+        type: "instance",
+        id: formId,
+        component: "Form",
+        children: [firstInputId, secondInputId, buttonId].map((value) => ({
+          type: "id",
+          value,
+        })),
+      },
+      ...[firstInputId, secondInputId].map((id) => ({
+        type: "instance" as const,
+        id,
+        component: "ws:element",
+        tag: "input",
+        children: [],
+      })),
+      {
+        type: "instance",
+        id: buttonId,
+        component: "ws:element",
+        tag: "button",
+        children: [{ type: "text", value: "Search Preview" }],
+      },
+      {
+        type: "instance",
+        id: outputId,
+        component: "Link",
+        children: [{ type: "text", value: "Query match" }],
+      },
+    ]),
+    props: JSON.stringify([
+      ...JSON.parse(build.props),
+      ...[firstInputId, secondInputId].map((instanceId) => ({
+        id: `${instanceId}:name`,
+        instanceId,
+        name: "name",
+        type: "string",
+        value: "tag",
+      })),
+      {
+        id: `${formId}:action`,
+        instanceId: formId,
+        name: "action",
+        type: "json",
+        value: [],
+      },
+      {
+        id: `${outputId}:href`,
+        instanceId: outputId,
+        name: "href",
+        type: "string",
+        value: "/?tag=second&tag=first",
+      },
+    ]),
+  });
+  const submissions: Request[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/rest/preview-form") {
+      submissions.push(request);
+    }
+  });
+  await page.goto(
+    getProjectBuilderUrl({
+      projectId: fixture.projectId,
+      authToken: fixture.builderToken,
+      mode: "preview",
+    })
+  );
+  const canvas = await waitForCanvasFrame({ page });
+  const form = canvas.locator(`[data-ws-managed-form-id="${formId}"]`);
+  await expect(form).toHaveAttribute("action", "?__webstudio__=navigate");
+  const queryLink = canvas.getByRole("link", { name: "Query match" });
+  await expect(queryLink).not.toHaveAttribute("aria-current", "page");
+  const marker = await canvas.evaluate(() => {
+    const value = crypto.randomUUID();
+    (
+      window as Window & { __previewNavigationMarker?: string }
+    ).__previewNavigationMarker = value;
+    return value;
+  });
+  const tags = form.locator('input[name="tag"]');
+  await tags.nth(0).fill("second");
+  await tags.nth(1).fill("first");
+  await form.getByRole("button", { name: "Search Preview" }).click();
+  await expect(queryLink).toHaveAttribute("aria-current", "page");
+  expect(await getCanvasFrame(page)).toBe(canvas);
+  expect(
+    await canvas.evaluate(
+      () =>
+        (window as Window & { __previewNavigationMarker?: string })
+          .__previewNavigationMarker
+    )
+  ).toBe(marker);
+  expect(submissions).toHaveLength(0);
 });

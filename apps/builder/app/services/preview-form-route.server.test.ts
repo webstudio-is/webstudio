@@ -7,6 +7,7 @@ import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
+import { encodeDataSourceVariable } from "@webstudio-is/sdk";
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
 import { action } from "../routes/rest.preview-form";
@@ -360,6 +361,9 @@ test.each([false, true])(
     const requests: string[] = [];
     let receivedHeaders: { auth?: string; csrf?: string } | undefined;
     let submittedFormData: FormData | undefined;
+    let routeResult:
+      | { success: boolean; previewExchanges?: PreviewFormExchange[] }
+      | undefined;
     let routeError: unknown;
     const server = createServer(async (request, response) => {
       if (request.url?.startsWith("/rest/preview-form?")) {
@@ -383,6 +387,7 @@ test.each([false, true])(
           );
           submittedFormData = await incoming.clone().formData();
           const routeResponse = await action({ request: incoming } as never);
+          routeResult = await routeResponse.clone().json();
           response.writeHead(routeResponse.status, {
             "content-type":
               routeResponse.headers.get("content-type") ?? "application/json",
@@ -499,6 +504,36 @@ test.each([false, true])(
           .json()) as EmailServiceEnvelope;
         expect(message.to).toEqual([{ address: "updated@example.com" }]);
         expect(message.text).toContain("Updated draft body");
+        expect(routeResult).toMatchObject({
+          success: true,
+          previewExchanges: [
+            {
+              resourceId: "email",
+              resourceName: "Updated email",
+              kind: "email",
+              request: {
+                method: "POST",
+                url: `${env.EMAIL_SERVICE_URL}/trpc/email.send`,
+                body: {
+                  to: [{ address: "updated@example.com" }],
+                  text: expect.stringContaining("Updated draft body"),
+                },
+              },
+              response: {
+                status: 200,
+                body: { result: { data: { id: "sent" } } },
+              },
+            },
+          ],
+        });
+        const exchange = routeResult?.previewExchanges?.[0];
+        expect(exchange?.request.headers).toContainEqual({
+          name: "authorization",
+          value: "[redacted]",
+        });
+        expect(JSON.stringify(exchange)).not.toContain(
+          "server-only-test-token"
+        );
       } else {
         expect(resourceFetch).toHaveBeenCalledWith(expect.any(Request));
         expect((resourceFetch.mock.calls[0][0] as Request).url).toContain(
@@ -653,6 +688,136 @@ test("Preview binds trusted server browser info without forwarding Referer crede
     ip: "203.0.113.77",
     referrer: `https://p-${projectId}.localhost/`,
   });
+});
+
+test("Preview binds each page's submitted values and browser context to its own Form", async () => {
+  const pages = [
+    {
+      id: "contact-page",
+      path: "/contact",
+      formId: "contact-form",
+      email: "contact@example.com",
+      ip: "203.0.113.11",
+      userAgent: "Contact browser",
+      language: "en-GB",
+    },
+    {
+      id: "support-page",
+      path: "/support",
+      formId: "support-form",
+      email: "support@example.com",
+      ip: "203.0.113.22",
+      userAgent: "Support browser",
+      language: "fr-FR",
+    },
+  ];
+  vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
+    ...draftBuild,
+    pages: {
+      ...draftBuild.pages,
+      pages: new Map(
+        pages.map(({ id, path }) => [
+          id,
+          { id, path, rootInstanceId: `${id}-root` },
+        ])
+      ),
+      folders: new Map([
+        ["root", { id: "root", slug: "", children: pages.map(({ id }) => id) }],
+      ]),
+      homePageId: pages[0].id,
+    },
+    instances: pages.flatMap(({ id, formId }) => [
+      {
+        type: "instance",
+        id: `${id}-root`,
+        component: "Body",
+        children: [{ type: "id", value: formId }],
+      },
+      { type: "instance", id: formId, component: "Form", children: [] },
+    ]),
+    props: pages.map(({ formId }) => ({
+      id: `${formId}-action`,
+      instanceId: formId,
+      name: "action",
+      type: "json",
+      value: [{ dataSourceId: `${formId}-destination`, enabled: true }],
+    })),
+    dataSources: pages.flatMap(({ formId }) => [
+      {
+        id: `${formId}-destination`,
+        type: "resource",
+        scopeInstanceId: formId,
+        resourceId: `${formId}-resource`,
+        name: "webhook",
+      },
+      {
+        id: `${formId}-data`,
+        type: "parameter",
+        scopeInstanceId: formId,
+        name: "formData",
+      },
+      {
+        id: `${formId}-browser`,
+        type: "parameter",
+        scopeInstanceId: formId,
+        name: "browserInfo",
+      },
+    ]),
+    resources: pages.map(({ formId }) => ({
+      id: `${formId}-resource`,
+      name: "webhook",
+      method: "post",
+      url: `"https://example.com/${formId}"`,
+      headers: [],
+      body: `({ email: ${encodeDataSourceVariable(`${formId}-data`)}.email, pageUrl: ${encodeDataSourceVariable(`${formId}-browser`)}.pageUrl, ip: ${encodeDataSourceVariable(`${formId}-browser`)}.ip, userAgent: ${encodeDataSourceVariable(`${formId}-browser`)}.userAgent, language: ${encodeDataSourceVariable(`${formId}-browser`)}.language })`,
+    })),
+  } as never);
+
+  for (const [index, page] of pages.entries()) {
+    const path = `${page.path}?topic=${page.id}`;
+    const formData = new FormData();
+    formData.set("ws--managed-form-id", page.formId);
+    formData.set("ws--managed-form-array-names", "[]");
+    formData.set("ws--form-bot", Date.now().toString(16));
+    formData.set("email", page.email);
+    const response = await action({
+      request: new Request(
+        `https://p-${projectId}.localhost/rest/preview-form?path=${encodeURIComponent(path)}`,
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            "cf-connecting-ip": page.ip,
+            "x-forwarded-for": "192.0.2.99",
+            "user-agent": page.userAgent,
+            "accept-language": page.language,
+          },
+        }
+      ),
+    } as never);
+    expect(await response.json()).toMatchObject({
+      success: true,
+      previewBrowserInfo: {
+        pageUrl: `https://site.wstd.work${path}`,
+        ip: page.ip,
+        userAgent: page.userAgent,
+        language: page.language,
+      },
+    });
+    const resourceFetch = vi
+      .mocked(createNodeProtectedResourceFetch)
+      .mock.results.at(-1)?.value;
+    expect(resourceFetch).toHaveBeenCalledTimes(index + 1);
+    const outgoing = resourceFetch.mock.calls[index][0] as Request;
+    expect(outgoing.url).toBe(`https://example.com/${page.formId}`);
+    expect(await outgoing.json()).toEqual({
+      email: page.email,
+      pageUrl: `https://site.wstd.work${path}`,
+      ip: page.ip,
+      userAgent: page.userAgent,
+      language: page.language,
+    });
+  }
 });
 
 test("draft expression failures do not execute a Resource", async () => {

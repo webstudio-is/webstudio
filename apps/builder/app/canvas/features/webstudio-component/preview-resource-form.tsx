@@ -101,7 +101,15 @@ export const PreviewResourceForm = forwardRef<
       {...props}
       ref={mergeRefs(ref, formRef)}
       navigationToken={getPreviewCurrentUrl(system, hash).href}
-      onQueryNavigate={(url) => switchPageAndUpdateSystem(url)}
+      onQueryNavigate={(url) => {
+        // The Form element's relative action resolves against the Builder
+        // canvas URL. Apply its submitted query to the previewed page instead.
+        const submittedUrl = new URL(url, window.location.href);
+        const previewUrl = getPreviewCurrentUrl(system, hash);
+        switchPageAndUpdateSystem(
+          `${previewUrl.pathname}${submittedUrl.search}${submittedUrl.hash}`
+        );
+      }}
     />
   );
 });

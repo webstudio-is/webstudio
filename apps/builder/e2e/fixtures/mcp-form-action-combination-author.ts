@@ -283,6 +283,66 @@ const author = async () => {
         dataSourceName: name,
         exposeAsDataSource: true,
       });
+    if (process.argv[3] === "ten-actions") {
+      const created = [];
+      for (let index = 0; index < 11; index++) {
+        created.push(
+          await createAction(
+            `HTTP action ${index + 1}`,
+            "/submit",
+            undefined,
+            `{ index: ${index + 1}, name: ${formData}.name }`
+          )
+        );
+      }
+      const actions = created.slice(0, 10).map(({ dataSourceId }) => ({
+        dataSourceId,
+        enabled: true,
+      }));
+      await call("update-props", {
+        updates: [
+          { instanceId: form.id, name: "action", type: "json", value: actions },
+        ],
+      });
+      const rejected = await client.callTool({
+        name: "update-props",
+        arguments: {
+          updates: [
+            {
+              instanceId: form.id,
+              name: "action",
+              type: "json",
+              value: [
+                ...actions,
+                { dataSourceId: created[10].dataSourceId, enabled: true },
+              ],
+            },
+          ],
+        },
+      });
+      expect(rejected.isError).toBe(true);
+      expect(JSON.stringify(rejected)).toContain(
+        "Select no more than 10 Resource actions"
+      );
+      await call("refresh");
+      const inspection = await call("inspect-instance", {
+        instanceId: form.id,
+        include: ["props"],
+      });
+      expect(inspection.props).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "action", value: actions }),
+        ])
+      );
+      process.stdout.write(
+        `${JSON.stringify({
+          formId: form.id,
+          resourceIds: created.slice(0, 10).map(({ resourceId }) => resourceId),
+          rejectedResourceId: created[10].resourceId,
+        })}\n`
+      );
+      return;
+    }
     const graphql = await createAction(
       "First GraphQL action",
       "/submit",
