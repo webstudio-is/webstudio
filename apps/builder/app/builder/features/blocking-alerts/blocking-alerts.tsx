@@ -34,10 +34,16 @@ const useTooSmallMessage = () => {
   return message;
 };
 
+export const isChromiumBrowser = (userAgent: string) =>
+  /(?:Chrome|Chromium)\//.test(userAgent);
+
 const useIsUnsupportedBrowser = () => {
   const [isUnsupportedBrowser, setIsUnsupportedBrowser] = useState(false);
   useEffect(() => {
-    if ("chrome" in window || isFeatureEnabled("unsupportedBrowsers")) {
+    if (
+      isChromiumBrowser(navigator.userAgent) ||
+      isFeatureEnabled("unsupportedBrowsers")
+    ) {
       return;
     }
 

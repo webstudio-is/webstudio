@@ -41,6 +41,31 @@ export type PublishedContentBlock = Readonly<{
   }>[];
 }>;
 
+export type ComponentGenerationPolicy = {
+  skipText?: (
+    child: Extract<Instance["children"][number], { type: "text" }>
+  ) => boolean;
+  resolveInstance?: (
+    instance: Instance,
+    instances: Instances,
+    dataSources: DataSources,
+    props: Props
+  ) => Instance;
+  renderResolvedExpression?: (
+    expression: string,
+    helpers?: Set<string>
+  ) => string;
+  declareDataSource?: (
+    dataSource: DataSource,
+    valueName: string,
+    instances: Instances
+  ) => string | undefined;
+  transformProps?: (
+    instance: Instance,
+    props: Map<string, Prop>
+  ) => string | undefined;
+};
+
 /**
  * (arg1) => {
  * myVar = myVar + arg1
@@ -170,6 +195,7 @@ export const generateJsxElement = ({
   indexesWithinAncestors,
   children,
   classesMap,
+  policy,
 }: {
   context?: "expression" | "jsx";
   scope: Scope;
@@ -186,6 +212,7 @@ export const generateJsxElement = ({
   indexesWithinAncestors: IndexesWithinAncestors;
   children: string;
   classesMap?: Map<string, Array<string>>;
+  policy?: ComponentGenerationPolicy;
 }) => {
   // descendant component is used only for styling
   // and should not be rendered
@@ -242,6 +269,8 @@ export const generateJsxElement = ({
     }
     propsByGeneratedName.set(name, prop);
   }
+  generatedProps +=
+    policy?.transformProps?.(instance, propsByGeneratedName) ?? "";
   const generatedPropNames = new Set([
     ...propsByGeneratedName.keys(),
     ...(classProps.size > 0 ? ["className"] : []),
@@ -251,12 +280,19 @@ export const generateJsxElement = ({
     ...propsByGeneratedName,
     ...Array.from(classProps.values(), (prop) => ["className", prop] as const),
   ]) {
-    const propValue = generatePropValue({
+    let propValue = generatePropValue({
       scope,
       prop,
       dataSources,
       usedDataSources,
     });
+    if (
+      instance.component !== collectionComponent &&
+      meta?.props?.[prop.name]?.type === "string" &&
+      (prop.type === "expression" || prop.type === "parameter")
+    ) {
+      propValue = `${propValue} == null ? ${propValue} : String(${propValue})`;
+    }
 
     if (prop.type === "resource") {
       const propMeta = meta?.props?.[prop.name];
@@ -430,9 +466,10 @@ export const generateJsxChildren = ({
   usedDataSources,
   indexesWithinAncestors,
   classesMap,
-  excludePlaceholders,
+  policy,
   publishedContentBlocks,
   contentBodyOverride,
+  usedRuntimeHelpers,
 }: {
   scope: Scope;
   metas: Map<Instance["component"], WsComponentMeta>;
@@ -446,8 +483,9 @@ export const generateJsxChildren = ({
   usedDataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   classesMap?: Map<string, Array<string>>;
-  excludePlaceholders?: boolean;
+  policy?: ComponentGenerationPolicy;
   publishedContentBlocks?: ReadonlyMap<Instance["id"], PublishedContentBlock>;
+  usedRuntimeHelpers?: Set<string>;
   contentBodyOverride?: Readonly<{
     instanceId: Instance["id"];
     children: Instance["children"];
@@ -456,7 +494,7 @@ export const generateJsxChildren = ({
   let generatedChildren = "";
   for (const child of children) {
     if (child.type === "text") {
-      if (excludePlaceholders && child.placeholder === true) {
+      if (policy?.skipText?.(child)) {
         continue;
       }
       // instance text can contain newlines
@@ -474,15 +512,26 @@ export const generateJsxChildren = ({
         usedDataSources,
         scope,
       });
+      usedRuntimeHelpers?.add("renderText");
       generatedChildren += `{renderText(${expression})}\n`;
       continue;
     }
     if (child.type === "id") {
       const instanceId = child.value;
-      const instance = instances.get(instanceId);
-      if (instance === undefined) {
+      const authoredInstance = instances.get(instanceId);
+      if (authoredInstance === undefined) {
         continue;
       }
+      const instance =
+        policy?.resolveInstance?.(
+          authoredInstance,
+          instances,
+          dataSources,
+          props
+        ) ?? authoredInstance;
+      const instanceRuntimeHelpers = usedRuntimeHelpers
+        ? new Set<string>()
+        : undefined;
       const publishedContent = publishedContentBlocks?.get(instance.id);
       let generatedInstanceChildren: string;
       if (contentBodyOverride?.instanceId === instance.id) {
@@ -498,9 +547,25 @@ export const generateJsxChildren = ({
           dataSources,
           usedDataSources,
           indexesWithinAncestors,
-          excludePlaceholders,
+          policy,
           publishedContentBlocks,
+          usedRuntimeHelpers: instanceRuntimeHelpers,
         });
+      } else if (
+        instance !== authoredInstance &&
+        instance.children[0]?.type === "expression" &&
+        policy?.renderResolvedExpression
+      ) {
+        const errorsExpression = generateExpression({
+          expression: instance.children[0].value,
+          dataSources,
+          usedDataSources,
+          scope,
+        });
+        generatedInstanceChildren = policy.renderResolvedExpression(
+          errorsExpression,
+          instanceRuntimeHelpers
+        );
       } else if (publishedContent === undefined) {
         generatedInstanceChildren = generateJsxChildren({
           classesMap,
@@ -514,8 +579,9 @@ export const generateJsxChildren = ({
           dataSources,
           usedDataSources,
           indexesWithinAncestors,
-          excludePlaceholders,
+          policy,
           publishedContentBlocks,
+          usedRuntimeHelpers: instanceRuntimeHelpers,
           contentBodyOverride,
         });
       } else {
@@ -567,8 +633,9 @@ export const generateJsxChildren = ({
               dataSources,
               usedDataSources,
               indexesWithinAncestors,
-              excludePlaceholders,
+              policy,
               publishedContentBlocks,
+              usedRuntimeHelpers: instanceRuntimeHelpers,
               contentBodyOverride:
                 publishedContent.bodyInstanceId === undefined
                   ? undefined
@@ -580,7 +647,9 @@ export const generateJsxChildren = ({
             const withDocument =
               documentName === undefined
                 ? generated
-                : `{((${documentName}) => <Fragment>\n${generated}</Fragment>)(${JSON.stringify({ frontmatter })})}\n`;
+                : `{((${documentName}) => <Fragment>\n${generated}</Fragment>)(${JSON.stringify(
+                    { frontmatter }
+                  )})}\n`;
             return {
               assetId,
               dependencyRevision,
@@ -592,7 +661,9 @@ export const generateJsxChildren = ({
           generatedInstanceChildren = generatedCandidates
             .map(
               ({ dependencyRevision, generated }) =>
-                `<Fragment key=${JSON.stringify(dependencyRevision)}>\n${generated}</Fragment>\n`
+                `<Fragment key=${JSON.stringify(
+                  dependencyRevision
+                )}>\n${generated}</Fragment>\n`
             )
             .join("");
         } else {
@@ -603,7 +674,11 @@ export const generateJsxChildren = ({
           const branches = generatedCandidates
             .map(
               ({ assetId, dependencyRevision, generated }) =>
-                `${sourceName} === ${JSON.stringify(assetId)} ? <Fragment key=${JSON.stringify(dependencyRevision)}>\n${generated}</Fragment>`
+                `${sourceName} === ${JSON.stringify(
+                  assetId
+                )} ? <Fragment key=${JSON.stringify(
+                  dependencyRevision
+                )}>\n${generated}</Fragment>`
             )
             .join(" : ");
           generatedInstanceChildren = `{((${sourceName}) => ${
@@ -611,7 +686,7 @@ export const generateJsxChildren = ({
           })(${sourceExpression})}\n`;
         }
       }
-      generatedChildren += generateJsxElement({
+      const generatedElement = generateJsxElement({
         context: "jsx",
         scope,
         metas,
@@ -624,7 +699,14 @@ export const generateJsxChildren = ({
         indexesWithinAncestors,
         classesMap,
         children: generatedInstanceChildren,
+        policy,
       });
+      generatedChildren += generatedElement;
+      if (generatedElement && instanceRuntimeHelpers) {
+        for (const helper of instanceRuntimeHelpers) {
+          usedRuntimeHelpers?.add(helper);
+        }
+      }
       continue;
     }
     child satisfies never;
@@ -645,6 +727,8 @@ export const generateWebstudioComponent = ({
   tagsOverrides,
   classesMap,
   publishedContentBlocks,
+  usedRuntimeHelpers,
+  policy,
 }: {
   scope: Scope;
   name: string;
@@ -655,6 +739,8 @@ export const generateWebstudioComponent = ({
   resources?: Resources;
   dataSources: DataSources;
   classesMap: Map<string, Array<string>>;
+  usedRuntimeHelpers?: Set<string>;
+  policy?: ComponentGenerationPolicy;
   publishedContentBlocks?: ReadonlyMap<Instance["id"], PublishedContentBlock>;
   metas: Map<Instance["component"], WsComponentMeta>;
   /**
@@ -671,6 +757,9 @@ export const generateWebstudioComponent = ({
   let generatedJsx = "<></>\n";
   // instance can be missing when generate xml
   if (instance) {
+    const rootRuntimeHelpers = usedRuntimeHelpers
+      ? new Set<string>()
+      : undefined;
     generatedJsx = generateJsxElement({
       context: "expression",
       scope,
@@ -683,6 +772,7 @@ export const generateWebstudioComponent = ({
       usedDataSources,
       indexesWithinAncestors,
       classesMap,
+      policy,
       children: generateJsxChildren({
         scope,
         metas,
@@ -696,8 +786,15 @@ export const generateWebstudioComponent = ({
         indexesWithinAncestors,
         classesMap,
         publishedContentBlocks,
+        usedRuntimeHelpers: rootRuntimeHelpers,
+        policy,
       }),
     });
+    if (generatedJsx && rootRuntimeHelpers) {
+      for (const helper of rootRuntimeHelpers) {
+        usedRuntimeHelpers?.add(helper);
+      }
+    }
   }
 
   let generatedProps = "";
@@ -723,6 +820,9 @@ export const generateWebstudioComponent = ({
 
   let generatedDataSources = "";
   for (const dataSource of usedDataSources.values()) {
+    const valueName = scope.getName(dataSource.id, dataSource.name);
+    generatedDataSources +=
+      policy?.declareDataSource?.(dataSource, valueName, instances) ?? "";
     if (dataSource.type === "variable") {
       const valueName = scope.getName(dataSource.id, dataSource.name);
       const setterName = scope.getName(

@@ -1,7 +1,5 @@
 import { forwardRef, type ElementRef } from "react";
-import type { Hook } from "@webstudio-is/react-sdk";
 import type { AnimationAction } from "@webstudio-is/sdk";
-import { animationCanPlayOnCanvasProperty } from "@webstudio-is/sdk/runtime";
 
 type ScrollProps = {
   debug?: boolean;
@@ -17,32 +15,3 @@ export const AnimateChildren = forwardRef<ElementRef<"div">, ScrollProps>(
 
 const displayName = "AnimateChildren";
 AnimateChildren.displayName = displayName;
-
-const namespace = "@webstudio-is/sdk-components-animation";
-
-export const hooksAnimateChildren: Hook = {
-  onNavigatorUnselect: (context, event) => {
-    if (
-      event.instancePath.length > 0 &&
-      event.instancePath[0].component === `${namespace}:${displayName}`
-    ) {
-      context.setMemoryProp(
-        event.instancePath[0],
-        animationCanPlayOnCanvasProperty,
-        undefined
-      );
-    }
-  },
-  onNavigatorSelect: (context, event) => {
-    if (
-      event.instancePath.length > 0 &&
-      event.instancePath[0].component === `${namespace}:${displayName}`
-    ) {
-      context.setMemoryProp(
-        event.instancePath[0],
-        animationCanPlayOnCanvasProperty,
-        true
-      );
-    }
-  },
-};

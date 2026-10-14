@@ -2976,6 +2976,13 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       connection,
       dependencies
     ),
+  "simulate-form-submission": async (options, connection, dependencies) =>
+    runProjectSessionCommand(
+      "simulate-form-submission",
+      await readInputObject(dependencies, options),
+      connection,
+      dependencies
+    ),
   "create-resource": async (options, connection, dependencies) => {
     const input = {
       resource: (await getResourceFields(

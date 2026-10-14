@@ -53,7 +53,6 @@ export type ComponentCatalogSourceInfo = {
   importSource?: string;
   componentExport: boolean;
   templateExport: boolean;
-  hooks: boolean;
   provenance: "core" | "sdk";
 };
 
@@ -97,7 +96,6 @@ export type ComponentRegistryItem = {
       component: Instance["component"];
       componentExport: string;
       templateExport?: string;
-      hooks: boolean;
       namespace?: string;
       category: string;
       contentModel?: WsComponentMeta["contentModel"];
@@ -157,7 +155,6 @@ const getComponentSourceInfo = (
     exportName,
     componentExport: true,
     templateExport: false,
-    hooks: false,
     provenance: namespace === undefined ? "core" : "sdk",
   };
 };
@@ -526,7 +523,6 @@ export const toComponentRegistryItem = (
         component: item.name,
         componentExport: source.exportName,
         templateExport: source.templateExport ? source.exportName : undefined,
-        hooks: source.hooks,
         namespace: source.namespace,
         category: item.category,
         contentModel,

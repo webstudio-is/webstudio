@@ -10,7 +10,7 @@ import {
   formIdFieldName,
   formBotFieldName,
   isBraveBrowser,
-} from "@webstudio-is/sdk/runtime";
+} from "@webstudio-is/sdk/form/browser";
 
 export const defaultTag = "form";
 
@@ -80,6 +80,7 @@ const isJSDom = () => {
   return hasMatchMedia === false;
 };
 
+/** @deprecated Legacy Webhook Form is supported through the next release. Use Form for new forms. */
 export const WebhookForm = forwardRef<
   ElementRef<typeof defaultTag>,
   Omit<ComponentProps<typeof defaultTag>, "action"> & {

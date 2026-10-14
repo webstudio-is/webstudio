@@ -43,8 +43,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   await checkCsrf(request);
-  const includeDiagnostics =
-    new URL(request.url).searchParams.get("diagnostics") === "true";
+  const searchParams = new URL(request.url).searchParams;
+  const includeDiagnostics = searchParams.get("diagnostics") === "true";
+  const inspectResourceKey = searchParams.get("inspect") ?? undefined;
 
   // Hope Remix will have customFetch by default, see https://kit.svelte.dev/docs/load#making-fetch-requests
   const customFetch: typeof fetch = (input, init) => {
@@ -92,13 +93,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
-  const output = await loadResourceRequestList({
+  const loaderInput = {
     request,
     requestList: requestList.data,
     sourceOrigin,
     includeDiagnostics,
     customFetch,
-  });
+  };
+  const output =
+    inspectResourceKey === undefined
+      ? await loadResourceRequestList(loaderInput)
+      : await loadResourceRequestList({ ...loaderInput, inspectResourceKey });
 
   return json(output, { headers: privateNoStoreResponseHeaders });
 };

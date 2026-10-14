@@ -1,7 +1,7 @@
 import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { UnsupportedBrowserDialog } from "./blocking-alerts";
+import { isChromiumBrowser, UnsupportedBrowserDialog } from "./blocking-alerts";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -51,4 +51,25 @@ test("shows an accessible modal dialog and lets the user continue", () => {
   });
 
   expect(onDismiss).toHaveBeenCalledOnce();
+});
+
+test("recognizes Chromium from its user agent without window.chrome", () => {
+  expect(
+    isChromiumBrowser(
+      "Mozilla/5.0 Chrome/131.0.0.0 Safari/537.36 HeadlessChrome/131.0.0.0"
+    )
+  ).toBe(true);
+  expect(
+    isChromiumBrowser(
+      "Mozilla/5.0 Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
+    )
+  ).toBe(true);
+  expect(
+    isChromiumBrowser("Mozilla/5.0 Firefox/132.0 Gecko/20100101 Firefox/132.0")
+  ).toBe(false);
+  expect(
+    isChromiumBrowser(
+      "Mozilla/5.0 AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15"
+    )
+  ).toBe(false);
 });

@@ -373,7 +373,7 @@ describe("project.verifyBindings", () => {
       )
     ).toMatchObject({ type: "asset", value: "article-image" });
     expect(state.instances?.get(clonedItemId.value)?.children[0]).toMatchObject(
-      { value: `${encodeDataVariableId(clonedParameter?.id ?? "")}?.name` }
+      { value: `${encodeDataVariableId(clonedParameter?.id ?? "")}.name` }
     );
     expect(verifyBindings(state, { pageId: "other" }).findings).toEqual([]);
     expect(verifyBindings(state, { pageId: "home" }).findings).toEqual([]);

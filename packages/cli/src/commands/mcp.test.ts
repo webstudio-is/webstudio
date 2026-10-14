@@ -14,10 +14,22 @@ import {
   hiddenMcpOperationCommands,
   listProjectSessionMcpTools,
 } from "@webstudio-is/project-build/mcp";
+import {
+  createDefaultProjectSessionCompatibility,
+  createProjectSession,
+} from "@webstudio-is/project-build/project-session";
+import {
+  createBuilderStateFromSnapshot,
+  createBuilderStateFreshness,
+} from "@webstudio-is/project-build/state";
 import { publicApiOperations } from "@webstudio-is/protocol";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { updatePersistedMcpCheckpoint } from "./mcp-checkpoint";
-import { createIssueReportFailureTracker } from "../project-session";
+import {
+  createCliProjectSessionStorage,
+  createIssueReportFailureTracker,
+} from "../project-session";
 import {
   __testing__,
   mcpOptions,
@@ -257,6 +269,199 @@ afterEach(async () => {
   await Promise.all(
     tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true }))
   );
+});
+
+test("confirms a resource deletion across persisted CLI sessions only for the unchanged plan", async () => {
+  const operation = publicApiOperations.find(
+    ({ command }) => command === "delete-resource"
+  );
+  if (operation === undefined) {
+    throw new Error("Expected delete-resource MCP operation");
+  }
+  const compatibility = createDefaultProjectSessionCompatibility("test");
+
+  for (const change of ["none", "version", "plan"] as const) {
+    const directory = await mkdtemp(
+      path.join(tmpdir(), "webstudio-mcp-delete-confirmation-")
+    );
+    tempDirs.push(directory);
+    const storagePath = path.join(directory, "project-session.json");
+    const storage = createCliProjectSessionStorage(storagePath);
+    const createSnapshot = (version: number, addDataSource: boolean) => {
+      const state = createBuilderStateFromSnapshot({
+        pages: {
+          homePageId: "home",
+          rootFolderId: "root",
+          pages: new Map([
+            [
+              "home",
+              {
+                id: "home",
+                name: "Home",
+                path: "",
+                title: "Home",
+                rootInstanceId: "body",
+                meta: {},
+              },
+            ],
+          ]),
+          folders: new Map([
+            [
+              "root",
+              { id: "root", name: "Root", slug: "", children: ["home"] },
+            ],
+          ]),
+        },
+        instances: [
+          [
+            ROOT_INSTANCE_ID,
+            {
+              type: "instance",
+              id: ROOT_INSTANCE_ID,
+              component: "Root",
+              children: [{ type: "id", value: "body" }],
+            },
+          ],
+          [
+            "body",
+            { type: "instance", id: "body", component: "Body", children: [] },
+          ],
+        ],
+        props: [],
+        dataSources: addDataSource
+          ? [
+              [
+                "resource-data",
+                {
+                  id: "resource-data",
+                  name: "resourceData",
+                  type: "resource",
+                  resourceId: "resource",
+                  scopeInstanceId: "body",
+                },
+              ],
+            ]
+          : [],
+        resources: [
+          [
+            "resource",
+            {
+              id: "resource",
+              name: "Test resource",
+              method: "get",
+              url: '"https://example.com"',
+              headers: [],
+            },
+          ],
+        ],
+      });
+      return {
+        projectId: "project-1",
+        buildId: "build-1",
+        version,
+        state,
+        freshness: createBuilderStateFreshness({ state, version }),
+        compatibilityVersion: "test",
+        compatibility,
+      };
+    };
+    await storage.save(createSnapshot(1, false), {});
+
+    let commits = 0;
+    const createCore = async () => {
+      const session = createProjectSession({
+        projectId: "project-1",
+        storage: createCliProjectSessionStorage(storagePath),
+        compatibilityVersion: "test",
+        runtimeContext: { createId: () => crypto.randomUUID() },
+        transport: {
+          async fetchNamespaces() {
+            throw new Error("The complete persisted snapshot should be used");
+          },
+          async commitPatch({ baseVersion }) {
+            commits += 1;
+            return { version: baseVersion + 1 };
+          },
+          async commitRestorePoint() {
+            throw new Error("Resource deletion must use patch commits");
+          },
+          async getPermissions() {
+            return {
+              canView: true,
+              canEdit: true,
+              canBuild: true,
+              canAdmin: false,
+              canUseApi: true,
+            };
+          },
+          async getCompatibility() {
+            return compatibility;
+          },
+        },
+      });
+      await session.initialize();
+      return createProjectSessionMcpCore({
+        operations: [operation],
+        createProjectSession: () => session,
+        executeOperation: ({ input, dryRun }) =>
+          session.mutate("resources.delete", input as { resourceId: string }, {
+            dryRun,
+          }),
+      });
+    };
+
+    const planned = await (
+      await createCore()
+    ).callTool({
+      name: "delete-resource",
+      input: { resourceId: "resource", dryRun: true },
+    });
+    expect(planned.structuredContent).toMatchObject({
+      ok: true,
+      meta: { confirmation: { token: expect.any(String) } },
+    });
+    const token = planned.structuredContent.meta.confirmation?.token;
+    if (token === undefined) {
+      throw new Error("Expected a deletion confirmation token");
+    }
+
+    if (change !== "none") {
+      const persisted = await storage.load();
+      await storage.save(
+        createSnapshot(change === "version" ? 2 : 1, change === "plan"),
+        {
+          expectedRevision: persisted?.revision,
+        }
+      );
+    }
+
+    const result = await (
+      await createCore()
+    ).callTool({
+      name: "delete-resource",
+      input: {
+        resourceId: "resource",
+        confirmDestructive: true,
+        confirmationToken: token,
+      },
+    });
+    if (change === "none") {
+      expect(result.structuredContent.ok).toBe(true);
+      expect(commits).toBe(1);
+      expect((await storage.load())?.state.resources?.has("resource")).toBe(
+        false
+      );
+    } else {
+      expect(result.structuredContent).toMatchObject({
+        ok: false,
+        error: { code: "DESTRUCTIVE_CONFIRMATION_INVALID" },
+      });
+      expect(commits).toBe(0);
+      expect((await storage.load())?.state.resources?.has("resource")).toBe(
+        true
+      );
+    }
+  }
 });
 
 test("persists sanitized issue-report failure diagnostics for the next CLI process", async () => {

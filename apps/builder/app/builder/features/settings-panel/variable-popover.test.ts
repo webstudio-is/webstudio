@@ -1,7 +1,5 @@
 import { expect, test } from "vitest";
-import { __testing__ } from "./variable-popover";
-
-const { getReloadableResourceFormData } = __testing__;
+import { getReloadableAssetsResourceFormData } from "./variable-editors/assets-resource-editor";
 
 test("blocks resource loads while the visible Assets query is invalid", () => {
   const form = document.createElement("form");
@@ -10,8 +8,8 @@ test("blocks resource loads while the visible Assets query is invalid", () => {
   queryValidity.value = "false";
   form.appendChild(queryValidity);
 
-  expect(getReloadableResourceFormData(form)).toBeUndefined();
+  expect(getReloadableAssetsResourceFormData(form)).toBeUndefined();
 
   queryValidity.value = "true";
-  expect(getReloadableResourceFormData(form)).toBeInstanceOf(FormData);
+  expect(getReloadableAssetsResourceFormData(form)).toBeInstanceOf(FormData);
 });

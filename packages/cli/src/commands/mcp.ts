@@ -1824,6 +1824,14 @@ const assertSingleOpCallToolSupported = (tool: string) => {
       { code: "BAD_REQUEST" }
     );
   }
+  if (tool === "preview.submit-form") {
+    throw Object.assign(
+      new Error(
+        "preview.submit-form requires a Preview owned by the same long-running MCP session or mcp run process."
+      ),
+      { code: "BAD_REQUEST" }
+    );
+  }
 };
 
 const getMcpDownloadAsset = async (
@@ -2192,6 +2200,17 @@ const createCliMcpHost = async ({
         running: true,
         mode: result.mode,
       };
+    },
+    async submitPreviewForm(input) {
+      return await previewHandlers.submitForm(input);
+    },
+    async simulateForm(input) {
+      await session.assertPermit("api");
+      await session.assertPermit("build");
+      return await httpClient.simulateFormSubmission({
+        ...apiConnection,
+        ...input,
+      });
     },
     async getPreviewStatus() {
       return { ...preview.status(), ...previewFreshness.status() };

@@ -11,6 +11,7 @@ import {
   inputJsonSchemaAcceptsType,
   parseComponentName,
   toInputJsonSchemaObject,
+  type WsComponentMeta,
   type ContentBlockDiagnostic,
   type InputJsonSchema,
   type InputJsonSchemaValue,
@@ -268,6 +269,56 @@ export type ProjectSessionPreviewStatusResult = {
   running: boolean;
   mode?: ProjectSessionPreviewMode;
 };
+
+export type ProjectSessionPreviewSubmitFormInput = {
+  path: string;
+  selector: string;
+  values: readonly {
+    name: string;
+    value?: string;
+    file?: { name: string; base64: string; type?: string };
+  }[];
+  submitter?: string;
+  timeout?: number;
+};
+
+export type ProjectSessionPreviewSubmitFormResult = {
+  status: "validation_failed" | "submitted" | "unknown";
+  formState?: string;
+  results: readonly {
+    status: number;
+    resourceId?: string;
+    resourceName?: string;
+  }[];
+  errors: readonly { status?: number; name?: string; message: string }[];
+  exchanges: readonly { status: number; url: string }[];
+  pageUrl: string;
+  redirect?: string;
+  correlationId: string;
+};
+
+type SubmitPreviewForm = (
+  input: ProjectSessionPreviewSubmitFormInput
+) => Promise<ProjectSessionPreviewSubmitFormResult>;
+
+export type ProjectSessionSimulateFormInput = {
+  path: string;
+  siteOrigin?: string;
+  formId: string;
+  values: readonly { name: string; value: string }[];
+  arrayNames?: readonly string[];
+};
+
+export type ProjectSessionSimulateFormResult = {
+  success: boolean;
+  status: number;
+  results: readonly { status: number; resourceId?: string }[];
+  errors: readonly { status?: number; message: string }[];
+};
+
+type SimulateForm = (
+  input: ProjectSessionSimulateFormInput
+) => Promise<ProjectSessionSimulateFormResult>;
 
 type StartPreview = (
   input: ProjectSessionPreviewInput,
@@ -1054,7 +1105,11 @@ export const getMcpTextAssetDescriptorIssues = ({
       issues.push({
         path: [...assetPath, "format"],
         code: "asset_filename_format_mismatch",
-        message: `Asset filename and format must match. ${JSON.stringify(name)} has extension ${JSON.stringify(filenameFormat ?? "(none)")} but format is ${JSON.stringify(declaredFormat)}.`,
+        message: `Asset filename and format must match. ${JSON.stringify(
+          name
+        )} has extension ${JSON.stringify(
+          filenameFormat ?? "(none)"
+        )} but format is ${JSON.stringify(declaredFormat)}.`,
         constraint: "asset_filename_format_mismatch",
       });
     }
@@ -1066,7 +1121,9 @@ export const getMcpTextAssetDescriptorIssues = ({
       issues.push({
         path: [...assetPath, "type"],
         code: "markdown_asset_type_mismatch",
-        message: `Markdown and MDX Assets must use type "file", not ${JSON.stringify(asset.type)}.`,
+        message: `Markdown and MDX Assets must use type "file", not ${JSON.stringify(
+          asset.type
+        )}.`,
         constraint: "markdown_asset_type_mismatch",
       });
     }
@@ -1278,7 +1335,9 @@ const collectInputSchemaIssues = ({
     return [
       issue({
         code: "invalid_value",
-        message: `must be one of ${schema.enum.map((value) => JSON.stringify(value)).join(", ")}.`,
+        message: `must be one of ${schema.enum
+          .map((value) => JSON.stringify(value))
+          .join(", ")}.`,
         constraint: "enum",
         example: schema.enum[0],
       }),
@@ -1363,7 +1422,9 @@ const collectInputSchemaIssues = ({
       issues.push({
         code: "invalid_type",
         path: [...path, requiredField],
-        message: `${command} ${["input", ...path, requiredField].join(".")} is required.`,
+        message: `${command} ${["input", ...path, requiredField].join(
+          "."
+        )} is required.`,
         constraint: "required",
       });
     }
@@ -1711,12 +1772,12 @@ const screenshotInputSchema = {
     baseUrl: {
       type: "string",
       description:
-        "Existing preview/site origin or base URL used with path, for example http://127.0.0.1:5177. When set, screenshot does not generate, build, start, or restart preview.",
+        "Existing site base URL used with path, for example http://127.0.0.1:5177. Skips preview generation and startup.",
     },
     path: {
       type: "string",
       description:
-        "Generated-site path to capture, for example /, /pricing, or /about. With baseUrl, captures that existing site. Without baseUrl, uses or starts the active long-running MCP preview server.",
+        "Generated-site path, for example /pricing. With baseUrl, capture that site; otherwise use or start the MCP preview.",
     },
     output: {
       type: "string",
@@ -1734,19 +1795,19 @@ const screenshotInputSchema = {
       type: "boolean",
       default: false,
       description:
-        "Capture the full page height after layout instead of only the viewport. Use this for long pages and design-system audits.",
+        "Capture the full page after layout, rather than the viewport.",
     },
     includeImageMetrics: {
       type: "boolean",
       default: false,
       description:
-        "Include per-image loading state and natural/rendered dimensions. Rendered audit enables this automatically; omit for compact ordinary screenshots.",
+        "Include image loading state and natural/rendered dimensions. Rendered audit enables this automatically.",
     },
     includeResourceMetrics: {
       type: "boolean",
       default: false,
       description:
-        "Include sanitized Resource Timing transfer and render-blocking metadata. Rendered audit enables this automatically; omit for compact ordinary screenshots.",
+        "Include sanitized Resource Timing and render-blocking data. Rendered audit enables this automatically.",
     },
     includeContrastMetrics: {
       type: "boolean",
@@ -1778,7 +1839,7 @@ const screenshotInputSchema = {
       type: "boolean",
       default: true,
       description:
-        "Wait for document.fonts.ready before sampling layout. Set false if a font never settles; capture still waits for stable layout frames.",
+        "Wait for document.fonts.ready. Set false if fonts never settle; layout still stabilizes.",
     },
     waitForTimeout: {
       type: "number",
@@ -1797,14 +1858,14 @@ const screenshotInputSchema = {
       enum: projectSessionPreviewSources,
       default: "session",
       description:
-        "When screenshot needs to start/restart preview for a path, choose local for .webstudio/data.json or session for the current ProjectSession snapshot after MCP edits.",
+        "Preview source: local uses .webstudio/data.json; session uses the current ProjectSession snapshot.",
     },
     mode: {
       type: "string",
       enum: projectSessionPreviewModes,
       default: "iterative",
       description:
-        "Iterative keeps one development server and browser alive while reloading after MCP edits. Production performs a full generated build and is intended for audits and release-like verification.",
+        "Iterative reloads a persistent dev server and browser after MCP edits. Production builds the generated site for audits.",
     },
     imageDomains: {
       type: "array",
@@ -2115,6 +2176,54 @@ const previewInputSchema = {
   },
 } as const satisfies ProjectSessionMcpInputSchema;
 
+const previewSubmitFormInputSchema = {
+  type: "object",
+  properties: {
+    path: {
+      type: "string",
+      description:
+        "Path on this session's local Preview, for example /contact.",
+    },
+    selector: {
+      type: "string",
+      description: "CSS selector identifying the rendered form.",
+    },
+    values: {
+      type: "array",
+      maxItems: 100,
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          value: { type: "string" },
+          file: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              base64: {
+                type: "string",
+                description: "Base64 file bytes, at most 1 MiB.",
+              },
+              type: { type: "string" },
+            },
+            required: ["name", "base64"],
+            additionalProperties: false,
+          },
+        },
+        required: ["name"],
+        additionalProperties: false,
+      },
+    },
+    submitter: {
+      type: "string",
+      description: "Optional CSS selector for the submit button.",
+    },
+    timeout: { type: "integer", minimum: 1, maximum: 60000 },
+  },
+  required: ["path", "selector", "values"],
+  additionalProperties: false,
+} as const satisfies ProjectSessionMcpInputSchema;
+
 const importInputSchema = {
   ...emptyInputSchema,
   description:
@@ -2339,6 +2448,13 @@ export const mcpArgumentExamples: Record<
     { assetId: "asset-id", folderId: "target-folder-id" },
   ],
   "preview.start": [{ source: "session" }],
+  "preview.submit-form": [
+    {
+      path: "/contact",
+      selector: "form",
+      values: [{ name: "email", value: "me@example.com" }],
+    },
+  ],
   "preview.status": [{}],
   "preview.stop": [{}],
   status: [{}, { verbose: true }],
@@ -3042,6 +3158,67 @@ const previewDataSchema = {
     },
   },
   required: ["running", "mode"],
+} as const satisfies InputJsonSchema;
+
+const previewSubmitFormDataSchema = {
+  type: "object",
+  properties: {
+    status: {
+      type: "string",
+      enum: ["validation_failed", "submitted", "unknown"],
+    },
+    formState: { type: "string" },
+    results: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          status: { type: "integer" },
+          resourceId: { type: "string" },
+          resourceName: { type: "string" },
+        },
+        required: ["status"],
+        additionalProperties: false,
+      },
+    },
+    errors: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          status: { type: "integer" },
+          name: { type: "string" },
+          message: { type: "string" },
+        },
+        required: ["message"],
+        additionalProperties: false,
+      },
+    },
+    exchanges: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          status: { type: "integer" },
+          url: { type: "string" },
+        },
+        required: ["status", "url"],
+        additionalProperties: false,
+      },
+    },
+    pageUrl: { type: "string" },
+    redirect: { type: "string" },
+    correlationId: { type: "string" },
+  },
+  required: [
+    "status",
+    "results",
+    "errors",
+    "exchanges",
+    "pageUrl",
+    "correlationId",
+  ],
+  additionalProperties: false,
 } as const satisfies InputJsonSchema;
 
 const restorePointSummaryDataSchema = getZodObjectSchema(
@@ -3899,6 +4076,26 @@ const downloadAssetTool = createProjectSessionMcpTool({
 
 const previewTools: readonly ProjectSessionMcpTool[] = [
   createProjectSessionMcpTool({
+    name: "preview.submit-form",
+    description:
+      "Submit a rendered form in this session's local Preview browser. Native validation runs before dispatch. Unknown outcomes are never retried; inspect the correlationId before deciding what to do next.",
+    inputSchema: previewSubmitFormInputSchema,
+    outputSchema: getMcpOutputSchema(previewSubmitFormDataSchema),
+    mcpExamples: getMcpExamples("preview.submit-form"),
+    annotations: {
+      command: "preview.submit-form",
+      operationId: "preview.submit-form",
+      method: "session",
+      permit: "api",
+      localCapable: false,
+      serverOnly: true,
+      readNamespaces: [],
+      writeNamespaces: [],
+      invalidatesNamespaces: [],
+      retryOnConflict: false,
+    },
+  }),
+  createProjectSessionMcpTool({
     name: "preview.start",
     description:
       "Start or refresh a generated-site preview. The iterative default keeps the server and browser alive and normally reloads the generated route after each MCP edit; production mode performs the full build used by audits.",
@@ -3959,6 +4156,88 @@ const previewTools: readonly ProjectSessionMcpTool[] = [
     },
   }),
 ];
+
+const simulateFormTool = createProjectSessionMcpTool({
+  name: "forms.simulate-submission",
+  description:
+    "Submit synthetic string fields for a saved Form through the trusted Builder server Form engine. This can trigger configured HTTP and Email Resources, so verify recipients before calling.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      path: { type: "string" },
+      siteOrigin: {
+        type: "string",
+        description:
+          "Optional check against the project's publisher origin; the Builder server determines the actual origin.",
+      },
+      formId: { type: "string" },
+      arrayNames: { type: "array", items: { type: "string" } },
+      values: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: { name: { type: "string" }, value: { type: "string" } },
+          required: ["name", "value"],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["path", "formId", "values"],
+    additionalProperties: false,
+  },
+  outputSchema: getMcpOutputSchema({
+    type: "object",
+    properties: {
+      success: { type: "boolean" },
+      status: { type: "integer" },
+      results: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            status: { type: "integer" },
+            resourceId: { type: "string" },
+          },
+          required: ["status"],
+          additionalProperties: false,
+        },
+      },
+      errors: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            status: { type: "integer" },
+            message: { type: "string" },
+          },
+          required: ["message"],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["success", "status", "results", "errors"],
+    additionalProperties: false,
+  }),
+  annotations: {
+    command: "forms.simulate-submission",
+    operationId: "forms.simulate-submission",
+    method: "session",
+    permit: "api",
+    localCapable: false,
+    serverOnly: true,
+    readNamespaces: [
+      "pages",
+      "instances",
+      "props",
+      "dataSources",
+      "resources",
+      "projectSettings",
+    ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+});
 
 type McpStructuredError = {
   code: string;
@@ -4037,6 +4316,8 @@ const mcpOperationSchemaInlineSizes = new Map<string, number>([
   ["edit-content-block-source", 0],
   ["update-content-block-frontmatter", 0],
   ["insert-fragment", 1_000],
+  // The nested Resource schema is available through meta.get-more-tools.
+  ["upsert-resource-prop", 2_000],
   ["create-assets-resource", 2_500],
   ["update-assets-resource", 2_500],
   ["validate-asset-query", 2_500],
@@ -4062,6 +4343,8 @@ export const listProjectSessionMcpTools = (
     includeScreenshotDiff?: boolean;
     includeInstallOcr?: boolean;
     includePreview?: boolean;
+    includePreviewSubmitForm?: boolean;
+    includeSimulateForm?: boolean;
     includeRestorePoints?: boolean;
   } = {}
 ): ProjectSessionMcpTool[] => [
@@ -4140,7 +4423,14 @@ export const listProjectSessionMcpTools = (
     : []),
   ...(options.includeScreenshotDiff ? [screenshotDiffTool] : []),
   ...(options.includeInstallOcr ? [installOcrTool] : []),
-  ...(options.includePreview ? previewTools : []),
+  ...(options.includeSimulateForm ? [simulateFormTool] : []),
+  ...(options.includePreview
+    ? previewTools.filter(
+        (tool) =>
+          tool.name !== "preview.submit-form" ||
+          options.includePreviewSubmitForm === true
+      )
+    : []),
 ];
 
 const toMetaResult = (data: unknown): ProjectSessionMcpToolResult => {
@@ -4385,7 +4675,9 @@ const getOptionalStringInput = (
   const value = input[field];
   if (typeof value !== "string") {
     throw new Error(
-      `${toolName} input.${field} must be a string when provided. Received ${Array.isArray(value) ? "array" : typeof value}.`
+      `${toolName} input.${field} must be a string when provided. Received ${
+        Array.isArray(value) ? "array" : typeof value
+      }.`
     );
   }
   return value;
@@ -4417,7 +4709,9 @@ const getOptionalBooleanInput = (
   const value = input[field];
   if (typeof value !== "boolean") {
     throw new Error(
-      `${toolName} input.${field} must be a boolean when provided. Received ${Array.isArray(value) ? "array" : typeof value}.`
+      `${toolName} input.${field} must be a boolean when provided. Received ${
+        Array.isArray(value) ? "array" : typeof value
+      }.`
     );
   }
   return value;
@@ -4436,7 +4730,9 @@ const getMetaGuideInput = (input: unknown) => {
     getOptionalStringInput(input, "workflow", "meta.guide") || "general";
   if (metaGuideWorkflows.includes(workflow as MetaGuideWorkflow) === false) {
     throw new Error(
-      `meta.guide input.workflow must be one of ${metaGuideWorkflows.join(", ")}.`
+      `meta.guide input.workflow must be one of ${metaGuideWorkflows.join(
+        ", "
+      )}.`
     );
   }
   return {
@@ -4610,6 +4906,108 @@ const normalizeMcpOperationInput = async (name: string, input: unknown) => {
   return input;
 };
 
+const assertNoLegacyWebhookFormInsertion = (name: string, input: unknown) => {
+  if (isRecord(input) === false) {
+    return;
+  }
+  let instances: unknown;
+  if (name === "update-text-tree") {
+    instances = input.instances;
+  } else if (name === "insert-fragment" && isRecord(input.fragment)) {
+    instances = input.fragment.instances;
+  } else if (name === "insert-collection" && isRecord(input.itemFragment)) {
+    instances = input.itemFragment.instances;
+  } else if (name === "integrate-runtime-ui" && isRecord(input.structure)) {
+    const fragment =
+      input.structure.type === "fragment"
+        ? input.structure.fragment
+        : input.structure.itemFragment;
+    if (isRecord(fragment)) {
+      instances = fragment.instances;
+    }
+  }
+  if (
+    (["insert-component", "wrap-instance", "convert-instance"].includes(name) &&
+      input.component === "WebhookForm") ||
+    (Array.isArray(instances) &&
+      instances.some(
+        (instance) => isRecord(instance) && instance.component === "WebhookForm"
+      ))
+  ) {
+    throw new Error(
+      'Webhook Form is deprecated and cannot be inserted through MCP. Use component "Form".'
+    );
+  }
+  if (
+    name === "apply-patch" &&
+    Array.isArray(input.transactions) &&
+    input.transactions.some(
+      (transaction) =>
+        isRecord(transaction) &&
+        hasLegacyWebhookFormInstancePatch(transaction.payload)
+    )
+  ) {
+    throw new Error(
+      'Webhook Form is deprecated and cannot be created through MCP patches. Use component "Form".'
+    );
+  }
+};
+
+const legacyWebhookFormCopyCommands = new Set([
+  "insert-mdx-text",
+  "duplicate-page",
+  "duplicate-page-template",
+  "create-page-from-template",
+  "duplicate-folder",
+  "copy-page",
+  "insert-page-transfer-item",
+]);
+
+const containsLegacyWebhookFormInstance = (value: unknown): boolean => {
+  if (value instanceof Map) {
+    return Array.from(value.values()).some(containsLegacyWebhookFormInstance);
+  }
+  if (Array.isArray(value)) {
+    return value.some(containsLegacyWebhookFormInstance);
+  }
+  if (isRecord(value)) {
+    return (
+      value.component === "WebhookForm" ||
+      Object.values(value).some(containsLegacyWebhookFormInstance)
+    );
+  }
+  return false;
+};
+
+const hasLegacyWebhookFormInstancePatch = (payload: unknown) =>
+  Array.isArray(payload) &&
+  payload.some(
+    (change) =>
+      isRecord(change) &&
+      change.namespace === "instances" &&
+      Array.isArray(change.patches) &&
+      change.patches.some(
+        (patch) =>
+          isRecord(patch) &&
+          patch.op !== "remove" &&
+          ((Array.isArray(patch.path) &&
+            patch.path.at(-1) === "component" &&
+            patch.value === "WebhookForm") ||
+            containsLegacyWebhookFormInstance(patch.value))
+      )
+  );
+
+const assertNoLegacyWebhookFormCopy = (envelope: ProjectSessionEnvelope) => {
+  if (envelope.transaction === undefined) {
+    throw new Error("MCP could not inspect the planned copy transaction.");
+  }
+  if (hasLegacyWebhookFormInstancePatch(envelope.transaction.payload)) {
+    throw new Error(
+      'Webhook Form is deprecated and cannot be copied through MCP. Use component "Form".'
+    );
+  }
+};
+
 const coveragePlanDetailValues = ["summary", "roots", "parts", "full"] as const;
 type CoveragePlanDetail = (typeof coveragePlanDetailValues)[number];
 const coveragePlanDocumentTypes = ["html", "xml", "text"] as const;
@@ -4626,7 +5024,9 @@ const getOptionalNumberInput = (
   const value = input[field];
   if (typeof value !== "number" || Number.isFinite(value) === false) {
     throw new Error(
-      `${toolName} input.${field} must be a finite number when provided. Received ${Array.isArray(value) ? "array" : typeof value}.`
+      `${toolName} input.${field} must be a finite number when provided. Received ${
+        Array.isArray(value) ? "array" : typeof value
+      }.`
     );
   }
   return value;
@@ -4666,7 +5066,9 @@ const getCoveragePlanInput = (input: unknown) => {
     coveragePlanDetailValues.includes(detail as CoveragePlanDetail) === false
   ) {
     throw new Error(
-      `components.coverage-plan input.detail must be one of ${coveragePlanDetailValues.join(", ")}.`
+      `components.coverage-plan input.detail must be one of ${coveragePlanDetailValues.join(
+        ", "
+      )}.`
     );
   }
   const documentType =
@@ -4678,7 +5080,9 @@ const getCoveragePlanInput = (input: unknown) => {
     ) === false
   ) {
     throw new Error(
-      `components.coverage-plan input.documentType must be one of ${coveragePlanDocumentTypes.join(", ")}.`
+      `components.coverage-plan input.documentType must be one of ${coveragePlanDocumentTypes.join(
+        ", "
+      )}.`
     );
   }
   const { offset, limit } = getOffsetPaginationInput({
@@ -4713,7 +5117,9 @@ const getCoverageStatusInput = (input: unknown) => {
     ) === false
   ) {
     throw new Error(
-      `components.coverage-status input.documentType must be one of ${coveragePlanDocumentTypes.join(", ")}.`
+      `components.coverage-status input.documentType must be one of ${coveragePlanDocumentTypes.join(
+        ", "
+      )}.`
     );
   }
   const pageId = getOptionalStringInput(
@@ -5230,14 +5636,20 @@ const getAnimationComponentGuidance = (component: string) =>
 const collectionComponentUsage =
   "Use Collection whenever an array or object from a resource or data variable should render a repeated list, grid, set of cards, table rows, options, tabs, or similar UI. Prefer insert-collection: pass the complete array/object plus one repeated-item JSX root, and it creates the Collection, private item/itemKey parameters, iterable binding, and item bindings atomically. External resource arrays are often nested below the scoped result's data field. Array iteration exposes `collectionItem`; object iteration also exposes `collectionItemKey`. Use expressions such as expression`collectionItem.name` in item JSX. Wrap multiple repeated siblings in one Element. For repeated Radix items, bind a stable unique id or slug to required value props. Do not create, replace, or delete internal Collection parameter records directly.";
 
+const isComponentAvailableInMcpCatalog = (
+  component: string,
+  meta: WsComponentMeta
+) =>
+  component !== "WebhookForm" &&
+  isComponentMetaUnavailableInCatalog(meta) === false;
+
 const getComponentCatalog = () => ({
   source: "@webstudio-is/sdk-components-registry/metas",
   usage:
     'Full component catalog. Prefer components.list({"source":"all"}), templates.list({}), components.search({"brief":"radix select"}), components.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}), and templates.get({"component":"@webstudio-is/sdk-components-react-radix:Select"}) for normal component discovery. Prefer insert-fragment for authored/styled sections. Use insert-component only when you want exactly one component template inserted automatically. Known components with contentModel.category "none" are not standalone-insertable; insert their root component template instead so required providers/parents are included.',
   components: [...componentMetas.entries()]
-    .filter(
-      ([_component, meta]) =>
-        isComponentMetaUnavailableInCatalog(meta) === false
+    .filter(([component, meta]) =>
+      isComponentAvailableInMcpCatalog(component, meta)
     )
     .map(([component, meta]) => {
       const [namespace, exportName] = parseComponentName(component);
@@ -5261,9 +5673,8 @@ const getComponentCatalog = () => ({
 
 const getCompactComponentCatalogEntries = () =>
   [...componentMetas.entries()]
-    .filter(
-      ([_component, meta]) =>
-        isComponentMetaUnavailableInCatalog(meta) === false
+    .filter(([component, meta]) =>
+      isComponentAvailableInMcpCatalog(component, meta)
     )
     .map(([component, meta]) => {
       const [parsedNamespace, exportName] = parseComponentName(component);
@@ -5323,9 +5734,10 @@ const getComponentSummaryEntry = ({
       )
     );
   if (
-    hiddenRequiredPart === false &&
-    (isComponentMetaUnavailableInCatalog(meta) ||
-      isComponentHiddenFromCatalog(meta, visibleCategory))
+    component === "WebhookForm" ||
+    (hiddenRequiredPart === false &&
+      (isComponentMetaUnavailableInCatalog(meta) ||
+        isComponentHiddenFromCatalog(meta, visibleCategory)))
   ) {
     return;
   }
@@ -5487,7 +5899,7 @@ const getComponentRegistryItems = () =>
     metas: componentMetas,
     templates: getComponentTemplates(),
     sources: getComponentCatalogSources(),
-  });
+  }).filter((item) => item.meta.component !== "WebhookForm");
 
 const filterRegistryItemsBySource = (
   items: readonly ComponentRegistryItem[],
@@ -5560,18 +5972,40 @@ const listRegistryItems = ({
   };
 };
 
+const getTemplateRootComponent = (
+  templates: ComponentTemplateRegistry,
+  name: string
+) => {
+  const template = templates.get(name)?.template;
+  const child =
+    template?.children.length === 1 ? template.children[0] : undefined;
+  return child?.type === "id"
+    ? template?.instances.find((instance) => instance.id === child.value)
+        ?.component
+    : undefined;
+};
+
 const getTemplateDetails = (input: unknown) => {
   const requested = getTemplateInput(input);
   const templateName = requested.startsWith("template:")
     ? requested
     : `template:${requested}`;
-  const item = getComponentRegistryItems().find(
-    (candidate) =>
-      candidate.meta.source === "template" &&
-      (candidate.name === requested ||
-        candidate.name === templateName ||
-        candidate.meta.component === requested)
-  );
+  const templates = getComponentTemplates();
+  const items = getComponentRegistryItems();
+  const item =
+    items.find(
+      (candidate) =>
+        candidate.meta.source === "template" &&
+        (candidate.name === requested ||
+          candidate.name === templateName ||
+          candidate.meta.component === requested)
+    ) ??
+    items.find(
+      (candidate) =>
+        candidate.meta.source === "template" &&
+        getTemplateRootComponent(templates, candidate.meta.component) ===
+          requested
+    );
   if (item === undefined) {
     return {
       found: false,
@@ -5580,7 +6014,7 @@ const getTemplateDetails = (input: unknown) => {
         'Template was not found in the shared registry. Use templates.list or components.list with source:"template" to discover exact template ids.',
     };
   }
-  const template = getComponentTemplates().get(item.meta.component);
+  const template = templates.get(item.meta.component);
   return {
     found: true,
     ...item,
@@ -6045,9 +6479,7 @@ const getComponentFindInput = (
   };
 };
 
-const compactComponentSearchEntry = (
-  entry: ComponentSummaryEntry & { matchedTokens?: string[] }
-) => {
+const compactComponentSearchEntry = (entry: Record<string, unknown>) => {
   const {
     templateRequiredEdges: _templateRequiredEdges,
     templateRequiredParts: _templateRequiredParts,
@@ -6069,10 +6501,33 @@ const findComponents = async (
   const tokens = normalizedBrief
     .split(/\s+/)
     .filter((token) => token.length > 1);
+  const registryOnlyTemplates = getComponentRegistryItems()
+    .filter(
+      (item) =>
+        item.meta.source === "template" &&
+        componentMetas.has(item.meta.component) === false
+    )
+    .map((item) => {
+      const [parsedNamespace, exportName] = parseComponentName(
+        item.meta.component
+      );
+      return {
+        component: item.meta.component,
+        exportName,
+        namespace: parsedNamespace ?? "global",
+        label: item.meta.label,
+        category: item.meta.category,
+        hasTemplate: true,
+        standaloneInsertable: true,
+        insertWith: item.meta.insert.component,
+        template: item.name,
+        description: item.description,
+      };
+    });
   const components =
     tokens.length === 0
       ? []
-      : summary.components
+      : [...summary.components, ...registryOnlyTemplates]
           .map((entry) => {
             const haystack = normalize(
               [
@@ -6081,7 +6536,9 @@ const findComponents = async (
                 entry.namespace,
                 entry.label,
                 entry.category,
-                entry.contentCategory,
+                "contentCategory" in entry ? entry.contentCategory : undefined,
+                "template" in entry ? entry.template : undefined,
+                "description" in entry ? entry.description : undefined,
               ]
                 .filter(Boolean)
                 .join(" ")
@@ -6122,7 +6579,7 @@ const findComponents = async (
     offset + limit < components.length ? offset + limit : undefined;
   return {
     usage:
-      "Search results are ranked, compact, and paged. Standalone/template roots are ranked before child parts. Multi-word searches match any meaningful token. Prefer insert-fragment for authored/styled sections. Use insert-component with insertWith/component only when inserting one standalone template/component. For full template edges/text, props, states, or content model, call components.get for one component.",
+      "Search results are ranked, compact, and paged. Standalone/template roots are ranked before child parts. Multi-word searches match any meaningful token. Prefer insert-fragment for authored/styled sections. Use insert-component with insertWith/component only when inserting one standalone template/component. For component details, call components.get with component. For registry-only template results, call templates.get with the returned template id.",
     query: brief,
     count: pagedComponents.length,
     totalCount: components.length,
@@ -6156,6 +6613,32 @@ const getComponentDetails = (component: string) => {
       ? 'Prefer placing JsonLd inside HeadSlot. Insert it with insert-component using the HeadSlot instance as parentInstanceId and component "JsonLd". For fixed structured data, set code with update-props using type "string" and a compact JSON object or array string. For structured data containing runtime values, use bind-props with an expression that evaluates directly to an object or array. The binding value stores expression source text, but the evaluated result must not be a string. Do not call JSON.stringify or assemble JSON with string concatenation; JsonLd validates and serializes the evaluated value. Fixed values with structurally invalid JSON-LD are rejected. Run audit with the seo scope after editing to find unknown, superseded, unsupported, or incompatible Schema.org terms; vocabulary findings are warnings because custom vocabularies remain valid.'
       : undefined;
   if (entry === undefined || meta === undefined) {
+    const templateItem = getComponentRegistryItems().find((item) => {
+      if (item.meta.source !== "template") {
+        return false;
+      }
+      return (
+        item.meta.component === component ||
+        getTemplateRootComponent(templates, item.meta.component) === component
+      );
+    });
+    if (templateItem !== undefined) {
+      const template = templates.get(templateItem.meta.component)?.template;
+      const rootComponent = getTemplateRootComponent(
+        templates,
+        templateItem.meta.component
+      );
+      const rootMeta = componentMetas.get(rootComponent ?? "");
+      return {
+        found: true,
+        component: rootComponent ?? templateItem.meta.component,
+        ...templateItem,
+        props: rootMeta?.props ?? {},
+        states: rootMeta?.states ?? [],
+        template,
+        usage: `Use insert-component with component "${templateItem.meta.component}" to insert this template.`,
+      };
+    }
     return {
       found: false,
       component,
@@ -6232,7 +6715,9 @@ const getMetaIndex = (
         "Do not call every discovery tool up front. Use this meta.index response for orientation, then call at most one focused discovery tool before acting.",
       tools:
         'Use meta.get-more-tools({"tools":["insert-fragment"]}) for the primary authored/styled insertion tool. Use {"brief":"style updates"} only for search. Page through webstudio://project/tools only when broader operation discovery is necessary.',
-      insertFragment: `Primary authored/styled insertion command shape: save ${JSON.stringify(insertFragmentInputFileExample)} as ${insertFragmentInputFilePath}, then run node packages/cli/local.js insert-fragment --input-file ${insertFragmentInputFilePath} --dry-run. Use parentInstanceId, not parentId. Use lowercase HTML elements, direct registered component identifiers, and helpers such as css, token, expression, and ActionValue. Use ws:style={css\`...\`} for Webstudio-native CSS, or style={{ padding: 24 }} for React-style object syntax converted into editable Webstudio styles. Use node packages/cli/local.js mcp single-op-call insert-fragment only when you need the explicit MCP form.`,
+      insertFragment: `Primary authored/styled insertion command shape: save ${JSON.stringify(
+        insertFragmentInputFileExample
+      )} as ${insertFragmentInputFilePath}, then run node packages/cli/local.js insert-fragment --input-file ${insertFragmentInputFilePath} --dry-run. Use parentInstanceId, not parentId. Use lowercase HTML elements, direct registered component identifiers, and helpers such as css, token, expression, and ActionValue. Use ws:style={css\`...\`} for Webstudio-native CSS, or style={{ padding: 24 }} for React-style object syntax converted into editable Webstudio styles. Use node packages/cli/local.js mcp single-op-call insert-fragment only when you need the explicit MCP form.`,
       resources:
         "Use MCP resources/list to discover overview and full resources.",
       projectSearch:
@@ -7034,7 +7519,9 @@ const getWorkflowInput = (input: unknown) => {
     workflowPhaseNames.includes(phase as WorkflowPhaseName) === false
   ) {
     throw new Error(
-      `workflow.next input.phase must be one of ${workflowPhaseNames.join(", ")}.`
+      `workflow.next input.phase must be one of ${workflowPhaseNames.join(
+        ", "
+      )}.`
     );
   }
   return { goal, phase: phase as WorkflowPhaseName };
@@ -8164,6 +8651,41 @@ const getPreviewInput = (input: unknown): ProjectSessionPreviewInput => {
   };
 };
 
+const getPreviewSubmitFormInput = (
+  input: unknown
+): ProjectSessionPreviewSubmitFormInput =>
+  z
+    .object({
+      path: z.string().min(1),
+      selector: z.string().min(1).max(500),
+      values: z
+        .array(
+          z
+            .object({
+              name: z.string().min(1),
+              value: z.string().optional(),
+              file: z
+                .object({
+                  name: z.string().min(1),
+                  base64: z.string().max(1_400_000),
+                  type: z.string().optional(),
+                })
+                .strict()
+                .optional(),
+            })
+            .strict()
+            .refine(
+              (value) =>
+                (value.value === undefined) !== (value.file === undefined)
+            )
+        )
+        .max(100),
+      submitter: z.string().min(1).max(500).optional(),
+      timeout: z.number().int().min(1).max(60_000).optional(),
+    })
+    .strict()
+    .parse(input);
+
 const slowOperationConfirmationTtlMs = 5 * 60 * 1000;
 
 const getProductionPreviewPreflight = async (input: unknown) => {
@@ -8261,6 +8783,8 @@ type ProjectSessionMcpCoreOptions<Command extends string> = {
   diffScreenshots?: DiffScreenshots;
   installOcr?: InstallOcr;
   startPreview?: StartPreview;
+  submitPreviewForm?: SubmitPreviewForm;
+  simulateForm?: SimulateForm;
   getPreviewStatus?: GetPreviewStatus;
   stopPreview?: StopPreview;
   guidance?: ProjectSessionMcpGuidance;
@@ -8295,6 +8819,8 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
   diffScreenshots,
   installOcr,
   startPreview,
+  submitPreviewForm,
+  simulateForm,
   getPreviewStatus,
   stopPreview,
   guidance,
@@ -8324,6 +8850,8 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
     includeInstallOcr: installOcr !== undefined,
     includePreview:
       startPreview !== undefined && getPreviewStatus !== undefined,
+    includePreviewSubmitForm: submitPreviewForm !== undefined,
+    includeSimulateForm: simulateForm !== undefined,
     includeRestorePoints: restorePoints !== undefined,
   });
   const listTools = () => [...tools];
@@ -8894,6 +9422,40 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           })
         );
       }
+      if (name === "preview.submit-form" && submitPreviewForm !== undefined) {
+        return toMetaResult(
+          await submitPreviewForm(getPreviewSubmitFormInput(input))
+        );
+      }
+      if (name === "forms.simulate-submission" && simulateForm !== undefined) {
+        const values = z
+          .object({ name: z.string().min(1), value: z.string() })
+          .strict();
+        const parsed = z
+          .object({
+            path: z.string().startsWith("/").max(2048),
+            siteOrigin: z.string().url().max(2048).optional(),
+            formId: z.string().min(1),
+            values: z.array(values).max(100),
+            arrayNames: z.array(z.string().min(1)).max(100).optional(),
+          })
+          .strict()
+          .parse(input);
+        if (parsed.siteOrigin !== undefined) {
+          const origin = new URL(parsed.siteOrigin);
+          if (
+            origin.protocol !== "https:" ||
+            origin.username !== "" ||
+            origin.password !== "" ||
+            origin.pathname !== "/" ||
+            origin.search !== "" ||
+            origin.hash !== ""
+          ) {
+            throw new Error("siteOrigin must be a bare HTTPS origin.");
+          }
+        }
+        return toMetaResult(await simulateForm(parsed));
+      }
       if (name === "preview.status" && getPreviewStatus !== undefined) {
         return toMetaResult(await getPreviewStatus());
       }
@@ -8928,6 +9490,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           insertionOperation,
           await getInsertFragmentInput(transportInput.input)
         );
+        assertNoLegacyWebhookFormInsertion("insert-fragment", insertionInput);
         const verificationInput = getNormalizedOperationInput(
           verificationOperation,
           { pagePath: transportInput.input.pagePath, limit: 200 }
@@ -9039,6 +9602,27 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       const toolInput = transportInput.input;
       dryRun = dryRun || transportInput.dryRun;
       const normalizedInput = await normalizeMcpOperationInput(name, toolInput);
+      assertNoLegacyWebhookFormInsertion(name, normalizedInput);
+      if (
+        (name === "clone-instance" || name === "duplicate-instance") &&
+        isRecord(normalizedInput) &&
+        typeof normalizedInput.sourceInstanceId === "string"
+      ) {
+        const source = await executeRead("list-instances", {
+          rootInstanceId: normalizedInput.sourceInstanceId,
+          component: "WebhookForm",
+          limit: 1,
+        });
+        if (
+          isRecord(source.result) &&
+          Array.isArray(source.result.instances) &&
+          source.result.instances.length > 0
+        ) {
+          throw new Error(
+            'Webhook Form is deprecated and cannot be duplicated through MCP. Use component "Form".'
+          );
+        }
+      }
       const isAuditInput = name === "audit" && isRecord(toolInput);
       if (
         isAuditInput &&
@@ -9141,6 +9725,16 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             )
           : normalizedInput
       );
+      const plannedCopy = legacyWebhookFormCopyCommands.has(name)
+        ? await executeOperation({
+            command: name as Command,
+            input: operationInput,
+            dryRun: true,
+          })
+        : undefined;
+      if (plannedCopy !== undefined) {
+        assertNoLegacyWebhookFormCopy(plannedCopy);
+      }
       const [envelope, response] = operation.requiresConfirm
         ? await executeDestructiveMcpOperation({
             command: name as Command,
@@ -9151,11 +9745,13 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             executeOperation,
           })
         : [
-            await executeOperation({
-              command: name as Command,
-              input: operationInput,
-              dryRun,
-            }),
+            dryRun && plannedCopy !== undefined
+              ? plannedCopy
+              : await executeOperation({
+                  command: name as Command,
+                  input: operationInput,
+                  dryRun,
+                }),
           ];
       if (response !== undefined) {
         return response;
@@ -9334,6 +9930,8 @@ export const createProjectSessionMcpServer = async <
   diffScreenshots,
   installOcr,
   startPreview,
+  submitPreviewForm,
+  simulateForm,
   getPreviewStatus,
   stopPreview,
   guidance,
@@ -9378,11 +9976,19 @@ export const createProjectSessionMcpServer = async <
   );
   const sendLog = (level: "info" | "error", data: string) => {
     reportLog?.(level, data);
-    void server.sendLoggingMessage({
-      level,
-      logger: "webstudio",
-      data,
-    } satisfies (typeof LoggingMessageNotificationSchema._output)["params"]);
+    void server
+      .sendLoggingMessage({
+        level,
+        logger: "webstudio",
+        data,
+      } satisfies (typeof LoggingMessageNotificationSchema._output)["params"])
+      .catch(() => {
+        // Heartbeats can finish after the client disconnects. A logging
+        // notification is best effort and must not crash the MCP server.
+        if (server.transport !== undefined) {
+          reportLog?.("error", "MCP logging notification failed");
+        }
+      });
   };
   const core = createProjectSessionMcpCore({
     operations,
@@ -9394,6 +10000,8 @@ export const createProjectSessionMcpServer = async <
     diffScreenshots,
     installOcr,
     startPreview,
+    submitPreviewForm,
+    simulateForm,
     getPreviewStatus,
     stopPreview,
     guidance,
@@ -9422,7 +10030,9 @@ export const createProjectSessionMcpServer = async <
         continue;
       }
       throw new Error(
-        `MCP tool names ${canonicalNames.join(" and ")} both map to ${exposedName}.`
+        `MCP tool names ${canonicalNames.join(
+          " and "
+        )} both map to ${exposedName}.`
       );
     }
   }
@@ -9430,7 +10040,9 @@ export const createProjectSessionMcpServer = async <
     onInitialized?.(server.getClientVersion()?.name);
     sendLog(
       "info",
-      `ready with ${core.listTools().length} tools; use tools/list, meta.index, or webstudio://project/guide`
+      `ready with ${
+        core.listTools().length
+      } tools; use tools/list, meta.index, or webstudio://project/guide`
     );
   };
 

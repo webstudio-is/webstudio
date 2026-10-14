@@ -1,11 +1,8 @@
 /** Composes registered components with their canvas metadata and templates. */
 import { coreMetas } from "@webstudio-is/sdk";
 import { coreTemplates } from "./core-templates";
-import { hooks as baseHooks } from "@webstudio-is/sdk-components-react/hooks";
 import * as baseTemplates from "@webstudio-is/sdk-components-react/templates";
-import { hooks as animationHooks } from "@webstudio-is/sdk-components-animation/hooks";
 import * as animationTemplates from "@webstudio-is/sdk-components-animation/templates";
-import { hooks as radixHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import * as radixTemplates from "@webstudio-is/sdk-components-react-radix/templates";
 import {
   animationComponentNamespace,
@@ -42,7 +39,6 @@ export const canvasComponentLibraries = [
     components: baseComponentLibrary.components,
     componentIds,
     metas: getLibraryMetas(),
-    hooks: baseHooks,
     templates: baseTemplates,
   },
   {
@@ -50,7 +46,6 @@ export const canvasComponentLibraries = [
     components: radixComponentLibrary.components,
     componentIds,
     metas: getLibraryMetas(radixComponentNamespace),
-    hooks: radixHooks,
     templates: radixTemplates,
   },
   {
@@ -58,7 +53,6 @@ export const canvasComponentLibraries = [
     components: animationComponentLibrary.components,
     componentIds,
     metas: getLibraryMetas(animationComponentNamespace),
-    hooks: animationHooks,
     templates: animationTemplates,
   },
 ] as const;

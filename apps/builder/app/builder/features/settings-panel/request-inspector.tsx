@@ -218,22 +218,34 @@ export const RequestInspector = ({
   queryContainerRef,
   preview,
   diagnostics,
+  request,
+  previewLabel = "Preview",
   queryPending = false,
   previewPending = false,
+  requestPending = false,
   diagnosticsPending = false,
   onDiagnosticsOpen,
 }: {
   queryContainerRef?: Ref<HTMLDivElement>;
   preview: ReactNode;
   diagnostics?: ReactNode;
+  request?: ReactNode;
+  previewLabel?: "Preview" | "Response";
   queryPending?: boolean;
   previewPending?: boolean;
+  requestPending?: boolean;
   diagnosticsPending?: boolean;
   onDiagnosticsOpen?: () => void;
 }) => (
   <PanelTabs
     key={queryContainerRef === undefined ? "preview" : "query"}
-    defaultValue={queryContainerRef === undefined ? "preview" : "query"}
+    defaultValue={
+      queryContainerRef !== undefined
+        ? "query"
+        : request !== undefined
+          ? "request"
+          : "preview"
+    }
     css={{ height: "100%", minWidth: 0, overflow: "hidden" }}
   >
     <PanelTabsList
@@ -246,11 +258,24 @@ export const RequestInspector = ({
       {queryContainerRef !== undefined && (
         <PanelTabsTrigger value="query">Query</PanelTabsTrigger>
       )}
-      <PanelTabsTrigger value="preview">Preview</PanelTabsTrigger>
+      {request !== undefined && (
+        <PanelTabsTrigger value="request">Request</PanelTabsTrigger>
+      )}
+      <PanelTabsTrigger value="preview">{previewLabel}</PanelTabsTrigger>
       <PanelTabsTrigger value="diagnostics" onClick={onDiagnosticsOpen}>
         Diagnostics
       </PanelTabsTrigger>
     </PanelTabsList>
+    {request !== undefined && (
+      <PanelTabsContent
+        value="request"
+        aria-busy={requestPending}
+        css={{ flex: 1, position: "relative", overflow: "hidden" }}
+      >
+        {request}
+        {requestPending && <RequestInspectorLoading label="Loading request…" />}
+      </PanelTabsContent>
+    )}
     {queryContainerRef !== undefined && (
       <PanelTabsContent
         value="query"
@@ -276,7 +301,15 @@ export const RequestInspector = ({
       css={{ flex: 1, position: "relative", overflow: "hidden" }}
     >
       {preview}
-      {previewPending && <RequestInspectorLoading label="Loading preview…" />}
+      {previewPending && (
+        <RequestInspectorLoading
+          label={
+            previewLabel === "Response"
+              ? "Loading response…"
+              : "Loading preview…"
+          }
+        />
+      )}
     </PanelTabsContent>
     <PanelTabsContent
       value="diagnostics"

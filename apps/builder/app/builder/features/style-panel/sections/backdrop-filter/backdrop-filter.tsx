@@ -3,8 +3,7 @@ import {
   type CssProperty,
   type StyleValue,
 } from "@webstudio-is/css-engine";
-import { Tooltip, Flex, Text, cssVar } from "@webstudio-is/design-system";
-import { InfoCircleIcon } from "@webstudio-is/icons";
+import { InfoTooltip, Flex, Text } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
 import { RepeatedStyleSection } from "../../shared/style-section";
 import { FilterSectionContent } from "../../shared/filter-content";
@@ -66,8 +65,8 @@ export const Section = () => {
               );
             }}
             tooltip={
-              <Tooltip
-                variant="wrapped"
+              <InfoTooltip
+                label="About backdrop filters"
                 content={
                   <Flex gap="2" direction="column">
                     <Text variant="regularBold">{label}</Text>
@@ -80,9 +79,7 @@ export const Section = () => {
                     </Text>
                   </Flex>
                 }
-              >
-                <InfoCircleIcon color={cssVar("--foreground-secondary")} />
-              </Tooltip>
+              />
             }
           />
         )}

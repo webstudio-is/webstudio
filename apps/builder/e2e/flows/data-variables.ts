@@ -21,7 +21,7 @@ const closeVariablePanelAndWaitForSave = async ({ page }: { page: Page }) => {
 
 const openNewVariablePanel = async ({ page }: { page: Page }) => {
   await page.getByRole("tab", { name: "Settings" }).click();
-  await page.getByRole("button", { name: "Add data variable" }).click();
+  await page.getByRole("button", { name: "Add variable" }).click();
   await page.getByText("New variable", { exact: true }).waitFor();
 };
 
@@ -36,9 +36,8 @@ const selectVariableType = async ({
     .getByText("Type", { exact: true })
     .locator("xpath=following::button[1]")
     .click();
-  await page
-    .getByRole("option", { name: new RegExp(`^${next}( Pro)?$`) })
-    .click();
+  const option = page.getByRole("option").filter({ hasText: next });
+  await option.click();
 };
 
 const fillVariableName = async ({
@@ -58,7 +57,7 @@ export const selectContentInstance = async ({ page }: { page: Page }) => {
     .waitFor({ state: "hidden" });
   await page.getByRole("tab", { name: "Settings" }).click();
   await page
-    .getByRole("button", { name: "Add data variable" })
+    .getByRole("button", { name: "Add variable" })
     .waitFor({ state: "visible" });
 };
 
@@ -90,7 +89,9 @@ export const bindSelectedTextContentToExpression = async ({
   } catch (error) {
     const dialogText = await bindingDialog.innerText().catch(() => "");
     throw new Error(
-      `Expected Text Content binding ${JSON.stringify(expression)} to save. Binding dialog: ${dialogText}`,
+      `Expected Text Content binding ${JSON.stringify(
+        expression
+      )} to save. Binding dialog: ${dialogText}`,
       { cause: error }
     );
   }
@@ -109,7 +110,7 @@ export const createHttpResourceVariable = async ({
 }) => {
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
-  await selectVariableType({ page, next: "Resource" });
+  await selectVariableType({ page, next: "REST resource" });
   await page.getByRole("textbox", { name: "URL" }).fill(url);
   await closeVariablePanelAndWaitForSave({ page });
 };
@@ -127,7 +128,7 @@ export const createGraphqlResourceVariable = async ({
 }) => {
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
-  await selectVariableType({ page, next: "GraphQL" });
+  await selectVariableType({ page, next: "GraphQL resource" });
   await page.getByRole("textbox", { name: "URL" }).fill(url);
   await page.getByRole("textbox", { name: "Query" }).fill(query);
   await closeVariablePanelAndWaitForSave({ page });
@@ -136,22 +137,15 @@ export const createGraphqlResourceVariable = async ({
 export const createSystemResourceVariable = async ({
   page,
   name,
-  resource = "Sitemap",
+  resource = "Sitemap resource",
 }: {
   page: Page;
   name: string;
-  resource?: "Sitemap" | "Current date" | "Assets";
+  resource?: "Sitemap resource" | "Current date resource" | "Assets resource";
 }) => {
   await openNewVariablePanel({ page });
   await fillVariableName({ page, name });
-  await selectVariableType({ page, next: "System resource" });
-  if (resource !== "Sitemap") {
-    await getVariableForm(page)
-      .getByText("Resource", { exact: true })
-      .locator("xpath=following::button[1]")
-      .click();
-    await page.getByRole("option", { name: resource, exact: true }).click();
-  }
+  await selectVariableType({ page, next: resource });
   await closeVariablePanelAndWaitForSave({ page });
 };
 

@@ -2,5 +2,6 @@
   "extends": "@webstudio-is/tsconfig/base.json",
   "compilerOptions": {
     "types": ["react/canary", "@types/node"]
-  }
+  },
+  "exclude": ["vitest.config.ts"]
 }

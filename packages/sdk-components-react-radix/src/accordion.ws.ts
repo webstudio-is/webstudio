@@ -96,6 +96,12 @@ export const metaAccordionTrigger: WsComponentMeta = {
 };
 
 export const metaAccordionContent: WsComponentMeta = {
+  selectionReveal: {
+    type: "value",
+    ancestor: getRadixComponentId("Accordion"),
+    prop: "value",
+    source: getRadixComponentId("AccordionItem"),
+  },
   label: "Item Content",
   icon: ContentIcon,
   contentModel: {

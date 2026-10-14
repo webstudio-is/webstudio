@@ -9,11 +9,7 @@ import {
   useContext,
 } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import {
-  getClosestInstance,
-  ReactSdkContext,
-  type Hook,
-} from "@webstudio-is/react-sdk/runtime";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import {
   getLinkActivation,
   NavigationOverlayContext,
@@ -95,41 +91,3 @@ export const PopoverContent = forwardRef<
 );
 
 export const PopoverClose = PopoverPrimitive.Close;
-
-/* BUILDER HOOKS */
-
-const namespace = "@webstudio-is/sdk-components-react-radix";
-
-// For each PopoverContent component within the selection,
-// we identify its closest parent Popover component
-// and update its open prop bound to variable.
-export const hooksPopover: Hook = {
-  onNavigatorUnselect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:PopoverContent`) {
-        const popover = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:Popover`
-        );
-        if (popover) {
-          context.setMemoryProp(popover, "open", undefined);
-        }
-      }
-    }
-  },
-  onNavigatorSelect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `${namespace}:PopoverContent`) {
-        const popover = getClosestInstance(
-          event.instancePath,
-          instance,
-          `${namespace}:Popover`
-        );
-        if (popover) {
-          context.setMemoryProp(popover, "open", true);
-        }
-      }
-    }
-  },
-};

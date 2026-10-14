@@ -16,6 +16,7 @@ import {
   Button,
   cssVar,
   Tooltip,
+  InfoTooltip,
   IconButton,
   Grid,
   Flex,
@@ -463,16 +464,10 @@ const ChangeProjectDomain = ({
         <Grid flow="column" align="center" gap={2}>
           <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>
             <Label htmlFor={id}>Domain:</Label>
-            <Tooltip
+            <InfoTooltip
+              label="About domain name"
               content="Domain can't be renamed once published. Unpublish to enable renaming."
-              variant="wrapped"
-            >
-              <InfoCircleIcon
-                tabIndex={0}
-                style={{ flexShrink: 0 }}
-                color={cssVar("--foreground-secondary")}
-              />
-            </Tooltip>
+            />
           </Flex>
           <InputField
             text="mono"
@@ -522,16 +517,10 @@ const ChangeProjectDomain = ({
           <Grid flow="column" align="center" gap={2}>
             <Flex align="center" gap={1} css={{ width: theme.spacing[20] }}>
               <Label htmlFor={`${id}-password`}>Password:</Label>
-              <Tooltip
+              <InfoTooltip
+                label="About staging password"
                 content="This password is read-only and cannot be changed. It is the same for every user. This prevents phishing attacks."
-                variant="wrapped"
-              >
-                <InfoCircleIcon
-                  tabIndex={0}
-                  style={{ flexShrink: 0 }}
-                  color={cssVar("--foreground-secondary")}
-                />
-              </Tooltip>
+              />
             </Flex>
             <InputField
               text="mono"

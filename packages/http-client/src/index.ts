@@ -1410,6 +1410,28 @@ export const getProjectPermissions = projectQuery(
   getPublicApiOperationPath("permissions")
 );
 
+export const simulateFormSubmission = async (
+  params: AuthProjectParams & {
+    formId: string;
+    path: string;
+    siteOrigin?: string;
+    values: readonly { name: string; value: string }[];
+    arrayNames?: readonly string[];
+  }
+) =>
+  await mutateProjectApi<{
+    success: boolean;
+    status: number;
+    results: { status: number; resourceId?: string }[];
+    errors: { status?: number; message: string }[];
+  }>(params, getPublicApiOperationPath("simulate-form-submission"), {
+    formId: params.formId,
+    path: params.path,
+    siteOrigin: params.siteOrigin,
+    values: params.values,
+    arrayNames: params.arrayNames,
+  });
+
 export const getBuildSnapshot = projectQueryInput<
   AuthProjectParams & {
     include?: string[];

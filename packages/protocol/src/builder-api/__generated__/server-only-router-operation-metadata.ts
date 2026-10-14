@@ -22,6 +22,62 @@ export const serverOnlyRouterOperationMetadata = {
       required: [],
     },
   },
+  "forms.simulateSubmission": {
+    id: "forms.simulateSubmission",
+    command: "simulate-form-submission",
+    method: "mutation",
+    path: "api.forms.simulateSubmission",
+    client: "simulateFormSubmission",
+    permit: "build",
+    inputSchema: {
+      type: "object",
+      properties: {
+        formId: {
+          type: "string",
+          minLength: 1,
+        },
+        path: {
+          type: "string",
+          minLength: 1,
+          maxLength: 2048,
+        },
+        siteOrigin: {
+          type: "string",
+          format: "uri",
+        },
+        values: {
+          maxItems: 100,
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: {
+                type: "string",
+                minLength: 1,
+                maxLength: 256,
+              },
+              value: {
+                type: "string",
+                maxLength: 10000,
+              },
+            },
+            required: ["name", "value"],
+          },
+        },
+        arrayNames: {
+          default: [],
+          maxItems: 100,
+          type: "array",
+          items: {
+            type: "string",
+            minLength: 1,
+            maxLength: 256,
+          },
+        },
+      },
+      required: ["formId", "path", "values"],
+    },
+  },
   "projects.permissions": {
     id: "projects.permissions",
     command: "permissions",
@@ -230,6 +286,7 @@ export const serverOnlyRouterOperationMetadata = {
                       field: {
                         type: "string",
                         enum: [
+                          "formId",
                           "jobId",
                           "domainId",
                           "blockInstanceId",

@@ -14,6 +14,8 @@ import { getStableErrorCode } from "../error-codes";
 import {
   defaultScreenshotTimeout,
   isBrowserSessionClosedError,
+  type BrowserFormValue,
+  type BrowserFormSubmitResult,
 } from "@webstudio-is/vision/browser";
 import {
   preparePreviewProject,
@@ -71,6 +73,14 @@ type McpScreenshotInput = {
 
 type McpToolProgress = {
   report: (message: string) => void;
+};
+
+export type McpPreviewSubmitFormInput = {
+  path: string;
+  selector: string;
+  values: readonly BrowserFormValue[];
+  submitter?: string;
+  timeout?: number;
 };
 
 const getPreparationProgress = (
@@ -293,14 +303,26 @@ export const createMcpPreviewHandlers = ({
   preparePreview?: typeof prepareDefaultPreviewProject;
   prepareSessionDataFile?: () => Promise<void>;
   captureScreenshot?: typeof captureScreenshotWithBrowserInstall;
-  createCaptureSession?: typeof createScreenshotCaptureSession;
+  createCaptureSession?: () => Pick<
+    ReturnType<typeof createScreenshotCaptureSession>,
+    "capture" | "capturePage" | "close"
+  > &
+    Partial<
+      Pick<ReturnType<typeof createScreenshotCaptureSession>, "submitForm">
+    >;
   sleep?: (durationMs: number) => Promise<void>;
   getHttpCredentials?: (
     path: string
   ) => { username: string; password: string } | undefined;
 }) => {
   let captureSession:
-    | ReturnType<typeof createScreenshotCaptureSession>
+    | (Pick<
+        ReturnType<typeof createScreenshotCaptureSession>,
+        "capture" | "capturePage" | "close"
+      > &
+        Partial<
+          Pick<ReturnType<typeof createScreenshotCaptureSession>, "submitForm">
+        >)
     | undefined;
   let captureSessionConfig: CaptureSessionConfig | undefined;
   let activeSource: PreviewSource | undefined;
@@ -549,6 +571,106 @@ export const createMcpPreviewHandlers = ({
       ? { previewMode: preview.status().mode }
       : {};
   return {
+    async submitForm(
+      input: McpPreviewSubmitFormInput
+    ): Promise<BrowserFormSubmitResult> {
+      return await runPreviewLifecycle(async () => {
+        const status = preview.status();
+        if (!status.running || status.url === undefined || isStale()) {
+          throw new Error(
+            "Start or refresh this MCP session's Preview before submitting a form."
+          );
+        }
+        const base = new URL(status.url);
+        const pathname = input.path.split(/[?#]/, 1)[0] ?? "";
+        let decodedPathname: string;
+        try {
+          decodedPathname = decodeURIComponent(pathname);
+        } catch {
+          throw new Error("Form path must be a valid Preview path.");
+        }
+        if (
+          base.protocol !== "http:" ||
+          !["127.0.0.1", "localhost", "[::1]"].includes(base.hostname) ||
+          base.username !== "" ||
+          base.password !== "" ||
+          !pathname.startsWith("/") ||
+          pathname.startsWith("//") ||
+          decodedPathname.includes("\\") ||
+          decodedPathname.split("/").includes("..")
+        ) {
+          throw new Error(
+            "Form submission requires a path on the session-owned local Preview."
+          );
+        }
+        if (
+          input.values.length > 100 ||
+          input.selector.length > 500 ||
+          (input.submitter?.length ?? 0) > 500
+        ) {
+          throw new Error("Preview Form submission input exceeds its limits.");
+        }
+        let totalFileBytes = 0;
+        for (const value of input.values) {
+          if (value.file !== undefined) {
+            const encoded = value.file.base64;
+            if (
+              encoded.length > 1_400_000 ||
+              !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
+                encoded
+              )
+            ) {
+              throw new Error(
+                "Form file must use bounded base64 data (at most 1 MiB)."
+              );
+            }
+            const bytes = Buffer.from(encoded, "base64").length;
+            totalFileBytes += bytes;
+            if (bytes > 1_048_576 || totalFileBytes > 5_242_880) {
+              throw new Error(
+                "Form files may contain at most 1 MiB each and 5 MiB total."
+              );
+            }
+          }
+        }
+        const url = new URL(input.path, base);
+        if (url.origin !== base.origin) {
+          throw new Error(
+            "Form path must stay on the session-owned local Preview."
+          );
+        }
+        const session = await getCaptureSession({
+          viewport: { width: 1280, height: 800 },
+          browser: "auto",
+          path: input.path,
+        });
+        try {
+          if (session.submitForm === undefined) {
+            throw new Error("Browser form submission is unavailable.");
+          }
+          return await session.submitForm({
+            url: url.toString(),
+            selector: input.selector,
+            values: input.values,
+            submitter: input.submitter,
+            timeout: input.timeout ?? defaultScreenshotTimeout,
+            browser: "auto",
+          });
+        } catch {
+          // The request may already have reached a service. Never replay it.
+          await closeCaptureSession().catch(() => undefined);
+          return {
+            status: "unknown",
+            formState: "unknown",
+            results: [],
+            errors: [],
+            exchanges: [],
+            pageUrl: `${url.origin}${url.pathname}`,
+            correlationId: crypto.randomUUID(),
+          };
+        }
+      });
+    },
     async startPreview(input: McpPreviewInput, progress?: McpToolProgress) {
       return await runPreviewLifecycle(async () => {
         const mode = input.mode ?? "iterative";

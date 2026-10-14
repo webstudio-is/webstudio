@@ -4,14 +4,13 @@ import { ZodError } from "zod";
 import {
   Flex,
   Grid,
+  InfoTooltip,
   LinkButton,
   ProChip,
   Text,
   Tooltip,
-  cssVar,
   theme,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon } from "@webstudio-is/icons";
 import {
   customResponseHeader,
   customResponseHeaderKey,
@@ -92,8 +91,8 @@ export const SectionHeaders = ({
       <Flex align="center" gap={1}>
         <Text variant="titles">Headers</Text>
         {allowDynamicData === false && <ProChip>Pro</ProChip>}
-        <Tooltip
-          variant="wrapped"
+        <InfoTooltip
+          label="About response headers"
           content={
             <>
               <Text>
@@ -130,13 +129,7 @@ export const SectionHeaders = ({
               )}
             </>
           }
-        >
-          <InfoCircleIcon
-            color={cssVar("--foreground-secondary")}
-            tabIndex={0}
-            aria-label="About response headers"
-          />
-        </Tooltip>
+        />
       </Flex>
       {saveError && <Text color="destructive">{saveError}</Text>}
       <ProjectSettingsRuleList

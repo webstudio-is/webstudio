@@ -184,6 +184,7 @@ type PublicBuildSnapshot = Omit<
   version: number;
   homePageId?: string;
   rootFolderId?: string;
+  formComponentIdentityVersion?: number;
   pages?: unknown;
   pageTemplates?: unknown;
   folders?: unknown;
@@ -254,6 +255,7 @@ const toPages = (snapshot: PublicBuildSnapshot) => {
   return migratePages({
     homePageId: snapshot.homePageId,
     rootFolderId: snapshot.rootFolderId,
+    formComponentIdentityVersion: snapshot.formComponentIdentityVersion,
     pages: snapshot.pages,
     pageTemplates: snapshot.pageTemplates,
     folders: snapshot.folders,

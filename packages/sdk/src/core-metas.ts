@@ -26,6 +26,7 @@ const rootMeta: WsComponentMeta = {
 export const elementComponent = "ws:element";
 
 const elementMeta: WsComponentMeta = {
+  selectionReveal: { type: "native-option" },
   label: "Element",
   // convert [object Module] to [object Object] to enable structured cloning
   presetStyle: { ...normalize },

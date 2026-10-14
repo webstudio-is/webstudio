@@ -459,7 +459,7 @@ const createContentModeBuildData = ({
     {
       type: "instance",
       id: dataResourceHttpFormId,
-      component: "Form",
+      component: "WebhookForm",
       label: "HTTP Resource Form",
       children: [{ type: "id", value: dataResourceHttpFormTextId }],
     },
@@ -474,7 +474,7 @@ const createContentModeBuildData = ({
     {
       type: "instance",
       id: dataResourceGraphqlFormId,
-      component: "Form",
+      component: "WebhookForm",
       label: "GraphQL Resource Form",
       children: [{ type: "id", value: dataResourceGraphqlFormTextId }],
     },
@@ -802,6 +802,7 @@ const createContentModeBuildData = ({
 
   const nextPages = JSON.parse(pages) as {
     homePageId: string;
+    formComponentIdentityVersion?: number;
     pages: Array<{ id: string; rootInstanceId: string }>;
     pageTemplates?: Array<{
       id: string;
@@ -818,6 +819,9 @@ const createContentModeBuildData = ({
     throw new Error("Expected existing build to have a home page");
   }
   homePage.rootInstanceId = rootInstanceId;
+  // Tests insert canonical managed Forms later. The seeded resource examples
+  // remain WebhookForms because their action props use the legacy format.
+  nextPages.formComponentIdentityVersion = 1;
   nextPages.pageTemplates = [
     ...(nextPages.pageTemplates ?? []),
     {

@@ -7,6 +7,7 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
 import {
   patchBuild,
   patchLoadedBuild,
@@ -23,6 +24,7 @@ const createContext = (): AppContext =>
   ({
     ...testContext,
     authorization: { type: "user", userId: "user-1" },
+    planFeatures: { ...defaultPlanFeatures, maxContactEmailsPerProject: 5 },
     getOwnerPlanFeatures: async () => ({}),
   }) as unknown as AppContext;
 
@@ -95,6 +97,88 @@ const transaction = (
 });
 
 describe("patchBuild", () => {
+  test("rejects an over-limit Contact email raw patch before persistence", async () => {
+    let didUpdateBuild = false;
+    server.use(
+      db.get("Project", () => json({ userId: "owner-1" })),
+      db.patch("Build", () => {
+        didUpdateBuild = true;
+        return empty({ headers: { "Content-Range": "*/1" } });
+      })
+    );
+    const result = await patchLoadedBuild(
+      {
+        build: buildRow,
+        buildId: "build-1",
+        projectId: "project-1",
+        clientVersion: 3,
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "projectSettings",
+                patches: [
+                  {
+                    op: "add",
+                    path: ["meta", "contactEmail"],
+                    value: "team@example.com",
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      },
+      {
+        ...createContext(),
+        getOwnerPlanFeatures: async () => defaultPlanFeatures,
+      } as AppContext
+    );
+    expect(result).toMatchObject({
+      status: "error",
+      errors: "Upgrade to PRO to customize the contact email.",
+    });
+    expect(didUpdateBuild).toBe(false);
+  });
+
+  test("allows unrelated settings edits after a plan downgrade", async () => {
+    const existingBuild = {
+      ...buildRow,
+      projectSettings: JSON.stringify({
+        meta: { contactEmail: "legacy@example.com" },
+        compiler: {},
+      }),
+    };
+    server.use(
+      db.patch("Build", () => empty({ headers: { "Content-Range": "*/1" } }))
+    );
+    const result = await patchLoadedBuild(
+      {
+        build: existingBuild,
+        buildId: "build-1",
+        projectId: "project-1",
+        clientVersion: 3,
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "projectSettings",
+                patches: [
+                  { op: "add", path: ["meta", "siteName"], value: "Site" },
+                ],
+              },
+            ],
+          }),
+        ],
+      },
+      {
+        ...createContext(),
+        getOwnerPlanFeatures: async () => defaultPlanFeatures,
+      } as AppContext
+    );
+    expect(result.status).toBe("ok");
+  });
+
   test("patches an already loaded build and returns the updated build row", async () => {
     let didLoadBuild = false;
     server.use(

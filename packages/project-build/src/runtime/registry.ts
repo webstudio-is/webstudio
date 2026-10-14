@@ -54,6 +54,7 @@ import {
   type RuntimeOutputSchemaId,
 } from "./output-schemas";
 import { createRuntimeMutation, type BuilderRuntimeMutation } from "./mutation";
+import { mutationPolicies } from "./mutation-policies";
 import { listFragmentExpressions } from "./fragment";
 import {
   bindExpressionInput,
@@ -264,24 +265,27 @@ const runtimeOperation = <
           isDestructiveRuntimeCommand(publicApi.command))
         : false,
     execute: ({ state, input, context }) => {
+      const validateOutput = (value: unknown) => {
+        const parsed = executionOutputSchema.parse(value);
+        if (contract.kind === "mutation") {
+          for (const policy of mutationPolicies) {
+            policy.validate(
+              state,
+              parsed as BuilderRuntimeMutation<Record<string, unknown>>
+            );
+          }
+        }
+        return parsed as RuntimeExecutionOutput<Id, Contract>;
+      };
       const result = execute({
         state,
         input: parseOperationInput(inputSchema, input, inputJsonSchema),
         context,
       });
       if (result instanceof Promise) {
-        return result.then(
-          (value) =>
-            executionOutputSchema.parse(value) as RuntimeExecutionOutput<
-              Id,
-              Contract
-            >
-        );
+        return result.then(validateOutput);
       }
-      return executionOutputSchema.parse(result) as RuntimeExecutionOutput<
-        Id,
-        Contract
-      >;
+      return validateOutput(result);
     },
   };
 };

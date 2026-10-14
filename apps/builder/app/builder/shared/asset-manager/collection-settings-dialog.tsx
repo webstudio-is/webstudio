@@ -26,6 +26,7 @@ import {
   Flex,
   Grid,
   InputField,
+  InfoTooltip,
   Label,
   List,
   ListItem,
@@ -43,7 +44,6 @@ import {
 } from "@webstudio-is/design-system";
 import {
   AlertCircleIcon,
-  InfoCircleIcon,
   PlusIcon,
   TrashIcon,
   ListViewIcon,
@@ -904,16 +904,10 @@ export const CollectionSettingsDialog = ({
                         {fieldsError}
                       </Text>
                     )}
-                    <Tooltip
-                      variant="wrapped"
+                    <InfoTooltip
+                      label="About collection fields"
                       content="Define the information editors fill in for every entry."
-                    >
-                      <InfoCircleIcon
-                        color={cssVar("--foreground-secondary")}
-                        tabIndex={0}
-                        aria-label="About collection fields"
-                      />
-                    </Tooltip>
+                    />
                   </Flex>
                   <Button
                     css={{ flexShrink: 0 }}
@@ -1108,16 +1102,10 @@ export const CollectionSettingsDialog = ({
                                   >
                                     Field key
                                   </Label>
-                                  <Tooltip
-                                    variant="wrapped"
+                                  <InfoTooltip
+                                    label="About field key"
                                     content="Stored in the entry’s frontmatter. Used to connect this field to your page."
-                                  >
-                                    <InfoCircleIcon
-                                      color={cssVar("--foreground-secondary")}
-                                      tabIndex={0}
-                                      aria-label="About field key"
-                                    />
-                                  </Tooltip>
+                                  />
                                 </Flex>
 
                                 <InputField
@@ -1188,20 +1176,14 @@ export const CollectionSettingsDialog = ({
                               <Flex gap={1} align="center">
                                 <Label>Type</Label>
                                 {protectedField && (
-                                  <Tooltip
-                                    variant="wrapped"
+                                  <InfoTooltip
+                                    label="About field type"
                                     content={
                                       requiredField
                                         ? "The slug identifies each entry and is always required."
                                         : "This text field is used to generate the entry slug."
                                     }
-                                  >
-                                    <InfoCircleIcon
-                                      color={cssVar("--foreground-secondary")}
-                                      tabIndex={0}
-                                      aria-label="About field type"
-                                    />
-                                  </Tooltip>
+                                  />
                                 )}
                               </Flex>
                               <Select
@@ -1258,16 +1240,10 @@ export const CollectionSettingsDialog = ({
                             >
                               <Flex gap={1} align="center">
                                 <Label>Generate from</Label>
-                                <Tooltip
-                                  variant="wrapped"
+                                <InfoTooltip
+                                  label="About slug generation"
                                   content="The slug becomes the MDX filename. It is generated from this field when editors create an entry."
-                                >
-                                  <InfoCircleIcon
-                                    color={cssVar("--foreground-secondary")}
-                                    tabIndex={0}
-                                    aria-label="About slug generation"
-                                  />
-                                </Tooltip>
+                                />
                               </Flex>
                               <Select<{ key: string; label: string }>
                                 aria-label="Generate slug from"
@@ -1511,16 +1487,10 @@ export const CollectionSettingsDialog = ({
               >
                 <Flex gap={1} align="center">
                   <Text variant="titles">Entry template</Text>
-                  <Tooltip
-                    variant="wrapped"
+                  <InfoTooltip
+                    label="About entry template"
                     content="Every new entry starts as a copy of this template. Add headings, placeholder text, and default field values so editors have a consistent starting point. Changes to the template only affect future entries."
-                  >
-                    <InfoCircleIcon
-                      color={cssVar("--foreground-secondary")}
-                      tabIndex={0}
-                      aria-label="About entry template"
-                    />
-                  </Tooltip>
+                  />
                 </Flex>
                 <Grid gap={1} css={{ maxWidth: 320 }}>
                   <Label htmlFor="collection-template-name">
@@ -1575,16 +1545,10 @@ export const CollectionSettingsDialog = ({
               >
                 <Flex gap={1} align="center">
                   <Text variant="titles">Entry page</Text>
-                  <Tooltip
-                    variant="wrapped"
+                  <InfoTooltip
+                    label="About entry page"
                     content="Choose the dynamic page that displays entries from this collection. Editors can then open an entry on the canvas from its menu or settings. The page must have one URL parameter."
-                  >
-                    <InfoCircleIcon
-                      color={cssVar("--foreground-secondary")}
-                      tabIndex={0}
-                      aria-label="About entry page"
-                    />
-                  </Tooltip>
+                  />
                 </Flex>
                 <Grid gap={1} css={{ maxWidth: 400 }}>
                   <ResettableLabel

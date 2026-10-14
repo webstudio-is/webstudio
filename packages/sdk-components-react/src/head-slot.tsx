@@ -1,8 +1,4 @@
-import {
-  getClosestInstance,
-  ReactSdkContext,
-  type Hook,
-} from "@webstudio-is/react-sdk/runtime";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { forwardRef, type ElementRef, useContext, type ReactNode } from "react";
 import { HeadSlotContext } from "./head-slot-context";
 import { XmlNode } from "./xml-node";
@@ -46,34 +42,3 @@ export const HeadSlot = forwardRef<
 });
 
 HeadSlot.displayName = "HeadSlot";
-
-export const hooksHeadSlot: Hook = {
-  onNavigatorUnselect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `HeadSlot`) {
-        const popover = getClosestInstance(
-          event.instancePath,
-          instance,
-          `HeadSlot`
-        );
-        if (popover) {
-          context.setMemoryProp(popover, "data-ws-expand", undefined);
-        }
-      }
-    }
-  },
-  onNavigatorSelect: (context, event) => {
-    for (const instance of event.instancePath) {
-      if (instance.component === `HeadSlot`) {
-        const popover = getClosestInstance(
-          event.instancePath,
-          instance,
-          `HeadSlot`
-        );
-        if (popover) {
-          context.setMemoryProp(popover, "data-ws-expand", true);
-        }
-      }
-    }
-  },
-};

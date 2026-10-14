@@ -11,6 +11,7 @@ import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
   getProjectPublishJob,
   listProjectPublishes,
+  getDeploymentPublishErrorDiagnostics,
   publishProject,
   publishStaticProject,
   unpublishProjectDomains,
@@ -146,6 +147,89 @@ const productionBuildHandler = (
       return json("build-prod");
     }
   );
+
+test("publish error diagnostics expose metadata without response values", () => {
+  const secret = "private-response-and-auth-sentinel";
+  const error = Object.assign(new Error(secret), {
+    meta: {
+      response: new Response(secret, {
+        status: 502,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "x-vercel-id": "iad1::request-id",
+          authorization: secret,
+        },
+      }),
+      responseJSON: [
+        { result: { data: secret } },
+        { error: { message: secret } },
+      ],
+    },
+  });
+
+  const diagnostics = getDeploymentPublishErrorDiagnostics(error);
+
+  expect(diagnostics).toEqual({
+    status: 502,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "x-vercel-id": "iad1::request-id",
+    },
+    responseJson: {
+      present: true,
+      batchSize: 2,
+      envelopes: ["result", "error"],
+    },
+  });
+  expect(JSON.stringify(diagnostics)).not.toContain(secret);
+  expect(
+    getDeploymentPublishErrorDiagnostics(new Error(secret))
+  ).toBeUndefined();
+});
+
+test("logs safe metadata when the deployment publish call rejects", async () => {
+  const secret = "private-response-and-auth-sentinel";
+  const error = Object.assign(new Error("Unable to transform response"), {
+    meta: {
+      response: new Response(secret, {
+        status: 502,
+        headers: { "content-type": "application/json", authorization: secret },
+      }),
+      responseJSON: { error: { message: secret } },
+    },
+  });
+  const publish = vi.fn().mockRejectedValue(error);
+  const log = vi.spyOn(console, "error").mockImplementation(() => {});
+  server.use(
+    projectHandler,
+    devBuildHandler(),
+    productionBuildHandler(() => {})
+  );
+
+  try {
+    await expect(
+      publishProject(
+        {
+          project: loadedProject,
+          domains: ["project.wstd.io"],
+          target: "staging",
+        },
+        createPublishContext(publish)
+      )
+    ).rejects.toBe(error);
+    expect(log).toHaveBeenCalledWith("Deployment publish request failed", {
+      status: 502,
+      headers: { "content-type": "application/json" },
+      responseJson: {
+        present: true,
+        envelopes: ["error"],
+      },
+    });
+    expect(JSON.stringify(log.mock.calls)).not.toContain(secret);
+  } finally {
+    log.mockRestore();
+  }
+});
 
 test("publishes saas project through shared domain service", async () => {
   const publish = vi.fn().mockResolvedValue({ success: true });

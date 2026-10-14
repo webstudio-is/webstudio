@@ -1,7 +1,11 @@
 import { expect, test } from "vitest";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import type { Pages, WebstudioData } from "@webstudio-is/sdk";
-import { migrateWebstudioDataMutable } from "./index";
+import {
+  migrateWebstudioDataMutable,
+  serializePages,
+  migratePages,
+} from "./index";
 
 const emptyData: WebstudioData = {
   pages: {
@@ -77,6 +81,7 @@ test("migrates legacy pages inside webstudio data", () => {
   migrateWebstudioDataMutable(data);
 
   expect(data.pages).toEqual({
+    formComponentIdentityVersion: 1,
     meta: undefined,
     compiler: undefined,
     redirects: undefined,
@@ -99,6 +104,51 @@ test("migrates legacy pages inside webstudio data", () => {
       ],
     ]),
   });
+});
+
+test("migrates saved legacy and managed form identities exactly once", () => {
+  const data = structuredClone(emptyData);
+  data.instances.set("native", {
+    type: "instance",
+    id: "native",
+    component: "NativeForm",
+    children: [],
+  });
+  data.instances.set("managed", {
+    type: "instance",
+    id: "managed",
+    component: "ResourceForm",
+    children: [],
+  });
+  data.instances.set("legacy", {
+    type: "instance",
+    id: "legacy",
+    component: "Form",
+    children: [],
+  });
+
+  migrateWebstudioDataMutable(data);
+
+  expect(data.instances.get("native")?.component).toBe("Form");
+  expect(data.instances.get("managed")?.component).toBe("Form");
+  expect(data.instances.get("legacy")?.component).toBe("WebhookForm");
+  expect(data.pages.formComponentIdentityVersion).toBe(1);
+  data.instances.set("new", {
+    type: "instance",
+    id: "new",
+    component: "Form",
+    children: [],
+  });
+  migrateWebstudioDataMutable(data);
+  expect(data.instances.get("native")?.component).toBe("Form");
+  expect(data.instances.get("managed")?.component).toBe("Form");
+  expect(data.instances.get("legacy")?.component).toBe("WebhookForm");
+  expect(data.instances.get("new")?.component).toBe("Form");
+  const reloaded = structuredClone(data);
+  reloaded.pages = migratePages(serializePages(data.pages));
+  expect(reloaded.pages.formComponentIdentityVersion).toBe(1);
+  migrateWebstudioDataMutable(reloaded);
+  expect(reloaded.instances.get("new")?.component).toBe("Form");
 });
 
 test("migrates styles inside webstudio data", () => {

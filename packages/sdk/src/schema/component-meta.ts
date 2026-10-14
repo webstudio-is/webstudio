@@ -91,6 +91,26 @@ export const contentModel = z.object({
 
 export type ContentModel = z.infer<typeof contentModel>;
 
+/** Temporary Builder prop overrides for the selected instance and its path. */
+export const selectionReveal = z.discriminatedUnion("type", [
+  // Native options use HTML value/text semantics and the closest select owner.
+  z.object({ type: z.literal("native-option") }),
+  z.object({
+    type: z.literal("fixed"),
+    // "self" addresses the instance declaring this rule.
+    ancestor: z.string(),
+    selectedOnly: z.boolean().optional(),
+    prop: z.string(),
+    value: z.union([z.string(), z.number(), z.boolean()]),
+  }),
+  z.object({
+    type: z.literal("value"),
+    ancestor: z.string(),
+    prop: z.string(),
+    source: z.string(),
+  }),
+]);
+
 export const wsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
   contentModel: contentModel.optional(),
@@ -99,6 +119,7 @@ export const wsComponentMeta = z.object({
   // important to automatically enumerate collections without
   // naming every item manually
   indexWithinAncestor: z.optional(z.string()),
+  selectionReveal: selectionReveal.optional(),
   label: z.optional(z.string()),
   description: z.string().optional(),
   deprecated: z.boolean().optional(),
@@ -112,6 +133,8 @@ export const wsComponentMeta = z.object({
       default: z.string(),
     })
     .optional(),
+  /** Controls whether the Builder exposes the rendered tag's HTML attributes. */
+  htmlAttributes: z.enum(["show", "hide"]).optional(),
   states: z.optional(z.array(componentState)),
   order: z.number().optional(),
   // properties and html attributes that will be always visible in properties panel

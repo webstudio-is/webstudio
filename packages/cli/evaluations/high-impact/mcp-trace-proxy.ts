@@ -16,6 +16,11 @@ export type BoundedMcpCall = {
   name: string;
   arguments?: {
     path?: string;
+    siteOrigin?: string;
+    searchesForForm?: true;
+    searchesForElement?: true;
+    inspectsFormTemplate?: true;
+    insertsFormTemplate?: true;
     viewport?: { width: number; height: number };
     viewports?: Array<{ width: number; height: number }>;
     dryRun?: true;
@@ -24,7 +29,17 @@ export type BoundedMcpCall = {
     assetQuerySha256?: string;
     assetQueryShapeSha256?: string;
     pageSettingsSha256?: string;
+    formValueNames?: string[];
+    hasFormFile?: true;
   };
+  formStatus?: "validation_failed" | "submitted" | "unknown";
+  formState?:
+    | "initial"
+    | "pending"
+    | "success"
+    | "error"
+    | "invalid"
+    | "unknown";
   startedAtMs: number;
   durationMs?: number;
   responseBytes?: number;
@@ -133,10 +148,69 @@ export const getMcpTraceRequest = (
   };
   if (isPlainRecord(params.arguments)) {
     const args: NonNullable<BoundedMcpCall["arguments"]> = {};
+    if (
+      params.name === "components.search" &&
+      typeof params.arguments.brief === "string"
+    ) {
+      const brief = params.arguments.brief.toLowerCase();
+      if (brief.includes("form") && brief.includes("webhook") === false) {
+        args.searchesForForm = true;
+      }
+      if (brief.includes("element") || brief.includes("native")) {
+        args.searchesForElement = true;
+      }
+    }
+    if (
+      params.name === "templates.get" &&
+      (params.arguments.template === "template:form" ||
+        params.arguments.component === "template:form" ||
+        params.arguments.name === "template:form")
+    ) {
+      args.inspectsFormTemplate = true;
+    }
+    if (
+      params.name === "insert-component" &&
+      params.arguments.component === "form"
+    ) {
+      args.insertsFormTemplate = true;
+    }
     if (params.name === "verify-page-responsive") {
       const path = getBoundedRoutePath(params.arguments.path);
       if (path !== undefined) {
         args.path = path;
+      }
+    }
+    if (params.name === "forms.simulate-submission") {
+      const path = getBoundedRoutePath(params.arguments.path);
+      if (path !== undefined) {
+        args.path = path;
+      }
+      if (params.arguments.siteOrigin === "https://site.example") {
+        args.siteOrigin = "https://site.example";
+      }
+      if (
+        Array.isArray(params.arguments.values) &&
+        params.arguments.values.length <= 16
+      ) {
+        const names = params.arguments.values.flatMap((value) =>
+          isPlainRecord(value) &&
+          (value.name === "name" ||
+            value.name === "email" ||
+            value.name === "subject" ||
+            value.name === "message")
+            ? [value.name]
+            : []
+        );
+        if (names.length === params.arguments.values.length) {
+          args.formValueNames = names;
+        }
+        if (
+          params.arguments.values.some(
+            (value) => isPlainRecord(value) && value.file !== undefined
+          )
+        ) {
+          args.hasFormFile = true;
+        }
       }
     }
     const viewport = params.arguments.viewport;
@@ -234,6 +308,19 @@ export const getMcpTraceResponse = (
     isPlainRecord(result) && isPlainRecord(result.structuredContent)
       ? result.structuredContent
       : undefined;
+  const formData =
+    call.name === "forms.simulate-submission" &&
+    isPlainRecord(structuredContent?.data)
+      ? structuredContent.data
+      : undefined;
+  const formStatus: BoundedMcpCall["formStatus"] =
+    typeof formData?.success === "boolean" ? "submitted" : undefined;
+  const formState: BoundedMcpCall["formState"] =
+    formData?.success === true
+      ? "success"
+      : formData?.success === false
+        ? "error"
+        : undefined;
   const meta =
     structuredContent !== undefined && isPlainRecord(structuredContent.meta)
       ? structuredContent.meta
@@ -261,6 +348,8 @@ export const getMcpTraceResponse = (
     ...(isError === undefined ? {} : { isError }),
     ...(errorCode === undefined ? {} : { errorCode }),
     ...(errorIssues === undefined ? {} : { errorIssues }),
+    ...(formStatus === undefined ? {} : { formStatus }),
+    ...(formState === undefined ? {} : { formState }),
   };
 };
 

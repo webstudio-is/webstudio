@@ -23,6 +23,12 @@ export const metaTooltipTrigger: WsComponentMeta = {
 };
 
 export const metaTooltipContent: WsComponentMeta = {
+  selectionReveal: {
+    type: "fixed",
+    ancestor: getRadixComponentId("Tooltip"),
+    prop: "open",
+    value: true,
+  },
   icon: ContentIcon,
   contentModel: {
     category: "none",

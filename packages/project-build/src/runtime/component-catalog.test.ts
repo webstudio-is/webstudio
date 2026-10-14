@@ -230,7 +230,6 @@ describe("component catalog", () => {
             importSource: "@webstudio-is/sdk-components-react/components",
             componentExport: true,
             templateExport: false,
-            hooks: false,
             provenance: "sdk",
           },
         ],
@@ -240,7 +239,6 @@ describe("component catalog", () => {
             exportName: "LocalTemplateOnly",
             componentExport: false,
             templateExport: true,
-            hooks: false,
             provenance: "core",
           },
         ],
@@ -265,7 +263,6 @@ describe("component catalog", () => {
           }),
           runtime: expect.objectContaining({
             componentExport: "Button",
-            hooks: false,
             category: "general",
             contentModel: { category: "instance", children: ["text"] },
             props: {

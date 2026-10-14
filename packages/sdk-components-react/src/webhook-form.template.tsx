@@ -9,7 +9,7 @@ import {
   type TemplateMeta,
 } from "@webstudio-is/template";
 import type { ReactNode } from "react";
-import { Form } from "./components";
+import { WebhookForm } from "./components";
 
 const formState = new Variable("formState", "initial");
 
@@ -18,14 +18,14 @@ export const meta: TemplateMeta = {
   order: 1,
   description: "Collect user data and send it to any webhook.",
   template: (
-    <Form
+    <WebhookForm
       state={expression`${formState}`}
       onStateChange={
         new ActionValue(["state"], expression`${formState} = state`)
       }
     >
       {setInstanceMeta(
-        { label: "Form Content" },
+        { label: "Form content" },
         <div
           ws:show={expression`${formState} === 'initial' || ${formState} === 'error'`}
         >
@@ -61,7 +61,7 @@ export const meta: TemplateMeta = {
         </div>
       )}
       {setInstanceMeta(
-        { label: "Success Message" },
+        { label: "Success message" },
         <div ws:show={expression`${formState} === 'success'`}>
           {
             new PlaceholderValue(
@@ -71,7 +71,7 @@ export const meta: TemplateMeta = {
         </div>
       )}
       {setInstanceMeta(
-        { label: "Error Message" },
+        { label: "Error message" },
         <div ws:show={expression`${formState} === 'error'`}>
           {
             new PlaceholderValue(
@@ -80,6 +80,6 @@ export const meta: TemplateMeta = {
           }
         </div>
       )}
-    </Form>
+    </WebhookForm>
   ),
 };

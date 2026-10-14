@@ -20,6 +20,68 @@ import { validateDomain } from "./db/validate";
 type LoadedProject = Awaited<ReturnType<typeof projectApi.loadById>>;
 type ProjectDomain = LoadedProject["domainsVirtual"][number];
 
+const publishResponseDiagnosticHeaders = [
+  "content-type",
+  "x-vercel-id",
+  "x-request-id",
+  "cf-ray",
+] as const;
+
+const getPublishResponseEnvelopeShape = (value: unknown) => {
+  if (typeof value !== "object" || value === null) {
+    return "other";
+  }
+  if ("result" in value) {
+    return "result";
+  }
+  if ("error" in value) {
+    return "error";
+  }
+  return "other";
+};
+
+/** Capture only safe metadata from the remote publish response. */
+export const getDeploymentPublishErrorDiagnostics = (error: unknown) => {
+  if (typeof error !== "object" || error === null || !("meta" in error)) {
+    return;
+  }
+  const meta = error.meta;
+  if (typeof meta !== "object" || meta === null) {
+    return;
+  }
+
+  const response = "response" in meta ? meta.response : undefined;
+  const responseJSON = "responseJSON" in meta ? meta.responseJSON : undefined;
+  if (!(response instanceof Response) && responseJSON === undefined) {
+    return;
+  }
+  const headers: Record<string, string> = {};
+  if (response instanceof Response) {
+    for (const name of publishResponseDiagnosticHeaders) {
+      const value = response.headers.get(name);
+      if (value !== null) {
+        headers[name] = value.slice(0, 128);
+      }
+    }
+  }
+
+  return {
+    ...(response instanceof Response ? { status: response.status } : {}),
+    headers,
+    responseJson: {
+      present: responseJSON !== undefined,
+      ...(Array.isArray(responseJSON)
+        ? { batchSize: responseJSON.length }
+        : {}),
+      envelopes: Array.isArray(responseJSON)
+        ? responseJSON.slice(0, 20).map(getPublishResponseEnvelopeShape)
+        : responseJSON === undefined
+          ? []
+          : [getPublishResponseEnvelopeShape(responseJSON)],
+    },
+  };
+};
+
 const assertMutation = (result: { success: boolean; error?: string }) => {
   if (result.success === false) {
     throw new Error(result.error ?? "Domain operation failed");
@@ -228,14 +290,23 @@ export const publishProject = async (
     throw new Error("Missing env.BUILDER_ORIGIN");
   }
 
-  const result = await deploymentTrpc.publish.mutate({
-    builderOrigin: env.BUILDER_ORIGIN,
-    githubSha: env.GITHUB_SHA,
-    buildId: build.id,
-    branchName: env.GITHUB_REF_NAME,
-    destination: publishedDeploymentDestination,
-    logProjectName: `${project.title} - ${project.id}`,
-  });
+  let result: Awaited<ReturnType<typeof deploymentTrpc.publish.mutate>>;
+  try {
+    result = await deploymentTrpc.publish.mutate({
+      builderOrigin: env.BUILDER_ORIGIN,
+      githubSha: env.GITHUB_SHA,
+      buildId: build.id,
+      branchName: env.GITHUB_REF_NAME,
+      destination: publishedDeploymentDestination,
+      logProjectName: `${project.title} - ${project.id}`,
+    });
+  } catch (error) {
+    const diagnostics = getDeploymentPublishErrorDiagnostics(error);
+    if (diagnostics !== undefined) {
+      console.error("Deployment publish request failed", diagnostics);
+    }
+    throw error;
+  }
 
   const deploymentNotImplemented =
     result.success === false && result.error === "NOT_IMPLEMENTED";

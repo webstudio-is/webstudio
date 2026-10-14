@@ -491,6 +491,9 @@ const apiCommandsByArea = {
   projectQuality: cliCommandMetadata
     .filter(({ cliCommand }) => cliCommand === "audit")
     .map(({ cliCommand }) => cliCommand),
+  forms: cliCommandMetadata
+    .filter(({ cliCommand }) => cliCommand === "simulate-form-submission")
+    .map(({ cliCommand }) => cliCommand),
   assetsAndIndexes: cliCommandMetadata
     .filter(({ cliCommand }) => cliCommand.includes("asset"))
     .map(({ cliCommand }) => cliCommand),

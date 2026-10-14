@@ -35,7 +35,6 @@ import {
 import {
   registerComponentLibrary,
   $registeredComponents,
-  subscribeComponentHooks,
   subscribeResourceRequestPlan,
   $isPreviewMode,
   $isDesignMode,
@@ -281,8 +280,6 @@ export const Canvas = () => {
   // from the cache synchronized by the Builder.
   useEffect(() => subscribeResourceRequestPlan(() => {}), []);
 
-  useEffect(subscribeComponentHooks, []);
-
   useEffect(subscribeCommands, []);
 
   useEffect(() => {
@@ -308,7 +305,7 @@ export const Canvas = () => {
 
   useEffect(() => startPointerTracking(), []);
 
-  useHashLinkSync();
+  useHashLinkSync(rootInstanceId);
 
   useEffect(subscribeInterceptedEvents, []);
 

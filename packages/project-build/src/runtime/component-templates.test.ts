@@ -14,7 +14,7 @@ describe("getComponentTemplates", () => {
         }),
       })
     );
-    expect(templates.get("Form")).toEqual(
+    expect(templates.get("WebhookForm")).toEqual(
       expect.objectContaining({
         template: expect.objectContaining({
           children: expect.any(Array),

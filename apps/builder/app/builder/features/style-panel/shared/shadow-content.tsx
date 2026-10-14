@@ -18,6 +18,7 @@ import {
   PanelContent,
   Flex,
   Grid,
+  InfoTooltip,
   Label,
   Separator,
   Text,
@@ -26,13 +27,8 @@ import {
   ToggleGroupButton,
   Tooltip,
   toast,
-  cssVar,
 } from "@webstudio-is/design-system";
-import {
-  InfoCircleIcon,
-  ShadowInsetIcon,
-  ShadowNormalIcon,
-} from "@webstudio-is/icons";
+import { ShadowInsetIcon, ShadowNormalIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
 import { PropertyInlineLabel } from "../property-label";
 import type { IntermediateStyleValue } from "./css-value-input";
@@ -419,8 +415,8 @@ export const ShadowContent = ({
             <Label>
               <Flex align={"center"} gap={1}>
                 Code
-                <Tooltip
-                  variant="wrapped"
+                <InfoTooltip
+                  label="About shadow CSS code"
                   content={
                     <Text>
                       Paste a {property} CSS code without the property name, for
@@ -431,9 +427,7 @@ export const ShadowContent = ({
                       </Text>
                     </Text>
                   }
-                >
-                  <InfoCircleIcon color={cssVar("--foreground-secondary")} />
-                </Tooltip>
+                />
               </Flex>
             </Label>
             <CssFragmentEditor

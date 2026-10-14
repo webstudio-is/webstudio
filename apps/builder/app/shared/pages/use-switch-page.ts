@@ -228,11 +228,11 @@ export const useSyncPageUrl = ({ isDataLoaded }: { isDataLoaded: boolean }) => {
 /**
  * Synchronize pageHash with scrolling position
  */
-export const useHashLinkSync = () => {
+export const useHashLinkSync = (rootInstanceId: string | undefined) => {
   const pageHash = useStore($selectedPageHash);
 
   useEffect(() => {
-    if (pageHash.hash === "") {
+    if (pageHash.hash === "" || rootInstanceId === undefined) {
       // native browser behavior is to do nothing if hash is empty
       // remix scroll to top, we emulate native
       return;
@@ -243,13 +243,34 @@ export const useHashLinkSync = () => {
       elementId = elementId.slice(1);
     }
 
-    // Try find element to scroll to
-    const element = document.getElementById(elementId);
-    if (element !== null) {
+    const scrollToHash = () => {
+      const pageRoot = document.querySelector(
+        `[data-ws-id="${CSS.escape(rootInstanceId)}"]`
+      );
+      const element = document.getElementById(elementId);
+      if (element === null || pageRoot?.contains(element) !== true) {
+        return false;
+      }
       element.scrollIntoView();
+      return true;
+    };
+
+    if (scrollToHash()) {
+      return;
     }
 
-    // Remix scroll to top if element not found
-    // browser do nothing
-  }, [pageHash]);
+    // Preview page instances can arrive after the page selection commits.
+    const observer = new MutationObserver(() => {
+      if (scrollToHash()) {
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["id"],
+    });
+    return () => observer.disconnect();
+  }, [pageHash, rootInstanceId]);
 };

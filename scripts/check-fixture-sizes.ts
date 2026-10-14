@@ -4,7 +4,7 @@ import { promisify } from "node:util";
 const execFileAsync = promisify(execFile);
 
 const fixtureLimits = [
-  ["./fixtures/ssg-cloudflare-pages/dist/client", 356],
+  ["./fixtures/ssg-cloudflare-pages/dist/client", 364],
   ["./fixtures/react-router-netlify/build/client", 376],
   ["./fixtures/webstudio-features/build/client", 3684],
 ] as const;

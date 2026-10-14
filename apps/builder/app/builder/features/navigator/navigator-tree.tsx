@@ -12,6 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  InfoTooltip,
   cssVar,
   keyframes,
   ScrollArea,
@@ -45,7 +46,6 @@ import { showAttributeMeta } from "@webstudio-is/project-build/runtime";
 import {
   EyeClosedIcon,
   EyeOpenIcon,
-  InfoCircleIcon,
   MarkdownEmbedIcon,
   SettingsIcon,
 } from "@webstudio-is/icons";
@@ -1122,8 +1122,8 @@ export const NavigatorTree = () => {
                   selectInstanceOnFocus([ROOT_INSTANCE_ID], event),
               }}
               action={
-                <Tooltip
-                  variant="wrapped"
+                <InfoTooltip
+                  label="About Global root variables"
                   side="bottom"
                   disableHoverableContent={true}
                   content={
@@ -1132,9 +1132,7 @@ export const NavigatorTree = () => {
                       instance on every page.
                     </Text>
                   }
-                >
-                  <InfoCircleIcon color={cssVar("--foreground-secondary")} />
-                </Tooltip>
+                />
               }
             >
               <TreeNodeLabel

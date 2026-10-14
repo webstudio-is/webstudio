@@ -1,5 +1,4 @@
 export * from "./context";
-export * from "./hook";
 export * from "./variable-state";
 export { PageSettingsMeta } from "./page-settings-meta";
 export { PageSettingsTitle } from "./page-settings-title";

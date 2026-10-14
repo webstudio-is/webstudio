@@ -128,6 +128,10 @@ export class Parameter {
 
 type ResourceConfig = {
   control?: Resource["control"];
+  email?: Omit<NonNullable<Resource["email"]>, "body" | "subject"> & {
+    body?: string | Expression;
+    subject?: string | Expression;
+  };
   url: Expression;
   method: Resource["method"];
   searchParams?: Array<{ name: string; value: Expression }>;
@@ -146,6 +150,13 @@ export class ResourceValue {
     }
     this.name = name;
     this.config = config;
+  }
+}
+
+export class FormActionsValue {
+  resources: ResourceValue[];
+  constructor(resources: ResourceValue[]) {
+    this.resources = resources;
   }
 }
 
@@ -429,7 +440,10 @@ export const renderTemplate = (
   const styleSourceSelections: StyleSourceSelection[] = [];
   const styles: StyleDecl[] = [];
   const referenceTokenIds: string[] = [];
-  const dataSources = new Map<Variable | Parameter, DataSource>();
+  const dataSources = new Map<
+    Variable | Parameter | ResourceValue,
+    DataSource
+  >();
   const resources = new Map<ResourceValue, Resource>();
   const idsByKey = new Map<unknown, string>();
   const lastIdsByList = new Map<unknown, number>();
@@ -453,7 +467,7 @@ export const renderTemplate = (
   };
   const getVariableId = (
     instanceId: string,
-    variable: Variable | Parameter
+    variable: Variable | Parameter | ResourceValue
   ) => {
     const id = getIdByKey(variable);
     if (dataSources.has(variable)) {
@@ -511,10 +525,38 @@ export const renderTemplate = (
     if (resources.has(resourceValue)) {
       return id;
     }
+    const email = resourceValue.config.email;
+    const {
+      body: emailBody,
+      subject: emailSubject,
+      ...emailSettings
+    } = email ?? {};
     resources.set(resourceValue, {
       id,
       name: resourceValue.name,
       control: resourceValue.config.control,
+      email:
+        email === undefined
+          ? undefined
+          : {
+              ...emailSettings,
+              ...(emailSubject === undefined
+                ? {}
+                : {
+                    subject:
+                      emailSubject instanceof Expression
+                        ? compileExpression(instanceId, emailSubject)
+                        : emailSubject,
+                  }),
+              ...(emailBody === undefined
+                ? {}
+                : {
+                    body:
+                      emailBody instanceof Expression
+                        ? compileExpression(instanceId, emailBody)
+                        : emailBody,
+                  }),
+            },
       url: compileExpression(instanceId, resourceValue.config.url),
       method: resourceValue.config.method,
       searchParams: resourceValue.config.searchParams?.map(
@@ -722,6 +764,17 @@ export const renderTemplate = (
       if (value instanceof ResourceValue) {
         const resourceId = getResourceId(instanceId, value);
         props.push({ ...base, type: "resource", value: resourceId });
+        continue;
+      }
+      if (value instanceof FormActionsValue) {
+        props.push({
+          ...base,
+          type: "json",
+          value: value.resources.map((resource) => ({
+            dataSourceId: getVariableId(instanceId, resource),
+            enabled: true,
+          })),
+        });
         continue;
       }
       if (value instanceof ActionValue) {

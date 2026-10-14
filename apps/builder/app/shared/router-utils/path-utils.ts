@@ -153,8 +153,23 @@ export const getCanvasUrl = () => {
   return `/canvas`;
 };
 
-export const restResourcesLoader = ({ diagnostics = false } = {}) =>
-  `/rest/resources-loader${diagnostics ? "?diagnostics=true" : ""}`;
+export const restResourcesLoader = ({
+  diagnostics = false,
+  inspect,
+}: {
+  diagnostics?: boolean;
+  inspect?: string;
+} = {}) => {
+  const params = new URLSearchParams();
+  if (diagnostics) {
+    params.set("diagnostics", "true");
+  }
+  if (inspect !== undefined) {
+    params.set("inspect", inspect);
+  }
+  const query = params.toString();
+  return `/rest/resources-loader${query === "" ? "" : `?${query}`}`;
+};
 
 export const marketplacePath = (method: string) =>
   `/builder/marketplace/${method}`;

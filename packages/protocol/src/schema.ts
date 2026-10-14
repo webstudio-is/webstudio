@@ -71,7 +71,12 @@ export type ProjectBundle = z.infer<typeof projectBundle>;
 
 export const publishedProjectBundle = projectBundle.extend({
   bundleVersion: z.union([z.string(), z.number()]).optional(),
-  user: z.object({ email: z.string().nullable() }).optional(),
+  user: z
+    .object({
+      email: z.string().nullable(),
+      username: z.string().nullable().optional(),
+    })
+    .optional(),
   projectDomain: z.string(),
   projectTitle: z.string(),
   assetIndex: contentArtifactV1.optional(),
