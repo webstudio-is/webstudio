@@ -62,6 +62,28 @@ While the server is running, stdout is reserved for MCP JSON-RPC messages. Do no
 
 ## One-Shot Tool Calls
 
+### Server-side Form simulation
+
+`forms.simulate-submission` evaluates a saved Form using synthetic string fields
+and the same trusted Builder server Form handler used by Builder Preview. Supply
+the saved Form instance ID and page path. The server uses this project's
+publisher origin. It can trigger the Form's configured HTTP and Email Resources, so verify
+every destination and recipient first. For dynamic checkbox or multiple-select fields,
+pass `arrayNames` to preserve an empty or single-value array when the saved
+field props do not identify the control. The result reports destination statuses
+and errors without Resource bodies. This server simulation does not exercise
+client validation, browser event handlers, navigation, file bytes, or actual
+browser information. The Builder server loads the saved draft and holds the
+Email service credentials; the CLI does not receive those credentials.
+
+```json
+{
+  "path": "/contact",
+  "formId": "saved-form-instance-id",
+  "values": [{ "name": "email", "value": "synthetic@example.com" }]
+}
+```
+
 Use the shortcut `webstudio <tool> '<json>'` when you are operating from a shell and need one MCP tool result. The explicit form `webstudio mcp single-op-call <tool> '<json>'` is equivalent and avoids writing temporary Node.js stdio client scripts.
 
 Examples:
@@ -920,25 +942,6 @@ source of truth. For tools with no required arguments, pass `{}`.
       "value": "me@example.com"
     }
   ]
-}
-```
-
-### forms.simulate-submission
-
-Runs a saved canvas Form entirely server-side through the managed Form engine.
-It can trigger configured HTTP Resources; use a controlled destination. The CLI
-rejects Email actions. Supply the site's exact HTTPS origin. Static checkbox
-and multiple-select fields retain array semantics; use `arrayNames` for dynamic
-fields when an empty or single selection must remain an array. This operation
-does not exercise browser validation, event handlers, navigation, file bytes,
-or actual browser information.
-
-```json
-{
-  "path": "/contact",
-  "siteOrigin": "https://example.com",
-  "formId": "saved-form-instance-id",
-  "values": [{ "name": "email", "value": "synthetic@example.com" }]
 }
 ```
 

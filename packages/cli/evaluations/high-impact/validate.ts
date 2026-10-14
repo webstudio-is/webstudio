@@ -2272,7 +2272,8 @@ const validateManagedFormRuntime = (
       submissions.every(
         (call) =>
           call.arguments?.path === "/contact-runtime" &&
-          call.arguments?.siteOrigin === "https://site.example" &&
+          (call.arguments?.siteOrigin === undefined ||
+            call.arguments.siteOrigin === "https://site.example") &&
           call.arguments?.hasFormFile !== true &&
           Array.isArray(call.arguments?.formValueNames) &&
           ["name", "email", "subject", "message"].every((name) =>
