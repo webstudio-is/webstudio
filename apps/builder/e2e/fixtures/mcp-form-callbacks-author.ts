@@ -26,6 +26,7 @@ import {
   type BuilderRuntimeMutation,
 } from "@webstudio-is/project-build/runtime";
 import { loadDevBuild, updateBuild } from "../db";
+import { seedSavedLegacyForm } from "./saved-legacy-form";
 
 const commands = new Set([
   "insert-fragment",
@@ -266,12 +267,57 @@ const author = async () => {
       name: "callbackErrors",
       value: { type: "json", value: [] },
     });
-    const component = mode === "legacy" ? "WebhookForm" : "Form";
-    const fragment = await call("insert-fragment", {
-      parentInstanceId: home.rootInstanceId,
-      fragment: `<${component} id="callback-form"><Input name="outcome" /><Button type="submit">Submit callback form</Button></${component}><Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>`,
-    });
-    const [formId, auditId, errorId] = fragment.rootInstanceIds as string[];
+    let formId: string;
+    let auditId: string;
+    let errorId: string;
+    if (mode === "legacy") {
+      await expect(
+        call("insert-fragment", {
+          parentInstanceId: home.rootInstanceId,
+          fragment: "<WebhookForm />",
+        })
+      ).rejects.toThrow("Webhook Form is deprecated");
+      formId = `saved-legacy-callback-${nextId++}`;
+      remote = {
+        ...remote,
+        version: remote.version + 1,
+        state: seedSavedLegacyForm({
+          state: remote.state,
+          rootInstanceId: home.rootInstanceId,
+          formId,
+        }),
+      };
+      await persist();
+      await call("refresh");
+      await call("update-props", {
+        updates: [
+          {
+            instanceId: formId,
+            name: "id",
+            type: "string",
+            value: "callback-form",
+          },
+        ],
+      });
+      await call("insert-fragment", {
+        parentInstanceId: formId,
+        fragment:
+          '<Input name="outcome" /><Button type="submit">Submit callback form</Button>',
+      });
+      const fragment = await call("insert-fragment", {
+        parentInstanceId: home.rootInstanceId,
+        fragment:
+          '<Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>',
+      });
+      [auditId, errorId] = fragment.rootInstanceIds as string[];
+    } else {
+      const fragment = await call("insert-fragment", {
+        parentInstanceId: home.rootInstanceId,
+        fragment:
+          '<Form id="callback-form"><Input name="outcome" /><Button type="submit">Submit callback form</Button></Form><Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>',
+      });
+      [formId, auditId, errorId] = fragment.rootInstanceIds as string[];
+    }
     const resource = await call("create-resource", {
       resource: {
         name: "Callback receiver",

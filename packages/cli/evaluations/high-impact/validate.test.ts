@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   collectionComponent,
+  defaultVisitorConfirmationBody,
   createStructuredAssetQueryResourceBody,
   encodeDataSourceVariable,
   parseStructuredAssetQueryResourceBody,
@@ -36,6 +37,8 @@ const addManagedContactPage = (): EvaluationProject => {
   const errorsId = "contact-form-errors";
   const projectDataSourceId = "contact-project-email-source";
   const visitorDataSourceId = "contact-visitor-email-source";
+  const formDataBinding = encodeDataSourceVariable("contact-form-data");
+  const browserInfoBinding = encodeDataSourceVariable("contact-browser-info");
   const formStateBinding = encodeDataSourceVariable(formStateId);
   const resultsBinding = encodeDataSourceVariable(resultsId);
   const errorsBinding = encodeDataSourceVariable(errorsId);
@@ -89,7 +92,7 @@ const addManagedContactPage = (): EvaluationProject => {
     {
       id: "form-success",
       component: "Box",
-      label: "Success Message",
+      label: "Success message",
       children: [
         {
           type: "text" as const,
@@ -101,7 +104,7 @@ const addManagedContactPage = (): EvaluationProject => {
     {
       id: "form-error",
       component: "Box",
-      label: "Error Message",
+      label: "Error message",
       children: [
         { type: "id" as const, value: "form-error-list" },
         {
@@ -119,7 +122,19 @@ const addManagedContactPage = (): EvaluationProject => {
       control: "email",
       method: "post",
       url: '""',
-      email: { recipientMode: "project" },
+      email: {
+        recipientMode: "project",
+        subject: `"Contact form: " + (${formDataBinding}.subject ?? "New message")`,
+        body:
+          "`" +
+          "${" +
+          browserInfoBinding +
+          ".pageUrl ? `Page: ${" +
+          browserInfoBinding +
+          '.pageUrl}\n\n` : ""}${' +
+          formDataBinding +
+          "}`",
+      },
     },
     {
       id: "visitor-email",
@@ -130,10 +145,11 @@ const addManagedContactPage = (): EvaluationProject => {
       email: {
         recipientMode: "visitor",
         visitorEmailField: "email",
-        subject: JSON.stringify("We received your message"),
-        body: JSON.stringify(
-          "Thanks for contacting us. We received your message and will get back to you soon."
-        ),
+        subject: `${formDataBinding}.subject ?? "Your message"`,
+        body: JSON.stringify(defaultVisitorConfirmationBody),
+        confirmationSubject: "formSubject",
+        confirmationBody: "default",
+        includeAttachments: false,
       },
     },
   ];
@@ -188,11 +204,18 @@ const addManagedContactPage = (): EvaluationProject => {
         ],
       },
       {
-        id: "form-state",
+        id: "form-data",
         instanceId: formId,
-        name: "state",
-        type: "expression",
-        value: formStateBinding,
+        name: "formData",
+        type: "parameter",
+        value: "contact-form-data",
+      },
+      {
+        id: "browser-info",
+        instanceId: formId,
+        name: "browserInfo",
+        type: "parameter",
+        value: "contact-browser-info",
       },
       {
         id: "form-state-change",
@@ -277,6 +300,18 @@ const addManagedContactPage = (): EvaluationProject => {
       },
     ],
     dataSources: [
+      {
+        id: "contact-form-data",
+        type: "parameter",
+        name: "formData",
+        scopeInstanceId: formId,
+      },
+      {
+        id: "contact-browser-info",
+        type: "parameter",
+        name: "browserInfo",
+        scopeInstanceId: formId,
+      },
       {
         id: formStateId,
         type: "variable",
@@ -726,6 +761,64 @@ describe("high-impact fixture validation", () => {
 });
 
 describe("managed Form evaluation", () => {
+  test("accepts contact heading text inside an inline child", () => {
+    const project = addManagedContactPage();
+    const heading = project.instances.find(
+      ({ id }) => id === "contact-heading"
+    )!;
+    project.instances.push({
+      id: "heading-text",
+      component: "ws:element",
+      tag: "span",
+      children: heading.children,
+    });
+    heading.children = [{ type: "id", value: "heading-text" }];
+    const result = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project,
+      toolCalls: managedFormCalls(),
+    });
+    expect(result.checks.contactPage).toBe("passed");
+  });
+
+  test("accepts harmless formatting in unchanged Email expressions", () => {
+    const project = addManagedContactPage();
+    const formData = encodeDataSourceVariable("contact-form-data");
+    project.resources = project.resources.map((resource) => ({
+      ...resource,
+      email: {
+        ...(resource.email as object),
+        subject:
+          resource.name === "Email to owner"
+            ? `'Contact form: '+(${formData}.subject??'New message')`
+            : `(${formData}.subject??'Your message')`,
+      },
+    }));
+    const result = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project,
+      toolCalls: managedFormCalls(),
+    });
+    expect(result.checks.formActionsPreserved).toBe("passed");
+  });
+
+  test("rejects restoring externally controlled Form state", () => {
+    const project = addManagedContactPage();
+    project.props.push({
+      id: "controlled-state",
+      instanceId: "contact-form",
+      name: "state",
+      type: "expression",
+      value: encodeDataSourceVariable("contact-form-state"),
+    });
+    const result = evaluateHighImpactOutcome({
+      fixture: managedFormAuthoringFixture,
+      project,
+      toolCalls: managedFormCalls(),
+    });
+    expect(result.checks.formStateBinding).toBe("failed");
+  });
+
   test("accepts Form discovery after an unrelated component and checks contact-route structure", () => {
     const result = evaluateHighImpactOutcome({
       fixture: managedFormAuthoringFixture,
@@ -823,7 +916,7 @@ describe("managed Form evaluation", () => {
       ({ instanceId, name }) => instanceId === button.id && name === "type"
     )!;
     const success = project.instances.find(
-      ({ label }) => label === "Success Message"
+      ({ label }) => label === "Success message"
     )!;
     const successVisibility = project.props.find(
       ({ instanceId, name }) =>
@@ -969,23 +1062,21 @@ describe("managed Form evaluation", () => {
     expect(result.checks.feedbackBindings).toBe("failed");
   });
 
-  test.each([
-    "form-state",
-    "form-state-change",
-    "form-result-change",
-    "errors-data",
-  ])("fails gracefully when %s has no binding value", (propId) => {
-    const project = addManagedContactPage();
-    const result = evaluateHighImpactOutcome({
-      fixture: managedFormAuthoringFixture,
-      project: {
-        ...project,
-        props: project.props.filter((prop) => prop.id !== propId),
-      },
-      toolCalls: managedFormCalls(),
-    });
-    expect(result.checks.feedbackBindings).toBe("failed");
-  });
+  test.each(["form-state-change", "form-result-change", "errors-data"])(
+    "fails gracefully when %s has no binding value",
+    (propId) => {
+      const project = addManagedContactPage();
+      const result = evaluateHighImpactOutcome({
+        fixture: managedFormAuthoringFixture,
+        project: {
+          ...project,
+          props: project.props.filter((prop) => prop.id !== propId),
+        },
+        toolCalls: managedFormCalls(),
+      });
+      expect(result.checks.feedbackBindings).toBe("failed");
+    }
+  );
 
   test("requires successful Form-template search and insertion, not unrelated insertions", () => {
     const project = addManagedContactPage();

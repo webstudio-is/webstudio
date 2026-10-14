@@ -93,9 +93,15 @@ const positionFeedback = async (
           return false;
         }
         if (position === "visible") {
-          feedback.style.position = "fixed";
-          feedback.style.top = "16px";
-          feedback.style.left = "16px";
+          const form = feedback.closest<HTMLElement>("form");
+          if (form === null) {
+            return false;
+          }
+          form.style.position = "fixed";
+          form.style.top = "16px";
+          form.style.left = "16px";
+          form.style.maxHeight = "calc(100vh - 32px)";
+          form.style.overflow = "auto";
         } else {
           feedback.style.marginBlockStart = "1600px";
         }

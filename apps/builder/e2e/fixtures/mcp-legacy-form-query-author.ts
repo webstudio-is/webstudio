@@ -25,6 +25,7 @@ import {
   type BuilderRuntimeMutation,
 } from "@webstudio-is/project-build/runtime";
 import { loadDevBuild, updateBuild } from "../db";
+import { seedSavedLegacyForm } from "./saved-legacy-form";
 
 const commands = new Set([
   "create-page",
@@ -256,12 +257,24 @@ const author = async () => {
       fragment:
         '<Link href="/legacy-query?tag=solo">Open legacy single query</Link>',
     });
-    const form = await call("insert-component", {
-      parentInstanceId: rootInstanceId,
-      component: "WebhookForm",
-    });
-    const formId = (form.rootInstanceIds as string[])[0];
-    expect(formId).toBeDefined();
+    await expect(
+      call("insert-component", {
+        parentInstanceId: rootInstanceId,
+        component: "WebhookForm",
+      })
+    ).rejects.toThrow("Webhook Form is deprecated");
+    const formId = `saved-legacy-query-${nextId++}`;
+    remote = {
+      ...remote,
+      version: remote.version + 1,
+      state: seedSavedLegacyForm({
+        state: remote.state,
+        rootInstanceId,
+        formId,
+      }),
+    };
+    await persist();
+    await call("refresh");
     await call("update-props", {
       updates: [
         {

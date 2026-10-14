@@ -22,8 +22,34 @@ const initialAuthorPath = fileURLToPath(
 const bindingAuthorPath = fileURLToPath(
   new URL("../fixtures/mcp-email-binding-author.ts", import.meta.url)
 );
+const author = async (
+  projectId: string,
+  path: string,
+  mode: string,
+  formId?: string
+) => {
+  const { stdout } = await execFileAsync(
+    process.execPath,
+    [
+      "--import",
+      "tsx",
+      "--import",
+      reactGlobalPath,
+      "--conditions=webstudio",
+      path,
+      projectId,
+      mode,
+      ...(formId === undefined ? [] : [formId]),
+    ],
+    {
+      timeout: 60_000,
+      env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
+    }
+  );
+  return JSON.parse(stdout) as { formId: string };
+};
 
-test("MCP Email bindings deliver values and reset to Project Settings inheritance", async ({
+test("MCP Email bindings deliver values and full reset restores project recipients and reply-to", async ({
   page,
   context,
 }) => {
@@ -34,29 +60,12 @@ test("MCP Email bindings deliver values and reset to Project Settings inheritanc
     assetNamePrefix: "mcp-email-binding-",
     builderToken: "mcp-email-binding-builder-token",
   });
-  const author = async (path: string, mode: string, formId?: string) => {
-    const { stdout } = await execFileAsync(
-      process.execPath,
-      [
-        "--import",
-        "tsx",
-        "--import",
-        reactGlobalPath,
-        "--conditions=webstudio",
-        path,
-        fixture.projectId,
-        mode,
-        ...(formId === undefined ? [] : [formId]),
-      ],
-      {
-        timeout: 60_000,
-        env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
-      }
-    );
-    return JSON.parse(stdout) as { formId: string };
-  };
-  const { formId } = await author(initialAuthorPath, "email");
-  await author(bindingAuthorPath, "bind", formId);
+  const { formId } = await author(
+    fixture.projectId,
+    initialAuthorPath,
+    "email"
+  );
+  await author(fixture.projectId, bindingAuthorPath, "bind", formId);
   const receiver = await startLocalEmailReceiver();
   try {
     await page.route("**/*", (route) =>
@@ -98,7 +107,7 @@ test("MCP Email bindings deliver values and reset to Project Settings inheritanc
       replyTo: { address: "ada@example.test" },
     });
 
-    await author(bindingAuthorPath, "reset", formId);
+    await author(fixture.projectId, bindingAuthorPath, "reset", formId);
     await withMcpEmailPreview({
       projectId: fixture.projectId,
       emailPort: receiver.port,
@@ -111,6 +120,86 @@ test("MCP Email bindings deliver values and reset to Project Settings inheritanc
       text: expect.stringContaining("Form data:"),
       replyTo: { address: "forms@mcp.test", name: "Contact Form" },
     });
+  } finally {
+    await receiver.close();
+  }
+});
+
+test("MCP partial Email body updates preserve recipient, sender, and attachment settings", async ({
+  page,
+  context,
+}) => {
+  const fixture = await createContentModeProject({
+    context,
+    email: "mcp-email-partial@webstudio.test",
+    title: "MCP partial Email update",
+    assetNamePrefix: "mcp-email-partial-",
+    builderToken: "mcp-email-partial-builder-token",
+  });
+  const { formId } = await author(
+    fixture.projectId,
+    initialAuthorPath,
+    "email"
+  );
+  await author(fixture.projectId, bindingAuthorPath, "partial", formId);
+  const receiver = await startLocalEmailReceiver();
+  try {
+    await page.route("**/*", (route) =>
+      new URL(route.request().url()).hostname === "127.0.0.1"
+        ? route.continue()
+        : route.abort()
+    );
+    const submit = async (url: string) => {
+      await page.goto(url);
+      const form = page.locator(`[data-ws-managed-form-id="${formId}"]`);
+      await form.locator('input[name="name"]').fill("Ada Lovelace");
+      await form.locator('input[name="email"]').fill("ada@example.test");
+      await form.locator('input[name="subject"]').fill("Account question");
+      await form.locator('textarea[name="message"]').fill("Hello");
+      await form.locator('input[name="upload"]').setInputFiles({
+        name: "private-note.txt",
+        mimeType: "text/plain",
+        buffer: Buffer.from("Do not attach this file"),
+      });
+      const responsePromise = page.waitForResponse(
+        (response) =>
+          new URL(response.url()).pathname.startsWith("/__ws-form") &&
+          response.request().method() === "POST"
+      );
+      await form.getByRole("button", { name: "Submit" }).click();
+      const response = await responsePromise;
+      expect(response.status(), JSON.stringify(await response.json())).toBe(
+        200
+      );
+    };
+    await withMcpEmailPreview({
+      projectId: fixture.projectId,
+      emailPort: receiver.port,
+      callback: async ({ url }) => submit(url),
+    });
+    await expect.poll(() => receiver.messages.length).toBe(1);
+    expect(receiver.messages[0]).toMatchObject({
+      to: [{ address: "ada@example.test" }],
+      text: "Custom confirmation",
+      replyTo: { address: "team@example.test", name: "Contact Team" },
+      fromName: "Contact Team",
+    });
+    expect(receiver.messages[0]?.attachments ?? []).toEqual([]);
+
+    await author(fixture.projectId, bindingAuthorPath, "empty", formId);
+    await withMcpEmailPreview({
+      projectId: fixture.projectId,
+      emailPort: receiver.port,
+      callback: async ({ url }) => submit(url),
+    });
+    await expect.poll(() => receiver.messages.length).toBe(2);
+    expect(receiver.messages[1]).toMatchObject({
+      to: [{ address: "ada@example.test" }],
+      text: "",
+      replyTo: { address: "team@example.test", name: "Contact Team" },
+      fromName: "Contact Team",
+    });
+    expect(receiver.messages[1]?.attachments ?? []).toEqual([]);
   } finally {
     await receiver.close();
   }

@@ -12,6 +12,7 @@ import { getFontFaces } from "@webstudio-is/fonts";
 import { mapQueryWhere } from "@webstudio-is/query-builder/runtime";
 import {
   collectionComponent,
+  defaultVisitorConfirmationBody,
   blockComponent,
   blockBodyComponent,
   blockTemplateComponent,
@@ -201,6 +202,29 @@ const isValidExpression = (value: string) => {
       preserveParens: true,
     });
     return value.slice(expression.end).trim() === "";
+  } catch {
+    return false;
+  }
+};
+
+// Compare parsed expression structure so whitespace, quotes, and parentheses
+// cannot make unchanged template bindings fail the rubric.
+const isEquivalentExpression = (value: unknown, expected: string) => {
+  if (typeof value !== "string") {
+    return false;
+  }
+  const signature = (code: string) => {
+    const statement = parse(`(${code}\n)`, { ecmaVersion: "latest" }).body[0];
+    if (statement?.type !== "ExpressionStatement") {
+      return undefined;
+    }
+    return JSON.stringify(statement.expression, (key, value) =>
+      ["start", "end", "raw"].includes(key) ? undefined : value
+    );
+  };
+  try {
+    const actual = signature(value);
+    return actual !== undefined && actual === signature(expected);
   } catch {
     return false;
   }
@@ -642,10 +666,10 @@ const validateManagedFormAuthoring = (
       ? undefined
       : getExecuteActionCode(getProp(form.id, "onResultChange"), "result");
   const successMessage = formDescendants.find(
-    ({ label }) => label === "Success Message"
+    ({ label }) => label?.toLowerCase() === "success message"
   );
   const errorMessage = formDescendants.find(
-    ({ label }) => label === "Error Message"
+    ({ label }) => label?.toLowerCase() === "error message"
   );
   const successVisibility =
     successMessage === undefined
@@ -683,8 +707,7 @@ const validateManagedFormAuthoring = (
     errorText.includes("couldn't send your message") &&
     errorText.includes("try again");
   const formStateBindingComplete =
-    formState !== undefined &&
-    isIdentifierExpression(stateProp, formStateReference);
+    formState !== undefined && stateProp === undefined;
   const formStateChangeComplete =
     formState !== undefined &&
     hasIdentifierAssignment(stateChange, formStateReference, "state");
@@ -750,10 +773,30 @@ const validateManagedFormAuthoring = (
     { name: "Email to owner", recipientMode: "project" },
     { name: "Email to visitor", recipientMode: "visitor" },
   ];
-  const visitorConfirmationSubject = JSON.stringify("We received your message");
-  const visitorConfirmationBody = JSON.stringify(
-    "Thanks for contacting us. We received your message and will get back to you soon."
-  );
+  const parameterReference = (name: string) => {
+    const parameter = input.project.dataSources.find(
+      (source) =>
+        source.type === "parameter" &&
+        source.name === name &&
+        source.scopeInstanceId === form?.id
+    );
+    return parameter === undefined
+      ? undefined
+      : encodeDataSourceVariable(String(parameter.id));
+  };
+  const formDataReference = parameterReference("formData");
+  const browserInfoReference = parameterReference("browserInfo");
+  const ownerSubject = `"Contact form: " + (${formDataReference}.subject ?? "New message")`;
+  const ownerBody =
+    "`" +
+    "${" +
+    browserInfoReference +
+    ".pageUrl ? `Page: ${" +
+    browserInfoReference +
+    '.pageUrl}\n\n` : ""}${' +
+    formDataReference +
+    "}`";
+  const visitorSubject = `${formDataReference}.subject ?? "Your message"`;
   const orderedActions = selectedActions.map((selected) =>
     typeof selected === "object" &&
     selected !== null &&
@@ -762,6 +805,13 @@ const validateManagedFormAuthoring = (
       : undefined
   );
   const actionsConfigured =
+    form !== undefined &&
+    formDataReference !== undefined &&
+    browserInfoReference !== undefined &&
+    getProp(form.id, "formData") ===
+      decodeDataSourceVariable(formDataReference) &&
+    getProp(form.id, "browserInfo") ===
+      decodeDataSourceVariable(browserInfoReference) &&
     scopedResources.length === 2 &&
     expectedResources.every(({ name, recipientMode }, index) => {
       const scopedResource = scopedResources[index];
@@ -779,12 +829,23 @@ const validateManagedFormAuthoring = (
           ("visitorEmailField" in email &&
             email.visitorEmailField === "email" &&
             "subject" in email &&
-            email.subject === visitorConfirmationSubject &&
+            isEquivalentExpression(email.subject, visitorSubject) &&
             "body" in email &&
-            email.body === visitorConfirmationBody)) &&
+            isEquivalentExpression(
+              email.body,
+              JSON.stringify(defaultVisitorConfirmationBody)
+            ) &&
+            "confirmationSubject" in email &&
+            email.confirmationSubject === "formSubject" &&
+            "confirmationBody" in email &&
+            email.confirmationBody === "default" &&
+            "includeAttachments" in email &&
+            email.includeAttachments === false)) &&
         (recipientMode !== "project" ||
-          (("subject" in email === false || email.subject === undefined) &&
-            ("body" in email === false || email.body === undefined)))
+          ("subject" in email &&
+            isEquivalentExpression(email.subject, ownerSubject) &&
+            "body" in email &&
+            isEquivalentExpression(email.body, ownerBody)))
       );
     }) &&
     selectedActions.length === 2 &&
@@ -841,7 +902,8 @@ const validateManagedFormAuthoring = (
     "contactPage",
     page !== undefined &&
       heading !== undefined &&
-      renderedTextOf([heading]).trim() === "contact northstar" &&
+      renderedTextOf(descendants(input.project, heading.id)).trim() ===
+        "contact northstar" &&
       introParagraph !== undefined,
     "The contact page needs a semantic heading and authored content."
   );
@@ -902,7 +964,7 @@ const validateManagedFormAuthoring = (
     failures,
     "formStateBinding",
     formStateBindingComplete && formStateChangeComplete,
-    "Bind the Form state and state-change callback to formState."
+    "Keep Form state internal and bind the state-change callback to formState."
   );
   recordCheck(
     checks,

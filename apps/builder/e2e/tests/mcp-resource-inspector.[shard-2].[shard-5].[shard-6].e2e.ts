@@ -215,6 +215,7 @@ test("MCP-authored Email Resource loads its Request preview without sending emai
     dialog.getByText("Contact form:", { exact: false })
   ).toBeVisible();
   const requestEditor = dialog.locator('[role="tabpanel"] .cm-content').last();
-  await expect(requestEditor).toContainText("Submitted fields:");
+  await expect(requestEditor).toContainText('"text": ""');
+  await expect(requestEditor).not.toContainText("Submitted fields:");
   expect(submissionRequests).toEqual([]);
 });

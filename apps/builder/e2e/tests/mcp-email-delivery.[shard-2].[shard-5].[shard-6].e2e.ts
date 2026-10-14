@@ -151,7 +151,9 @@ test("MCP-authored contact Form delivers customized Email messages locally", asy
         expect(ownerMessage?.text).toContain("Email: ada@example.test");
         expect(ownerMessage?.text).toContain("Subject: MCP email test");
         expect(ownerMessage?.text).toContain("Page: http://127.0.0.1:");
-        expect(visitorMessage?.subject).toBe("We received your message");
+        expect(visitorMessage?.subject).toBe(
+          "Contact Form received your email: We received your message"
+        );
         expect(visitorMessage?.text).toBe(
           "Thanks for contacting us. We will reply soon."
         );
@@ -287,7 +289,7 @@ test("custom recipients and Email overrides stay isolated between Forms", async 
   }
 });
 
-test("Email retries keep one message ID and new submissions get a new one", async ({
+test("Email provider failure is not replayed, sibling succeeds, and a new submission gets a new message ID", async ({
   page,
   context,
 }) => {
@@ -323,7 +325,11 @@ test("Email retries keep one message ID and new submissions get a new one", asyn
       },
     }
   );
-  const { formId } = JSON.parse(stdout) as { formId: string };
+  const { formId, emailResourceIds } = JSON.parse(stdout) as {
+    formId: string;
+    emailResourceIds: string[];
+  };
+  expect(emailResourceIds).toHaveLength(2);
   const requests: Array<{
     subject: string;
     to: Array<{ address: string }>;
@@ -350,7 +356,6 @@ test("Email retries keep one message ID and new submissions get a new one", asyn
               error: {
                 code: "temporary_failure",
                 message: "Temporary local E2E failure",
-                retryable: true,
               },
             }
           : { id: `local-email-${requests.length}` }
@@ -389,9 +394,29 @@ test("Email retries keep one message ID and new submissions get a new one", asyn
             response.request().method() === "POST"
         );
         await form.getByRole("button", { name: "Submit" }).click();
-        expect((await firstResponse).status()).toBe(200);
-        await expect(form).toHaveAttribute("data-state", "success");
-        await expect.poll(() => requests.length).toBe(3);
+        const firstSubmission = await firstResponse;
+        expect(firstSubmission.status()).toBe(502);
+        expect(await firstSubmission.json()).toMatchObject({
+          success: false,
+          results: [
+            expect.objectContaining({
+              resourceId: emailResourceIds[0],
+              status: 503,
+            }),
+            expect.objectContaining({
+              resourceId: emailResourceIds[1],
+              status: 200,
+            }),
+          ],
+          errors: [
+            expect.objectContaining({
+              resourceId: emailResourceIds[0],
+              status: 503,
+            }),
+          ],
+        });
+        await expect(form).toHaveAttribute("data-state", "error");
+        await expect.poll(() => requests.length).toBe(2);
 
         await page.reload();
         const secondForm = page.locator(
@@ -417,34 +442,31 @@ test("Email retries keep one message ID and new submissions get a new one", asyn
         await secondForm.getByRole("button", { name: "Submit" }).click();
         expect((await secondResponse).status()).toBe(200);
         await expect(secondForm).toHaveAttribute("data-state", "success");
-        await expect.poll(() => requests.length).toBe(5);
+        await expect.poll(() => requests.length).toBe(4);
 
         const firstMessageId = requests[0].headers["X-Message-ID"];
         expect(firstMessageId).not.toBe("");
-        expect(
-          requests.slice(0, 3).map(({ headers }) => headers["X-Message-ID"])
-        ).toEqual([firstMessageId, firstMessageId, firstMessageId]);
-        expect(requests[0]).toEqual(requests[2]);
+        expect(requests[1].headers["X-Message-ID"]).toBe(firstMessageId);
         const expectedSubjects = new Set([
           "Contact form: Message ID test",
-          "We received your message",
+          "Contact Form received your email: We received your message",
         ]);
         expect(
           new Set(requests.slice(0, 2).map(({ subject }) => subject))
         ).toEqual(expectedSubjects);
         const secondMessageIds = requests
-          .slice(3)
+          .slice(2)
           .map(({ headers }) => headers["X-Message-ID"]);
         expect(secondMessageIds[0]).toBe(secondMessageIds[1]);
         expect(secondMessageIds[0]).not.toBe(firstMessageId);
         expect(
-          new Set(requests.slice(3).map(({ subject }) => subject))
+          new Set(requests.slice(2).map(({ subject }) => subject))
         ).toEqual(expectedSubjects);
         expect(
           new Set(requests.slice(0, 2).map(({ to }) => to[0]?.address))
         ).toEqual(new Set(["owner@mcp.test", "visitor@example.test"]));
         expect(
-          new Set(requests.slice(3).map(({ to }) => to[0]?.address))
+          new Set(requests.slice(2).map(({ to }) => to[0]?.address))
         ).toEqual(new Set(["owner@mcp.test", "visitor@example.test"]));
       },
     });

@@ -679,7 +679,7 @@ const author = async () => {
           value: [
             expect.objectContaining({
               code: expect.stringContaining(
-                `${variableId("results")} = result?.results`
+                `${variableId("results")} = result.results`
               ),
             }),
           ],
@@ -693,7 +693,7 @@ const author = async () => {
       }>
     ).find(({ name }) => name === "onResultChange");
     expect(resultCallback?.value[0]?.code).toContain(
-      `${variableId("errors")} = result?.errors`
+      `${variableId("errors")} = result.errors`
     );
     process.stdout.write(
       `${JSON.stringify({

@@ -32,10 +32,15 @@ const mode = process.argv[3];
 const formId = process.argv[4];
 if (
   projectId === undefined ||
-  (mode !== "bind" && mode !== "reset") ||
+  (mode !== "bind" &&
+    mode !== "reset" &&
+    mode !== "partial" &&
+    mode !== "empty") ||
   formId === undefined
 ) {
-  throw new Error("Expected a project ID, bind or reset mode, and Form ID");
+  throw new Error(
+    "Expected a project ID, bind, reset, partial, or empty mode, and Form ID"
+  );
 }
 
 const commands = new Set([
@@ -43,6 +48,7 @@ const commands = new Set([
   "list-resources",
   "inspect-instance",
   "update-resource",
+  "upsert-resource",
   "update-props",
   "update-project-settings",
 ]);
@@ -247,7 +253,54 @@ try {
   if (projectEmail === undefined) {
     throw new Error("Expected the contact Form Project Email Resource");
   }
-  if (mode === "bind") {
+  if (mode === "partial" || mode === "empty") {
+    const visitorEmail = (
+      resources.resources as Array<{
+        id: string;
+        dataSourceId: string;
+        name: string;
+      }>
+    ).find(({ name }) => name === "Email to visitor");
+    if (visitorEmail === undefined) {
+      throw new Error("Expected the contact Form visitor Email Resource");
+    }
+    const settings = {
+      recipientMode: "visitor",
+      visitorEmailField: "email",
+      senderExpression: '"Contact Team <team@example.test>"',
+      includeAttachments: false,
+      subject: '"Thanks for writing"',
+      body: '"Initial confirmation"',
+    };
+    if (mode === "partial") {
+      await call("update-resource", {
+        resourceId: visitorEmail.id,
+        values: { email: settings },
+      });
+      await call("update-props", {
+        updates: [
+          {
+            instanceId: form.id,
+            name: "action",
+            type: "json",
+            value: [{ dataSourceId: visitorEmail.dataSourceId, enabled: true }],
+          },
+        ],
+      });
+    }
+    const body = mode === "partial" ? '"Custom confirmation"' : '""';
+    await call("update-resource", {
+      resourceId: visitorEmail.id,
+      values: { email: { body } },
+    });
+    await call("refresh");
+    const persistedResources = JSON.parse(
+      (await loadDevBuild({ projectId })).resources
+    ) as Array<{ id: string; email?: Record<string, unknown> }>;
+    expect(
+      persistedResources.find(({ id }) => id === visitorEmail.id)?.email
+    ).toMatchObject({ ...settings, body });
+  } else if (mode === "bind") {
     const inspection = await call("inspect-instance", {
       instanceId: form.id,
       include: ["props"],
@@ -282,9 +335,25 @@ try {
       ],
     });
   } else {
-    await call("update-resource", {
+    const savedResource = (
+      JSON.parse((await loadDevBuild({ projectId })).resources) as Array<{
+        id: string;
+        name: string;
+        control?: string;
+        method: string;
+        url: string;
+        headers: Array<{ name: string; value: string }>;
+      }>
+    ).find(({ id }) => id === projectEmail.id);
+    if (savedResource === undefined) {
+      throw new Error("Expected the saved Project Email Resource");
+    }
+    const { id: _id, ...resource } = savedResource;
+    await call("upsert-resource", {
       resourceId: projectEmail.id,
-      values: { email: { recipientMode: "project" } },
+      dataSourceId: projectEmail.dataSourceId,
+      scopeInstanceId: form.id,
+      resource: { ...resource, email: { recipientMode: "project" } },
     });
     await call("update-project-settings", {
       meta: {
@@ -300,7 +369,21 @@ try {
   const persistedSettings = persistedResources.find(
     ({ id }) => id === projectEmail.id
   )?.email;
-  if (mode === "reset") {
+  if (mode === "partial" || mode === "empty") {
+    const visitorEmail = (
+      resources.resources as Array<{ id: string; name: string }>
+    ).find(({ name }) => name === "Email to visitor");
+    expect(
+      persistedResources.find(({ id }) => id === visitorEmail?.id)?.email
+    ).toMatchObject({
+      recipientMode: "visitor",
+      visitorEmailField: "email",
+      senderExpression: '"Contact Team <team@example.test>"',
+      includeAttachments: false,
+      subject: '"Thanks for writing"',
+      body: mode === "partial" ? '"Custom confirmation"' : '""',
+    });
+  } else if (mode === "reset") {
     expect(persistedSettings).toEqual({ recipientMode: "project" });
   } else {
     expect(persistedSettings).toMatchObject({

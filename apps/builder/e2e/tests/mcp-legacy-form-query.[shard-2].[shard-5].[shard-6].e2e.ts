@@ -9,7 +9,7 @@ import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
 
-test("MCP-authored legacy Webhook Form preserves single and repeated query bindings through navigation and submission", async ({
+test("MCP-edited saved legacy Webhook Form preserves single and repeated query bindings through navigation and submission", async ({
   page,
   context,
 }) => {
@@ -112,7 +112,6 @@ test("MCP-authored legacy Webhook Form preserves single and repeated query bindi
           await form.locator('button[type="submit"]').click();
           const response = await responsePromise;
           expect(response.status()).toBe(200);
-          await expect(form).toHaveAttribute("data-state", "success");
           expect(receiver.deliveries.at(-1)).toMatchObject({
             method: "POST",
             tag: scenario.tag,

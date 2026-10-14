@@ -175,6 +175,11 @@ test("Form error message binds all errors through its authored container", () =>
   const list = fragment.instances.find(({ tag }) => tag === "ul")!;
   expect(error.children).toContainEqual({ type: "id", value: list.id });
   expect(list.children).toContainEqual({ type: "id", value: collection.id });
+  const listItem = fragment.instances.find(({ tag }) => tag === "li")!;
+  expect(collection.children).toContainEqual({
+    type: "id",
+    value: listItem.id,
+  });
   expect(fragment.props).toContainEqual(
     expect.objectContaining({
       instanceId: collection.id,
@@ -189,10 +194,41 @@ test("Form error message binds all errors through its authored container", () =>
       (child) => child.type === "expression" && child.value.endsWith(".message")
     )
   );
-  expect(message).toBeDefined();
+  expect(message?.id).toBe(listItem.id);
   expect(error.tag).toBe("div");
   expect(fragment.instances.some(({ tag }) => tag === "ul")).toBe(true);
   expect(fragment.instances.some(({ tag }) => tag === "li")).toBe(true);
+  const listStyleSourceId = fragment.styleSourceSelections.find(
+    ({ instanceId }) => instanceId === list.id
+  )?.values[0];
+  expect(
+    fragment.styles
+      .filter(({ styleSourceId }) => styleSourceId === listStyleSourceId)
+      .map(({ property, value }) => ({ property, value }))
+  ).toEqual(
+    expect.arrayContaining([
+      { property: "display", value: { type: "keyword", value: "grid" } },
+      { property: "rowGap", value: { type: "unit", unit: "px", value: 4 } },
+    ])
+  );
+  const errorStyleSourceId = fragment.styleSourceSelections.find(
+    ({ instanceId }) => instanceId === error.id
+  )?.values[0];
+  expect(
+    fragment.styles
+      .filter(({ styleSourceId }) => styleSourceId === errorStyleSourceId)
+      .map(({ property, value }) => ({ property, value }))
+  ).toEqual(
+    expect.arrayContaining([
+      {
+        property: "backgroundColor",
+        value: expect.objectContaining({
+          type: "color",
+          components: [1, 0.9686, 0.9647],
+        }),
+      },
+    ])
+  );
 });
 
 test("Form success and error feedback render without DOM markers", () => {
@@ -297,6 +333,13 @@ test("new Form templates select project and visitor Email Resources", () => {
       confirmationBody: "default",
     },
   ]);
+  expect(renderedTemplate).not.toMatch(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i);
+  for (const resource of emailResources) {
+    expect(resource?.email).not.toHaveProperty("recipients");
+    expect(resource?.email).not.toHaveProperty("recipientsExpression");
+    expect(resource?.email).not.toHaveProperty("sender");
+    expect(resource?.email).not.toHaveProperty("senderExpression");
+  }
   expect(emailResources[0]?.email?.subject).toContain(".subject");
   expect(emailResources[1]?.email?.subject).toContain(".subject");
   expect(emailResources[0]?.email?.body).toContain(".pageUrl");

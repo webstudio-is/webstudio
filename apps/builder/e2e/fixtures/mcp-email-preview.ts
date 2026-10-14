@@ -52,8 +52,8 @@ export const createManagedFormEmailSender = ({ formData, projectId }: { context:
     });
     const data = await response.json();
     return response.ok
-      ? { ok: true, status: 200, data }
-      : { ok: false, status: response.status, error: data.error };
+      ? { ok: true, status: response.status, statusText: response.statusText, data }
+      : { ok: false, status: response.status, statusText: response.statusText, data };
   },
 }, formData, projectId);
 

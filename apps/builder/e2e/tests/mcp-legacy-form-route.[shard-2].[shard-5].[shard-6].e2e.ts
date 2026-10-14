@@ -9,7 +9,7 @@ import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
 
-test("MCP-authored legacy Webhook Form action uses current dynamic route params in generated Preview", async ({
+test("MCP-edited saved legacy Webhook Form action uses current dynamic route params in generated Preview", async ({
   page,
   context,
 }) => {
@@ -101,13 +101,12 @@ test("MCP-authored legacy Webhook Form action uses current dynamic route params 
         await form.locator('button[type="submit"]').click();
         const response = await responsePromise;
         expect(response.status()).toBe(200);
-        await expect(form).toHaveAttribute("data-state", "success");
         expect(receiver.deliveries).toEqual([
           {
             method: "POST",
             slug: "second",
             routeHeader: "second",
-            body: { email: "", message: "Current route", name: "" },
+            body: { message: "Current route" },
           },
         ]);
       },

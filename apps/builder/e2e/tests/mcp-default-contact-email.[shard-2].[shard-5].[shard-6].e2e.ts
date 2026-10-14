@@ -3,6 +3,8 @@ import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { expect, type Page } from "@playwright/test";
+import { encodeDataSourceVariable } from "@webstudio-is/sdk";
+import { formDataParameterName } from "@webstudio-is/sdk/runtime";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { loadDevBuild } from "../db";
 import {
@@ -105,11 +107,21 @@ test("MCP-inserted default contact Form sends its automatic owner message and vi
     id: string;
     email?: Record<string, unknown>;
   }>;
+  const dataSources = JSON.parse(build.dataSources) as Array<{
+    id: string;
+    name: string;
+    scopeInstanceId?: string;
+  }>;
+  const formData = dataSources.find(
+    ({ name, scopeInstanceId }) =>
+      name === formDataParameterName && scopeInstanceId === formId
+  );
+  expect(formData).toBeDefined();
   expect(
     resources.find(({ id }) => id === ownerResourceId)?.email
   ).toMatchObject({
     recipientMode: "project",
-    body: expect.stringContaining("Submitted fields"),
+    body: expect.stringContaining(encodeDataSourceVariable(formData!.id)),
   });
   expect(
     resources.find(({ id }) => id === visitorResourceId)?.email
@@ -259,7 +271,13 @@ test("failed visitor confirmation stays nonfatal while the owner Email succeeds"
           expect.objectContaining({
             resourceId: visitorResourceId,
             status: 429,
-            message: "Email sending limit reached",
+            message: "Too Many Requests",
+            body: {
+              error: {
+                code: "email_rate_limited",
+                message: "Email sending limit reached",
+              },
+            },
           }),
         ]);
         expect(messages).toHaveLength(2);
