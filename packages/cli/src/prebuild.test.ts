@@ -24,7 +24,7 @@ import {
 import { build } from "esbuild";
 import { loadConfigFromFile } from "vite";
 import { bundleVersion } from "@webstudio-is/protocol";
-import type { Asset, Instance, Prop } from "@webstudio-is/sdk";
+import type { Asset, DataSource, Instance, Prop } from "@webstudio-is/sdk";
 import {
   createDocumentGraph,
   type AssetFileDocument,
@@ -103,6 +103,11 @@ const runGeneratedCommand = async (
     cwd: tempDir,
     env,
   });
+};
+
+const prerenderSsg = async () => {
+  await runGeneratedCommand("vike", ["build"]);
+  await runGeneratedCommand("vike", ["prerender"]);
 };
 
 const linkPackagedPreviewDependencies = async () => {
@@ -258,6 +263,8 @@ const createSiteData = (
     }>;
     instances?: Array<[string, Omit<Instance, "type">]>;
     props?: Array<[string, Prop]>;
+    dataSources?: Array<[string, DataSource]>;
+    resources?: Array<[string, Resource]>;
     pageMeta?: Record<string, unknown>;
     redirects?: Redirects;
     formComponentIdentityVersion?: number;
@@ -352,8 +359,8 @@ const createSiteData = (
           ],
         ]
       ).map(([id, instance]) => [id, { type: "instance", ...instance }]),
-      dataSources: [],
-      resources: [],
+      dataSources: overrides.dataSources ?? [],
+      resources: overrides.resources ?? [],
       styleSources: [],
       styleSourceSelections: [],
       styles: [],
@@ -916,9 +923,12 @@ describe("prebuild", () => {
         projectId: string;
       }) => EmailResourceLoadOptions["sendEmail"];
     };
-    const bindingSendEmail = vi
-      .fn()
-      .mockResolvedValue({ ok: true, status: 200, data: { id: "sent" } });
+    const bindingSendEmail = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      data: { id: "sent" },
+    });
     const sendEmail = adapter.createManagedFormEmailSender({
       context: {
         cloudflare: {
@@ -1031,8 +1041,8 @@ describe("prebuild", () => {
                     name === "type"
                       ? "file"
                       : name === "name"
-                        ? "attachments"
-                        : "image/*,.pdf",
+                      ? "attachments"
+                      : "image/*,.pdf",
                 },
               ] as [string, Prop]
           ),
@@ -1087,7 +1097,7 @@ describe("prebuild", () => {
   });
   test("rejects Assets queries without a content database without changing generated files", async () => {
     const siteData = createSiteData();
-    siteData.build.resources = [["posts", createQueryResource()]] as never;
+    siteData.build.resources = [["posts", createQueryResource()]];
     siteData.build.dataSources = [
       [
         "posts-data",
@@ -1099,7 +1109,7 @@ describe("prebuild", () => {
           scopeInstanceId: "root",
         },
       ],
-    ] as never;
+    ];
     await writeSiteData(siteData);
     const existingFiles = [
       "app/routes/_index.tsx",
@@ -1416,7 +1426,7 @@ describe("prebuild", () => {
           (id) =>
             [id, { id, component: "ws:block", children: [] }] as [
               string,
-              Omit<Instance, "type">,
+              Omit<Instance, "type">
             ]
         ),
       ],
@@ -1563,7 +1573,7 @@ describe("prebuild", () => {
           resourceId: "posts",
         },
       ],
-    ] as never;
+    ];
     siteData.build.resources = [
       [
         "posts",
@@ -1587,7 +1597,7 @@ describe("prebuild", () => {
           }),
         },
       ],
-    ] as never;
+    ];
     siteData.build.styleSources = [
       ["dynamic-style", { type: "local", id: "dynamic-style" }],
     ] as never;
@@ -1736,7 +1746,7 @@ describe("prebuild", () => {
         name,
         resourceId: `${name}-resource`,
       },
-    ]) as never;
+    ]);
     siteData.build.resources = resourceNames.map((name) => [
       `${name}-resource`,
       {
@@ -1746,7 +1756,7 @@ describe("prebuild", () => {
         method: "get",
         headers: [],
       },
-    ]) as never;
+    ]);
     await writeSiteData(siteData);
 
     await prebuild({
@@ -1883,8 +1893,7 @@ describe("prebuild", () => {
     });
 
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vite", ["build"]);
-    await runGeneratedCommand("vike", ["prerender"]);
+    await prerenderSsg();
 
     const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
     const codeElements = findElementsByTagName(html, "code");
@@ -1948,8 +1957,7 @@ describe("prebuild", () => {
 
     await prebuild({ assets: false, template: ["ssg"] });
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vite", ["build"]);
-    await runGeneratedCommand("vike", ["prerender"]);
+    await prerenderSsg();
 
     const htmlSource = await readFile("dist/client/index.html", "utf8");
     expect(htmlSource).toMatch(/^<!DOCTYPE html><html/);
@@ -2643,9 +2651,7 @@ sitemap.map((page) => page.path);`
         ],
         assetIndex: index,
       };
-      siteData.build.resources = [
-        ["posts", createQueryResource("full")],
-      ] as never;
+      siteData.build.resources = [["posts", createQueryResource("full")]];
       siteData.build.dataSources = [
         [
           "posts-data",
@@ -2657,7 +2663,7 @@ sitemap.map((page) => page.path);`
             scopeInstanceId: "root",
           },
         ],
-      ] as never;
+      ];
       await writeSiteData(
         siteData as unknown as ReturnType<typeof createSiteData>
       );
@@ -2702,9 +2708,7 @@ sitemap.map((page) => page.path);`
       await runGeneratedCommand("react-router", ["build"]);
       const serverBundle = (
         await Promise.all(
-          (
-            await getFilePaths("build/server")
-          )
+          (await getFilePaths("build/server"))
             .filter((path) => path.endsWith(".js"))
             .map((path) => readFile(path, "utf8"))
         )
@@ -2714,9 +2718,7 @@ sitemap.map((page) => page.path);`
       expect(serverBundle).toContain("post-revision");
       const clientBundle = (
         await Promise.all(
-          (
-            await getFilePaths("build/client")
-          )
+          (await getFilePaths("build/client"))
             .filter((path) => path.endsWith(".js"))
             .map((path) => readFile(path, "utf8"))
         )
@@ -2811,7 +2813,7 @@ sitemap.map((page) => page.path);`
       }),
       assetIndex: index,
     };
-    siteData.build.resources = [["posts", createQueryResource()]] as never;
+    siteData.build.resources = [["posts", createQueryResource()]];
     siteData.build.dataSources = [
       [
         "posts-data",
@@ -2823,7 +2825,7 @@ sitemap.map((page) => page.path);`
           scopeInstanceId: "root",
         },
       ],
-    ] as never;
+    ];
     await writeSiteData(
       siteData as unknown as ReturnType<typeof createSiteData>
     );
@@ -3055,9 +3057,7 @@ sitemap.map((page) => page.path);`
 
     const serverBundle = (
       await Promise.all(
-        (
-          await getFilePaths("build/server")
-        )
+        (await getFilePaths("build/server"))
           .filter((path) => path.endsWith(".js"))
           .map((path) => readFile(path, "utf8"))
       )
@@ -3552,7 +3552,7 @@ sitemap.map((page) => page.path);`
             scopeInstanceId: "root",
           },
         ],
-      ] as never;
+      ];
       siteData.build.resources = [
         [
           "author",
@@ -3577,7 +3577,7 @@ sitemap.map((page) => page.path);`
             headers: [{ name: "Cache-Control", value: '"public, max-age=60"' }],
           },
         ],
-      ] as never;
+      ];
       await writeSiteData(siteData);
       await prebuild({ assets: false, template: [template] });
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
@@ -3713,7 +3713,7 @@ sitemap.map((page) => page.path);`
             ([id]) =>
               [id, { id, component: "ResourceForm", children: [] }] as [
                 string,
-                Omit<Instance, "type">,
+                Omit<Instance, "type">
               ]
           ),
         ],
@@ -6530,8 +6530,7 @@ export const createManagedFormResourceFetch = () => {
 
     await prebuild({ assets: false, template: ["ssg"] });
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vite", ["build"]);
-    await runGeneratedCommand("vike", ["prerender"]);
+    await prerenderSsg();
 
     const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
     const [form] = findElementsByTagName(html, "form");
@@ -6672,7 +6671,7 @@ export const createManagedFormResourceFetch = () => {
           }),
         },
       ],
-    ] as never;
+    ];
     siteData.build.dataSources = [
       [
         "post-data",
@@ -6684,7 +6683,7 @@ export const createManagedFormResourceFetch = () => {
           scopeInstanceId: "post-root",
         },
       ],
-    ] as never;
+    ];
     await writeSiteData(siteData);
 
     await prebuild({ assets: false, template: ["ssg"] });
@@ -6702,16 +6701,13 @@ export const createManagedFormResourceFetch = () => {
     expect(sitemap).not.toContain('"path": "/blog/hello-world"');
     expect(sitemap).not.toContain('"path": "/blog/draft-post"');
     await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-    await runGeneratedCommand("vite", ["build"]);
-    await runGeneratedCommand("vike", ["prerender"]);
+    await prerenderSsg();
     await expect(
       readFile("dist/client/blog/hello-world/index.html", "utf8")
     ).resolves.toContain("<!DOCTYPE html>");
     const staticRuntimeOutput = (
       await Promise.all(
-        (
-          await getFilePaths("dist/client")
-        )
+        (await getFilePaths("dist/client"))
           .filter((path) => path.endsWith(".js") || path.endsWith(".json"))
           .map((path) => readFile(path, "utf8"))
       )
@@ -7195,7 +7191,7 @@ export const createManagedFormResourceFetch = () => {
           }),
         },
       ],
-    ] as never;
+    ];
     siteData.build.dataSources = [
       [
         "posts-data",
@@ -7207,7 +7203,7 @@ export const createManagedFormResourceFetch = () => {
           scopeInstanceId: "root",
         },
       ],
-    ] as never;
+    ];
     await writeSiteData(
       siteData as unknown as ReturnType<typeof createSiteData>
     );
@@ -7244,8 +7240,7 @@ export const createManagedFormResourceFetch = () => {
         meta: { totalCount: 1, hasMore: false },
       },
     ]);
-    await runGeneratedCommand("vite", ["build"]);
-    await runGeneratedCommand("vike", ["prerender"]);
+    await prerenderSsg();
     await expect(readFile("dist/client/index.html", "utf8")).resolves.toContain(
       "<!DOCTYPE html>"
     );
@@ -7349,7 +7344,7 @@ export const createManagedFormResourceFetch = () => {
           scopeInstanceId: "collection",
         },
       ],
-    ] as never;
+    ];
     siteData.build.resources = [
       [
         "sitemap-resource",
@@ -7362,7 +7357,7 @@ export const createManagedFormResourceFetch = () => {
           headers: [],
         },
       ],
-    ] as never;
+    ];
     await writeSiteData(siteData);
 
     await prebuild({ assets: false, template: ["react-router"] });
@@ -7371,6 +7366,98 @@ export const createManagedFormResourceFetch = () => {
       readFile("app/__generated__/[sitemap.xml]._index.server.tsx", "utf8")
     ).resolves.toContain('rootIds: [\n      "sitemap-resource"');
   });
+
+  test("emits static text pages at their configured paths", async () => {
+    const robots = "User-agent: *\nDisallow: /private";
+    const security = "Contact: mailto:security@example.com\n# <head> & café\n";
+    const siteData = createSiteData({
+      pages: [
+        {
+          id: "home",
+          name: "Home",
+          title: "Home",
+          path: "",
+          rootInstanceId: "root",
+          meta: {},
+        },
+        {
+          id: "robots",
+          name: "Robots",
+          title: "Robots",
+          path: "/robots.txt",
+          rootInstanceId: "root",
+          meta: {
+            documentType: "text",
+            content: JSON.stringify(robots),
+          },
+        },
+        {
+          id: "security",
+          name: "Security",
+          title: "Security",
+          path: "/.well-known/security.txt",
+          rootInstanceId: "root",
+          meta: {
+            documentType: "text",
+            content: `${encodeDataVariableId("security-data")}.data.content`,
+          },
+        },
+        {
+          id: "empty",
+          name: "Empty",
+          title: "Empty",
+          path: "/empty.txt",
+          rootInstanceId: "root",
+          meta: { documentType: "text", content: '""' },
+        },
+      ],
+      dataSources: [
+        [
+          "security-data",
+          {
+            id: "security-data",
+            type: "resource",
+            name: "Security",
+            resourceId: "security-resource",
+            scopeInstanceId: "root",
+          },
+        ],
+      ],
+      resources: [
+        [
+          "security-resource",
+          {
+            id: "security-resource",
+            name: "Security",
+            control: "system",
+            method: "get",
+            url: JSON.stringify(
+              `data:application/json,${encodeURIComponent(
+                JSON.stringify({ content: security })
+              )}`
+            ),
+            headers: [],
+          },
+        ],
+      ],
+    });
+    await writeSiteData(siteData);
+
+    await prebuild({ assets: false, template: ["ssg"] });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    await prerenderSsg();
+
+    await expect(readFile("dist/client/robots.txt", "utf8")).resolves.toBe(
+      robots
+    );
+    await expect(
+      readFile("dist/client/.well-known/security.txt", "utf8")
+    ).resolves.toBe(security);
+    await expect(readFile("dist/client/empty.txt", "utf8")).resolves.toBe("");
+    await expect(readFile("dist/client/index.html", "utf8")).resolves.toContain(
+      "<!DOCTYPE html>"
+    );
+  }, 30_000);
 
   test("generates html, xml, and text document routes", async () => {
     await writeSiteData(

@@ -263,7 +263,12 @@ export const createPreviewController = (
       try {
         await waitForPreviewReady(
           url,
-          { isRunning, requiredAssetNames, requiredProject },
+          {
+            isRunning,
+            requiredAssetNames,
+            requiredProject,
+            probeIdentityOnly: result.mode === "iterative",
+          },
           dependencies
         );
       } catch (error) {
