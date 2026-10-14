@@ -208,6 +208,7 @@ const apiCommandOptionsByCommand: Partial<
   "get-assets-resource": apiCommand.assetResourceCommandOptions,
   "create-assets-resource": apiCommand.inputCommandOptions,
   "update-assets-resource": apiCommand.inputCommandOptions,
+  "simulate-form-submission": apiCommand.inputCommandOptions,
   "list-publishes": apiCommand.paginatedListCommandOptions,
   "create-resource": apiCommand.createResourceCommandOptions,
   "update-resource": apiCommand.updateResourceCommandOptions,
@@ -258,6 +259,10 @@ export const highLevelCliCommands = [
   { command: "get-assets-resource", operation: "get-assets-resource" },
   { command: "create-assets-resource", operation: "create-assets-resource" },
   { command: "update-assets-resource", operation: "update-assets-resource" },
+  {
+    command: "simulate-form-submission",
+    operation: "simulate-form-submission",
+  },
   {
     command: "get-marketplace-product",
     operation: "get-marketplace-product",

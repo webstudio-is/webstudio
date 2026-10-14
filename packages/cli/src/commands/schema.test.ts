@@ -149,8 +149,8 @@ test("prints compact mcp tool summaries as json by default", () => {
       inputSchema,
     })
   );
-  // Includes the custom response headers and screenshot target schemas.
-  expect(JSON.stringify(handshakePayload).length).toBeLessThan(221_000);
+  // Includes Form simulation, custom response headers, and screenshot schemas.
+  expect(JSON.stringify(handshakePayload).length).toBeLessThan(222_000);
   const screenshotTool = expectedTools.find(
     ({ name }) => name === "screenshot"
   );

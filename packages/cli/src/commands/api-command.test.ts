@@ -529,6 +529,35 @@ test("routes server-only commands through project session transport", async () =
   );
 });
 
+test("reads Form simulation input from a file and runs it on the server", async () => {
+  mockConfig();
+  const input = {
+    formId: "form-1",
+    path: "/contact",
+    values: { email: "testing@webstudio.is" },
+  };
+  readFile.mockResolvedValueOnce(JSON.stringify(input));
+
+  await apiCommand(
+    { command: "simulate-form-submission", input: "form.json", json: true },
+    dependencies
+  );
+
+  expect(readFile).toHaveBeenCalledWith("form.json", "utf-8");
+  const session = createCliProjectSession.mock.results[0]?.value;
+  expect(session.executeServerOperation).toHaveBeenCalledWith(
+    {
+      id: "forms.simulateSubmission",
+      method: "mutation",
+      invalidatesNamespaces: [],
+      refetchInvalidatedNamespaces: false,
+    },
+    input
+  );
+  expect(session.read).not.toHaveBeenCalled();
+  expect(session.mutate).not.toHaveBeenCalled();
+});
+
 test("passes refresh to local-capable command session", async () => {
   mockConfig();
 

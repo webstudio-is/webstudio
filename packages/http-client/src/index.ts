@@ -1424,7 +1424,7 @@ export const simulateFormSubmission = async (
     status: number;
     results: { status: number; resourceId?: string }[];
     errors: { status?: number; message: string }[];
-  }>(params, "api.forms.simulateSubmission", {
+  }>(params, getPublicApiOperationPath("simulate-form-submission"), {
     formId: params.formId,
     path: params.path,
     siteOrigin: params.siteOrigin,
