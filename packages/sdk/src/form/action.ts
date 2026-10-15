@@ -1,4 +1,6 @@
 export const maxFormActions = 10;
+/** @deprecated Kept for compatibility with existing SDK consumers. */
+export const noEnabledFormActionMessage = "Enable at least one action";
 export const resourceFormActionUrl = "?__webstudio__=resources";
 export const navigationFormActionUrl = "?__webstudio__=navigate";
 

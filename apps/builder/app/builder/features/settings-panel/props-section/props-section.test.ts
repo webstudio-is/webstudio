@@ -8,7 +8,41 @@ const {
   shouldSyncMediaAssetProps,
   findExpressionPropByStandardName,
   shouldWriteBoundValue,
+  getStandaloneInitialProps,
 } = __testing__;
+
+test("keeps a standalone Form redirect when Content mode hides Action", () => {
+  const redirect = {
+    propName: "successRedirect",
+    meta: { type: "string", control: "url", required: false },
+  } as const;
+  const action = {
+    propName: "action",
+    meta: { type: "json", control: "form-action", required: false },
+  } as const;
+
+  expect(
+    getStandaloneInitialProps({
+      component: "Form",
+      addedProps: [],
+      initialProps: [redirect],
+    })
+  ).toEqual([redirect]);
+  expect(
+    getStandaloneInitialProps({
+      component: "Form",
+      addedProps: [],
+      initialProps: [action, redirect],
+    })
+  ).toEqual([action]);
+  expect(
+    getStandaloneInitialProps({
+      component: "Form",
+      addedProps: [action],
+      initialProps: [redirect],
+    })
+  ).toEqual([]);
+});
 
 test("Form and generic components render their property sections", () => {
   for (const component of ["Form", "Box"]) {

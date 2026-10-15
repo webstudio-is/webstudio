@@ -3,6 +3,7 @@ import {
   getEnabledFormActions,
   getFormActions,
   isFormSubmission,
+  noEnabledFormActionMessage,
   validateFormSubmission,
 } from "./form-submission";
 
@@ -16,6 +17,10 @@ test("enabled Actions preserve configured order without running legacy disabled 
   expect(validateFormSubmission(actions)).toBeUndefined();
   expect(getFormActions(actions)).toEqual(["third", "first"]);
   expect(getEnabledFormActions(actions)).toEqual(["third", "first"]);
+});
+
+test("retains the legacy validation message export", () => {
+  expect(noEnabledFormActionMessage).toBe("Enable at least one action");
 });
 
 test("empty, duplicate and over-limit Actions are rejected", () => {

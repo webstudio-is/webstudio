@@ -186,6 +186,26 @@ const shouldWriteBoundValue = (
 ): update is Exclude<PropValue, { type: "expression" }> =>
   isContentMode && update.type !== "expression";
 
+const getStandaloneInitialProps = ({
+  component,
+  addedProps,
+  initialProps,
+}: {
+  component: Instance["component"];
+  addedProps: PropAndMeta[];
+  initialProps: PropAndMeta[];
+}) => {
+  const hasVisibleFormActionControl =
+    component === "Form" &&
+    [...addedProps, ...initialProps].some(
+      (item) => item.meta.control === "form-action"
+    );
+  return initialProps.filter(
+    (item) =>
+      item.propName !== "successRedirect" || !hasVisibleFormActionControl
+  );
+};
+
 const renderProperty = (
   {
     propsLogic: logic,
@@ -477,13 +497,11 @@ export const PropsSection = (props: PropsSectionProps) => {
               />
             )}
             {addedProps.map((item) => renderProperty(props, item))}
-            {initialProps
-              .filter(
-                (item) =>
-                  props.component !== "Form" ||
-                  item.propName !== "successRedirect"
-              )
-              .map((item) => renderProperty(props, item))}
+            {getStandaloneInitialProps({
+              component: props.component,
+              addedProps,
+              initialProps,
+            }).map((item) => renderProperty(props, item))}
           </Flex>
         </CollapsibleSectionWithAddButton>
       )}
@@ -497,6 +515,7 @@ export const __testing__ = {
   shouldSyncMediaAssetProps,
   findExpressionPropByStandardName,
   shouldWriteBoundValue,
+  getStandaloneInitialProps,
 };
 
 const $propValues = computed(
