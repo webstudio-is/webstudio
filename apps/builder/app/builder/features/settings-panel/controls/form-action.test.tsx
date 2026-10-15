@@ -3,10 +3,14 @@ import { act } from "react-dom/test-utils";
 import { userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test, vi } from "vitest";
 import {
+  Box,
+  Flex,
+  Grid,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
   TooltipProvider,
+  theme,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import type { Prop } from "@webstudio-is/sdk";
@@ -16,6 +20,8 @@ import {
   $props,
   $resources,
 } from "~/shared/sync/data-stores";
+import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
+import { FieldLabel } from "../property-label";
 import { FormActionControl } from "./form-action";
 
 (
@@ -83,9 +89,9 @@ test("Action + explains how to add a resource when none are available", async ()
     )
   );
 
-  const addButton = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Add action"]'
-  )!;
+  const addButton = container
+    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+    .item(1)!;
   expect(addButton.disabled).toBe(false);
   expect(addButton.dataset.buttonColor).toBe("ghost");
   await act(async () => userEvent.click(addButton));
@@ -96,7 +102,7 @@ test("Action + explains how to add a resource when none are available", async ()
   expect(onChange).not.toHaveBeenCalled();
 });
 
-test("Action + matches the Variables + button in every interaction state", async () => {
+test("Action header and menu align while rows retain their original geometry", async () => {
   $instances.set(
     new Map([
       [
@@ -105,47 +111,165 @@ test("Action + matches the Variables + button in every interaction state", async
       ],
     ])
   );
-  $dataSources.set(new Map());
-  $resources.set(new Map());
+  $dataSources.set(
+    new Map([
+      [
+        "send",
+        {
+          type: "resource",
+          id: "send",
+          name: "Send request",
+          scopeInstanceId: "form",
+          resourceId: "request",
+        },
+      ],
+    ])
+  );
+  $resources.set(new Map([["request", requestResource("request")]]));
   const container = document.createElement("div");
+  container.style.width = "300px";
   document.body.appendChild(container);
   root = createRoot(container);
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <SectionTitle
-          suffix={
-            <SectionTitleButton
-              aria-label="Add variable"
-              prefix={<PlusIcon />}
-            />
-          }
-        >
-          <SectionTitleLabel>Variables</SectionTitleLabel>
-        </SectionTitle>
-        <FormActionControl
-          instanceId="form"
-          propName="action"
-          prop={undefined}
-          computedValue={undefined}
-          meta={{ type: "json", control: "form-action", required: false }}
-          onChange={vi.fn()}
-        />
+        <div data-properties-section>
+          <CollapsibleSectionWithAddButton
+            label="Properties & attributes"
+            onAdd={vi.fn()}
+          >
+            <div />
+          </CollapsibleSectionWithAddButton>
+        </div>
+        <Grid css={{ paddingBottom: theme.panel.paddingBlock }}>
+          <FormActionControl
+            instanceId="form"
+            propName="action"
+            prop={{
+              id: "action",
+              instanceId: "form",
+              name: "action",
+              type: "json",
+              value: [{ dataSourceId: "send" }],
+            }}
+            computedValue={[{ dataSourceId: "send" }]}
+            meta={{ type: "json", control: "form-action", required: false }}
+            onChange={vi.fn()}
+          />
+        </Grid>
+        <div data-variables-section>
+          <SectionTitle
+            suffix={
+              <Flex align="center">
+                <SectionTitleButton
+                  aria-label="Add variable"
+                  prefix={<PlusIcon />}
+                />
+              </Flex>
+            }
+          >
+            <SectionTitleLabel>Variables</SectionTitleLabel>
+          </SectionTitle>
+        </div>
+        {/* The original Action header flowed at the button height. */}
+        <Grid>
+          <div data-baseline-action>
+            <Box css={{ paddingInline: theme.panel.paddingInline }}>
+              <Flex align="center" justify="between" data-baseline-header>
+                <FieldLabel description="Action details">Action</FieldLabel>
+                <SectionTitleButton prefix={<PlusIcon />} />
+              </Flex>
+            </Box>
+            <Box css={{ py: theme.spacing[2] }}>
+              <Flex direction="column" gap="2">
+                <Grid>
+                  <div
+                    data-baseline-row
+                    style={{ height: theme.spacing[11] }}
+                  />
+                </Grid>
+              </Flex>
+            </Box>
+          </div>
+        </Grid>
       </TooltipProvider>
     )
   );
 
-  const variableButton = Array.from(
-    container.querySelectorAll<HTMLButtonElement>('[aria-label="Add variable"]')
-  ).at(-1)!;
-  const actionButton = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Add action"]'
-  )!;
+  const propertyButton = container
+    .querySelector("[data-properties-section]")!
+    .querySelectorAll<HTMLButtonElement>('[data-button-color="ghost"]')
+    .item(1)!;
+  const actionButton = container
+    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+    .item(1)!;
+  const variableButton = container
+    .querySelectorAll<HTMLButtonElement>('[aria-label="Add variable"]')
+    .item(1)!;
   expect(actionButton.tabIndex).toBe(0);
+  const propertyHeader = propertyButton.closest("div[data-state]")!;
+  const actionHeader = actionButton.closest("div[data-state]")!;
+  const variableHeader = variableButton.closest("div[data-state]")!;
+  const panelRect = container.getBoundingClientRect();
+  const propertyRect = propertyHeader.getBoundingClientRect();
+  const actionRect = actionHeader.getBoundingClientRect();
+  const variableRect = variableHeader.getBoundingClientRect();
+  expect(actionRect.left).toBe(propertyRect.left);
+  expect(actionRect.right).toBe(propertyRect.right);
+  expect(actionRect.left).toBe(variableRect.left);
+  expect(actionRect.right).toBe(variableRect.right);
+  expect(actionButton.getBoundingClientRect().top - actionRect.top).toBe(
+    propertyButton.getBoundingClientRect().top - propertyRect.top
+  );
+  expect(actionButton.getBoundingClientRect().top - actionRect.top).toBe(
+    variableButton.getBoundingClientRect().top - variableRect.top
+  );
+  const actionButtonRect = actionButton.getBoundingClientRect();
+  const propertyButtonRect = propertyButton.getBoundingClientRect();
+  expect(
+    actionButtonRect.top + actionButtonRect.height / 2 - actionRect.top
+  ).toBe(
+    propertyButtonRect.top + propertyButtonRect.height / 2 - propertyRect.top
+  );
+  expect(actionButton.getBoundingClientRect().right - actionRect.right).toBe(
+    propertyButton.getBoundingClientRect().right - propertyRect.right
+  );
+  expect(actionButton.getBoundingClientRect().right - actionRect.right).toBe(
+    variableButton.getBoundingClientRect().right - variableRect.right
+  );
+  const rowRect = container
+    .querySelector<HTMLElement>('[data-list-item="true"]')!
+    .getBoundingClientRect();
+  expect(actionRect.left).toBe(panelRect.left);
+  expect(actionRect.right).toBe(panelRect.right);
+  expect(rowRect.left).toBe(panelRect.left);
+  expect(rowRect.right).toBe(panelRect.right);
+  const baselineHeaderRect = container
+    .querySelector<HTMLElement>("[data-baseline-header]")!
+    .getBoundingClientRect();
+  const baselineRowRect = container
+    .querySelector<HTMLElement>("[data-baseline-row]")!
+    .getBoundingClientRect();
+  expect(rowRect.top - actionRect.top).toBe(
+    baselineRowRect.top - baselineHeaderRect.top
+  );
+  expect(
+    document
+      .elementFromPoint(
+        rowRect.left + rowRect.width / 2,
+        rowRect.top + rowRect.height / 8
+      )
+      ?.closest('[data-list-item="true"]')
+  ).toBe(container.querySelector('[data-list-item="true"]'));
+  expect(
+    document
+      .elementFromPoint(actionButtonRect.left + 2, actionButtonRect.bottom - 1)
+      ?.closest('[aria-label="Add action"]')
+  ).toBe(actionButton);
   for (const state of ["auto", "hover", "focus", "pressed"]) {
-    variableButton.dataset.state = state;
+    propertyButton.dataset.state = state;
     actionButton.dataset.state = state;
-    const reference = getComputedStyle(variableButton);
+    const reference = getComputedStyle(propertyButton);
     const actual = getComputedStyle(actionButton);
     for (const property of [
       "backgroundColor",
@@ -164,6 +288,23 @@ test("Action + matches the Variables + button in every interaction state", async
       );
     }
   }
+  await act(async () => userEvent.click(actionButton));
+  const menuRect = document
+    .querySelector<HTMLElement>('[role="menu"]')!
+    .getBoundingClientRect();
+  const triggerRect = actionButton.getBoundingClientRect();
+  expect(menuRect.top).toBeGreaterThanOrEqual(triggerRect.bottom);
+  expect(menuRect.right).toBeLessThanOrEqual(panelRect.right);
+  expect(menuRect.left).toBeGreaterThanOrEqual(panelRect.left);
+  expect(menuRect.right).toBeCloseTo(triggerRect.right, 0);
+  await act(async () => userEvent.keyboard("{Escape}"));
+  const actionLabel = Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent === "Action"
+  )!;
+  await act(async () => userEvent.click(actionLabel));
+  expect(document.querySelector('[role="tooltip"]')?.textContent).toContain(
+    "Sends each form submission to all destinations at the same time."
+  );
 });
 
 test("Action control handles an empty Resource list and can select an in-scope destination", async () => {
@@ -263,9 +404,9 @@ test("Action control handles an empty Resource list and can select an in-scope d
     "Create a Resource in Data variables to add an action."
   );
 
-  const addButton = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Add action"]'
-  )!;
+  const addButton = container
+    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+    .item(1)!;
   expect(addButton.dataset.buttonColor).toBe("ghost");
 
   await act(async () =>
@@ -345,8 +486,9 @@ test("Action control handles an empty Resource list and can select an in-scope d
   );
   expect(container.textContent).not.toContain("Create Resource in Form");
   expect(
-    container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')
-      ?.disabled
+    container
+      .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+      .item(1)?.disabled
   ).toBe(true);
 });
 
@@ -415,7 +557,9 @@ test("a Form can select a Resource defined outside its scope", async () => {
 
   await act(async () =>
     userEvent.click(
-      container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')!
+      container
+        .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+        .item(1)!
     )
   );
   const requestOption = Array.from(
@@ -599,9 +743,9 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
       )
   );
   expect(document.querySelector('[role="dialog"]')).toBeNull();
-  const addButton = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Add action"]'
-  )!;
+  const addButton = container
+    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+    .item(1)!;
   await act(async () => await userEvent.hover(addButton));
   await expect
     .poll(() => document.querySelector('[role="tooltip"]')?.textContent)
@@ -713,9 +857,12 @@ test("a legacy Action stays visible and can be removed", async () => {
   expect(row?.getBoundingClientRect().left).toBe(
     container.getBoundingClientRect().left
   );
-  const addButton = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Add action"]'
-  )!;
+  expect(row?.getBoundingClientRect().right).toBe(
+    container.getBoundingClientRect().right
+  );
+  const addButton = container
+    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+    .item(1)!;
   await act(async () => addButton.focus());
   await act(async () => userEvent.tab());
   expect(document.activeElement).toBe(row);
