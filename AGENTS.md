@@ -6,3 +6,4 @@
 - For dependencies without a structured error signal, use documented APIs or validate inputs/results directly. Do not add message-based compatibility fallbacks.
 - Keep error messages for display and logging. Never include credentials or tokens in error text.
 - When changing an error contract, inspect its producers and consumers and verify the relevant transport and recovery paths. Tests should demonstrate that changing message wording cannot change behavior.
+- Normalize transport and validation errors in shared error-handling code. UI components should consume normalized errors and add only UI-specific context, rather than decode transport payloads or duplicate generic error formatting.

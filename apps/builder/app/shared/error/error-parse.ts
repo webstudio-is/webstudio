@@ -1,8 +1,15 @@
+import { TRPCClientError } from "@trpc/client";
 import { isRouteErrorResponse } from "@remix-run/react";
 import { z } from "zod";
 
-// Currently, we have multiple error formats, and not all of them are covered here.
-// We should consolidate these formats into a single, unified format for consistency.
+// Normalize transport and validation payloads here so UI consumers only need
+// the display message and status, regardless of where an error originated.
+const validationIssue = z.object({ message: z.string().min(1) });
+const validationErrorData = z.object({
+  httpStatus: z.number().int().min(400).max(599).catch(500),
+  issues: z.array(z.unknown()).catch([]),
+});
+
 const pageError = z.union([
   z.string().transform((message) => ({ message, description: undefined })),
   z
@@ -30,6 +37,24 @@ export const parseError = (
   message: string;
   description?: string;
 } => {
+  if (error instanceof TRPCClientError || error instanceof z.ZodError) {
+    const parsed = validationErrorData.safeParse(
+      error instanceof z.ZodError
+        ? { httpStatus: 400, issues: error.issues }
+        : error.data
+    );
+    const messages = parsed.success
+      ? parsed.data.issues.flatMap((issue) => {
+          const parsedIssue = validationIssue.safeParse(issue);
+          return parsedIssue.success ? [parsedIssue.data.message] : [];
+        })
+      : [];
+    return {
+      status: parsed.success ? parsed.data.httpStatus : 500,
+      message: messages.length === 0 ? error.message : messages.join(", "),
+    };
+  }
+
   if (error instanceof Error) {
     return {
       message: error.message,

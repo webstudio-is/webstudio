@@ -1,4 +1,3 @@
-import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createId } from "@webstudio-is/sdk";
 import { useRevalidator } from "@remix-run/react";
@@ -30,6 +29,7 @@ import { TrashIcon } from "@webstudio-is/icons";
 import { type Workspace, type Role } from "@webstudio-is/project";
 import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
 import { RoleSelect } from "./role-select";
+import { parseError } from "~/shared/error/error-parse";
 
 const inviteMembers = async (
   emails: string[],
@@ -48,21 +48,7 @@ const inviteMembers = async (
         failed.push(`${email}: ${result.error}`);
       }
     } catch (error) {
-      const raw = error instanceof Error ? error.message : "Unknown error";
-      const issues =
-        error instanceof TRPCClientError ? error.data?.issues : undefined;
-      const messages = Array.isArray(issues)
-        ? issues.flatMap((issue: unknown) =>
-            typeof issue === "object" &&
-            issue !== null &&
-            "message" in issue &&
-            typeof issue.message === "string"
-              ? [issue.message]
-              : []
-          )
-        : [];
-      const message = messages.length === 0 ? raw : messages.join(", ");
-      failed.push(`${email}: ${message}`);
+      failed.push(`${email}: ${parseError(error).message}`);
     }
   }
   return failed;
