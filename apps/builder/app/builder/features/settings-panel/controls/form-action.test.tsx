@@ -2,7 +2,13 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test, vi } from "vitest";
-import { TooltipProvider } from "@webstudio-is/design-system";
+import {
+  SectionTitle,
+  SectionTitleButton,
+  SectionTitleLabel,
+  TooltipProvider,
+} from "@webstudio-is/design-system";
+import { PlusIcon } from "@webstudio-is/icons";
 import type { Prop } from "@webstudio-is/sdk";
 import {
   $dataSources,
@@ -88,6 +94,76 @@ test("Action + explains how to add a resource when none are available", async ()
   );
   expect(document.querySelector('[role="menu"]')).toBeNull();
   expect(onChange).not.toHaveBeenCalled();
+});
+
+test("Action + matches the Variables + button in every interaction state", async () => {
+  $instances.set(
+    new Map([
+      [
+        "form",
+        { type: "instance", id: "form", component: "Form", children: [] },
+      ],
+    ])
+  );
+  $dataSources.set(new Map());
+  $resources.set(new Map());
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <TooltipProvider>
+        <SectionTitle
+          suffix={
+            <SectionTitleButton
+              aria-label="Add variable"
+              prefix={<PlusIcon />}
+            />
+          }
+        >
+          <SectionTitleLabel>Variables</SectionTitleLabel>
+        </SectionTitle>
+        <FormActionControl
+          instanceId="form"
+          propName="action"
+          prop={undefined}
+          computedValue={undefined}
+          meta={{ type: "json", control: "form-action", required: false }}
+          onChange={vi.fn()}
+        />
+      </TooltipProvider>
+    )
+  );
+
+  const variableButton = Array.from(
+    container.querySelectorAll<HTMLButtonElement>('[aria-label="Add variable"]')
+  ).at(-1)!;
+  const actionButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Add action"]'
+  )!;
+  expect(actionButton.tabIndex).toBe(0);
+  for (const state of ["auto", "hover", "focus", "pressed"]) {
+    variableButton.dataset.state = state;
+    actionButton.dataset.state = state;
+    const reference = getComputedStyle(variableButton);
+    const actual = getComputedStyle(actionButton);
+    for (const property of [
+      "backgroundColor",
+      "color",
+      "outlineColor",
+      "outlineStyle",
+      "outlineWidth",
+      "outlineOffset",
+      "borderRadius",
+      "height",
+      "paddingInlineStart",
+      "paddingInlineEnd",
+    ] as const) {
+      expect(actual[property], `${state}: ${property}`).toBe(
+        reference[property]
+      );
+    }
+  }
 });
 
 test("Action control handles an empty Resource list and can select an in-scope destination", async () => {

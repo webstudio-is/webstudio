@@ -2,7 +2,6 @@ import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import {
   Box,
-  Button,
   InteractiveListArrowFocus,
   InteractiveListItem,
   DropdownMenu,
@@ -11,6 +10,7 @@ import {
   DropdownMenuTrigger,
   Flex,
   Grid,
+  SectionTitleButton,
   SmallIconButton,
   Text,
   Tooltip,
@@ -191,9 +191,9 @@ export const FormActionControl = ({
             open={showEmptyResourceTooltip}
             onOpenChange={setShowEmptyResourceTooltip}
           >
-            <Button
+            <SectionTitleButton
               aria-label="Add action"
-              color="ghost"
+              tabIndex={0}
               prefix={<PlusIcon />}
               onClick={() => setShowEmptyResourceTooltip(true)}
             />
@@ -203,10 +203,10 @@ export const FormActionControl = ({
             <Tooltip content="Add a resource to submit this Form.">
               <span style={{ display: "flex" }}>
                 <DropdownMenuTrigger asChild>
-                  <Button
+                  <SectionTitleButton
                     aria-label="Add action"
+                    tabIndex={0}
                     disabled={action.length >= maxFormActions}
-                    color="ghost"
                     prefix={<PlusIcon />}
                   />
                 </DropdownMenuTrigger>

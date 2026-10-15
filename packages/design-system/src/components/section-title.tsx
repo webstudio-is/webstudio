@@ -254,7 +254,10 @@ export const SectionTitleButton = forwardRef(
       tabIndex={-1}
       color="ghost"
       {...props}
-      css={{ color: cssVar(buttonContentColor), ...css }}
+      css={{
+        color: cssVar(buttonContentColor, cssVar("--foreground-primary")),
+        ...css,
+      }}
       ref={ref}
     />
   )
