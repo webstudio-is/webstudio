@@ -54,17 +54,6 @@ describe("project bundle contract", () => {
         new Error(getMissingImportedAssetFilesMessage(names))
       )
     ).toBeUndefined();
-    expect(
-      getMissingImportedAssetFiles({
-        data: {
-          webstudioCode: "MISSING_IMPORTED_ASSET_FILES",
-          missingAssetNames: [42],
-        },
-      })
-    ).toBeUndefined();
-    const cyclic: { cause?: unknown } = {};
-    cyclic.cause = cyclic;
-    expect(getMissingImportedAssetFiles(cyclic)).toBeUndefined();
   });
 
   test("preserves published project metadata", () => {

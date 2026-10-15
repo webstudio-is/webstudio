@@ -455,18 +455,19 @@ test("preserves document load failure ids for publish validation", async () => {
   });
 });
 
-test("advertises structured import errors after checking project build access", async () => {
-  const hasProjectPermit = vi
-    .spyOn(authorizeProject, "hasProjectPermit")
-    .mockResolvedValue(true);
-  const context = {} as never;
-  await expect(
-    buildRouter
-      .createCaller(context)
-      .checkProjectBuildPermission({ projectId: "project-id" })
-  ).resolves.toEqual({ supportsStructuredImportErrors: true });
-  expect(hasProjectPermit).toHaveBeenCalledWith(
-    { projectId: "project-id", permit: "build" },
-    context
-  );
-});
+test.each([true, false])(
+  "only advertises import capabilities to an authorized caller: %s",
+  async (allowed) => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(allowed);
+    const result = buildRouter
+      .createCaller({} as never)
+      .checkProjectBuildPermission({ projectId: "project-id" });
+    if (allowed) {
+      await expect(result).resolves.toEqual({
+        supportsStructuredImportErrors: true,
+      });
+    } else {
+      await expect(result).rejects.toThrow();
+    }
+  }
+);

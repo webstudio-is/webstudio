@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const env = vi.hoisted(() => ({
   TRPC_SERVER_API_TOKEN: undefined as string | undefined,
-  POSTGREST_URL: "http://localhost:3000",
+  POSTGREST_URL: "http://test-postgrest",
   POSTGREST_API_KEY: "",
   PUBLISHER_HOST: "wstd.work",
 }));
@@ -52,10 +52,6 @@ vi.mock("@webstudio-is/plans/index.server", () => ({
   getPlanInfo: vi.fn(),
 }));
 
-vi.mock("@webstudio-is/postgrest/index.server", () => ({
-  createClient: vi.fn(),
-}));
-
 vi.mock("~/services/session.server", () => ({
   readLoginSessionBloomFilter: vi.fn(),
 }));
@@ -65,11 +61,12 @@ vi.mock("./router-utils", () => ({
   isCanvas,
 }));
 
-import { createClient } from "@webstudio-is/postgrest/index.server";
-import { TRPCError } from "@trpc/server";
+import { createTestServer, db, json } from "@webstudio-is/postgrest/testing";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { procedure, router } from "@webstudio-is/trpc-interface/index.server";
 import { createContext, extractAuthFromRequest } from "./context.server";
+
+const server = createTestServer();
 
 describe("extractAuthFromRequest", () => {
   beforeEach(() => {
@@ -131,56 +128,54 @@ describe("extractAuthFromRequest", () => {
 
 describe("invalid token authorization", () => {
   const appRouter = router({ check: procedure.query(() => "authorized") });
-
-  test.each([null, { project: null }, { project: { userId: null } }])(
-    "returns a structured 401 when the token or its owner is unavailable: %j",
-    async (data) => {
-      const maybeSingle = vi.fn().mockResolvedValue({ data, error: null });
-      const query = { select: vi.fn(), eq: vi.fn(), maybeSingle };
-      query.select.mockReturnValue(query);
-      query.eq.mockReturnValue(query);
-      vi.mocked(createClient).mockReturnValue({
-        from: vi.fn(() => query),
-      } as never);
-      const response = await fetchRequestHandler({
-        endpoint: "/trpc",
-        req: new Request("http://localhost/trpc/check", {
-          headers: { "x-auth-token": "private-token" },
-        }),
-        router: appRouter,
-        createContext: ({ req }) => createContext(req),
-      });
-      expect(response.status).toBe(401);
-      const body = await response.json();
-      expect(body).toMatchObject({
-        error: {
-          data: { code: "UNAUTHORIZED", webstudioCode: "INVALID_AUTH_TOKEN" },
-        },
-      });
-      expect(JSON.stringify(body)).not.toContain("private-token");
-      expect(maybeSingle).toHaveBeenCalledOnce();
-    }
-  );
-
-  test("does not classify a database failure as an invalid credential", async () => {
-    const query = {
-      select: vi.fn(),
-      eq: vi.fn(),
-      maybeSingle: vi
-        .fn()
-        .mockResolvedValue({ data: null, error: { code: "08006" } }),
-    };
-    query.select.mockReturnValue(query);
-    query.eq.mockReturnValue(query);
-    vi.mocked(createClient).mockReturnValue({
-      from: vi.fn(() => query),
-    } as never);
-    const error = await createContext(
-      new Request("http://localhost/trpc/check", {
+  const request = () =>
+    fetchRequestHandler({
+      endpoint: "/trpc",
+      req: new Request("http://localhost/trpc/check", {
         headers: { "x-auth-token": "private-token" },
-      })
-    ).catch((error) => error);
-    expect(error).not.toBeInstanceOf(TRPCError);
-    expect(error.message).toBe("Failed to verify authorization token");
+      }),
+      router: appRouter,
+      createContext: ({ req }) => createContext(req),
+    });
+
+  test.each([
+    { scenario: "revoked token", rows: [] },
+    { scenario: "unavailable project", rows: [{ project: null }] },
+    {
+      scenario: "project without an owner",
+      rows: [{ project: { userId: null } }],
+    },
+  ])("returns a structured 401 for $scenario", async ({ rows }) => {
+    server.use(db.get("AuthorizationToken", () => json(rows)));
+    const response = await request();
+    expect(response.status).toBe(401);
+    const body = await response.json();
+    expect(body).toMatchObject({
+      error: {
+        data: { code: "UNAUTHORIZED", webstudioCode: "INVALID_AUTH_TOKEN" },
+      },
+    });
+    expect(JSON.stringify(body)).not.toContain("private-token");
+  });
+
+  test("reports a database outage as a server failure rather than invalid credentials", async () => {
+    server.use(
+      db.get("AuthorizationToken", () =>
+        json(
+          { code: "08006", message: "Database unavailable" },
+          { status: 503 }
+        )
+      )
+    );
+    const response = await request();
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body).toMatchObject({
+      error: { data: { code: "INTERNAL_SERVER_ERROR" } },
+    });
+    expect(body).not.toMatchObject({
+      error: { data: { webstudioCode: "INVALID_AUTH_TOKEN" } },
+    });
+    expect(JSON.stringify(body)).not.toContain("private-token");
   });
 });

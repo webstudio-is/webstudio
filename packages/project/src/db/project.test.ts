@@ -84,12 +84,9 @@ describe("loadById", () => {
 
   test("treats an absent project as an explicit not-found result", async () => {
     server.use(db.get("Project", () => json([])));
-    await expect(
-      loadById("missing-project", createContext())
-    ).rejects.toBeInstanceOf(ProjectNotFoundError);
-    await expect(
-      loadById("missing-project", createContext())
-    ).rejects.toMatchObject({
+    const result = loadById("missing-project", createContext());
+    await expect(result).rejects.toBeInstanceOf(ProjectNotFoundError);
+    await expect(result).rejects.toMatchObject({
       code: "NOT_FOUND",
       cause: { webstudioCode: "NOT_FOUND" },
     });

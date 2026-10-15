@@ -2,10 +2,7 @@
 // server evaluator boundary.
 import { expect, test } from "vitest";
 import { evaluateWebstudioJsxFragment } from "./fragment.server";
-import {
-  webstudioJsxFragmentInputDescription,
-  webstudioJsxRuntimeBindings,
-} from "./bindings";
+import { webstudioJsxFragmentInputDescription } from "./bindings";
 
 test("uses intrinsic tags and direct component identifiers", async () => {
   const fragment = await evaluateWebstudioJsxFragment(
@@ -42,15 +39,17 @@ test("rejects component member syntax", async () => {
 });
 
 test("keeps internal validation errors out of the public JSX environment", async () => {
-  expect(webstudioJsxRuntimeBindings).not.toHaveProperty(
-    "TemplateValidationError"
+  const fragment = await evaluateWebstudioJsxFragment(
+    "<div title={typeof TemplateValidationError} />"
+  );
+  expect(fragment.props).toContainEqual(
+    expect.objectContaining({
+      name: "title",
+      type: "string",
+      value: "undefined",
+    })
   );
   expect(webstudioJsxFragmentInputDescription).not.toContain(
     "TemplateValidationError"
   );
-  await expect(
-    evaluateWebstudioJsxFragment(
-      '<div title={new TemplateValidationError("user-supplied failure")} />'
-    )
-  ).rejects.toThrow("TemplateValidationError is not defined");
 });

@@ -2439,9 +2439,6 @@ test.each(
         url.pathname === "/trpc/build.importProjectBundle"
       ) {
         importAttempts += 1;
-        if (!supportsStructuredImportErrors) {
-          expect(uploadAttempts).toBe(1);
-        }
         await readRequestBody(request);
         response.writeHead(200, { "content-type": "application/json" });
         response.end(
@@ -2510,6 +2507,11 @@ test.each(
     }
 
     expect(calls).toContain("GET /trpc/build.checkProjectBuildPermission");
+    if (!supportsStructuredImportErrors) {
+      expect(calls.indexOf("POST /rest/assets/uploads/image.png")).toBeLessThan(
+        calls.indexOf("POST /trpc/build.importProjectBundle")
+      );
+    }
     const expectedImportAttempts = supportsStructuredImportErrors ? 2 : 1;
     expect(importAttempts).toBe(expectedImportAttempts);
     expect(uploadAttempts).toBe(1);
