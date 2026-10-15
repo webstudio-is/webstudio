@@ -54,12 +54,6 @@ const isPostgrestSingleObjectError = (error: unknown) =>
   "code" in error &&
   error.code === "PGRST116";
 
-const projectDataUnavailableResponse = () =>
-  new Response(
-    "Webstudio couldn't resolve a required record while loading this project. Refresh and try again; if the issue persists, contact support.",
-    { status: 500, statusText: "Project data unavailable" }
-  );
-
 export const links = () => {
   return [{ rel: "stylesheet", href: builderStyles }];
 };
@@ -107,9 +101,6 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         { status: 401, statusText: "Unauthorized" }
       );
     }
-    if (isPostgrestSingleObjectError(error)) {
-      throw projectDataUnavailableResponse();
-    }
     throw error;
   }
 
@@ -152,7 +143,18 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
     }
 
     const start = Date.now();
-    const project = await projectApi.loadById(projectId, context);
+    let project: Awaited<ReturnType<typeof projectApi.loadById>>;
+    try {
+      project = await projectApi.loadById(projectId, context);
+    } catch (error) {
+      if (isPostgrestSingleObjectError(error)) {
+        throw new Response("This project is unavailable or no longer exists.", {
+          status: 404,
+          statusText: "Project not found",
+        });
+      }
+      throw error;
+    }
 
     if (project === null) {
       throw new Response(`Project "${projectId}" not found`, {
@@ -213,10 +215,23 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         .eq("isDeleted", false)
         .eq("members.userId", currentUserId ?? noMatchId)
         .is("members.removedAt", null)
-        .single();
+        .maybeSingle();
 
       if (workspace.error) {
+        if (isPostgrestSingleObjectError(workspace.error)) {
+          throw new Response(
+            "The workspace data for this project is ambiguous. Contact support for help.",
+            { status: 500, statusText: "Workspace data unavailable" }
+          );
+        }
         throw workspace.error;
+      }
+
+      if (workspace.data === null) {
+        throw new Response(
+          "This project's workspace is unavailable. Contact the project owner for help.",
+          { status: 404, statusText: "Workspace not found" }
+        );
       }
 
       const planResult = await getPlanInfo([workspace.data.userId], context);
@@ -304,9 +319,6 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
       }
     );
   } catch (error) {
-    if (isPostgrestSingleObjectError(error)) {
-      throw projectDataUnavailableResponse();
-    }
     if (error instanceof AuthorizationError) {
       // try to re-login user if he has no access to the project
       throw await authWsLoader(loaderArgs);
