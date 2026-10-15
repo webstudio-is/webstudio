@@ -79,17 +79,17 @@ const createTokenAuthorizationContext = async (
     .from("AuthorizationToken")
     .select("project:Project(id, userId)")
     .eq("token", authToken)
-    .limit(2);
+    .maybeSingle();
 
   if (projectOwnerIdByToken.error) {
     throw new Error("Failed to verify authorization token");
   }
 
-  if (projectOwnerIdByToken.data.length !== 1) {
+  if (projectOwnerIdByToken.data === null) {
     throw new InvalidAuthTokenError();
   }
 
-  const ownerId = projectOwnerIdByToken.data[0].project?.userId ?? null;
+  const ownerId = projectOwnerIdByToken.data.project?.userId ?? null;
   if (ownerId === null) {
     throw new InvalidAuthTokenError();
   }
