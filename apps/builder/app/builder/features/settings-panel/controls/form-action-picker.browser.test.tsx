@@ -105,9 +105,7 @@ const setup = (resourceNames: readonly string[]) => {
   };
   act(() => root?.render(<Harness />));
   const addButton = () =>
-    container
-      .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-      .item(1)!;
+    container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')!;
   const add = async (name: string) => {
     await act(async () => userEvent.click(addButton()));
     const option = Array.from(

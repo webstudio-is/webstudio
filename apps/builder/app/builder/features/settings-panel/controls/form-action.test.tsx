@@ -89,9 +89,9 @@ test("Action + explains how to add a resource when none are available", async ()
     )
   );
 
-  const addButton = container
-    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-    .item(1)!;
+  const addButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Add action"]'
+  )!;
   expect(addButton.disabled).toBe(false);
   expect(addButton.dataset.buttonColor).toBe("ghost");
   await act(async () => userEvent.click(addButton));
@@ -102,7 +102,7 @@ test("Action + explains how to add a resource when none are available", async ()
   expect(onChange).not.toHaveBeenCalled();
 });
 
-test("Action header and menu align while rows retain their original geometry", async () => {
+test("Action header matches shared plus insets without overlapping full-width rows", async () => {
   $instances.set(
     new Map([
       [
@@ -127,7 +127,12 @@ test("Action header and menu align while rows retain their original geometry", a
   );
   $resources.set(new Map([["request", requestResource("request")]]));
   const container = document.createElement("div");
-  container.style.width = "300px";
+  Object.assign(container.style, {
+    width: "300px",
+    position: "fixed",
+    right: "0",
+    top: "0",
+  });
   document.body.appendChild(container);
   root = createRoot(container);
   await act(async () =>
@@ -141,7 +146,10 @@ test("Action header and menu align while rows retain their original geometry", a
             <div />
           </CollapsibleSectionWithAddButton>
         </div>
-        <Grid css={{ paddingBottom: theme.panel.paddingBlock }}>
+        <Grid
+          data-action-control
+          css={{ paddingBottom: theme.panel.paddingBlock }}
+        >
           <FormActionControl
             instanceId="form"
             propName="action"
@@ -183,9 +191,9 @@ test("Action header and menu align while rows retain their original geometry", a
             <Box css={{ py: theme.spacing[2] }}>
               <Flex direction="column" gap="2">
                 <Grid>
-                  <div
+                  <Box
                     data-baseline-row
-                    style={{ height: theme.spacing[11] }}
+                    css={{ height: theme.sizes.controlHeight }}
                   />
                 </Grid>
               </Flex>
@@ -200,15 +208,16 @@ test("Action header and menu align while rows retain their original geometry", a
     .querySelector("[data-properties-section]")!
     .querySelectorAll<HTMLButtonElement>('[data-button-color="ghost"]')
     .item(1)!;
-  const actionButton = container
-    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-    .item(1)!;
+  const actionButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Add action"]'
+  )!;
   const variableButton = container
     .querySelectorAll<HTMLButtonElement>('[aria-label="Add variable"]')
     .item(1)!;
   expect(actionButton.tabIndex).toBe(0);
   const propertyHeader = propertyButton.closest("div[data-state]")!;
-  const actionHeader = actionButton.closest("div[data-state]")!;
+  const actionHeader = container.querySelector("[data-action-control]")!
+    .firstElementChild!.firstElementChild!;
   const variableHeader = variableButton.closest("div[data-state]")!;
   const panelRect = container.getBoundingClientRect();
   const propertyRect = propertyHeader.getBoundingClientRect();
@@ -251,8 +260,11 @@ test("Action header and menu align while rows retain their original geometry", a
     .querySelector<HTMLElement>("[data-baseline-row]")!
     .getBoundingClientRect();
   expect(rowRect.top - actionRect.top).toBe(
-    baselineRowRect.top - baselineHeaderRect.top
+    baselineRowRect.top - baselineHeaderRect.top + 4
   );
+  expect(actionRect.height).toBe(30);
+  expect(actionButtonRect.bottom).toBe(rowRect.top);
+  expect(rowRect.height).toBe(baselineRowRect.height);
   expect(
     document
       .elementFromPoint(
@@ -296,7 +308,7 @@ test("Action header and menu align while rows retain their original geometry", a
   expect(menuRect.top).toBeGreaterThanOrEqual(triggerRect.bottom);
   expect(menuRect.right).toBeLessThanOrEqual(panelRect.right);
   expect(menuRect.left).toBeGreaterThanOrEqual(panelRect.left);
-  expect(menuRect.right).toBeCloseTo(triggerRect.right, 0);
+  expect(menuRect.right).toBeCloseTo(panelRect.right - 16, 0);
   await act(async () => userEvent.keyboard("{Escape}"));
   const actionLabel = Array.from(container.querySelectorAll("button")).find(
     (button) => button.textContent === "Action"
@@ -404,9 +416,9 @@ test("Action control handles an empty Resource list and can select an in-scope d
     "Create a Resource in Data variables to add an action."
   );
 
-  const addButton = container
-    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-    .item(1)!;
+  const addButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Add action"]'
+  )!;
   expect(addButton.dataset.buttonColor).toBe("ghost");
 
   await act(async () =>
@@ -486,9 +498,8 @@ test("Action control handles an empty Resource list and can select an in-scope d
   );
   expect(container.textContent).not.toContain("Create Resource in Form");
   expect(
-    container
-      .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-      .item(1)?.disabled
+    container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')
+      ?.disabled
   ).toBe(true);
 });
 
@@ -557,9 +568,7 @@ test("a Form can select a Resource defined outside its scope", async () => {
 
   await act(async () =>
     userEvent.click(
-      container
-        .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-        .item(1)!
+      container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')!
     )
   );
   const requestOption = Array.from(
@@ -743,9 +752,9 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
       )
   );
   expect(document.querySelector('[role="dialog"]')).toBeNull();
-  const addButton = container
-    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-    .item(1)!;
+  const addButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Add action"]'
+  )!;
   await act(async () => await userEvent.hover(addButton));
   await expect
     .poll(() => document.querySelector('[role="tooltip"]')?.textContent)
@@ -860,9 +869,9 @@ test("a legacy Action stays visible and can be removed", async () => {
   expect(row?.getBoundingClientRect().right).toBe(
     container.getBoundingClientRect().right
   );
-  const addButton = container
-    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-    .item(1)!;
+  const addButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Add action"]'
+  )!;
   await act(async () => addButton.focus());
   await act(async () => userEvent.tab());
   expect(document.activeElement).toBe(row);
