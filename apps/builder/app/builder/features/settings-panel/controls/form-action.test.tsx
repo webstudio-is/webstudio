@@ -101,7 +101,7 @@ test("Action + explains how to add a resource when none are available", async ()
   expect(onChange).not.toHaveBeenCalled();
 });
 
-test("Action header and rows align with the panel sections", async () => {
+test("Action header and menu align while rows retain their original width", async () => {
   $instances.set(
     new Map([
       [
@@ -213,10 +213,10 @@ test("Action header and rows align with the panel sections", async () => {
   const rowRect = container
     .querySelector<HTMLElement>('[data-list-item="true"]')!
     .getBoundingClientRect();
-  expect(rowRect.left).toBeGreaterThan(actionRect.left);
-  expect(rowRect.right).toBeLessThan(actionRect.right);
   expect(actionRect.left).toBe(panelRect.left);
   expect(actionRect.right).toBe(panelRect.right);
+  expect(rowRect.left).toBe(panelRect.left);
+  expect(rowRect.right).toBe(panelRect.right);
   for (const state of ["auto", "hover", "focus", "pressed"]) {
     propertyButton.dataset.state = state;
     actionButton.dataset.state = state;
@@ -805,9 +805,9 @@ test("a legacy Action stays visible and can be removed", async () => {
   expect(row?.getClientRects().length).toBeGreaterThan(0);
   expect(getComputedStyle(row!).opacity).toBe("1");
   expect(row?.hasAttribute("disabled")).toBe(false);
-  expect(
-    row?.parentElement?.getBoundingClientRect().left
-  ).toBeGreaterThanOrEqual(container.getBoundingClientRect().left);
+  expect(row?.parentElement?.getBoundingClientRect().left).toBeLessThan(
+    container.getBoundingClientRect().left
+  );
   const addButton = container
     .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
     .item(1)!;

@@ -254,7 +254,12 @@ export const FormActionControl = ({
         <Flex direction="column" gap="2">
           {action.length > 0 && (
             <InteractiveListArrowFocus dragItemId={dragItemId}>
-              <Grid ref={sortableRefCallback}>
+              <Grid
+                ref={sortableRefCallback}
+                css={{
+                  marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
+                }}
+              >
                 {action.map(({ dataSourceId: id }, index) => (
                   <ActionItem
                     key={id}
