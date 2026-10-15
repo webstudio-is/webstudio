@@ -7,8 +7,6 @@ import {
   getValidationIssues,
 } from "@webstudio-is/project-build/runtime";
 
-const missingProjectOwnerForTokenPattern =
-  /^Project owner can't be found for token\b/;
 const stableErrorCodePattern = /^[A-Z][A-Z0-9_]{0,159}$/;
 
 const getErrorMessage = (error: unknown) =>
@@ -73,8 +71,8 @@ export const getStableErrorCode = (error: unknown) => {
 };
 
 export const isMissingApiAccessError = (error: unknown) => {
-  const message = getErrorMessage(error);
-  return missingProjectOwnerForTokenPattern.test(message);
+  const code = getStableErrorCode(error);
+  return code === "INVALID_AUTH_TOKEN" || code === "API_ACCESS_DISABLED";
 };
 
 export const getCliErrorSummary = (error: unknown, command = "mcp") => {
@@ -86,7 +84,7 @@ export const getCliErrorSummary = (error: unknown, command = "mcp") => {
     return compatibilityMessage;
   }
   const message = getErrorMessage(error);
-  if (missingProjectOwnerForTokenPattern.test(message)) {
+  if (isMissingApiAccessError(error)) {
     return "This project cannot be accessed through the Builder API with the current share link/token. Enable API access in the share-link settings, then relink the project with `webstudio init --link <share-link> --json`.";
   }
   return message;

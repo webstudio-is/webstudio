@@ -29,7 +29,7 @@ import {
 } from "@webstudio-is/project-build";
 import {
   isAssetFileName,
-  getMissingImportedAssetFilesMessage,
+  MissingImportedAssetFilesError,
   getBundleVersionMismatchMessage,
   bundleVersion,
   type PublishedProjectBundle,
@@ -208,10 +208,8 @@ const loadImportedAssetFiles = async ({
     (asset) => filesByName.has(asset.name) === false
   );
   if (missingAssets.length > 0) {
-    throw new Error(
-      getMissingImportedAssetFilesMessage(
-        missingAssets.map((asset) => asset.name)
-      )
+    throw new MissingImportedAssetFilesError(
+      missingAssets.map((asset) => asset.name)
     );
   }
 

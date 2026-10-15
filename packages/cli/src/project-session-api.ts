@@ -1,3 +1,4 @@
+import { CliError } from "./errors";
 import {
   getPublicApiOperation,
   publicApiOperationRequiresServerSupport,
@@ -99,7 +100,8 @@ export const executeProjectSessionApiOperation = async ({
     dryRun === true &&
     (runtimeOperationId === undefined || operation.method !== "mutation")
   ) {
-    throw new Error(
+    throw new CliError(
+      "INVALID_ARGUMENT",
       `${command} does not support --dry-run. Use --dry-run only with local-capable mutation tools; omit it for read or server-only tools.`
     );
   }

@@ -1,3 +1,5 @@
+import { DocumentGraphResolutionError } from "@webstudio-is/content-engine";
+import { throwApiError } from "./api-errors.server";
 import { loadProjectBundleByProjectId } from "~/shared/db";
 import {
   formatMdxTemplatePublishDiagnostics,
@@ -51,6 +53,32 @@ export const loadContentDatabasePublishDiagnostics = async (
     loadMdxDependencySource: loadDocumentSource,
     onMdxBlockInstanceId: (blockInstanceId) =>
       mdxBlockInstanceIds.add(blockInstanceId),
+  }).catch((error: unknown): never => {
+    const visited = new Set<unknown>();
+    let current = error;
+    while (current instanceof Error && !visited.has(current)) {
+      visited.add(current);
+      if (
+        current instanceof DocumentGraphResolutionError &&
+        current.code === "DOCUMENT_LOAD_FAILED" &&
+        current.documentId !== undefined
+      ) {
+        throwApiError("BAD_REQUEST", current.message, {
+          webstudioCode: current.code,
+          issues: [
+            {
+              code: current.code,
+              path: ["assets", current.documentId],
+              assetId: current.documentId,
+              constraint: "readable_document",
+              message: current.message,
+            },
+          ],
+        });
+      }
+      current = current.cause;
+    }
+    throw error;
   });
   const mdxErrors: Array<{
     filename: string;

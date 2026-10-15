@@ -1,3 +1,4 @@
+import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createId } from "@webstudio-is/sdk";
 import { useRevalidator } from "@remix-run/react";
@@ -48,19 +49,19 @@ const inviteMembers = async (
       }
     } catch (error) {
       const raw = error instanceof Error ? error.message : "Unknown error";
-      // tRPC surfaces Zod input validation failures as a JSON array of issues.
-      // Extract the human-readable message(s) instead of dumping raw JSON.
-      let message = raw;
-      try {
-        const issues = JSON.parse(raw);
-        if (Array.isArray(issues) && issues.length > 0) {
-          message = issues
-            .map((i: { message?: string }) => i.message ?? "Invalid value")
-            .join(", ");
-        }
-      } catch {
-        // not JSON — use raw message as-is
-      }
+      const issues =
+        error instanceof TRPCClientError ? error.data?.issues : undefined;
+      const messages = Array.isArray(issues)
+        ? issues.flatMap((issue: unknown) =>
+            typeof issue === "object" &&
+            issue !== null &&
+            "message" in issue &&
+            typeof issue.message === "string"
+              ? [issue.message]
+              : []
+          )
+        : [];
+      const message = messages.length === 0 ? raw : messages.join(", ");
       failed.push(`${email}: ${message}`);
     }
   }

@@ -39,7 +39,7 @@ import {
   buildPatchNamespaces,
   bundleVersion as currentBundleVersion,
   importProjectBundleResult,
-  parseMissingImportedAssetFilesMessage,
+  getMissingImportedAssetFiles,
   publishedProjectBundle,
   maxProjectBundleSize,
   stagedUploadPath,
@@ -1356,8 +1356,11 @@ export const parseBuildPatchTransactions = (transactions: unknown) => {
 
   const result = buildPatchTransaction.array().safeParse(input);
   if (result.success === false) {
-    throw new Error(
-      `Invalid patch JSON: ${formatSchemaIssues(result.error.issues)}`
+    throw Object.assign(
+      new Error(
+        `Invalid patch JSON: ${formatSchemaIssues(result.error.issues)}`
+      ),
+      { code: "INVALID_PATCH", issues: result.error.issues }
     );
   }
   return result.data;
@@ -2563,7 +2566,7 @@ export const importProjectBundleWithAssets = async (
       const missingAssetNames =
         params.skipAssets === true
           ? undefined
-          : parseMissingImportedAssetFilesMessage(error);
+          : getMissingImportedAssetFiles(error);
       const assetNames = missingAssetNames ?? [];
       if (assetNames.length === 0 || attempt === maxRetries) {
         throw error;

@@ -4,7 +4,8 @@ import { builderPatchTransactionSchema } from "@webstudio-is/project-build/contr
 import {
   isAssetFileName,
   getMissingImportedAssetFilesMessage,
-  parseMissingImportedAssetFilesMessage,
+  MissingImportedAssetFilesError,
+  getMissingImportedAssetFiles,
   getBundleVersionMismatchMessage,
   importProjectBundleInput,
   publishedProjectBundle,
@@ -35,30 +36,35 @@ describe("project bundle contract", () => {
     expect(isAssetFileName("folder\\image.png")).toBe(false);
   });
 
-  test("formats and parses missing imported asset file messages", () => {
-    const message = getMissingImportedAssetFilesMessage([
-      "image.png",
-      "font,latin.woff2",
-    ]);
-
-    expect(message).toBe(
-      'Imported asset files are missing: ["image.png","font,latin.woff2"]'
-    );
-    expect(parseMissingImportedAssetFilesMessage(new Error(message))).toEqual([
-      "image.png",
-      "font,latin.woff2",
-    ]);
+  test("reads missing imported asset files from structured local and remote errors", () => {
+    const names = ["image.png", "font,latin.woff2"];
+    const error = new MissingImportedAssetFilesError(names);
+    error.message = "Wording may change";
+    expect(getMissingImportedAssetFiles(error)).toEqual(names);
     expect(
-      parseMissingImportedAssetFilesMessage("Other error")
-    ).toBeUndefined();
-  });
-
-  test("parses already-deployed comma-separated missing asset messages", () => {
+      getMissingImportedAssetFiles({
+        data: {
+          webstudioCode: "MISSING_IMPORTED_ASSET_FILES",
+          missingAssetNames: names,
+        },
+      })
+    ).toEqual(names);
     expect(
-      parseMissingImportedAssetFilesMessage(
-        new Error("Imported asset files are missing: image.png, font.woff2")
+      getMissingImportedAssetFiles(
+        new Error(getMissingImportedAssetFilesMessage(names))
       )
-    ).toEqual(["image.png", "font.woff2"]);
+    ).toBeUndefined();
+    expect(
+      getMissingImportedAssetFiles({
+        data: {
+          webstudioCode: "MISSING_IMPORTED_ASSET_FILES",
+          missingAssetNames: [42],
+        },
+      })
+    ).toBeUndefined();
+    const cyclic: { cause?: unknown } = {};
+    cyclic.cause = cyclic;
+    expect(getMissingImportedAssetFiles(cyclic)).toBeUndefined();
   });
 
   test("preserves published project metadata", () => {

@@ -1,3 +1,4 @@
+import { CliError } from "./errors";
 import { readFile } from "node:fs/promises";
 import { cwd } from "node:process";
 import { join } from "node:path";
@@ -8,6 +9,17 @@ import {
   jsonToLocalConfig,
 } from "./config";
 import { isFileExists } from "./fs-utils";
+
+export class ApiConnectionNotInitializedError extends CliError {
+  readonly reason: "localConfigMissing" | "projectConfigMissing";
+  constructor(
+    reason: ApiConnectionNotInitializedError["reason"],
+    message: string
+  ) {
+    super("NOT_INITIALIZED", message);
+    this.reason = reason;
+  }
+}
 
 export type ApiConnection = {
   origin: string;
@@ -35,7 +47,8 @@ export const resolveApiConnection = async (
   if (projectId === undefined) {
     const localConfigFile = join(projectRoot, LOCAL_CONFIG_FILE);
     if ((await dependencies.isFileExists(localConfigFile)) === false) {
-      throw new Error(
+      throw new ApiConnectionNotInitializedError(
+        "localConfigMissing",
         "Local config file is not found. Run webstudio init --link <api-share-link> from a Webstudio project."
       );
     }
@@ -45,14 +58,15 @@ export const resolveApiConnection = async (
   }
 
   if (projectId.trim() === "") {
-    throw new Error("Project id must not be empty.");
+    throw new CliError("INVALID_ARGUMENT", "Project id must not be empty.");
   }
   const globalConfig = jsonToGlobalConfig(
     JSON.parse(await dependencies.readFile(GLOBAL_CONFIG_FILE, "utf-8"))
   );
   const projectConfig = globalConfig[projectId];
   if (projectConfig === undefined) {
-    throw new Error(
+    throw new ApiConnectionNotInitializedError(
+      "projectConfigMissing",
       isExplicitProject
         ? `Project config for "${projectId}" is not found. Run webstudio init --link <api-share-link> once to save its credentials.`
         : "Project config is not found. Run webstudio init --link <api-share-link>."

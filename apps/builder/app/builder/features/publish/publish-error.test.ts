@@ -38,7 +38,19 @@ describe("getPublishValidationErrorMessage", () => {
   });
 
   test("locates a linked asset and points users to Webstudio MCP", () => {
-    const error = new Error("Document asset-id could not be loaded");
+    const error = Object.assign(new Error("Wording can change"), {
+      data: {
+        issues: [
+          {
+            code: "DOCUMENT_LOAD_FAILED",
+            path: ["assets", "asset-id"],
+            assetId: "asset-id",
+            constraint: "readable_document",
+            message: "Wording can change",
+          },
+        ],
+      },
+    });
     const asset = {
       id: "asset-id",
       filename: "article",
@@ -85,10 +97,27 @@ describe("getPublishValidationErrorMessage", () => {
 
   test("includes the document ID and MCP link when asset metadata is unavailable", () => {
     const message = getPublishValidationErrorMessage(
-      new Error("Document asset-id could not be loaded")
+      Object.assign(new Error("Wording can change"), {
+        data: {
+          issues: [
+            {
+              code: "DOCUMENT_LOAD_FAILED",
+              path: ["assets", "asset-id"],
+              assetId: "asset-id",
+              constraint: "readable_document",
+              message: "Wording can change",
+            },
+          ],
+        },
+      })
     );
 
     expect(message).toContain("https://wstd.us/mcp");
     expect(message).toContain("Document ID: asset-id");
   });
+});
+
+test("does not infer a document id from error prose", () => {
+  const message = "Document asset-id could not be loaded";
+  expect(getPublishValidationErrorMessage(new Error(message))).toBe(message);
 });

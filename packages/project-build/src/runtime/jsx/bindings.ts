@@ -1,4 +1,5 @@
 import {
+  TemplateValidationError,
   ActionValue,
   AssetValue,
   PageValue,
@@ -19,7 +20,7 @@ import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
 const css = (strings: TemplateStringsArray, ...values: string[]) => {
   const source = String.raw({ raw: strings }, ...values);
   if (hasUnsupportedCssTemplateRules(source)) {
-    throw new Error(
+    throw new TemplateValidationError(
       "css templates do not support selectors or at-rules such as @keyframes. Use declarations and @media rules only. Use Webstudio Animation components for editable animations."
     );
   }
@@ -60,6 +61,7 @@ const helperBindings = {
   Variable,
   Parameter,
   ResourceValue,
+  TemplateValidationError,
   ActionValue,
   AssetValue,
   PageValue,

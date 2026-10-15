@@ -66,6 +66,8 @@ export type PlanConfig = {
   prices: Record<string, string>;
 };
 
+class UnknownParentPlanError extends Error {}
+
 /**
  * Parse the PLANS env variable (JSON array of {name, extends?, features, prices?}).
  * - features is partial when extends is used; the parent plan fills in the rest.
@@ -142,7 +144,7 @@ export const parsePlansEnv = (raw: string): Map<string, PlanConfig> => {
     const resolved = new Map<string, PlanConfig>();
     for (const entry of entries) {
       if (entry.extends !== undefined && !byName.has(entry.extends)) {
-        throw new Error(
+        throw new UnknownParentPlanError(
           `PLANS entry "${entry.name}" extends unknown plan "${entry.extends}"`
         );
       }
@@ -169,7 +171,7 @@ export const parsePlansEnv = (raw: string): Map<string, PlanConfig> => {
     }
     return resolved;
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith("PLANS entry")) {
+    if (error instanceof UnknownParentPlanError) {
       throw error;
     }
     return new Map();

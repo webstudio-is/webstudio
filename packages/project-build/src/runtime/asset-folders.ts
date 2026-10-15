@@ -1,6 +1,5 @@
 import { z } from "zod";
 import {
-  assetFolderIssue,
   assetFolderName,
   assetFolders,
   createAssetFolderHierarchy,
@@ -63,19 +62,18 @@ const validateFolderMutation = (folders: AssetFolders, name: string) => {
     return;
   }
   const issue = result.error.issues[0];
-  if (issue?.message === assetFolderIssue.duplicateName) {
+  const issueCode =
+    issue?.code === "custom" ? issue.params?.assetFolderIssue : undefined;
+  if (issueCode === "duplicateName") {
     return throwBuilderRuntimeError(
       "CONFLICT",
       `A folder named "${name}" already exists in this location`
     );
   }
-  if (issue?.message === assetFolderIssue.parentMissing) {
+  if (issueCode === "parentMissing") {
     return throwBuilderRuntimeError("NOT_FOUND", "Parent folder not found");
   }
-  if (
-    issue?.message === assetFolderIssue.selfParent ||
-    issue?.message === assetFolderIssue.cycle
-  ) {
+  if (issueCode === "selfParent" || issueCode === "cycle") {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "A folder can't be moved into itself or one of its descendants"

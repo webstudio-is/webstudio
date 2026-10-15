@@ -2429,9 +2429,13 @@ test.each([undefined, "source-folder"])(
             importAttempts === 1
               ? {
                   error: {
-                    message: "Imported asset files are missing: image.png",
+                    message: "Import requires uploaded files",
                     code: -32603,
-                    data: { code: "INTERNAL_SERVER_ERROR" },
+                    data: {
+                      code: "INTERNAL_SERVER_ERROR",
+                      webstudioCode: "MISSING_IMPORTED_ASSET_FILES",
+                      missingAssetNames: ["image.png"],
+                    },
                   },
                 }
               : { result: { data: { version: 2 } } },

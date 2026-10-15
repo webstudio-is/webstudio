@@ -3,7 +3,7 @@ import * as httpClient from "@webstudio-is/http-client";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { AssetType, PageRedirect } from "@webstudio-is/sdk";
 import { isFileExists } from "../fs-utils";
-import { HandledCliError } from "../errors";
+import { CliError, HandledCliError } from "../errors";
 import {
   createLocalUploadAssetInput,
   createLocalUploadAssetsInput,
@@ -1539,7 +1539,7 @@ type UpdateDomainInput = Parameters<
 
 const requireOption = (value: string | undefined, name: string) => {
   if (value === undefined || value.length === 0) {
-    throw new Error(`${name} is required.`);
+    throw new CliError("INVALID_ARGUMENT", `${name} is required.`);
   }
   return value;
 };
@@ -1556,14 +1556,14 @@ const requireSingleOption = (
 
 const requireStringOption = (value: string | undefined, name: string) => {
   if (value === undefined) {
-    throw new Error(`${name} is required.`);
+    throw new CliError("INVALID_ARGUMENT", `${name} is required.`);
   }
   return value;
 };
 
 const requireTrueOption = (value: boolean | undefined, name: string) => {
   if (value !== true) {
-    throw new Error(`${name} is required.`);
+    throw new CliError("INVALID_ARGUMENT", `${name} is required.`);
   }
 };
 
@@ -1574,7 +1574,8 @@ const rejectOptionConflict = (
   valueOptionName: string
 ) => {
   if (clearOption === true && valueOption !== undefined) {
-    throw new Error(
+    throw new CliError(
+      "INVALID_ARGUMENT",
       `${clearOptionName} cannot be used with ${valueOptionName}.`
     );
   }
@@ -1582,7 +1583,7 @@ const rejectOptionConflict = (
 
 const requireNumberOption = (value: number | undefined, name: string) => {
   if (value === undefined) {
-    throw new Error(`${name} is required.`);
+    throw new CliError("INVALID_ARGUMENT", `${name} is required.`);
   }
   return value;
 };
@@ -1606,7 +1607,7 @@ const requireListOption = (
 ) => {
   const values = listStringOption(value);
   if (values === undefined || values.length === 0) {
-    throw new Error(`${name} is required.`);
+    throw new CliError("INVALID_ARGUMENT", `${name} is required.`);
   }
   return values;
 };
@@ -1622,7 +1623,7 @@ const optionalChoice = <Choice extends string>(
   if ((choices as readonly string[]).includes(value)) {
     return value as Choice;
   }
-  throw new Error(`Unsupported ${name} "${value}".`);
+  throw new CliError("INVALID_ARGUMENT", `Unsupported ${name} "${value}".`);
 };
 
 const requiredChoice = <Choice extends string>(
@@ -1632,7 +1633,7 @@ const requiredChoice = <Choice extends string>(
 ) => {
   const choice = optionalChoice(value, choices, name);
   if (choice === undefined) {
-    throw new Error(`${name} is required.`);
+    throw new CliError("INVALID_ARGUMENT", `${name} is required.`);
   }
   return choice;
 };
@@ -1686,7 +1687,10 @@ const readOptionalJsonObject = async (
   }
   const value = await readJsonFile(dependencies, path, "--input");
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error("--input must contain a JSON object.");
+    throw new CliError(
+      "INVALID_ARGUMENT",
+      "--input must contain a JSON object."
+    );
   }
   return value as Record<string, unknown>;
 };
@@ -1698,7 +1702,10 @@ const readJsonArray = async (
 ) => {
   const value = await readJsonFile(dependencies, path, name);
   if (Array.isArray(value) === false) {
-    throw new Error(`${name} must contain a JSON array.`);
+    throw new CliError(
+      "INVALID_ARGUMENT",
+      `${name} must contain a JSON array.`
+    );
   }
   return value;
 };
@@ -1725,13 +1732,19 @@ const parseVariableValue = (
   if (valueType === "number") {
     const number = Number(rawValue);
     if (Number.isFinite(number) === false) {
-      throw new Error("--value must be a finite number.");
+      throw new CliError(
+        "INVALID_ARGUMENT",
+        "--value must be a finite number."
+      );
     }
     return { type: valueType, value: number };
   }
   if (valueType === "boolean") {
     if (rawValue !== "true" && rawValue !== "false") {
-      throw new Error('--value must be "true" or "false".');
+      throw new CliError(
+        "INVALID_ARGUMENT",
+        '--value must be "true" or "false".'
+      );
     }
     return { type: valueType, value: rawValue === "true" };
   }
@@ -1746,7 +1759,10 @@ const parseOptionalVariableValue = (
     return;
   }
   if (options.value === undefined || options.valueType === undefined) {
-    throw new Error("--value and --value-type must be provided together.");
+    throw new CliError(
+      "INVALID_ARGUMENT",
+      "--value and --value-type must be provided together."
+    );
   }
   return parseVariableValue(options.valueType, options.value);
 };
@@ -1817,7 +1833,6 @@ const redirectStatusOption = (status: ApiCommandOptions["status"]) =>
   status === "301" || status === "302" ? status : undefined;
 
 const getErrorCode = (error: unknown) => {
-  const message = getCliErrorMessage(error);
   const stableCode = getStableErrorCode(error);
   if (isMissingApiAccessError(error)) {
     return "UNAUTHORIZED";
@@ -1836,24 +1851,6 @@ const getErrorCode = (error: unknown) => {
   }
   if (error instanceof SyntaxError) {
     return "INVALID_JSON";
-  }
-  if (
-    message.includes("Local config file") ||
-    message.includes("Project config")
-  ) {
-    return "NOT_INITIALIZED";
-  }
-  if (message.includes(" is required")) {
-    return "INVALID_ARGUMENT";
-  }
-  if (message.includes("does not support --dry-run")) {
-    return "INVALID_ARGUMENT";
-  }
-  if (message.includes("Invalid patch JSON")) {
-    return "INVALID_PATCH";
-  }
-  if (message.includes("version") || message.includes("CONFLICT")) {
-    return "VERSION_CONFLICT";
   }
   return "API_COMMAND_FAILED";
 };

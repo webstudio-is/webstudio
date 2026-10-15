@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { type AppContext } from "@webstudio-is/trpc-interface/index.server";
 import env from "~/env/env.server";
 import { authenticator } from "~/services/auth.server";
@@ -23,10 +24,13 @@ import {
   apiClientVersionHeader,
 } from "@webstudio-is/trpc-interface/api-compatibility";
 
-export class InvalidAuthTokenError extends Error {
+export class InvalidAuthTokenError extends TRPCError {
   constructor() {
-    super("The authorization token is invalid or no longer available");
-    this.name = "InvalidAuthTokenError";
+    super({
+      code: "UNAUTHORIZED",
+      message: "The authorization token is invalid or no longer available",
+      cause: { webstudioCode: "INVALID_AUTH_TOKEN" },
+    });
   }
 }
 

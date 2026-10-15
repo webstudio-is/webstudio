@@ -32,6 +32,7 @@ import {
   type BuilderPatchChange,
 } from "../contracts/patch";
 import {
+  InvalidCursorError,
   paginateOutput,
   projectOutput,
   type PaginatedOutputInput,
@@ -1064,7 +1065,7 @@ export const listAssets = (
       input,
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "Invalid asset cursor") {
+    if (error instanceof InvalidCursorError) {
       return throwBuilderRuntimeError("BAD_REQUEST", error.message);
     }
     throw error;

@@ -1,3 +1,4 @@
+import { DocumentGraphResolutionError } from "@webstudio-is/content-engine";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { bundleVersion } from "@webstudio-is/protocol";
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
@@ -423,5 +424,33 @@ describe("build router project bundle import", () => {
     });
     expect(readStagedUploadText).not.toHaveBeenCalled();
     expect(removeStagedUpload).not.toHaveBeenCalled();
+  });
+});
+
+test("preserves document load failure ids for publish validation", async () => {
+  const error = new DocumentGraphResolutionError({
+    code: "DOCUMENT_LOAD_FAILED",
+    documentId: "asset-id",
+    message: "Storage is temporarily unavailable",
+  });
+  await expect(
+    loadContentDatabasePublishDiagnostics("project-id", {} as never, {
+      loadProjectBundleByProjectId: vi
+        .fn()
+        .mockRejectedValue(
+          new Error("Compilation failed", { cause: error })
+        ) as never,
+    })
+  ).rejects.toMatchObject({
+    code: "BAD_REQUEST",
+    cause: {
+      webstudioCode: "DOCUMENT_LOAD_FAILED",
+      issues: [
+        expect.objectContaining({
+          code: "DOCUMENT_LOAD_FAILED",
+          assetId: "asset-id",
+        }),
+      ],
+    },
   });
 });
