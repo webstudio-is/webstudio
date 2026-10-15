@@ -174,7 +174,11 @@ export const FormActionControl = ({
                   </DropdownMenuTrigger>
                 </span>
               </Tooltip>
-              <DropdownMenuContent css={{ minWidth: 180 }}>
+              <DropdownMenuContent
+                align="end"
+                collisionPadding={16}
+                css={{ minWidth: 180 }}
+              >
                 {resources.map((variable) => (
                   <DropdownMenuItem
                     key={variable.id}

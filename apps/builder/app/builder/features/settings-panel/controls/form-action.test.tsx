@@ -239,6 +239,16 @@ test("Action header and rows align with the panel sections", async () => {
       );
     }
   }
+  await act(async () => userEvent.click(actionButton));
+  const menuRect = document
+    .querySelector<HTMLElement>('[role="menu"]')!
+    .getBoundingClientRect();
+  const triggerRect = actionButton.getBoundingClientRect();
+  expect(menuRect.top).toBeGreaterThanOrEqual(triggerRect.bottom);
+  expect(menuRect.right).toBeLessThanOrEqual(panelRect.right);
+  expect(menuRect.left).toBeGreaterThanOrEqual(panelRect.left);
+  expect(menuRect.right).toBeCloseTo(triggerRect.right, 0);
+  await act(async () => userEvent.keyboard("{Escape}"));
   const actionLabel = Array.from(container.querySelectorAll("button")).find(
     (button) => button.textContent === "Action"
   )!;
