@@ -142,22 +142,20 @@ test("Action header and menu align while rows retain their original geometry", a
           </CollapsibleSectionWithAddButton>
         </div>
         <Grid css={{ paddingBottom: theme.panel.paddingBlock }}>
-          <Box css={{ paddingInline: theme.panel.paddingInline }}>
-            <FormActionControl
-              instanceId="form"
-              propName="action"
-              prop={{
-                id: "action",
-                instanceId: "form",
-                name: "action",
-                type: "json",
-                value: [{ dataSourceId: "send" }],
-              }}
-              computedValue={[{ dataSourceId: "send" }]}
-              meta={{ type: "json", control: "form-action", required: false }}
-              onChange={vi.fn()}
-            />
-          </Box>
+          <FormActionControl
+            instanceId="form"
+            propName="action"
+            prop={{
+              id: "action",
+              instanceId: "form",
+              name: "action",
+              type: "json",
+              value: [{ dataSourceId: "send" }],
+            }}
+            computedValue={[{ dataSourceId: "send" }]}
+            meta={{ type: "json", control: "form-action", required: false }}
+            onChange={vi.fn()}
+          />
         </Grid>
         <div data-variables-section>
           <SectionTitle
@@ -173,30 +171,26 @@ test("Action header and menu align while rows retain their original geometry", a
             <SectionTitleLabel>Variables</SectionTitleLabel>
           </SectionTitle>
         </div>
-        {/* The Action header before this change flowed at the button height. */}
+        {/* The original Action header flowed at the button height. */}
         <Grid>
-          <Box css={{ paddingInline: theme.panel.paddingInline }}>
-            <div data-baseline-action>
+          <div data-baseline-action>
+            <Box css={{ paddingInline: theme.panel.paddingInline }}>
               <Flex align="center" justify="between" data-baseline-header>
                 <FieldLabel description="Action details">Action</FieldLabel>
                 <SectionTitleButton prefix={<PlusIcon />} />
               </Flex>
-              <Box css={{ py: theme.spacing[2] }}>
-                <Flex direction="column" gap="2">
-                  <Grid
-                    css={{
-                      marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
-                    }}
-                  >
-                    <div
-                      data-baseline-row
-                      style={{ height: theme.spacing[11] }}
-                    />
-                  </Grid>
-                </Flex>
-              </Box>
-            </div>
-          </Box>
+            </Box>
+            <Box css={{ py: theme.spacing[2] }}>
+              <Flex direction="column" gap="2">
+                <Grid>
+                  <div
+                    data-baseline-row
+                    style={{ height: theme.spacing[11] }}
+                  />
+                </Grid>
+              </Flex>
+            </Box>
+          </div>
         </Grid>
       </TooltipProvider>
     )
@@ -860,8 +854,11 @@ test("a legacy Action stays visible and can be removed", async () => {
   expect(row?.getClientRects().length).toBeGreaterThan(0);
   expect(getComputedStyle(row!).opacity).toBe("1");
   expect(row?.hasAttribute("disabled")).toBe(false);
-  expect(row?.parentElement?.getBoundingClientRect().left).toBeLessThan(
+  expect(row?.getBoundingClientRect().left).toBe(
     container.getBoundingClientRect().left
+  );
+  expect(row?.getBoundingClientRect().right).toBe(
+    container.getBoundingClientRect().right
   );
   const addButton = container
     .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')

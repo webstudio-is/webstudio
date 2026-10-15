@@ -141,14 +141,12 @@ export const FormActionControl = ({
       ? undefined
       : validateFormSubmission(action);
 
+  // The SectionTitle can extend past the original control-height header slot.
+  // Keep the list in the same flow position as the original Action header.
   return (
-    <Box>
+    <Grid css={{ gridTemplateRows: `${theme.sizes.controlHeight} auto` }}>
       <SectionTitle
         collapsible={false}
-        css={{
-          marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
-          marginBottom: `calc(${theme.sizes.controlHeight} - ${theme.spacing[14]})`,
-        }}
         suffix={
           resources.length === 0 ? (
             <Tooltip
@@ -259,12 +257,7 @@ export const FormActionControl = ({
         <Flex direction="column" gap="2">
           {action.length > 0 && (
             <InteractiveListArrowFocus dragItemId={dragItemId}>
-              <Grid
-                ref={sortableRefCallback}
-                css={{
-                  marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
-                }}
-              >
+              <Grid ref={sortableRefCallback}>
                 {action.map(({ dataSourceId: id }, index) => (
                   <ActionItem
                     key={id}
@@ -281,21 +274,29 @@ export const FormActionControl = ({
               </Grid>
             </InteractiveListArrowFocus>
           )}
-          {error && <Text>{error}</Text>}
+          {error && (
+            <Box css={{ paddingInline: theme.panel.paddingInline }}>
+              <Text>{error}</Text>
+            </Box>
+          )}
           {action.length > 0 && successRedirect && (
-            <UrlControl {...successRedirect} />
+            <Box css={{ paddingInline: theme.panel.paddingInline }}>
+              <UrlControl {...successRedirect} />
+            </Box>
           )}
           {!invalidSavedValue && action.length === 0 && (
-            <Flex align="center" justify="center" gap="1">
-              <Text>Navigation mode</Text>
-              <InfoTooltip
-                label="About navigation mode"
-                content="Submits the form fields as URL query parameters and navigates without a full page reload. Use this for search and filters that update page Resources from the URL."
-              />
-            </Flex>
+            <Box css={{ paddingInline: theme.panel.paddingInline }}>
+              <Flex align="center" justify="center" gap="1">
+                <Text>Navigation mode</Text>
+                <InfoTooltip
+                  label="About navigation mode"
+                  content="Submits the form fields as URL query parameters and navigates without a full page reload. Use this for search and filters that update page Resources from the URL."
+                />
+              </Flex>
+            </Box>
           )}
         </Flex>
       </Box>
-    </Box>
+    </Grid>
   );
 };

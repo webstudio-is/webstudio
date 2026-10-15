@@ -473,7 +473,13 @@ export const PropsSection = (props: PropsSectionProps) => {
         {logic.systemProps.map((item) => (
           <Box
             key={item.propName}
-            css={{ paddingInline: theme.panel.paddingInline }}
+            css={{
+              paddingInline:
+                props.component === "Form" &&
+                item.meta.control === "form-action"
+                  ? 0
+                  : theme.panel.paddingInline,
+            }}
           >
             {renderProperty(props, item)}
           </Box>
