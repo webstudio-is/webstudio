@@ -134,18 +134,7 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
     }
 
     const start = Date.now();
-    let project: Awaited<ReturnType<typeof projectApi.loadById>>;
-    try {
-      project = await projectApi.loadById(projectId, context);
-    } catch (error) {
-      if (error instanceof projectApi.ProjectNotFoundError) {
-        throw new Response("This project is unavailable or no longer exists.", {
-          status: 404,
-          statusText: "Project not found",
-        });
-      }
-      throw error;
-    }
+    const project = await projectApi.loadById(projectId, context);
 
     const authPermit =
       (await authorizeProject.getProjectPermit(
@@ -298,6 +287,12 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
       }
     );
   } catch (error) {
+    if (error instanceof projectApi.ProjectNotFoundError) {
+      throw new Response(error.message, {
+        status: 404,
+        statusText: "Project not found",
+      });
+    }
     if (error instanceof AuthorizationError) {
       // try to re-login user if he has no access to the project
       throw await authWsLoader(loaderArgs);

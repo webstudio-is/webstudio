@@ -1,7 +1,6 @@
 import { z } from "zod";
 import * as projectApi from "@webstudio-is/project/index.server";
 import {
-  DomainNotPublishedError,
   createProductionBuild,
   unpublishBuild,
 } from "@webstudio-is/project-build/server";
@@ -379,14 +378,7 @@ export const unpublishProjectDomains = async (
   for (const domain of domains) {
     const dbDomain = domain.replace(`.${env.PUBLISHER_HOST}`, "");
     const result = await deploymentTrpc.unpublish.mutate({ domain });
-    await unpublishBuild({ projectId, domain: dbDomain }, context).catch(
-      (error) => {
-        if (error instanceof DomainNotPublishedError) {
-          return;
-        }
-        throw error;
-      }
-    );
+    await unpublishBuild({ projectId, domain: dbDomain }, context);
     if (result.success === false && result.error !== "NOT_IMPLEMENTED") {
       throw new Error(`Failed to unpublish ${domain}: ${result.error}`);
     }

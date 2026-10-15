@@ -840,7 +840,7 @@ describe("unpublishBuild (msw)", () => {
     ).rejects.toThrow(AuthorizationError);
   });
 
-  test("throws when domain is not published", async () => {
+  test("succeeds when the domain is already unpublished", async () => {
     const projectId = uid();
     server.use(
       ownershipHandler,
@@ -850,7 +850,7 @@ describe("unpublishBuild (msw)", () => {
 
     await expect(
       unpublishBuild({ projectId, domain: "example.com" }, createContext())
-    ).rejects.toThrow("is not published");
+    ).resolves.toBeUndefined();
   });
 
   test("deletes build when it has only the one domain", async () => {

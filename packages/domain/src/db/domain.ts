@@ -7,10 +7,7 @@ import {
 } from "@webstudio-is/trpc-interface/index.server";
 import { createId } from "@webstudio-is/sdk";
 import * as projectApi from "@webstudio-is/project/index.server";
-import {
-  DomainNotPublishedError,
-  unpublishBuild,
-} from "@webstudio-is/project-build/server";
+import { unpublishBuild } from "@webstudio-is/project-build/server";
 import { validateDomain } from "./validate";
 import { cnameFromUserId } from "./cname-from-user-id";
 import type { Project } from "@webstudio-is/project";
@@ -234,12 +231,7 @@ export const remove = async (
   await unpublishBuild(
     { projectId: props.projectId, domain: domain.domain },
     context
-  ).catch((error) => {
-    if (error instanceof DomainNotPublishedError) {
-      return;
-    }
-    throw error;
-  });
+  );
 
   const deleteResult = await context.postgrest.client
     .from("ProjectDomain")

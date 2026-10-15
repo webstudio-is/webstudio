@@ -25,9 +25,7 @@ import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
 import { parseTemplateCss, type TemplateStyleDecl } from "./css";
 import { camelCaseProperty, parseMediaQuery } from "@webstudio-is/css-data";
 
-export class TemplateValidationError extends Error {
-  readonly code = "INVALID_TEMPLATE";
-}
+export class TemplateValidationError extends Error {}
 
 declare module "react" {
   interface HTMLAttributes<T> {

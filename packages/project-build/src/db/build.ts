@@ -302,14 +302,6 @@ export const createBuild = async (
   }
 };
 
-export class DomainNotPublishedError extends Error {
-  readonly webstudioCode = "DOMAIN_NOT_PUBLISHED";
-  constructor(domain: string) {
-    super(`Domain ${domain} is not published`);
-    this.name = "DomainNotPublishedError";
-  }
-}
-
 export const unpublishBuild = async (
   props: {
     projectId: Build["projectId"];
@@ -351,10 +343,6 @@ export const unpublishBuild = async (
     }
     return deployment.domains.includes(props.domain);
   });
-
-  if (targetBuilds.length === 0) {
-    throw new DomainNotPublishedError(props.domain);
-  }
 
   // Process all builds that contain this domain
   for (const targetBuild of targetBuilds) {

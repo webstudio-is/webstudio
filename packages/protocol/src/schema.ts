@@ -29,16 +29,13 @@ const assetFileName = z
 export const isAssetFileName = (value: string) =>
   assetFileName.safeParse(value).success;
 
-const missingImportedAssetFilesPrefix = "Imported asset files are missing: ";
-
-export const getMissingImportedAssetFilesMessage = (assetNames: string[]) =>
-  `${missingImportedAssetFilesPrefix}${JSON.stringify(assetNames)}`;
-
 export class MissingImportedAssetFilesError extends Error {
   readonly webstudioCode = "MISSING_IMPORTED_ASSET_FILES";
   readonly missingAssetNames: string[];
   constructor(missingAssetNames: string[]) {
-    super(getMissingImportedAssetFilesMessage(missingAssetNames));
+    super(
+      `Imported asset files are missing: ${JSON.stringify(missingAssetNames)}`
+    );
     this.missingAssetNames = missingAssetNames;
     this.name = "MissingImportedAssetFilesError";
   }

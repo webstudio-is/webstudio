@@ -66,8 +66,6 @@ export type PlanConfig = {
   prices: Record<string, string>;
 };
 
-class UnknownParentPlanError extends Error {}
-
 /**
  * Parse the PLANS env variable (JSON array of {name, extends?, features, prices?}).
  * - features is partial when extends is used; the parent plan fills in the rest.
@@ -77,103 +75,99 @@ class UnknownParentPlanError extends Error {}
  * Returns a Map of plan name → { name, features, prices }.
  */
 export const parsePlansEnv = (raw: string): Map<string, PlanConfig> => {
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      return new Map();
-    }
-
-    type PlanEntry = {
-      name: string;
-      extends?: string;
-      features: Partial<PlanFeatures>;
-      prices: Record<string, string>;
-    };
-
-    // First pass: validate entry structure and collect partial features.
-    const entries: PlanEntry[] = parsed.flatMap((item) => {
-      if (
-        typeof item !== "object" ||
-        item === null ||
-        typeof item.name !== "string"
-      ) {
-        console.error("Invalid PLANS entry (missing name):", item);
-        return [];
-      }
-      if ("extends" in item && typeof item.extends !== "string") {
-        console.error("Invalid PLANS entry (extends must be a string):", item);
-        return [];
-      }
-      const featuresResult = planFeatures
-        .partial()
-        .safeParse("features" in item ? item.features : {});
-      if (!featuresResult.success) {
-        console.error(
-          `Invalid PLANS entry "${item.name}" features:`,
-          featuresResult.error.flatten()
-        );
-        return [];
-      }
-      const pricesResult = prices.safeParse(
-        "prices" in item ? item.prices : {}
-      );
-      if (!pricesResult.success) {
-        console.error(
-          `Invalid PLANS entry "${item.name}" prices:`,
-          pricesResult.error.flatten()
-        );
-        return [];
-      }
-      return [
-        {
-          name: item.name,
-          extends: "extends" in item ? (item.extends as string) : undefined,
-          features: featuresResult.data,
-          prices: pricesResult.data,
-        } satisfies PlanEntry,
-      ];
-    });
-
-    // Build name → partial features map for resolving extends.
-    const byName = new Map<string, Partial<PlanFeatures>>(
-      entries.map((e) => [e.name, e.features])
-    );
-
-    // Second pass: resolve extends and validate the full feature set.
-    // Every entry implicitly extends defaultPlanFeatures; "extends" picks a named plan on top of that.
-    const resolved = new Map<string, PlanConfig>();
-    for (const entry of entries) {
-      if (entry.extends !== undefined && !byName.has(entry.extends)) {
-        throw new UnknownParentPlanError(
-          `PLANS entry "${entry.name}" extends unknown plan "${entry.extends}"`
-        );
-      }
-      const parentFeatures: PlanFeatures =
-        entry.extends === undefined
-          ? defaultPlanFeatures
-          : { ...defaultPlanFeatures, ...byName.get(entry.extends)! };
-      const result = planFeatures.safeParse({
-        ...parentFeatures,
-        ...entry.features,
-      });
-      if (!result.success) {
-        console.error(
-          `Invalid PLANS entry "${entry.name}" features after resolving extends:`,
-          result.error.flatten()
-        );
-        continue;
-      }
-      resolved.set(entry.name, {
-        name: entry.name,
-        features: result.data,
-        prices: entry.prices,
-      });
-    }
-    return resolved;
-  } catch (error) {
-    if (error instanceof UnknownParentPlanError) {
-      throw error;
-    }
+    parsed = JSON.parse(raw);
+  } catch {
     return new Map();
   }
+  if (!Array.isArray(parsed)) {
+    return new Map();
+  }
+
+  type PlanEntry = {
+    name: string;
+    extends?: string;
+    features: Partial<PlanFeatures>;
+    prices: Record<string, string>;
+  };
+
+  // First pass: validate entry structure and collect partial features.
+  const entries: PlanEntry[] = parsed.flatMap((item) => {
+    if (
+      typeof item !== "object" ||
+      item === null ||
+      typeof item.name !== "string"
+    ) {
+      console.error("Invalid PLANS entry (missing name):", item);
+      return [];
+    }
+    if ("extends" in item && typeof item.extends !== "string") {
+      console.error("Invalid PLANS entry (extends must be a string):", item);
+      return [];
+    }
+    const featuresResult = planFeatures
+      .partial()
+      .safeParse("features" in item ? item.features : {});
+    if (!featuresResult.success) {
+      console.error(
+        `Invalid PLANS entry "${item.name}" features:`,
+        featuresResult.error.flatten()
+      );
+      return [];
+    }
+    const pricesResult = prices.safeParse("prices" in item ? item.prices : {});
+    if (!pricesResult.success) {
+      console.error(
+        `Invalid PLANS entry "${item.name}" prices:`,
+        pricesResult.error.flatten()
+      );
+      return [];
+    }
+    return [
+      {
+        name: item.name,
+        extends: "extends" in item ? (item.extends as string) : undefined,
+        features: featuresResult.data,
+        prices: pricesResult.data,
+      } satisfies PlanEntry,
+    ];
+  });
+
+  // Build name → partial features map for resolving extends.
+  const byName = new Map<string, Partial<PlanFeatures>>(
+    entries.map((e) => [e.name, e.features])
+  );
+
+  // Second pass: resolve extends and validate the full feature set.
+  // Every entry implicitly extends defaultPlanFeatures; "extends" picks a named plan on top of that.
+  const resolved = new Map<string, PlanConfig>();
+  for (const entry of entries) {
+    if (entry.extends !== undefined && !byName.has(entry.extends)) {
+      throw new Error(
+        `PLANS entry "${entry.name}" extends unknown plan "${entry.extends}"`
+      );
+    }
+    const parentFeatures: PlanFeatures =
+      entry.extends === undefined
+        ? defaultPlanFeatures
+        : { ...defaultPlanFeatures, ...byName.get(entry.extends)! };
+    const result = planFeatures.safeParse({
+      ...parentFeatures,
+      ...entry.features,
+    });
+    if (!result.success) {
+      console.error(
+        `Invalid PLANS entry "${entry.name}" features after resolving extends:`,
+        result.error.flatten()
+      );
+      continue;
+    }
+    resolved.set(entry.name, {
+      name: entry.name,
+      features: result.data,
+      prices: entry.prices,
+    });
+  }
+  return resolved;
 };

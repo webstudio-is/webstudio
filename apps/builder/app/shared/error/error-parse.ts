@@ -4,10 +4,9 @@ import { z } from "zod";
 
 // Normalize transport and validation payloads here so UI consumers only need
 // the display message and status, regardless of where an error originated.
-const validationIssue = z.object({ message: z.string().min(1) });
 const validationErrorData = z.object({
   httpStatus: z.number().int().min(400).max(599).catch(500),
-  issues: z.array(z.unknown()).catch([]),
+  issues: z.array(z.object({ message: z.string() })).catch([]),
 });
 
 const pageError = z.union([
@@ -44,10 +43,7 @@ export const parseError = (
         : error.data
     );
     const messages = parsed.success
-      ? parsed.data.issues.flatMap((issue) => {
-          const parsedIssue = validationIssue.safeParse(issue);
-          return parsedIssue.success ? [parsedIssue.data.message] : [];
-        })
+      ? parsed.data.issues.map((issue) => issue.message)
       : [];
     return {
       status: parsed.success ? parsed.data.httpStatus : 500,

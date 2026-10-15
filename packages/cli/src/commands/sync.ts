@@ -23,10 +23,7 @@ import type {
 import { HandledCliError } from "../errors";
 import { apiCompatibilityHeaders, stopSpinnerWithError } from "./api";
 import { downloadAssetFiles } from "../asset-files";
-import {
-  ApiConnectionNotInitializedError,
-  resolveApiConnection,
-} from "../api-connection";
+import { resolveApiConnection } from "../api-connection";
 import { materializeManagedAgents } from "../managed-agents";
 import { serializedBuild } from "@webstudio-is/project-build/contracts";
 import {
@@ -209,16 +206,11 @@ export const sync = async (
     try {
       connection = await dependencies.resolveApiConnection(dependencies);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      syncing.stop(
-        error instanceof ApiConnectionNotInitializedError &&
-          error.reason === "localConfigMissing"
-          ? "Local config file is not found. Please make sure current directory is a webstudio project"
-          : error instanceof ApiConnectionNotInitializedError &&
-              error.reason === "projectConfigMissing"
-            ? "Project config is not found, please run webstudio link"
-            : message,
-        2
+      stopSpinnerWithError(
+        syncing,
+        error,
+        "Unable to load project configuration",
+        "sync"
       );
       throw new HandledCliError();
     }

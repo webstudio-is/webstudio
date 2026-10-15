@@ -3,7 +3,6 @@ import { builderNamespaces } from "@webstudio-is/project-build/contracts";
 import { builderPatchTransactionSchema } from "@webstudio-is/project-build/contracts";
 import {
   isAssetFileName,
-  getMissingImportedAssetFilesMessage,
   MissingImportedAssetFilesError,
   getMissingImportedAssetFiles,
   getBundleVersionMismatchMessage,
@@ -51,7 +50,9 @@ describe("project bundle contract", () => {
     ).toEqual(names);
     expect(
       getMissingImportedAssetFiles(
-        new Error(getMissingImportedAssetFilesMessage(names))
+        new Error(
+          'Imported asset files are missing: ["image.png","font,latin.woff2"]'
+        )
       )
     ).toBeUndefined();
   });
