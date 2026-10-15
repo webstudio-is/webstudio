@@ -31,8 +31,13 @@ const startBarrierReceiver = async () => {
       return;
     }
     deliveries.push(Buffer.concat(chunks).toString("utf8"));
-    if (deliveries.length > 2) {
+    if (deliveries.length > 3) {
       response.writeHead(409).end();
+      return;
+    }
+    if (barrierReached) {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({ delivered: true }));
       return;
     }
     pending.push(response);
@@ -76,7 +81,7 @@ const startBarrierReceiver = async () => {
   };
 };
 
-test("MCP-authored Form starts both selected Actions before either receiver responds", async ({
+test("MCP-authored Form starts connected Actions concurrently and runs all three", async ({
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -110,12 +115,12 @@ test("MCP-authored Form starts both selected Actions before either receiver resp
       },
     }
   );
-  const { formId, graphqlResourceId, httpResourceId, disabledResourceId } =
+  const { formId, graphqlResourceId, httpResourceId, middleResourceId } =
     JSON.parse(stdout) as {
       formId: string;
       graphqlResourceId: string;
       httpResourceId: string;
-      disabledResourceId: string;
+      middleResourceId: string;
     };
   const receiver = await startBarrierReceiver();
   try {
@@ -159,10 +164,13 @@ test("MCP-authored Form starts both selected Actions before either receiver resp
             resourceId: graphqlResourceId,
             status: 200,
           }),
+          expect.objectContaining({
+            resourceId: middleResourceId,
+            status: 200,
+          }),
           expect.objectContaining({ resourceId: httpResourceId, status: 200 }),
         ]);
-        expect(JSON.stringify(submission)).not.toContain(disabledResourceId);
-        expect(receiver.deliveries).toHaveLength(2);
+        expect(receiver.deliveries).toHaveLength(3);
         expect(
           receiver.deliveries.some((body) => body.includes("mutation Record"))
         ).toBe(true);
