@@ -26,6 +26,14 @@ If you define a variable on the Global Root, it will be available on all pages a
 To access variables in the Page Settings, the variable must be defined on the Body of the page.
 {% endhint %}
 
+## Create and edit a variable
+
+Select an instance in the Navigator, then add a variable in **Settings > Variables**. The **New variable** dialog asks for a **Name** and **Type**. It suggests names used in expressions that have not yet been created. A name is required and must be unique among variables on the same instance; using the name of a variable on an ancestor is allowed but shows a warning because the new variable shadows it.
+
+Choose **String**, **Number**, **Boolean**, **JSON**, **REST resource**, **GraphQL resource**, **Assets resource**, **Email resource**, **Sitemap resource**, or **Current date resource**. Resource types may require a plan with dynamic data access. The editor changes with the type, and the right side of the dialog previews the value or resource data. You can resize or maximize the dialog.
+
+Changes save when you close the dialog or move away from it. A new variable closes after it is created. Correct an invalid name before closing; other field errors are shown in their editors. For an existing variable, the menu offers **Copy** and, where allowed, **Delete**. Copying a resource includes its configuration, so you can paste it onto another instance or into another project. Resource editors also provide **Refresh resource data** and a **Refresh** menu action.
+
 ## Global data variables
 
 Variables defined on the **Global Root** are accessible across all pages in your project. This is powerful for:
@@ -35,14 +43,14 @@ Variables defined on the **Global Root** are accessible across all pages in your
 - **CMS configuration** – Set up API endpoints that all pages can access
 - **Slot compatibility** – Global variables work within Slots, enabling dynamic content in reusable components
 
-### Setting Up Global Variables
+### Setting up global variables
 
 1. In the Navigator, select **Global Root** (above Body)
 2. In the Settings panel, add a new variable
-3. Choose the variable type (String, JSON, Resource, etc.)
+3. Choose the variable type in the **New variable** dialog
 4. The variable is now accessible on any page
 
-### Use Cases
+### Use cases
 
 {% embed url="https://www.youtube.com/watch?v=jRzMROoKwsQ" %}
 
@@ -65,23 +73,23 @@ System variable contains the following:
 
 ### String
 
-A String variable holds text data, which can be used for content like titles, descriptions, and labels.
+A String variable holds text data, which can be used for titles, descriptions, and labels. Enter the text in **Value**; the preview updates as you edit.
 
 ### Number
 
-A Number variable stores numeric values, including integers and decimals. It's useful for calculations, counters, and any numeric data that components might need to display or use in logic.
+A Number variable stores numeric values, including integers and decimals. Enter a number in **Value**; the editor reports an empty or invalid number.
 
 ### Boolean
 
-A Boolean variable represents a true or false value. It is ideal for toggling states, such as visibility.
+A Boolean variable represents a true or false value. Set **Value** with the switch, for example to control visibility.
 
 ### JSON
 
-A JSON variable allows for structured data in JSON format. It is ideal for creating simple data structures used with [Collections](../core-components/collection.md) to iterate over each item, such as creating a dynamic gallery.
+A JSON variable allows for structured data. Enter its value in the expression editor; syntax errors are marked there, and the evaluated value appears in the preview. It can provide items to a [Collection](../core-components/collection.md), such as a dynamic gallery.
 
 ### Resource
 
-A Resource variable gets its value from a fetch request, allowing data from a remote system to be used within Webstudio. For example, Resource can be used to interact with a REST API. While it can also be used to interact with a GraphQL API, it’s recommended to use the [GraphQL Resource](variables.md#graphql) instead.
+Choose **REST resource** to fetch data from an HTTP API. For a GraphQL API, use the [GraphQL resource](variables.md#graphql) editor.
 
 There are several fields available to configure the fetch request.
 
@@ -94,10 +102,13 @@ There are several fields available to configure the fetch request.
 {% endhint %}
 
 - URL – Where the resource is located.
-- Method – A [request method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods). Refer to the third-party API docs to find the suitable method.
-- Search Params - Key/value pairs used for providing additional parameters as part of the URL. Values can be bound to other variables.
-- Cache Max Age allows you to define your own cache lifetime.
+- Method – GET, POST, PUT, or DELETE. Refer to the third-party API docs to find the suitable method.
+- Search params – Key/value pairs used for providing additional parameters as part of the URL. Values can be bound to other variables.
+- Cache max age – Define your own cache lifetime.
 - Headers – Key/value pairs such `Content-Type application/json`. Refer to [Request Headers](https://developer.mozilla.org/en-US/docs/Glossary/Request_header) for more info.
+- Format and body – For requests other than GET, choose **auto**, **application/json**, or **multipart/form-data** and configure the body. A Form action also shows these fields even when GET is selected because Form submissions use POST.
+
+The preview can load the request and show its response, request details, and error diagnostics. Use **Refresh resource data** after changing inputs or to request fresh data.
 
 {% include "../../.gitbook/includes/the-requests-including-any....md" %}
 
@@ -105,7 +116,7 @@ There are several fields available to configure the fetch request.
 
 Create a Resource in **Variables** on the [Form](../core-components/form.md) or an ancestor. Then use **Properties & Attributes > Action** on the Form to select it. A Resource created on the Form can bind its URL, headers, and body to that Form's `formData` and safe `browserInfo` values. A Resource on an ancestor can be selected, but cannot bind the descendant Form's submission values. HTTP destinations in a Form always send POST requests, regardless of the Resource's method used for ordinary data loading.
 
-For a Form-scoped HTTP Resource, leave the body unset to forward every named Form field. **Request body format** defaults to **Auto**: text-only data is JSON; a body containing uploaded files becomes multipart. Choose **JSON** or **Multipart** when the receiving API requires that format. JSON rejects uploaded files instead of dropping them. Multipart sends repeated values under the same field name and includes uploaded files with their filenames and bytes. Use the [Form upload guide](../core-components/form.md#inputs-and-responses) for file inputs and the combined request limit.
+For a Form-scoped HTTP resource, leave the body unset to forward every named Form field. **Format** defaults to **auto**: text-only Form data is JSON; a body containing uploaded files becomes multipart. Choose **application/json** or **multipart/form-data** when the receiving API requires that format. JSON rejects uploaded files instead of dropping them. Multipart sends repeated values under the same field name and includes uploaded files with their filenames and bytes. Use the [Form upload guide](../core-components/form.md#inputs-and-responses) for file inputs and the combined request limit.
 
 #### Response
 
@@ -129,29 +140,38 @@ When you configure a Resource, the data is fetched using Cloudflare Workers, whi
 
 By default, several factors determine what gets cached and for how long, but one of the primary factors is what the origin system instructs the requesting entity to cache. In other words, the headless CMS tells Cloudflare Workers what can be cached, if anything, and for how long.\
 \
-If you set a custom **Cache Max Age** value, it will define your cache lifetime instead of relying on API response headers.
+If you set a custom **Cache max age** value, it will define your cache lifetime instead of relying on API response headers.
 
 ### GraphQL
 
-A GraphQL Resource variable gets its value from a GraphQL API, allowing data from a remote system to be used within Webstudio. While similar to [Resource](variables.md#resource), it’s unique in that the available fields are specifically designed for interacting with GraphQL APIs.
+Choose **GraphQL resource** to fetch data from a GraphQL API. Its editor sends a POST request and provides fields for the GraphQL operation.
 
 There are several fields available to configure the fetch request.
 
 - **URL** – Where the resource is located.
 - **Query** – A GraphQL query.
-- **Variables** – A JavaScript object containing variables that will be passed into the request. This is commonly used to pass in parameters in a URL within a Dynamic Page. For example `{ slug: system.params.slug }` See [System Variable](variables.md#system) for more info.
+- **GraphQL variables** – An object passed into the query. You can bind it to other variables; for example, use `{ slug: system.params.slug }` on a Dynamic Page. The editor requires a valid object. See [System](variables.md#system).
+- **Cache max age** and **Headers** – Configure caching and request headers.
+
+The URL accepts a URL or cURL command. Use **Load data** or **Refresh resource data** to inspect the response and request.
 
 {% include "../../.gitbook/includes/the-requests-including-any....md" %}
 
-### System Resource
+### System resource
 
-A System Resource variable gets its value from internal data.
+A system resource gets its value from project or site data. Choose one of the following types in the dialog:
 
-Available system resources:
+- **Assets resource** – Queries project assets. Its query editor supports filters, sorting, pagination, and file content. Invalid query settings are shown in the editor. See [Content Engine](content-engine.md) for a complete article workflow.
+- **Sitemap resource** – Loads data about the site's static pages, commonly used to build a custom sitemap with static and dynamic data. See the [XML Node component](../core-components/xml-node.md#include-the-static-sitemap).
+- **Current date resource** – Provides the current date normalized to midnight UTC. Format it with the [Time component](../core-components/time.md).
 
-- **Sitemap** – Contains data about the static pages on the website, commonly used to build a custom sitemap that combines dynamic data with static data. Refer to the [XML Node component](../core-components/xml-node.md#include-the-static-sitemap) for more info.
-- **Current Date** – Returns the current date/time, useful for displaying "today's date" or calculating relative times. Can be formatted using the [Time component](../core-components/time.md).
-- **Assets** – Queries project assets, including structured fields and file content from Markdown, MDX, and JSON files. See [Content Engine](content-engine.md) for a complete article workflow.
+These editors provide **Load data** and **Refresh resource data** to update the preview. Sitemap and current date resources need only a name; the Assets resource uses a query editor.
+
+### Email resource
+
+Choose **Email resource** to send a plain-text email when a [Form](../core-components/form.md) is submitted. Choose **Project recipients (or owner)**, **Custom recipients**, or, when the resource is on a Form, **Visitor email field**. The visitor option selects a named email input on that Form. Configure **Reply to**, **Subject**, **Body**, and whether to attach submitted files. Custom recipients, Reply to, Subject, and Body can use bindings. The editor validates recipient and sender addresses and expressions.
+
+The **Request** preview shows the email request without sending it. Submit the Form in Preview to see the email service response. See the [Form guide](../core-components/form.md) for delivery behavior and limits.
 
 ## Related
 
