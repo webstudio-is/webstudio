@@ -38,6 +38,23 @@ There are two types of exports:
 
 On Webstudio Cloud, a published Cloudflare-hosted site can send Email Resources through Webstudio's private Email Service when its `EMAIL_SERVICE` binding is configured. That binding and service are not included in an export. A self-hosted JavaScript application needs a custom server-side email integration before Email Resources, including visitor-addressed ones, can send; without one, delivery fails explicitly. A static export has no managed Form submission endpoint and cannot send them.
 
+#### Email Resource sender hook
+
+The current generated JavaScript app calls `handleManagedFormSubmission` from `@webstudio-is/sdk/form/server`. Its `createEmailSender(formData)` option must return a server-side `sendEmail` function; the generated Node adapter currently returns `undefined`. This is an implementation hook in the exported app, not a stable public integration API, so check its types when updating Webstudio.
+
+`sendEmail(request, options)` receives an evaluated Email Resource request. `request.email` contains the recipient mode, recipients, optional sender, subject, body, and attachment setting. The factory also receives the submitted `FormData`, which the host can use to read attachments. `options` includes an abort `signal` and a `timeoutMs` budget. The sender must deliver through the host's email provider and return this outcome shape:
+
+```ts
+type EmailOutcome = {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  data: unknown;
+};
+```
+
+Return `ok: false` with a useful status, message in `statusText`, and error details in `data` when delivery fails. A failed team-recipient action makes the managed Form submission fail; a failed visitor-addressed action appears in its `errors` without changing overall success. Keep provider credentials and sender validation on the server, and handle provider errors, attachments, cancellation, and timeouts there.
+
 {% hint style="warning" %}
 If you want the export to contain human-readable class names, disable atomic CSS. See [Atomic CSS](../foundations/project-settings.md#atomic-css) for more information.
 {% endhint %}
