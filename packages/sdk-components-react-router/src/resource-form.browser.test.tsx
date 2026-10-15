@@ -128,7 +128,7 @@ test("managed Form posts its server identity and shows the action error", async 
     return (
       <Form
         data-ws-managed-form-id="form-instance"
-        action={[{ dataSourceId: "resource-id", enabled: true }]}
+        action={[{ dataSourceId: "resource-id" }]}
         state={state}
         onStateChange={(state) => {
           stateChanges.push(state);
@@ -246,7 +246,7 @@ test("managed Form reports success after the action succeeds", async () => {
         element: (
           <Form
             data-ws-managed-form-id="form-instance"
-            action={[{ dataSourceId: "resource-id", enabled: true }]}
+            action={[{ dataSourceId: "resource-id" }]}
             onStateChange={(state) => stateChanges.push(state)}
             onResultChange={(result) => resultChanges.push(result)}
           >

@@ -367,7 +367,7 @@ const author = async () => {
             ? { type: "resource", value: resource.resourceId }
             : {
                 type: "json",
-                value: [{ dataSourceId: resource.dataSourceId, enabled: true }],
+                value: [{ dataSourceId: resource.dataSourceId }],
               }),
         },
         {

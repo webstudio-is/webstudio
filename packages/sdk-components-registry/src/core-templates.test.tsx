@@ -302,7 +302,7 @@ test("new Form templates select project and visitor Email Resources", () => {
   );
   expect(action).toMatchObject({
     type: "json",
-    value: emailSources.map(({ id }) => ({ dataSourceId: id, enabled: true })),
+    value: emailSources.map(({ id }) => ({ dataSourceId: id })),
   });
   expect(emailSources.map(({ scopeInstanceId }) => scopeInstanceId)).toEqual([
     form.id,

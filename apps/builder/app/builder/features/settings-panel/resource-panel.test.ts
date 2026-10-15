@@ -1458,7 +1458,7 @@ test("body controls follow the effective method for standalone GET and Form Acti
             instanceId: "form",
             name: "action",
             type: "json",
-            value: [{ dataSourceId: variable.id, enabled: true }],
+            value: [{ dataSourceId: variable.id }],
           },
         ],
       ])

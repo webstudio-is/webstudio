@@ -53,7 +53,7 @@ test("the shared handler executes a Form graph from the supplied runtime configu
       search: {},
     },
     configuration: () => ({
-      action: [{ dataSourceId: "source", enabled: true }],
+      action: [{ dataSourceId: "source" }],
       resourceIds: ["http"],
     }),
     getGraph,
@@ -169,7 +169,7 @@ test("a dynamic recipient list from a Resource output is rejected before any sen
         search: {},
       },
       configuration: () => ({
-        action: [{ dataSourceId: "email-source", enabled: true }],
+        action: [{ dataSourceId: "email-source" }],
         resourceIds: ["email"],
       }),
       getGraph: () => graph,
@@ -266,8 +266,8 @@ test.each([
       },
       configuration: () => ({
         action: [
-          { dataSourceId: "http-source", enabled: true },
-          { dataSourceId: "email-source", enabled: true },
+          { dataSourceId: "http-source" },
+          { dataSourceId: "email-source" },
         ],
         resourceIds: ["http", "email"],
       }),
@@ -355,8 +355,8 @@ test("a resolved six-mailbox bound recipient list fails before any send", async 
       },
       configuration: () => ({
         action: [
-          { dataSourceId: "http-source", enabled: true },
-          { dataSourceId: "email-source", enabled: true },
+          { dataSourceId: "http-source" },
+          { dataSourceId: "email-source" },
         ],
         resourceIds: ["http", "email"],
       }),
@@ -448,7 +448,6 @@ test("three webhooks complete when the Email Service rate-limits one destination
     configuration: () => ({
       action: graph.rootIds.map((dataSourceId) => ({
         dataSourceId,
-        enabled: true,
       })),
       resourceIds: graph.rootIds,
     }),
@@ -516,10 +515,7 @@ test("a visitor Email Resource sends in parallel and a failed delivery remains n
       search: {},
     },
     configuration: () => ({
-      action: [
-        { dataSourceId: "http", enabled: true },
-        { dataSourceId: "visitor", enabled: true },
-      ],
+      action: [{ dataSourceId: "http" }, { dataSourceId: "visitor" }],
       resourceIds: ["http", "visitor"],
     }),
     getGraph: () => ({
@@ -635,7 +631,6 @@ test("two visitor Email Resources fail preflight before any action runs", async 
       configuration: () => ({
         action: resourceIds.map((dataSourceId) => ({
           dataSourceId,
-          enabled: true,
         })),
         resourceIds,
       }),
@@ -695,10 +690,7 @@ test.each([undefined, "invalid-address"])(
         search: {},
       },
       configuration: () => ({
-        action: [
-          { dataSourceId: "http", enabled: true },
-          { dataSourceId: "visitor", enabled: true },
-        ],
+        action: [{ dataSourceId: "http" }, { dataSourceId: "visitor" }],
         resourceIds: ["http", "visitor"],
       }),
       getGraph: () => ({
@@ -803,10 +795,7 @@ test.each([
         pathname: "/",
       },
       configuration: () => ({
-        action: [
-          { dataSourceId: "visitor", enabled: true },
-          { dataSourceId: "http", enabled: true },
-        ],
+        action: [{ dataSourceId: "visitor" }, { dataSourceId: "http" }],
         resourceIds: ["visitor", "http"],
       }),
       getGraph: () => ({
@@ -928,10 +917,7 @@ test.each([false, true])(
           pathname: "/",
         },
         configuration: () => ({
-          action: [
-            { dataSourceId: "http", enabled: true },
-            { dataSourceId: "visitor", enabled: true },
-          ],
+          action: [{ dataSourceId: "http" }, { dataSourceId: "visitor" }],
           resourceIds: ["http", "visitor"],
         }),
         getGraph: () => ({

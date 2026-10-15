@@ -946,12 +946,10 @@ describe("insert webstudio component at", () => {
       if (!isFormSubmission(action.value)) {
         throw new Error("Expected valid Form actions");
       }
-      expect(action.value).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ enabled: true }),
-          expect.objectContaining({ enabled: true }),
-        ])
-      );
+      expect(action.value).toEqual([
+        { dataSourceId: expect.any(String) },
+        { dataSourceId: expect.any(String) },
+      ]);
       expect(action.value).toHaveLength(2);
       expect(
         action.value.map(

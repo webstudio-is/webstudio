@@ -53,10 +53,7 @@ test("managed Remix Form scrolls partial failure and reveals visible success", a
     return (
       <Form
         data-ws-managed-form-id="saved-managed-form"
-        action={[
-          { dataSourceId: "first", enabled: true },
-          { dataSourceId: "second", enabled: true },
-        ]}
+        action={[{ dataSourceId: "first" }, { dataSourceId: "second" }]}
         state={state}
         onStateChange={setState}
       >

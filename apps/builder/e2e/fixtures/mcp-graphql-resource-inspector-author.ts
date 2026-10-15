@@ -265,7 +265,7 @@ const author = async () => {
       dataSourceName: "GraphQL inspection action",
       exposeAsDataSource: true,
     });
-    const actions = [{ dataSourceId: graphql.dataSourceId, enabled: true }];
+    const actions = [{ dataSourceId: graphql.dataSourceId }];
     await call("update-props", {
       updates: [
         { instanceId: form.id, name: "action", type: "json", value: actions },

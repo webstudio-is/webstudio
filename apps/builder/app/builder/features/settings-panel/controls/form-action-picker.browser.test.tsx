@@ -133,35 +133,17 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-test("Action picker adds, disables, reorders, and removes HTTP, GraphQL, and Email resources", async () => {
+test("Action picker adds, reorders, and removes HTTP, GraphQL, and Email resources", async () => {
   const ui = setup(names);
   for (const name of names) {
     await ui.add(name);
   }
-  expect(ui.saved).toEqual(
-    names.map((dataSourceId) => ({ dataSourceId, enabled: true }))
-  );
+  expect(ui.saved).toEqual(names.map((dataSourceId) => ({ dataSourceId })));
   expect(
     Array.from(ui.container.querySelectorAll('[data-list-item="true"]')).map(
       (row) => row.getAttribute("aria-label")
     )
   ).toEqual(names.map((name) => `Action ${name}`));
-
-  await act(async () =>
-    ui.container
-      .querySelector<HTMLButtonElement>(
-        '[aria-label="Disable action GraphQL"]'
-      )!
-      .click()
-  );
-  expect(ui.saved).toEqual([
-    { dataSourceId: "HTTP", enabled: true },
-    { dataSourceId: "GraphQL", enabled: false },
-    { dataSourceId: "Email", enabled: true },
-  ]);
-  expect(
-    ui.container.querySelector('[aria-label="Action GraphQL"]')
-  ).toHaveStyle({ opacity: "0.2" });
 
   const source = ui.container.querySelector<HTMLElement>(
     '[aria-label="Action Email"] [data-drag-handle]'
@@ -210,9 +192,9 @@ test("Action picker adds, disables, reorders, and removes HTTP, GraphQL, and Ema
     );
   });
   expect(ui.saved).toEqual([
-    { dataSourceId: "Email", enabled: true },
-    { dataSourceId: "HTTP", enabled: true },
-    { dataSourceId: "GraphQL", enabled: false },
+    { dataSourceId: "Email" },
+    { dataSourceId: "HTTP" },
+    { dataSourceId: "GraphQL" },
   ]);
   // useDrag suppresses the click immediately following a drag for 300 ms.
   await new Promise((resolve) => setTimeout(resolve, 350));
@@ -222,8 +204,8 @@ test("Action picker adds, disables, reorders, and removes HTTP, GraphQL, and Ema
       .click()
   );
   expect(ui.saved).toEqual([
-    { dataSourceId: "Email", enabled: true },
-    { dataSourceId: "GraphQL", enabled: false },
+    { dataSourceId: "Email" },
+    { dataSourceId: "GraphQL" },
   ]);
 });
 

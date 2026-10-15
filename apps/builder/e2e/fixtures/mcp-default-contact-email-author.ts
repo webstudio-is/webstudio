@@ -268,7 +268,6 @@ const author = async () => {
     }
     const actions = [owner, visitor].map(({ dataSourceId }) => ({
       dataSourceId,
-      enabled: true,
     }));
     const inspection = await call("inspect-instance", {
       instanceId: form.id,

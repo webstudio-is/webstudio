@@ -1142,9 +1142,7 @@ export const rebindTreeVariablesMutable = ({
   });
 };
 
-const removeFormActionsForResources = <
-  T extends { dataSourceId: string; enabled: boolean },
->(
+const removeFormActionsForResources = <T extends { dataSourceId: string }>(
   actions: T[],
   removedIds: ReadonlySet<string>
 ): T[] => actions.filter((action) => !removedIds.has(action.dataSourceId));

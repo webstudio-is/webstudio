@@ -121,3 +121,30 @@ test("keyboard users can open the recipients helper", async () => {
   await act(async () => userEvent.keyboard("{Enter}"));
   expect(page.getByRole("tooltip").getByText(recipientsHelp)).toBeVisible();
 });
+
+test("Reply to helper explains the visitor confirmation display name", async () => {
+  const replyToHelp =
+    "This is the default Reply to address for email resources. Its display name is used in generated default visitor confirmation subjects and messages when the resource has no Reply to value. Custom subjects and messages stay unchanged. If no display name is set, “Site Owner” is used.";
+  act(() =>
+    root.render(
+      <TooltipProvider delayDuration={0}>
+        <SectionEmails />
+      </TooltipProvider>
+    )
+  );
+
+  expect(document.body.textContent).not.toContain(replyToHelp);
+  const replyToHelpButton = document.querySelector(
+    'button[aria-label="Reply to"]'
+  );
+  expect(replyToHelpButton).not.toBeNull();
+  for (let attempts = 0; attempts < 10; attempts += 1) {
+    if (document.activeElement === replyToHelpButton) {
+      break;
+    }
+    await act(async () => userEvent.tab());
+  }
+  expect(document.activeElement).toBe(replyToHelpButton);
+  await act(async () => userEvent.keyboard("{Enter}"));
+  expect(page.getByRole("tooltip").getByText(replyToHelp)).toBeVisible();
+});

@@ -484,7 +484,6 @@ const author = async () => {
               value: [
                 {
                   dataSourceId: secondProjectEmail.dataSourceId,
-                  enabled: true,
                 },
               ],
             },
@@ -584,32 +583,30 @@ const author = async () => {
     const actions = emptyActionMode
       ? []
       : formatMode
-        ? [{ dataSourceId: http.dataSourceId, enabled: true }]
+        ? [{ dataSourceId: http.dataSourceId }]
         : [
             ...(emailMode
               ? emails
                   .filter(({ name }) =>
                     ["Email to owner", "Email to visitor"].includes(name)
                   )
-                  .map(({ dataSourceId }) => ({ dataSourceId, enabled: true }))
+                  .map(({ dataSourceId }) => ({ dataSourceId }))
               : emailIsolationMode
                 ? projectRecipientsResource === undefined
                   ? []
                   : [
                       {
                         dataSourceId: projectRecipientsResource.dataSourceId,
-                        enabled: true,
                       },
                     ]
                 : redirectMode
                   ? authorOptions.fail === true
-                    ? [{ dataSourceId: http.dataSourceId, enabled: true }]
+                    ? [{ dataSourceId: http.dataSourceId }]
                     : successfulHttp === undefined
                       ? []
                       : [
                           {
                             dataSourceId: successfulHttp.dataSourceId,
-                            enabled: true,
                           },
                         ]
                   : [
@@ -618,10 +615,9 @@ const author = async () => {
                         : [
                             {
                               dataSourceId: successfulHttp.dataSourceId,
-                              enabled: true,
                             },
                           ]),
-                      { dataSourceId: http.dataSourceId, enabled: true },
+                      { dataSourceId: http.dataSourceId },
                     ]),
           ];
     const updates = [

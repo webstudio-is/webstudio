@@ -1,4 +1,5 @@
 import { useStore } from "@nanostores/react";
+import { useState } from "react";
 import {
   Box,
   InteractiveListArrowFocus,
@@ -9,20 +10,15 @@ import {
   DropdownMenuTrigger,
   Flex,
   Grid,
+  SectionTitleButton,
   SmallIconButton,
-  SmallToggleButton,
   Text,
   Tooltip,
   InfoTooltip,
   useSortable,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  EyeClosedIcon,
-  EyeOpenIcon,
-  MinusIcon,
-  PlusIcon,
-} from "@webstudio-is/icons";
+import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import {
   isFormSubmission,
   maxFormActions,
@@ -39,22 +35,19 @@ import {
 import { type ControlProps } from "../shared";
 import { FieldLabel } from "../property-label";
 import { showVariable } from "../variable-navigation";
+import { UrlControl } from "./url";
 
 const ActionItem = ({
   id,
   index,
   variable,
-  isEnabled,
   active,
-  onToggle,
   onRemove,
 }: {
   id: string;
   index: number;
   variable?: DataSource;
-  isEnabled: boolean;
   active: boolean;
-  onToggle: () => void;
   onRemove: () => void;
 }) => {
   const isResource = variable?.type === "resource";
@@ -66,7 +59,6 @@ const ActionItem = ({
       aria-label={`Action ${name}`}
       draggable
       active={active}
-      css={{ opacity: isEnabled ? undefined : 0.2 }}
       onClick={(event) => {
         const target = event.target;
         if (
@@ -84,29 +76,16 @@ const ActionItem = ({
         </Text>
       }
       buttons={
-        <>
-          <Tooltip content={isEnabled ? "Disable action" : "Enable action"}>
-            <SmallToggleButton
-              tabIndex={-1}
-              variant="normal"
-              pressed={!isEnabled}
-              aria-label={`${isEnabled ? "Disable" : "Enable"} action ${name}`}
-              icon={isEnabled ? <EyeOpenIcon /> : <EyeClosedIcon />}
-              onClick={(event) => event.stopPropagation()}
-              onPressedChange={onToggle}
-            />
-          </Tooltip>
-          <SmallIconButton
-            tabIndex={-1}
-            variant="destructive"
-            aria-label={`Remove action ${name}`}
-            icon={<MinusIcon />}
-            onClick={(event) => {
-              event.stopPropagation();
-              onRemove();
-            }}
-          />
-        </>
+        <SmallIconButton
+          tabIndex={-1}
+          variant="destructive"
+          aria-label={`Remove action ${name}`}
+          icon={<MinusIcon />}
+          onClick={(event) => {
+            event.stopPropagation();
+            onRemove();
+          }}
+        />
       }
     />
   );
@@ -116,7 +95,12 @@ export const FormActionControl = ({
   instanceId,
   prop,
   onChange,
-}: ControlProps<"form-action">) => {
+  successRedirect,
+}: ControlProps<"form-action"> & {
+  successRedirect?: ControlProps<"url">;
+}) => {
+  const [showEmptyResourceTooltip, setShowEmptyResourceTooltip] =
+    useState(false);
   const instances = useStore($instances);
   const dataSources = useStore($dataSources);
   const resourcesById = useStore($resources);
@@ -137,7 +121,10 @@ export const FormActionControl = ({
     return resource !== undefined && resource.control !== "system";
   });
   const update = (next: FormSubmission) =>
-    onChange({ type: "json", value: next });
+    onChange({
+      type: "json",
+      value: next.map(({ dataSourceId }) => ({ dataSourceId })),
+    });
   const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
     items: action.map(({ dataSourceId }) => ({ id: dataSourceId })),
     onSort: (newIndex, oldIndex) => {
@@ -160,8 +147,7 @@ export const FormActionControl = ({
           description={
             <Flex direction="column" gap="1">
               <Text>
-                Sends each form submission to all selected destinations at the
-                same time.
+                Sends each form submission to all destinations at the same time.
               </Text>
               <Box as="ul" css={{ margin: 0, paddingLeft: theme.spacing[4] }}>
                 <li>
@@ -199,46 +185,57 @@ export const FormActionControl = ({
         >
           Action
         </FieldLabel>
-        <DropdownMenu>
-          <Tooltip content="Add a resource to submit this Form.">
-            <span style={{ display: "flex" }}>
-              <DropdownMenuTrigger asChild>
-                <SmallIconButton
-                  aria-label="Add action"
-                  disabled={
-                    action.length >= maxFormActions || resources.length === 0
-                  }
-                  icon={<PlusIcon />}
-                />
-              </DropdownMenuTrigger>
-            </span>
+        {resources.length === 0 ? (
+          <Tooltip
+            content="Create a resource in the Variables section first."
+            open={showEmptyResourceTooltip}
+            onOpenChange={setShowEmptyResourceTooltip}
+          >
+            <SectionTitleButton
+              aria-label="Add action"
+              tabIndex={0}
+              prefix={<PlusIcon />}
+              onClick={() => setShowEmptyResourceTooltip(true)}
+            />
           </Tooltip>
-          <DropdownMenuContent>
-            {resources.map((variable) => (
-              <DropdownMenuItem
-                key={variable.id}
-                disabled={action.some(
-                  ({ dataSourceId }) => dataSourceId === variable.id
-                )}
-                onSelect={() => {
-                  if (
-                    action.length < maxFormActions &&
-                    !action.some(
-                      ({ dataSourceId }) => dataSourceId === variable.id
-                    )
-                  ) {
-                    update([
-                      ...action,
-                      { dataSourceId: variable.id, enabled: true },
-                    ]);
-                  }
-                }}
-              >
-                {variable.name}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        ) : (
+          <DropdownMenu>
+            <Tooltip content="Add a resource to submit this Form.">
+              <span style={{ display: "flex" }}>
+                <DropdownMenuTrigger asChild>
+                  <SectionTitleButton
+                    aria-label="Add action"
+                    tabIndex={0}
+                    disabled={action.length >= maxFormActions}
+                    prefix={<PlusIcon />}
+                  />
+                </DropdownMenuTrigger>
+              </span>
+            </Tooltip>
+            <DropdownMenuContent css={{ minWidth: 180 }}>
+              {resources.map((variable) => (
+                <DropdownMenuItem
+                  key={variable.id}
+                  disabled={action.some(
+                    ({ dataSourceId }) => dataSourceId === variable.id
+                  )}
+                  onSelect={() => {
+                    if (
+                      action.length < maxFormActions &&
+                      !action.some(
+                        ({ dataSourceId }) => dataSourceId === variable.id
+                      )
+                    ) {
+                      update([...action, { dataSourceId: variable.id }]);
+                    }
+                  }}
+                >
+                  {variable.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </Flex>
       <Box css={{ py: theme.spacing[2] }}>
         <Flex direction="column" gap="2">
@@ -250,23 +247,13 @@ export const FormActionControl = ({
                   marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
                 }}
               >
-                {action.map(({ dataSourceId: id, enabled }, index) => (
+                {action.map(({ dataSourceId: id }, index) => (
                   <ActionItem
                     key={id}
                     id={id}
                     index={index}
                     variable={dataSources.get(id)}
-                    isEnabled={enabled}
                     active={dragItemId === id}
-                    onToggle={() =>
-                      update(
-                        action.map((item) =>
-                          item.dataSourceId === id
-                            ? { ...item, enabled: !item.enabled }
-                            : item
-                        )
-                      )
-                    }
                     onRemove={() =>
                       update(action.filter((item) => item.dataSourceId !== id))
                     }
@@ -277,6 +264,9 @@ export const FormActionControl = ({
             </InteractiveListArrowFocus>
           )}
           {error && <Text>{error}</Text>}
+          {action.length > 0 && successRedirect && (
+            <UrlControl {...successRedirect} />
+          )}
           {!invalidSavedValue && action.length === 0 && (
             <Flex align="center" justify="center" gap="1">
               <Text>Navigation mode</Text>

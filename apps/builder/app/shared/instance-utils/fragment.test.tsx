@@ -546,8 +546,8 @@ describe("insert webstudio fragment copy", () => {
             name: "action",
             type: "json",
             value: [
-              { dataSourceId: "scoped-source", enabled: true },
-              { dataSourceId: "external-source", enabled: true },
+              { dataSourceId: "scoped-source" },
+              { dataSourceId: "external-source" },
             ],
           },
         ],
@@ -572,8 +572,8 @@ describe("insert webstudio fragment copy", () => {
     ).toMatchObject({
       type: "json",
       value: [
-        { dataSourceId: copiedScopedId, enabled: true },
-        { dataSourceId: "external-source", enabled: true },
+        { dataSourceId: copiedScopedId },
+        { dataSourceId: "external-source" },
       ],
     });
   });

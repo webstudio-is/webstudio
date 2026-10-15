@@ -63,7 +63,7 @@ test("Preview Form posts to the authenticated Builder and sets error state witho
         instanceId: formId,
         name: "action",
         type: "json",
-        value: [{ dataSourceId: variableId, enabled: true }],
+        value: [{ dataSourceId: variableId }],
       },
       {
         id: `${formId}:successRedirect`,
@@ -231,7 +231,7 @@ test("Preview Form success redirects navigate matched pages and keep feedback fo
         instanceId: formId,
         name: "action",
         type: "json",
-        value: [{ dataSourceId: variableId, enabled: true }],
+        value: [{ dataSourceId: variableId }],
       },
       {
         id: `${targetId}:id`,
@@ -360,7 +360,7 @@ test("Preview Form success redirects navigate matched pages and keep feedback fo
     .toContain("done");
 });
 
-test("Preview Form preserves browser FormData and renders configured failure results", async ({
+test("Preview Form preserves browser FormData and runs legacy disabled actions in order", async ({
   page,
   context,
 }) => {
@@ -648,12 +648,12 @@ test("Preview Form preserves browser FormData and renders configured failure res
     result.results.map(
       ({ resourceName }: { resourceName: string }) => resourceName
     )
-  ).toEqual(["First", "Last"]);
+  ).toEqual(["First", "Disabled", "Last"]);
   expect(
     result.errors.map(
       ({ resourceName }: { resourceName: string }) => resourceName
     )
-  ).toEqual(["First", "Last"]);
+  ).toEqual(["First", "Disabled", "Last"]);
   expect(submissions).toHaveLength(1);
   const captured = await Promise.all(
     page
@@ -675,7 +675,7 @@ test("Preview Form preserves browser FormData and renders configured failure res
   await expect(form.getByRole("alert")).toBeVisible();
   await expect(form.getByText("Submission failed")).toBeVisible();
   await expect(form.getByRole("alert")).toContainText(result.errors[0].message);
-  await expect(form.getByText("First,Last")).toBeVisible();
+  await expect(form.getByText("First,Disabled,Last")).toBeVisible();
   await expect(form.getByText("Sent successfully")).toHaveCount(0);
   await expect
     .poll(() =>

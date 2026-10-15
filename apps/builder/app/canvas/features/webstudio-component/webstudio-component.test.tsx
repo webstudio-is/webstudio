@@ -247,7 +247,7 @@ test.each(["query", "hash", "params"] as const)(
       await act(async () =>
         root.render(
           <PreviewResourceForm
-            action={[{ dataSourceId: "resource", enabled: true }]}
+            action={[{ dataSourceId: "resource" }]}
             successRedirect="/done"
             onManagedSubmit={(_values, requestSignal) => {
               signal = requestSignal;

@@ -54,7 +54,7 @@ test("managed submission refreshes mutable page data once without replaying POST
         <output>{value}</output>
         <Form
           data-ws-managed-form-id="form"
-          action={[{ dataSourceId: "resource", enabled: true }]}
+          action={[{ dataSourceId: "resource" }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
@@ -111,7 +111,7 @@ test("failed submissions skip refresh and a later successful submission refreshe
         <output>{value}</output>
         <Form
           data-ws-managed-form-id="form"
-          action={[{ dataSourceId: "resource", enabled: true }]}
+          action={[{ dataSourceId: "resource" }]}
         >
           <button type="submit">Send</button>
         </Form>
@@ -152,7 +152,7 @@ test("a redirect skips refresh", async () => {
       element: (
         <Form
           data-ws-managed-form-id="form"
-          action={[{ dataSourceId: "resource", enabled: true }]}
+          action={[{ dataSourceId: "resource" }]}
           successRedirect="#done"
         >
           <button type="submit">Send</button>
@@ -195,7 +195,7 @@ test("navigation ignores an in-flight submission from the old page", async () =>
       element: (
         <Form
           data-ws-managed-form-id="form"
-          action={[{ dataSourceId: "resource", enabled: true }]}
+          action={[{ dataSourceId: "resource" }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
@@ -255,7 +255,7 @@ test("refresh failure retains the completed success result and does not replay P
         <output>{value}</output>
         <Form
           data-ws-managed-form-id="form"
-          action={[{ dataSourceId: "resource", enabled: true }]}
+          action={[{ dataSourceId: "resource" }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>

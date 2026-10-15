@@ -296,11 +296,11 @@ const author = async () => {
           instanceId: form.id,
           name: "action",
           type: "json",
-          value: [{ dataSourceId: owner.dataSourceId, enabled: true }],
+          value: [{ dataSourceId: owner.dataSourceId }],
         },
       ],
     });
-    const actions = [{ dataSourceId: owner.dataSourceId, enabled: true }];
+    const actions = [{ dataSourceId: owner.dataSourceId }];
     const updatedInspection = await call("inspect-instance", {
       instanceId: form.id,
       include: ["props"],

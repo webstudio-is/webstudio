@@ -146,7 +146,7 @@ test("copying a Form remaps its local Resource actions", () => {
     instanceId: "formId",
     name: "action",
     type: "json",
-    value: [{ dataSourceId: "localResourceVariable", enabled: false }],
+    value: [{ dataSourceId: "localResourceVariable" }],
   });
 
   const fragment = webstudioFragment.parse(
@@ -170,9 +170,7 @@ test("copying a Form remaps its local Resource actions", () => {
       copiedSubmission.value as { dataSourceId: string }[]
     )[0].dataSourceId;
     expect(destinationId).not.toBe("localResourceVariable");
-    expect(copiedSubmission.value).toEqual([
-      { dataSourceId: destinationId, enabled: false },
-    ]);
+    expect(copiedSubmission.value).toEqual([{ dataSourceId: destinationId }]);
     expect(data.dataSources.get(destinationId)).toMatchObject({
       scopeInstanceId: copiedForm?.id,
       resourceId: expect.not.stringMatching(/^localResource$/),

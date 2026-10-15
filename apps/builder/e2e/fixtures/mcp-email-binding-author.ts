@@ -283,7 +283,7 @@ try {
             instanceId: form.id,
             name: "action",
             type: "json",
-            value: [{ dataSourceId: visitorEmail.dataSourceId, enabled: true }],
+            value: [{ dataSourceId: visitorEmail.dataSourceId }],
           },
         ],
       });
@@ -330,7 +330,7 @@ try {
           instanceId: form.id,
           name: "action",
           type: "json",
-          value: [{ dataSourceId: projectEmail.dataSourceId, enabled: true }],
+          value: [{ dataSourceId: projectEmail.dataSourceId }],
         },
       ],
     });

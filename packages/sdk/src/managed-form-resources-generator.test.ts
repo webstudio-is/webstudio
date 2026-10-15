@@ -2505,7 +2505,6 @@ test.each([
         configuration: () => ({
           action: input.destinationDataSourceIds.map((dataSourceId) => ({
             dataSourceId,
-            enabled: true,
           })),
           resourceIds: ["http", "visitor"],
         }),
