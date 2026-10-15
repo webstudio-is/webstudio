@@ -21,7 +21,7 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
         createRoot(document.getElementById("root")).render(
           createElement(Form, {
             "data-ws-managed-form-id": "form-one",
-            action: [{ dataSourceId: "destination", enabled: true }],
+            action: [{ dataSourceId: "destination" }],
             onStateChange: (state) => window.formStates.push(state),
             onResultChange: (result) => window.formResults.push(result),
           },

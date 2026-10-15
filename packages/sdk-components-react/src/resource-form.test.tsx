@@ -5,7 +5,7 @@ import { Form } from "./resource-form";
 test("Form exposes a valid action URL that identifies its mode", () => {
   const html = renderToStaticMarkup(
     <Form
-      action={[{ dataSourceId: "request", enabled: true }]}
+      action={[{ dataSourceId: "request" }]}
       method="post"
       encType="multipart/form-data"
     >
@@ -37,12 +37,12 @@ test("server rendering blocks an over-limit managed Form", () => {
   const html = renderToStaticMarkup(
     <Form
       action={[
-        { dataSourceId: "one", enabled: true },
-        { dataSourceId: "two", enabled: true },
-        { dataSourceId: "three", enabled: true },
-        { dataSourceId: "four", enabled: true },
-        { dataSourceId: "five", enabled: true },
-        { dataSourceId: "six", enabled: true },
+        { dataSourceId: "one" },
+        { dataSourceId: "two" },
+        { dataSourceId: "three" },
+        { dataSourceId: "four" },
+        { dataSourceId: "five" },
+        { dataSourceId: "six" },
       ]}
     >
       <button type="submit">Send</button>

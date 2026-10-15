@@ -123,7 +123,6 @@ test("rejects a fragment containing a Form with more than 10 actions", () => {
               type: "json",
               value: Array.from({ length: 11 }, (_, index) => ({
                 dataSourceId: `resource-${index}`,
-                enabled: true,
               })),
             },
           ],

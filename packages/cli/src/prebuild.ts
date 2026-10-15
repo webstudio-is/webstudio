@@ -65,7 +65,7 @@ import {
   type ComponentBuildContribution,
   isPublishedDeployment,
   isFormSubmission,
-  getEnabledFormActions,
+  getFormActions,
 } from "@webstudio-is/sdk";
 import {
   migratePages,
@@ -1806,7 +1806,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
         const action =
           actionProp?.type === "json" ? actionProp.value : undefined;
         const resourceIds = isFormSubmission(action)
-          ? getEnabledFormActions(action).map((id) => {
+          ? getFormActions(action).map((id) => {
               const dataSource = dataSources.get(id);
               return dataSource?.type === "resource" &&
                 resources.has(dataSource.resourceId)
@@ -1820,7 +1820,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
       ([formId, { action }]) => ({
         formId,
         destinationDataSourceIds: isFormSubmission(action)
-          ? getEnabledFormActions(action)
+          ? getFormActions(action)
           : [],
       })
     );

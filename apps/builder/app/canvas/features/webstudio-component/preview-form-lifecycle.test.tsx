@@ -55,7 +55,7 @@ test.each([true, false])(
       }
       return (
         <__testing__.PreviewResourceForm
-          action={[{ dataSourceId: "request", enabled: true }]}
+          action={[{ dataSourceId: "request" }]}
           state={state}
           onStateChange={setState}
           onManagedSubmit={submit}
@@ -99,7 +99,7 @@ test.each([true, false])(
       const isPreviewMode = useStore($isPreviewMode);
       return isPreviewMode ? (
         <__testing__.PreviewResourceForm
-          action={[{ dataSourceId: "request", enabled: true }]}
+          action={[{ dataSourceId: "request" }]}
           onManagedSubmit={submit}
         >
           <button type="submit">Send</button>
@@ -137,7 +137,7 @@ test("Preview publishes live unsent DOM values as input/change events occur", as
       root?.render(
         <__testing__.PreviewResourceForm
           data-ws-managed-form-id="live-form"
-          action={[{ dataSourceId: "request", enabled: true }]}
+          action={[{ dataSourceId: "request" }]}
           onManagedSubmit={submit}
         >
           <input name="text" />

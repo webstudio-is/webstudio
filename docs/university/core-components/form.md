@@ -9,7 +9,7 @@ Use **Form** to send visitor input to HTTP or email [resources](../foundations/c
 ## Configure actions
 
 1. Use the two email resources included in a new Form, or create HTTP, email, or GraphQL resources in **Variables**, on the Form or an ancestor.
-2. Select the Form. In **Properties & Attributes > Action**, use the plus menu to choose up to ten visible resources. Each resource can be selected once; use the row controls to disable or remove an action. Edit a resource in **Variables**.
+2. Select the Form. In **Properties & Attributes > Action**, use the plus menu to choose up to ten visible resources. Each resource can be selected once; use the row control to remove an action. Edit a resource in **Variables**.
 3. Give each input a **Name**. Its name identifies the submitted value in `formData`.
 4. Submit the Form in Builder Preview to test the current draft, or publish and test the deployed site.
 

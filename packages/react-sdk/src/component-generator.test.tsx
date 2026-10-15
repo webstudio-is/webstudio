@@ -148,7 +148,7 @@ test("managed Forms own their server identity after custom props and action dedu
     instanceId: "form",
     name: "action",
     type: "json",
-    value: [{ dataSourceId: "request", enabled: true }],
+    value: [{ dataSourceId: "request" }],
   });
   const managed = generate(true);
   expect(managed.match(/data-ws-managed-form-id/g)).toHaveLength(1);
@@ -169,7 +169,7 @@ test("managed Forms own their server identity after custom props and action dedu
     instanceId: "form",
     name: "action",
     type: "json",
-    value: [{ dataSourceId: "final", enabled: true }],
+    value: [{ dataSourceId: "final" }],
   });
   expect(generate(true)).toContain('data-ws-managed-form-id="form"');
 });
@@ -200,7 +200,7 @@ test("managed Form policy applies to a root Form and leaves other elements' prop
     instanceId: "form",
     name: "action",
     type: "json",
-    value: [{ dataSourceId: "request", enabled: true }],
+    value: [{ dataSourceId: "request" }],
   });
   const generate = (rootInstanceId: string) =>
     generateManagedFormComponent({

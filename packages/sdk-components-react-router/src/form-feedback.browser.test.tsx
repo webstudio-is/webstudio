@@ -75,10 +75,7 @@ test("managed Form reveals partial failure and leaves visible success feedback i
     return (
       <Form
         data-ws-managed-form-id="saved-managed-form"
-        action={[
-          { dataSourceId: "first", enabled: true },
-          { dataSourceId: "second", enabled: true },
-        ]}
+        action={[{ dataSourceId: "first" }, { dataSourceId: "second" }]}
         state={state}
         onStateChange={setState}
       >
@@ -150,7 +147,7 @@ test("managed Form reveals authored Error Message on repeated failures", async (
     return (
       <Form
         data-ws-managed-form-id="saved-managed-form"
-        action={[{ dataSourceId: "first", enabled: true }]}
+        action={[{ dataSourceId: "first" }]}
         state={state}
         onStateChange={setState}
         onResultChange={(result) => setErrors(result.errors)}
@@ -204,7 +201,7 @@ test("managed Form reveals a persistent configuration error", async () => {
     const [errors, setErrors] = useState<Array<{ message: string }>>([]);
     return (
       <Form
-        action={[{ dataSourceId: "disabled-resource", enabled: false }]}
+        action={[{ dataSourceId: "resource" }, { dataSourceId: "resource" }]}
         state={state}
         onStateChange={setState}
         onResultChange={(result) => setErrors(result.errors)}
@@ -235,7 +232,9 @@ test("managed Form reveals a persistent configuration error", async () => {
       await act(async () => view.container.querySelector("button")?.click());
       await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(attempt));
       const currentAlert = view.container.querySelector('[role="alert"]');
-      expect(currentAlert?.textContent).toContain("Enable at least one action");
+      expect(currentAlert?.textContent).toContain(
+        "Select each Resource only once"
+      );
       if (alert !== null) {
         expect(currentAlert).toBe(alert);
       }
@@ -260,7 +259,7 @@ test("managed Form follows a valid success redirect without scrolling feedback",
     return (
       <Form
         data-ws-managed-form-id="saved-managed-form"
-        action={[{ dataSourceId: "first", enabled: true }]}
+        action={[{ dataSourceId: "first" }]}
         state={state}
         onStateChange={setState}
         successRedirect="#after-form"

@@ -331,8 +331,8 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
     expect(projectResource).toMatchObject({ scopeInstanceId: form?.id });
     expect(visitorResource).toMatchObject({ scopeInstanceId: form?.id });
     expect(action?.value).toEqual([
-      { dataSourceId: projectResource?.dataSourceId, enabled: true },
-      { dataSourceId: visitorResource?.dataSourceId, enabled: true },
+      { dataSourceId: projectResource?.dataSourceId },
+      { dataSourceId: visitorResource?.dataSourceId },
     ]);
     const formVariables = variables.data.variables as Array<{
       id: string;
@@ -512,8 +512,8 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
           name: "action",
           type: "json",
           value: [
-            { dataSourceId: visitorResource?.dataSourceId, enabled: false },
-            { dataSourceId: projectResource?.dataSourceId, enabled: true },
+            { dataSourceId: visitorResource?.dataSourceId },
+            { dataSourceId: projectResource?.dataSourceId },
           ],
         },
       ],
@@ -532,8 +532,8 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
           name: "action",
           type: "json",
           value: [
-            { dataSourceId: visitorResource?.dataSourceId, enabled: false },
-            { dataSourceId: projectResource?.dataSourceId, enabled: true },
+            { dataSourceId: visitorResource?.dataSourceId },
+            { dataSourceId: projectResource?.dataSourceId },
           ],
         }),
       ])
@@ -638,7 +638,7 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
       email: { recipientMode: "project" },
     });
 
-    const extraActions: Array<{ dataSourceId: string; enabled: boolean }> = [];
+    const extraActions: Array<{ dataSourceId: string }> = [];
     for (let index = 0; index < 7; index++) {
       const created = await call("create-resource", {
         resource: {
@@ -652,13 +652,12 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
       });
       extraActions.push({
         dataSourceId: created.data.dataSourceId as string,
-        enabled: true,
       });
     }
     const tenActions = [
-      { dataSourceId: projectResource?.dataSourceId, enabled: true },
-      { dataSourceId: visitorResource?.dataSourceId, enabled: false },
-      { dataSourceId: httpDataSourceId, enabled: true },
+      { dataSourceId: projectResource?.dataSourceId },
+      { dataSourceId: visitorResource?.dataSourceId },
+      { dataSourceId: httpDataSourceId },
       ...extraActions,
     ];
     expect(tenActions).toHaveLength(10);
@@ -690,10 +689,7 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
             instanceId: form?.id,
             name: "action",
             type: "json",
-            value: [
-              ...tenActions,
-              { dataSourceId: "one-too-many", enabled: true },
-            ],
+            value: [...tenActions, { dataSourceId: "one-too-many" }],
           },
         ],
       },
@@ -704,8 +700,8 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
     );
     expect(commits).toBe(commitsBeforeRejection);
     const remainingActions = [
-      { dataSourceId: httpDataSourceId, enabled: true },
-      { dataSourceId: projectResource?.dataSourceId, enabled: true },
+      { dataSourceId: httpDataSourceId },
+      { dataSourceId: projectResource?.dataSourceId },
     ];
     await call("update-props", {
       updates: [

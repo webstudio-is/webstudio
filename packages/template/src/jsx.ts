@@ -772,7 +772,6 @@ export const renderTemplate = (
           type: "json",
           value: value.resources.map((resource) => ({
             dataSourceId: getVariableId(instanceId, resource),
-            enabled: true,
           })),
         });
         continue;

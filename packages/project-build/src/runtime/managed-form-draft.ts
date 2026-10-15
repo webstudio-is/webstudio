@@ -2,7 +2,7 @@ import {
   decodeDataVariableId,
   findTreeInstanceIds,
   getAllPages,
-  getEnabledFormActions,
+  getFormActions,
   getPagePath,
   isFormSubmission,
   type DataSources,
@@ -75,9 +75,7 @@ export const prepareManagedFormDraft = ({
     .filter((prop) => prop.instanceId === formId && prop.name === "action")
     .at(-1);
   const action = actionProp?.type === "json" ? actionProp.value : undefined;
-  const destinations = isFormSubmission(action)
-    ? getEnabledFormActions(action)
-    : [];
+  const destinations = isFormSubmission(action) ? getFormActions(action) : [];
   const resourceIds = destinations.map((id) => {
     const source = dataSources.get(id);
     return source?.type === "resource" && resources.has(source.resourceId)

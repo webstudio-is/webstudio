@@ -12,7 +12,7 @@ import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
 
-test("MCP-authored Form dispatches enabled HTTP and GraphQL Actions in configured result order", async ({
+test("MCP-authored Form dispatches all Actions in configured result order", async ({
   context,
 }) => {
   const fixture = await createContentModeProject({
@@ -53,11 +53,11 @@ test("MCP-authored Form dispatches enabled HTTP and GraphQL Actions in configure
       },
     }
   );
-  const { formId, graphqlResourceId, disabledResourceId, httpResourceId } =
+  const { formId, graphqlResourceId, middleResourceId, httpResourceId } =
     JSON.parse(stdout) as {
       formId: string;
       graphqlResourceId: string;
-      disabledResourceId: string;
+      middleResourceId: string;
       httpResourceId: string;
     };
   const receiver = await startFormDeliveryReceiver();
@@ -103,14 +103,19 @@ test("MCP-authored Form dispatches enabled HTTP and GraphQL Actions in configure
             status: 200,
           }),
           expect.objectContaining({
+            resourceId: middleResourceId,
+            resourceName: "Middle HTTP action",
+            status: 200,
+          }),
+          expect.objectContaining({
             resourceId: httpResourceId,
             resourceName: "Last HTTP action",
             status: 200,
           }),
         ]);
-        expect(JSON.stringify(submission)).not.toContain(disabledResourceId);
-        expect(receiver.deliveries).toHaveLength(2);
+        expect(receiver.deliveries).toHaveLength(3);
         expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual([
+          "/submit",
           "/submit",
           "/submit",
         ]);

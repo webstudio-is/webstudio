@@ -117,15 +117,15 @@ test("deleting a Resource removes it from a new Form's destinations", () => {
     name: "action",
     type: "json",
     value: [
-      { dataSourceId: "resourceVariable", enabled: false },
-      { dataSourceId: "otherResourceVariable", enabled: true },
+      { dataSourceId: "resourceVariable" },
+      { dataSourceId: "otherResourceVariable" },
     ],
   });
 
   deleteVariableMutable(data, "resourceVariable");
 
   expect(data.props.get("action")).toMatchObject({
-    value: [{ dataSourceId: "otherResourceVariable", enabled: true }],
+    value: [{ dataSourceId: "otherResourceVariable" }],
   });
 });
 
@@ -209,7 +209,7 @@ test("Form-scoped Resource bindings and destination survive edit, save, and relo
     instanceId: "formId",
     name: "action",
     type: "json",
-    value: [{ dataSourceId: "destination", enabled: true }],
+    value: [{ dataSourceId: "destination" }],
   });
 
   const bodyExpression = `({ email: ${encodeDataVariableId("formData")}.email })`;
@@ -258,7 +258,7 @@ test("Form-scoped Resource bindings and destination survive edit, save, and relo
     scopeInstanceId: "formId",
   });
   expect(reloadedProps.get("action")).toMatchObject({
-    value: [{ dataSourceId: "destination", enabled: true }],
+    value: [{ dataSourceId: "destination" }],
   });
 });
 
@@ -5038,7 +5038,7 @@ describe("resource patch helpers", () => {
       instanceId: "form",
       name: "action",
       type: "json",
-      value: [{ dataSourceId: "data-source", enabled: false }],
+      value: [{ dataSourceId: "data-source" }],
     };
     const dataSource: DataSource = {
       id: "data-source",
@@ -5081,7 +5081,7 @@ describe("resource patch helpers", () => {
       instanceId: "button",
       name: "action",
       type: "json",
-      value: [{ dataSourceId: "data-source", enabled: true }],
+      value: [{ dataSourceId: "data-source" }],
     };
     const dataSource: DataSource = {
       id: "data-source",
@@ -5100,9 +5100,7 @@ describe("resource patch helpers", () => {
     expect(result.payload.flatMap(({ patches }) => patches)).not.toContainEqual(
       expect.objectContaining({ path: ["button-action", "value"] })
     );
-    expect(action.value).toEqual([
-      { dataSourceId: "data-source", enabled: true },
-    ]);
+    expect(action.value).toEqual([{ dataSourceId: "data-source" }]);
   });
 
   test("rejects deleting resources whose data source is referenced by expressions", () => {
