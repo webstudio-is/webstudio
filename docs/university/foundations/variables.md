@@ -2,17 +2,17 @@
 description: Data variables enable the definition and use of a value throughout the page.
 ---
 
-# 🔡 Data variables
+# 🔡 Variables
 
 {% hint style="info" %}
-**Hint:** [CSS variables](css-variables.md) are different than Data variables. They enable the reuse of values in the Style Panel.
+**Hint:** [CSS variables](css-variables.md) are different than data variables. They enable the reuse of values in the Style Panel.
 {% endhint %}
 
-Data variables are defined on any instance in the navigator such as Global Root, Body, or Heading. Variables can be found on the right panel in the settings tab.
+Data variables are defined on any instance in the Navigator such as Global Root, Body, or Heading. Find them in the **Variables** section of the Settings panel on the right.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/variables-settings-panel-dark.png">
-  <img src="../../.gitbook/assets/variables-settings-panel-light.png" alt="Settings panel with instance properties and a Data variables section listing static and dynamic variables">
+  <img src="../../.gitbook/assets/variables-settings-panel-light.png" alt="Settings panel with instance properties and a Variables section listing static and dynamic variables">
 </picture>
 
 
@@ -103,7 +103,7 @@ There are several fields available to configure the fetch request.
 
 #### Submit a Form to a Resource
 
-Create a Resource in **Data variables** on the [Form](../core-components/form.md) or an ancestor. Then use **Properties & Attributes > Action** on the Form to select it. A Resource created on the Form can bind its URL, headers, and body to that Form's `formData` and safe `browserInfo` values. A Resource on an ancestor can be selected, but cannot bind the descendant Form's submission values. HTTP destinations in a Form always send POST requests, regardless of the Resource's method used for ordinary data loading.
+Create a Resource in **Variables** on the [Form](../core-components/form.md) or an ancestor. Then use **Properties & Attributes > Action** on the Form to select it. A Resource created on the Form can bind its URL, headers, and body to that Form's `formData` and safe `browserInfo` values. A Resource on an ancestor can be selected, but cannot bind the descendant Form's submission values. HTTP destinations in a Form always send POST requests, regardless of the Resource's method used for ordinary data loading.
 
 For a Form-scoped HTTP Resource, leave the body unset to forward every named Form field. **Request body format** defaults to **Auto**: text-only data is JSON; a body containing uploaded files becomes multipart. Choose **JSON** or **Multipart** when the receiving API requires that format. JSON rejects uploaded files instead of dropping them. Multipart sends repeated values under the same field name and includes uploaded files with their filenames and bytes. Use the [Form upload guide](../core-components/form.md#inputs-and-responses) for file inputs and the combined request limit.
 
@@ -158,5 +158,5 @@ Available system resources:
 - [Expression editor](expression-editor.md) – Bind variables to components and create expressions
 - [CMS](cms.md) – Use Resources to fetch content from external systems
 - [Collection](../core-components/collection.md) – Iterate over JSON or Resource data
-- [CSS variables](css-variables.md) – Define reusable style values (different from Data variables)
+- [CSS variables](css-variables.md) – Define reusable style values (different from data variables)
 - [Slot](../core-components/slot.md) – Access global variables in reusable components

@@ -212,7 +212,7 @@ Content editors cannot create dynamic paths such as `/blog/:slug`, wildcard path
 - [Project settings](project-settings.md) – Site-wide settings such as favicon, custom code, redirects, and route authentication
 - [Page templates](page-templates.md) – Create reusable blueprints for new pages
 - [Publishing & custom domains](publishing-and-custom-domains.md) – Publish protected pages to custom domains
-- [Data variables](variables.md) – Define and use variables on pages
+- [Variables](variables.md) – Define and use variables on pages
 - [Expression editor](expression-editor.md) – Bind expressions to Page Settings fields
 - [XML Node](../core-components/xml-node.md) – Build XML pages such as sitemaps
 - [Custom 404 page](../how-tos/how-to-make-a-custom-404-page.md) – Create a custom 404 page

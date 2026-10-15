@@ -682,6 +682,6 @@ reference cycles fail instead of returning partial data.
 - [Content Engine reference](content-engine-reference.md) – Check query fields, modes, diagnostics, references, and limits
 - [Assets](assets.md) – Create, edit, organize, and reference project files
 - [Content Block](../core-components/content-block.md) – Design and visually edit MDX articles
-- [Data variables](variables.md) – Define resources and understand their scope
+- [Variables](variables.md) – Define resources and understand their scope
 - [Collection](../core-components/collection.md) – Render article lists
 - [Markdown Embed](../core-components/markdown-embed.md) – Render and style an article body
