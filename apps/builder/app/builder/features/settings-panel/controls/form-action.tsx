@@ -145,6 +145,7 @@ export const FormActionControl = ({
     <Box>
       <SectionTitle
         collapsible={false}
+        css={{ marginInline: `calc(-1 * ${theme.panel.paddingInline})` }}
         suffix={
           resources.length === 0 ? (
             <Tooltip
@@ -249,12 +250,7 @@ export const FormActionControl = ({
         <Flex direction="column" gap="2">
           {action.length > 0 && (
             <InteractiveListArrowFocus dragItemId={dragItemId}>
-              <Grid
-                ref={sortableRefCallback}
-                css={{
-                  marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
-                }}
-              >
+              <Grid ref={sortableRefCallback}>
                 {action.map(({ dataSourceId: id }, index) => (
                   <ActionItem
                     key={id}

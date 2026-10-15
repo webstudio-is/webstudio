@@ -2,7 +2,17 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test, vi } from "vitest";
-import { TooltipProvider } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  Grid,
+  SectionTitle,
+  SectionTitleButton,
+  SectionTitleLabel,
+  TooltipProvider,
+  theme,
+} from "@webstudio-is/design-system";
+import { PlusIcon } from "@webstudio-is/icons";
 import type { Prop } from "@webstudio-is/sdk";
 import {
   $dataSources,
@@ -91,7 +101,7 @@ test("Action + explains how to add a resource when none are available", async ()
   expect(onChange).not.toHaveBeenCalled();
 });
 
-test("Action + matches the Properties & attributes + position and states", async () => {
+test("Action header and rows align with the panel sections", async () => {
   $instances.set(
     new Map([
       [
@@ -100,9 +110,23 @@ test("Action + matches the Properties & attributes + position and states", async
       ],
     ])
   );
-  $dataSources.set(new Map());
-  $resources.set(new Map());
+  $dataSources.set(
+    new Map([
+      [
+        "send",
+        {
+          type: "resource",
+          id: "send",
+          name: "Send request",
+          scopeInstanceId: "form",
+          resourceId: "request",
+        },
+      ],
+    ])
+  );
+  $resources.set(new Map([["request", requestResource("request")]]));
   const container = document.createElement("div");
+  container.style.width = "300px";
   document.body.appendChild(container);
   root = createRoot(container);
   await act(async () =>
@@ -116,14 +140,38 @@ test("Action + matches the Properties & attributes + position and states", async
             <div />
           </CollapsibleSectionWithAddButton>
         </div>
-        <FormActionControl
-          instanceId="form"
-          propName="action"
-          prop={undefined}
-          computedValue={undefined}
-          meta={{ type: "json", control: "form-action", required: false }}
-          onChange={vi.fn()}
-        />
+        <Grid css={{ paddingBottom: theme.panel.paddingBlock }}>
+          <Box css={{ paddingInline: theme.panel.paddingInline }}>
+            <FormActionControl
+              instanceId="form"
+              propName="action"
+              prop={{
+                id: "action",
+                instanceId: "form",
+                name: "action",
+                type: "json",
+                value: [{ dataSourceId: "send" }],
+              }}
+              computedValue={[{ dataSourceId: "send" }]}
+              meta={{ type: "json", control: "form-action", required: false }}
+              onChange={vi.fn()}
+            />
+          </Box>
+        </Grid>
+        <div data-variables-section>
+          <SectionTitle
+            suffix={
+              <Flex align="center">
+                <SectionTitleButton
+                  aria-label="Add variable"
+                  prefix={<PlusIcon />}
+                />
+              </Flex>
+            }
+          >
+            <SectionTitleLabel>Variables</SectionTitleLabel>
+          </SectionTitle>
+        </div>
       </TooltipProvider>
     )
   );
@@ -135,23 +183,40 @@ test("Action + matches the Properties & attributes + position and states", async
   const actionButton = container
     .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
     .item(1)!;
+  const variableButton = container
+    .querySelectorAll<HTMLButtonElement>('[aria-label="Add variable"]')
+    .item(1)!;
   expect(actionButton.tabIndex).toBe(0);
   const propertyHeader = propertyButton.closest("div[data-state]")!;
   const actionHeader = actionButton.closest("div[data-state]")!;
-  expect(
-    actionButton.getBoundingClientRect().top -
-      actionHeader.getBoundingClientRect().top
-  ).toBe(
-    propertyButton.getBoundingClientRect().top -
-      propertyHeader.getBoundingClientRect().top
+  const variableHeader = variableButton.closest("div[data-state]")!;
+  const panelRect = container.getBoundingClientRect();
+  const propertyRect = propertyHeader.getBoundingClientRect();
+  const actionRect = actionHeader.getBoundingClientRect();
+  const variableRect = variableHeader.getBoundingClientRect();
+  expect(actionRect.left).toBe(propertyRect.left);
+  expect(actionRect.right).toBe(propertyRect.right);
+  expect(actionRect.left).toBe(variableRect.left);
+  expect(actionRect.right).toBe(variableRect.right);
+  expect(actionButton.getBoundingClientRect().top - actionRect.top).toBe(
+    propertyButton.getBoundingClientRect().top - propertyRect.top
   );
-  expect(
-    actionButton.getBoundingClientRect().right -
-      actionHeader.getBoundingClientRect().right
-  ).toBe(
-    propertyButton.getBoundingClientRect().right -
-      propertyHeader.getBoundingClientRect().right
+  expect(actionButton.getBoundingClientRect().top - actionRect.top).toBe(
+    variableButton.getBoundingClientRect().top - variableRect.top
   );
+  expect(actionButton.getBoundingClientRect().right - actionRect.right).toBe(
+    propertyButton.getBoundingClientRect().right - propertyRect.right
+  );
+  expect(actionButton.getBoundingClientRect().right - actionRect.right).toBe(
+    variableButton.getBoundingClientRect().right - variableRect.right
+  );
+  const rowRect = container
+    .querySelector<HTMLElement>('[data-list-item="true"]')!
+    .getBoundingClientRect();
+  expect(rowRect.left).toBeGreaterThan(actionRect.left);
+  expect(rowRect.right).toBeLessThan(actionRect.right);
+  expect(actionRect.left).toBe(panelRect.left);
+  expect(actionRect.right).toBe(panelRect.right);
   for (const state of ["auto", "hover", "focus", "pressed"]) {
     propertyButton.dataset.state = state;
     actionButton.dataset.state = state;
@@ -730,9 +795,9 @@ test("a legacy Action stays visible and can be removed", async () => {
   expect(row?.getClientRects().length).toBeGreaterThan(0);
   expect(getComputedStyle(row!).opacity).toBe("1");
   expect(row?.hasAttribute("disabled")).toBe(false);
-  expect(row?.parentElement?.getBoundingClientRect().left).toBeLessThan(
-    container.getBoundingClientRect().left
-  );
+  expect(
+    row?.parentElement?.getBoundingClientRect().left
+  ).toBeGreaterThanOrEqual(container.getBoundingClientRect().left);
   const addButton = container
     .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
     .item(1)!;
