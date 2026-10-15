@@ -52,8 +52,7 @@ export const getMissingImportedAssetFiles = (
     visited.add(value);
     const record = value as Record<string, unknown>;
     if (
-      (record.webstudioCode === "MISSING_IMPORTED_ASSET_FILES" ||
-        record.code === "MISSING_IMPORTED_ASSET_FILES") &&
+      record.webstudioCode === "MISSING_IMPORTED_ASSET_FILES" &&
       Array.isArray(record.missingAssetNames) &&
       record.missingAssetNames.every((name) => typeof name === "string")
     ) {
