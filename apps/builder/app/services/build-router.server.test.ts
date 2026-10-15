@@ -454,3 +454,19 @@ test("preserves document load failure ids for publish validation", async () => {
     },
   });
 });
+
+test("advertises structured import errors after checking project build access", async () => {
+  const hasProjectPermit = vi
+    .spyOn(authorizeProject, "hasProjectPermit")
+    .mockResolvedValue(true);
+  const context = {} as never;
+  await expect(
+    buildRouter
+      .createCaller(context)
+      .checkProjectBuildPermission({ projectId: "project-id" })
+  ).resolves.toEqual({ supportsStructuredImportErrors: true });
+  expect(hasProjectPermit).toHaveBeenCalledWith(
+    { projectId: "project-id", permit: "build" },
+    context
+  );
+});

@@ -61,7 +61,6 @@ const helperBindings = {
   Variable,
   Parameter,
   ResourceValue,
-  TemplateValidationError,
   ActionValue,
   AssetValue,
   PageValue,
