@@ -292,7 +292,7 @@ const author = async () => {
           instanceId: formId,
           name: "action",
           type: "json",
-          value: [{ dataSourceId: resource.dataSourceId, enabled: true }],
+          value: [{ dataSourceId: resource.dataSourceId }],
         },
       ],
     });

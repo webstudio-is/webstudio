@@ -1196,8 +1196,8 @@ test("render Form actions with local Email Resources", () => {
   expect(props.find(({ name }) => name === "action")).toMatchObject({
     type: "json",
     value: [
-      { dataSourceId: dataSources[0].id, enabled: true },
-      { dataSourceId: dataSources[1].id, enabled: true },
+      { dataSourceId: dataSources[0].id },
+      { dataSourceId: dataSources[1].id },
     ],
   });
   expect(

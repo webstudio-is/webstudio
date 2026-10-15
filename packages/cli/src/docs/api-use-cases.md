@@ -868,13 +868,13 @@ Commands:
 
 - MCP tool: insert-component {"parentInstanceId":"<parentInstanceId>","component":"<componentId from components.search>"}
 - MCP tool: create-resource {"resource":{"name":"Send submission","method":"post","url":"https://api.example.com/submit","headers":[],"body":"formData"},"scopeInstanceId":"<formInstanceId>","dataSourceName":"Send submission","exposeAsDataSource":true}
-- MCP tool: update-props {"updates":[{"instanceId":"<formInstanceId>","name":"action","type":"json","value":[{"dataSourceId":"<returned dataSourceId>","enabled":true}]}]}
+- MCP tool: update-props {"updates":[{"instanceId":"<formInstanceId>","name":"action","type":"json","value":[{"dataSourceId":"<returned dataSourceId>"}]}]}
 - MCP tool: update-resource {"resourceId":"<emailResourceId>","values":{"email":{"recipientMode":"visitor","visitorEmailField":"email","includeAttachments":true}}}
 - MCP tool: update-project-settings {"meta":{"emailSender":"Acme <hello@example.com>"}}
 
 Notes:
 
-- Use `update-props` with a JSON Action array to add, order, or remove destinations. The Action entries use `{ "dataSourceId": "...", "enabled": true }` and support up to ten Resources, matching the Builder control. The `enabled` field is required and must be `true` for an Action to run. Saved Actions with `enabled: false` remain inactive until removed and added again.
+- Use `update-props` with a JSON Action array to add, order, or remove destinations. The Action entries use `{ "dataSourceId": "..." }` and support up to ten Resources, matching the Builder control. Each connected Action runs in its configured order. An extra `enabled` key in older saved settings is ignored.
 - Create each destination Resource in the Form's scope so it can use `formData` and `browserInfo`. Set `exposeAsDataSource:true` to receive the data-source id used by the Action array. When a Resource uses Form-only parameters, it is kept out of page-load requests and runs with the Form submission.
 - `update-resource` accepts the same Email settings as the Builder: project, custom, or visitor recipients; sender; subject; body; and submitted-file attachments. Use expressions in string fields for dynamic values.
 - `update-project-settings` edits the project-wide Email recipients and Reply to. `update-props` also sets Form fields and Success redirect, while `bind-props` supplies dynamic expressions. `insert-component` uses the registered Form template, including its default contact fields and Email Actions. Set subject and body on each Email Resource.

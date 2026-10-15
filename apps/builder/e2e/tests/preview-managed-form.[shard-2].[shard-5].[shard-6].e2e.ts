@@ -63,7 +63,7 @@ test("Preview Form posts to the authenticated Builder and sets error state witho
         instanceId: formId,
         name: "action",
         type: "json",
-        value: [{ dataSourceId: variableId, enabled: true }],
+        value: [{ dataSourceId: variableId }],
       },
       {
         id: `${formId}:successRedirect`,
@@ -231,7 +231,7 @@ test("Preview Form success redirects navigate matched pages and keep feedback fo
         instanceId: formId,
         name: "action",
         type: "json",
-        value: [{ dataSourceId: variableId, enabled: true }],
+        value: [{ dataSourceId: variableId }],
       },
       {
         id: `${targetId}:id`,

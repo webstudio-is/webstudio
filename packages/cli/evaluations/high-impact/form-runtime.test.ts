@@ -130,7 +130,7 @@ test("runtime validator requires the observed success, failure, recovery sequenc
     instanceId: "runtime-form",
     name: "action",
     type: "json",
-    value: [{ dataSourceId: "runtime-source", enabled: true }],
+    value: [{ dataSourceId: "runtime-source" }],
   });
   project.dataSources.push({
     id: "runtime-source",
@@ -171,16 +171,30 @@ test("runtime validator requires the observed success, failure, recovery sequenc
   expect(result.checks.runtimeObservedStates).toBe("passed");
   expect(result.checks.runtimeSessionPreview).toBe("passed");
 
-  for (const action of [
-    { dataSourceId: "runtime-source" },
-    { dataSourceId: "runtime-source", enabled: "true" },
-    { dataSourceId: "runtime-source", enabled: true },
+  const withLegacyKey = structuredClone(project);
+  withLegacyKey.props.find((prop) => prop.id === "action")!.value = [
+    { dataSourceId: "runtime-source", enabled: false },
+  ];
+  expect(
+    evaluateHighImpactOutcome({
+      fixture: managedFormRuntimeFixture,
+      project: withLegacyKey,
+      toolCalls: [{ name: "meta.guide" }, ...submissions],
+      formRuntimeDeliveries: [
+        { path: "/submit", status: 200 },
+        { path: "/reject", status: 503 },
+        { path: "/reject", status: 503 },
+        { path: "/submit", status: 200 },
+      ],
+    }).checks.runtimeFormAction
+  ).toBe("passed");
+
+  for (const value of [
+    [{ dataSourceId: "unexpected" }],
+    [{ dataSourceId: "runtime-source" }, { dataSourceId: "unexpected" }],
   ]) {
     const malformed = structuredClone(project);
-    malformed.props.find((prop) => prop.id === "action")!.value =
-      action.enabled === true
-        ? [action, { dataSourceId: "unexpected" }]
-        : [action];
+    malformed.props.find((prop) => prop.id === "action")!.value = value;
     expect(
       evaluateHighImpactOutcome({
         fixture: managedFormRuntimeFixture,

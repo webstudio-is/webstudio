@@ -3176,7 +3176,7 @@ sitemap.map((page) => page.path);`
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "destination", enabled: true }],
+              value: [{ dataSourceId: "destination" }],
             },
           ],
         ],
@@ -3688,20 +3688,16 @@ sitemap.map((page) => page.path);`
           "too-many",
           Array(11)
             .fill("destination")
-            .map((dataSourceId) => ({ dataSourceId, enabled: true })),
+            .map((dataSourceId) => ({ dataSourceId })),
         ],
         [
           "duplicate",
-          [
-            { dataSourceId: "destination", enabled: true },
-            { dataSourceId: "destination", enabled: true },
-          ],
+          [{ dataSourceId: "destination" }, { dataSourceId: "destination" }],
         ],
-        ["missing", [{ dataSourceId: "missing", enabled: true }]],
+        ["missing", [{ dataSourceId: "missing" }]],
         ["malformed", { destinations: "destination" }],
         ["native", { mode: "native", destinations: ["destination"] }],
-        ["disabled", [{ dataSourceId: "destination", enabled: false }]],
-        ["valid", [{ dataSourceId: "destination", enabled: true }]],
+        ["valid", [{ dataSourceId: "destination" }]],
       ] as const;
       const siteData = createSiteData({
         instances: [
@@ -3854,15 +3850,6 @@ sitemap.map((page) => page.path);`
         success: false,
         errors: ["Invalid Form submission"],
       });
-      expect(outgoingFetch).not.toHaveBeenCalled();
-      await expect(
-        submit("disabled", {
-          [formBotFieldName]: "brave",
-          [managedFormArrayNamesFieldName]: "[]",
-        })
-      ).resolves.toEqual(
-        getManagedFormFailure("Form Resource graph not found")
-      );
       expect(outgoingFetch).not.toHaveBeenCalled();
       vi.stubGlobal("navigator", { brave: { isBrave: () => true } });
       await expect(
@@ -4110,7 +4097,7 @@ sitemap.map((page) => page.path);`
                 instanceId: "root",
                 name: "action",
                 type: "json",
-                value: [{ dataSourceId: "destination", enabled: true }],
+                value: [{ dataSourceId: "destination" }],
               },
             ],
           ],
@@ -4375,9 +4362,9 @@ sitemap.map((page) => page.path);`
               name: "action",
               type: "json",
               value: [
-                { dataSourceId: "http-source", enabled: true },
-                { dataSourceId: "project-source", enabled: true },
-                { dataSourceId: "custom-source", enabled: true },
+                { dataSourceId: "http-source" },
+                { dataSourceId: "project-source" },
+                { dataSourceId: "custom-source" },
               ],
             },
           ],
@@ -4523,7 +4510,7 @@ sitemap.map((page) => page.path);`
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "http-source", enabled: true }],
+              value: [{ dataSourceId: "http-source" }],
             },
           ],
         ],
@@ -4632,7 +4619,7 @@ sitemap.map((page) => page.path);`
             instanceId: "root",
             name: "action",
             type: "json",
-            value: [{ dataSourceId: "destination", enabled: true }],
+            value: [{ dataSourceId: "destination" }],
           },
         ],
       ],
@@ -4723,7 +4710,7 @@ sitemap.map((page) => page.path);`
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "emailDestination", enabled: true }],
+              value: [{ dataSourceId: "emailDestination" }],
             },
           ],
         ],
@@ -5012,7 +4999,7 @@ sitemap.map((page) => page.path);`
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "visitor-source", enabled: true }],
+              value: [{ dataSourceId: "visitor-source" }],
             },
           ],
           [
@@ -5146,7 +5133,7 @@ export const createManagedFormResourceFetch = () => globalThis.__testManagedForm
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "destination", enabled: true }],
+              value: [{ dataSourceId: "destination" }],
             },
           ],
         ],
@@ -5254,8 +5241,8 @@ export const createManagedFormResourceFetch = () => {
               name: "action",
               type: "json",
               value: [
-                { dataSourceId: "sibling-source", enabled: true },
-                { dataSourceId: "failed-source", enabled: true },
+                { dataSourceId: "sibling-source" },
+                { dataSourceId: "failed-source" },
               ],
             },
           ],
@@ -5535,8 +5522,8 @@ export const createManagedFormResourceFetch = () => {
               name: "action",
               type: "json",
               value: [
-                { dataSourceId: "valid-source", enabled: true },
-                { dataSourceId: "denied-source", enabled: true },
+                { dataSourceId: "valid-source" },
+                { dataSourceId: "denied-source" },
               ],
             },
           ],
@@ -5658,8 +5645,8 @@ export const createManagedFormResourceFetch = () => {
               name: "action",
               type: "json",
               value: [
-                { dataSourceId: "independent-source", enabled: true },
-                { dataSourceId: "dependent-source", enabled: true },
+                { dataSourceId: "independent-source" },
+                { dataSourceId: "dependent-source" },
               ],
             },
           ],
@@ -5834,8 +5821,8 @@ export const createManagedFormResourceFetch = () => {
               name: "action",
               type: "json",
               value: [
-                { dataSourceId: "form-destination", enabled: true },
-                { dataSourceId: "browser-destination", enabled: true },
+                { dataSourceId: "form-destination" },
+                { dataSourceId: "browser-destination" },
               ],
             },
           ],
@@ -6075,7 +6062,7 @@ export const createManagedFormResourceFetch = () => {
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "destination", enabled: true }],
+              value: [{ dataSourceId: "destination" }],
             },
           ],
         ],
@@ -6217,7 +6204,7 @@ export const createManagedFormResourceFetch = () => {
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "destination", enabled: true }],
+              value: [{ dataSourceId: "destination" }],
             },
           ],
         ],
@@ -6344,7 +6331,7 @@ export const createManagedFormResourceFetch = () => {
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "destination", enabled: true }],
+              value: [{ dataSourceId: "destination" }],
             },
           ],
         ],

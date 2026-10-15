@@ -78,7 +78,7 @@ test("does not fetch a Form-bound Resource during page load", () => {
         instanceId: "form",
         type: "json",
         name: "action",
-        value: [{ dataSourceId: "resourceVariableId", enabled: true }],
+        value: [{ dataSourceId: "resourceVariableId" }],
       },
     ]),
   });
@@ -150,8 +150,8 @@ test("does not evaluate configured Form Actions during page load", () => {
         type: "json",
         name: "action",
         value: [
-          { dataSourceId: "graphql-source", enabled: true },
-          { dataSourceId: "disabled-source", enabled: false },
+          { dataSourceId: "graphql-source" },
+          { dataSourceId: "disabled-source" },
         ],
       },
     ]),
@@ -163,7 +163,7 @@ test("does not evaluate configured Form Actions during page load", () => {
   expect(generated).not.toContain("formData.name");
 });
 
-test("keeps a page-used Resource selected as a disabled Form Action", () => {
+test("keeps a page-used Resource selected as a Form Action", () => {
   const generated = generatePageResources({
     scope: createScope(),
     page: { rootInstanceId: "body" } as Page,
@@ -221,7 +221,7 @@ test("keeps a page-used Resource selected as a disabled Form Action", () => {
         instanceId: "form",
         type: "json",
         name: "action",
-        value: [{ dataSourceId: "form-shared-source", enabled: false }],
+        value: [{ dataSourceId: "form-shared-source" }],
       },
     ]),
   });

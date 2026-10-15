@@ -152,7 +152,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
     )!;
   await act(async () => userEvent.click(actionLabel()));
   expect(document.body.textContent).toContain(
-    "Sends each form submission to all enabled destinations at the same time."
+    "Sends each form submission to all destinations at the same time."
   );
   const variableBullets = Array.from(
     document.body.querySelectorAll('[role="tooltip"] ul li')
@@ -209,7 +209,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
   await act(async () => requestOption?.click());
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: [{ dataSourceId: "resourceDataSource", enabled: true }],
+    value: [{ dataSourceId: "resourceDataSource" }],
   });
 
   await act(async () =>
@@ -218,7 +218,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
       instanceId: "form",
       name: "action",
       type: "json",
-      value: [{ dataSourceId: "resourceDataSource", enabled: true }],
+      value: [{ dataSourceId: "resourceDataSource" }],
     })
   );
   await act(async () =>
@@ -240,7 +240,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
   expect(container.textContent).toContain("Renamed request");
   await act(async () => userEvent.click(actionLabel()));
   expect(document.body.textContent).toContain(
-    "Sends each form submission to all enabled destinations at the same time."
+    "Sends each form submission to all destinations at the same time."
   );
   expect(document.body.textContent).toContain("Reset");
   expect(document.body.textContent).not.toContain("Reset value");
@@ -248,7 +248,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
   await act(async () => userEvent.keyboard("{Escape}"));
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: [{ dataSourceId: "resourceDataSource", enabled: true }],
+    value: [{ dataSourceId: "resourceDataSource" }],
   });
 
   await act(async () =>
@@ -259,7 +259,6 @@ test("Action control handles an empty Resource list and can select an in-scope d
       type: "json",
       value: Array.from({ length: 10 }, (_, index) => ({
         dataSourceId: `resource-${index}`,
-        enabled: true,
       })),
     })
   );
@@ -345,7 +344,7 @@ test("a Form can select a Resource defined outside its scope", async () => {
   await act(async () => requestOption?.click());
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: [{ dataSourceId: "externalResourceId", enabled: true }],
+    value: [{ dataSourceId: "externalResourceId" }],
   });
 });
 
@@ -392,7 +391,7 @@ test("stored Form selection renders and a deleted Resource can be removed", asyn
     instanceId: "form",
     name: "action",
     type: "json",
-    value: [{ dataSourceId: "resource-id", enabled: true }],
+    value: [{ dataSourceId: "resource-id" }],
   };
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -501,9 +500,9 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
             instanceId: "form",
             name: "action",
             type: "json",
-            value: [{ dataSourceId: "http", enabled: true }],
+            value: [{ dataSourceId: "http" }],
           }}
-          computedValue={[{ dataSourceId: "http", enabled: true }]}
+          computedValue={[{ dataSourceId: "http" }]}
           meta={{ type: "json", control: "form-action", required: false }}
           onChange={onChange}
         />
@@ -546,14 +545,11 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
   );
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
-    value: [
-      { dataSourceId: "http", enabled: true },
-      { dataSourceId: "email", enabled: true },
-    ],
+    value: [{ dataSourceId: "http" }, { dataSourceId: "email" }],
   });
 });
 
-test("a legacy disabled Action stays visible and can be removed", async () => {
+test("a legacy Action stays visible and can be removed", async () => {
   $instances.set(
     new Map([
       [
@@ -597,9 +593,9 @@ test("a legacy disabled Action stays visible and can be removed", async () => {
             instanceId: "form",
             name: "action",
             type: "json",
-            value: [{ dataSourceId: "send", enabled: true }],
+            value: [{ dataSourceId: "send", enabled: false }],
           }}
-          computedValue={[{ dataSourceId: "send", enabled: true }]}
+          computedValue={[{ dataSourceId: "send" }]}
           meta={{ type: "json", control: "form-action", required: false }}
           onChange={onChange}
         />
@@ -617,9 +613,9 @@ test("a legacy disabled Action stays visible and can be removed", async () => {
             instanceId: "form",
             name: "action",
             type: "json",
-            value: [{ dataSourceId: "send", enabled: false }],
+            value: [{ dataSourceId: "send" }],
           }}
-          computedValue={[{ dataSourceId: "send", enabled: false }]}
+          computedValue={[{ dataSourceId: "send" }]}
           meta={{ type: "json", control: "form-action", required: false }}
           onChange={onChange}
         />
@@ -627,9 +623,7 @@ test("a legacy disabled Action stays visible and can be removed", async () => {
     )
   );
   const row = container.querySelector<HTMLElement>('[data-list-item="true"]');
-  expect(row?.getAttribute("aria-label")).toBe(
-    "Action Send request (disabled in saved settings)"
-  );
+  expect(row?.getAttribute("aria-label")).toBe("Action Send request");
   expect(row?.textContent).toContain("Send request");
   expect(row?.querySelector("label")).toBeNull();
   expect(row?.getClientRects().length).toBeGreaterThan(0);
@@ -671,15 +665,12 @@ test("a legacy disabled Action stays visible and can be removed", async () => {
 test.each([
   { actions: [], mode: "Navigation mode", warning: undefined },
   {
-    actions: [{ dataSourceId: "first", enabled: false }],
+    actions: [{ dataSourceId: "first" }],
     mode: undefined,
     warning: undefined,
   },
   {
-    actions: [
-      { dataSourceId: "first", enabled: false },
-      { dataSourceId: "second", enabled: true },
-    ],
+    actions: [{ dataSourceId: "first" }, { dataSourceId: "second" }],
     mode: undefined,
     warning: undefined,
   },

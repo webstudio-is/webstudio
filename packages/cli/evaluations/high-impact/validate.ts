@@ -814,9 +814,7 @@ const validateManagedFormAuthoring = (
     typeof selected === "object" &&
     selected !== null &&
     "dataSourceId" in selected &&
-    typeof selected.dataSourceId === "string" &&
-    "enabled" in selected &&
-    typeof selected.enabled === "boolean"
+    typeof selected.dataSourceId === "string"
       ? selected
       : undefined
   );
@@ -2213,9 +2211,7 @@ const validateManagedFormRuntime = (
           typeof action === "object" &&
           action !== null &&
           "dataSourceId" in action &&
-          typeof action.dataSourceId === "string" &&
-          "enabled" in action &&
-          typeof action.enabled === "boolean"
+          typeof action.dataSourceId === "string"
       )
     : [];
   const selectedSource = input.project.dataSources.find(
@@ -2238,6 +2234,7 @@ const validateManagedFormRuntime = (
       Array.isArray(actions) &&
       selected.length === actions.length &&
       selected.length === 1 &&
+      selected[0]?.dataSourceId === "runtime-source" &&
       selectedResource?.method === "post" &&
       safeResourceUrl &&
       input.project.resources.every(

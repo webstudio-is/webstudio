@@ -138,9 +138,7 @@ test("Action picker adds, reorders, and removes HTTP, GraphQL, and Email resourc
   for (const name of names) {
     await ui.add(name);
   }
-  expect(ui.saved).toEqual(
-    names.map((dataSourceId) => ({ dataSourceId, enabled: true }))
-  );
+  expect(ui.saved).toEqual(names.map((dataSourceId) => ({ dataSourceId })));
   expect(
     Array.from(ui.container.querySelectorAll('[data-list-item="true"]')).map(
       (row) => row.getAttribute("aria-label")
@@ -194,9 +192,9 @@ test("Action picker adds, reorders, and removes HTTP, GraphQL, and Email resourc
     );
   });
   expect(ui.saved).toEqual([
-    { dataSourceId: "Email", enabled: true },
-    { dataSourceId: "HTTP", enabled: true },
-    { dataSourceId: "GraphQL", enabled: true },
+    { dataSourceId: "Email" },
+    { dataSourceId: "HTTP" },
+    { dataSourceId: "GraphQL" },
   ]);
   // useDrag suppresses the click immediately following a drag for 300 ms.
   await new Promise((resolve) => setTimeout(resolve, 350));
@@ -206,8 +204,8 @@ test("Action picker adds, reorders, and removes HTTP, GraphQL, and Email resourc
       .click()
   );
   expect(ui.saved).toEqual([
-    { dataSourceId: "Email", enabled: true },
-    { dataSourceId: "GraphQL", enabled: true },
+    { dataSourceId: "Email" },
+    { dataSourceId: "GraphQL" },
   ]);
 });
 

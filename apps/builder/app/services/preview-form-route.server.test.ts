@@ -97,7 +97,7 @@ const draftBuild = {
       instanceId: "form",
       name: "action",
       type: "json",
-      value: [{ dataSourceId: "destination", enabled: true }],
+      value: [{ dataSourceId: "destination" }],
     },
   ],
   dataSources: [
@@ -322,7 +322,7 @@ test("server MCP simulation and Builder Preview use the same saved Form setup an
   });
 });
 
-test("Builder Preview does not execute a legacy disabled Action", async () => {
+test("Builder Preview executes a legacy Action with an enabled key", async () => {
   vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
     ...draftBuild,
     props: [
@@ -333,10 +333,10 @@ test("Builder Preview does not execute a legacy disabled Action", async () => {
     ],
   } as never);
   const response = await action({ request: request() } as never);
-  expect((await response.json()).success).toBe(false);
+  expect((await response.json()).success).toBe(true);
   expect(
     vi.mocked(createNodeProtectedResourceFetch).mock.results[0].value
-  ).not.toHaveBeenCalled();
+  ).toHaveBeenCalledWith(expect.any(Request));
 });
 
 test.each([
@@ -573,7 +573,7 @@ test.each([false, true])(
           createRoot(document.getElementById("root")).render(
             createElement(Form, {
               "data-ws-managed-form-id": "form",
-              action: [{ dataSourceId: "destination", enabled: true }],
+              action: [{ dataSourceId: "destination" }],
               onManagedSubmit: (values, signal) => submitPreviewForm({
                 values,
                 managedFormId: "form",
@@ -693,7 +693,7 @@ test.each([false, true])(
           props: [
             {
               ...draftBuild.props[0],
-              value: [{ dataSourceId: "new-email", enabled: true }],
+              value: [{ dataSourceId: "new-email" }],
             },
           ],
           dataSources: [
@@ -990,7 +990,7 @@ test("Preview binds each page's submitted values and browser context to its own 
       instanceId: formId,
       name: "action",
       type: "json",
-      value: [{ dataSourceId: `${formId}-destination`, enabled: true }],
+      value: [{ dataSourceId: `${formId}-destination` }],
     })),
     dataSources: pages.flatMap(({ formId }) => [
       {
@@ -1278,8 +1278,8 @@ test("two Email actions identify each credential failure in local Preview", asyn
       {
         ...draftBuild.props[0],
         value: [
-          { dataSourceId: "destination", enabled: true },
-          { dataSourceId: "visitorDestination", enabled: true },
+          { dataSourceId: "destination" },
+          { dataSourceId: "visitorDestination" },
         ],
       },
     ],

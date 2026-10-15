@@ -199,8 +199,8 @@ const addManagedContactPage = (): EvaluationProject => {
         name: "action",
         type: "json",
         value: [
-          { dataSourceId: projectDataSourceId, enabled: true },
-          { dataSourceId: visitorDataSourceId, enabled: true },
+          { dataSourceId: projectDataSourceId },
+          { dataSourceId: visitorDataSourceId },
         ],
       },
       {
@@ -761,23 +761,29 @@ describe("high-impact fixture validation", () => {
 });
 
 describe("managed Form evaluation", () => {
-  test.each([
-    (dataSourceId: string) => ({ dataSourceId }),
-    (dataSourceId: string) => ({ dataSourceId, enabled: "true" }),
-  ])("rejects a Form action without a boolean enabled field", (makeValue) => {
+  test("checks intended Form action IDs and order despite legacy keys", () => {
     const project = addManagedContactPage();
     const action = project.props.find(
       ({ instanceId, name }) =>
         instanceId === "contact-form" && name === "action"
     )!;
     const selected = action.value as Array<{ dataSourceId: string }>;
-    action.value = [makeValue(selected[0].dataSourceId), selected[1]];
-    const result = evaluateHighImpactOutcome({
-      fixture: managedFormAuthoringFixture,
-      project,
-      toolCalls: managedFormCalls(),
-    });
-    expect(result.checks.formActionsPreserved).toBe("failed");
+    action.value = selected.map((entry) => ({ ...entry, enabled: false }));
+    expect(
+      evaluateHighImpactOutcome({
+        fixture: managedFormAuthoringFixture,
+        project,
+        toolCalls: managedFormCalls(),
+      }).checks.formActionsPreserved
+    ).toBe("passed");
+    action.value = [selected[1], selected[0]];
+    expect(
+      evaluateHighImpactOutcome({
+        fixture: managedFormAuthoringFixture,
+        project,
+        toolCalls: managedFormCalls(),
+      }).checks.formActionsPreserved
+    ).toBe("failed");
   });
 
   test("accepts contact heading text inside an inline child", () => {
@@ -1159,7 +1165,7 @@ describe("Form modes evaluation", () => {
         instanceId: "mode-contact",
         name: "action",
         type: "json",
-        value: [{ dataSourceId: "email-owner", enabled: true }],
+        value: [{ dataSourceId: "email-owner" }],
       },
       {
         id: "mode-search-actions",
@@ -2277,7 +2283,7 @@ describe("Form modes authoring evaluation", () => {
         instanceId: "contact",
         name: "action",
         type: "json",
-        value: [{ dataSourceId: "email", enabled: true }],
+        value: [{ dataSourceId: "email" }],
       },
       {
         id: "search-action",
@@ -2314,7 +2320,7 @@ describe("Form modes authoring evaluation", () => {
   test("rejects the legacy identity and navigation with connected actions", () => {
     const invalid = project();
     invalid.instances[0].component = "WebhookForm";
-    invalid.props[1].value = [{ dataSourceId: "email", enabled: true }];
+    invalid.props[1].value = [{ dataSourceId: "email" }];
     const result = evaluateHighImpactOutcome({
       fixture: formModesAuthoringFixture,
       project: invalid,

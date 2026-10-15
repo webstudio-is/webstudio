@@ -587,7 +587,7 @@ test("clicking an Action opens its Resource editor and highlights its Variables 
               instanceId: "child",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: resourceVariable.id, enabled: true }],
+              value: [{ dataSourceId: resourceVariable.id }],
             }}
             onChange={() => {}}
             propName="action"
@@ -711,7 +711,7 @@ test("an Action Resource unavailable in Variables does not open a stale dialog",
               instanceId: "child",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: parentResource.id, enabled: true }],
+              value: [{ dataSourceId: parentResource.id }],
             }}
             computedValue={[]}
             meta={{

@@ -29,7 +29,7 @@ test("a StrictMode Form submits after the effect cleanup probe", async () => {
       root.render(
         <StrictMode>
           <Form
-            action={[{ dataSourceId: "resource-one", enabled: true }]}
+            action={[{ dataSourceId: "resource-one" }]}
             onManagedSubmit={onManagedSubmit}
             onResultChange={onResultChange}
           >
@@ -59,7 +59,7 @@ test("a StrictMode Form aborts an active request on real unmount", async () => {
       root.render(
         <StrictMode>
           <Form
-            action={[{ dataSourceId: "resource-one", enabled: true }]}
+            action={[{ dataSourceId: "resource-one" }]}
             onManagedSubmit={(_values, requestSignal) => {
               signal = requestSignal;
               return new Promise(() => {});
@@ -180,7 +180,7 @@ test("a throwing submit callback cannot trigger native delivery", async () => {
     await act(async () => {
       root.render(
         <Form
-          action={[{ dataSourceId: "resource-one", enabled: true }]}
+          action={[{ dataSourceId: "resource-one" }]}
           onSubmit={() => {
             throw new Error("Submit callback failed");
           }}
@@ -244,7 +244,7 @@ test("legacy native-mode settings do not activate saved Resource actions", async
 
 test("a Resource Form cannot natively submit without hydration", async () => {
   const html = renderToStaticMarkup(
-    <Form method="post" action={[{ dataSourceId: "resource", enabled: true }]}>
+    <Form method="post" action={[{ dataSourceId: "resource" }]}>
       <input name="email" defaultValue="person@example.com" />
       <button type="submit">Send</button>
     </Form>
@@ -311,7 +311,7 @@ test("a hydrated Form handles submit buttons associated by form id", async () =>
         <>
           <Form
             id="managed-form"
-            action={[{ dataSourceId: "resource-one", enabled: true }]}
+            action={[{ dataSourceId: "resource-one" }]}
             onManagedSubmit={onManagedSubmit}
           >
             <input name="email" defaultValue="person@example.com" />
@@ -344,7 +344,7 @@ test("Form passes one structured submission to its dispatcher", async () => {
     await act(async () => {
       root.render(
         <Form
-          action={[{ dataSourceId: "resource-one", enabled: true }]}
+          action={[{ dataSourceId: "resource-one" }]}
           onManagedSubmit={onManagedSubmit}
         >
           <input name="name" defaultValue="Ada" />
@@ -374,7 +374,7 @@ test("Form resolves Preview success redirects against the Preview page", async (
     await act(async () => {
       root.render(
         <Form
-          action={[{ dataSourceId: "resource-one", enabled: true }]}
+          action={[{ dataSourceId: "resource-one" }]}
           successRedirect="thanks"
           getRedirectBaseUrl={() => "https://webstudio.local/contact"}
           onManagedSubmit={async () => ({
@@ -417,7 +417,7 @@ test("unmatched Preview redirect keeps successful Form feedback on the current p
     await act(async () => {
       root.render(
         <Form
-          action={[{ dataSourceId: "resource-one", enabled: true }]}
+          action={[{ dataSourceId: "resource-one" }]}
           successRedirect="/missing"
           getRedirectBaseUrl={() => "https://webstudio.local/contact"}
           onManagedSubmit={async () => ({
@@ -461,7 +461,7 @@ test("file-input settings enforce required uploads and keep optional or multiple
     act(async () =>
       root.render(
         <Form
-          action={[{ dataSourceId: "resource-one", enabled: true }]}
+          action={[{ dataSourceId: "resource-one" }]}
           onManagedSubmit={onManagedSubmit}
         >
           <input
@@ -526,7 +526,7 @@ test("managed Form submits by HTTP outside a router provider and reports pending
       root.render(
         <Form
           data-ws-managed-form-id="form-one"
-          action={[{ dataSourceId: "destination", enabled: true }]}
+          action={[{ dataSourceId: "destination" }]}
           onStateChange={(state) => states.push(state)}
           onResultChange={(result) => results.push(result)}
         >
@@ -633,7 +633,7 @@ test("Preview runs the supplied submission and reports its result without the pu
     await act(async () =>
       root.render(
         <Form
-          action={[{ dataSourceId: "email", enabled: true }]}
+          action={[{ dataSourceId: "email" }]}
           onManagedSubmit={onManagedSubmit}
           onResultChange={onResultChange}
         >
@@ -680,7 +680,7 @@ test("Preview reports rejected submissions as failures and clears pending state"
     await act(async () =>
       root.render(
         <Form
-          action={[{ dataSourceId: "email", enabled: true }]}
+          action={[{ dataSourceId: "email" }]}
           onManagedSubmit={onManagedSubmit}
           onResultChange={onResultChange}
           onStateChange={(state) => states.push(state)}
@@ -773,7 +773,7 @@ test("managed Form reports HTTP and network failures without native navigation",
       root.render(
         <Form
           data-ws-managed-form-id="form-one"
-          action={[{ dataSourceId: "destination", enabled: true }]}
+          action={[{ dataSourceId: "destination" }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
@@ -862,7 +862,7 @@ test.each([
       const [errors, setErrors] = useState<Array<{ message: string }>>([]);
       return (
         <Form
-          action={[{ dataSourceId: "request", enabled: true }]}
+          action={[{ dataSourceId: "request" }]}
           onManagedSubmit={async () => ({
             success: false,
             status: 422,

@@ -40,25 +40,22 @@ const ActionItem = ({
   id,
   index,
   variable,
-  enabled,
   active,
   onRemove,
 }: {
   id: string;
   index: number;
   variable?: DataSource;
-  enabled: boolean;
   active: boolean;
   onRemove: () => void;
 }) => {
   const isResource = variable?.type === "resource";
   const name = isResource ? variable.name : "Deleted Resource";
-  const label = enabled ? name : `${name} (disabled in saved settings)`;
   return (
     <InteractiveListItem
       id={id}
       index={index}
-      aria-label={`Action ${label}`}
+      aria-label={`Action ${name}`}
       draggable
       active={active}
       onClick={(event) => {
@@ -74,7 +71,7 @@ const ActionItem = ({
       }}
       label={
         <Text variant="labels" truncate>
-          {label}
+          {name}
         </Text>
       }
       buttons={
@@ -123,7 +120,10 @@ export const FormActionControl = ({
     return resource !== undefined && resource.control !== "system";
   });
   const update = (next: FormSubmission) =>
-    onChange({ type: "json", value: next });
+    onChange({
+      type: "json",
+      value: next.map(({ dataSourceId }) => ({ dataSourceId })),
+    });
   const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
     items: action.map(({ dataSourceId }) => ({ id: dataSourceId })),
     onSort: (newIndex, oldIndex) => {
@@ -146,8 +146,7 @@ export const FormActionControl = ({
           description={
             <Flex direction="column" gap="1">
               <Text>
-                Sends each form submission to all enabled destinations at the
-                same time.
+                Sends each form submission to all destinations at the same time.
               </Text>
               <Box as="ul" css={{ margin: 0, paddingLeft: theme.spacing[4] }}>
                 <li>
@@ -224,10 +223,7 @@ export const FormActionControl = ({
                         ({ dataSourceId }) => dataSourceId === variable.id
                       )
                     ) {
-                      update([
-                        ...action,
-                        { dataSourceId: variable.id, enabled: true },
-                      ]);
+                      update([...action, { dataSourceId: variable.id }]);
                     }
                   }}
                 >
@@ -248,13 +244,12 @@ export const FormActionControl = ({
                   marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
                 }}
               >
-                {action.map(({ dataSourceId: id, enabled }, index) => (
+                {action.map(({ dataSourceId: id }, index) => (
                   <ActionItem
                     key={id}
                     id={id}
                     index={index}
                     variable={dataSources.get(id)}
-                    enabled={enabled}
                     active={dragItemId === id}
                     onRemove={() =>
                       update(action.filter((item) => item.dataSourceId !== id))
