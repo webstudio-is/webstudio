@@ -21,6 +21,7 @@ import {
   $resources,
 } from "~/shared/sync/data-stores";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
+import { FieldLabel } from "../property-label";
 import { FormActionControl } from "./form-action";
 
 (
@@ -101,7 +102,7 @@ test("Action + explains how to add a resource when none are available", async ()
   expect(onChange).not.toHaveBeenCalled();
 });
 
-test("Action header and menu align while rows retain their original width", async () => {
+test("Action header and menu align while rows retain their original geometry", async () => {
   $instances.set(
     new Map([
       [
@@ -172,6 +173,31 @@ test("Action header and menu align while rows retain their original width", asyn
             <SectionTitleLabel>Variables</SectionTitleLabel>
           </SectionTitle>
         </div>
+        {/* The Action header before this change flowed at the button height. */}
+        <Grid>
+          <Box css={{ paddingInline: theme.panel.paddingInline }}>
+            <div data-baseline-action>
+              <Flex align="center" justify="between" data-baseline-header>
+                <FieldLabel description="Action details">Action</FieldLabel>
+                <SectionTitleButton prefix={<PlusIcon />} />
+              </Flex>
+              <Box css={{ py: theme.spacing[2] }}>
+                <Flex direction="column" gap="2">
+                  <Grid
+                    css={{
+                      marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
+                    }}
+                  >
+                    <div
+                      data-baseline-row
+                      style={{ height: theme.spacing[11] }}
+                    />
+                  </Grid>
+                </Flex>
+              </Box>
+            </div>
+          </Box>
+        </Grid>
       </TooltipProvider>
     )
   );
@@ -204,6 +230,13 @@ test("Action header and menu align while rows retain their original width", asyn
   expect(actionButton.getBoundingClientRect().top - actionRect.top).toBe(
     variableButton.getBoundingClientRect().top - variableRect.top
   );
+  const actionButtonRect = actionButton.getBoundingClientRect();
+  const propertyButtonRect = propertyButton.getBoundingClientRect();
+  expect(
+    actionButtonRect.top + actionButtonRect.height / 2 - actionRect.top
+  ).toBe(
+    propertyButtonRect.top + propertyButtonRect.height / 2 - propertyRect.top
+  );
   expect(actionButton.getBoundingClientRect().right - actionRect.right).toBe(
     propertyButton.getBoundingClientRect().right - propertyRect.right
   );
@@ -217,6 +250,28 @@ test("Action header and menu align while rows retain their original width", asyn
   expect(actionRect.right).toBe(panelRect.right);
   expect(rowRect.left).toBe(panelRect.left);
   expect(rowRect.right).toBe(panelRect.right);
+  const baselineHeaderRect = container
+    .querySelector<HTMLElement>("[data-baseline-header]")!
+    .getBoundingClientRect();
+  const baselineRowRect = container
+    .querySelector<HTMLElement>("[data-baseline-row]")!
+    .getBoundingClientRect();
+  expect(rowRect.top - actionRect.top).toBe(
+    baselineRowRect.top - baselineHeaderRect.top
+  );
+  expect(
+    document
+      .elementFromPoint(
+        rowRect.left + rowRect.width / 2,
+        rowRect.top + rowRect.height / 8
+      )
+      ?.closest('[data-list-item="true"]')
+  ).toBe(container.querySelector('[data-list-item="true"]'));
+  expect(
+    document
+      .elementFromPoint(actionButtonRect.left + 2, actionButtonRect.bottom - 1)
+      ?.closest('[aria-label="Add action"]')
+  ).toBe(actionButton);
   for (const state of ["auto", "hover", "focus", "pressed"]) {
     propertyButton.dataset.state = state;
     actionButton.dataset.state = state;

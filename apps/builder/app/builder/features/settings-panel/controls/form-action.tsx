@@ -145,7 +145,10 @@ export const FormActionControl = ({
     <Box>
       <SectionTitle
         collapsible={false}
-        css={{ marginInline: `calc(-1 * ${theme.panel.paddingInline})` }}
+        css={{
+          marginInline: `calc(-1 * ${theme.panel.paddingInline})`,
+          marginBottom: `calc(${theme.sizes.controlHeight} - ${theme.spacing[14]})`,
+        }}
         suffix={
           resources.length === 0 ? (
             <Tooltip
@@ -157,6 +160,7 @@ export const FormActionControl = ({
                 aria-label="Add action"
                 tabIndex={0}
                 prefix={<PlusIcon />}
+                css={{ position: "relative", zIndex: 1 }}
                 onClick={() => setShowEmptyResourceTooltip(true)}
               />
             </Tooltip>
@@ -170,6 +174,7 @@ export const FormActionControl = ({
                       tabIndex={0}
                       disabled={action.length >= maxFormActions}
                       prefix={<PlusIcon />}
+                      css={{ position: "relative", zIndex: 1 }}
                     />
                   </DropdownMenuTrigger>
                 </span>
