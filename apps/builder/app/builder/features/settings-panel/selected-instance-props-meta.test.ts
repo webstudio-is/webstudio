@@ -73,7 +73,10 @@ test("keeps rendered form attributes for components without the opt-out", () => 
         "Form",
         {
           label: "Form",
-          props: {},
+          props: {
+            custom: { type: "string", control: "text", required: false },
+            className: { type: "string", control: "text", required: false },
+          },
         } satisfies WsComponentMeta,
       ],
     ])
@@ -86,6 +89,12 @@ test("keeps rendered form attributes for components without the opt-out", () => 
   expect(propsMetas.has("enctype")).toBe(true);
   expect(propsMetas.has("id")).toBe(true);
   expect(propsMetas.has("aria-label")).toBe(true);
+  expect(propsMetas.has("class")).toBe(false);
+  const propNames = [...propsMetas.keys()];
+  expect(propNames[0]).toBe(showAttribute);
+  expect(propNames.indexOf("custom")).toBeLessThan(propNames.indexOf("method"));
+  expect(propNames.indexOf("method")).toBeLessThan(propNames.indexOf("id"));
+  expect(propNames.indexOf("id")).toBeLessThan(propNames.indexOf("aria-label"));
 });
 
 test.each(["ws:element", "Input"])(

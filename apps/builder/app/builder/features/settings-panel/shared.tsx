@@ -23,7 +23,7 @@ import {
   systemParameter,
 } from "@webstudio-is/sdk";
 import { getContentModePropNamesByTag } from "@webstudio-is/project-build/runtime";
-import type { PropMeta, Prop, Asset } from "@webstudio-is/sdk";
+import type { PropMeta, Prop, Asset, WsComponentMeta } from "@webstudio-is/sdk";
 import {
   Label as BaseLabel,
   useIsTruncated,
@@ -356,6 +356,47 @@ const getInitialPropNames = (
   return initialPropNames;
 };
 
+const getInstancePropsMetas = (
+  meta: WsComponentMeta | undefined,
+  tag: string | undefined,
+  contentModePropNames: Set<string> | undefined
+): Map<string, PropMeta> => {
+  const propsMetas = new Map<Prop["name"], PropMeta>();
+  const addAttributes = (attributes: readonly Attribute[] | undefined) => {
+    if (attributes === undefined) {
+      return;
+    }
+    for (const attribute of [...attributes].reverse()) {
+      const propMeta = attributeToMeta(attribute);
+      propsMetas.set(
+        attribute.name,
+        contentModePropNames?.has(attribute.name)
+          ? { ...propMeta, contentMode: true }
+          : propMeta
+      );
+    }
+  };
+
+  // Build from lowest to highest precedence, then reverse for display order.
+  if (tag && meta?.htmlAttributes !== "hide") {
+    if (elementsByTag[tag].categories.includes("html-element")) {
+      addAttributes(ariaAttributes);
+      addAttributes(attributesByTag["*"]);
+    }
+    addAttributes(attributesByTag[tag]);
+  }
+  for (const [name, propMeta] of Object.entries(meta?.props ?? {}).reverse()) {
+    // Component props take precedence over their equivalent HTML attributes.
+    const htmlName = reactPropsToStandardAttributes[name];
+    if (htmlName) {
+      propsMetas.delete(htmlName);
+    }
+    propsMetas.set(name, propMeta);
+  }
+  propsMetas.set(showAttribute, showAttributeMeta);
+  return new Map(Array.from(propsMetas.entries()).reverse());
+};
+
 export const $selectedInstancePropsMetas = computed(
   [
     $selectedInstance,
@@ -363,66 +404,16 @@ export const $selectedInstancePropsMetas = computed(
     $instanceTags,
     $contentModePropNamesByTag,
   ],
-  (
-    instance,
-    metas,
-    instanceTags,
-    contentModePropNamesByTag
-  ): Map<string, PropMeta> => {
+  (instance, metas, instanceTags, contentModePropNamesByTag) => {
     if (instance === undefined) {
-      return new Map();
+      return new Map<string, PropMeta>();
     }
-    const meta = metas.get(instance.component);
     const tag = instanceTags.get(instance.id);
-    const propsMetas = new Map<Prop["name"], PropMeta>();
-    const contentModePropNames =
-      tag === undefined ? undefined : contentModePropNamesByTag.get(tag);
-    const toAttributeMeta = (attribute: Attribute): PropMeta => {
-      const propMeta = attributeToMeta(attribute);
-      if (contentModePropNames?.has(attribute.name)) {
-        return { ...propMeta, contentMode: true };
-      }
-      return propMeta;
-    };
-    // add html attributes only when instance has tag
-    if (tag && meta?.htmlAttributes !== "hide") {
-      if (elementsByTag[tag].categories.includes("html-element")) {
-        for (const attribute of [...ariaAttributes].reverse()) {
-          propsMetas.set(attribute.name, toAttributeMeta(attribute));
-        }
-        // include global attributes only for html elements
-        if (attributesByTag["*"]) {
-          for (const attribute of [...attributesByTag["*"]].reverse()) {
-            propsMetas.set(attribute.name, toAttributeMeta(attribute));
-          }
-        }
-      }
-      if (attributesByTag[tag]) {
-        for (const attribute of [...attributesByTag[tag]].reverse()) {
-          propsMetas.set(attribute.name, toAttributeMeta(attribute));
-        }
-      }
-    }
-    for (const [name, propMeta] of Object.entries(
-      meta?.props ?? {}
-    ).reverse()) {
-      // when component property has the same name as html attribute in react
-      // override to deduplicate similar properties
-      // for example component can have own "className" and html has "class"
-      const htmlName = reactPropsToStandardAttributes[name];
-      if (htmlName) {
-        propsMetas.delete(htmlName);
-      }
-      propsMetas.set(name, propMeta);
-    }
-    propsMetas.set(showAttribute, showAttributeMeta);
-    // ui should render in the following order
-    // 1. system properties
-    // 2. component properties
-    // 3. specific tag attributes
-    // 4. global html attributes
-    // 5. aria attributes
-    return new Map(Array.from(propsMetas.entries()).reverse());
+    return getInstancePropsMetas(
+      metas.get(instance.component),
+      tag,
+      tag === undefined ? undefined : contentModePropNamesByTag.get(tag)
+    );
   }
 );
 
