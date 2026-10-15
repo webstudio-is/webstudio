@@ -19,7 +19,10 @@ import {
   AuthorizationError,
   authorizeProject,
 } from "@webstudio-is/trpc-interface/index.server";
-import { createContext } from "~/shared/context.server";
+import {
+  createContext,
+  InvalidAuthTokenError,
+} from "~/shared/context.server";
 import { getPlanInfo } from "@webstudio-is/plans/index.server";
 import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { dashboardPath, isBuilder, isDashboard } from "~/shared/router-utils";
@@ -44,6 +47,18 @@ import {
   privateNoStoreResponseHeaders,
 } from "~/services/cache-control.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
+
+const isPostgrestSingleObjectError = (error: unknown) =>
+  typeof error === "object" &&
+  error !== null &&
+  "code" in error &&
+  error.code === "PGRST116";
+
+const projectDataUnavailableResponse = () =>
+  new Response(
+    "Webstudio couldn't resolve a required record while loading this project. Refresh and try again; if the issue persists, contact support.",
+    { status: 500, statusText: "Project data unavailable" }
+  );
 
 export const links = () => {
   return [{ rel: "stylesheet", href: builderStyles }];
@@ -82,7 +97,21 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
     // await checkCsrf(request);
   }
 
-  const context = await createContext(request);
+  let context: Awaited<ReturnType<typeof createContext>>;
+  try {
+    context = await createContext(request);
+  } catch (error) {
+    if (error instanceof InvalidAuthTokenError) {
+      throw new Response(
+        "This share link is invalid or expired. Ask the project owner for a new link.",
+        { status: 401, statusText: "Unauthorized" }
+      );
+    }
+    if (isPostgrestSingleObjectError(error)) {
+      throw projectDataUnavailableResponse();
+    }
+    throw error;
+  }
 
   if (context.authorization.type === "service") {
     throw new AuthorizationError("Service calls are not allowed");
@@ -275,6 +304,9 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
       }
     );
   } catch (error) {
+    if (isPostgrestSingleObjectError(error)) {
+      throw projectDataUnavailableResponse();
+    }
     if (error instanceof AuthorizationError) {
       // try to re-login user if he has no access to the project
       throw await authWsLoader(loaderArgs);
