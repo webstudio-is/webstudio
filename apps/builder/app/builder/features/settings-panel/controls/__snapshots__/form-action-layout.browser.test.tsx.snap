@@ -1,0 +1,499 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`preserves original content geometry: invalid action at 240px 1`] = `
+{
+  "elements": [
+    {
+      "height": 20,
+      "name": "Action",
+      "width": 43.328125,
+      "x": 12,
+      "y": 2,
+    },
+    {
+      "height": 16,
+      "name": "Invalid Form action settings",
+      "width": 216,
+      "x": 12,
+      "y": 26,
+    },
+  ],
+  "height": 44,
+}
+`;
+
+exports[`preserves original content geometry: invalid action at 300px 1`] = `
+{
+  "elements": [
+    {
+      "height": 20,
+      "name": "Action",
+      "width": 43.328125,
+      "x": 12,
+      "y": 2,
+    },
+    {
+      "height": 16,
+      "name": "Invalid Form action settings",
+      "width": 276,
+      "x": 12,
+      "y": 26,
+    },
+  ],
+  "height": 44,
+}
+`;
+
+exports[`preserves original content geometry: navigation at 240px 1`] = `
+{
+  "elements": [
+    {
+      "height": 20,
+      "name": "Action",
+      "width": 43.328125,
+      "x": 12,
+      "y": 2,
+    },
+    {
+      "height": 16,
+      "name": "Navigation mode",
+      "width": 96.15625,
+      "x": 61.921875,
+      "y": 26,
+    },
+  ],
+  "height": 44,
+}
+`;
+
+exports[`preserves original content geometry: navigation at 300px 1`] = `
+{
+  "elements": [
+    {
+      "height": 20,
+      "name": "Action",
+      "width": 43.328125,
+      "x": 12,
+      "y": 2,
+    },
+    {
+      "height": 16,
+      "name": "Navigation mode",
+      "width": 96.15625,
+      "x": 91.921875,
+      "y": 26,
+    },
+  ],
+  "height": 44,
+}
+`;
+
+exports[`preserves original content geometry: one action and redirect at 240px 1`] = `
+{
+  "elements": [
+    {
+      "height": 20,
+      "name": "Action",
+      "width": 43.328125,
+      "x": 12,
+      "y": 2,
+    },
+    {
+      "height": 24,
+      "name": "Action send",
+      "width": 240,
+      "x": 0,
+      "y": 26,
+    },
+    {
+      "height": 28,
+      "name": "send",
+      "width": 28.359375,
+      "x": 12,
+      "y": 24,
+    },
+    {
+      "height": 0,
+      "name": "Remove action send",
+      "width": 0,
+      "x": 0,
+      "y": 0,
+    },
+    {
+      "height": 20,
+      "name": "Success Redirect",
+      "width": 107.140625,
+      "x": 12,
+      "y": 58,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 14,
+      "y": 83,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 38,
+      "y": 83,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 62,
+      "y": 83,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 86,
+      "y": 83,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 110,
+      "y": 83,
+    },
+    {
+      "height": 22,
+      "name": "",
+      "width": 214,
+      "x": 13,
+      "y": 111,
+    },
+    {
+      "height": 16,
+      "name": "",
+      "width": 16,
+      "x": 4,
+      "y": 98,
+    },
+  ],
+  "height": 142,
+}
+`;
+
+exports[`preserves original content geometry: one action and redirect at 300px 1`] = `
+{
+  "elements": [
+    {
+      "height": 20,
+      "name": "Action",
+      "width": 43.328125,
+      "x": 12,
+      "y": 2,
+    },
+    {
+      "height": 24,
+      "name": "Action send",
+      "width": 300,
+      "x": 0,
+      "y": 26,
+    },
+    {
+      "height": 28,
+      "name": "send",
+      "width": 28.359375,
+      "x": 12,
+      "y": 24,
+    },
+    {
+      "height": 0,
+      "name": "Remove action send",
+      "width": 0,
+      "x": 0,
+      "y": 0,
+    },
+    {
+      "height": 20,
+      "name": "Success Redirect",
+      "width": 107.140625,
+      "x": 12,
+      "y": 58,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 14,
+      "y": 83,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 38,
+      "y": 83,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 62,
+      "y": 83,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 86,
+      "y": 83,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 110,
+      "y": 83,
+    },
+    {
+      "height": 22,
+      "name": "",
+      "width": 274,
+      "x": 13,
+      "y": 111,
+    },
+    {
+      "height": 16,
+      "name": "",
+      "width": 16,
+      "x": 4,
+      "y": 98,
+    },
+  ],
+  "height": 142,
+}
+`;
+
+exports[`preserves original content geometry: two actions and redirect at 240px 1`] = `
+{
+  "elements": [
+    {
+      "height": 20,
+      "name": "Action",
+      "width": 43.328125,
+      "x": 12,
+      "y": 2,
+    },
+    {
+      "height": 24,
+      "name": "Action send",
+      "width": 240,
+      "x": 0,
+      "y": 26,
+    },
+    {
+      "height": 28,
+      "name": "send",
+      "width": 28.359375,
+      "x": 12,
+      "y": 24,
+    },
+    {
+      "height": 0,
+      "name": "Remove action send",
+      "width": 0,
+      "x": 0,
+      "y": 0,
+    },
+    {
+      "height": 24,
+      "name": "Action other",
+      "width": 240,
+      "x": 0,
+      "y": 50,
+    },
+    {
+      "height": 28,
+      "name": "other",
+      "width": 31.0625,
+      "x": 12,
+      "y": 48,
+    },
+    {
+      "height": 0,
+      "name": "Remove action other",
+      "width": 0,
+      "x": 0,
+      "y": 0,
+    },
+    {
+      "height": 20,
+      "name": "Success Redirect",
+      "width": 107.140625,
+      "x": 12,
+      "y": 82,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 14,
+      "y": 107,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 38,
+      "y": 107,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 62,
+      "y": 107,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 86,
+      "y": 107,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 110,
+      "y": 107,
+    },
+    {
+      "height": 22,
+      "name": "",
+      "width": 214,
+      "x": 13,
+      "y": 135,
+    },
+    {
+      "height": 16,
+      "name": "",
+      "width": 16,
+      "x": 4,
+      "y": 122,
+    },
+  ],
+  "height": 166,
+}
+`;
+
+exports[`preserves original content geometry: two actions and redirect at 300px 1`] = `
+{
+  "elements": [
+    {
+      "height": 20,
+      "name": "Action",
+      "width": 43.328125,
+      "x": 12,
+      "y": 2,
+    },
+    {
+      "height": 24,
+      "name": "Action send",
+      "width": 300,
+      "x": 0,
+      "y": 26,
+    },
+    {
+      "height": 28,
+      "name": "send",
+      "width": 28.359375,
+      "x": 12,
+      "y": 24,
+    },
+    {
+      "height": 0,
+      "name": "Remove action send",
+      "width": 0,
+      "x": 0,
+      "y": 0,
+    },
+    {
+      "height": 24,
+      "name": "Action other",
+      "width": 300,
+      "x": 0,
+      "y": 50,
+    },
+    {
+      "height": 28,
+      "name": "other",
+      "width": 31.0625,
+      "x": 12,
+      "y": 48,
+    },
+    {
+      "height": 0,
+      "name": "Remove action other",
+      "width": 0,
+      "x": 0,
+      "y": 0,
+    },
+    {
+      "height": 20,
+      "name": "Success Redirect",
+      "width": 107.140625,
+      "x": 12,
+      "y": 82,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 14,
+      "y": 107,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 38,
+      "y": 107,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 62,
+      "y": 107,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 86,
+      "y": 107,
+    },
+    {
+      "height": 20,
+      "name": "",
+      "width": 24,
+      "x": 110,
+      "y": 107,
+    },
+    {
+      "height": 22,
+      "name": "",
+      "width": 274,
+      "x": 13,
+      "y": 135,
+    },
+    {
+      "height": 16,
+      "name": "",
+      "width": 16,
+      "x": 4,
+      "y": 122,
+    },
+  ],
+  "height": 166,
+}
+`;

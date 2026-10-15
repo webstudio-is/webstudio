@@ -149,9 +149,7 @@ test("Actions references an existing Resource without creating another", async (
   expect(container.textContent).not.toContain("Create Resource in Form");
   await act(async () => {
     await userEvent.click(
-      container
-        .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-        .item(1)!
+      container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')!
     );
   });
   const action = Array.from(
