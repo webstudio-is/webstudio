@@ -2,6 +2,7 @@ import { useStore } from "@nanostores/react";
 import { useState } from "react";
 import {
   Box,
+  Button,
   InteractiveListArrowFocus,
   InteractiveListItem,
   DropdownMenu,
@@ -190,9 +191,10 @@ export const FormActionControl = ({
             open={showEmptyResourceTooltip}
             onOpenChange={setShowEmptyResourceTooltip}
           >
-            <SmallIconButton
+            <Button
               aria-label="Add action"
-              icon={<PlusIcon />}
+              color="ghost"
+              prefix={<PlusIcon />}
               onClick={() => setShowEmptyResourceTooltip(true)}
             />
           </Tooltip>
@@ -201,15 +203,16 @@ export const FormActionControl = ({
             <Tooltip content="Add a resource to submit this Form.">
               <span style={{ display: "flex" }}>
                 <DropdownMenuTrigger asChild>
-                  <SmallIconButton
+                  <Button
                     aria-label="Add action"
                     disabled={action.length >= maxFormActions}
-                    icon={<PlusIcon />}
+                    color="ghost"
+                    prefix={<PlusIcon />}
                   />
                 </DropdownMenuTrigger>
               </span>
             </Tooltip>
-            <DropdownMenuContent>
+            <DropdownMenuContent css={{ minWidth: 180 }}>
               {resources.map((variable) => (
                 <DropdownMenuItem
                   key={variable.id}

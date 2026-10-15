@@ -81,6 +81,7 @@ test("Action + explains how to add a resource when none are available", async ()
     '[aria-label="Add action"]'
   )!;
   expect(addButton.disabled).toBe(false);
+  expect(addButton.dataset.buttonColor).toBe("ghost");
   await act(async () => userEvent.click(addButton));
   expect(document.querySelector('[role="tooltip"]')?.textContent).toContain(
     "Create a resource in the Variables section first."
@@ -121,7 +122,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
           type: "resource",
           id: "resourceDataSource",
           scopeInstanceId: "form",
-          name: "Send request",
+          name: "Go",
           resourceId: "resource",
         },
       ],
@@ -186,6 +187,11 @@ test("Action control handles an empty Resource list and can select an in-scope d
     "Create a Resource in Data variables to add an action."
   );
 
+  const addButton = container.querySelector<HTMLButtonElement>(
+    '[aria-label="Add action"]'
+  )!;
+  expect(addButton.dataset.buttonColor).toBe("ghost");
+
   await act(async () =>
     render({
       id: "action",
@@ -198,14 +204,13 @@ test("Action control handles an empty Resource list and can select an in-scope d
   expect(container.textContent).not.toContain(
     "Select at least one Resource destination"
   );
-  await act(async () =>
-    userEvent.click(
-      container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')!
-    )
-  );
+  await act(async () => userEvent.click(addButton));
+  expect(
+    getComputedStyle(document.querySelector('[role="menu"]')!).minWidth
+  ).toBe("180px");
   const requestOption = Array.from(
     document.querySelectorAll<HTMLElement>('[role="menuitem"]')
-  ).find((option) => option.textContent?.includes("Send request"));
+  ).find((option) => option.textContent?.includes("Go"));
   await act(async () => requestOption?.click());
   expect(onChange).toHaveBeenLastCalledWith({
     type: "json",
