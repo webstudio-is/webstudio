@@ -142,6 +142,15 @@ test("Action + matches the Variables + button in every interaction state", async
     '[aria-label="Add action"]'
   )!;
   expect(actionButton.tabIndex).toBe(0);
+  const variableHeader = variableButton.closest('[data-state="closed"]')!;
+  const actionHeader = actionButton.parentElement!;
+  expect(
+    actionButton.getBoundingClientRect().top -
+      actionHeader.getBoundingClientRect().top
+  ).toBe(
+    variableButton.getBoundingClientRect().top -
+      variableHeader.getBoundingClientRect().top
+  );
   for (const state of ["auto", "hover", "focus", "pressed"]) {
     variableButton.dataset.state = state;
     actionButton.dataset.state = state;

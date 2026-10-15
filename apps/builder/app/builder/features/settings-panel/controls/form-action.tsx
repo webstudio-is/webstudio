@@ -142,7 +142,11 @@ export const FormActionControl = ({
 
   return (
     <Box>
-      <Flex align="center" justify="between">
+      <Flex
+        align="center"
+        justify="between"
+        css={{ height: theme.spacing[14] }}
+      >
         <FieldLabel
           description={
             <Flex direction="column" gap="1">
