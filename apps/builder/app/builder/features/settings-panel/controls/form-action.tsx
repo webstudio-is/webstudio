@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
   Flex,
   Grid,
+  SectionTitle,
   SectionTitleButton,
   SmallIconButton,
   Text,
@@ -142,105 +143,108 @@ export const FormActionControl = ({
 
   return (
     <Box>
-      <Flex
-        align="center"
-        justify="between"
-        css={{ height: theme.spacing[14] }}
-      >
-        <FieldLabel
-          description={
-            <Flex direction="column" gap="1">
-              <Text>
-                Sends each form submission to all destinations at the same time.
-              </Text>
-              <Box as="ul" css={{ margin: 0, paddingLeft: theme.spacing[4] }}>
-                <li>
-                  <Text>
-                    <code>formData</code> — submitted fields from this Form
-                  </Text>
-                </li>
-                <li>
-                  <Text>
-                    <code>browserInfo</code> — visitor details
-                  </Text>
-                </li>
-                <li>
-                  <Text>
-                    <code>formState</code> — current Form state: initial,
-                    success, or error.
-                  </Text>
-                </li>
-                <li>
-                  <Text>
-                    <code>results</code> — each action’s response, in order
-                  </Text>
-                </li>
-                <li>
-                  <Text>
-                    <code>errors</code> — failed actions and their messages
-                  </Text>
-                </li>
-              </Box>
-            </Flex>
-          }
-          resettable={invalidSavedValue || action.length > 0}
-          resetLabel="Reset"
-          onReset={() => update([])}
-        >
-          Action
-        </FieldLabel>
-        {resources.length === 0 ? (
-          <Tooltip
-            content="Create a resource in the Variables section first."
-            open={showEmptyResourceTooltip}
-            onOpenChange={setShowEmptyResourceTooltip}
-          >
-            <SectionTitleButton
-              aria-label="Add action"
-              tabIndex={0}
-              prefix={<PlusIcon />}
-              onClick={() => setShowEmptyResourceTooltip(true)}
-            />
-          </Tooltip>
-        ) : (
-          <DropdownMenu>
-            <Tooltip content="Add a resource to submit this Form.">
-              <span style={{ display: "flex" }}>
-                <DropdownMenuTrigger asChild>
-                  <SectionTitleButton
-                    aria-label="Add action"
-                    tabIndex={0}
-                    disabled={action.length >= maxFormActions}
-                    prefix={<PlusIcon />}
-                  />
-                </DropdownMenuTrigger>
-              </span>
+      <SectionTitle
+        collapsible={false}
+        suffix={
+          resources.length === 0 ? (
+            <Tooltip
+              content="Create a resource in the Variables section first."
+              open={showEmptyResourceTooltip}
+              onOpenChange={setShowEmptyResourceTooltip}
+            >
+              <SectionTitleButton
+                aria-label="Add action"
+                tabIndex={0}
+                prefix={<PlusIcon />}
+                onClick={() => setShowEmptyResourceTooltip(true)}
+              />
             </Tooltip>
-            <DropdownMenuContent css={{ minWidth: 180 }}>
-              {resources.map((variable) => (
-                <DropdownMenuItem
-                  key={variable.id}
-                  disabled={action.some(
-                    ({ dataSourceId }) => dataSourceId === variable.id
-                  )}
-                  onSelect={() => {
-                    if (
-                      action.length < maxFormActions &&
-                      !action.some(
-                        ({ dataSourceId }) => dataSourceId === variable.id
-                      )
-                    ) {
-                      update([...action, { dataSourceId: variable.id }]);
-                    }
-                  }}
-                >
-                  {variable.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </Flex>
+          ) : (
+            <DropdownMenu>
+              <Tooltip content="Add a resource to submit this Form.">
+                <span style={{ display: "flex" }}>
+                  <DropdownMenuTrigger asChild>
+                    <SectionTitleButton
+                      aria-label="Add action"
+                      tabIndex={0}
+                      disabled={action.length >= maxFormActions}
+                      prefix={<PlusIcon />}
+                    />
+                  </DropdownMenuTrigger>
+                </span>
+              </Tooltip>
+              <DropdownMenuContent css={{ minWidth: 180 }}>
+                {resources.map((variable) => (
+                  <DropdownMenuItem
+                    key={variable.id}
+                    disabled={action.some(
+                      ({ dataSourceId }) => dataSourceId === variable.id
+                    )}
+                    onSelect={() => {
+                      if (
+                        action.length < maxFormActions &&
+                        !action.some(
+                          ({ dataSourceId }) => dataSourceId === variable.id
+                        )
+                      ) {
+                        update([...action, { dataSourceId: variable.id }]);
+                      }
+                    }}
+                  >
+                    {variable.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        }
+      >
+        <Box css={{ pointerEvents: "auto" }}>
+          <FieldLabel
+            description={
+              <Flex direction="column" gap="1">
+                <Text>
+                  Sends each form submission to all destinations at the same
+                  time.
+                </Text>
+                <Box as="ul" css={{ margin: 0, paddingLeft: theme.spacing[4] }}>
+                  <li>
+                    <Text>
+                      <code>formData</code> — submitted fields from this Form
+                    </Text>
+                  </li>
+                  <li>
+                    <Text>
+                      <code>browserInfo</code> — visitor details
+                    </Text>
+                  </li>
+                  <li>
+                    <Text>
+                      <code>formState</code> — current Form state: initial,
+                      success, or error.
+                    </Text>
+                  </li>
+                  <li>
+                    <Text>
+                      <code>results</code> — each action’s response, in order
+                    </Text>
+                  </li>
+                  <li>
+                    <Text>
+                      <code>errors</code> — failed actions and their messages
+                    </Text>
+                  </li>
+                </Box>
+              </Flex>
+            }
+            resettable={invalidSavedValue || action.length > 0}
+            resetLabel="Reset"
+            onReset={() => update([])}
+          >
+            Action
+          </FieldLabel>
+        </Box>
+      </SectionTitle>
       <Box css={{ py: theme.spacing[2] }}>
         <Flex direction="column" gap="2">
           {action.length > 0 && (

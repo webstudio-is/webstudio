@@ -2,13 +2,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { userEvent } from "@vitest/browser/context";
 import { afterEach, expect, test, vi } from "vitest";
-import {
-  SectionTitle,
-  SectionTitleButton,
-  SectionTitleLabel,
-  TooltipProvider,
-} from "@webstudio-is/design-system";
-import { PlusIcon } from "@webstudio-is/icons";
+import { TooltipProvider } from "@webstudio-is/design-system";
 import type { Prop } from "@webstudio-is/sdk";
 import {
   $dataSources,
@@ -16,6 +10,7 @@ import {
   $props,
   $resources,
 } from "~/shared/sync/data-stores";
+import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import { FormActionControl } from "./form-action";
 
 (
@@ -83,9 +78,9 @@ test("Action + explains how to add a resource when none are available", async ()
     )
   );
 
-  const addButton = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Add action"]'
-  )!;
+  const addButton = container
+    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+    .item(1)!;
   expect(addButton.disabled).toBe(false);
   expect(addButton.dataset.buttonColor).toBe("ghost");
   await act(async () => userEvent.click(addButton));
@@ -96,7 +91,7 @@ test("Action + explains how to add a resource when none are available", async ()
   expect(onChange).not.toHaveBeenCalled();
 });
 
-test("Action + matches the Variables + button in every interaction state", async () => {
+test("Action + matches the Properties & attributes + position and states", async () => {
   $instances.set(
     new Map([
       [
@@ -113,16 +108,14 @@ test("Action + matches the Variables + button in every interaction state", async
   await act(async () =>
     root?.render(
       <TooltipProvider>
-        <SectionTitle
-          suffix={
-            <SectionTitleButton
-              aria-label="Add variable"
-              prefix={<PlusIcon />}
-            />
-          }
-        >
-          <SectionTitleLabel>Variables</SectionTitleLabel>
-        </SectionTitle>
+        <div data-properties-section>
+          <CollapsibleSectionWithAddButton
+            label="Properties & attributes"
+            onAdd={vi.fn()}
+          >
+            <div />
+          </CollapsibleSectionWithAddButton>
+        </div>
         <FormActionControl
           instanceId="form"
           propName="action"
@@ -135,26 +128,34 @@ test("Action + matches the Variables + button in every interaction state", async
     )
   );
 
-  const variableButton = Array.from(
-    container.querySelectorAll<HTMLButtonElement>('[aria-label="Add variable"]')
-  ).at(-1)!;
-  const actionButton = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Add action"]'
-  )!;
+  const propertyButton = container
+    .querySelector("[data-properties-section]")!
+    .querySelectorAll<HTMLButtonElement>('[data-button-color="ghost"]')
+    .item(1)!;
+  const actionButton = container
+    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+    .item(1)!;
   expect(actionButton.tabIndex).toBe(0);
-  const variableHeader = variableButton.closest('[data-state="closed"]')!;
-  const actionHeader = actionButton.parentElement!;
+  const propertyHeader = propertyButton.closest("div[data-state]")!;
+  const actionHeader = actionButton.closest("div[data-state]")!;
   expect(
     actionButton.getBoundingClientRect().top -
       actionHeader.getBoundingClientRect().top
   ).toBe(
-    variableButton.getBoundingClientRect().top -
-      variableHeader.getBoundingClientRect().top
+    propertyButton.getBoundingClientRect().top -
+      propertyHeader.getBoundingClientRect().top
+  );
+  expect(
+    actionButton.getBoundingClientRect().right -
+      actionHeader.getBoundingClientRect().right
+  ).toBe(
+    propertyButton.getBoundingClientRect().right -
+      propertyHeader.getBoundingClientRect().right
   );
   for (const state of ["auto", "hover", "focus", "pressed"]) {
-    variableButton.dataset.state = state;
+    propertyButton.dataset.state = state;
     actionButton.dataset.state = state;
-    const reference = getComputedStyle(variableButton);
+    const reference = getComputedStyle(propertyButton);
     const actual = getComputedStyle(actionButton);
     for (const property of [
       "backgroundColor",
@@ -173,6 +174,13 @@ test("Action + matches the Variables + button in every interaction state", async
       );
     }
   }
+  const actionLabel = Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent === "Action"
+  )!;
+  await act(async () => userEvent.click(actionLabel));
+  expect(document.querySelector('[role="tooltip"]')?.textContent).toContain(
+    "Sends each form submission to all destinations at the same time."
+  );
 });
 
 test("Action control handles an empty Resource list and can select an in-scope destination", async () => {
@@ -272,9 +280,9 @@ test("Action control handles an empty Resource list and can select an in-scope d
     "Create a Resource in Data variables to add an action."
   );
 
-  const addButton = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Add action"]'
-  )!;
+  const addButton = container
+    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+    .item(1)!;
   expect(addButton.dataset.buttonColor).toBe("ghost");
 
   await act(async () =>
@@ -354,8 +362,9 @@ test("Action control handles an empty Resource list and can select an in-scope d
   );
   expect(container.textContent).not.toContain("Create Resource in Form");
   expect(
-    container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')
-      ?.disabled
+    container
+      .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+      .item(1)?.disabled
   ).toBe(true);
 });
 
@@ -424,7 +433,9 @@ test("a Form can select a Resource defined outside its scope", async () => {
 
   await act(async () =>
     userEvent.click(
-      container.querySelector<HTMLButtonElement>('[aria-label="Add action"]')!
+      container
+        .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+        .item(1)!
     )
   );
   const requestOption = Array.from(
@@ -608,9 +619,9 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
       )
   );
   expect(document.querySelector('[role="dialog"]')).toBeNull();
-  const addButton = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Add action"]'
-  )!;
+  const addButton = container
+    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+    .item(1)!;
   await act(async () => await userEvent.hover(addButton));
   await expect
     .poll(() => document.querySelector('[role="tooltip"]')?.textContent)
@@ -722,9 +733,9 @@ test("a legacy Action stays visible and can be removed", async () => {
   expect(row?.parentElement?.getBoundingClientRect().left).toBeLessThan(
     container.getBoundingClientRect().left
   );
-  const addButton = container.querySelector<HTMLButtonElement>(
-    '[aria-label="Add action"]'
-  )!;
+  const addButton = container
+    .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
+    .item(1)!;
   await act(async () => addButton.focus());
   await act(async () => userEvent.tab());
   expect(document.activeElement).toBe(row);
