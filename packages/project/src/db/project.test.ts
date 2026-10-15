@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   createTestServer,
   db,
@@ -6,9 +6,12 @@ import {
   empty,
   testContext,
 } from "@webstudio-is/postgrest/testing";
-import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import {
+  authorizeProject,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/index.server";
 import { defaultPlanFeatures } from "@webstudio-is/plans";
-import { create } from "./project";
+import { create, loadById, ProjectNotFoundError } from "./project";
 
 const server = createTestServer();
 
@@ -70,5 +73,50 @@ describe("create — maxProjectsAllowedPerUser guard", () => {
 
     const result = await create({ title: "New Project" }, ctx);
     expect(result).toMatchObject({ id: "proj-new", title: "New Project" });
+  });
+});
+
+describe("loadById", () => {
+  beforeEach(() => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  test("treats an absent project as an explicit not-found result", async () => {
+    server.use(db.get("Project", () => json([])));
+    await expect(
+      loadById("missing-project", createContext())
+    ).rejects.toBeInstanceOf(ProjectNotFoundError);
+    await expect(
+      loadById("missing-project", createContext())
+    ).rejects.toMatchObject({
+      code: "NOT_FOUND",
+      cause: { webstudioCode: "NOT_FOUND" },
+    });
+  });
+
+  test("returns the unique project with its optional static build", async () => {
+    server.use(
+      db.get("Project", () =>
+        json([{ id: "project-1", latestStaticBuild: [] }])
+      )
+    );
+    await expect(loadById("project-1", createContext())).resolves.toMatchObject(
+      { id: "project-1", latestStaticBuild: null }
+    );
+  });
+
+  test("preserves database failures instead of reporting a missing project", async () => {
+    server.use(
+      db.get("Project", () =>
+        json(
+          { code: "08006", message: "Database unavailable" },
+          { status: 503 }
+        )
+      )
+    );
+    await expect(loadById("project-1", createContext())).rejects.toMatchObject({
+      code: "08006",
+    });
   });
 });

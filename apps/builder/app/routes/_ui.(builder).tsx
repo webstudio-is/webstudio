@@ -19,10 +19,7 @@ import {
   AuthorizationError,
   authorizeProject,
 } from "@webstudio-is/trpc-interface/index.server";
-import {
-  createContext,
-  InvalidAuthTokenError,
-} from "~/shared/context.server";
+import { createContext, InvalidAuthTokenError } from "~/shared/context.server";
 import { getPlanInfo } from "@webstudio-is/plans/index.server";
 import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { dashboardPath, isBuilder, isDashboard } from "~/shared/router-utils";
@@ -47,12 +44,6 @@ import {
   privateNoStoreResponseHeaders,
 } from "~/services/cache-control.server";
 export { ErrorBoundary } from "~/shared/error/error-boundary";
-
-const isPostgrestSingleObjectError = (error: unknown) =>
-  typeof error === "object" &&
-  error !== null &&
-  "code" in error &&
-  error.code === "PGRST116";
 
 export const links = () => {
   return [{ rel: "stylesheet", href: builderStyles }];
@@ -147,19 +138,13 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
     try {
       project = await projectApi.loadById(projectId, context);
     } catch (error) {
-      if (isPostgrestSingleObjectError(error)) {
+      if (error instanceof projectApi.ProjectNotFoundError) {
         throw new Response("This project is unavailable or no longer exists.", {
           status: 404,
           statusText: "Project not found",
         });
       }
       throw error;
-    }
-
-    if (project === null) {
-      throw new Response(`Project "${projectId}" not found`, {
-        status: 404,
-      });
     }
 
     const authPermit =
@@ -218,12 +203,6 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         .maybeSingle();
 
       if (workspace.error) {
-        if (isPostgrestSingleObjectError(workspace.error)) {
-          throw new Response(
-            "The workspace data for this project is ambiguous. Contact support for help.",
-            { status: 500, statusText: "Workspace data unavailable" }
-          );
-        }
         throw workspace.error;
       }
 
