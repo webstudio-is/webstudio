@@ -64,7 +64,13 @@ export const Section = () => {
         )
       }
     >
-      <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
+      <Flex
+        css={{
+          paddingInline: theme.panel.paddingInline,
+          flexDirection: "column",
+          gap: theme.spacing[5],
+        }}
+      >
         <FlexChildSectionAlign />
         <FlexChildSectionSizing />
         <OrderControl />

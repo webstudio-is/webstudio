@@ -220,11 +220,12 @@ const renderProperty = (
   const { prop, propName, meta } = item;
   if (component === blockComponent && propName === contentBlockSourceProp) {
     return (
-      <ContentBlockSourceSection
-        key={propName}
-        blockInstanceId={instanceId}
-        renderScope={selectedInstanceKey}
-      />
+      <Box key={propName} css={{ paddingInline: theme.panel.paddingInline }}>
+        <ContentBlockSourceSection
+          blockInstanceId={instanceId}
+          renderScope={selectedInstanceKey}
+        />
+      </Box>
     );
   }
   const targetInstanceId = item.instanceId ?? instanceId;
@@ -267,7 +268,7 @@ const renderProperty = (
     );
   }
 
-  return renderControl({
+  const control = renderControl({
     key: propName,
     instanceId: targetInstanceId,
     meta,
@@ -296,6 +297,11 @@ const renderProperty = (
       }
     },
   });
+  return control === undefined ? undefined : (
+    <Box key={propName} css={{ paddingInline: theme.panel.paddingInline }}>
+      {control}
+    </Box>
+  );
 };
 
 const forbiddenProperties = new Set(["style"]);
@@ -470,31 +476,27 @@ export const PropsSection = (props: PropsSectionProps) => {
           paddingBottom: theme.panel.paddingBlock,
         }}
       >
-        {logic.systemProps.map((item) => (
-          <Box
-            key={item.propName}
-            css={{ paddingInline: theme.panel.paddingInline }}
-          >
-            {renderProperty(props, item)}
-          </Box>
-        ))}
+        {logic.systemProps.map((item) => renderProperty(props, item))}
       </Grid>
 
       <Separator />
       {showPropertiesSection && (
         <CollapsibleSectionWithAddButton
           label="Properties & attributes"
+          fullWidth
           onAdd={isDesignMode ? () => setAddingProp(true) : undefined}
           hasItems={hasItems}
         >
           <Flex gap="1" direction="column">
             {isDesignMode && addingProp && (
-              <AddPropertyOrAttribute
-                onPropSelected={(propName) => {
-                  setAddingProp(false);
-                  logic.handleAdd(propName);
-                }}
-              />
+              <Box css={{ paddingInline: theme.panel.paddingInline }}>
+                <AddPropertyOrAttribute
+                  onPropSelected={(propName) => {
+                    setAddingProp(false);
+                    logic.handleAdd(propName);
+                  }}
+                />
+              </Box>
             )}
             {addedProps.map((item) => renderProperty(props, item))}
             {getStandaloneInitialProps({

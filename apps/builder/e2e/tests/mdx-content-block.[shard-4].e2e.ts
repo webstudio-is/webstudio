@@ -833,6 +833,7 @@ test("Named MDX templates re-resolve after rename, reload, and removal", async (
   await chooseContentBlockSource({ page, filename: namedTemplateFilename });
   await confirmContentBlockConnection({ page });
   await waitForCanvasText({ page, text: "Authored lifecycle card" });
+  await waitForSyncStatus({ page, status: "idle" });
 
   await expandNavigatorItem({ page, name: "Content Block" });
   await expandNavigatorItem({ page, name: "Block Template" });

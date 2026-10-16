@@ -10,7 +10,13 @@ export const properties = ["list-style-type"] satisfies CssProperty[];
 export const Section = () => {
   return (
     <StyleSection label="List item" properties={properties}>
-      <Grid gap={2} css={{ gridTemplateColumns: `1fr ${theme.spacing[21]}` }}>
+      <Grid
+        gap={2}
+        css={{
+          paddingInline: theme.panel.paddingInline,
+          gridTemplateColumns: `1fr ${theme.spacing[21]}`,
+        }}
+      >
         <PropertyLabel
           label="List style type"
           description={propertyDescriptions.listStyleType}
