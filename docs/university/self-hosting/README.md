@@ -40,7 +40,9 @@ There are two types of exports:
 
 Set up an HTTP endpoint to send email from your self-hosted project. The following is a suggested JSON contract for that endpoint; choose its URL and authorization token.
 
-##### Builder authorization token
+##### Builder email service configuration
+
+The server-side `EMAIL_SERVICE_URL` environment variable sets the Builder's current email service base URL. It is restricted to approved Webstudio Worker origins and cannot connect the suggested endpoint contract below to an arbitrary self-hosted URL.
 
 The Builder's existing email-service connection uses the server-side `TRPC_SERVER_API_TOKEN` environment variable for its `Authorization: Bearer <token>` header. The token must match the value expected by that service and must never be exposed in browser-visible configuration or client code. This variable supplies authentication; it does not configure a connection to an arbitrary self-hosted endpoint.
 
