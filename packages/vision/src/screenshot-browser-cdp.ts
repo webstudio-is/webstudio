@@ -432,30 +432,6 @@ type NavigationResult = {
   loaderId?: string;
 };
 
-const getDefaultExecutionContext = (
-  params: unknown
-): { id: number; frameId: string } | undefined => {
-  if (
-    typeof params !== "object" ||
-    params === null ||
-    !("context" in params) ||
-    typeof params.context !== "object" ||
-    params.context === null ||
-    !("id" in params.context) ||
-    typeof params.context.id !== "number" ||
-    !("auxData" in params.context) ||
-    typeof params.context.auxData !== "object" ||
-    params.context.auxData === null ||
-    !("frameId" in params.context.auxData) ||
-    typeof params.context.auxData.frameId !== "string" ||
-    !("isDefault" in params.context.auxData) ||
-    params.context.auxData.isDefault !== true
-  ) {
-    return;
-  }
-  return { id: params.context.id, frameId: params.context.auxData.frameId };
-};
-
 const getExecutionContextId = (params: unknown) =>
   typeof params === "object" &&
   params !== null &&
@@ -1749,14 +1725,26 @@ const capturePageWithBrowserRuntime = async (
           }
         };
         cdp.on("Runtime.executionContextCreated", (params) => {
-          const context = getDefaultExecutionContext(params);
-          if (context === undefined) {
+          const context = (
+            params as {
+              context?: {
+                id: number;
+                auxData?: { frameId?: string; isDefault?: boolean };
+              };
+            } | null
+          )?.context;
+          if (context?.auxData?.isDefault !== true) {
+            return;
+          }
+          const { id, auxData } = context;
+          const { frameId } = auxData;
+          if (typeof frameId !== "string") {
             return;
           }
           if (navigationExecutionContextFrames !== undefined) {
-            navigationExecutionContextFrames.set(context.id, context.frameId);
-          } else if (context.frameId === navigationFrameId) {
-            activeExecutionContextIds.add(context.id);
+            navigationExecutionContextFrames.set(id, frameId);
+          } else if (frameId === navigationFrameId) {
+            activeExecutionContextIds.add(id);
           }
         });
         cdp.on("Runtime.exceptionThrown", (params) => {
