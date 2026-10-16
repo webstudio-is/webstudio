@@ -773,6 +773,7 @@ export type BrowserScreenshotNavigation = {
   mimeType?: string;
   redirects: string[];
   documentReadyState: string;
+  javascriptErrorPresent?: boolean;
   pageMetadata?: BrowserScreenshotPageMetadata;
   layoutStable: boolean;
 };
@@ -1695,6 +1696,20 @@ const capturePageWithBrowserRuntime = async (
             mimeType?: string;
           }
         >();
+        let javascriptErrorPresent = false;
+        cdp.on("Runtime.exceptionThrown", () => {
+          javascriptErrorPresent = true;
+        });
+        cdp.on("Runtime.consoleAPICalled", (params) => {
+          if (
+            typeof params === "object" &&
+            params !== null &&
+            "type" in params &&
+            params.type === "error"
+          ) {
+            javascriptErrorPresent = true;
+          }
+        });
         cdp.on("Network.requestWillBeSent", (params) => {
           if (
             typeof params !== "object" ||
@@ -1771,6 +1786,7 @@ const capturePageWithBrowserRuntime = async (
           );
           let navigationMs = 0;
           if (options.url !== previousUrl) {
+            javascriptErrorPresent = false;
             redirectsByFrame.clear();
             documentResponsesByFrame.clear();
             const navigationStartedAt = Date.now();
@@ -2009,6 +2025,7 @@ const capturePageWithBrowserRuntime = async (
                 }),
             redirects,
             ...readiness,
+            ...(javascriptErrorPresent ? { javascriptErrorPresent: true } : {}),
           };
           if (images === undefined) {
             delete layout.images;

@@ -61,6 +61,7 @@ class FakeWebSocket {
   readonly readinessWidths?: number[];
   readonly lifecycleFrames: string[];
   readonly pendingFonts: boolean;
+  readonly consoleError: boolean;
   imageInspectionFinished = false;
   screenshotStartedBeforeImageInspectionFinished = false;
   private currentUrl = "about:blank";
@@ -71,7 +72,8 @@ class FakeWebSocket {
     subframeStatus?: number,
     readinessWidths?: number[],
     lifecycleFrames = ["main"],
-    pendingFonts = false
+    pendingFonts = false,
+    consoleError = false
   ) {
     this.status = status;
     this.finalUrl = finalUrl;
@@ -79,6 +81,7 @@ class FakeWebSocket {
     this.readinessWidths = readinessWidths;
     this.lifecycleFrames = lifecycleFrames;
     this.pendingFonts = pendingFonts;
+    this.consoleError = consoleError;
     setTimeout(() => this.emit("open"), 0);
   }
 
@@ -408,6 +411,14 @@ class FakeWebSocket {
                   mimeType: "text/html",
                 },
               },
+            }),
+          });
+        }
+        if (this.consoleError) {
+          this.emit("message", {
+            data: JSON.stringify({
+              method: "Runtime.consoleAPICalled",
+              params: { type: "error" },
             }),
           });
         }
@@ -1918,6 +1929,34 @@ test("returns final URL, redirects, and HTTP error status", async () => {
     documentReadyState: "complete",
     layoutStable: true,
   });
+});
+
+test("reports React error boundary errors logged by the page", async () => {
+  const layout = await captureBrowserScreenshot(
+    {
+      url: "https://example.com",
+      output: "/tmp/react-error.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "networkidle",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        true
+      ),
+    })
+  );
+
+  expect(layout.navigation?.javascriptErrorPresent).toBe(true);
 });
 
 test("ignores child-frame document responses when reporting navigation", async () => {
