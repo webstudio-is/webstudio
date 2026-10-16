@@ -1,10 +1,12 @@
 import type { AssetQueryPreviewDiagnostics } from "@webstudio-is/content-engine";
 import {
+  Flex,
   PanelBanner,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
   Text,
+  theme,
 } from "@webstudio-is/design-system";
 import { CopyIcon } from "@webstudio-is/icons";
 import type { ReactNode } from "react";
@@ -137,6 +139,7 @@ const DiagnosticsSection = ({
   const [open, setOpen] = useOpenState(label, isOpen);
   return (
     <CollapsibleSectionRoot
+      fullWidth
       isOpen={open}
       onOpenChange={setOpen}
       trigger={
@@ -160,7 +163,13 @@ const DiagnosticsSection = ({
         </SectionTitle>
       }
     >
-      {children}
+      <Flex
+        direction="column"
+        gap="2"
+        css={{ paddingInline: theme.panel.paddingInline }}
+      >
+        {children}
+      </Flex>
     </CollapsibleSectionRoot>
   );
 };

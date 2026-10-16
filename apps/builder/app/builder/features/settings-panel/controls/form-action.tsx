@@ -144,7 +144,12 @@ export const FormActionControl = ({
   // The SectionTitle can extend past the original control-height header slot.
   // Keep the list in the same flow position as the original Action header.
   return (
-    <Grid css={{ gridTemplateRows: `${theme.sizes.controlHeight} auto` }}>
+    <Grid
+      css={{
+        paddingInline: 0,
+        gridTemplateRows: `${theme.sizes.controlHeight} auto`,
+      }}
+    >
       <SectionTitle
         collapsible={false}
         suffix={

@@ -49,7 +49,7 @@ export const AuthSection = ({
     password: false,
   });
   return (
-    <Grid gap={2}>
+    <Grid gap={2} css={{ paddingInline: theme.panel.paddingInline }}>
       <Grid gap={1}>
         <CheckboxAndLabel>
           <Checkbox

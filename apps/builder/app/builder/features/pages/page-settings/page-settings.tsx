@@ -185,7 +185,7 @@ export const FormFields = ({
             </Text>
           </PanelBanner>
         )}
-        <CollapsibleSection label="General">
+        <CollapsibleSection fullWidth label="General">
           <GeneralSection
             autoSelect={autoSelect}
             errors={errors}
@@ -207,7 +207,7 @@ export const FormFields = ({
         </CollapsibleSection>
 
         {showAuthSection && (
-          <CollapsibleSection label="Authentication">
+          <CollapsibleSection fullWidth label="Authentication">
             <AuthSection
               values={values}
               errors={errors}
@@ -219,7 +219,7 @@ export const FormFields = ({
         )}
 
         {showTextContentSection && values.documentType === "text" && (
-          <CollapsibleSection label="Content">
+          <CollapsibleSection fullWidth label="Content">
             <TextContentSection
               values={values}
               errors={errors}
@@ -229,7 +229,7 @@ export const FormFields = ({
         )}
 
         {values.documentType === "html" && (
-          <CollapsibleSection label="Search">
+          <CollapsibleSection fullWidth label="Search">
             <SearchSection
               values={values}
               errors={errors}
@@ -255,7 +255,7 @@ export const FormFields = ({
         )}
 
         {values.documentType === "html" && (
-          <CollapsibleSection label="Social image">
+          <CollapsibleSection fullWidth label="Social image">
             <SocialImageSection
               values={values}
               errors={errors}
@@ -270,7 +270,7 @@ export const FormFields = ({
         )}
 
         {values.documentType === "html" && (
-          <CollapsibleSection label="Custom metadata">
+          <CollapsibleSection fullWidth label="Custom metadata">
             <CustomMetadataSection
               values={values}
               errors={errors}
@@ -285,7 +285,7 @@ export const FormFields = ({
           (project?.marketplaceApprovalStatus === "PENDING" ||
             project?.marketplaceApprovalStatus === "APPROVED" ||
             project?.marketplaceApprovalStatus === "REJECTED") && (
-            <CollapsibleSection label="Marketplace">
+            <CollapsibleSection fullWidth label="Marketplace">
               <MarketplaceSection values={values} onChange={onChange} />
             </CollapsibleSection>
           )}

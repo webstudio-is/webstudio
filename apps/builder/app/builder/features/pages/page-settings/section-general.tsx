@@ -306,7 +306,11 @@ export const GeneralSection = ({
   const isHomePageId = useId();
   const documentTypeId = useId();
   return (
-    <>
+    <Flex
+      direction="column"
+      gap="2"
+      css={{ paddingInline: theme.panel.paddingInline }}
+    >
       <Grid gap={1}>
         <Label htmlFor={nameId}>{nameLabel}</Label>
         <InputErrorsTooltip errors={errors.name}>
@@ -452,6 +456,6 @@ export const GeneralSection = ({
           />
         </Grid>
       )}
-    </>
+    </Flex>
   );
 };

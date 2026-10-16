@@ -111,7 +111,7 @@ export const SearchSection = ({
     )
   );
   return (
-    <Grid gap={2}>
+    <Grid gap={2} css={{ paddingInline: theme.panel.paddingInline }}>
       <Grid gap={2}>
         <Text color="subtle">
           Optimize the way this page appears in search engine results pages.

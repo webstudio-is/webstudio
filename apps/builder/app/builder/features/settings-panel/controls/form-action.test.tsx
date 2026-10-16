@@ -136,9 +136,15 @@ test("Action header and menu align while rows retain their original geometry", a
         <div data-properties-section>
           <CollapsibleSectionWithAddButton
             label="Properties & attributes"
+            fullWidth
             onAdd={vi.fn()}
           >
-            <div />
+            <Box
+              data-properties-content
+              css={{ paddingInline: theme.panel.paddingInline }}
+            >
+              Property content
+            </Box>
           </CollapsibleSectionWithAddButton>
         </div>
         <Grid css={{ paddingBottom: theme.panel.paddingBlock }}>
@@ -195,6 +201,14 @@ test("Action header and menu align while rows retain their original geometry", a
       </TooltipProvider>
     )
   );
+
+  const propertyContent = container.querySelector<HTMLElement>(
+    "[data-properties-content]"
+  )!;
+  expect(
+    getComputedStyle(propertyContent.parentElement!).paddingInlineStart
+  ).toBe("0px");
+  expect(getComputedStyle(propertyContent).paddingInlineStart).toBe("12px");
 
   const propertyButton = container
     .querySelector("[data-properties-section]")!
