@@ -145,6 +145,9 @@ export const FormActionControl = ({
     <Grid css={{ paddingInline: 0 }}>
       <SectionTitle
         collapsible={false}
+        suffixPlaceholder={
+          <SectionTitleButton aria-label="Add action" prefix={<PlusIcon />} />
+        }
         suffix={
           resources.length === 0 ? (
             <Tooltip

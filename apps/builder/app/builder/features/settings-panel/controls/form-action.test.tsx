@@ -90,10 +90,7 @@ test("Action + explains how to add a resource when none are available", async ()
 
   const addButton = container
     .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-    .item(0)!;
-  expect(container.querySelectorAll('[aria-label="Add action"]')).toHaveLength(
-    1
-  );
+    .item(1)!;
   expect(addButton.disabled).toBe(false);
   expect(addButton.dataset.buttonColor).toBe("ghost");
   await act(async () => userEvent.click(addButton));
@@ -195,13 +192,13 @@ test("Action header and menu align while items sit below the full header", async
   const propertyButton = container
     .querySelector("[data-properties-section]")!
     .querySelectorAll<HTMLButtonElement>('[data-button-color="ghost"]')
-    .item(0)!;
+    .item(1)!;
   const actionButton = container
     .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-    .item(0)!;
+    .item(1)!;
   const variableButton = container
     .querySelectorAll<HTMLButtonElement>('[aria-label="Add variable"]')
-    .item(0)!;
+    .item(1)!;
   expect(actionButton.tabIndex).toBe(0);
   const propertyHeader = propertyButton.closest("div[data-state]")!;
   const actionHeader = actionButton.closest("div[data-state]")!;
@@ -397,7 +394,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
 
   const addButton = container
     .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-    .item(0)!;
+    .item(1)!;
   expect(addButton.dataset.buttonColor).toBe("ghost");
 
   await act(async () =>
@@ -479,7 +476,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
   expect(
     container
       .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-      .item(0)?.disabled
+      .item(1)?.disabled
   ).toBe(true);
 });
 
@@ -550,7 +547,7 @@ test("a Form can select a Resource defined outside its scope", async () => {
     userEvent.click(
       container
         .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-        .item(0)!
+        .item(1)!
     )
   );
   const requestOption = Array.from(
@@ -736,7 +733,7 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
   expect(document.querySelector('[role="dialog"]')).toBeNull();
   const addButton = container
     .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-    .item(0)!;
+    .item(1)!;
   await act(async () => await userEvent.hover(addButton));
   await expect
     .poll(() => document.querySelector('[role="tooltip"]')?.textContent)
@@ -853,7 +850,7 @@ test("a legacy Action stays visible and can be removed", async () => {
   );
   const addButton = container
     .querySelectorAll<HTMLButtonElement>('[aria-label="Add action"]')
-    .item(0)!;
+    .item(1)!;
   await act(async () => addButton.focus());
   await act(async () => userEvent.tab());
   expect(document.activeElement).toBe(row);
