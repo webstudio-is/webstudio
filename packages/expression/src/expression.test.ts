@@ -127,11 +127,18 @@ describe("lint expression", () => {
     message,
   });
 
-  const warn = (from: number, to: number, message: string): Diagnostic => ({
+  const warn = (
+    from: number,
+    to: number,
+    message: string,
+    identifier: string
+  ): Diagnostic => ({
     from,
     to,
     severity: "warning",
     message,
+    code: "unknown-identifier",
+    identifier,
   });
 
   test("forbid empty expression", () => {
@@ -246,7 +253,7 @@ describe("lint expression", () => {
         allowAssignment: true,
         availableVariables: new Set(["c"]),
       })
-    ).toEqual([warn(1, 2, `"a" is not defined in the scope`)]);
+    ).toEqual([warn(1, 2, `"a" is not defined in the scope`, "a")]);
   });
 
   test("lint assignment operators and targets", () => {
@@ -306,8 +313,8 @@ describe("lint expression", () => {
     expect(
       lintExpression({ expression: ` a = b + 1`, allowAssignment: true })
     ).toEqual([
-      warn(5, 6, `"b" is not defined in the scope`),
-      warn(1, 2, `"a" is not defined in the scope`),
+      warn(5, 6, `"b" is not defined in the scope`, "b"),
+      warn(1, 2, `"a" is not defined in the scope`, "a"),
     ]);
     expect(
       lintExpression({

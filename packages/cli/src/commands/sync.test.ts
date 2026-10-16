@@ -859,7 +859,7 @@ test("throws handled error when local project config is missing", async () => {
   ).rejects.toThrow("Handled CLI error");
 
   expect(indicator.stop).toHaveBeenCalledWith(
-    "Local config file is not found. Please make sure current directory is a webstudio project",
+    expect.stringContaining("webstudio init --link <api-share-link>"),
     2
   );
 });

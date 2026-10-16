@@ -326,6 +326,7 @@ export const buildRouter = router({
     .input(checkProjectBuildPermissionInput)
     .query(async ({ ctx, input }) => {
       await assertProjectBuildPermit({ ctx, projectId: input.projectId });
+      return { supportsStructuredImportErrors: true };
     }),
 
   importProjectBundle: procedure.input(importProjectBundleInput).mutation(

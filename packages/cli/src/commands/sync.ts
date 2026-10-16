@@ -206,14 +206,11 @@ export const sync = async (
     try {
       connection = await dependencies.resolveApiConnection(dependencies);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      syncing.stop(
-        message.includes("Local config file")
-          ? "Local config file is not found. Please make sure current directory is a webstudio project"
-          : message.includes("Project config")
-            ? "Project config is not found, please run webstudio link"
-            : message,
-        2
+      stopSpinnerWithError(
+        syncing,
+        error,
+        "Unable to load project configuration",
+        "sync"
       );
       throw new HandledCliError();
     }

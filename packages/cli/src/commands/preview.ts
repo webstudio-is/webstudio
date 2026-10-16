@@ -226,6 +226,10 @@ type PreviewProcessOwner = {
   previewPid?: unknown;
 };
 
+export class PreviewCleanupError extends Error {
+  readonly code = "PREVIEW_CLEANUP_FAILED";
+}
+
 export const createPreviewCleanupError = async ({
   previewProjectDir,
   lockedPath,
@@ -255,7 +259,7 @@ export const createPreviewCleanupError = async ({
     pids.length === 0
       ? "Stop the CLI/MCP process that started preview. On WSL/Windows, use PowerShell Get-CimInstance Win32_Process to find a command whose path is inside the locked preview directory, verify it belongs to this project, and stop only that PID."
       : `Stop preview from its owning CLI/MCP session. If that owner is gone, verify the recorded PID belongs to this project, then terminate only its tree (WSL/Windows: taskkill.exe /pid ${pids.at(-1)} /t /f; Linux/macOS: kill -- -${pids.at(-1)}).`;
-  return new Error(
+  return new PreviewCleanupError(
     `PREVIEW_CLEANUP_FAILED: Could not remove generated preview path ${lockedPath}. A preview process may still have it open. ${ownerHint} ${recovery}`,
     { cause }
   );
@@ -340,10 +344,7 @@ export const ensurePreviewDependencies = async (
       });
     }
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.startsWith("PREVIEW_CLEANUP_FAILED:")
-    ) {
+    if (error instanceof PreviewCleanupError) {
       throw error;
     }
     // Continue with the CLI dependency tree or an isolated install.

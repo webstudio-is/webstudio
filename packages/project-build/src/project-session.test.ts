@@ -3,6 +3,7 @@ import { encodeDataVariableId, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { BuilderNamespace } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
 import {
+  ProjectSessionBusyError,
   createDefaultProjectSessionCompatibility,
   createProjectSession,
   hasProjectSessionPermit,
@@ -136,7 +137,7 @@ const createOneTimeConflictingStorage = (
       if (saveAttempts === 1) {
         revision = "rev-concurrent";
         current = { ...current, revision };
-        throw new Error("Project session snapshot changed on disk.");
+        throw new ProjectSessionBusyError();
       }
       expect(options.expectedRevision).toBe(revision);
       revision = "rev-reconciled";
@@ -628,7 +629,7 @@ describe("project session", () => {
             revision: "rev-concurrent",
           });
           revision = current.revision;
-          throw new Error("Project session snapshot changed on disk.");
+          throw new ProjectSessionBusyError();
         }
         expect(options.expectedRevision).toBe(revision);
         revision = "rev-retry";
@@ -685,7 +686,7 @@ describe("project session", () => {
         return createPersistedSnapshot({ revision: "rev-concurrent" });
       },
       async save() {
-        throw new Error("Project session snapshot changed on disk.");
+        throw new ProjectSessionBusyError();
       },
       async clear() {},
     };
@@ -1018,7 +1019,7 @@ describe("project session", () => {
       },
       async save() {
         saveAttempts += 1;
-        throw new Error("Project session snapshot changed on disk.");
+        throw new ProjectSessionBusyError();
       },
       async clear() {},
     };

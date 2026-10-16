@@ -260,7 +260,7 @@ test("reports only the shape of an untransformable server response", () => {
           status: 200,
           headers: { "content-type": "application/json" },
         }),
-        responseJSON: [{ result: { data: "private customer content" } }],
+        responseJSON: [{ result: "private customer content" }],
       },
     }
   );
@@ -650,7 +650,7 @@ describe("cli project session storage", () => {
         },
         { expectedRevision: "stale" }
       )
-    ).rejects.toThrow("changed on disk");
+    ).rejects.toMatchObject({ code: "PROJECT_SESSION_BUSY" });
 
     await expect(
       storage.save(
@@ -1136,9 +1136,17 @@ describe("cli project session transport", () => {
       getBuildSnapshot: async (input) => {
         includes.push(input.include);
         if (input.include?.includes("projectSettings")) {
-          throw new Error(
-            'invalid_enum_value: received "projectSettings", expected one of pages|folders'
-          );
+          throw Object.assign(new Error("Unsupported include"), {
+            data: {
+              code: "BAD_REQUEST",
+              issues: [
+                {
+                  code: "invalid_value",
+                  path: ["include", input.include.indexOf("projectSettings")],
+                },
+              ],
+            },
+          });
         }
         return {
           projectId: "project-1",

@@ -346,7 +346,7 @@ const wait = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
-class ProjectSessionBusyError extends Error {
+export class ProjectSessionBusyError extends Error {
   code = "PROJECT_SESSION_BUSY";
 
   constructor(options: { cause?: unknown } = {}) {
@@ -522,12 +522,6 @@ const redactKeys = new Set([
 const getProjectSessionErrorCode = (error: unknown) => {
   if (error instanceof BuilderRuntimeError) {
     return error.code;
-  }
-  if (
-    error instanceof Error &&
-    error.message.includes("Project session snapshot changed on disk")
-  ) {
-    return "PROJECT_SESSION_BUSY";
   }
   if (typeof error === "object" && error !== null) {
     if ("code" in error) {
