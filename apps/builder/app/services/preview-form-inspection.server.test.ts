@@ -207,6 +207,44 @@ test("prepared URL-encoded inspection retains repeated fields", async () => {
   expect(snapshot.request.body).toEqual({ tag: ["one", "two"] });
 });
 
+test.each(["native", "prepared"] as const)(
+  "%s HTTP inspection preserves malformed JSON as text",
+  async (source) => {
+    const body = '{"message":';
+    const url = "https://example.com/send";
+    const headers = new Headers({ "content-type": "application/json" });
+    const request =
+      source === "native"
+        ? new Request(url, { method: "POST", headers, body })
+        : {
+            type: "prepared-http" as const,
+            url,
+            method: "POST",
+            headers,
+            body,
+          };
+    const snapshot = await capturePreviewResourceExchange(
+      "resource",
+      {
+        request,
+        response: {
+          status: 200,
+          statusText: "OK",
+          headers: new Headers(),
+          data: "accepted",
+        },
+      },
+      {
+        publicValues: new Set(),
+        privateValues: new Set(),
+        allowRequestBody: true,
+      }
+    );
+
+    expect(snapshot.request.body).toBe(body);
+  }
+);
+
 test("inspection preserves repeated query parameters and sanitizes relative Location credentials", async () => {
   const snapshot = await capturePreviewResourceExchange(
     "resource",

@@ -25,17 +25,6 @@ const formEntries = (fields: FormData | URLSearchParams) => {
   return body;
 };
 
-const parseTextBody = (body: string, contentType: string): unknown => {
-  if (/application\/json/i.test(contentType)) {
-    try {
-      return JSON.parse(body);
-    } catch {
-      // Preserve invalid JSON as text for inspection.
-    }
-  }
-  return body;
-};
-
 export const capturePreviewResourceExchange = async (
   resourceId: string,
   exchange: ResourceExchange,
@@ -243,27 +232,32 @@ export const capturePreviewResourceExchange = async (
       : { body, truncated: limit.truncated };
   };
   let requestBody: unknown;
-  if (request instanceof Request) {
+  if (request instanceof Request || isPreparedHttpRequest(request)) {
     const contentType = request.headers.get("content-type") ?? "";
-    if (
-      /multipart\/form-data|application\/x-www-form-urlencoded/i.test(
+    let body: unknown;
+    if (request instanceof Request) {
+      body = /multipart\/form-data|application\/x-www-form-urlencoded/i.test(
         contentType
       )
-    ) {
-      const fields = await request.formData();
-      requestBody = formEntries(fields);
+        ? await request.formData()
+        : await request.text();
     } else {
-      requestBody = parseTextBody(await request.text(), contentType);
+      body = request.body;
     }
-  } else if (isPreparedHttpRequest(request)) {
-    const body = request.body;
     if (body instanceof FormData || body instanceof URLSearchParams) {
       requestBody = formEntries(body);
     } else if (typeof body === "string") {
-      const contentType = request.headers.get("content-type") ?? "";
-      requestBody = /application\/x-www-form-urlencoded/i.test(contentType)
-        ? formEntries(new URLSearchParams(body))
-        : parseTextBody(body, contentType);
+      if (/application\/x-www-form-urlencoded/i.test(contentType)) {
+        requestBody = formEntries(new URLSearchParams(body));
+      } else if (/application\/json/i.test(contentType)) {
+        try {
+          requestBody = JSON.parse(body);
+        } catch {
+          requestBody = body;
+        }
+      } else {
+        requestBody = body;
+      }
     } else {
       requestBody = body === undefined ? "" : "[unavailable]";
     }
