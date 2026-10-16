@@ -19,7 +19,7 @@ import {
   AuthorizationError,
   authorizeProject,
 } from "@webstudio-is/trpc-interface/index.server";
-import { createContext } from "~/shared/context.server";
+import { createContext, InvalidAuthTokenError } from "~/shared/context.server";
 import { getPlanInfo } from "@webstudio-is/plans/index.server";
 import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { dashboardPath, isBuilder, isDashboard } from "~/shared/router-utils";
@@ -82,7 +82,18 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
     // await checkCsrf(request);
   }
 
-  const context = await createContext(request);
+  let context: Awaited<ReturnType<typeof createContext>>;
+  try {
+    context = await createContext(request);
+  } catch (error) {
+    if (error instanceof InvalidAuthTokenError) {
+      throw new Response(
+        "This share link is invalid or expired. Ask the project owner for a new link.",
+        { status: 401, statusText: "Unauthorized" }
+      );
+    }
+    throw error;
+  }
 
   if (context.authorization.type === "service") {
     throw new AuthorizationError("Service calls are not allowed");
@@ -124,12 +135,6 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
 
     const start = Date.now();
     const project = await projectApi.loadById(projectId, context);
-
-    if (project === null) {
-      throw new Response(`Project "${projectId}" not found`, {
-        status: 404,
-      });
-    }
 
     const authPermit =
       (await authorizeProject.getProjectPermit(
@@ -184,10 +189,17 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
         .eq("isDeleted", false)
         .eq("members.userId", currentUserId ?? noMatchId)
         .is("members.removedAt", null)
-        .single();
+        .maybeSingle();
 
       if (workspace.error) {
         throw workspace.error;
+      }
+
+      if (workspace.data === null) {
+        throw new Response(
+          "This project's workspace is unavailable. Contact the project owner for help.",
+          { status: 404, statusText: "Workspace not found" }
+        );
       }
 
       const planResult = await getPlanInfo([workspace.data.userId], context);
@@ -275,6 +287,12 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
       }
     );
   } catch (error) {
+    if (error instanceof projectApi.ProjectNotFoundError) {
+      throw new Response(error.message, {
+        status: 404,
+        statusText: "Project not found",
+      });
+    }
     if (error instanceof AuthorizationError) {
       // try to re-login user if he has no access to the project
       throw await authWsLoader(loaderArgs);

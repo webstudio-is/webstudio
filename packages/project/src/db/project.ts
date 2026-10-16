@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { createId } from "@webstudio-is/sdk";
 import {
   authorizeProject,
@@ -41,6 +42,16 @@ export const findProjectIdsByUserId = async (
   return result.data;
 };
 
+export class ProjectNotFoundError extends TRPCError {
+  constructor() {
+    super({
+      code: "NOT_FOUND",
+      message: "This project is unavailable or no longer exists.",
+      cause: { webstudioCode: "NOT_FOUND" },
+    });
+  }
+}
+
 export type Project = Awaited<ReturnType<typeof loadById>>;
 
 export const loadById = async (projectId: string, context: AppContext) => {
@@ -66,10 +77,13 @@ export const loadById = async (projectId: string, context: AppContext) => {
     )
     .eq("id", projectId)
     .eq("isDeleted", false)
-    .single();
+    .maybeSingle();
 
   if (data.error) {
     throw data.error;
+  }
+  if (data.data === null) {
+    throw new ProjectNotFoundError();
   }
   const { latestStaticBuild, ...project } = data.data;
 

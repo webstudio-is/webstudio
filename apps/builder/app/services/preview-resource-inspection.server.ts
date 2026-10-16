@@ -1,4 +1,7 @@
-import type { ResourceExchange } from "@webstudio-is/sdk/runtime";
+import type {
+  PreparedHttpRequest,
+  ResourceExchange,
+} from "@webstudio-is/sdk/runtime";
 import type { PreviewResourceExchange } from "~/shared/preview-resource-inspection";
 
 const sensitive =
@@ -7,6 +10,20 @@ const publicHeader =
   /^(accept|content-type|content-length|cache-control|expires|date|etag|last-modified|location|vary)$/i;
 const redacted = "[redacted]";
 const maxBodyLength = 64 * 1024;
+
+const isPreparedHttpRequest = (
+  request: ResourceExchange["request"]
+): request is PreparedHttpRequest =>
+  "type" in request && request.type === "prepared-http";
+
+const formEntries = (fields: FormData | URLSearchParams) => {
+  const body: Record<string, unknown> = {};
+  for (const name of new Set(fields.keys())) {
+    const values = fields.getAll(name);
+    body[name] = values.length === 1 ? values[0] : values;
+  }
+  return body;
+};
 
 export const capturePreviewResourceExchange = async (
   resourceId: string,
@@ -73,12 +90,14 @@ export const capturePreviewResourceExchange = async (
   const request = exchange.request;
   const kind =
     exchange.kind ??
-    (!(request instanceof Request) && request.control === "email"
+    (!(request instanceof Request) &&
+    !isPreparedHttpRequest(request) &&
+    request.control === "email"
       ? "email"
       : "http");
   const visibleValues = new Set([...publicValues, ...publicValueAliases]);
   const requestHeaders =
-    request instanceof Request
+    request instanceof Request || isPreparedHttpRequest(request)
       ? request.headers
       : new Headers(
           request.headers.map(({ name, value }) => [name, String(value)])
@@ -213,23 +232,24 @@ export const capturePreviewResourceExchange = async (
       : { body, truncated: limit.truncated };
   };
   let requestBody: unknown;
-  if (request instanceof Request) {
+  if (request instanceof Request || isPreparedHttpRequest(request)) {
     const contentType = request.headers.get("content-type") ?? "";
-    if (
-      /multipart\/form-data|application\/x-www-form-urlencoded/i.test(
+    let body: unknown;
+    if (request instanceof Request) {
+      body = /multipart\/form-data|application\/x-www-form-urlencoded/i.test(
         contentType
       )
-    ) {
-      const fields = await request.formData();
-      const body: Record<string, unknown> = {};
-      for (const name of new Set(fields.keys())) {
-        const values = fields.getAll(name);
-        body[name] = values.length === 1 ? values[0] : values;
-      }
-      requestBody = body;
+        ? await request.formData()
+        : await request.text();
     } else {
-      const body = await request.text();
-      if (/application\/json/i.test(contentType)) {
+      body = request.body;
+    }
+    if (body instanceof FormData || body instanceof URLSearchParams) {
+      requestBody = formEntries(body);
+    } else if (typeof body === "string") {
+      if (/application\/x-www-form-urlencoded/i.test(contentType)) {
+        requestBody = formEntries(new URLSearchParams(body));
+      } else if (/application\/json/i.test(contentType)) {
         try {
           requestBody = JSON.parse(body);
         } catch {
@@ -238,6 +258,8 @@ export const capturePreviewResourceExchange = async (
       } else {
         requestBody = body;
       }
+    } else {
+      requestBody = body === undefined ? "" : "[unavailable]";
     }
   } else {
     requestBody = request.email ?? request.body;

@@ -1101,10 +1101,9 @@ test("formats unknown MCP resource failures as structured JSON", () => {
 });
 
 test("formats missing Builder API access in MCP single-op-call failures", () => {
-  const error = Object.assign(
-    new Error("Project owner can't be found for token token-1"),
-    { code: "INTERNAL_SERVER_ERROR" }
-  );
+  const error = Object.assign(new Error("The credential has been revoked"), {
+    code: "INVALID_AUTH_TOKEN",
+  });
 
   expect(
     createMcpSingleOpCallErrorPayload({

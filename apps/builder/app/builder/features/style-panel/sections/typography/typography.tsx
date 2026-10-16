@@ -72,7 +72,11 @@ export const properties = [
 export const Section = () => {
   return (
     <StyleSection label="Typography" properties={properties}>
-      <Flex gap="2" direction="column">
+      <Flex
+        gap="2"
+        direction="column"
+        css={{ paddingInline: theme.panel.paddingInline }}
+      >
         <TypographySectionFont />
         <TypographySectionSizing />
         <TypographySectionAdvanced />

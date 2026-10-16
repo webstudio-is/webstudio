@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { type AppContext } from "@webstudio-is/trpc-interface/index.server";
 import env from "~/env/env.server";
 import { authenticator } from "~/services/auth.server";
@@ -22,6 +23,16 @@ import {
   apiClientContractVersionHeader,
   apiClientVersionHeader,
 } from "@webstudio-is/trpc-interface/api-compatibility";
+
+export class InvalidAuthTokenError extends TRPCError {
+  constructor() {
+    super({
+      code: "UNAUTHORIZED",
+      message: "The authorization token is invalid or no longer available",
+      cause: { webstudioCode: "INVALID_AUTH_TOKEN" },
+    });
+  }
+}
 
 export const extractAuthFromRequest = async (request: Request) => {
   if (isCanvas(request)) {
@@ -72,17 +83,19 @@ const createTokenAuthorizationContext = async (
     .from("AuthorizationToken")
     .select("project:Project(id, userId)")
     .eq("token", authToken)
-    .single();
+    .maybeSingle();
 
   if (projectOwnerIdByToken.error) {
-    throw new Error(`Project owner can't be found for token ${authToken}`);
+    throw new Error("Failed to verify authorization token");
+  }
+
+  if (projectOwnerIdByToken.data === null) {
+    throw new InvalidAuthTokenError();
   }
 
   const ownerId = projectOwnerIdByToken.data.project?.userId ?? null;
   if (ownerId === null) {
-    throw new Error(
-      `Project ${projectOwnerIdByToken.data.project?.id} has null userId`
-    );
+    throw new InvalidAuthTokenError();
   }
 
   return {

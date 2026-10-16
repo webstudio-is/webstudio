@@ -61,6 +61,11 @@ class FakeWebSocket {
   readonly readinessWidths?: number[];
   readonly lifecycleFrames: string[];
   readonly pendingFonts: boolean;
+  readonly runtimeErrorScenario?:
+    | "console-error"
+    | "stale-outgoing-error"
+    | "hash-navigation-error";
+  private navigationCount = 0;
   imageInspectionFinished = false;
   screenshotStartedBeforeImageInspectionFinished = false;
   private currentUrl = "about:blank";
@@ -71,7 +76,8 @@ class FakeWebSocket {
     subframeStatus?: number,
     readinessWidths?: number[],
     lifecycleFrames = ["main"],
-    pendingFonts = false
+    pendingFonts = false,
+    runtimeErrorScenario?: FakeWebSocket["runtimeErrorScenario"]
   ) {
     this.status = status;
     this.finalUrl = finalUrl;
@@ -79,6 +85,7 @@ class FakeWebSocket {
     this.readinessWidths = readinessWidths;
     this.lifecycleFrames = lifecycleFrames;
     this.pendingFonts = pendingFonts;
+    this.runtimeErrorScenario = runtimeErrorScenario;
     setTimeout(() => this.emit("open"), 0);
   }
 
@@ -359,12 +366,34 @@ class FakeWebSocket {
       return;
     }
     setTimeout(() => {
+      const navigationNumber = this.navigationCount + 1;
+      const sameDocumentNavigation =
+        message.method === "Page.navigate" &&
+        this.runtimeErrorScenario === "hash-navigation-error" &&
+        navigationNumber === 2;
       respond(
         message.method === "Page.navigate"
-          ? { frameId: "main", loaderId: "main-loader" }
+          ? sameDocumentNavigation
+            ? { frameId: "main" }
+            : { frameId: "main", loaderId: "main-loader" }
           : {}
       );
       if (message.method === "Page.navigate") {
+        this.navigationCount = navigationNumber;
+        const executionContextId = navigationNumber;
+        if (!sameDocumentNavigation) {
+          this.emit("message", {
+            data: JSON.stringify({
+              method: "Runtime.executionContextCreated",
+              params: {
+                context: {
+                  id: executionContextId,
+                  auxData: { frameId: "main", isDefault: true },
+                },
+              },
+            }),
+          });
+        }
         const requestedUrl = String(message.params?.url);
         this.currentUrl = this.finalUrl ?? requestedUrl;
         if (this.currentUrl !== requestedUrl) {
@@ -411,7 +440,29 @@ class FakeWebSocket {
             }),
           });
         }
-        for (const frameId of this.lifecycleFrames) {
+        const shouldLogError =
+          this.runtimeErrorScenario === "console-error" ||
+          ((this.runtimeErrorScenario === "stale-outgoing-error" ||
+            sameDocumentNavigation) &&
+            navigationNumber === 2);
+        if (shouldLogError) {
+          this.emit("message", {
+            data: JSON.stringify({
+              method: "Runtime.consoleAPICalled",
+              params: {
+                type: "error",
+                executionContextId:
+                  shouldLogError &&
+                  this.runtimeErrorScenario !== "console-error"
+                    ? 1
+                    : executionContextId,
+              },
+            }),
+          });
+        }
+        for (const frameId of sameDocumentNavigation
+          ? []
+          : this.lifecycleFrames) {
           this.emit("message", {
             data: JSON.stringify({
               method: "Page.lifecycleEvent",
@@ -1918,6 +1969,116 @@ test("returns final URL, redirects, and HTTP error status", async () => {
     documentReadyState: "complete",
     layoutStable: true,
   });
+});
+
+test("reports React error boundary errors logged by the page", async () => {
+  const layout = await captureBrowserScreenshot(
+    {
+      url: "https://example.com",
+      output: "/tmp/react-error.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "networkidle",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        "console-error"
+      ),
+    })
+  );
+
+  expect(layout.navigation?.javascriptErrorPresent).toBe(true);
+});
+
+test("does not attribute an outgoing page error to the next route", async () => {
+  const options = {
+    url: "https://example.com/one",
+    output: "/tmp/one.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(
+    options,
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        "stale-outgoing-error"
+      ),
+    })
+  );
+
+  const layouts = await session.capturePage([
+    options,
+    {
+      ...options,
+      url: "https://example.com/two",
+      output: "/tmp/two.png",
+    },
+  ]);
+
+  expect(
+    layouts.map(({ navigation }) => navigation?.javascriptErrorPresent)
+  ).toEqual([undefined, undefined]);
+  await session.close();
+});
+
+test("keeps tracking the document context across hash navigations", async () => {
+  const options = {
+    url: "https://example.com/one",
+    output: "/tmp/one.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(
+    options,
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        "hash-navigation-error"
+      ),
+    })
+  );
+
+  const layouts = await session.capturePage([
+    options,
+    {
+      ...options,
+      url: "https://example.com/one#section",
+      output: "/tmp/one-hash.png",
+    },
+  ]);
+
+  expect(
+    layouts.map(({ navigation }) => navigation?.javascriptErrorPresent)
+  ).toEqual([undefined, true]);
+  await session.close();
 });
 
 test("ignores child-frame document responses when reporting navigation", async () => {

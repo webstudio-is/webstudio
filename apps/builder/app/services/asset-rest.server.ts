@@ -18,7 +18,6 @@ import {
   PostgresAssetRepository,
 } from "@webstudio-is/asset-uploader/server";
 import type { ProjectPermit } from "@webstudio-is/trpc-interface/index.server";
-import { assetFolderIssue } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { assetDescriptionEncoding } from "@webstudio-is/protocol/asset-resource-api";
@@ -229,7 +228,9 @@ const getAssetRestErrorStatus = (error: unknown) => {
   if (
     error instanceof ZodError &&
     error.issues.some(
-      ({ message }) => message === assetFolderIssue.duplicateName
+      (issue) =>
+        issue.code === "custom" &&
+        issue.params?.assetFolderIssue === "duplicateName"
     )
   ) {
     return 409;

@@ -154,15 +154,34 @@ describe("getCliErrorMessage", () => {
     );
   });
 
-  test("explains missing Builder API access for opaque project owner token errors", () => {
-    const error = Object.assign(
-      new Error("Project owner can't be found for token token-1"),
-      { data: { code: "INTERNAL_SERVER_ERROR" } }
-    );
+  test("explains missing Builder API access from structured codes", () => {
+    const error = Object.assign(new Error("The credential has been revoked"), {
+      data: { code: "UNAUTHORIZED", webstudioCode: "INVALID_AUTH_TOKEN" },
+    });
 
     expect(isMissingApiAccessError(error)).toBe(true);
     expect(getCliErrorMessage(error)).toBe(
       "This project cannot be accessed through the Builder API with the current share link/token. Enable API access in the share-link settings, then relink the project with `webstudio init --link <share-link> --json`."
     );
   });
+});
+
+test("does not classify authorization failures by message text", () => {
+  expect(
+    isMissingApiAccessError(
+      new Error("Project owner can't be found for token token-1")
+    )
+  ).toBe(false);
+  expect(
+    isMissingApiAccessError({
+      data: { webstudioCode: "API_ACCESS_DISABLED" },
+      message: "Any wording",
+    })
+  ).toBe(true);
+  expect(
+    isMissingApiAccessError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "The credential has been revoked",
+    })
+  ).toBe(false);
 });

@@ -121,6 +121,7 @@ export const SectionTitle = forwardRef(
       css,
       children,
       suffix,
+      suffixPlaceholder,
       inactive = false,
       collapsible = true,
       ...props
@@ -133,6 +134,8 @@ export const SectionTitle = forwardRef(
       css?: CSS;
       /** Primarily for <SectionTitleButton> */
       suffix?: ReactNode;
+      /** Inert sizing copy when the suffix contains stateful components */
+      suffixPlaceholder?: ReactNode;
     },
     ref: Ref<HTMLButtonElement>
   ) => {
@@ -181,7 +184,9 @@ export const SectionTitle = forwardRef(
 
                   {suffix && (
                     /* In case of text overflow we need to place here the same suffix*/
-                    <div className={invisibleSuffixStyle()}>{suffix}</div>
+                    <div className={invisibleSuffixStyle()}>
+                      {suffixPlaceholder ?? suffix}
+                    </div>
                   )}
                 </div>
               </div>

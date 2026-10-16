@@ -1,3 +1,4 @@
+import { Flex, theme } from "@webstudio-is/design-system";
 import { useState, useRef } from "react";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import { SpaceLayout } from "./layout";
@@ -212,70 +213,79 @@ export const Section = () => {
 
   return (
     <StyleSection label="Space" properties={spaceProperties}>
-      <SpaceLayout
-        disabled={readonly}
-        ref={layoutRef}
-        onClick={(event) => {
-          const property = hoverTarget?.property;
-          const styleValueSource = styles.find(
-            (styleDecl) => styleDecl.property === property
-          )?.source.name;
+      <Flex
+        direction="column"
+        gap="2"
+        css={{ paddingInline: theme.panel.paddingInline }}
+      >
+        <SpaceLayout
+          disabled={readonly}
+          ref={layoutRef}
+          onClick={(event) => {
+            const property = hoverTarget?.property;
+            const styleValueSource = styles.find(
+              (styleDecl) => styleDecl.property === property
+            )?.source.name;
 
-          if (
-            readonly === false &&
-            property &&
-            // reset when the value is set and after try to edit two sides
-            (styleValueSource === "local" || styleValueSource === "overwritten")
-          ) {
-            if (event.shiftKey && event.altKey) {
-              const properties = getSpaceModifiersGroup(property, {
-                shiftKey: true,
-                altKey: false,
-              });
-              const batch = createBatchUpdate();
-              for (const property of properties) {
-                batch.deleteProperty(property);
+            if (
+              readonly === false &&
+              property &&
+              // reset when the value is set and after try to edit two sides
+              (styleValueSource === "local" ||
+                styleValueSource === "overwritten")
+            ) {
+              if (event.shiftKey && event.altKey) {
+                const properties = getSpaceModifiersGroup(property, {
+                  shiftKey: true,
+                  altKey: false,
+                });
+                const batch = createBatchUpdate();
+                for (const property of properties) {
+                  batch.deleteProperty(property);
+                }
+                batch.publish();
+                return;
               }
-              batch.publish();
+              if (event.altKey) {
+                return;
+              }
+            }
+            if (readonly) {
               return;
             }
-            if (event.altKey) {
-              return;
-            }
+            handleOpenProperty(property);
+          }}
+          onHover={readonly ? () => undefined : handleHover}
+          onFocus={readonly ? undefined : keyboardNavigation.handleFocus}
+          onBlur={readonly ? undefined : keyboardNavigation.handleBlur}
+          activeProperties={activeProperties}
+          onKeyDown={readonly ? undefined : keyboardNavigation.handleKeyDown}
+          onMouseMove={
+            readonly ? undefined : keyboardNavigation.handleMouseMove
           }
-          if (readonly) {
-            return;
+          onMouseLeave={
+            readonly ? undefined : keyboardNavigation.handleMouseLeave
           }
-          handleOpenProperty(property);
-        }}
-        onHover={readonly ? () => undefined : handleHover}
-        onFocus={readonly ? undefined : keyboardNavigation.handleFocus}
-        onBlur={readonly ? undefined : keyboardNavigation.handleBlur}
-        activeProperties={activeProperties}
-        onKeyDown={readonly ? undefined : keyboardNavigation.handleKeyDown}
-        onMouseMove={readonly ? undefined : keyboardNavigation.handleMouseMove}
-        onMouseLeave={
-          readonly ? undefined : keyboardNavigation.handleMouseLeave
-        }
-        renderCell={({ property }) => (
-          <Cell
-            isPopoverOpen={openProperty === property}
-            onPopoverClose={() => {
-              if (openProperty === property) {
-                handleOpenProperty(undefined);
-                layoutRef.current?.focus();
-              }
-            }}
-            onHover={handleHover}
-            property={property}
-            getActiveProperties={getActiveProperties}
-            scrubStatus={{
-              ...scrubStatus,
-              readonly,
-            }}
-          />
-        )}
-      />
+          renderCell={({ property }) => (
+            <Cell
+              isPopoverOpen={openProperty === property}
+              onPopoverClose={() => {
+                if (openProperty === property) {
+                  handleOpenProperty(undefined);
+                  layoutRef.current?.focus();
+                }
+              }}
+              onHover={handleHover}
+              property={property}
+              getActiveProperties={getActiveProperties}
+              scrubStatus={{
+                ...scrubStatus,
+                readonly,
+              }}
+            />
+          )}
+        />
+      </Flex>
     </StyleSection>
   );
 };

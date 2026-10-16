@@ -231,15 +231,7 @@ export const remove = async (
   await unpublishBuild(
     { projectId: props.projectId, domain: domain.domain },
     context
-  ).catch((error) => {
-    if (
-      error instanceof Error &&
-      error.message === `Domain ${domain.domain} is not published`
-    ) {
-      return;
-    }
-    throw error;
-  });
+  );
 
   const deleteResult = await context.postgrest.client
     .from("ProjectDomain")

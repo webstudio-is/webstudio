@@ -25,6 +25,8 @@ import { isMdxTemplateComponentName } from "@webstudio-is/content-engine/mdx";
 import { parseTemplateCss, type TemplateStyleDecl } from "./css";
 import { camelCaseProperty, parseMediaQuery } from "@webstudio-is/css-data";
 
+export class TemplateValidationError extends Error {}
+
 declare module "react" {
   interface HTMLAttributes<T> {
     "ws:id"?: string;
@@ -71,7 +73,7 @@ export const setTemplateMeta = (
   element: JSX.Element
 ): JSX.Element => {
   if (isMdxTemplateComponentName(meta.name) === false) {
-    throw new Error(
+    throw new TemplateValidationError(
       "Template name must be a PascalCase JavaScript identifier, for example PromotionCard"
     );
   }
@@ -90,7 +92,7 @@ export class Token {
 
 export const token = (name: string, styles?: TemplateStyleDecl[]): Token => {
   if (typeof name !== "string" || name.length === 0) {
-    throw new Error(
+    throw new TemplateValidationError(
       'token() requires a non-empty string name, for example token("brand", css`color: red;`).'
     );
   }
@@ -98,12 +100,12 @@ export const token = (name: string, styles?: TemplateStyleDecl[]): Token => {
     return new Token(name);
   }
   if (Array.isArray(styles) === false) {
-    throw new Error(
+    throw new TemplateValidationError(
       'token() styles must come from css`...`, for example token("brand", css`color: red;`).'
     );
   }
   if (styles.length === 0) {
-    throw new Error(
+    throw new TemplateValidationError(
       'token() styles must include at least one valid CSS declaration from css`...`, for example token("brand", css`color: red;`).'
     );
   }
@@ -144,7 +146,7 @@ export class ResourceValue {
   config: ResourceConfig;
   constructor(name: string, config: ResourceConfig) {
     if (config === undefined) {
-      throw new Error(
+      throw new TemplateValidationError(
         "Invalid JSX prop: ResourceValue requires a resource definition. Existing resource ids are not supported in JSX; insert the component first, then bind its resource prop with update-props."
       );
     }
@@ -255,11 +257,13 @@ const findUnsupportedSerializableValue = (
   | {
       path: string[];
       message: string;
+      kind?: "function";
     }
   | undefined => {
   if (typeof value === "function") {
     return {
       path,
+      kind: "function",
       message:
         "Do not pass JavaScript functions. Use Webstudio actions instead",
     };
@@ -365,10 +369,11 @@ const validateSerializablePropValue = (name: string, value: unknown) => {
     unsupportedValue.path.length === 0
       ? ""
       : ` at "${unsupportedValue.path.join(".")}"`;
-  const actionHint = unsupportedValue.message.includes("functions")
-    ? ` For actions, use ${name}={new ActionValue(["event"], expression\`console.log(event)\`)}.`
-    : "";
-  throw new Error(
+  const actionHint =
+    unsupportedValue.kind === "function"
+      ? ` For actions, use ${name}={new ActionValue(["event"], expression\`console.log(event)\`)}.`
+      : "";
+  throw new TemplateValidationError(
     `Invalid JSX prop "${name}"${nestedPath}. ${unsupportedValue.message}.${actionHint}`
   );
 };
@@ -390,7 +395,7 @@ const hasInvalidStyleValue = (styles: TemplateStyleDecl[]) =>
 
 const convertReactStyleObject = (value: unknown): TemplateStyleDecl[] => {
   if (isPlainObject(value) === false) {
-    throw new Error(
+    throw new TemplateValidationError(
       "style prop must be a plain object, for example style={{ padding: 24 }}."
     );
   }
@@ -402,7 +407,7 @@ const convertReactStyleObject = (value: unknown): TemplateStyleDecl[] => {
     const property = getReactStyleProperty(name);
     if (typeof styleValue === "number") {
       if (Number.isFinite(styleValue) === false) {
-        throw new Error(
+        throw new TemplateValidationError(
           `Invalid style prop "${name}". Use a finite number or string value.`
         );
       }
@@ -420,7 +425,7 @@ const convertReactStyleObject = (value: unknown): TemplateStyleDecl[] => {
       styles.push(...parseReactStyleDeclaration(property, styleValue));
       continue;
     }
-    throw new Error(
+    throw new TemplateValidationError(
       `Invalid style prop "${name}". Use a string, finite number, null, or undefined value.`
     );
   }
@@ -635,7 +640,7 @@ export const renderTemplate = (
     element: JSX.Element
   ): Instance["children"][number] => {
     if (element.type === Fragment) {
-      throw new Error(
+      throw new TemplateValidationError(
         "Do not use React fragment shorthand <>...</> inside Webstudio JSX. Pass sibling Webstudio components directly at the top level, or wrap text in an element such as <section><p>Text</p></section>."
       );
     }
@@ -645,7 +650,7 @@ export const renderTemplate = (
       intrinsicTag !== undefined &&
       intrinsicTags.has(intrinsicTag) === false
     ) {
-      throw new Error(
+      throw new TemplateValidationError(
         `Invalid intrinsic JSX element "${intrinsicTag}". Use a standard lowercase HTML or SVG tag.`
       );
     }
@@ -653,7 +658,7 @@ export const renderTemplate = (
       options.allowManualIds === false &&
       element.props?.["ws:id"] !== undefined
     ) {
-      throw new Error(
+      throw new TemplateValidationError(
         "Do not set ws:id in JSX fragments. Webstudio runtime generates system ids automatically."
       );
     }
@@ -669,7 +674,7 @@ export const renderTemplate = (
           : typeof element.type === "object" && element.type !== null
             ? element.type.displayName
             : undefined;
-      throw new Error(
+      throw new TemplateValidationError(
         `Invalid JSX component${componentName ? ` "${componentName}"` : ""} in Webstudio JSX. Use a lowercase HTML element or an available PascalCase component identifier.`
       );
     }
@@ -698,7 +703,7 @@ export const renderTemplate = (
       const { value } = mappedProp;
       if (name === "ws:tag") {
         if (intrinsicTag !== undefined) {
-          throw new Error(
+          throw new TemplateValidationError(
             `Do not set ws:tag on intrinsic JSX <${intrinsicTag}>. Use the intended HTML tag directly.`
           );
         }
@@ -708,12 +713,12 @@ export const renderTemplate = (
       if (name === "ws:style") {
         const localStyles = value as TemplateStyleDecl[];
         if (Array.isArray(localStyles) === false) {
-          throw new Error(
+          throw new TemplateValidationError(
             "ws:style must come from css`...`, for example ws:style={css`padding: 24px;`}."
           );
         }
         if (localStyles.length === 0) {
-          throw new Error(
+          throw new TemplateValidationError(
             "ws:style must include at least one valid CSS declaration from css`...`, for example ws:style={css`padding: 24px;`}."
           );
         }
@@ -730,7 +735,7 @@ export const renderTemplate = (
           Array.isArray(value) === false ||
           value.every((token) => token instanceof Token) === false
         ) {
-          throw new Error(
+          throw new TemplateValidationError(
             'ws:tokens must be an array of token(...) values, for example ws:tokens={[token("brand", css`color: red;`)]}.'
           );
         }
@@ -801,7 +806,7 @@ export const renderTemplate = (
               return `${issue.message}${path}`;
             })
             .join("; ");
-          throw new Error(
+          throw new TemplateValidationError(
             `Invalid JSX prop "${name}". Expected animationAction for ${component}.${name}. ${details}`
           );
         }
@@ -877,7 +882,7 @@ export const renderTemplate = (
     options.allowManualIds === false &&
     (children.length === 0 || instances.length === 0)
   ) {
-    throw new Error(
+    throw new TemplateValidationError(
       "JSX fragment must contain at least one element or component, for example <section><p>Text</p></section>."
     );
   }

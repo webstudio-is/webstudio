@@ -39,6 +39,8 @@ export type Diagnostic = {
   to: number;
   severity: "error" | "hint" | "info" | "warning";
   message: string;
+  code?: "unknown-identifier";
+  identifier?: string;
 };
 
 type ExpressionVisitor = {
@@ -298,7 +300,8 @@ export const lintExpression = ({
   const diagnostics: Diagnostic[] = [];
   const addMessage = (
     message: string,
-    severity: "error" | "warning" = "error"
+    severity: "error" | "warning" = "error",
+    metadata: Pick<Diagnostic, "code" | "identifier"> = {}
   ) => {
     return (node: { start: number; end: number }) => {
       diagnostics.push({
@@ -307,6 +310,7 @@ export const lintExpression = ({
         to: node.end - 1,
         severity,
         message: message,
+        ...metadata,
       });
     };
   };
@@ -332,10 +336,10 @@ export const lintExpression = ({
     simple(root, {
       Identifier(node) {
         if (availableVariables.has(node.name) === false) {
-          addMessage(
-            `"${node.name}" is not defined in the scope`,
-            "warning"
-          )(node);
+          addMessage(`"${node.name}" is not defined in the scope`, "warning", {
+            code: "unknown-identifier",
+            identifier: node.name,
+          })(node);
         }
       },
       Literal() {},
@@ -362,7 +366,8 @@ export const lintExpression = ({
             if (availableVariables.has(node.name) === false) {
               addMessage(
                 `"${node.name}" is not defined in the scope`,
-                "warning"
+                "warning",
+                { code: "unknown-identifier", identifier: node.name }
               )(node);
             }
           },

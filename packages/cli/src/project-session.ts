@@ -34,6 +34,7 @@ import {
   getHomePage,
 } from "@webstudio-is/sdk";
 import {
+  ProjectSessionBusyError,
   createProjectSession,
   createDefaultProjectSessionCompatibility,
   serializeRestorePointTransaction,
@@ -234,12 +235,34 @@ const createCliProjectSessionCompatibility = (
   apiCompatibilityVersion: connection.headers?.["x-webstudio-client-version"],
 });
 
-const isUnsupportedProjectSettingsIncludeError = (error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  return (
-    message.includes("invalid_enum_value") &&
-    message.includes('received "projectSettings"')
-  );
+const isUnsupportedProjectSettingsIncludeError = (
+  error: unknown,
+  includes: readonly string[]
+) => {
+  return getIssueReportErrorRecords(error).some((record) => {
+    const data = isPlainRecord(record.data) ? record.data : record;
+    return (
+      Array.isArray(data.issues) &&
+      data.issues.some((issue) => {
+        if (
+          !isPlainRecord(issue) ||
+          (issue.code !== "invalid_enum_value" &&
+            issue.code !== "invalid_value") ||
+          !Array.isArray(issue.path) ||
+          issue.path.length !== 2 ||
+          issue.path[0] !== "include"
+        ) {
+          return false;
+        }
+        const index = issue.path[1];
+        return (
+          (typeof index === "number" || typeof index === "string") &&
+          Number.isInteger(Number(index)) &&
+          includes[Number(index)] === "projectSettings"
+        );
+      })
+    );
+  });
 };
 
 const getLegacyPublicApiInclude = (namespaces: readonly BuilderNamespace[]) =>
@@ -389,11 +412,27 @@ export const createIssueReportFailure = (
           ? "error"
           : "other";
   const httpStatus = httpClient.getErrorStatus(error) ?? response?.status;
-  const isResponseTransformFailure = records.some(
-    (candidate) =>
-      candidate.name === "TRPCClientError" &&
-      candidate.message === "Unable to transform response from server"
-  );
+  const isResponseTransformFailure = records.some((candidate) => {
+    if (
+      candidate.name !== "TRPCClientError" ||
+      !isPlainRecord(candidate.meta)
+    ) {
+      return false;
+    }
+    const json = candidate.meta.responseJSON;
+    const envelopes = Array.isArray(json) ? json : [json];
+    return (
+      json !== undefined &&
+      envelopes.some(
+        (envelope) =>
+          !isPlainRecord(envelope) ||
+          ("error" in envelope
+            ? !isPlainRecord(envelope.error) ||
+              typeof envelope.error.code !== "number"
+            : !isPlainRecord(envelope.result))
+      )
+    );
+  });
   const processExit = isPlainRecord(record?.processExit)
     ? record.processExit
     : undefined;
@@ -609,7 +648,7 @@ export const createCliProjectSessionStorage = (
       options.expectedRevision !== undefined &&
       current?.revision !== options.expectedRevision
     ) {
-      throw new Error("Project session snapshot changed on disk.");
+      throw new ProjectSessionBusyError();
     }
     const revision = randomUUID();
     await writeFileAtomic(
@@ -736,13 +775,14 @@ export const createCliProjectSessionTransport = ({
           include,
         })
       ) as Promise<PublicBuildSnapshot>;
+    const includes = getPublicBuildIncludes(namespaces);
     let snapshot: PublicBuildSnapshot;
     try {
-      snapshot = await fetchSnapshot(getPublicBuildIncludes(namespaces));
+      snapshot = await fetchSnapshot(includes);
     } catch (error) {
       if (
         namespaces.includes("projectSettings") === false ||
-        isUnsupportedProjectSettingsIncludeError(error) === false
+        isUnsupportedProjectSettingsIncludeError(error, includes) === false
       ) {
         throw error;
       }

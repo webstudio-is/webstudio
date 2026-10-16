@@ -1,3 +1,4 @@
+import { getValidationIssues } from "@webstudio-is/project-build/runtime";
 import { TRPCClientError } from "@trpc/client";
 import {
   createAssetFolderHierarchy,
@@ -32,11 +33,10 @@ export const getPublishValidationErrorMessage = (
     return publishValidationTimeoutMessage;
   }
   const message = error instanceof Error ? error.message : undefined;
-  const unloadedDocument = /^Document (.+) could not be loaded$/.exec(
-    message ?? ""
-  );
-  if (unloadedDocument !== null) {
-    const documentId = unloadedDocument[1];
+  const documentId = getValidationIssues(error)?.find(
+    (issue) => issue.code === "DOCUMENT_LOAD_FAILED"
+  )?.assetId;
+  if (documentId !== undefined) {
     const asset = assets?.get(documentId);
     if (asset !== undefined) {
       const folderPath = formatAssetFolderPath(

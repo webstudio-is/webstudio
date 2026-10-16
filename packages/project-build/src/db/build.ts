@@ -344,10 +344,6 @@ export const unpublishBuild = async (
     return deployment.domains.includes(props.domain);
   });
 
-  if (targetBuilds.length === 0) {
-    throw new Error(`Domain ${props.domain} is not published`);
-  }
-
   // Process all builds that contain this domain
   for (const targetBuild of targetBuilds) {
     const deployment = parseDeployment(targetBuild.deployment);

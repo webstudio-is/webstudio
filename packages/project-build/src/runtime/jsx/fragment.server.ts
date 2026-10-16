@@ -1,5 +1,8 @@
 import { createId, type WebstudioFragment } from "@webstudio-is/sdk";
-import { renderTemplate } from "@webstudio-is/template";
+import {
+  renderTemplate,
+  TemplateValidationError,
+} from "@webstudio-is/template";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { componentIds } from "@webstudio-is/sdk-components-registry/components";
 import {
@@ -9,21 +12,6 @@ import {
 import { evaluateJsx } from "./evaluate.server";
 import { getErrorMessage } from "./errors";
 import { inspectWebstudioJsxFragmentSyntax } from "./syntax";
-
-const templateValidationMessagePrefixes = [
-  "Do not use React fragment shorthand",
-  "Invalid JSX component",
-  "Invalid JSX prop",
-  "token()",
-  "ws:style",
-  "ws:tokens",
-  "css templates",
-];
-
-const isTemplateValidationMessage = (message: string) =>
-  templateValidationMessagePrefixes.some((prefix) =>
-    message.startsWith(prefix)
-  );
 
 const createWebstudioJsxFragmentIdFactory = () => {
   const salt = createId();
@@ -53,7 +41,7 @@ export const evaluateWebstudioJsxFragment = async (
       )}`,
     evaluationErrorMessage: (error) => {
       const message = getErrorMessage(error);
-      if (isTemplateValidationMessage(message)) {
+      if (error instanceof TemplateValidationError) {
         return message;
       }
       return `Could not evaluate JSX fragment. Use ${webstudioJsxBindingGuidance}. ${message}`;

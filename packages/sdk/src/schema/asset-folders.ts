@@ -48,6 +48,7 @@ export const assetFolders = z
           code: "custom",
           path: [folderId, "id"],
           message: assetFolderIssue.idMismatch,
+          params: { assetFolderIssue: "idMismatch" },
         });
       }
       if (folder.parentId === folder.id) {
@@ -55,6 +56,7 @@ export const assetFolders = z
           code: "custom",
           path: [folderId, "parentId"],
           message: assetFolderIssue.selfParent,
+          params: { assetFolderIssue: "selfParent" },
         });
       } else if (
         folder.parentId !== undefined &&
@@ -64,6 +66,7 @@ export const assetFolders = z
           code: "custom",
           path: [folderId, "parentId"],
           message: assetFolderIssue.parentMissing,
+          params: { assetFolderIssue: "parentMissing" },
         });
       }
 
@@ -73,6 +76,7 @@ export const assetFolders = z
           code: "custom",
           path: [folderId, "name"],
           message: assetFolderIssue.duplicateName,
+          params: { assetFolderIssue: "duplicateName" },
         });
       }
       siblingKeys.add(siblingKey);
@@ -82,6 +86,7 @@ export const assetFolders = z
       context.addIssue({
         code: "custom",
         message: assetFolderIssue.projectMismatch,
+        params: { assetFolderIssue: "projectMismatch" },
       });
     }
 
@@ -92,6 +97,7 @@ export const assetFolders = z
           code: "custom",
           path: [folderId, "parentId"],
           message: assetFolderIssue.cycle,
+          params: { assetFolderIssue: "cycle" },
         });
       }
     }
