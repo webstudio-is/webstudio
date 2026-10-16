@@ -36,41 +36,72 @@ There are two types of exports:
 * **JavaScript application** – Builds a dynamic app with server routes. This is the default behavior of Webstudio Cloud and provides the most functionality, but it requires hosting that runs the app.
 * **Static site** – Outputs a static site (HTML/CSS/JS) with limited functionality, but has more versatile hosting options.
 
-On Webstudio Cloud, a published Cloudflare-hosted site can send Email Resources through Webstudio's private Email Service when its `EMAIL_SERVICE` binding is configured. That binding and service are not included in an export. A self-hosted JavaScript application needs a custom server-side email integration before Email Resources, including visitor-addressed ones, can send; without one, delivery fails explicitly. A static export has no managed Form submission endpoint and cannot send them.
-
 #### HTTP endpoint for self-hosted email
 
-The browser submits a managed Form to the exported app's `POST /__ws-form` route (or `POST /__ws-form/<page-path>`). The app evaluates each selected Email Resource before delivery. Webstudio Cloud then calls its private email service: published sites use a Cloudflare service binding, while Builder Preview posts to `/trpc/email.send` with a private token and receives a tRPC response envelope. The URL helper accepts only Webstudio's approved Worker hosts, so it cannot be pointed at an arbitrary self-hosted endpoint. The generated Node adapter leaves email delivery unconfigured. In the exported server, replace `createManagedFormEmailSender` in `app/__generated__/$resources.managed-form-fetch.server.ts` with an adapter that calls your endpoint. Regeneration can replace that file; reapply or automate the customization when exporting again.
+Set up an HTTP endpoint to send email from your self-hosted project. The following is a suggested JSON contract for that endpoint; choose its URL and authentication credentials.
 
-The generated route calls `createManagedFormEmailSender({ context, formData, projectId })`. Return a `sendEmail(resourceRequest, options)` function from it. That function receives the evaluated Email Resource request; combine its `resourceRequest.email` fields with files from the submitted `formData` to build the HTTP JSON body below. Use `projectId` for your endpoint's project identity, and map the endpoint's response to the `sendEmail` outcome. `options` includes a cancellation signal and timeout budget.
+##### HTTP request
 
-You choose the private endpoint URL and authentication. For example, have the adapter send `POST /email/send` with `Content-Type: application/json`, `Authorization: Bearer <server-secret>`, and `X-Webstudio-Project-Id: <project-id>`. Its JSON body uses the evaluated message fields sent to the Cloud service:
+Use `POST /email/send` over HTTPS with these headers:
+
+| Header | Value |
+| --- | --- |
+| `Content-Type` | `application/json` |
+| `Authorization` | `Bearer <server-secret>` when using bearer authentication |
+| `X-Webstudio-Project-Id` | The project ID, if the endpoint serves multiple projects |
+
+The request body is a JSON object with these fields. Optional fields may be omitted.
+
+| Field | Required | Type and meaning |
+| --- | --- | --- |
+| `to` | Yes | Nonempty array of mailbox objects. Each has a required `address` string containing an email address and an optional `name` string. |
+| `subject` | Yes | String containing the email subject. |
+| `text` | Yes | String containing the plain-text email body. |
+| `replyTo` | No | One mailbox object with a required `address` string and an optional `name` string. Sets the Reply-To address. |
+| `fromName` | No | String containing the sender display name. The endpoint supplies the authenticated From address. |
+| `headers` | No | Object mapping email header names to string values, such as `X-Message-ID` for message correlation. These are email headers, separate from the HTTP request headers. |
+| `attachments` | No | Array of attachment objects. Each has three required string fields: `filename`, `contentType` (MIME type), and `contentBase64` (standard Base64-encoded file bytes, without a data URL prefix). Use `application/octet-stream` when the MIME type is unknown. |
+
+Example request body:
 
 ```json
 {
   "to": [{ "address": "team@example.com", "name": "Team" }],
-  "subject": "New form submission",
-  "text": "Form data:\nName: Ada",
+  "subject": "New message",
+  "text": "Hello from Ada.",
+  "replyTo": { "address": "ada@example.com", "name": "Ada" },
+  "fromName": "Example Website",
   "headers": { "X-Message-ID": "0123456789abcdef" },
-  "replyTo": { "address": "owner@example.com", "name": "Site Owner" },
-  "fromName": "Site Owner",
   "attachments": [{ "filename": "note.txt", "contentType": "text/plain", "contentBase64": "aGVsbG8=" }]
 }
 ```
 
-`to`, `subject`, and `text` are the resolved recipients and message. `replyTo`, `fromName`, `headers`, and `attachments` are optional. `replyTo` is the Email Resource's **Reply to** value; it is not the provider's authenticated From address, which your host controls. `fromName` is a display name. Attachments are submitted files encoded as Base64 when **Attach submitted files** is enabled. The Form adds one `X-Message-ID` email header shared by its email actions; forward it for correlation. Recipient mode and the selected visitor field are resolved before this message is sent, so they are not endpoint fields.
+The attachment in this example contains the UTF-8 text `hello`.
 
-Have the endpoint report a delivery result that the adapter maps to the current `sendEmail` outcome. For a direct JSON contract, these are suitable responses:
+##### HTTP response
+
+Return `Content-Type: application/json`. For success, use an HTTP `2xx` status and the success body below. For failure, use an HTTP `4xx` or `5xx` status and the error body below. The body's `status` must match the HTTP status.
+
+| Field | Required | Type and meaning |
+| --- | --- | --- |
+| `ok` | Yes | Boolean: `true` for success, `false` for failure. |
+| `status` | Yes | Integer HTTP status code: `200`–`299` for success or `400`–`599` for failure. Choose a status that permits a JSON response body. |
+| `statusText` | Yes | String describing the result. |
+| `data` | Yes | Object containing `id` on success or `error` on failure. |
+| `data.id` | On success | Nonempty string containing the sent message's ID. |
+| `data.error` | On failure | Object with required string fields `code` (a machine-readable error code) and `message` (a human-readable explanation). |
+
+Success example — HTTP `200 OK`:
 
 ```json
 { "ok": true, "status": 200, "statusText": "OK", "data": { "id": "provider-message-id" } }
 ```
 
+Failure example — HTTP `422 Unprocessable Content`:
+
 ```json
 { "ok": false, "status": 422, "statusText": "Recipient rejected", "data": { "error": { "code": "recipient_rejected", "message": "Recipient rejected" } } }
 ```
-
-Return an HTTP error status for a failed send and preserve its message in the adapter's outcome. A failed team-recipient action makes the Form submission fail; a failed visitor-addressed action appears in `errors` without changing overall success. The Form does not retry a failed Email Resource action, since delivery may already have happened. A timeout or lost response can therefore leave delivery uncertain. `X-Message-ID` is for correlation, not general idempotency: separate actions in one submission share it, and a new submission gets a new value. If your endpoint needs duplicate detection, define its own idempotency semantics. Keep the endpoint and provider credentials server-side. This is an integration pattern for the current generated app, not a stable Webstudio HTTP API; check the generated adapter and SDK types after upgrades.
 
 {% hint style="warning" %}
 If you want the export to contain human-readable class names, disable atomic CSS. See [Atomic CSS](../foundations/project-settings.md#atomic-css) for more information.
