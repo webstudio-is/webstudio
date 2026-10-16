@@ -1917,6 +1917,7 @@ test("reports an interior route HTTP failure instead of a wrong-site error", asy
         {
           navigation: {
             generatedSiteRootPresent: false,
+            javascriptErrorPresent: true,
             status: 503,
             documentReadyState: "complete",
             redirects: [],
@@ -1940,6 +1941,47 @@ test("reports an interior route HTTP failure instead of a wrong-site error", asy
     code: "SCREENSHOT_ROUTE_HTTP_ERROR",
     issues: [
       { code: "screenshot_route_http_error", constraint: "http_status:503" },
+    ],
+  });
+});
+
+test("reports a JavaScript error instead of a successful generated-site screenshot", async () => {
+  const handlers = createMcpPreviewHandlers({
+    preview: {
+      status: vi.fn(() => ({
+        url: "http://127.0.0.1:5173/",
+        running: true,
+        mode: "iterative" as const,
+      })),
+      startAndWait: vi.fn(),
+      resolveUrl: vi.fn(() => "http://127.0.0.1:5173/"),
+    },
+    isStale: () => false,
+    createCaptureSession: vi.fn(() => ({
+      capture: vi.fn(async () => ({
+        output: "builder.png",
+        navigation: {
+          generatedSiteRootPresent: true,
+          javascriptErrorPresent: true,
+        },
+      })),
+      capturePage: vi.fn(),
+      close: vi.fn(),
+    })) as never,
+  });
+
+  await expect(
+    handlers.captureScreenshot({
+      path: "/",
+      viewport: { width: 1280, height: 720 },
+    })
+  ).rejects.toMatchObject({
+    code: "SCREENSHOT_JAVASCRIPT_ERROR",
+    issues: [
+      {
+        code: "screenshot_javascript_error",
+        constraint: "javascript_runtime_error",
+      },
     ],
   });
 });
