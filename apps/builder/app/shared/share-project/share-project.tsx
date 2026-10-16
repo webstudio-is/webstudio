@@ -529,7 +529,17 @@ const SharedLinkItem = ({
       role="group"
       aria-label={`Share link ${currentLink.name}`}
     >
-      <Label css={{ flexGrow: 1 }}>{currentLink.name}</Label>
+      <Label
+        css={{
+          flexGrow: 1,
+          minWidth: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {currentLink.name}
+      </Label>
       <CopyToClipboard
         text={builderUrl({
           authToken: currentLink.token,
