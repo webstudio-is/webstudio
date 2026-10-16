@@ -39,7 +39,7 @@ export const Section = () => {
 
   return (
     <StyleSection label="Position" properties={properties}>
-      <Grid gap={2}>
+      <Grid gap={2} css={{ paddingInline: theme.panel.paddingInline }}>
         <Grid gap={2} css={{ gridTemplateColumns: `1fr ${theme.spacing[23]}` }}>
           <PropertyLabel
             label="Position"

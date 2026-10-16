@@ -2,8 +2,6 @@ import type { ReactNode } from "react";
 import { PlusIcon } from "@webstudio-is/icons";
 import type { CssProperty } from "@webstudio-is/css-engine";
 import {
-  Flex,
-  theme,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
@@ -38,11 +36,10 @@ export const getDots = (styles: ComputedStyleDecl[]) => {
 export const StyleSection = (props: {
   label: string;
   properties: CssProperty[];
-  fullWidth?: boolean;
   suffix?: ReactNode;
   children: ReactNode;
 }) => {
-  const { label, children, properties, fullWidth, suffix } = props;
+  const { label, children, properties, suffix } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
   const styles = useComputedStyles(properties);
   return (
@@ -57,13 +54,7 @@ export const StyleSection = (props: {
       }
       fullWidth
     >
-      <Flex
-        direction="column"
-        gap="2"
-        css={{ paddingInline: fullWidth ? 0 : theme.panel.paddingInline }}
-      >
-        {children}
-      </Flex>
+      {children}
     </CollapsibleSectionRoot>
   );
 };
