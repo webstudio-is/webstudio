@@ -40,6 +40,17 @@ There are two types of exports:
 
 Set up an HTTP endpoint to send email from your self-hosted project. The following is a suggested JSON contract for that endpoint; choose its URL and authorization token.
 
+##### Builder configuration
+
+Configure these environment variables on the Builder server:
+
+| Variable | Value |
+| --- | --- |
+| `EMAIL_SERVICE_URL` | The email endpoint's HTTPS base URL, using an origin supported by your Builder deployment. |
+| `TRPC_SERVER_API_TOKEN` | The token sent as `Authorization: Bearer <token>`. It must match the token expected by the endpoint. |
+
+Both variables are server-side configuration only. Keep them out of browser-visible configuration and client code.
+
 ##### HTTP request
 
 Use `POST /email/send` over HTTPS with these headers:
