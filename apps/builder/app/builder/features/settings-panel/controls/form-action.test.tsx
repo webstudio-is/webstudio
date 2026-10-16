@@ -438,7 +438,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
   await act(async () => userEvent.click(addButton));
   expect(
     getComputedStyle(document.querySelector('[role="menu"]')!).minWidth
-  ).toBe("180px");
+  ).toBe("176px");
   const requestOption = Array.from(
     document.querySelectorAll<HTMLElement>('[role="menuitem"]')
   ).find((option) => option.textContent?.includes("Go"));

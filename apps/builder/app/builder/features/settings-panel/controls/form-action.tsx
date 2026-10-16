@@ -185,7 +185,7 @@ export const FormActionControl = ({
               <DropdownMenuContent
                 align="end"
                 collisionPadding={16}
-                css={{ minWidth: 180 }}
+                css={{ minWidth: theme.spacing[26] }}
               >
                 {resources.map((variable) => (
                   <DropdownMenuItem
