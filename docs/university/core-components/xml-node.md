@@ -36,10 +36,7 @@ To include the static sitemap data in your custom sitemap, follow these steps:
 1. Create a page
 2. In the page settings, set the Document Type to XML&#x20;
 3. Set the page path to /sitemap.xml. This will override the default sitemap.
-4. Fetch the static data by clicking Create Variable > System Resource (Type) > Sitemap (Resource)&#x20;
-
-   <figure><img src="../../.gitbook/assets/static-sitemap-data.png" alt="Sitemap System Resource selected in Dynamic data"><figcaption></figcaption></figure>
-
+4. In **Settings > Variables**, add a variable and choose **Sitemap resource** in the **New variable** dialog.
 
 5. Use a [Collection](collection.md) to iterate over the static sitemap data
 
