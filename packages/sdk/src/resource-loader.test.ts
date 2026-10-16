@@ -1837,8 +1837,12 @@ test("optional exchange observer records the same serialized fetch and each retr
   }> = [];
   const fetch = vi
     .fn<typeof globalThis.fetch>()
-    .mockImplementation(async (input) => {
-      expect(input).toBeInstanceOf(Request);
+    .mockImplementation(async (input, init) => {
+      expect(input).toBe("https://example.com/send?q=submitted");
+      expect(init).toMatchObject({
+        method: "post",
+        body: '{"email":"ada@example.com"}',
+      });
       const response = Response.json(
         { accepted: fetch.mock.calls.length > 1 },
         {

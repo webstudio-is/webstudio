@@ -135,23 +135,10 @@ const dispatcher = new Agent({
 
 /** Fetch an external resource only when its connection uses a public IP. */
 export const safeResourceFetch = async (
-  input: string | Request | URL,
+  input: string,
   init?: RequestInit
 ): Promise<Response> => {
-  // Node's global Request is not recognized by the installed Undici package.
-  // Preserve its method, headers, body, and signal while passing Undici a URL.
-  const request = input instanceof Request ? input : undefined;
-  const url = input instanceof Request ? input.url : input;
-  const response = await undiciFetch(url, {
-    ...(request === undefined
-      ? {}
-      : {
-          method: request.method,
-          headers: request.headers,
-          body: request.body,
-          signal: request.signal,
-          ...(request.body === null ? {} : { duplex: "half" }),
-        }),
+  const response = await undiciFetch(input, {
     ...init,
     dispatcher,
   } as unknown as Parameters<typeof undiciFetch>[1]);

@@ -533,10 +533,10 @@ export const loadResource = async (
         : undefined;
     // Cloudflare adds generic metadata to clone(); inspection uses Web Request fields.
     inspectionRequest = outgoing?.clone() as Request | undefined;
+    // Keep the transport input consistent when an exchange is inspected.
+    // The Request above is only for observing the serialized request.
     const response = await awaitWithSignal(
-      outgoing === undefined
-        ? customFetch(href, requestInit)
-        : customFetch(outgoing),
+      customFetch(href, requestInit),
       signal
     );
 

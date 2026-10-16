@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import type { ResourceRequest } from "@webstudio-is/sdk";
 import { loadResource } from "@webstudio-is/sdk/runtime";
 
@@ -9,6 +9,17 @@ import {
   resourceRequestListSchema,
 } from "./resource-list-loader.server";
 import { getResourceKey } from "~/shared/resource-utils";
+
+// Match the external URL branch in rest.resources-loader.ts, including its
+// string-only transport contract and existing public-address validation.
+const externalResourceFetch: typeof fetch = (input, init) => {
+  if (typeof input !== "string") {
+    return Promise.reject(
+      new TypeError("Resource loader requires a URL string")
+    );
+  }
+  return safeResourceFetch(input, init);
+};
 
 test("inspected Resource requests preserve POST method, headers, and body", async () => {
   const originalAllowLocal = process.env.E2E_ALLOW_LOCAL_RESOURCE_URLS;
@@ -44,6 +55,7 @@ test("inspected Resource requests preserve POST method, headers, and body", asyn
       body: { id: 42 },
     } satisfies ResourceRequest;
     const key = getResourceKey(resourceRequest);
+    const customFetch = vi.fn(externalResourceFetch);
     const output = await loadResourceRequestList({
       request: new Request("https://p-test.localhost/rest/resources-loader", {
         method: "POST",
@@ -52,8 +64,16 @@ test("inspected Resource requests preserve POST method, headers, and body", asyn
       sourceOrigin: "https://source.example",
       includeDiagnostics: false,
       inspectResourceKey: key,
-      customFetch: safeResourceFetch,
+      customFetch,
     });
+    expect(customFetch).toHaveBeenCalledWith(
+      resourceRequest.url,
+      expect.objectContaining({
+        method: "post",
+        headers: expect.any(Headers),
+        body: '{"id":42}',
+      })
+    );
     expect(output.resources[0]?.[1]).toMatchObject({
       ok: true,
       status: 200,
@@ -84,7 +104,7 @@ test.skipIf(process.env.WEBSTUDIO_LIVE_RESOURCE_GET !== "1")(
   async () => {
     const url = "https://api.tilmaplatform.com/api/orgs/holyredeemer/en/";
     const result = await loadResource(
-      safeResourceFetch,
+      externalResourceFetch,
       {
         name: "Holy Redeemer",
         method: "get",
@@ -137,18 +157,7 @@ test.skipIf(process.env.WEBSTUDIO_LIVE_RESOURCE_GET !== "1")(
       { method: "POST", body: JSON.stringify([resourceRequest]) }
     );
     const requestList = resourceRequestListSchema.parse(await request.json());
-    // Match the external URL branch in rest.resources-loader.ts.
-    const customFetch: typeof fetch = (input, init) => {
-      if (input instanceof Request) {
-        return safeResourceFetch(input, init);
-      }
-      if (typeof input !== "string") {
-        return Promise.reject(
-          new TypeError("Resource loader requires a URL string or Request")
-        );
-      }
-      return safeResourceFetch(input, init);
-    };
+    const customFetch = vi.fn(externalResourceFetch);
     const output = await loadResourceRequestList({
       request,
       requestList,
@@ -157,6 +166,10 @@ test.skipIf(process.env.WEBSTUDIO_LIVE_RESOURCE_GET !== "1")(
       inspectResourceKey: key,
       customFetch,
     });
+    expect(customFetch).toHaveBeenCalledWith(
+      url,
+      expect.objectContaining({ method: "get", headers: expect.any(Headers) })
+    );
     const result = output.resources[0]?.[1];
     console.info("Inspected Resource editor GET outcome", {
       ok: (result as { ok?: unknown })?.ok,
