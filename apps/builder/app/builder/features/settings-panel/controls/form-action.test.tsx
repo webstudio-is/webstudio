@@ -21,7 +21,6 @@ import {
   $resources,
 } from "~/shared/sync/data-stores";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
-import { FieldLabel } from "../property-label";
 import { FormActionControl } from "./form-action";
 
 (
@@ -102,7 +101,7 @@ test("Action + explains how to add a resource when none are available", async ()
   expect(onChange).not.toHaveBeenCalled();
 });
 
-test("Action header and menu align while rows retain their original geometry", async () => {
+test("Action header and menu align while items sit below the full header", async () => {
   $instances.set(
     new Map([
       [
@@ -177,30 +176,6 @@ test("Action header and menu align while rows retain their original geometry", a
             <SectionTitleLabel>Variables</SectionTitleLabel>
           </SectionTitle>
         </div>
-        {/* The original Action header flowed at the button height. */}
-        <Grid>
-          <div data-baseline-action>
-            <Flex
-              align="center"
-              justify="between"
-              data-baseline-header
-              css={{ paddingInline: theme.panel.paddingInline }}
-            >
-              <FieldLabel description="Action details">Action</FieldLabel>
-              <SectionTitleButton prefix={<PlusIcon />} />
-            </Flex>
-            <Box css={{ py: theme.spacing[2] }}>
-              <Flex direction="column" gap="2">
-                <Grid>
-                  <div
-                    data-baseline-row
-                    style={{ height: theme.spacing[11] }}
-                  />
-                </Grid>
-              </Flex>
-            </Box>
-          </div>
-        </Grid>
       </TooltipProvider>
     )
   );
@@ -261,15 +236,10 @@ test("Action header and menu align while rows retain their original geometry", a
   expect(actionRect.right).toBe(panelRect.right);
   expect(rowRect.left).toBe(panelRect.left);
   expect(rowRect.right).toBe(panelRect.right);
-  const baselineHeaderRect = container
-    .querySelector<HTMLElement>("[data-baseline-header]")!
-    .getBoundingClientRect();
-  const baselineRowRect = container
-    .querySelector<HTMLElement>("[data-baseline-row]")!
-    .getBoundingClientRect();
-  expect(rowRect.top - actionRect.top).toBe(
-    baselineRowRect.top - baselineHeaderRect.top
-  );
+  expect(actionRect.height).toBe(36);
+  expect(rowRect.top - actionRect.bottom).toBe(2);
+  expect(rowRect.top).toBeGreaterThan(actionButtonRect.bottom);
+  expect(rowRect.height).toBe(24);
   expect(
     document
       .elementFromPoint(

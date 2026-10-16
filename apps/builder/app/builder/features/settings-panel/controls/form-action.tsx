@@ -141,15 +141,8 @@ export const FormActionControl = ({
       ? undefined
       : validateFormSubmission(action);
 
-  // The SectionTitle can extend past the original control-height header slot.
-  // Keep the list in the same flow position as the original Action header.
   return (
-    <Grid
-      css={{
-        paddingInline: 0,
-        gridTemplateRows: `${theme.sizes.controlHeight} auto`,
-      }}
-    >
+    <Grid css={{ paddingInline: 0 }}>
       <SectionTitle
         collapsible={false}
         suffix={
@@ -163,7 +156,6 @@ export const FormActionControl = ({
                 aria-label="Add action"
                 tabIndex={0}
                 prefix={<PlusIcon />}
-                css={{ position: "relative", zIndex: 1 }}
                 onClick={() => setShowEmptyResourceTooltip(true)}
               />
             </Tooltip>
@@ -177,7 +169,6 @@ export const FormActionControl = ({
                       tabIndex={0}
                       disabled={action.length >= maxFormActions}
                       prefix={<PlusIcon />}
-                      css={{ position: "relative", zIndex: 1 }}
                     />
                   </DropdownMenuTrigger>
                 </span>
