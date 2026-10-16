@@ -49,9 +49,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // Hope Remix will have customFetch by default, see https://kit.svelte.dev/docs/load#making-fetch-requests
   const customFetch: typeof fetch = (input, init) => {
+    // Exchange inspection provides a Request for external resources.
+    if (input instanceof Request) {
+      return safeResourceFetch(input, init);
+    }
     if (typeof input !== "string") {
       return Promise.reject(
-        new TypeError("Resource loader requires a URL string")
+        new TypeError("Resource loader requires a URL string or Request")
       );
     }
 
