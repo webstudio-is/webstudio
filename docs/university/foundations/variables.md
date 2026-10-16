@@ -56,7 +56,7 @@ Variables defined on **Global root** are accessible across all pages. Use them f
 
 ### System
 
-System variable is a unique variable in that it exists by default, while all other variables are added by the user.
+The System variable is available by default. Forms also add variables automatically for submission data and state.
 
 System variable contains the following:
 
