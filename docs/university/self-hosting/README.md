@@ -51,8 +51,8 @@ Use `POST /email/send` over HTTPS with these headers:
 | Header | Required | Value |
 | --- | --- | --- |
 | `Content-Type` | Yes | `application/json` |
-| `Authorization` | Yes | `Bearer <token>` |
-| `X-Webstudio-Project-Id` | No | The project ID for routing or lookup when the endpoint serves multiple projects. This header does not authenticate the request. |
+| `Authorization` | Yes | `Bearer <token>`. Only this token authenticates the request. |
+| `X-Webstudio-Project-Id` | No | Caller-supplied, untrusted project ID for routing or lookup when the endpoint serves multiple projects. It is not a trusted identity and must never grant authorization. |
 
 The endpoint must verify the authorization token before sending email. The caller must keep the token server-side and never expose it to the browser.
 
