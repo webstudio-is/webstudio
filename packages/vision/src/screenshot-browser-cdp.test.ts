@@ -63,6 +63,8 @@ class FakeWebSocket {
   readonly pendingFonts: boolean;
   readonly consoleError: boolean;
   readonly staleConsoleErrorOnSecondNavigation: boolean;
+  readonly sameDocumentOnSecondNavigation: boolean;
+  readonly consoleErrorOnSecondNavigation: boolean;
   private navigationCount = 0;
   imageInspectionFinished = false;
   screenshotStartedBeforeImageInspectionFinished = false;
@@ -76,7 +78,9 @@ class FakeWebSocket {
     lifecycleFrames = ["main"],
     pendingFonts = false,
     consoleError = false,
-    staleConsoleErrorOnSecondNavigation = false
+    staleConsoleErrorOnSecondNavigation = false,
+    sameDocumentOnSecondNavigation = false,
+    consoleErrorOnSecondNavigation = false
   ) {
     this.status = status;
     this.finalUrl = finalUrl;
@@ -87,6 +91,8 @@ class FakeWebSocket {
     this.consoleError = consoleError;
     this.staleConsoleErrorOnSecondNavigation =
       staleConsoleErrorOnSecondNavigation;
+    this.sameDocumentOnSecondNavigation = sameDocumentOnSecondNavigation;
+    this.consoleErrorOnSecondNavigation = consoleErrorOnSecondNavigation;
     setTimeout(() => this.emit("open"), 0);
   }
 
@@ -369,23 +375,30 @@ class FakeWebSocket {
     setTimeout(() => {
       respond(
         message.method === "Page.navigate"
-          ? { frameId: "main", loaderId: "main-loader" }
+          ? this.sameDocumentOnSecondNavigation &&
+            this.navigationCount + 1 === 2
+            ? { frameId: "main" }
+            : { frameId: "main", loaderId: "main-loader" }
           : {}
       );
       if (message.method === "Page.navigate") {
         this.navigationCount += 1;
         const executionContextId = this.navigationCount;
-        this.emit("message", {
-          data: JSON.stringify({
-            method: "Runtime.executionContextCreated",
-            params: {
-              context: {
-                id: executionContextId,
-                auxData: { frameId: "main", isDefault: true },
+        if (
+          !(this.sameDocumentOnSecondNavigation && this.navigationCount === 2)
+        ) {
+          this.emit("message", {
+            data: JSON.stringify({
+              method: "Runtime.executionContextCreated",
+              params: {
+                context: {
+                  id: executionContextId,
+                  auxData: { frameId: "main", isDefault: true },
+                },
               },
-            },
-          }),
-        });
+            }),
+          });
+        }
         const requestedUrl = String(message.params?.url);
         this.currentUrl = this.finalUrl ?? requestedUrl;
         if (this.currentUrl !== requestedUrl) {
@@ -435,7 +448,8 @@ class FakeWebSocket {
         if (
           this.consoleError ||
           (this.staleConsoleErrorOnSecondNavigation &&
-            this.navigationCount === 2)
+            this.navigationCount === 2) ||
+          (this.consoleErrorOnSecondNavigation && this.navigationCount === 2)
         ) {
           this.emit("message", {
             data: JSON.stringify({
@@ -446,7 +460,10 @@ class FakeWebSocket {
                   this.staleConsoleErrorOnSecondNavigation &&
                   this.navigationCount === 2
                     ? 1
-                    : executionContextId,
+                    : this.sameDocumentOnSecondNavigation &&
+                        this.navigationCount === 2
+                      ? 1
+                      : executionContextId,
               },
             }),
           });
@@ -2027,6 +2044,50 @@ test("does not attribute an outgoing page error to the next route", async () => 
   expect(
     layouts.map(({ navigation }) => navigation?.javascriptErrorPresent)
   ).toEqual([undefined, undefined]);
+  await session.close();
+});
+
+test("keeps tracking the document context across hash navigations", async () => {
+  const options = {
+    url: "https://example.com/one",
+    output: "/tmp/one.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(
+    options,
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        false,
+        false,
+        true,
+        true
+      ),
+    })
+  );
+
+  const layouts = await session.capturePage([
+    options,
+    {
+      ...options,
+      url: "https://example.com/one#section",
+      output: "/tmp/one-hash.png",
+    },
+  ]);
+
+  expect(
+    layouts.map(({ navigation }) => navigation?.javascriptErrorPresent)
+  ).toEqual([undefined, true]);
   await session.close();
 });
 

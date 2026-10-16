@@ -1847,6 +1847,10 @@ const capturePageWithBrowserRuntime = async (
           );
           let navigationMs = 0;
           if (options.url !== previousUrl) {
+            const previousNavigationFrameId = navigationFrameId;
+            const previousExecutionContextIds = new Set(
+              activeExecutionContextIds
+            );
             javascriptErrorPresent = false;
             isNavigating = true;
             navigationExecutionContextFrames.clear();
@@ -1871,19 +1875,29 @@ const capturePageWithBrowserRuntime = async (
                 `Browser navigation failed: ${navigation.errorText}`
               );
             }
+            const sameDocumentNavigation =
+              navigation.loaderId === undefined &&
+              navigation.frameId !== undefined &&
+              navigation.frameId === previousNavigationFrameId;
             navigationFrameId = navigation.frameId;
             isNavigating = false;
+            if (sameDocumentNavigation) {
+              for (const executionContextId of previousExecutionContextIds) {
+                activeExecutionContextIds.add(executionContextId);
+              }
+            }
             for (const [
               executionContextId,
               frameId,
             ] of navigationExecutionContextFrames) {
               if (frameId === navigationFrameId) {
                 activeExecutionContextIds.add(executionContextId);
-                if (
-                  navigationJavascriptErrorContextIds.has(executionContextId)
-                ) {
-                  javascriptErrorPresent = true;
-                }
+              }
+            }
+            for (const executionContextId of activeExecutionContextIds) {
+              if (navigationJavascriptErrorContextIds.has(executionContextId)) {
+                javascriptErrorPresent = true;
+                break;
               }
             }
             navigationExecutionContextFrames.clear();

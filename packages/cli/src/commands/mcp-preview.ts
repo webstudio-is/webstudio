@@ -538,25 +538,6 @@ export const createMcpPreviewHandlers = ({
     if (
       input.path !== undefined &&
       input.baseUrl === undefined &&
-      result.navigation?.javascriptErrorPresent === true
-    ) {
-      const message =
-        "The page reported a JavaScript error during screenshot capture.";
-      throw Object.assign(new Error(message), {
-        code: "SCREENSHOT_JAVASCRIPT_ERROR",
-        issues: [
-          {
-            code: "screenshot_javascript_error",
-            path: [],
-            message,
-            constraint: "javascript_runtime_error",
-          },
-        ],
-      });
-    }
-    if (
-      input.path !== undefined &&
-      input.baseUrl === undefined &&
       result.navigation?.generatedSiteRootPresent === false
     ) {
       const status = result.navigation.status;
@@ -579,6 +560,25 @@ export const createMcpPreviewHandlers = ({
             constraint: routeFailed
               ? `http_status:${status}`
               : "generated_site_identity_present",
+          },
+        ],
+      });
+    }
+    if (
+      input.path !== undefined &&
+      input.baseUrl === undefined &&
+      result.navigation?.javascriptErrorPresent === true
+    ) {
+      const message =
+        "The page reported a JavaScript error during screenshot capture.";
+      throw Object.assign(new Error(message), {
+        code: "SCREENSHOT_JAVASCRIPT_ERROR",
+        issues: [
+          {
+            code: "screenshot_javascript_error",
+            path: [],
+            message,
+            constraint: "javascript_runtime_error",
           },
         ],
       });

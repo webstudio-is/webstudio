@@ -1917,6 +1917,7 @@ test("reports an interior route HTTP failure instead of a wrong-site error", asy
         {
           navigation: {
             generatedSiteRootPresent: false,
+            javascriptErrorPresent: true,
             status: 503,
             documentReadyState: "complete",
             redirects: [],
