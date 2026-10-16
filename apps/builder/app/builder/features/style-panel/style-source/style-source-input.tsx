@@ -55,7 +55,7 @@ import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
 import { $computedStyleDeclarations } from "../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { StyleSourceMenu, type SelectorConfig } from "./style-source-menu";
+import { StyleSourceMenu } from "./style-source-menu";
 
 type IntermediateItem = {
   id: StyleSource["id"];
@@ -107,7 +107,6 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
     onSelectItem?: (itemSelector: ItemSelector) => void;
     onEditItem?: (id?: Item["id"]) => void;
     editingItemId?: Item["id"];
-    states: { label: string; selector: string }[];
     error?: StyleSourceError;
   };
 
@@ -189,7 +188,6 @@ const TextFieldBase: ForwardRefRenderFunction<
     onSelectItem,
     onEditItem,
     editingItemId,
-    states,
     error,
     ...textFieldProps
   } = props;
@@ -261,19 +259,7 @@ const TextFieldBase: ForwardRefRenderFunction<
           item={item}
           renderMenu={renderMenu}
           selected={item.id === selectedItemSelector?.styleSourceId}
-          state={
-            item.id === selectedItemSelector?.styleSourceId
-              ? selectedItemSelector.state
-              : undefined
-          }
           label={item.label}
-          stateLabel={
-            item.id === selectedItemSelector?.styleSourceId &&
-            selectedItemSelector.state
-              ? states.find((s) => s.selector === selectedItemSelector.state)
-                  ?.label || selectedItemSelector.state
-              : undefined
-          }
           error={item.id === error?.id ? error : undefined}
           disabled={item.disabled}
           isDragging={item.id === dragItemId}
@@ -306,7 +292,6 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   value?: Array<Item>;
   selectedItemSelector: undefined | ItemSelector;
   editingItemId?: Item["id"];
-  componentStates?: SelectorConfig[];
   onSelectAutocompleteItem?: (item: Item) => void;
   onDetachItem?: (id: Item["id"]) => void;
   onDeleteItem?: (id: Item["id"]) => void;
@@ -430,8 +415,6 @@ export const StyleSourceInput = (
   let hasNewTokenItem = false;
   let hasGlobalTokenItem = false;
 
-  const states = props.componentStates ?? [];
-
   return (
     <ComboboxRoot open={isOpen}>
       <Box {...getComboboxProps()}>
@@ -445,17 +428,8 @@ export const StyleSourceInput = (
               <StyleSourceMenu
                 open={open}
                 onOpenChange={onOpenChange}
-                selectedItemSelector={props.selectedItemSelector}
                 item={item}
                 hasStyles={hasStyles}
-                states={states}
-                onAddSelector={(itemId, selector) => {
-                  props.onSelectItem?.({
-                    styleSourceId: itemId,
-                    state: selector,
-                  });
-                }}
-                onSelect={props.onSelectItem}
                 onDuplicate={props.onDuplicateItem}
                 onToggleLock={props.onToggleLockItem}
                 onConvertToToken={props.onConvertToToken}
@@ -473,7 +447,6 @@ export const StyleSourceInput = (
             onSort={props.onSort}
             label={label}
             value={value}
-            states={states}
             selectedItemSelector={props.selectedItemSelector}
             css={props.css}
             editingItemId={props.editingItemId}
