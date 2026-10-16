@@ -165,7 +165,7 @@ export const FormActionControl = ({
           ) : (
             <DropdownMenu>
               <Tooltip content="Add a resource to submit this Form.">
-                <span style={{ display: "flex" }}>
+                <Flex>
                   <DropdownMenuTrigger asChild>
                     <SectionTitleButton
                       aria-label="Add action"
@@ -174,7 +174,7 @@ export const FormActionControl = ({
                       prefix={<PlusIcon />}
                     />
                   </DropdownMenuTrigger>
-                </span>
+                </Flex>
               </Tooltip>
               <DropdownMenuContent
                 align="end"

@@ -201,7 +201,9 @@ test("Action header and menu align while items sit below the full header", async
     .item(1)!;
   expect(actionButton.tabIndex).toBe(0);
   const propertyHeader = propertyButton.closest("div[data-state]")!;
-  const actionHeader = actionButton.closest("div[data-state]")!;
+  const actionHeader = actionButton
+    .closest("div[data-state]")!
+    .parentElement!.closest("div[data-state]")!;
   const variableHeader = variableButton.closest("div[data-state]")!;
   const panelRect = container.getBoundingClientRect();
   const propertyRect = propertyHeader.getBoundingClientRect();
