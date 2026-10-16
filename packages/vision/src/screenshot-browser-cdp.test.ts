@@ -62,6 +62,8 @@ class FakeWebSocket {
   readonly lifecycleFrames: string[];
   readonly pendingFonts: boolean;
   readonly consoleError: boolean;
+  readonly staleConsoleErrorOnSecondNavigation: boolean;
+  private navigationCount = 0;
   imageInspectionFinished = false;
   screenshotStartedBeforeImageInspectionFinished = false;
   private currentUrl = "about:blank";
@@ -73,7 +75,8 @@ class FakeWebSocket {
     readinessWidths?: number[],
     lifecycleFrames = ["main"],
     pendingFonts = false,
-    consoleError = false
+    consoleError = false,
+    staleConsoleErrorOnSecondNavigation = false
   ) {
     this.status = status;
     this.finalUrl = finalUrl;
@@ -82,6 +85,8 @@ class FakeWebSocket {
     this.lifecycleFrames = lifecycleFrames;
     this.pendingFonts = pendingFonts;
     this.consoleError = consoleError;
+    this.staleConsoleErrorOnSecondNavigation =
+      staleConsoleErrorOnSecondNavigation;
     setTimeout(() => this.emit("open"), 0);
   }
 
@@ -368,6 +373,19 @@ class FakeWebSocket {
           : {}
       );
       if (message.method === "Page.navigate") {
+        this.navigationCount += 1;
+        const executionContextId = this.navigationCount;
+        this.emit("message", {
+          data: JSON.stringify({
+            method: "Runtime.executionContextCreated",
+            params: {
+              context: {
+                id: executionContextId,
+                auxData: { frameId: "main", isDefault: true },
+              },
+            },
+          }),
+        });
         const requestedUrl = String(message.params?.url);
         this.currentUrl = this.finalUrl ?? requestedUrl;
         if (this.currentUrl !== requestedUrl) {
@@ -414,11 +432,22 @@ class FakeWebSocket {
             }),
           });
         }
-        if (this.consoleError) {
+        if (
+          this.consoleError ||
+          (this.staleConsoleErrorOnSecondNavigation &&
+            this.navigationCount === 2)
+        ) {
           this.emit("message", {
             data: JSON.stringify({
               method: "Runtime.consoleAPICalled",
-              params: { type: "error" },
+              params: {
+                type: "error",
+                executionContextId:
+                  this.staleConsoleErrorOnSecondNavigation &&
+                  this.navigationCount === 2
+                    ? 1
+                    : executionContextId,
+              },
             }),
           });
         }
@@ -1957,6 +1986,48 @@ test("reports React error boundary errors logged by the page", async () => {
   );
 
   expect(layout.navigation?.javascriptErrorPresent).toBe(true);
+});
+
+test("does not attribute an outgoing page error to the next route", async () => {
+  const options = {
+    url: "https://example.com/one",
+    output: "/tmp/one.png",
+    width: 800,
+    height: 600,
+    browserPath: "/usr/bin/chromium",
+    waitUntil: "networkidle" as const,
+    waitForTimeout: 0,
+    timeout: 1000,
+  };
+  const session = await createBrowserScreenshotSession(
+    options,
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        false,
+        true
+      ),
+    })
+  );
+
+  const layouts = await session.capturePage([
+    options,
+    {
+      ...options,
+      url: "https://example.com/two",
+      output: "/tmp/two.png",
+    },
+  ]);
+
+  expect(
+    layouts.map(({ navigation }) => navigation?.javascriptErrorPresent)
+  ).toEqual([undefined, undefined]);
+  await session.close();
 });
 
 test("ignores child-frame document responses when reporting navigation", async () => {

@@ -1697,8 +1697,70 @@ const capturePageWithBrowserRuntime = async (
           }
         >();
         let javascriptErrorPresent = false;
-        cdp.on("Runtime.exceptionThrown", () => {
-          javascriptErrorPresent = true;
+        let isNavigating = false;
+        let navigationFrameId: string | undefined;
+        const navigationExecutionContextFrames = new Map<number, string>();
+        const navigationJavascriptErrorContextIds = new Set<number>();
+        const activeExecutionContextIds = new Set<number>();
+        const getExecutionContextId = (params: unknown) =>
+          typeof params === "object" &&
+          params !== null &&
+          "executionContextId" in params &&
+          typeof params.executionContextId === "number"
+            ? params.executionContextId
+            : undefined;
+        const recordJavascriptError = (params: unknown) => {
+          const executionContextId = getExecutionContextId(params);
+          if (executionContextId === undefined) {
+            return;
+          }
+          if (isNavigating) {
+            navigationJavascriptErrorContextIds.add(executionContextId);
+          } else if (activeExecutionContextIds.has(executionContextId)) {
+            javascriptErrorPresent = true;
+          }
+        };
+        cdp.on("Runtime.executionContextCreated", (params) => {
+          if (
+            typeof params !== "object" ||
+            params === null ||
+            !("context" in params) ||
+            typeof params.context !== "object" ||
+            params.context === null ||
+            !("id" in params.context) ||
+            typeof params.context.id !== "number" ||
+            !("auxData" in params.context) ||
+            typeof params.context.auxData !== "object" ||
+            params.context.auxData === null ||
+            !("frameId" in params.context.auxData) ||
+            typeof params.context.auxData.frameId !== "string" ||
+            !("isDefault" in params.context.auxData) ||
+            params.context.auxData.isDefault !== true
+          ) {
+            return;
+          }
+          const { id } = params.context;
+          const { frameId } = params.context.auxData;
+          if (isNavigating) {
+            navigationExecutionContextFrames.set(id, frameId);
+          } else if (frameId === navigationFrameId) {
+            activeExecutionContextIds.add(id);
+          }
+          if (
+            frameId === navigationFrameId &&
+            navigationJavascriptErrorContextIds.has(id)
+          ) {
+            javascriptErrorPresent = true;
+          }
+        });
+        cdp.on("Runtime.exceptionThrown", (params) => {
+          recordJavascriptError(
+            typeof params === "object" &&
+              params !== null &&
+              "exceptionDetails" in params
+              ? params.exceptionDetails
+              : undefined
+          );
         });
         cdp.on("Runtime.consoleAPICalled", (params) => {
           if (
@@ -1707,7 +1769,7 @@ const capturePageWithBrowserRuntime = async (
             "type" in params &&
             params.type === "error"
           ) {
-            javascriptErrorPresent = true;
+            recordJavascriptError(params);
           }
         });
         cdp.on("Network.requestWillBeSent", (params) => {
@@ -1770,7 +1832,6 @@ const capturePageWithBrowserRuntime = async (
           send("Page.setLifecycleEventsEnabled", { enabled: true }),
         ]);
         const targetSetupMs = Date.now() - setupStartedAt;
-        let navigationFrameId: string | undefined;
         let previousUrl: string | undefined;
         for (const [index, options] of optionsList.entries()) {
           const viewportStartedAt = Date.now();
@@ -1787,6 +1848,10 @@ const capturePageWithBrowserRuntime = async (
           let navigationMs = 0;
           if (options.url !== previousUrl) {
             javascriptErrorPresent = false;
+            isNavigating = true;
+            navigationExecutionContextFrames.clear();
+            navigationJavascriptErrorContextIds.clear();
+            activeExecutionContextIds.clear();
             redirectsByFrame.clear();
             documentResponsesByFrame.clear();
             const navigationStartedAt = Date.now();
@@ -1807,6 +1872,20 @@ const capturePageWithBrowserRuntime = async (
               );
             }
             navigationFrameId = navigation.frameId;
+            isNavigating = false;
+            for (const [executionContextId, frameId] of
+              navigationExecutionContextFrames) {
+              if (frameId === navigationFrameId) {
+                activeExecutionContextIds.add(executionContextId);
+                if (
+                  navigationJavascriptErrorContextIds.has(executionContextId)
+                ) {
+                  javascriptErrorPresent = true;
+                }
+              }
+            }
+            navigationExecutionContextFrames.clear();
+            navigationJavascriptErrorContextIds.clear();
             navigationMs = Date.now() - navigationStartedAt;
             previousUrl = options.url;
           } else {
