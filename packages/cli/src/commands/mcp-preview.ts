@@ -535,11 +535,10 @@ export const createMcpPreviewHandlers = ({
     input: McpScreenshotInput,
     result: Awaited<ReturnType<typeof captureScreenshot>>
   ) => {
-    if (
-      input.path !== undefined &&
-      input.baseUrl === undefined &&
-      result.navigation?.generatedSiteRootPresent === false
-    ) {
+    if (input.path === undefined || input.baseUrl !== undefined) {
+      return result;
+    }
+    if (result.navigation?.generatedSiteRootPresent === false) {
       const status = result.navigation.status;
       const routeFailed = status !== undefined && status >= 400;
       const code = routeFailed
@@ -564,11 +563,7 @@ export const createMcpPreviewHandlers = ({
         ],
       });
     }
-    if (
-      input.path !== undefined &&
-      input.baseUrl === undefined &&
-      result.navigation?.javascriptErrorPresent === true
-    ) {
+    if (result.navigation?.javascriptErrorPresent === true) {
       const message =
         "The page reported a JavaScript error during screenshot capture.";
       throw Object.assign(new Error(message), {

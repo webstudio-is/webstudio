@@ -61,10 +61,10 @@ class FakeWebSocket {
   readonly readinessWidths?: number[];
   readonly lifecycleFrames: string[];
   readonly pendingFonts: boolean;
-  readonly consoleError: boolean;
-  readonly staleConsoleErrorOnSecondNavigation: boolean;
-  readonly sameDocumentOnSecondNavigation: boolean;
-  readonly consoleErrorOnSecondNavigation: boolean;
+  readonly runtimeErrorScenario?:
+    | "console-error"
+    | "stale-outgoing-error"
+    | "hash-navigation-error";
   private navigationCount = 0;
   imageInspectionFinished = false;
   screenshotStartedBeforeImageInspectionFinished = false;
@@ -77,10 +77,7 @@ class FakeWebSocket {
     readinessWidths?: number[],
     lifecycleFrames = ["main"],
     pendingFonts = false,
-    consoleError = false,
-    staleConsoleErrorOnSecondNavigation = false,
-    sameDocumentOnSecondNavigation = false,
-    consoleErrorOnSecondNavigation = false
+    runtimeErrorScenario?: FakeWebSocket["runtimeErrorScenario"]
   ) {
     this.status = status;
     this.finalUrl = finalUrl;
@@ -88,11 +85,7 @@ class FakeWebSocket {
     this.readinessWidths = readinessWidths;
     this.lifecycleFrames = lifecycleFrames;
     this.pendingFonts = pendingFonts;
-    this.consoleError = consoleError;
-    this.staleConsoleErrorOnSecondNavigation =
-      staleConsoleErrorOnSecondNavigation;
-    this.sameDocumentOnSecondNavigation = sameDocumentOnSecondNavigation;
-    this.consoleErrorOnSecondNavigation = consoleErrorOnSecondNavigation;
+    this.runtimeErrorScenario = runtimeErrorScenario;
     setTimeout(() => this.emit("open"), 0);
   }
 
@@ -373,20 +366,22 @@ class FakeWebSocket {
       return;
     }
     setTimeout(() => {
+      const navigationNumber = this.navigationCount + 1;
+      const sameDocumentNavigation =
+        message.method === "Page.navigate" &&
+        this.runtimeErrorScenario === "hash-navigation-error" &&
+        navigationNumber === 2;
       respond(
         message.method === "Page.navigate"
-          ? this.sameDocumentOnSecondNavigation &&
-            this.navigationCount + 1 === 2
+          ? sameDocumentNavigation
             ? { frameId: "main" }
             : { frameId: "main", loaderId: "main-loader" }
           : {}
       );
       if (message.method === "Page.navigate") {
-        this.navigationCount += 1;
-        const executionContextId = this.navigationCount;
-        if (
-          !(this.sameDocumentOnSecondNavigation && this.navigationCount === 2)
-        ) {
+        this.navigationCount = navigationNumber;
+        const executionContextId = navigationNumber;
+        if (!sameDocumentNavigation) {
           this.emit("message", {
             data: JSON.stringify({
               method: "Runtime.executionContextCreated",
@@ -445,30 +440,29 @@ class FakeWebSocket {
             }),
           });
         }
-        if (
-          this.consoleError ||
-          (this.staleConsoleErrorOnSecondNavigation &&
-            this.navigationCount === 2) ||
-          (this.consoleErrorOnSecondNavigation && this.navigationCount === 2)
-        ) {
+        const shouldLogError =
+          this.runtimeErrorScenario === "console-error" ||
+          ((this.runtimeErrorScenario === "stale-outgoing-error" ||
+            sameDocumentNavigation) &&
+            navigationNumber === 2);
+        if (shouldLogError) {
           this.emit("message", {
             data: JSON.stringify({
               method: "Runtime.consoleAPICalled",
               params: {
                 type: "error",
                 executionContextId:
-                  this.staleConsoleErrorOnSecondNavigation &&
-                  this.navigationCount === 2
+                  shouldLogError &&
+                  this.runtimeErrorScenario !== "console-error"
                     ? 1
-                    : this.sameDocumentOnSecondNavigation &&
-                        this.navigationCount === 2
-                      ? 1
-                      : executionContextId,
+                    : executionContextId,
               },
             }),
           });
         }
-        for (const frameId of this.lifecycleFrames) {
+        for (const frameId of sameDocumentNavigation
+          ? []
+          : this.lifecycleFrames) {
           this.emit("message", {
             data: JSON.stringify({
               method: "Page.lifecycleEvent",
@@ -1997,7 +1991,7 @@ test("reports React error boundary errors logged by the page", async () => {
         undefined,
         ["main"],
         false,
-        true
+        "console-error"
       ),
     })
   );
@@ -2026,8 +2020,7 @@ test("does not attribute an outgoing page error to the next route", async () => 
         undefined,
         ["main"],
         false,
-        false,
-        true
+        "stale-outgoing-error"
       ),
     })
   );
@@ -2068,10 +2061,7 @@ test("keeps tracking the document context across hash navigations", async () => 
         undefined,
         ["main"],
         false,
-        false,
-        false,
-        true,
-        true
+        "hash-navigation-error"
       ),
     })
   );
