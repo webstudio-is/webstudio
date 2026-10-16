@@ -1,7 +1,6 @@
 import { createServer } from "node:http";
 import { expect, test, vi } from "vitest";
 import type { ResourceRequest } from "@webstudio-is/sdk";
-import { loadResource } from "@webstudio-is/sdk/runtime";
 
 import { safeResourceFetch } from "./safe-resource-fetch.server";
 import {
@@ -21,7 +20,7 @@ const externalResourceFetch: typeof fetch = (input, init) => {
   return safeResourceFetch(input, init);
 };
 
-test("inspected Resource requests preserve POST method, headers, and body", async () => {
+test("inspected Resource GET and POST requests preserve their methods and bodies", async () => {
   const originalAllowLocal = process.env.E2E_ALLOW_LOCAL_RESOURCE_URLS;
   process.env.E2E_ALLOW_LOCAL_RESOURCE_URLS = "true";
   const server = createServer(async (incoming, outgoing) => {
@@ -87,6 +86,37 @@ test("inspected Resource requests preserve POST method, headers, and body", asyn
       request: { method: "POST", url: resourceRequest.url },
       response: { status: 200 },
     });
+    const getRequest = {
+      name: "Local GET inspection",
+      method: "get",
+      url: resourceRequest.url,
+      searchParams: [],
+      headers: [],
+    } satisfies ResourceRequest;
+    const getFetch = vi.fn(externalResourceFetch);
+    const getOutput = await loadResourceRequestList({
+      request: new Request("https://p-test.localhost/rest/resources-loader", {
+        method: "POST",
+      }),
+      requestList: [getRequest],
+      sourceOrigin: "https://source.example",
+      includeDiagnostics: false,
+      inspectResourceKey: getResourceKey(getRequest),
+      customFetch: getFetch,
+    });
+    expect(getFetch).toHaveBeenCalledWith(
+      getRequest.url,
+      expect.objectContaining({ method: "get", headers: expect.any(Headers) })
+    );
+    expect(getOutput.resources[0]?.[1]).toMatchObject({
+      ok: true,
+      status: 200,
+      data: { method: "GET", body: "" },
+    });
+    expect(getOutput.inspection).toMatchObject({
+      request: { method: "GET", url: getRequest.url },
+      response: { status: 200 },
+    });
   } finally {
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve()))
@@ -98,46 +128,6 @@ test("inspected Resource requests preserve POST method, headers, and body", asyn
     }
   }
 });
-
-test.skipIf(process.env.WEBSTUDIO_LIVE_RESOURCE_GET !== "1")(
-  "loads the Holy Redeemer API through Builder's GET Resource transport",
-  async () => {
-    const url = "https://api.tilmaplatform.com/api/orgs/holyredeemer/en/";
-    const result = await loadResource(
-      externalResourceFetch,
-      {
-        name: "Holy Redeemer",
-        method: "get",
-        url,
-        searchParams: [],
-        headers: [],
-      },
-      undefined,
-      { timeoutMs: 15_000 }
-    );
-
-    console.info("Live Builder Resource GET outcome", {
-      ok: result.ok,
-      status: result.status,
-      statusText: result.statusText,
-      dataType: typeof result.data,
-      topLevelKeys:
-        result.data !== null && typeof result.data === "object"
-          ? Object.keys(result.data).slice(0, 6)
-          : undefined,
-    });
-
-    expect(result).toMatchObject({
-      ok: true,
-      status: 200,
-      data: {
-        name: expect.any(String),
-        slug: expect.any(String),
-      },
-    });
-  },
-  20_000
-);
 
 test.skipIf(process.env.WEBSTUDIO_LIVE_RESOURCE_GET !== "1")(
   "uses the Resource editor request in the inspected server loader path",

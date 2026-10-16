@@ -19,6 +19,7 @@ import {
   isLocalResource,
   loadResource,
   loadResources,
+  type ResourceExchange,
   type ResourceRequestGraph,
 } from "./resource-loader";
 import type { ResourceRequest } from "./schema/resources";
@@ -617,6 +618,7 @@ test("sends file bodies as multipart and preserves repeated fields and bytes", a
     type: "application/octet-stream",
   });
   let submitted: Request | undefined;
+  let preparedRequest: ResourceExchange["request"] | undefined;
   const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
     submitted = new Request(input, init);
     return Response.json({ accepted: true });
@@ -643,9 +645,28 @@ test("sends file bodies as multipart and preserves repeated fields and bytes", a
     rootIds: ["upload"],
   };
 
-  await expect(loadResources(fetch, graph)).resolves.toMatchObject({
+  await expect(
+    loadResources(fetch, graph, undefined, {
+      onResourceExchange: (_id, exchange) => {
+        preparedRequest = exchange.request;
+      },
+    })
+  ).resolves.toMatchObject({
     Upload: { ok: true, data: { accepted: true } },
   });
+  expect(preparedRequest).toMatchObject({
+    type: "prepared-http",
+    method: "POST",
+    url: "https://example.com/upload",
+    body: expect.any(FormData),
+  });
+  if (
+    preparedRequest &&
+    "type" in preparedRequest &&
+    preparedRequest.type === "prepared-http"
+  ) {
+    expect(preparedRequest.headers.has("content-type")).toBe(false);
+  }
   expect(submitted?.headers.get("content-type")).toMatch(
     /^multipart\/form-data; boundary=/
   );
@@ -1876,14 +1897,17 @@ test("optional exchange observer records the same serialized fetch and each retr
   await loadResources(fetch, graph, undefined, {
     shouldRetryFailedRoot: () => true,
     onResourceExchange: async (id, exchange) => {
-      if (!(exchange.request instanceof Request)) {
+      if (
+        !("type" in exchange.request) ||
+        exchange.request.type !== "prepared-http"
+      ) {
         throw Error("Expected HTTP transport");
       }
       observed.push({
         id,
         method: exchange.request.method,
         url: exchange.request.url,
-        body: await exchange.request.text(),
+        body: String(exchange.request.body),
         status: exchange.response.status,
         responseHeader: exchange.response.headers.get("X-Response"),
         finalUrl: exchange.response.url,

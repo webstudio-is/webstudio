@@ -1,4 +1,7 @@
-import type { ResourceExchange } from "@webstudio-is/sdk/runtime";
+import type {
+  PreparedHttpRequest,
+  ResourceExchange,
+} from "@webstudio-is/sdk/runtime";
 import type { PreviewResourceExchange } from "~/shared/preview-resource-inspection";
 
 const sensitive =
@@ -7,6 +10,31 @@ const publicHeader =
   /^(accept|content-type|content-length|cache-control|expires|date|etag|last-modified|location|vary)$/i;
 const redacted = "[redacted]";
 const maxBodyLength = 64 * 1024;
+
+const isPreparedHttpRequest = (
+  request: ResourceExchange["request"]
+): request is PreparedHttpRequest =>
+  "type" in request && request.type === "prepared-http";
+
+const formEntries = (fields: FormData | URLSearchParams) => {
+  const body: Record<string, unknown> = {};
+  for (const name of new Set(fields.keys())) {
+    const values = fields.getAll(name);
+    body[name] = values.length === 1 ? values[0] : values;
+  }
+  return body;
+};
+
+const parseTextBody = (body: string, contentType: string): unknown => {
+  if (/application\/json/i.test(contentType)) {
+    try {
+      return JSON.parse(body);
+    } catch {
+      // Preserve invalid JSON as text for inspection.
+    }
+  }
+  return body;
+};
 
 export const capturePreviewResourceExchange = async (
   resourceId: string,
@@ -73,12 +101,14 @@ export const capturePreviewResourceExchange = async (
   const request = exchange.request;
   const kind =
     exchange.kind ??
-    (!(request instanceof Request) && request.control === "email"
+    (!(request instanceof Request) &&
+    !isPreparedHttpRequest(request) &&
+    request.control === "email"
       ? "email"
       : "http");
   const visibleValues = new Set([...publicValues, ...publicValueAliases]);
   const requestHeaders =
-    request instanceof Request
+    request instanceof Request || isPreparedHttpRequest(request)
       ? request.headers
       : new Headers(
           request.headers.map(({ name, value }) => [name, String(value)])
@@ -221,23 +251,21 @@ export const capturePreviewResourceExchange = async (
       )
     ) {
       const fields = await request.formData();
-      const body: Record<string, unknown> = {};
-      for (const name of new Set(fields.keys())) {
-        const values = fields.getAll(name);
-        body[name] = values.length === 1 ? values[0] : values;
-      }
-      requestBody = body;
+      requestBody = formEntries(fields);
     } else {
-      const body = await request.text();
-      if (/application\/json/i.test(contentType)) {
-        try {
-          requestBody = JSON.parse(body);
-        } catch {
-          requestBody = body;
-        }
-      } else {
-        requestBody = body;
-      }
+      requestBody = parseTextBody(await request.text(), contentType);
+    }
+  } else if (isPreparedHttpRequest(request)) {
+    const body = request.body;
+    if (body instanceof FormData || body instanceof URLSearchParams) {
+      requestBody = formEntries(body);
+    } else if (typeof body === "string") {
+      const contentType = request.headers.get("content-type") ?? "";
+      requestBody = /application\/x-www-form-urlencoded/i.test(contentType)
+        ? formEntries(new URLSearchParams(body))
+        : parseTextBody(body, contentType);
+    } else {
+      requestBody = body === undefined ? "" : "[unavailable]";
     }
   } else {
     requestBody = request.email ?? request.body;

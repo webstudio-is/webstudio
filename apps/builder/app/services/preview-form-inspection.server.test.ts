@@ -146,6 +146,67 @@ test("multipart inspection reports file metadata without upload bytes", async ()
   expect(JSON.stringify(snapshot)).not.toContain("private-upload-bytes");
 });
 
+test("prepared multipart inspection does not invent a content-type boundary", async () => {
+  const body = new FormData();
+  body.set("email", "ada@example.com");
+  body.set(
+    "file",
+    new File(["private-upload-bytes"], "hello.txt", { type: "text/plain" })
+  );
+  const snapshot = await capturePreviewResourceExchange(
+    "resource",
+    {
+      kind: "http",
+      request: {
+        type: "prepared-http",
+        url: "https://example.com/send",
+        method: "POST",
+        headers: new Headers(),
+        body,
+      },
+      response: {
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        data: "accepted",
+      },
+    },
+    { publicValues: new Set(["ada@example.com"]), privateValues: new Set() }
+  );
+  expect(snapshot.request.headers).toEqual([]);
+  expect(snapshot.request.body).toEqual({
+    email: "ada@example.com",
+    file: { name: "hello.txt", type: "text/plain", size: 20 },
+  });
+  expect(JSON.stringify(snapshot)).not.toContain("private-upload-bytes");
+});
+
+test("prepared URL-encoded inspection retains repeated fields", async () => {
+  const snapshot = await capturePreviewResourceExchange(
+    "resource",
+    {
+      kind: "http",
+      request: {
+        type: "prepared-http",
+        url: "https://example.com/send",
+        method: "POST",
+        headers: new Headers({
+          "content-type": "application/x-www-form-urlencoded",
+        }),
+        body: "tag=one&tag=two",
+      },
+      response: {
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        data: "accepted",
+      },
+    },
+    { publicValues: new Set(["one", "two"]), privateValues: new Set() }
+  );
+  expect(snapshot.request.body).toEqual({ tag: ["one", "two"] });
+});
+
 test("inspection preserves repeated query parameters and sanitizes relative Location credentials", async () => {
   const snapshot = await capturePreviewResourceExchange(
     "resource",
