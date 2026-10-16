@@ -180,12 +180,15 @@ test("Action header and menu align while rows retain their original geometry", a
         {/* The original Action header flowed at the button height. */}
         <Grid>
           <div data-baseline-action>
-            <Box css={{ paddingInline: theme.panel.paddingInline }}>
-              <Flex align="center" justify="between" data-baseline-header>
-                <FieldLabel description="Action details">Action</FieldLabel>
-                <SectionTitleButton prefix={<PlusIcon />} />
-              </Flex>
-            </Box>
+            <Flex
+              align="center"
+              justify="between"
+              data-baseline-header
+              css={{ paddingInline: theme.panel.paddingInline }}
+            >
+              <FieldLabel description="Action details">Action</FieldLabel>
+              <SectionTitleButton prefix={<PlusIcon />} />
+            </Flex>
             <Box css={{ py: theme.spacing[2] }}>
               <Flex direction="column" gap="2">
                 <Grid>
