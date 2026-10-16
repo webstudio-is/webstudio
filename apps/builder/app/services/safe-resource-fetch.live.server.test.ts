@@ -20,6 +20,98 @@ const externalResourceFetch: typeof fetch = (input, init) => {
   return safeResourceFetch(input, init);
 };
 
+test.each([307, 308])(
+  "inspected Resource POST and PUT bodies survive a %i redirect",
+  async (redirectStatus) => {
+    const originalAllowLocal = process.env.E2E_ALLOW_LOCAL_RESOURCE_URLS;
+    process.env.E2E_ALLOW_LOCAL_RESOURCE_URLS = "true";
+    const received: Array<{ path: string; method: string; body: string }> = [];
+    const server = createServer(async (incoming, outgoing) => {
+      const chunks: Buffer[] = [];
+      for await (const chunk of incoming) {
+        chunks.push(chunk);
+      }
+      const exchange = {
+        path: incoming.url ?? "",
+        method: incoming.method ?? "",
+        body: Buffer.concat(chunks).toString(),
+      };
+      received.push(exchange);
+      if (incoming.url === "/redirect") {
+        outgoing.writeHead(redirectStatus, { location: "/receive" });
+        outgoing.end();
+      } else {
+        outgoing.setHeader("content-type", "application/json");
+        outgoing.end(JSON.stringify(exchange));
+      }
+    });
+    try {
+      await new Promise<void>((resolve) =>
+        server.listen(0, "127.0.0.1", resolve)
+      );
+      const address = server.address();
+      if (address === null || typeof address === "string") {
+        throw new Error("Expected a local test server port");
+      }
+      for (const method of ["post", "put"] as const) {
+        received.length = 0;
+        const resourceRequest = {
+          name: "Redirect inspection",
+          method,
+          url: `http://127.0.0.1:${address.port}/redirect`,
+          searchParams: [],
+          headers: [],
+          body: { id: 42 },
+        } satisfies ResourceRequest;
+        const customFetch = vi.fn(externalResourceFetch);
+        const output = await loadResourceRequestList({
+          request: new Request(
+            "https://p-test.localhost/rest/resources-loader",
+            {
+              method: "POST",
+            }
+          ),
+          requestList: [resourceRequest],
+          sourceOrigin: "https://source.example",
+          includeDiagnostics: false,
+          inspectResourceKey: getResourceKey(resourceRequest),
+          customFetch,
+        });
+        expect(customFetch).toHaveBeenCalledWith(
+          resourceRequest.url,
+          expect.objectContaining({ method, body: '{"id":42}' })
+        );
+        expect(received).toEqual([
+          {
+            path: "/redirect",
+            method: method.toUpperCase(),
+            body: '{"id":42}',
+          },
+          { path: "/receive", method: method.toUpperCase(), body: '{"id":42}' },
+        ]);
+        expect(output.resources[0]?.[1]).toMatchObject({
+          ok: true,
+          status: 200,
+          data: received[1],
+        });
+        expect(output.inspection).toMatchObject({
+          request: { method: method.toUpperCase(), url: resourceRequest.url },
+          response: { status: 200 },
+        });
+      }
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve()))
+      );
+      if (originalAllowLocal === undefined) {
+        delete process.env.E2E_ALLOW_LOCAL_RESOURCE_URLS;
+      } else {
+        process.env.E2E_ALLOW_LOCAL_RESOURCE_URLS = originalAllowLocal;
+      }
+    }
+  }
+);
+
 test("inspected Resource GET and POST requests preserve their methods and bodies", async () => {
   const originalAllowLocal = process.env.E2E_ALLOW_LOCAL_RESOURCE_URLS;
   process.env.E2E_ALLOW_LOCAL_RESOURCE_URLS = "true";
