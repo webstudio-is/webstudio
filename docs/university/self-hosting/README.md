@@ -38,17 +38,19 @@ There are two types of exports:
 
 #### HTTP endpoint for self-hosted email
 
-Set up an HTTP endpoint to send email from your self-hosted project. The following is a suggested JSON contract for that endpoint; choose its URL and authentication credentials.
+Set up an HTTP endpoint to send email from your self-hosted project. The following is a suggested JSON contract for that endpoint; choose its URL and authorization token.
 
 ##### HTTP request
 
 Use `POST /email/send` over HTTPS with these headers:
 
-| Header | Value |
-| --- | --- |
-| `Content-Type` | `application/json` |
-| `Authorization` | `Bearer <server-secret>` when using bearer authentication |
-| `X-Webstudio-Project-Id` | The project ID, if the endpoint serves multiple projects |
+| Header | Required | Value |
+| --- | --- | --- |
+| `Content-Type` | Yes | `application/json` |
+| `Authorization` | Yes | `Bearer <token>` |
+| `X-Webstudio-Project-Id` | No | The project ID for routing or lookup when the endpoint serves multiple projects. This header does not authenticate the request. |
+
+The endpoint must verify the authorization token before sending email. The caller must keep the token server-side and never expose it to the browser.
 
 The request body is a JSON object with these fields. Optional fields may be omitted.
 
