@@ -26,7 +26,7 @@ import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
 import {
   deserializeVariable,
   isVariableClipboardData,
-} from "~/builder/features/settings-panel/variable-clipboard";
+} from "./variable-clipboard";
 
 const isTextEditing = (event: ClipboardEvent) => {
   // Text is edited on the Canvas using the default Canvas text editor settings.
