@@ -1,7 +1,6 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  theme,
   Button,
   Grid,
   InputErrorsTooltip,
@@ -46,7 +45,7 @@ export const SocialImageSection = ({
   const title = usePageSettingsText(values.title, variableValues);
   const description = usePageSettingsText(values.description, variableValues);
   return (
-    <Grid gap={2} css={{ paddingInline: theme.panel.paddingInline }}>
+    <Grid gap={2}>
       <Text color="subtle">
         This image appears when you share a link to this page on social media
         sites. If no image is set here, the social image set in the project

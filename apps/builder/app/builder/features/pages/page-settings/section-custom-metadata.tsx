@@ -1,4 +1,4 @@
-import { Box, InputErrorsTooltip, theme } from "@webstudio-is/design-system";
+import { InputErrorsTooltip } from "@webstudio-is/design-system";
 import { CustomMetadata } from "../custom-metadata";
 import type {
   PageSettingsErrors,
@@ -21,11 +21,7 @@ export const CustomMetadataSection = ({
 }) => {
   return (
     <InputErrorsTooltip errors={errors.customMetas}>
-      <Box
-        role="group"
-        aria-label="Custom metadata"
-        css={{ paddingInline: theme.panel.paddingInline }}
-      >
+      <div role="group" aria-label="Custom metadata">
         <CustomMetadata
           customMetas={values.customMetas}
           disabled={disabled}
@@ -37,7 +33,7 @@ export const CustomMetadataSection = ({
             });
           }}
         />
-      </Box>
+      </div>
     </InputErrorsTooltip>
   );
 };

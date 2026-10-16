@@ -1,12 +1,6 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  Grid,
-  Label,
-  Text,
-  TextArea,
-  theme,
-} from "@webstudio-is/design-system";
+import { Grid, Label, Text, TextArea } from "@webstudio-is/design-system";
 import { isLiteralExpression } from "@webstudio-is/expression";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import type {
@@ -30,7 +24,7 @@ export const TextContentSection = ({
   const contentId = useId();
 
   return (
-    <Grid gap={2} css={{ paddingInline: theme.panel.paddingInline }}>
+    <Grid gap={2}>
       <Text color="subtle">The plain text content served for this page.</Text>
       <Grid gap={1}>
         <Label htmlFor={contentId}>Text</Label>
