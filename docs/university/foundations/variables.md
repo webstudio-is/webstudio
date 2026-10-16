@@ -149,15 +149,19 @@ The URL accepts a URL or cURL command. Use **Load data** or **Refresh resource d
 
 {% include "../../.gitbook/includes/the-requests-including-any....md" %}
 
-### System resource
+### Assets resource
 
-A system resource gets its value from project or site data. Choose one of the following types in the dialog:
+Choose **Assets resource** to query project assets. Its query editor supports filters, sorting, pagination, and file content. Invalid query settings are shown in the editor. See [Content Engine](content-engine.md) for a complete article workflow.
 
-- **Assets resource** – Queries project assets. Its query editor supports filters, sorting, pagination, and file content. Invalid query settings are shown in the editor. See [Content Engine](content-engine.md) for a complete article workflow.
-- **Sitemap resource** – Loads data about the site's static pages, commonly used to build a custom sitemap with static and dynamic data. See the [XML Node component](../core-components/xml-node.md#include-the-static-sitemap).
-- **Current date resource** – Provides the current date normalized to midnight UTC. Format it with the [Time component](../core-components/time.md).
+### Sitemap resource
 
-These editors provide **Load data** and **Refresh resource data** to update the preview. Sitemap and current date resources need only a name; the Assets resource uses a query editor.
+Choose **Sitemap resource** to load the site's static pages. Use it to combine static and dynamic data in a custom sitemap. See the [XML Node component](../core-components/xml-node.md#include-the-static-sitemap).
+
+### Current date resource
+
+Choose **Current date resource** to get the current date normalized to midnight UTC. Format it with the [Time component](../core-components/time.md).
+
+These resource editors provide **Load data** and **Refresh resource data** to update the preview. Sitemap and current date resources need only a name; the Assets resource uses a query editor.
 
 ### Email resource
 
