@@ -1873,8 +1873,10 @@ const capturePageWithBrowserRuntime = async (
             }
             navigationFrameId = navigation.frameId;
             isNavigating = false;
-            for (const [executionContextId, frameId] of
-              navigationExecutionContextFrames) {
+            for (const [
+              executionContextId,
+              frameId,
+            ] of navigationExecutionContextFrames) {
               if (frameId === navigationFrameId) {
                 activeExecutionContextIds.add(executionContextId);
                 if (
