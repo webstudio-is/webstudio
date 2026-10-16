@@ -38,22 +38,37 @@ There are two types of exports:
 
 On Webstudio Cloud, a published Cloudflare-hosted site can send Email Resources through Webstudio's private Email Service when its `EMAIL_SERVICE` binding is configured. That binding and service are not included in an export. A self-hosted JavaScript application needs a custom server-side email integration before Email Resources, including visitor-addressed ones, can send; without one, delivery fails explicitly. A static export has no managed Form submission endpoint and cannot send them.
 
-#### Email Resource sender hook
+#### HTTP endpoint for self-hosted email
 
-The current generated JavaScript app calls `handleManagedFormSubmission` from `@webstudio-is/sdk/form/server`. Its `createEmailSender(formData)` option must return a server-side `sendEmail` function; the generated Node adapter currently returns `undefined`. This is an implementation hook in the exported app, not a stable public integration API, so check its types when updating Webstudio.
+The browser submits a managed Form to the exported app's `POST /__ws-form` route (or `POST /__ws-form/<page-path>`). The app evaluates each selected Email Resource before delivery. Webstudio Cloud then calls its private email service: published sites use a Cloudflare service binding, while Builder Preview posts to `/trpc/email.send` with a private token and receives a tRPC response envelope. The URL helper accepts only Webstudio's approved Worker hosts, so it cannot be pointed at an arbitrary self-hosted endpoint. The generated Node adapter leaves email delivery unconfigured. In the exported server, replace `createManagedFormEmailSender` in `app/__generated__/$resources.managed-form-fetch.server.ts` with an adapter that calls your endpoint. Regeneration can replace that file; reapply or automate the customization when exporting again.
 
-`sendEmail(request, options)` receives an evaluated Email Resource request. `request.email` contains the recipient mode, recipients, optional sender, subject, body, and attachment setting. The factory also receives the submitted `FormData`, which the host can use to read attachments. `options` includes an abort `signal` and a `timeoutMs` budget. The sender must deliver through the host's email provider and return this outcome shape:
+You choose the private endpoint URL and authentication. For example, have the adapter send `POST /email/send` with `Content-Type: application/json`, `Authorization: Bearer <server-secret>`, and `X-Webstudio-Project-Id: <project-id>`. Its JSON body uses the evaluated message fields sent to the Cloud service:
 
-```ts
-type EmailOutcome = {
-  ok: boolean;
-  status: number;
-  statusText: string;
-  data: unknown;
-};
+```json
+{
+  "to": [{ "address": "team@example.com", "name": "Team" }],
+  "subject": "New form submission",
+  "text": "Form data:\nName: Ada",
+  "headers": { "X-Message-ID": "0123456789abcdef" },
+  "replyTo": { "address": "owner@example.com", "name": "Site Owner" },
+  "fromName": "Site Owner",
+  "attachments": [{ "filename": "note.txt", "contentType": "text/plain", "contentBase64": "aGVsbG8=" }]
+}
 ```
 
-Return `ok: false` with a useful status, message in `statusText`, and error details in `data` when delivery fails. A failed team-recipient action makes the managed Form submission fail; a failed visitor-addressed action appears in its `errors` without changing overall success. Keep provider credentials and sender validation on the server, and handle provider errors, attachments, cancellation, and timeouts there.
+`to`, `subject`, and `text` are the resolved recipients and message. `replyTo`, `fromName`, `headers`, and `attachments` are optional. `replyTo` is the Email Resource's **Reply to** value; it is not the provider's authenticated From address, which your host controls. `fromName` is a display name. Attachments are submitted files encoded as Base64 when **Attach submitted files** is enabled. The Form adds one `X-Message-ID` email header shared by its email actions; forward it for correlation. Recipient mode and the selected visitor field are resolved before this message is sent, so they are not endpoint fields.
+
+Have the endpoint report a delivery result that the adapter maps to the current `sendEmail` outcome. For a direct JSON contract, these are suitable responses:
+
+```json
+{ "ok": true, "status": 200, "statusText": "OK", "data": { "id": "provider-message-id" } }
+```
+
+```json
+{ "ok": false, "status": 422, "statusText": "Recipient rejected", "data": { "error": { "code": "recipient_rejected", "message": "Recipient rejected" } } }
+```
+
+Return an HTTP error status for a failed send and preserve its message in the adapter's outcome. A failed team-recipient action makes the Form submission fail; a failed visitor-addressed action appears in `errors` without changing overall success. The Form does not retry a failed Email Resource action, since delivery may already have happened. A timeout or lost response can therefore leave delivery uncertain; use `X-Message-ID` if your service needs duplicate detection. Keep the endpoint and provider credentials server-side. This is an integration pattern for the current generated app, not a stable Webstudio HTTP API; check the generated adapter and SDK types after upgrades.
 
 {% hint style="warning" %}
 If you want the export to contain human-readable class names, disable atomic CSS. See [Atomic CSS](../foundations/project-settings.md#atomic-css) for more information.
