@@ -36,41 +36,39 @@ There are two types of exports:
 * **JavaScript application** – Builds a dynamic app with server routes. This is the default behavior of Webstudio Cloud and provides the most functionality, but it requires hosting that runs the app.
 * **Static site** – Outputs a static site (HTML/CSS/JS) with limited functionality, but has more versatile hosting options.
 
-#### HTTP endpoint for self-hosted email
+#### tRPC email service endpoint
 
-Set up an HTTP endpoint to send email from your self-hosted project. The following is a suggested JSON contract for that endpoint; choose its URL and authorization token.
+The Builder calls the email service with a tRPC mutation:
 
-##### Builder email service configuration
+```text
+POST <EMAIL_SERVICE_URL>/trpc/email.send
+```
 
-The server-side `EMAIL_SERVICE_URL` environment variable sets the Builder's current email service base URL. It is restricted to approved Webstudio Worker origins and cannot connect the suggested endpoint contract below to an arbitrary self-hosted URL.
+The request uses HTTPS, `Content-Type: application/json`, and `Authorization: Bearer <token>`. The JSON request body is the email object itself; do not wrap it in a `json` property.
 
-The Builder's existing email-service connection uses the server-side `TRPC_SERVER_API_TOKEN` environment variable for its `Authorization: Bearer <token>` header. The token must match the value expected by that service and must never be exposed in browser-visible configuration or client code. This variable supplies authentication; it does not configure a connection to an arbitrary self-hosted endpoint.
+The email service also requires `X-Webstudio-Project-Id`, a UUID used for routing and rate limiting. It is caller-supplied metadata, not authentication. The service must authorize the request using the bearer token.
 
-##### HTTP request
+##### Builder configuration
 
-Use `POST /email/send` over HTTPS with these headers:
+Set `TRPC_SERVER_API_TOKEN` on the Builder server and configure the email service with the same secret. Never expose this token to browser code.
 
-| Header | Required | Value |
-| --- | --- | --- |
-| `Content-Type` | Yes | `application/json` |
-| `Authorization` | Yes | `Bearer <token>`. Only this token authenticates the request. |
-| `X-Webstudio-Project-Id` | No | Caller-supplied, untrusted project ID for routing or lookup when the endpoint serves multiple projects. It is not a trusted identity and must never grant authorization. |
+`EMAIL_SERVICE_URL` is the service's HTTPS origin, without a path or query string. The current Builder accepts only approved Webstudio email Worker origins, including its version URLs. It rejects arbitrary self-hosted origins. Therefore, implementing this endpoint alone does not currently let a self-hosted service replace Webstudio's service; Builder URL validation must also support that origin.
 
-The endpoint must verify the authorization token before sending email. The caller must keep the token server-side and never expose it to the browser.
-
-The request body is a JSON object with these fields. Optional fields may be omitted.
+##### Request body
 
 | Field | Required | Type and meaning |
 | --- | --- | --- |
-| `to` | Yes | Nonempty array of mailbox objects. Each has a required `address` string containing an email address and an optional `name` string. |
-| `subject` | Yes | String containing the email subject. |
-| `text` | Yes | String containing the plain-text email body. |
-| `replyTo` | No | One mailbox object with a required `address` string and an optional `name` string. Sets the Reply-To address. |
-| `fromName` | No | String containing the sender display name. The endpoint supplies the authenticated From address. |
-| `headers` | No | Object mapping email header names to string values, such as `X-Message-ID` for message correlation. These are email headers, separate from the HTTP request headers. |
-| `attachments` | No | Array of attachment objects. Each has three required string fields: `filename`, `contentType` (MIME type), and `contentBase64` (standard Base64-encoded file bytes, without a data URL prefix). Use `application/octet-stream` when the MIME type is unknown. |
+| `to` | Yes | Array of 1–50 mailbox objects. Each has an `address` email string and optional `name`. |
+| `subject` | Yes | Nonempty email subject string. |
+| `text` | Yes | Plain-text email body string. |
+| `replyTo` | No | Mailbox object with an `address` email string and optional `name`. |
+| `fromName` | No | Display name for the service's configured sender address. |
+| `headers` | No | Object supporting `X-Message-ID` for message correlation. |
+| `attachments` | No | Array of up to 32 objects with `filename`, `contentType`, and standard Base64 `contentBase64` strings. Do not include a data URL prefix. |
 
-Example request body:
+The complete JSON request must be no larger than 7 MiB. The service chooses and verifies its sender address; the request does not set a From address.
+
+Example request:
 
 ```json
 {
@@ -80,36 +78,56 @@ Example request body:
   "replyTo": { "address": "ada@example.com", "name": "Ada" },
   "fromName": "Example Website",
   "headers": { "X-Message-ID": "0123456789abcdef" },
-  "attachments": [{ "filename": "note.txt", "contentType": "text/plain", "contentBase64": "aGVsbG8=" }]
+  "attachments": [
+    {
+      "filename": "note.txt",
+      "contentType": "text/plain",
+      "contentBase64": "aGVsbG8="
+    }
+  ]
 }
 ```
 
-The attachment in this example contains the UTF-8 text `hello`.
+##### tRPC response
 
-##### HTTP response
+Return the standard tRPC result envelope. Its `result.data` contains the delivery result.
 
-Return `Content-Type: application/json`. For success, use an HTTP `2xx` status and the success body below. For failure, use an HTTP `4xx` or `5xx` status and the error body below. The body's `status` must match the HTTP status.
-
-| Field | Required | Type and meaning |
-| --- | --- | --- |
-| `ok` | Yes | Boolean: `true` for success, `false` for failure. |
-| `status` | Yes | Integer HTTP status code: `200`–`299` for success or `400`–`599` for failure. Choose a status that permits a JSON response body. |
-| `statusText` | Yes | String describing the result. |
-| `data` | Yes | Object containing `id` on success or `error` on failure. |
-| `data.id` | On success | Nonempty string containing the sent message's ID. |
-| `data.error` | On failure | Object with required string fields `code` (a machine-readable error code) and `message` (a human-readable explanation). |
-
-Success example — HTTP `200 OK`:
+Success — HTTP `200 OK`:
 
 ```json
-{ "ok": true, "status": 200, "statusText": "OK", "data": { "id": "provider-message-id" } }
+{
+  "result": {
+    "data": {
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "data": { "id": "provider-message-id" }
+    }
+  }
+}
 ```
 
-Failure example — HTTP `422 Unprocessable Content`:
+A delivery failure is still a successful tRPC procedure call: return HTTP `200 OK` with `ok: false` and the delivery status in the nested result.
 
 ```json
-{ "ok": false, "status": 422, "statusText": "Recipient rejected", "data": { "error": { "code": "recipient_rejected", "message": "Recipient rejected" } } }
+{
+  "result": {
+    "data": {
+      "ok": false,
+      "status": 429,
+      "statusText": "Email sending limit reached",
+      "data": {
+        "error": {
+          "code": "email_rate_limited",
+          "message": "Email sending limit reached"
+        }
+      }
+    }
+  }
+}
 ```
+
+Authentication, request, and transport failures use a non-2xx HTTP status and an error response with a human-readable `error.message`. The Builder treats these as call failures; it does not confuse them with a completed email delivery result.
 
 {% hint style="warning" %}
 If you want the export to contain human-readable class names, disable atomic CSS. See [Atomic CSS](../foundations/project-settings.md#atomic-css) for more information.
