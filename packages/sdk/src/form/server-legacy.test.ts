@@ -1,5 +1,6 @@
 import { expect, test, vi } from "vitest";
 import type { ResourceRequestGraph } from "../resource-loader";
+import { getManagedFormValues } from "./server-submission";
 import {
   adaptLegacyFormSubmission,
   createLegacyFormResourceFetch,
@@ -7,7 +8,6 @@ import {
 import {
   formBotFieldName,
   formIdFieldName,
-  managedFormArrayNamesFieldName,
   managedFormIdFieldName,
 } from "./fields";
 
@@ -67,9 +67,9 @@ test.each(["get", "post", "put", "delete"] as const)(
     });
     expect(adapted.formData.get(managedFormIdFieldName)).toBe("legacy");
     expect(adapted.formData.get(formIdFieldName)).toBeNull();
-    expect(adapted.formData.get(managedFormArrayNamesFieldName)).toBe(
-      '["choice"]'
-    );
+    expect(getManagedFormValues(adapted.formData)).toEqual({
+      choice: ["first", "last"],
+    });
     expect(adapted.graph.resources.map(({ id }) => id)).toEqual([
       "action",
       "dependency",

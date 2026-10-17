@@ -28,7 +28,6 @@ export const adaptLegacyFormSubmission = ({
   url: URL;
 }) => {
   const adapted = new FormData();
-  const counts = new Map<string, number>();
   for (const [name, value] of formData) {
     if (
       name === formIdFieldName ||
@@ -38,19 +37,9 @@ export const adaptLegacyFormSubmission = ({
       continue;
     }
     adapted.append(name, value);
-    if (name !== formBotFieldName) {
-      counts.set(name, (counts.get(name) ?? 0) + 1);
-    }
   }
   adapted.set(managedFormIdFieldName, "legacy");
-  adapted.set(
-    managedFormArrayNamesFieldName,
-    JSON.stringify(
-      Array.from(counts)
-        .filter(([, count]) => count > 1)
-        .map(([name]) => name)
-    )
-  );
+  adapted.set(managedFormArrayNamesFieldName, "[]");
   // A per-submission marker identifies dependencies at the transport boundary.
   // It is removed before a request reaches any destination.
   const dependencyHeader = `x-webstudio-legacy-dependency-${crypto.randomUUID()}`;
@@ -121,40 +110,33 @@ export const adaptLegacyFormSubmission = ({
       }
     };
     visit(action.id);
+    const body = Object.fromEntries(
+      Array.from(adapted).filter(
+        ([name]) =>
+          name !== managedFormIdFieldName &&
+          name !== managedFormArrayNamesFieldName &&
+          name !== formBotFieldName
+      )
+    );
     graph = {
       rootIds: [action.id],
       resources: resources.resources
         .filter((resource) => reachableIds.has(resource.id))
-        .map((resource) =>
-          resource.id === action.id
-            ? {
-                ...resource,
-                createRequest: (documents: ReadonlyMap<string, unknown>) => ({
-                  ...resource.createRequest(documents),
-                  body: Object.fromEntries(
-                    Array.from(adapted).filter(
-                      ([name]) =>
-                        name !== managedFormIdFieldName &&
-                        name !== managedFormArrayNamesFieldName &&
-                        name !== formBotFieldName
-                    )
-                  ),
-                }),
-              }
-            : {
-                ...resource,
-                createRequest: (documents: ReadonlyMap<string, unknown>) => {
-                  const request = resource.createRequest(documents);
-                  return {
-                    ...request,
-                    headers: [
-                      ...request.headers,
-                      { name: dependencyHeader, value: "1" },
-                    ],
-                  };
-                },
-              }
-        ),
+        .map((resource) => ({
+          ...resource,
+          createRequest: (documents: ReadonlyMap<string, unknown>) => {
+            const request = resource.createRequest(documents);
+            return resource.id === action.id
+              ? { ...request, body }
+              : {
+                  ...request,
+                  headers: [
+                    ...request.headers,
+                    { name: dependencyHeader, value: "1" },
+                  ],
+                };
+          },
+        })),
     };
   }
   return { formData: adapted, graph, dependencyHeader };
@@ -183,11 +165,8 @@ export const createLegacyFormResourceFetch =
     const isDependency = request.headers.has(dependencyHeader);
     request.headers.delete(dependencyHeader);
     protectedFetch.validateDestination(new URL(request.url));
-    if (
-      !isDependency ||
-      !request.headers.get("Cache-Control") ||
-      !globalThis.caches
-    ) {
+    const cacheControl = request.headers.get("Cache-Control");
+    if (!isDependency || !cacheControl || !globalThis.caches) {
       return protectedFetch(request);
     }
     request.signal.throwIfAborted();
@@ -205,10 +184,7 @@ export const createLegacyFormResourceFetch =
       return response;
     }
     response = new Response(response.body, response);
-    response.headers.set(
-      "Cache-Control",
-      request.headers.get("Cache-Control")!
-    );
+    response.headers.set("Cache-Control", cacheControl);
     await cache.put(cacheKey, response.clone());
     request.signal.throwIfAborted();
     return response;
