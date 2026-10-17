@@ -18,8 +18,7 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import {
   handleManagedFormSubmission,
-  adaptLegacyFormSubmission,
-  createLegacyFormResourceFetch,
+  handleLegacyWebhookFormSubmission,
   getManagedFormFailure,
   readFormDataWithLimit,
   type ManagedFormResponse,
@@ -303,15 +302,15 @@ export const action = async ({
     if (!isManagedFormRequest && managedFormIds.length > 0) {
       throw new Error("Invalid Form submission");
     }
+    const protectedFetch = createManagedFormResourceFetch({
+      request,
+      context,
+      projectDomain,
+    });
     if (isManagedFormRequest) {
       if (managedFormIds.length !== 1 || formData.has(formIdFieldName)) {
         throw new Error("Invalid Form submission");
       }
-      const protectedFetch = createManagedFormResourceFetch({
-        request,
-        context,
-        projectDomain,
-      });
       return await handleManagedFormSubmission({
         request,
         formData,
@@ -333,68 +332,22 @@ export const action = async ({
       });
     }
 
-    const resourceName = formData.get(formIdFieldName);
-    const generatedResources = getResources({ system });
-    const actionResource =
-      typeof resourceName === "string"
-        ? generatedResources.action.get(resourceName)
-        : undefined;
-
-    const adapted = adaptLegacyFormSubmission({
+    return await handleLegacyWebhookFormSubmission({
+      request,
       formData,
-      action: actionResource,
-      resources: generatedResources.data,
+      url,
+      resources: getResources({ system }),
       contactEmail,
-      url,
-    });
-    const protectedFetch = createManagedFormResourceFetch({
-      request,
-      context,
-      projectDomain,
-    });
-    const assetFetch = await createGeneratedAssetResourceFetch({
-      request,
-      context,
-      fallback: customFetch,
-    });
-    const resourceFetch = createLegacyFormResourceFetch({
-      protectedFetch,
-      localFetch: assetFetch,
-      dependencyHeader: adapted.dependencyHeader,
-      projectId,
-    });
-    const response = await handleManagedFormSubmission({
-      request,
-      formData: adapted.formData,
-      url,
-      system,
-      configuration: () => ({
-        action: [{ dataSourceId: "legacy" }],
-        resourceIds: [adapted.graph.rootIds[0]],
+      resourceFetch: protectedFetch,
+      dependencyFetch: await createGeneratedAssetResourceFetch({
+        request,
+        context,
+        fallback: customFetch,
       }),
-      getGraph: () => adapted.graph,
       createEmailSender: (data) =>
         createManagedFormEmailSender({ context, formData: data, projectId }),
       validateEmail: validateManagedFormEmail,
-      resourceFetch,
-      validateDestination: (destination) => {
-        if (
-          destination.origin !== url.origin ||
-          !isLocalResource(destination.pathname)
-        ) {
-          protectedFetch.validateDestination(destination);
-        }
-      },
-      trustedIp:
-        typeof context === "object" &&
-        context !== null &&
-        "cloudflare" in context
-          ? request.headers.get("cf-connecting-ip") ?? undefined
-          : undefined,
     });
-    return response.success
-      ? { success: true }
-      : { success: false, errors: response.errors.map((error) => error.message) };
   } catch (error) {
     console.error(error);
 

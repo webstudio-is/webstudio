@@ -2,4 +2,4 @@ export * from "./shared";
 export * from "./server-submission";
 export * from "./server-handler";
 export * from "./server-email";
-export * from "./server-legacy";
+export * from "./legacy-webhook-form";

@@ -448,7 +448,7 @@ test("generate resources loader", () => {
       }
       const _data: ResourceRequestGraph = {
         resources: [
-          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName },
+          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName, control: undefined, bodyFormat: undefined },
         ],
         rootIds: [
         ],
@@ -665,7 +665,7 @@ test("generate variable and use in resources loader", () => {
       }
       const _data: ResourceRequestGraph = {
         resources: [
-          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName },
+          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName, control: undefined, bodyFormat: undefined },
         ],
         rootIds: [
         ],
@@ -911,7 +911,7 @@ test("generate page system variable and use in resources loader", () => {
       }
       const _data: ResourceRequestGraph = {
         resources: [
-          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName },
+          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName, control: undefined, bodyFormat: undefined },
         ],
         rootIds: [
         ],
@@ -964,7 +964,7 @@ test("generate global system variable and use in resources loader", () => {
       }
       const _data: ResourceRequestGraph = {
         resources: [
-          { id: "resource:0", outputName: "MyResource", dependencies: [], createRequest: MyResource },
+          { id: "resource:0", outputName: "MyResource", dependencies: [], createRequest: MyResource, control: "system", bodyFormat: undefined },
         ],
         rootIds: [
           "resource:0",
@@ -1064,7 +1064,7 @@ test("generate resource loader with search params", () => {
       }
       const _data: ResourceRequestGraph = {
         resources: [
-          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName },
+          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName, control: undefined, bodyFormat: undefined },
         ],
         rootIds: [
         ],
@@ -1205,7 +1205,7 @@ test("generates action resources as lazy roots without loading stale data", () =
       }
       const _data: ResourceRequestGraph = {
         resources: [
-          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName },
+          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName, control: undefined, bodyFormat: undefined },
         ],
         rootIds: [
         ],
