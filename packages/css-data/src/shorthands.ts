@@ -395,17 +395,17 @@ const expandFont = function* (value: CssNode) {
   let lineHeight: CssNode = createInitialNode();
   let fontFamily: CssNode = createInitialNode();
   if (config) {
-    if (
-      lexer.match("<'font-size'> / <'line-height'> <'font-family'>#", config)
-        .matched
-    ) {
+    const nodes = getValueList(config);
+    // Match the separator structurally: the lexer cannot match a grammar
+    // containing var(), even when size, line-height, and family are unambiguous.
+    if (nodes[1]?.type === "Operator" && nodes[1].value === "/") {
       const [fontSizeNode, _slashNode, lineHeightNode, ...fontFamilyNodes] =
-        getValueList(config);
+        nodes;
       fontSize = fontSizeNode;
       lineHeight = lineHeightNode;
       fontFamily = createValueNode(fontFamilyNodes);
     } else {
-      const [fontSizeNode, ...fontFamilyNodes] = getValueList(config);
+      const [fontSizeNode, ...fontFamilyNodes] = nodes;
       fontSize = fontSizeNode;
       fontFamily = createValueNode(fontFamilyNodes);
     }
