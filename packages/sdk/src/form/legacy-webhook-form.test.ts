@@ -284,7 +284,9 @@ test.each(["missing", "cycle"] as const)(
           },
         },
       })
-    ).rejects.toThrow(kind === "missing" ? "Resource not found" : "cycle");
+    ).rejects.toThrow(
+      kind === "missing" ? "Form Resource absent not found" : "cycle"
+    );
     expect(createRequest).not.toHaveBeenCalled();
   }
 );
