@@ -1051,14 +1051,14 @@ export const prebuild = async (options: {
   const testFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const outgoing = new Request(input, init);
     const url = new URL(outgoing.url);
-    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || url.search !== "" || url.hash !== "" || outgoing.method !== "POST") {
+    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || [...url.searchParams.keys()].some((key) => key !== "slug" && key !== "tag") || url.hash !== "" || outgoing.method !== "POST") {
       throw new Error("Unexpected evaluation Form destination");
     }
     protectedFetch.validateDestination(url);
-    return fetch(new Request("http://127.0.0.1:${evaluationReceiverPort}" + url.pathname, outgoing));
+    return fetch(new Request("http://127.0.0.1:${evaluationReceiverPort}" + url.pathname + url.search, outgoing));
   };
   return Object.assign(testFetch, { validateDestination: (url: URL) => {
-    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || url.search !== "" || url.hash !== "") {
+    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || [...url.searchParams.keys()].some((key) => key !== "slug" && key !== "tag") || url.hash !== "") {
       throw new Error("Unexpected evaluation Form destination");
     }
     protectedFetch.validateDestination(url);

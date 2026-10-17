@@ -19,7 +19,6 @@ export default {
   async fetch(request, env, ctx) {
     return requestHandler(request, {
       EXCLUDE_FROM_SEARCH: false,
-      getDefaultActionResource: undefined,
       cloudflare: { env, ctx },
     });
   },

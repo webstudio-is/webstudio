@@ -376,7 +376,7 @@ export const generateResources = ({
       resourceId
     )}, outputName: ${JSON.stringify(name)}, dependencies: ${JSON.stringify(
       dependencies
-    )}, createRequest: ${name} },\n`;
+    )}, createRequest: ${name}, control: ${JSON.stringify(resource.control)}, bodyFormat: ${JSON.stringify(resource.bodyFormat)} },\n`;
   }
   generated += `    ],\n`;
   generated += `    rootIds: [\n`;

@@ -42,7 +42,7 @@ for (const mode of ["legacy", "managed"] as const) {
           ),
           fixture.projectId,
           mode,
-          receiver.url,
+          "https://mcp-delivery.example/submit",
         ],
         {
           timeout: 60_000,
@@ -140,11 +140,16 @@ for (const mode of ["legacy", "managed"] as const) {
         expect(receiver.deliveries).toEqual([
           { outcome: "success" },
           { outcome: "failure" },
+          { outcome: "failure" },
           { outcome: "success" },
         ]);
       };
       if (mode === "legacy") {
-        await withGeneratedPreview({ projectId: fixture.projectId, callback });
+        await withGeneratedPreview({
+          projectId: fixture.projectId,
+          evaluationReceiverPort: String(receiver.port),
+          callback,
+        });
       } else {
         await withGeneratedFormDeliveryPreview({
           projectId: fixture.projectId,
