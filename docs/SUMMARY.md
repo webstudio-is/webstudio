@@ -23,7 +23,7 @@
   * [🖌️ Design tokens](university/foundations/design-tokens.md)
   * [🎨 Style panel](university/foundations/style-panel.md)
   * [🎯 States and selectors](university/foundations/states-and-selectors.md)
-  * [🔡 Data variables](university/foundations/variables.md)
+  * [🔡 Variables](university/foundations/variables.md)
   * [➕ Expression editor](university/foundations/expression-editor.md)
   * [🎨 Custom classes & attributes](university/foundations/custom-classes-and-attributes.md)
   * [🔄 Transforms](university/foundations/transforms.md)

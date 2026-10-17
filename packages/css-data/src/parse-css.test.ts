@@ -9,6 +9,34 @@ import {
 import { propertyVarTestFixtures } from "./__generated__/property-var-test-fixtures";
 
 describe("Parse CSS", () => {
+  test.each([
+    ["16px/1.5", "16px", "1.5", "var(--font-body)"],
+    ["16px / 24px", "16px", "24px", "var(--font-body)"],
+    ["16px/var(--leading)", "16px", "var(--leading)", "var(--font-body)"],
+    ["16px", "16px", "initial", "var(--font-body)"],
+  ])(
+    "font shorthand %s %s %s %s matches explicit longhands",
+    (sizeAndHeight, size, height, family) => {
+      const shorthand = parseCss(
+        `.test { font: 600 ${sizeAndHeight} ${family} }`,
+        new Map()
+      );
+      const longhands = parseCss(
+        `.test {
+          font-style: initial;
+          font-variant-caps: initial;
+          font-weight: 600;
+          font-stretch: initial;
+          font-size: ${size};
+          line-height: ${height};
+          font-family: ${family};
+        }`,
+        new Map()
+      );
+      expect(shorthand.styles).toEqual(longhands.styles);
+    }
+  );
+
   test("detects rules unsupported by template CSS", () => {
     expect(hasUnsupportedCssTemplateRules("color: red")).toBe(false);
     expect(

@@ -61,7 +61,7 @@ In the [Address Bar](../foundations/cms.md#address-bar), provide a test value.
 
 [GraphQL data variables](../foundations/variables.md#graphql) fetch external content.
 
-Go to `Page Settings > Data variables > Add New Variable`.
+Select **Body** in the Navigator, then use the **Variables** section in the Settings panel to add a GraphQL Resource.
 
 Next, configure the variable:
 

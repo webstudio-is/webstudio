@@ -94,4 +94,4 @@ Webstudio dynamic pages use **one template for all records**. The CMS handles cr
 - [Design tokens](design-tokens.md) – Reusable style collections built on top of CSS variables
 - [CMS & dynamic data](cms.md) – One template, many pages
 - [Page templates](page-templates.md) – Reusable blueprints for creating pages
-- [Data variables](variables.md) – Binding data to the canvas
+- [Variables](variables.md) – Binding data to the canvas

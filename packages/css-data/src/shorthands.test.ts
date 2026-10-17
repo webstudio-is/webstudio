@@ -524,6 +524,20 @@ test("expand font with css-wide keywords", () => {
   ]);
 });
 
+test("expand font with variable family and fallback", () => {
+  expect(
+    expandShorthands([["font", "600 16px/1.5 var(--font-body, sans-serif)"]])
+  ).toEqual([
+    ["font-style", "initial"],
+    ["font-variant-caps", "initial"],
+    ["font-weight", "600"],
+    ["font-stretch", "initial"],
+    ["font-size", "16px"],
+    ["line-height", "1.5"],
+    ["font-family", "var(--font-body, sans-serif)"],
+  ]);
+});
+
 test("expand font-synthesis", () => {
   expect(expandShorthands([["font-synthesis", `none`]])).toEqual([
     ["font-synthesis-weight", "none"],

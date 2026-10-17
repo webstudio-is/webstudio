@@ -194,7 +194,7 @@ This approach is simpler — no need to conditionally show/hide content — but 
 
 - [Webstudio CMS](https://webstudio.is/cms) – Learn more about CMS capabilities in Webstudio
 - [Headless CMS Finder](https://webstudio.is/tools/headless-cms-finder) – Compare and find the right headless CMS
-- [Data variables](variables.md) – Define Resources to fetch CMS data
+- [Variables](variables.md) – Define Resources to fetch CMS data
 - [Expression editor](expression-editor.md) – Bind CMS data to components
 - [Collection](../core-components/collection.md) – Iterate over CMS data to create lists
 - [Content Embed](../core-components/content-embed.md) – Display rich text HTML from your CMS

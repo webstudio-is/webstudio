@@ -1,18 +1,18 @@
 ---
-description: Data variables enable the definition and use of a value throughout the page.
+description: Define values and resources for use throughout your site.
 ---
 
-# 🔡 Data variables
+# 🔡 Variables
 
 {% hint style="info" %}
-**Hint:** [CSS variables](css-variables.md) are different than Data variables. They enable the reuse of values in the Style Panel.
+**Hint:** [CSS variables](css-variables.md) are different than data variables. They enable the reuse of values in the Style Panel.
 {% endhint %}
 
-Data variables are defined on any instance in the navigator such as Global Root, Body, or Heading. Variables can be found on the right panel in the settings tab.
+Define variables on an instance in the Navigator, such as Global root, Body, or Heading. Find them in **Settings > Variables**.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/variables-settings-panel-dark.png">
-  <img src="../../.gitbook/assets/variables-settings-panel-light.png" alt="Settings panel with instance properties and a Data variables section listing static and dynamic variables">
+  <img src="../../.gitbook/assets/variables-settings-panel-light.png" alt="Settings panel with instance properties and a Variables section listing static and dynamic variables">
 </picture>
 
 
@@ -20,41 +20,43 @@ Data variables are defined on any instance in the navigator such as Global Root,
 
 Variables are available within the instance they are defined on and any of its children. They are _not_ available in the parent.
 
-If you define a variable on the Global Root, it will be available on all pages and can be used within [Slots](../core-components/slot.md).
+If you define a variable on Global root, it is available on all pages and can be used within [Slots](../core-components/slot.md).
 
 {% hint style="info" %}
 To access variables in the Page Settings, the variable must be defined on the Body of the page.
 {% endhint %}
 
-## Global data variables
+## Create and edit a variable
 
-Variables defined on the **Global Root** are accessible across all pages in your project. This is powerful for:
+Select an instance in the Navigator, then use **Add variable** in **Settings > Variables**. In the **New variable** dialog, enter a **Name** and choose a **Type**. The name field suggests names already used in expressions but not yet created. Names must be unique on the same instance. You can reuse an ancestor's variable name, but a warning shows that the new variable shadows it.
 
-- **Reusable contact information** – Define your email, phone, or address once and use it everywhere
-- **Site-wide settings** – Store company name, social links, or other global data
-- **CMS configuration** – Set up API endpoints that all pages can access
-- **Slot compatibility** – Global variables work within Slots, enabling dynamic content in reusable components
+Choose **String**, **Number**, **Boolean**, **JSON**, **REST resource**, **GraphQL resource**, **Assets resource**, **Email resource**, **Sitemap resource**, or **Current date resource**. Resource types may require a plan with dynamic data access. The editor changes with the type, and the right side of the dialog previews the value or resource data. You can resize or maximize the dialog.
 
-### Setting Up Global Variables
+Changes save when you close the dialog or move away from it. A new variable closes after it is created. Correct an invalid name before closing; other field errors are shown in their editors. For an existing variable, the menu offers **Copy** and, where allowed, **Delete**. Copying a resource includes its configuration, so you can paste it onto another instance or into another project. Resource editors also provide **Refresh resource data** and a **Refresh** menu action.
 
-1. In the Navigator, select **Global Root** (above Body)
-2. In the Settings panel, add a new variable
-3. Choose the variable type (String, JSON, Resource, etc.)
-4. The variable is now accessible on any page
+## Global variables
 
-### Use Cases
+Variables defined on **Global root** are accessible across all pages. Use them for shared contact information, site settings, or resource configurations needed in [Slots](../core-components/slot.md).
+
+### Setting up global variables
+
+1. In the Navigator, select **Global root** above Body.
+2. In **Settings > Variables**, select **Add variable**.
+3. Enter a name and choose a type in the **New variable** dialog.
+
+### Use cases
 
 {% embed url="https://www.youtube.com/watch?v=jRzMROoKwsQ" %}
 
-- **Contact email**: Define once, bind to all contact forms and footers
-- **Simple CMS**: Use JSON variables on Global Root for site-wide data that displays in Slots
-- **API keys**: Store Resource configurations globally for consistent data fetching
+- **Contact email**: Define once and bind it to contact information across pages.
+- **Simple CMS**: Use a JSON variable on Global root for data displayed in Slots.
+- **Shared resource**: Define a resource once for use across pages.
 
 ## Variables
 
 ### System
 
-System variable is a unique variable in that it exists by default, while all other variables are added by the user.
+The System variable is available by default. Forms also add variables automatically for submission data and state.
 
 System variable contains the following:
 
@@ -65,23 +67,23 @@ System variable contains the following:
 
 ### String
 
-A String variable holds text data, which can be used for content like titles, descriptions, and labels.
+A String variable holds text data, which can be used for titles, descriptions, and labels. Enter the text in **Value**; the preview updates as you edit.
 
 ### Number
 
-A Number variable stores numeric values, including integers and decimals. It's useful for calculations, counters, and any numeric data that components might need to display or use in logic.
+A Number variable stores numeric values, including integers and decimals. Enter a number in **Value**; the editor reports an empty or invalid number.
 
 ### Boolean
 
-A Boolean variable represents a true or false value. It is ideal for toggling states, such as visibility.
+A Boolean variable represents a true or false value. Set **Value** with the switch, for example to control visibility.
 
 ### JSON
 
-A JSON variable allows for structured data in JSON format. It is ideal for creating simple data structures used with [Collections](../core-components/collection.md) to iterate over each item, such as creating a dynamic gallery.
+A JSON variable allows for structured data. Enter its value in the expression editor; syntax errors are marked there, and the evaluated value appears in the preview. It can provide items to a [Collection](../core-components/collection.md), such as a dynamic gallery.
 
 ### Resource
 
-A Resource variable gets its value from a fetch request, allowing data from a remote system to be used within Webstudio. For example, Resource can be used to interact with a REST API. While it can also be used to interact with a GraphQL API, it’s recommended to use the [GraphQL Resource](variables.md#graphql) instead.
+Choose **REST resource** to fetch data from an HTTP API. For a GraphQL API, use the [GraphQL resource](variables.md#graphql) editor.
 
 There are several fields available to configure the fetch request.
 
@@ -89,23 +91,24 @@ There are several fields available to configure the fetch request.
 **Shortcut:** The URL field supports pasting in a cURL command. Doing so will automatically populate the various fields within the Resource. Many API docs will provide you with a cURL command, so look out for it to save time.
 {% endhint %}
 
-{% hint style="info" %}
-**Copy & Paste:** Resources can be copied and pasted between projects. Select an instance with a Resource variable defined, copy it, and paste into another project – the Resource configuration will be included.
-{% endhint %}
-
 - URL – Where the resource is located.
-- Method – A [request method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods). Refer to the third-party API docs to find the suitable method.
-- Search Params - Key/value pairs used for providing additional parameters as part of the URL. Values can be bound to other variables.
-- Cache Max Age allows you to define your own cache lifetime.
+- Method – GET, POST, PUT, or DELETE. Refer to the third-party API docs to find the suitable method.
+- Search params – Key/value pairs used for providing additional parameters as part of the URL. Values can be bound to other variables.
+- Cache max age – Define your own cache lifetime.
 - Headers – Key/value pairs such `Content-Type application/json`. Refer to [Request Headers](https://developer.mozilla.org/en-US/docs/Glossary/Request_header) for more info.
+- Format and body – For requests other than GET, choose **auto**, **application/json**, or **multipart/form-data** and configure the body. A Form action also shows these fields even when GET is selected because Form submissions use POST.
+
+The preview can load the request and show its response, request details, and error diagnostics. Use **Refresh resource data** after changing inputs or to request fresh data.
 
 {% include "../../.gitbook/includes/the-requests-including-any....md" %}
 
-#### Submit a Form to a Resource
+#### Submit a form to a resource
 
-Create a Resource in **Data variables** on the [Form](../core-components/form.md) or an ancestor. Then use **Properties & Attributes > Action** on the Form to select it. A Resource created on the Form can bind its URL, headers, and body to that Form's `formData` and safe `browserInfo` values. A Resource on an ancestor can be selected, but cannot bind the descendant Form's submission values. HTTP destinations in a Form always send POST requests, regardless of the Resource's method used for ordinary data loading.
+A new [Form](../core-components/form.md) includes two email resources. To add another destination, create a REST, GraphQL, or email resource in **Variables** on the Form or an ancestor. Then select the Form and use **Properties & Attributes > Action** to add the resource. Resources defined on the Form can bind to its `formData` and safe `browserInfo` values; ancestor resources cannot bind to those values. HTTP destinations always send POST requests when the Form is submitted, regardless of their configured method for ordinary data loading.
 
-For a Form-scoped HTTP Resource, leave the body unset to forward every named Form field. **Request body format** defaults to **Auto**: text-only data is JSON; a body containing uploaded files becomes multipart. Choose **JSON** or **Multipart** when the receiving API requires that format. JSON rejects uploaded files instead of dropping them. Multipart sends repeated values under the same field name and includes uploaded files with their filenames and bytes. Use the [Form upload guide](../core-components/form.md#inputs-and-responses) for file inputs and the combined request limit.
+The Form also exposes `formState`, `results`, and `errors` in **Variables**. Use these to show the submission state and inspect the selected actions' responses. See the [Form guide](../core-components/form.md#inputs-and-responses) for their contents and submission behavior.
+
+For a Form-scoped HTTP resource, leave the body unset to forward every named Form field. **Format** defaults to **auto**: text-only Form data is JSON; a body containing uploaded files becomes multipart. Choose **application/json** or **multipart/form-data** when the receiving API requires that format. JSON rejects uploaded files instead of dropping them. Multipart sends repeated values under the same field name and includes uploaded files with their filenames and bytes. Use the [Form upload guide](../core-components/form.md#inputs-and-responses) for file inputs and the combined request limit.
 
 #### Response
 
@@ -129,34 +132,47 @@ When you configure a Resource, the data is fetched using Cloudflare Workers, whi
 
 By default, several factors determine what gets cached and for how long, but one of the primary factors is what the origin system instructs the requesting entity to cache. In other words, the headless CMS tells Cloudflare Workers what can be cached, if anything, and for how long.\
 \
-If you set a custom **Cache Max Age** value, it will define your cache lifetime instead of relying on API response headers.
+If you set a custom **Cache max age** value, it will define your cache lifetime instead of relying on API response headers.
 
 ### GraphQL
 
-A GraphQL Resource variable gets its value from a GraphQL API, allowing data from a remote system to be used within Webstudio. While similar to [Resource](variables.md#resource), it’s unique in that the available fields are specifically designed for interacting with GraphQL APIs.
+Choose **GraphQL resource** to fetch data from a GraphQL API. Its editor sends a POST request and provides fields for the GraphQL operation.
 
 There are several fields available to configure the fetch request.
 
 - **URL** – Where the resource is located.
 - **Query** – A GraphQL query.
-- **Variables** – A JavaScript object containing variables that will be passed into the request. This is commonly used to pass in parameters in a URL within a Dynamic Page. For example `{ slug: system.params.slug }` See [System Variable](variables.md#system) for more info.
+- **GraphQL variables** – An object passed into the query. You can bind it to other variables; for example, use `{ slug: system.params.slug }` on a Dynamic Page. The editor requires a valid object. See [System](variables.md#system).
+- **Cache max age** and **Headers** – Configure caching and request headers.
+
+The URL accepts a URL or cURL command. Use **Load data** or **Refresh resource data** to inspect the response and request.
 
 {% include "../../.gitbook/includes/the-requests-including-any....md" %}
 
-### System Resource
+### Assets resource
 
-A System Resource variable gets its value from internal data.
+Choose **Assets resource** to query project assets. Its query editor supports filters, sorting, pagination, and file content. Invalid query settings are shown in the editor. See [Content Engine](content-engine.md) for a complete article workflow.
 
-Available system resources:
+### Sitemap resource
 
-- **Sitemap** – Contains data about the static pages on the website, commonly used to build a custom sitemap that combines dynamic data with static data. Refer to the [XML Node component](../core-components/xml-node.md#include-the-static-sitemap) for more info.
-- **Current Date** – Returns the current date/time, useful for displaying "today's date" or calculating relative times. Can be formatted using the [Time component](../core-components/time.md).
-- **Assets** – Queries project assets, including structured fields and file content from Markdown, MDX, and JSON files. See [Content Engine](content-engine.md) for a complete article workflow.
+Choose **Sitemap resource** to load the site's static pages. Use it to combine static and dynamic data in a custom sitemap. See the [XML Node component](../core-components/xml-node.md#include-the-static-sitemap).
+
+### Current date resource
+
+Choose **Current date resource** to get the current date normalized to midnight UTC. Format it with the [Time component](../core-components/time.md).
+
+These resource editors provide **Load data** and **Refresh resource data** to update the preview. Sitemap and current date resources need only a name; the Assets resource uses a query editor.
+
+### Email resource
+
+Choose **Email resource** to send a plain-text email when a [Form](../core-components/form.md) is submitted. Choose **Project recipients (or owner)**, **Custom recipients**, or, for a resource within a Form, **Visitor email field**. The visitor option selects a named email input on that Form. Configure **Reply to**, **Subject**, **Body**, and **Attach submitted files**. Custom recipients, Reply to, Subject, and Body can use bindings. The editor validates recipient and sender addresses and expressions.
+
+The **Request** preview shows the email request without sending it. Submit the Form in Preview to see the email service response. See the [Form guide](../core-components/form.md) for delivery behavior and limits.
 
 ## Related
 
 - [Expression editor](expression-editor.md) – Bind variables to components and create expressions
 - [CMS](cms.md) – Use Resources to fetch content from external systems
 - [Collection](../core-components/collection.md) – Iterate over JSON or Resource data
-- [CSS variables](css-variables.md) – Define reusable style values (different from Data variables)
+- [CSS variables](css-variables.md) – Define reusable style values (different from data variables)
 - [Slot](../core-components/slot.md) – Access global variables in reusable components

@@ -61,4 +61,4 @@ Each category in the Commands Panel shows a counter indicating how many items it
 - [Anatomy of the Webstudio builder](anatomy-of-the-webstudio-builder.md) – Overview of the Builder interface
 - [Design tokens](design-tokens.md) – Manage reusable style packages
 - [CSS variables](css-variables.md) – Manage CSS custom properties
-- [Data variables](variables.md) – Manage data variables in your project
+- [Variables](variables.md) – Manage data variables in your project

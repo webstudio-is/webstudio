@@ -1687,6 +1687,30 @@ test("explains unmatched jsx without implying session state", async () => {
   );
 });
 
+test("inserts font shorthand with separate line-height and variable family", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    '<ws.element ws:tag="p" ws:style={css`font: 600 16px/1.5 var(--font-body);`} />'
+  );
+  const mutation = insertFragment(
+    createState(parent),
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+  expect(getAddedValues<StyleDecl>(mutation, "styles")).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        property: "lineHeight",
+        value: { type: "unit", unit: "number", value: 1.5 },
+      }),
+      expect.objectContaining({
+        property: "fontFamily",
+        value: { type: "var", value: "font-body" },
+      }),
+    ])
+  );
+});
+
 test("inserts bare template-backed components from webstudio jsx fragments", async () => {
   const parent = createParent();
   const fragment = await parseWebstudioJsxFragment(`<Switch />`);

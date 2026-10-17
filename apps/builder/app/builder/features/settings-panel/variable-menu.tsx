@@ -30,11 +30,14 @@ import {
 import { serverSyncStore } from "~/shared/sync/sync-stores";
 import { readClipboardText } from "~/shared/clipboard";
 import {
+  serializeVariable,
+  deserializeVariable,
+} from "~/shared/copy-paste/variable-clipboard";
+import {
   DeleteDataVariableDialog,
   deleteDataVariable,
   validateDataVariableName,
 } from "~/builder/shared/data-variable-utils";
-import { serializeVariable, deserializeVariable } from "./variable-clipboard";
 
 type VariableToDelete = { id: string; name: string; usages: number };
 
