@@ -58,13 +58,13 @@ Set `TRPC_SERVER_API_TOKEN` on the Builder server and configure the email servic
 
 | Field | Required | Type and meaning |
 | --- | --- | --- |
-| `to` | Yes | Array of 1–50 mailbox objects. Each has an `address` email string and optional `name`. |
-| `subject` | Yes | Nonempty email subject string. |
+| `to` | Yes | Array of 1–50 mailbox objects. Each has a valid `address` email string and optional `name`. |
+| `subject` | Yes | Nonempty email subject string, up to 998 characters. |
 | `text` | Yes | Plain-text email body string. |
-| `replyTo` | No | Mailbox object with an `address` email string and optional `name`. |
-| `fromName` | No | Display name for the service's configured sender address. |
-| `headers` | No | Object supporting `X-Message-ID` for message correlation. |
-| `attachments` | No | Array of up to 32 objects with `filename`, `contentType`, and standard Base64 `contentBase64` strings. Do not include a data URL prefix. |
+| `replyTo` | No | Mailbox object with a valid `address` email string and optional `name`. |
+| `fromName` | No | Display name for the service's configured sender address, 1–256 characters. |
+| `headers` | No | Object with the nonempty `X-Message-ID` string used for message correlation. |
+| `attachments` | No | Array of up to 32 objects. Each has a nonempty `filename` (up to 255 characters), a `contentType` string, and standard Base64 `contentBase64`. Do not include a data URL prefix. |
 
 The complete JSON request must be no larger than 7 MiB. The service chooses and verifies its sender address; the request does not set a From address.
 
