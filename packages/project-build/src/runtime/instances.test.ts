@@ -1234,6 +1234,71 @@ describe("canConvertInstance", () => {
 });
 
 describe("convertInstance", () => {
+  test("converts composite media after semantically deleting obsolete provider parts", () => {
+    const instances = new Map([
+      [
+        "body",
+        createInstance("body", "Body", [{ type: "id", value: "wrapper" }]),
+      ],
+      [
+        "wrapper",
+        createInstance("wrapper", "Box", [
+          { type: "id", value: "player" },
+          { type: "id", value: "caption" },
+        ]),
+      ],
+      [
+        "player",
+        createInstance("player", "Vimeo", [{ type: "id", value: "play" }]),
+      ],
+      ["play", createInstance("play", "VimeoPlayButton", [])],
+      [
+        "caption",
+        createInstance("caption", "Text", [{ type: "text", value: "Caption" }]),
+      ],
+    ]);
+    const state = {
+      instances,
+      props: new Map<string, Prop>(),
+      dataSources: new Map<string, DataSource>(),
+      styleSources: new Map<string, StyleSource>(),
+      styleSourceSelections: new Map<string, StyleSourceSelection>(),
+      styles: new Map<string, StyleDecl>(),
+    };
+    const input = {
+      instanceSelector: ["player", "wrapper", "body"],
+      component: elementComponent,
+      tag: "video",
+    };
+    expect(() => convertInstance(state, input, runtimeContext)).toThrow(
+      "Converted tree violates content model"
+    );
+    const removal = deleteInstances(state, { instanceIds: ["play"] });
+    applyBuilderPatchPayloadMutable(
+      (namespace) => state[namespace as keyof typeof state],
+      removal.payload
+    );
+    const conversion = convertInstance(state, input, runtimeContext);
+    applyBuilderPatchPayloadMutable(
+      (namespace) => state[namespace as keyof typeof state],
+      conversion.payload
+    );
+    expect(instances.get("player")).toMatchObject({
+      id: "player",
+      component: elementComponent,
+      tag: "video",
+      children: [],
+    });
+    expect(instances.has("play")).toBe(false);
+    expect(instances.get("wrapper")?.children).toEqual([
+      { type: "id", value: "player" },
+      { type: "id", value: "caption" },
+    ]);
+    expect(instances.get("caption")?.children).toEqual([
+      { type: "text", value: "Caption" },
+    ]);
+  });
+
   test("converts a Tabs tree leaf first without losing content or props", () => {
     const radix = "@webstudio-is/sdk-components-react-radix:";
     const instances = new Map([
