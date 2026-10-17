@@ -3359,6 +3359,10 @@ sitemap.map((page) => page.path);`
       ] as never;
       await writeSiteData(siteData);
       await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(tempDir, "app/__generated__/$resources.managed-form-fetch.server.ts"),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => Object.assign(globalThis.__legacyRouteFetch, { validateDestination: () => undefined });\n"
+      );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
         stdin: {
@@ -3382,7 +3386,7 @@ sitemap.map((page) => page.path);`
         body: unknown;
       }> = [];
       vi.stubGlobal(
-        "fetch",
+        "__legacyRouteFetch",
         vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
           const request = new Request(input, init);
           received.push({
@@ -3530,7 +3534,197 @@ sitemap.map((page) => page.path);`
   );
 
   test.each(["defaults", "react-router"])(
-    "submits identical forms twice while caching dependencies (%s)",
+    "keeps a saved Webhook Form URL method and rejects its own host (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "WebhookForm", children: [] }],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "string",
+              value: "https://receiver.example/hook",
+            },
+          ],
+          [
+            "method",
+            {
+              id: "method",
+              instanceId: "root",
+              name: "method",
+              type: "string",
+              value: "put",
+            },
+          ],
+        ],
+      });
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        `import { createProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch";
+export const createManagedFormEmailSender = () => undefined;
+export const validateManagedFormEmail = () => undefined;
+export const createManagedFormResourceFetch = ({ request }) => createProtectedResourceFetch({
+  deniedHostnames: [new URL(request.url).hostname],
+  transport: async ({ url, method, headers, body }) => ({
+    response: await globalThis.__testManagedFormFetch(url, { method, headers, body }),
+  }),
+});
+`
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "legacy-url-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "legacy-url-action.mjs")).href
+      );
+      const received: Array<{ method: string; body: unknown }> = [];
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push({ method: request.method, body: await request.json() });
+          return Response.json({ accepted: true });
+        }
+      );
+      const submit = (host: string) => {
+        const form = new FormData();
+        form.set(formIdFieldName, "action");
+        form.set(formBotFieldName, "brave");
+        form.set("message", "Hello");
+        return action({
+          request: new Request(`https://${host}/`, {
+            method: "POST",
+            headers: { host },
+            body: form,
+          }),
+          context: {},
+        });
+      };
+      await expect(submit("example.com")).resolves.toEqual({ success: true });
+      expect(received).toEqual([{ method: "PUT", body: { message: "Hello" } }]);
+      const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        await expect(submit("receiver.example")).resolves.toEqual({
+          success: false,
+          errors: ["Resource destination is not allowed"],
+        });
+      } finally {
+        errorLog.mockRestore();
+      }
+      expect(received).toHaveLength(1);
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "sends the default legacy owner email through the Form sender (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "WebhookForm", children: [] }],
+        ],
+        pageMeta: { contactEmail: "owner@example.com" },
+      });
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => globalThis.__testSendEmail;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => Object.assign(fetch, { validateDestination: () => undefined });\n"
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await build({
+        stdin: {
+          contents: 'export { action } from "./app/routes/_index"',
+          resolveDir: tempDir,
+        },
+        outfile: join(tempDir, "legacy-email-action.mjs"),
+        bundle: true,
+        platform: "node",
+        format: "esm",
+        packages: "external",
+        loader: { ".css": "text" },
+      });
+      const { action } = await import(
+        pathToFileURL(join(tempDir, "legacy-email-action.mjs")).href
+      );
+      const messages: ResourceRequest[] = [];
+      vi.stubGlobal("__testSendEmail", async (resource: ResourceRequest) => {
+        messages.push(resource);
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          data: { id: "sent" },
+        };
+      });
+      const form = new FormData();
+      form.set(formBotFieldName, "brave");
+      form.set("message", "Hello");
+      await expect(
+        action({
+          request: new Request("https://example.com/", {
+            method: "POST",
+            headers: { host: "example.com" },
+            body: form,
+          }),
+          context: {
+            getDefaultActionResource: () => {
+              throw new Error("Old email hook must not run");
+            },
+          },
+        })
+      ).resolves.toEqual({ success: true });
+      expect(messages).toHaveLength(1);
+      expect(messages[0]?.control).toBe("email");
+      expect(messages[0]?.email?.recipients).toEqual([
+        { address: "owner@example.com" },
+      ]);
+      vi.stubGlobal("__testSendEmail", async () => ({
+        ok: false,
+        status: 503,
+        statusText: "Email service is unavailable",
+        data: { error: { code: "EMAIL_SERVICE_UNAVAILABLE", message: "Email service is unavailable" } },
+      }));
+      await expect(
+        action({
+          request: new Request("https://example.com/", {
+            method: "POST",
+            headers: { host: "example.com" },
+            body: form,
+          }),
+          context: {},
+        })
+      ).resolves.toEqual({
+        success: false,
+        errors: ["Email service is unavailable"],
+      });
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "submits identical legacy forms twice while caching dependencies (%s)",
     async (template) => {
       const siteData = createSiteData({
         instances: [["root", { id: "root", component: "Form", children: [] }]],
@@ -3566,7 +3760,7 @@ sitemap.map((page) => page.path);`
             id: "author",
             name: "Author",
             method: "post",
-            url: '"https://example.com/author"',
+            url: '"https://receiver.example/author"',
             body: '{ query: "author" }',
             headers: [{ name: "Cache-Control", value: '"public, max-age=60"' }],
           },
@@ -3577,7 +3771,7 @@ sitemap.map((page) => page.path);`
             id: "submit",
             name: "Submit",
             method: "post",
-            url: `"https://example.com/submit/" + ${encodeDataSourceVariable(
+            url: `"https://receiver.example/submit/" + ${encodeDataSourceVariable(
               "author"
             )}.data.id`,
             headers: [{ name: "Cache-Control", value: '"public, max-age=60"' }],
@@ -3586,6 +3780,13 @@ sitemap.map((page) => page.path);`
       ];
       await writeSiteData(siteData);
       await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => Object.assign(globalThis.__testManagedFormFetch, { validateDestination: () => undefined });\n"
+      );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
         stdin: {
@@ -3613,7 +3814,7 @@ sitemap.map((page) => page.path);`
       });
       const received: Array<{ url: string; body: unknown }> = [];
       vi.stubGlobal(
-        "fetch",
+        "__testManagedFormFetch",
         async (input: RequestInfo | URL, init?: RequestInit) => {
           const request = new Request(input, init);
           received.push({ url: request.url, body: await request.json() });
@@ -3666,13 +3867,13 @@ sitemap.map((page) => page.path);`
         ).resolves.toEqual({ success: true });
       }
       expect(received).toEqual([
-        { url: "https://example.com/author", body: { query: "author" } },
+        { url: "https://receiver.example/author", body: { query: "author" } },
         {
-          url: "https://example.com/submit/author-123",
+          url: "https://receiver.example/submit/author-123",
           body: { message: "Hello" },
         },
         {
-          url: "https://example.com/submit/author-123",
+          url: "https://receiver.example/submit/author-123",
           body: { message: "Hello" },
         },
       ]);

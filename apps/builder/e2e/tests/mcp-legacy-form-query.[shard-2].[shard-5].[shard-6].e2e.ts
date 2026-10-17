@@ -42,7 +42,7 @@ test("MCP-edited saved legacy Webhook Form preserves single and repeated query b
           )
         ),
         fixture.projectId,
-        receiver.url,
+        "https://mcp-delivery.example/submit",
       ],
       {
         timeout: 60_000,
@@ -59,6 +59,7 @@ test("MCP-edited saved legacy Webhook Form preserves single and repeated query b
     );
     await withGeneratedPreview({
       projectId: fixture.projectId,
+      evaluationReceiverPort: new URL(receiver.url).port,
       callback: async ({ url }) => {
         await page.route("**/*", (route) =>
           new URL(route.request().url()).hostname === "127.0.0.1"
