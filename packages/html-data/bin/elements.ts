@@ -85,7 +85,15 @@ const elementsByTag: Record<string, Element> = {};
       elementsByTag[tag] = {
         description,
         categories,
-        children: children.includes("empty") ? [] : children,
+        // Template contents are held in a separate DocumentFragment, so the
+        // HTML index does not list normal element children for this tag.
+        // Model its authorable content as flow content in the Builder.
+        children:
+          tag === "template"
+            ? ["flow"]
+            : children.includes("empty")
+              ? []
+              : children,
       };
     }
   }

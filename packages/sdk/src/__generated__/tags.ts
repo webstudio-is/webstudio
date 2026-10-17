@@ -81,6 +81,7 @@ export const tags: string[] = [
   "search",
   "section",
   "select",
+  "selectedcontent",
   "slot",
   "small",
   "source",
@@ -91,6 +92,7 @@ export const tags: string[] = [
   "table",
   "tbody",
   "td",
+  "template",
   "textarea",
   "tfoot",
   "th",
@@ -160,5 +162,5 @@ export const tags: string[] = [
   "mpath",
   "animateTransform",
   "metadata",
-  "foreignObject",
+  "foreignObject"
 ];

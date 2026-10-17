@@ -272,6 +272,7 @@ export const elementsByTag: Record<string, Element> = {
       "h4",
       "h5",
       "h6",
+      "p",
       "script-supporting elements",
       "p",
     ],
@@ -409,12 +410,18 @@ export const elementsByTag: Record<string, Element> = {
   optgroup: {
     description: "Group of options in a list box",
     categories: ["html-element", "none"],
-    children: ["option", "script-supporting elements"],
+    children: [
+      "option",
+      "script-supporting elements",
+      "noscript",
+      "div",
+      "legend",
+    ],
   },
   option: {
     description: "Option in a list box or combo box control",
     categories: ["html-element", "none"],
-    children: ["text"],
+    children: ["text", "div", "phrasing"],
   },
   output: {
     description: "Calculated output value",
@@ -504,7 +511,20 @@ export const elementsByTag: Record<string, Element> = {
       "form-associated",
       "palpable",
     ],
-    children: ["option", "optgroup", "script-supporting elements"],
+    children: [
+      "option",
+      "optgroup",
+      "hr",
+      "script-supporting elements",
+      "noscript",
+      "div",
+      "button",
+    ],
+  },
+  selectedcontent: {
+    description: "Mirrors content from an option",
+    categories: ["html-element", "none"],
+    children: [],
   },
   slot: {
     description: "Shadow tree slot",
@@ -567,6 +587,17 @@ export const elementsByTag: Record<string, Element> = {
   td: {
     description: "Table cell",
     categories: ["html-element", "none"],
+    children: ["flow"],
+  },
+  template: {
+    description: "Template",
+    categories: [
+      "html-element",
+      "metadata",
+      "flow",
+      "phrasing",
+      "script-supporting",
+    ],
     children: ["flow"],
   },
   textarea: {

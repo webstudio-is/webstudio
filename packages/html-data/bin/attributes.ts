@@ -159,7 +159,10 @@ for (const row of rows) {
   const description = getTextContent(row.childNodes[2]).trim();
   const tags = /HTML elements/.test(elements)
     ? ["*"]
-    : elements.split(/;/g).map((d) => d.replace(/\([^)]+\)/g, "").trim());
+    : elements
+        .split(/[;,\n]/g)
+        .map((d) => d.replace(/\([^)]+\)/g, "").trim())
+        .filter(Boolean);
   let value = getTextContent(row.childNodes[3]).trim().toLowerCase();
   if (value.endsWith(";")) {
     value = value.slice(0, -1);
