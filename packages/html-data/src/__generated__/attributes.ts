@@ -868,10 +868,23 @@ const attribute_name_kxpyia: Attribute = {
   type: "string",
 };
 
+const attribute_loading_yzzdw4: Attribute = {
+  name: "loading",
+  description: "Used when determining loading deferral",
+  type: "select",
+  options: ["lazy", "eager"],
+};
+
 const attribute_preserveAspectRatio_19as3ta: Attribute = {
   name: "preserveAspectRatio",
   description: "",
   type: "string",
+};
+
+const attribute_controls_i44ww0: Attribute = {
+  name: "controls",
+  description: "Show user agent controls",
+  type: "boolean",
 };
 
 const attribute_crossorigin_jl1m2v: Attribute = {
@@ -879,13 +892,6 @@ const attribute_crossorigin_jl1m2v: Attribute = {
   description: "How the element handles crossorigin requests",
   type: "select",
   options: ["anonymous", "use-credentials"],
-};
-
-const attribute_loading_yzzdw4: Attribute = {
-  name: "loading",
-  description: "Used when determining loading deferral",
-  type: "select",
-  options: ["lazy", "eager"],
 };
 
 const attribute_alt_1j06s5r: Attribute = {
@@ -1179,12 +1185,6 @@ const attribute_autoplay_1a0sp4x: Attribute = {
   type: "boolean",
 };
 
-const attribute_controls_i44ww0: Attribute = {
-  name: "controls",
-  description: "Show user agent controls",
-  type: "boolean",
-};
-
 const attribute_loop_i1hxl: Attribute = {
   name: "loop",
   description: "Whether to loop the media resource",
@@ -1245,7 +1245,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       name: "contenteditable",
       description: "Whether the element is editable",
       type: "select",
-      options: ["true", "plaintext-only", "false"],
+      options: ["true", "false", "plaintext-only"],
     },
     {
       name: "dir",
@@ -1258,6 +1258,17 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       description: "Whether the element is draggable",
       type: "select",
       options: ["true", "false"],
+    },
+    {
+      name: "headingoffset",
+      description: "Offsets heading levels for descendants",
+      type: "number",
+    },
+    {
+      name: "headingreset",
+      description:
+        "Prevents a heading offset computation from traversing beyond the element with the attribute",
+      type: "boolean",
     },
     {
       name: "hidden",
@@ -1617,6 +1628,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     attribute_autoplay_1a0sp4x,
     attribute_controls_i44ww0,
     attribute_crossorigin_jl1m2v,
+    attribute_loading_yzzdw4,
     attribute_loop_i1hxl,
     attribute_muted_1hc6ujd,
     attribute_preload_1a7kb09,
@@ -3831,6 +3843,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
       type: "string",
       required: true,
     },
+    attribute_controls_i44ww0,
     attribute_crossorigin_jl1m2v,
     {
       name: "decoding",
@@ -5297,6 +5310,46 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     attribute_headers_gc0t0h,
     attribute_rowspan_o1tr8d,
   ],
+  template: [
+    {
+      name: "for",
+      description: "Updates existing content",
+      type: "string",
+    },
+    {
+      name: "shadowrootclonable",
+      description: "Sets clonable on a declarative shadow root",
+      type: "boolean",
+    },
+    {
+      name: "shadowrootcustomelementregistry",
+      description:
+        "Enables declarative shadow roots to indicate they will use a custom element registry",
+      type: "boolean",
+    },
+    {
+      name: "shadowrootdelegatesfocus",
+      description: "Sets delegates focus on a declarative shadow root",
+      type: "boolean",
+    },
+    {
+      name: "shadowrootmode",
+      description: "Enables streaming declarative shadow roots",
+      type: "select",
+      options: ["open", "closed"],
+    },
+    {
+      name: "shadowrootserializable",
+      description: "Sets serializable on a declarative shadow root",
+      type: "boolean",
+    },
+    {
+      name: "shadowrootslotassignment",
+      description: "Sets slot assignment on a declarative shadow root",
+      type: "select",
+      options: ["named", "manual"],
+    },
+  ],
   text: [
     attribute_alignment_baseline_1mavux3,
     attribute_baseline_shift_1992be8,
@@ -5716,6 +5769,7 @@ export const attributesByTag: Record<string, undefined | Attribute[]> = {
     attribute_controls_i44ww0,
     attribute_crossorigin_jl1m2v,
     attribute_height_10887hn,
+    attribute_loading_yzzdw4,
     attribute_loop_i1hxl,
     attribute_muted_1hc6ujd,
     {

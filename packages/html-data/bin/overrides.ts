@@ -1,6 +1,5 @@
 export const ignoredTags: string[] = [
   "base",
-  "template",
   "meta",
   "noscript",
   "link",

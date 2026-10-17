@@ -9,6 +9,8 @@ const Page = () => {
         contentEditable={"true"}
         dir={"ltr"}
         draggable={"true"}
+        headingoffset={0}
+        headingreset={true}
         hidden={true}
         id={""}
         inputMode={"none"}
@@ -224,6 +226,7 @@ const Page = () => {
         autoPlay={true}
         controls={true}
         crossOrigin={"anonymous"}
+        loading={"lazy"}
         loop={true}
         muted={true}
         preload={"none"}
@@ -2167,6 +2170,7 @@ const Page = () => {
       />
       <img
         alt={""}
+        controls={true}
         crossOrigin={"anonymous"}
         decoding={"sync"}
         fetchPriority={"auto"}
@@ -3344,6 +3348,15 @@ const Page = () => {
         className={`${""}`}
       />
       <td colSpan={0} headers={""} rowSpan={0} />
+      <template
+        htmlFor={""}
+        shadowrootclonable={true}
+        shadowrootcustomelementregistry={true}
+        shadowrootdelegatesfocus={true}
+        shadowrootmode={"open"}
+        shadowrootserializable={true}
+        shadowrootslotassignment={"named"}
+      />
       <text
         alignmentBaseline={"auto"}
         baselineShift={""}
@@ -3691,6 +3704,7 @@ const Page = () => {
         controls={true}
         crossOrigin={"anonymous"}
         height={0}
+        loading={"lazy"}
         loop={true}
         muted={true}
         playsInline={true}

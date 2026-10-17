@@ -485,7 +485,6 @@ const unsupportedElementTags = new Set([
   "noscript",
   "script",
   "style",
-  "template",
   "title",
 ]);
 
