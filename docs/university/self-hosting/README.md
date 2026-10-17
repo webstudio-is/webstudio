@@ -44,6 +44,8 @@ The Builder calls the email service with a tRPC mutation:
 POST <EMAIL_SERVICE_URL>/trpc/email.send
 ```
 
+This endpoint does not configure Email Resources in exported projects. Current CLI exports do not support an arbitrary self-hosted email service URL for managed form delivery.
+
 The request uses HTTPS, `Content-Type: application/json`, and `Authorization: Bearer <token>`. The JSON request body is the email object itself; do not wrap it in a `json` property.
 
 The email service also requires `X-Webstudio-Project-Id`, a UUID used for routing and rate limiting. It is caller-supplied metadata, not authentication. The service must authorize the request using the bearer token.
