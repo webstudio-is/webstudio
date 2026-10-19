@@ -10,7 +10,9 @@ const resourceFetch = Object.assign(
   { validateDestination: vi.fn() }
 );
 const submit = (
-  options: Partial<Parameters<typeof handleDeprecatedWebhookFormSubmission>[0]> = {}
+  options: Partial<
+    Parameters<typeof handleDeprecatedWebhookFormSubmission>[0]
+  > = {}
 ) => {
   const formData = new FormData();
   formData.set(formBotFieldName, "brave");
