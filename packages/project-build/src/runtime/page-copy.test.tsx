@@ -34,12 +34,14 @@ import {
   duplicatePageTemplate,
   insertPageCopyMutable,
   insertPageTransferItem,
+  insertFolderCopyFromDataMutable,
   insertPageFromTemplateMutable,
   insertTemplateCopyFromFragmentsMutable,
   listPageTemplates,
   reorderPageTemplates,
   updatePageTemplate,
 } from "./page-copy";
+import type { FolderCopyData } from "./data-formats/page-transfer";
 import {
   createTemplateComponentFixture,
   css,
@@ -88,6 +90,34 @@ test("requires an explicit resolution for conflicting transferred root styles", 
       { createId: createNanoId }
     )
   ).toThrow(/root style conflicts require an explicit/i);
+});
+
+test("rejects a nested historical Form before creating any folder or page", () => {
+  const { sourcePages, source, target } = createConflictingRootStyleProjects();
+  const page = createPageCopyData({
+    data: source,
+    page: getHomePage(sourcePages),
+  });
+  page.bodyFragment.instances[0].component = "Form";
+  const folder: FolderCopyData = {
+    folder: { id: "outer", name: "Outer", slug: "outer", children: [] },
+    children: [
+      {
+        folder: { id: "inner", name: "Inner", slug: "inner", children: [] },
+        children: [page],
+      },
+    ],
+  };
+  const before = structuredClone(target);
+
+  expect(() =>
+    insertFolderCopyFromDataMutable({
+      source: folder,
+      target: { data: target, parentFolderId: ROOT_FOLDER_ID },
+      projectId: "target-project",
+    })
+  ).toThrow(/Copy it again/);
+  expect(target).toEqual(before);
 });
 
 test("requires an explicit resolution for conflicting copied root styles", () => {

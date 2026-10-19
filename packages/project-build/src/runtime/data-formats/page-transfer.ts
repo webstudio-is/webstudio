@@ -7,6 +7,10 @@ import {
 } from "@webstudio-is/sdk";
 import { z } from "zod";
 import { parseDataEnvelope } from "./data-envelope";
+import {
+  ambiguousFormClipboardMessage,
+  hasAmbiguousFormInstance,
+} from "../fragment-identity";
 
 export type PageCopyData = {
   page: Page;
@@ -97,6 +101,19 @@ export const parsePageTransferData = (serializedData: string) => {
   });
   if (transferData.valid === false) {
     return transferData;
+  }
+  if (
+    collectPageTransferItems(transferData.data).some(
+      (item) =>
+        hasAmbiguousFormInstance(item.rootFragment) ||
+        hasAmbiguousFormInstance(item.bodyFragment)
+    )
+  ) {
+    return {
+      owned: true,
+      valid: false,
+      error: ambiguousFormClipboardMessage,
+    } as const;
   }
   return {
     owned: true,

@@ -4,6 +4,7 @@ import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   resolveFragmentRootStyleConflicts,
+  assertNoAmbiguousFormInstance,
 } from "./fragment";
 import { isFragmentContentModeCopyableProp } from "./content-mode-copy-policy";
 import { z } from "zod";
@@ -356,6 +357,10 @@ const copyPageFragmentsMutable = ({
   createId?: CreateId;
   contentMode?: boolean;
 }) => {
+  if (rootFragment !== undefined) {
+    assertNoAmbiguousFormInstance(rootFragment);
+  }
+  assertNoAmbiguousFormInstance(bodyFragment);
   if (projectId === undefined) {
     return;
   }
@@ -1576,6 +1581,17 @@ export const insertFolderCopyFromDataMutable = ({
   forceFolderCopySuffix?: boolean;
   createId?: CreateId;
 }) => {
+  const assertFolderFragments = (folder: FolderCopyData) => {
+    for (const child of folder.children) {
+      if ("folder" in child) {
+        assertFolderFragments(child);
+      } else {
+        assertNoAmbiguousFormInstance(child.rootFragment);
+        assertNoAmbiguousFormInstance(child.bodyFragment);
+      }
+    }
+  };
+  assertFolderFragments(source);
   const copyContext = {
     didCopyRootFragment: false,
   };
@@ -1599,6 +1615,10 @@ export const insertPageTransferItem = (
   input: z.infer<typeof pageTransferInsertInput>,
   context: { createId: CreateId }
 ) => {
+  for (const item of collectPageTransferItems(input.item)) {
+    assertNoAmbiguousFormInstance(item.rootFragment);
+    assertNoAmbiguousFormInstance(item.bodyFragment);
+  }
   const data = getRequiredWebstudioData(state);
   if (data.pages.folders.has(input.targetFolderId) === false) {
     return throwBuilderRuntimeError("NOT_FOUND", "Target folder not found");

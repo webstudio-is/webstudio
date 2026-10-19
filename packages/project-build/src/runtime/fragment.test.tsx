@@ -49,6 +49,23 @@ const Slot = createTemplateComponentFixture("Slot");
 const Text = createTemplateComponentFixture("Text");
 const ResourceForm = createTemplateComponentFixture("ResourceForm");
 
+test("rejects an ambiguous historical Form before mutating fragment data", () => {
+  const data = renderData(<Body ws:id="bodyId" />);
+  const fragment = renderTemplate(<Box ws:id="boxId" />);
+  fragment.instances[0].component = "Form";
+  const before = structuredClone(data);
+
+  expect(() =>
+    insertWebstudioFragmentCopy({
+      data,
+      fragment,
+      availableVariables: [],
+      projectId: "project",
+    })
+  ).toThrow(/Copy it again/);
+  expect(data).toEqual(before);
+});
+
 test("copying Email Resources restores parent bindings by name in the target scope", () => {
   const parentVariable = new Variable("Owner", "Source owner");
   const emailVariable = new ResourceValue("Email", {

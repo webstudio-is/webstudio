@@ -92,6 +92,33 @@ const getIdValuePair = <T extends { id: string }>(item: T) =>
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map(getIdValuePair));
 
+test("rejects historical Form clipboard data before importing or inserting", async () => {
+  const importAssets = vi.spyOn(builderApiTesting.api, "importAssets");
+  const before = structuredClone($instances.get());
+  const clipboardData = JSON.stringify({
+    "@webstudio/instance/v0.1": {
+      instanceSelector: ["form", "body0"],
+      children: [{ type: "id", value: "form" }],
+      instances: [createInstance("form", "Form", [])],
+      assets: [],
+      dataSources: [],
+      resources: [],
+      props: [],
+      breakpoints: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+    },
+  });
+
+  expect(await instanceText.onPaste?.(clipboardData)).toMatchObject({
+    success: false,
+    error: expect.stringMatching(/Copy it again/),
+  });
+  expect(importAssets).not.toHaveBeenCalled();
+  expect($instances.get()).toEqual(before);
+});
+
 const getMapDifference = <Type extends Map<unknown, unknown>>(
   left: Type,
   right: Type
