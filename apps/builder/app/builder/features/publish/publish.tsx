@@ -145,39 +145,54 @@ const PrePublishAuditMessage = ({
   return (
     <>
       {message}{" "}
-      <PrePublishInstanceLink instanceId={instanceId}>
+      <PrePublishInstanceLink
+        instanceId={instanceId}
+        pageId={finding.location.pageId}
+        instanceSelector={finding.location.instanceSelector}
+      >
         Show element
       </PrePublishInstanceLink>
     </>
   );
 };
 
-const getPrePublishInstanceTarget = (instanceId: string) => {
+const getPrePublishInstanceTarget = (
+  instanceId: string,
+  pageId?: string,
+  instanceSelector?: string[]
+) => {
   const pages = $pages.get();
   const instances = $instances.get();
   if (pages === undefined || instances.has(instanceId) === false) {
     return;
   }
-  const { pageId, instanceSelector } = findPageAndSelectorByInstanceId(
-    pages,
-    instances,
-    instanceId
-  );
-  const href = getInstanceLink(instanceSelector);
+  const target =
+    pageId === undefined || instanceSelector === undefined
+      ? findPageAndSelectorByInstanceId(pages, instances, instanceId)
+      : { pageId, instanceSelector };
+  const href = getInstanceLink(target.instanceSelector);
   if (href === undefined) {
     return;
   }
-  return { pageId, instanceSelector, href };
+  return { ...target, href };
 };
 
 const PrePublishInstanceLink = ({
   instanceId,
+  pageId,
+  instanceSelector,
   children,
 }: {
   instanceId: string;
+  pageId?: string;
+  instanceSelector?: string[];
   children: ReactNode;
 }) => {
-  const target = getPrePublishInstanceTarget(instanceId);
+  const target = getPrePublishInstanceTarget(
+    instanceId,
+    pageId,
+    instanceSelector
+  );
   if (target === undefined) {
     return null;
   }
@@ -220,7 +235,9 @@ const getPrePublishAuditFindings = (): PublishValidationFinding[] => {
       return [];
     }
     const context = Object.entries(finding.location)
-      .filter(([, value]) => value !== undefined)
+      .filter(
+        ([key, value]) => key !== "instanceSelector" && value !== undefined
+      )
       .map(([key, value]) => `${key}: ${value}`);
     const reportText = [
       `${finding.severity.toUpperCase()}: ${formatPrePublishAuditFinding(
