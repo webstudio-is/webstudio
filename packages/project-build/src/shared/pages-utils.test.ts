@@ -9,7 +9,6 @@ test("createDefaultPages", () => {
       homePageId: "homePageId",
     })
   ).toEqual({
-    formComponentIdentityVersion: 1,
     meta: {},
     homePageId: "homePageId",
     rootFolderId: "root",

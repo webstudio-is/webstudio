@@ -577,11 +577,11 @@ test.each([false, true])(
           contents: `
           import { createElement } from "react";
           import { createRoot } from "react-dom/client";
-          import { Form } from "./resource-form";
+          import { ResourceForm } from "./resource-form";
           import { submitPreviewForm } from "~/shared/preview-form-bridge";
 
           createRoot(document.getElementById("root")).render(
-            createElement(Form, {
+            createElement(ResourceForm, {
               "data-ws-managed-form-id": "form",
               action: [{ dataSourceId: "destination" }],
               onManagedSubmit: (values, signal) => submitPreviewForm({

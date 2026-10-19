@@ -64,7 +64,7 @@ test("lists the managed Form while retaining saved Webhook Forms", () => {
 
   // Saved instances keep their original component IDs and implementations.
   expect($registeredComponents.get().has("ResourceForm")).toBe(true);
-  expect($registeredComponents.get().has("ResourceForm")).toBe(false);
+  expect($registeredComponents.get().has("Form")).toBe(false);
   expect($registeredComponents.get().has("WebhookForm")).toBe(true);
   expect($registeredComponents.get().has("RemixForm")).toBe(true);
   expect($registeredComponentMetas.get().get("ResourceForm")?.deprecated).toBe(
