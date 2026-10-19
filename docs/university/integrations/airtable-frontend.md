@@ -217,7 +217,7 @@ The flexibility of Resources enables you to fetch exactly what you need from one
 
 - [Using filters to dynamically display Airtable content](../how-tos/using-filters-to-dynamically-display-content.md)
 - [Building dynamic pages for Airtable data](https://youtu.be/3mW7cPDXIxY)
-- [Using Webstudio Webhook form to send data to an Airtable automation (doc)](airtable-form-webhook.md)
+- [Using the deprecated Webhook Form to send data to an Airtable automation (doc)](airtable-form-webhook.md)
 - [Airtable filters API (doc)](https://support.airtable.com/docs/airtable-web-api-using-filterbyformula-or-sort-parameters)
 
 ## Related

@@ -989,6 +989,7 @@ export const prebuild = async (options: {
   const siteData = parsedSiteData.data;
   const pages = migratePages(siteData.build.pages);
   const migratedInstances = new Map(siteData.build.instances);
+  // Saved Form identities may still need the deprecated Webhook Form migration.
   migrateResourceFormInstancesMutable(
     migratedInstances.values(),
     pages.formComponentIdentityVersion === undefined
@@ -1789,6 +1790,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
 
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
+    // Legacy-only conversion of saved Webhook Form action props.
     replaceFormActionsWithResources({
       instances,
       resources,
@@ -1859,6 +1861,8 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     });
 
     const projectMeta = siteData.build.projectSettings?.meta ?? pages.meta;
+    // The generated contactEmail export serves only saved Webhook Forms.
+    // projectMeta.contactEmail itself also serves managed Email Resources.
     const contactEmail: undefined | string =
       // fallback to user email when contact email is empty string
       projectMeta?.contactEmail || siteData.user?.email || undefined;
@@ -2010,6 +2014,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
           ${JSON.stringify(managedFormSubmissions)}
         );
 
+      /** @deprecated Generated only for saved Webhook Forms. */
       export const contactEmail = ${JSON.stringify(contactEmail)};
     `;
 

@@ -185,6 +185,7 @@ type PublicBuildSnapshot = Omit<
   version: number;
   homePageId?: string;
   rootFolderId?: string;
+  /** @deprecated Saved Webhook Form identity migration marker. */
   formComponentIdentityVersion?: number;
   pages?: unknown;
   pageTemplates?: unknown;

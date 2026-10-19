@@ -60,5 +60,6 @@ export const getManagedFormResourceGraph = (formId: string, _managedFormProps: {
           []
         );
 
+      /** @deprecated Generated only for saved Webhook Forms. */
       export const contactEmail = "hello@webstudio.is";
     

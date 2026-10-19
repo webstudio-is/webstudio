@@ -86,6 +86,23 @@ const rootFolderId = "root";
 const elementComponent = "ws:element";
 const slowPrebuildTestTimeout = 15_000;
 
+const loadGeneratedIndexAction = async () => {
+  await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+  await build({
+    stdin: {
+      contents: 'export { action } from "./app/routes/_index"',
+      resolveDir: tempDir,
+    },
+    outfile: join(tempDir, "action.mjs"),
+    bundle: true,
+    platform: "node",
+    format: "esm",
+    packages: "external",
+    loader: { ".css": "text" },
+  });
+  return import(pathToFileURL(join(tempDir, "action.mjs")).href);
+};
+
 const runGeneratedCommand = async (
   command: "react-router" | "remix" | "tsc" | "vite" | "vike",
   args: string[]
@@ -3584,22 +3601,7 @@ export const createManagedFormResourceFetch = ({ request }) => createProtectedRe
 });
 `
       );
-      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-      await build({
-        stdin: {
-          contents: 'export { action } from "./app/routes/_index"',
-          resolveDir: tempDir,
-        },
-        outfile: join(tempDir, "legacy-url-action.mjs"),
-        bundle: true,
-        platform: "node",
-        format: "esm",
-        packages: "external",
-        loader: { ".css": "text" },
-      });
-      const { action } = await import(
-        pathToFileURL(join(tempDir, "legacy-url-action.mjs")).href
-      );
+      const { action } = await loadGeneratedIndexAction();
       const received: Array<{ method: string; body: unknown }> = [];
       vi.stubGlobal(
         "__testManagedFormFetch",
@@ -3696,22 +3698,7 @@ export const createManagedFormResourceFetch = ({ request }) => createProtectedRe
         ),
         "export const createManagedFormEmailSender = () => globalThis.__testSendEmail;\nexport const validateManagedFormEmail = (...args) => globalThis.__testValidateEmail(...args);\nexport const createManagedFormResourceFetch = () => Object.assign(fetch, { validateDestination: () => undefined });\n"
       );
-      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-      await build({
-        stdin: {
-          contents: 'export { action } from "./app/routes/_index"',
-          resolveDir: tempDir,
-        },
-        outfile: join(tempDir, "legacy-email-action.mjs"),
-        bundle: true,
-        platform: "node",
-        format: "esm",
-        packages: "external",
-        loader: { ".css": "text" },
-      });
-      const { action } = await import(
-        pathToFileURL(join(tempDir, "legacy-email-action.mjs")).href
-      );
+      const { action } = await loadGeneratedIndexAction();
       const validateEmail = vi.fn();
       vi.stubGlobal("__testValidateEmail", validateEmail);
       const messages: ResourceRequest[] = [];
@@ -3869,22 +3856,7 @@ export const createManagedFormResourceFetch = ({ request }) => createProtectedRe
         ),
         "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => Object.assign(fetch, { validateDestination: () => undefined });\n"
       );
-      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-      await build({
-        stdin: {
-          contents: 'export { action } from "./app/routes/_index"',
-          resolveDir: tempDir,
-        },
-        outfile: join(tempDir, "action.mjs"),
-        bundle: true,
-        platform: "node",
-        format: "esm",
-        packages: "external",
-        loader: { ".css": "text" },
-      });
-      const { action } = await import(
-        pathToFileURL(join(tempDir, "action.mjs")).href
-      );
+      const { action } = await loadGeneratedIndexAction();
       const cached = new Map<string, Response>();
       vi.stubGlobal("caches", {
         open: async () => ({

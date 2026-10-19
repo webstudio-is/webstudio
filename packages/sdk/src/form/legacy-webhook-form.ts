@@ -17,7 +17,7 @@ import {
 import { prepareVisitorEmailRequest } from "./server-email";
 import { formBotFieldName, formIdFieldName } from "./fields";
 
-/** Adapt saved Webhook Forms to the shared Form execution pipeline. */
+/** @deprecated Compatibility adapter for saved Webhook Forms. Use managed Form submissions for new forms. */
 export const handleLegacyWebhookFormSubmission = async ({
   request,
   formData,

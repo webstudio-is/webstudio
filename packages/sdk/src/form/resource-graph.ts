@@ -1,5 +1,6 @@
 import type { ResourceRequestResource } from "../resource-loader";
 
+/** Resource traversal shared by deprecated Webhook Form and managed Form; keep for Form. */
 export const getReachableResources = <
   Resource extends ResourceRequestResource,
 >(graph: {

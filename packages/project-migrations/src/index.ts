@@ -71,6 +71,7 @@ export const migrateResourceFormInstancesMutable = (
 ) => {
   for (const instance of instances) {
     if (migrateLegacyForm && instance.component === "Form") {
+      // Deprecated Webhook Form identity is retained for saved projects only.
       instance.component = "WebhookForm";
     } else if (
       instance.component === "NativeForm" ||
@@ -198,6 +199,7 @@ export const migrateWebstudioDataMutable = (data: WebstudioData) => {
     data.instances.values(),
     data.pages.formComponentIdentityVersion === undefined
   );
+  // Marks completion of the deprecated Webhook Form identity migration.
   data.pages.formComponentIdentityVersion = 1;
   migrateResourcesMutable(data.resources.values());
   migrateStylesMutable(data.styles);

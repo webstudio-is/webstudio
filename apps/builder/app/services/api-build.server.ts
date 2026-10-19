@@ -101,6 +101,7 @@ export const createBuildSnapshot = ({
     snapshot.homePageId = pages.homePageId;
     snapshot.rootFolderId = pages.rootFolderId;
     if (include.has("pages")) {
+      // Preserve the deprecated Webhook Form identity migration marker in snapshots.
       snapshot.formComponentIdentityVersion =
         pages.formComponentIdentityVersion;
       snapshot.redirects = pages.redirects;

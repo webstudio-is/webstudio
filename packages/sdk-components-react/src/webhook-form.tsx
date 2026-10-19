@@ -1,5 +1,6 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
+// This module serves only the deprecated Webhook Form. Remove its private Props with it.
 type Props = ComponentProps<"form"> & {
   encType?:
     | "application/x-www-form-urlencoded"

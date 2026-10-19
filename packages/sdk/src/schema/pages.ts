@@ -280,7 +280,7 @@ export const getPageDraftabilityError = ({
 
 export const pages = z
   .object({
-    /** One-time migration from the legacy Form component identity. */
+    /** @deprecated One-time identity migration for saved Webhook Forms. */
     formComponentIdentityVersion: z.number().int().optional(),
     meta: projectMeta.optional(),
     compiler: compilerSettings.optional(),

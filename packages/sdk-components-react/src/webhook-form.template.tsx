@@ -13,6 +13,7 @@ import { WebhookForm } from "./components";
 
 const formState = new Variable("formState", "initial");
 
+/** @deprecated Use the Form component for new forms. */
 export const meta: TemplateMeta = {
   category: "data",
   order: 1,

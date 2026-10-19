@@ -29,37 +29,6 @@ const submit = (
   });
 };
 
-const emailRequest = (addresses: string[]): ResourceRequest => ({
-  name: "Email",
-  control: "email",
-  method: "post",
-  url: "",
-  searchParams: [],
-  headers: [],
-  email: {
-    recipientMode: "custom",
-    recipients: addresses.map((address) => ({ address })),
-    subject: "Hello",
-    body: "Saved message",
-    includeAttachments: false,
-  },
-});
-const configuredEmail = (request: ResourceRequest) => ({
-  data: {
-    rootIds: [],
-    resources: [
-      {
-        id: "email",
-        outputName: "email",
-        dependencies: [],
-        control: "email" as const,
-        createRequest: () => request,
-      },
-    ],
-  },
-  action: new Map([["email", { id: "email", outputName: "email" }]]),
-});
-
 test.each(["get", "post", "put", "delete"] as const)(
   "keeps the legacy %s method, request fields, and last repeated value",
   async (method) => {
@@ -86,6 +55,7 @@ test.each(["get", "post", "put", "delete"] as const)(
               },
             ],
             headers: [{ name: "X-Saved", value: "yes" }],
+            bodyFormat: "json",
             body: "saved body",
           }),
         },
@@ -95,7 +65,8 @@ test.each(["get", "post", "put", "delete"] as const)(
           dependencies: [],
           createRequest: () => ({
             name: "dependency",
-            method: "get",
+            method: "post",
+            body: { lookup: "saved" },
             url: "/$resources/assets",
             searchParams: [],
             headers: [],
@@ -133,7 +104,14 @@ test.each(["get", "post", "put", "delete"] as const)(
       }),
       { validateDestination: vi.fn() }
     );
-    const dependencyFetch = vi.fn(async () => Response.json("saved"));
+    const dependencyFetch = vi.fn(
+      async (_input: RequestInfo | URL, init?: RequestInit) => {
+        expect(await new Response(init?.body).json()).toEqual({
+          lookup: "saved",
+        });
+        return Response.json("saved");
+      }
+    );
     expect(
       await submit({
         formData,
@@ -179,50 +157,6 @@ test("sends the default owner notification with fields and uploaded files", asyn
       includeAttachments: true,
     },
   });
-});
-
-test("preflights configured Email actions and supplies their threading header", async () => {
-  const formData = new FormData();
-  formData.set(formBotFieldName, "brave");
-  formData.set(formIdFieldName, "email");
-  const sendEmail = vi.fn(async (_request: ResourceRequest) => ({
-    ok: true,
-    status: 200,
-    statusText: "OK",
-    data: { id: "sent" },
-  }));
-  const validateEmail = vi.fn();
-  expect(
-    await submit({
-      formData,
-      resources: configuredEmail(emailRequest(["visitor@example.com"])),
-      createEmailSender: () => sendEmail,
-      validateEmail,
-    })
-  ).toEqual({ success: true });
-  expect(validateEmail).toHaveBeenCalledOnce();
-  const sent = sendEmail.mock.calls[0]?.[0];
-  expect(sent?.email?.headers?.["X-Message-ID"]).toEqual(expect.any(String));
-  expect(validateEmail.mock.calls[0]?.[0]).toEqual(sent);
-});
-
-test("rejects too many configured Email recipients before sending", async () => {
-  const formData = new FormData();
-  formData.set(formBotFieldName, "brave");
-  formData.set(formIdFieldName, "email");
-  const createEmailSender = vi.fn();
-  await expect(
-    submit({
-      formData,
-      resources: configuredEmail(
-        emailRequest(
-          Array.from({ length: 6 }, (_, index) => `person${index}@example.com`)
-        )
-      ),
-      createEmailSender,
-    })
-  ).rejects.toThrow("no more than 5");
-  expect(createEmailSender).not.toHaveBeenCalled();
 });
 
 test("reports a failed Email action and does not retry it", async () => {

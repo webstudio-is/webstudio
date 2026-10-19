@@ -79,7 +79,7 @@
 {% endcontent-ref %}
 
 {% content-ref url="webhook-form.md" %}
-[webhook-form.md](webhook-form.md)
+[Webhook Form (deprecated)](webhook-form.md)
 {% endcontent-ref %}
 
 {% content-ref url="input.md" %}

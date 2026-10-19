@@ -18,6 +18,7 @@ export { meta as Subscript } from "./subscript.ws";
 export { meta as Button } from "./button.ws";
 export { meta as Input } from "./input.ws";
 export { meta as Form } from "./resource-form.ws";
+/** @deprecated Use Form for new forms. */
 export { meta as WebhookForm } from "./webhook-form.ws";
 export { meta as RemixForm } from "./form.ws";
 export { meta as Image } from "./image.ws";

@@ -1,6 +1,6 @@
 ---
 description: >-
-  Webhook Forms enable form submissions to get sent to an email address and
+  Deprecated. Existing Webhook Forms send submissions to an email address or
   optionally third-party services like Airtable, n8n, or Zapier.
 ---
 

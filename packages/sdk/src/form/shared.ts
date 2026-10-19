@@ -11,6 +11,7 @@ export const formDataParameterName = "formData";
 export const browserInfoParameterName = "browserInfo";
 
 export const internalFormFieldNames = new Set([
+  // Remove this field with the deprecated Webhook Form; the remaining fields serve Form.
   formIdFieldName,
   managedFormIdFieldName,
   managedFormArrayNamesFieldName,

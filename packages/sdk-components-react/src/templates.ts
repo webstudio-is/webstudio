@@ -1,5 +1,6 @@
 export { meta as ContentEmbed } from "./content-embed.template";
 export { meta as MarkdownEmbed } from "./markdown-embed.template";
+/** @deprecated Use Form for new forms. */
 export { meta as WebhookForm } from "./webhook-form.template";
 export { meta as Vimeo } from "./vimeo.template";
 export { meta as YouTube } from "./youtube.template";

@@ -4906,6 +4906,7 @@ const normalizeMcpOperationInput = async (name: string, input: unknown) => {
   return input;
 };
 
+/** @deprecated Guard only for the legacy Webhook Form component. */
 const assertNoLegacyWebhookFormInsertion = (name: string, input: unknown) => {
   if (isRecord(input) === false) {
     return;
@@ -4953,6 +4954,7 @@ const assertNoLegacyWebhookFormInsertion = (name: string, input: unknown) => {
   }
 };
 
+/** @deprecated Copy operations inspected only for saved Webhook Forms. */
 const legacyWebhookFormCopyCommands = new Set([
   "insert-mdx-text",
   "duplicate-page",
@@ -4963,6 +4965,7 @@ const legacyWebhookFormCopyCommands = new Set([
   "insert-page-transfer-item",
 ]);
 
+/** @deprecated Detects only saved Webhook Form instances. */
 const containsLegacyWebhookFormInstance = (value: unknown): boolean => {
   if (value instanceof Map) {
     return Array.from(value.values()).some(containsLegacyWebhookFormInstance);
@@ -4979,6 +4982,7 @@ const containsLegacyWebhookFormInstance = (value: unknown): boolean => {
   return false;
 };
 
+/** @deprecated Detects only patches that create Webhook Form instances. */
 const hasLegacyWebhookFormInstancePatch = (payload: unknown) =>
   Array.isArray(payload) &&
   payload.some(
@@ -4997,6 +5001,7 @@ const hasLegacyWebhookFormInstancePatch = (payload: unknown) =>
       )
   );
 
+/** @deprecated Copy guard only for saved Webhook Forms. */
 const assertNoLegacyWebhookFormCopy = (envelope: ProjectSessionEnvelope) => {
   if (envelope.transaction === undefined) {
     throw new Error("MCP could not inspect the planned copy transaction.");
@@ -5640,6 +5645,7 @@ const isComponentAvailableInMcpCatalog = (
   component: string,
   meta: WsComponentMeta
 ) =>
+  // The explicit check hides the deprecated Webhook Form even with older metadata.
   component !== "WebhookForm" &&
   isComponentMetaUnavailableInCatalog(meta) === false;
 
@@ -5734,6 +5740,7 @@ const getComponentSummaryEntry = ({
       )
     );
   if (
+    // Keep the deprecated Webhook Form out of component search and templates.
     component === "WebhookForm" ||
     (hiddenRequiredPart === false &&
       (isComponentMetaUnavailableInCatalog(meta) ||
@@ -5894,6 +5901,7 @@ const getComponentSummary = (input: unknown) => {
   };
 };
 
+// The final filter hides the deprecated Webhook Form from registry discovery.
 const getComponentRegistryItems = () =>
   listComponentRegistryItems({
     metas: componentMetas,
@@ -9604,6 +9612,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       const normalizedInput = await normalizeMcpOperationInput(name, toolInput);
       assertNoLegacyWebhookFormInsertion(name, normalizedInput);
       if (
+        // Block duplication of a saved, deprecated Webhook Form.
         (name === "clone-instance" || name === "duplicate-instance") &&
         isRecord(normalizedInput) &&
         typeof normalizedInput.sourceInstanceId === "string"

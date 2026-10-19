@@ -1,7 +1,3 @@
-/**
- * Used to identify form inside server handler
- */
-export const formIdFieldName = `ws--form-id`;
 /** Identifies a managed ResourceForm without accepting destinations from the visitor. */
 export const managedFormIdFieldName = `ws--managed-form-id`;
 /** Query marker lets the server apply managed-only parsing limits before parsing. */
@@ -10,13 +6,11 @@ export const managedFormRequestParamName = `ws--managed-form-request`;
 export const managedFormEndpointPrefix = "/__ws-form";
 /** Names whose submitted values are lists, including empty checkbox groups. */
 export const managedFormArrayNamesFieldName = `ws--managed-form-array-names`;
-/**
- * Used for simlpe protection against non js bots
- */
+/** Bot field shared by deprecated Webhook Form and managed Form; keep for Form. */
 export const formBotFieldName = `ws--form-bot`;
 
 /**
- * Detects if the browser is Brave.
+ * Detects if the browser is Brave for both deprecated Webhook Form and managed Form.
  * Brave Shields blocks our bot protection mechanism (matchMedia fingerprinting detection),
  * causing form submissions to silently fail.
  * @see https://github.com/brave/brave-browser/issues/46541
@@ -28,3 +22,6 @@ export const isBraveBrowser = (): boolean => {
   // @ts-expect-error - brave is a non-standard property
   return navigator.brave?.isBrave?.() === true || navigator.brave !== undefined;
 };
+
+/** @deprecated Identifies legacy Webhook Form submissions. Use managedFormIdFieldName for new Forms. */
+export const formIdFieldName = `ws--form-id`;

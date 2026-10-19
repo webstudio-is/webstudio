@@ -37,6 +37,7 @@ export const createDefaultPages = ({
     systemDataSourceId,
   };
   return {
+    // New projects have no saved Form instance requiring Webhook Form migration.
     formComponentIdentityVersion: 1,
     meta: {},
     homePageId,

@@ -4,6 +4,10 @@ description: Connect Webstudio forms to n8n for workflow automation.
 
 # How to integrate Webhook Form with N8N
 
+{% hint style="info" %}
+**Deprecated:** This guide uses the legacy [Webhook Form](../core-components/webhook-form.md). Use [Form](../core-components/form.md) for new forms.
+{% endhint %}
+
 This guide shows you how to link Webstudio Forms with [n8n](https://n8n.io/) for workflow automation. We will move data from Webstudio to n8n, save it in a Supabase table, and then ping a Slack channel when certain conditions are met.
 
 {% embed url="https://www.youtube.com/watch?v=zeJVpfemwj0" %}

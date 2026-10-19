@@ -12,6 +12,9 @@ import {
   isBraveBrowser,
 } from "@webstudio-is/sdk/form/browser";
 
+// This module serves only the deprecated Webhook Form. Remove its private
+// fetch, state, aspect-ratio, and jsdom helpers with the component.
+/** @deprecated Tag for the legacy Webhook Form component. */
 export const defaultTag = "form";
 
 const useOnFetchEnd = <Data,>(
