@@ -630,7 +630,7 @@ test("Webhook Form action submits once and persists after reload", async ({
   });
   const webhook = await startWebhookServer();
   const text = "Initial content";
-  const actionUrl = webhook.url;
+  const actionUrl = "https://mcp-delivery.example/submit";
 
   try {
     await seedSavedWebhookForm(fixture.projectId);
@@ -670,6 +670,7 @@ test("Webhook Form action submits once and persists after reload", async ({
     await measure("props runtime submit generated webhook form", async () => {
       await withGeneratedPreview({
         projectId: fixture.projectId,
+        evaluationReceiverPort: new URL(webhook.url).port,
         callback: async ({ url }) => {
           await page.goto(url);
           if (webhook.requests.length !== 0) {
