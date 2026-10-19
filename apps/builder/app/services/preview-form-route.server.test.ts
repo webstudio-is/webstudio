@@ -89,7 +89,7 @@ const draftBuild = {
       component: "Body",
       children: [{ type: "id", value: "form" }],
     },
-    { type: "instance", id: "form", component: "Form", children: [] },
+    { type: "instance", id: "form", component: "ResourceForm", children: [] },
   ],
   props: [
     {
@@ -1000,7 +1000,7 @@ test("Preview binds each page's submitted values and browser context to its own 
         component: "Body",
         children: [{ type: "id", value: formId }],
       },
-      { type: "instance", id: formId, component: "Form", children: [] },
+      { type: "instance", id: formId, component: "ResourceForm", children: [] },
     ]),
     props: pages.map(({ formId }) => ({
       id: `${formId}-action`,

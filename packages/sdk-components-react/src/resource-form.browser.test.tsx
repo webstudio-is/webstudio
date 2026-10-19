@@ -3,7 +3,7 @@ import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { expect, test, vi } from "vitest";
-import { Form } from "./resource-form";
+import { ResourceForm as Form } from "./resource-form";
 import {
   managedFormRequestParamName,
   managedFormIdFieldName,

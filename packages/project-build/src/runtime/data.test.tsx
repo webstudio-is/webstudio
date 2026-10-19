@@ -89,7 +89,7 @@ const Box = createTemplateComponentFixture("Box");
 const Fragment = createTemplateComponentFixture("Fragment");
 const Slot = createTemplateComponentFixture("Slot");
 const Text = createTemplateComponentFixture("Text");
-const ResourceForm = createTemplateComponentFixture("Form");
+const ResourceForm = createTemplateComponentFixture("ResourceForm");
 
 test("deleting a Resource removes it from a new Form's destinations", () => {
   const data = renderData(
@@ -3961,7 +3961,7 @@ describe("resource patch helpers", () => {
     state.instances.set("form", {
       type: "instance",
       id: "form",
-      component: "Form",
+      component: "ResourceForm",
       children: [],
     });
     for (const [id, scopeInstanceId] of [
@@ -4008,7 +4008,7 @@ describe("resource patch helpers", () => {
     state.instances.set("form", {
       type: "instance",
       id: "form",
-      component: "Form",
+      component: "ResourceForm",
       children: [],
     });
     state.resources.set("email-id", {
@@ -4079,7 +4079,7 @@ describe("resource patch helpers", () => {
     state.instances.set("form", {
       type: "instance",
       id: "form",
-      component: "Form",
+      component: "ResourceForm",
       children: [],
     });
     state.resources.set("email-id", {
@@ -4151,7 +4151,7 @@ describe("resource patch helpers", () => {
       state.instances.set("form", {
         type: "instance",
         id: "form",
-        component: "Form",
+        component: "ResourceForm",
         children: [],
       });
       state.resources.set("email-id", {
@@ -4444,7 +4444,7 @@ describe("resource patch helpers", () => {
     const form: Instance = {
       type: "instance",
       id: "form",
-      component: "Form",
+      component: "ResourceForm",
       children: [],
     };
     const ids = ["resource-id", "prop-id"];
@@ -5050,7 +5050,7 @@ describe("resource patch helpers", () => {
     expect(
       createResourceDeletePayload({
         resource,
-        instances: new Map([["form", { component: "Form" }]]),
+        instances: new Map([["form", { component: "ResourceForm" }]]),
         props: [submission],
         dataSources: [dataSource],
       }).isUsed
@@ -5058,7 +5058,7 @@ describe("resource patch helpers", () => {
     expect(
       createResourceDeletePayload({
         resource,
-        instances: new Map([["form", { component: "Form" }]]),
+        instances: new Map([["form", { component: "ResourceForm" }]]),
         props: [submission],
         dataSources: [dataSource],
         force: true,

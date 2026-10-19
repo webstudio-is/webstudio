@@ -14,7 +14,7 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
       contents: `
         import { createElement } from "react";
         import { createRoot } from "react-dom/client";
-        import { Form } from "./resource-form";
+        import { ResourceForm as Form } from "./resource-form";
 
         window.formStates = [];
         window.formResults = [];

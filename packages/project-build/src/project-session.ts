@@ -1,6 +1,8 @@
 import hash from "@emotion/hash";
 import deepEqual from "fast-deep-equal";
 import { z } from "zod";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
+import { hasHistoricalFormComponentIdentityVersion } from "@webstudio-is/project-migrations/pages";
 import type {
   RuntimeOperationContract,
   RuntimeOperationId,
@@ -204,11 +206,28 @@ export const hydrateRestorePointTransaction = (
   transaction: BuilderPatchTransaction
 ) =>
   transformRestorePointTransaction(transaction, (state) => {
+    const hasModernFormMarker = hasHistoricalFormComponentIdentityVersion(
+      state.pages
+    );
     const serialized = serializedRestorePointState.parse(state);
     const hydrated = createBuilderStateFromSerializedSnapshot({
       ...serialized,
       marketplaceProduct: serialized.marketplaceProduct ?? undefined,
     }) as Record<string, unknown>;
+    if (hydrated.instances instanceof Map) {
+      if (
+        state.pages === undefined &&
+        Array.from(hydrated.instances.values()).some(
+          (instance) => instance.component === "Form"
+        )
+      ) {
+        throw new Error("A restore point with instances must include pages.");
+      }
+      migrateResourceFormInstancesMutable(
+        hydrated.instances.values(),
+        hasModernFormMarker
+      );
+    }
     if (serialized.marketplaceProduct === null) {
       hydrated.marketplaceProduct = undefined;
     }

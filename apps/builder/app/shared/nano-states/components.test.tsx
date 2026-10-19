@@ -53,7 +53,7 @@ test("lists the managed Form while retaining saved Webhook Forms", () => {
     expect.objectContaining({
       name: "form",
       label: "Form (Beta)",
-      firstInstance: expect.objectContaining({ component: "Form" }),
+      firstInstance: expect.objectContaining({ component: "ResourceForm" }),
     }),
   ]);
 
@@ -63,11 +63,11 @@ test("lists the managed Form while retaining saved Webhook Forms", () => {
   ).toBe(false);
 
   // Saved instances keep their original component IDs and implementations.
-  expect($registeredComponents.get().has("Form")).toBe(true);
+  expect($registeredComponents.get().has("ResourceForm")).toBe(true);
   expect($registeredComponents.get().has("ResourceForm")).toBe(false);
   expect($registeredComponents.get().has("WebhookForm")).toBe(true);
   expect($registeredComponents.get().has("RemixForm")).toBe(true);
-  expect($registeredComponentMetas.get().get("Form")?.deprecated).toBe(
+  expect($registeredComponentMetas.get().get("ResourceForm")?.deprecated).toBe(
     undefined
   );
   expect($registeredComponentMetas.get().get("WebhookForm")?.label).toBe(

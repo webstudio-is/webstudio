@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
-import { Form } from "./resource-form";
+import { ResourceForm as Form } from "./resource-form";
 
 test("Form exposes a valid action URL that identifies its mode", () => {
   const html = renderToStaticMarkup(

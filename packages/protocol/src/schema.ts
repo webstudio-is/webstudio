@@ -87,10 +87,21 @@ export const publishedProjectBundle = projectBundle.extend({
 });
 export type PublishedProjectBundle = z.infer<typeof publishedProjectBundle>;
 
+// Input-only compatibility for bundles produced before Form identities were
+// canonicalized. Keep this out of publishedProjectBundle and bundleVersion.
+export const historicalPublishedProjectBundle = publishedProjectBundle.extend({
+  build: serializedBuild.extend({
+    pages: z.intersection(
+      serializedBuild.shape.pages,
+      z.object({ formComponentIdentityVersion: z.number().int().optional() })
+    ),
+  }),
+});
+
 export const importProjectBundleInput = z
   .object({
     projectId: z.string().min(1),
-    data: publishedProjectBundle.optional(),
+    data: historicalPublishedProjectBundle.optional(),
     uploadId: z.string().min(1).optional(),
     ignoreVersionCheck: z.boolean().optional(),
   })

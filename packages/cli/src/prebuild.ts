@@ -71,6 +71,7 @@ import {
   migratePages,
   migrateResourceFormInstancesMutable,
 } from "@webstudio-is/project-migrations";
+import { hasHistoricalFormComponentIdentityVersion } from "@webstudio-is/project-migrations/pages";
 import {
   collectFontFamiliesFromStyleDecls,
   createWebstudioDataFromFragment,
@@ -119,7 +120,7 @@ import {
 } from "@webstudio-is/query-builder/runtime";
 import {
   bundleVersion,
-  publishedProjectBundle,
+  historicalPublishedProjectBundle,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
 import { createAuthConfigResources, LOCAL_AUTH_FILE } from "./auth-config";
@@ -970,7 +971,8 @@ export const prebuild = async (options: {
       `Project bundle is missing, please make sure the project is synced.`
     );
   }
-  const parsedSiteData = publishedProjectBundle.safeParse(loadedSiteData);
+  const parsedSiteData =
+    historicalPublishedProjectBundle.safeParse(loadedSiteData);
   if (parsedSiteData.success === false) {
     throw Object.assign(
       new Error(
@@ -992,7 +994,7 @@ export const prebuild = async (options: {
   // Saved Form identities may still need the deprecated Webhook Form migration.
   migrateResourceFormInstancesMutable(
     migratedInstances.values(),
-    pages.formComponentIdentityVersion === undefined
+    hasHistoricalFormComponentIdentityVersion(siteData.build.pages)
   );
   const publicationBuild = { ...siteData.build, pages };
   const allAssetIds = new Set(siteData.assets.map(({ id }) => id));
@@ -1798,7 +1800,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     });
     const formInstances = Array.from(instances.values());
     const managedFormSubmissions = formInstances
-      .filter((instance) => instance.component === "Form")
+      .filter((instance) => instance.component === "ResourceForm")
       .map((instance) => {
         const actionProp = Array.from(props.values())
           .filter(

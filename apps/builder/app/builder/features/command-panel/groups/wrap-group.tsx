@@ -54,7 +54,7 @@ const wrapperComponentNames = [
   "AnimateText",
   "StaggerAnimation",
   "VideoAnimation",
-  "Form",
+  "ResourceForm",
 ];
 
 const $wrapOptions = computed(

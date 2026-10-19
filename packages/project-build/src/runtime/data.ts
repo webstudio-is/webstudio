@@ -1174,7 +1174,7 @@ export const deleteVariableMutable = (
     if (
       prop.type !== "json" ||
       prop.name !== "action" ||
-      data.instances.get(prop.instanceId)?.component !== "Form" ||
+      data.instances.get(prop.instanceId)?.component !== "ResourceForm" ||
       !isFormSubmission(prop.value) ||
       !prop.value.some((action) => action.dataSourceId === variableId)
     ) {
@@ -1594,7 +1594,8 @@ export const isManagedFormParameter = (
   dataSource?.type === "parameter" &&
   (dataSource.name === formDataParameterName ||
     dataSource.name === browserInfoParameterName) &&
-  instances?.get(dataSource.scopeInstanceId ?? "")?.component === "Form";
+  instances?.get(dataSource.scopeInstanceId ?? "")?.component ===
+    "ResourceForm";
 
 export const isRequiredManagedFormVariable = (
   dataSource: DataSource | undefined,
@@ -1605,7 +1606,7 @@ export const isRequiredManagedFormVariable = (
   if (
     dataSourceId === undefined ||
     scopeInstanceId === undefined ||
-    state.instances?.get(scopeInstanceId)?.component !== "Form"
+    state.instances?.get(scopeInstanceId)?.component !== "ResourceForm"
   ) {
     return false;
   }
@@ -2886,7 +2887,7 @@ export const createResourceDeletePayload = ({
     if (
       prop.type !== "json" ||
       prop.name !== "action" ||
-      instances.get(prop.instanceId)?.component !== "Form" ||
+      instances.get(prop.instanceId)?.component !== "ResourceForm" ||
       !isFormSubmission(prop.value) ||
       !prop.value.some((action) =>
         resourceDataSourceIds.has(action.dataSourceId)

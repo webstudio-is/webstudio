@@ -4,6 +4,7 @@ import { cwd } from "node:process";
 import { spinner } from "@clack/prompts";
 import {
   bundleVersion,
+  historicalPublishedProjectBundle,
   publishedProjectBundle,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
@@ -30,7 +31,12 @@ import {
   createBuilderStateFromBuildData,
   createSerializedBuilderBuildDataFromState,
 } from "@webstudio-is/project-build/state";
-import { migratePages } from "@webstudio-is/project-migrations/pages";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
+import {
+  hasHistoricalFormComponentIdentityVersion,
+  migratePages,
+  serializePages,
+} from "@webstudio-is/project-migrations/pages";
 import {
   createBuildContentCompilationPlan,
   createPublishedBuildContentCompilationPlan,
@@ -64,6 +70,7 @@ import {
 
 // Builder data uses arrays rather than the keyed pairs in an export bundle.
 const builderData = serializedBuild.extend({
+  pages: historicalPublishedProjectBundle.shape.build.shape.pages,
   breakpoints: breakpoint.array(),
   styles: styleDecl.array(),
   styleSources: styleSource.array(),
@@ -87,7 +94,11 @@ const loadCurrentProjectBundle = async (
   ) {
     throw new Error("Source project does not match the linked project");
   }
+  const hasModernFormMarker = hasHistoricalFormComponentIdentityVersion(
+    data.pages
+  );
   const pages = migratePages(data.pages);
+  migrateResourceFormInstancesMutable(data.instances, hasModernFormMarker);
   const state = createBuilderStateFromBuildData({ ...data, pages });
   return publishedProjectBundle.parse({
     bundleVersion,
@@ -244,6 +255,25 @@ export const sync = async (
     syncing.stop("Unable to synchronize project bundle", 2);
     throw new HandledCliError();
   }
+
+  const hasModernFormMarker = hasHistoricalFormComponentIdentityVersion(
+    project.build.pages
+  );
+  const canonicalInstances = project.build.instances.map(
+    ([id, instance]) => [id, { ...instance }] as [string, typeof instance]
+  );
+  migrateResourceFormInstancesMutable(
+    canonicalInstances.map(([, instance]) => instance),
+    hasModernFormMarker
+  );
+  project = publishedProjectBundle.parse({
+    ...project,
+    build: {
+      ...project.build,
+      pages: serializePages(migratePages(project.build.pages)),
+      instances: canonicalInstances,
+    },
+  });
 
   const createContentSource = () =>
     createFileSystemContentSource({

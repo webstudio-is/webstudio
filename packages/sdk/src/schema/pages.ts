@@ -280,8 +280,6 @@ export const getPageDraftabilityError = ({
 
 export const pages = z
   .object({
-    /** Keep while unversioned saved projects are supported; prevents new Form instances from being renamed WebhookForm. */
-    formComponentIdentityVersion: z.number().int().optional(),
     meta: projectMeta.optional(),
     compiler: compilerSettings.optional(),
     redirects: z.array(pageRedirect).optional(),

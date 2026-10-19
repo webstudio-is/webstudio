@@ -8,7 +8,7 @@ import {
   useLoaderData,
 } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
-import { Form } from "./resource-form";
+import { ResourceForm as Form } from "./resource-form";
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }

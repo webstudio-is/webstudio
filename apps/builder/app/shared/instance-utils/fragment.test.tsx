@@ -520,7 +520,7 @@ describe("insert webstudio fragment copy", () => {
       data,
       fragment: {
         ...emptyFragment,
-        instances: [createInstance("form", "Form", [])],
+        instances: [createInstance("form", "ResourceForm", [])],
         dataSources: [
           {
             id: "scoped-source",

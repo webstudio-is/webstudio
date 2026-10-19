@@ -23,21 +23,21 @@ test("keeps a standalone Form redirect when Content mode hides Action", () => {
 
   expect(
     getStandaloneInitialProps({
-      component: "Form",
+      component: "ResourceForm",
       addedProps: [],
       initialProps: [redirect],
     })
   ).toEqual([redirect]);
   expect(
     getStandaloneInitialProps({
-      component: "Form",
+      component: "ResourceForm",
       addedProps: [],
       initialProps: [action, redirect],
     })
   ).toEqual([action]);
   expect(
     getStandaloneInitialProps({
-      component: "Form",
+      component: "ResourceForm",
       addedProps: [action],
       initialProps: [redirect],
     })
@@ -45,7 +45,7 @@ test("keeps a standalone Form redirect when Content mode hides Action", () => {
 });
 
 test("Form and generic components render their property sections", () => {
-  for (const component of ["Form", "Box"]) {
+  for (const component of ["ResourceForm", "Box"]) {
     expect(
       shouldRenderPropsSectionContainer({
         component,

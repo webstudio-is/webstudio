@@ -50,7 +50,6 @@ const buildId = "high-impact-evaluation-build";
 const initialVersion = 1;
 
 const createPersistedPages = (project: EvaluationProject) => ({
-  formComponentIdentityVersion: 1,
   meta: { siteName: "High-impact evaluation", contactEmail: "" },
   compiler: { atomicStyles: true },
   redirects: [],

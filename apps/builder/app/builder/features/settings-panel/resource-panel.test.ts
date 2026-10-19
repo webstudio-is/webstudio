@@ -646,7 +646,7 @@ test.each(["sender", "recipients"] as const)(
           {
             id: "form",
             type: "instance",
-            component: "Form",
+            component: "ResourceForm",
             children: [{ type: "id", value: "contact-input" }],
           },
         ],
@@ -1068,7 +1068,7 @@ test("visitor Email Resource selects a named Form email field", async () => {
         {
           type: "instance",
           id: "form",
-          component: "Form",
+          component: "ResourceForm",
           children: [{ type: "id", value: "email-input" }],
         },
       ],
@@ -1333,7 +1333,7 @@ test("unrelated Resource edits preserve recipient scope and aliases", async () =
         {
           type: "instance",
           id: "form",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -1443,7 +1443,7 @@ test("body controls follow the effective method for standalone GET and Form Acti
           {
             type: "instance",
             id: "form",
-            component: "Form",
+            component: "ResourceForm",
             children: [],
           },
         ],
@@ -2227,7 +2227,7 @@ test.each([
           {
             id: "form",
             type: "instance",
-            component: "Form",
+            component: "ResourceForm",
             children: [{ type: "id", value: "contact-input" }],
           },
         ],

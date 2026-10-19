@@ -301,6 +301,39 @@ describe("build import helpers", () => {
     ]);
   });
 
+  test.each([
+    { marker: 1, expected: "ResourceForm" },
+    { marker: undefined, expected: "WebhookForm" },
+  ])(
+    "imports historical Form as $expected with canonical pages",
+    ({ marker, expected }) => {
+      const data = createData();
+      if (marker !== undefined) {
+        Object.assign(data.build.pages, {
+          formComponentIdentityVersion: marker,
+        });
+      }
+      data.build.instances.push([
+        "form",
+        { id: "form", type: "instance", component: "Form", children: [] },
+      ]);
+      const update = createBuildImportUpdate({
+        data,
+        lastTransactionId: "import-tx",
+        updatedAt: "2024-02-01T00:00:00.000Z",
+        version: 4,
+      });
+      expect(JSON.parse(update.pages)).not.toHaveProperty(
+        "formComponentIdentityVersion"
+      );
+      expect(
+        JSON.parse(update.instances).find(
+          (instance: { id: string }) => instance.id === "form"
+        )?.component
+      ).toBe(expected);
+    }
+  );
+
   test("uses imported home social image only when corresponding asset exists", () => {
     expect(getImportedPreviewImageAssetId(createData())).toBe("asset-1");
 

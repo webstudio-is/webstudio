@@ -105,7 +105,7 @@ test("runtime validator requires the observed success, failure, recovery sequenc
   });
   project.instances.push({
     id: "runtime-form",
-    component: "Form",
+    component: "ResourceForm",
     children: ["name", "email", "subject", "message"].map((name) => ({
       type: "id" as const,
       value: `field-${name}`,

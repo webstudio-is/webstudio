@@ -190,8 +190,8 @@ const createResourceScopeStore = (variable: DataSource | undefined) => {
           ? undefined
           : instancePath
               ?.slice(variablePathIndex)
-              .find(({ instance }) => instance.component === "Form")?.instance
-              .id;
+              .find(({ instance }) => instance.component === "ResourceForm")
+              ?.instance.id;
       const formScopeSelector =
         formScopeInstanceId === undefined
           ? undefined

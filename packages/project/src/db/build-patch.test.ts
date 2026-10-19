@@ -9,6 +9,10 @@ import {
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { defaultPlanFeatures } from "@webstudio-is/plans";
 import {
+  parseInstanceData,
+  parsePages,
+} from "@webstudio-is/project-build/persistence";
+import {
   patchBuild,
   patchLoadedBuild,
   type BuildPatchTransaction,
@@ -94,6 +98,65 @@ const transaction = (
     },
   ],
   ...overrides,
+});
+
+test("a pages-only save persists marked modern Form as ResourceForm with pages", async () => {
+  const markedPages = {
+    ...JSON.parse(buildRow.pages),
+    formComponentIdentityVersion: 1,
+  };
+  const build = {
+    ...buildRow,
+    pages: JSON.stringify(markedPages),
+    instances: JSON.stringify([
+      {
+        id: "body-1",
+        type: "instance",
+        component: "Body",
+        children: [{ type: "id", value: "form-1" }],
+      },
+      {
+        id: "form-1",
+        type: "instance",
+        component: "Form",
+        children: [{ type: "text", value: "Keep me" }],
+      },
+    ]),
+  };
+  const result = await createBuildPatchUpdate({
+    build,
+    clientVersion: 3,
+    transactions: [
+      transaction({
+        payload: [
+          {
+            namespace: "pages",
+            patches: [
+              { op: "add", path: ["meta", "siteName"], value: "Updated" },
+            ],
+          },
+        ],
+      }),
+    ],
+  });
+  expect(result.status).toBe("ok");
+  if (result.status !== "ok" || result.update === undefined) {
+    return;
+  }
+  expect(result.update.pages).toBeDefined();
+  expect(result.update.instances).toBeDefined();
+  expect(JSON.parse(result.update.pages ?? "{}")).not.toHaveProperty(
+    "formComponentIdentityVersion"
+  );
+  const reloadedPages = parsePages(result.update.pages ?? "{}");
+  const reloadedInstances = parseInstanceData(result.update.instances ?? "[]");
+  expect(reloadedPages.meta?.siteName).toBe("Updated");
+  expect(reloadedInstances.get("form-1")).toEqual({
+    id: "form-1",
+    type: "instance",
+    component: "ResourceForm",
+    children: [{ type: "text", value: "Keep me" }],
+  });
 });
 
 describe("patchBuild", () => {

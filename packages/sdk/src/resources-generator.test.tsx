@@ -17,7 +17,7 @@ import { generatePageResources } from "./managed-form-resources-generator";
 import type { DataSource } from "./schema/data-sources";
 
 const Body = createTemplateComponentFixture("Body");
-const Form = createTemplateComponentFixture("Form");
+const Form = createTemplateComponentFixture("ResourceForm");
 const WebhookForm = createTemplateComponentFixture("WebhookForm");
 
 test("base request fields do not generate Email delivery configuration", () => {
@@ -45,7 +45,7 @@ test("does not fetch a Form-bound Resource during page load", () => {
     scope: createScope(),
     page: { rootInstanceId: "form" } as Page,
     instances: toMap([
-      { type: "instance", id: "form", component: "Form", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ]),
     dataSources: toMap([
       {
@@ -93,7 +93,7 @@ test("does not evaluate configured Form Actions during page load", () => {
     scope: createScope(),
     page: { rootInstanceId: "form" } as Page,
     instances: toMap([
-      { type: "instance", id: "form", component: "Form", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ]),
     dataSources: toMap([
       {
@@ -174,7 +174,7 @@ test("keeps a page-used Resource selected as a Form Action", () => {
         component: "Body",
         children: [{ type: "id", value: "form" }],
       },
-      { type: "instance", id: "form", component: "Form", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ]),
     dataSources: toMap([
       {
@@ -332,7 +332,7 @@ test("excludes transitive Form-only Resources and rejects Dynamic Content Block 
       {
         type: "instance" as const,
         id: "form",
-        component: "Form",
+        component: "ResourceForm",
         children: [],
       },
     ]),

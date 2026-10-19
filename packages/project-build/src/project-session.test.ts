@@ -331,6 +331,48 @@ describe("project session", () => {
     });
   });
 
+  test("hydrates a canonical instances-only restore without pages", () => {
+    const transaction = {
+      id: "restore",
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: [],
+              value: [
+                [
+                  "form",
+                  {
+                    id: "form",
+                    type: "instance",
+                    component: "ResourceForm",
+                    children: [],
+                  },
+                ],
+              ],
+            },
+          ],
+        },
+      ],
+    } as BuilderPatchTransaction;
+    const hydrated = hydrateRestorePointTransaction(transaction);
+    expect(hydrated.payload[0]?.patches[0]).toMatchObject({
+      value: new Map([
+        [
+          "form",
+          {
+            id: "form",
+            type: "instance",
+            component: "ResourceForm",
+            children: [],
+          },
+        ],
+      ]),
+    });
+  });
+
   test("rejects malformed serialized restore namespace values", () => {
     expect(() =>
       hydrateRestorePointTransaction({

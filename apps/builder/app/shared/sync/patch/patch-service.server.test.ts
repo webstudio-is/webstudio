@@ -44,6 +44,7 @@ const buildRow = {
   projectId: "project-1",
   version: 3,
   lastTransactionId: null,
+  pages: JSON.stringify({}),
   instances: JSON.stringify([]),
   props: JSON.stringify([]),
   styleSources: JSON.stringify([]),
@@ -408,6 +409,7 @@ describe("applyPatchRequest", () => {
 
     expect(createContentModeCapabilities).toHaveBeenCalledWith({
       breakpoints: JSON.stringify([]),
+      pages: buildRow.pages,
       instances: JSON.stringify([]),
       props: JSON.stringify([]),
       styleSourceSelections: JSON.stringify([]),
@@ -416,7 +418,7 @@ describe("applyPatchRequest", () => {
     });
     expect(context.selectedColumns).toEqual([
       "projectId, version",
-      "instances, props, styleSources, styleSourceSelections, styles, breakpoints",
+      "pages, instances, props, styleSources, styleSourceSelections, styles, breakpoints",
       "projectId, version, lastTransactionId, props",
     ]);
     expect(result).toEqual({

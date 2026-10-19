@@ -51,7 +51,7 @@ const addManagedContactPage = (): EvaluationProject => {
   const instances = [
     {
       id: formId,
-      component: "Form",
+      component: "ResourceForm",
       children: [
         { type: "id" as const, value: "form-content" },
         { type: "id" as const, value: "form-success" },
@@ -932,7 +932,7 @@ describe("managed Form evaluation", () => {
     const project = addManagedContactPage();
     const calls = managedFormCalls();
     const form = project.instances.find(
-      ({ component }) => component === "Form"
+      ({ component }) => component === "ResourceForm"
     )!;
     const button = project.instances.find(
       ({ component }) => component === "Button"
@@ -1123,12 +1123,12 @@ describe("Form modes evaluation", () => {
     project.instances.push(
       {
         id: "mode-contact",
-        component: "Form",
+        component: "ResourceForm",
         children: [],
       },
       {
         id: "mode-search",
-        component: "Form",
+        component: "ResourceForm",
         children: [],
       },
       {
@@ -2259,13 +2259,13 @@ describe("Form modes authoring evaluation", () => {
     instances: [
       {
         id: "contact",
-        component: "Form",
+        component: "ResourceForm",
         label: "Contact",
         children: [],
       },
       {
         id: "search",
-        component: "Form",
+        component: "ResourceForm",
         label: "Search",
         children: [],
       },

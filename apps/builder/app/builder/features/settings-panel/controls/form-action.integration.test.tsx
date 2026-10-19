@@ -64,7 +64,7 @@ test("Actions references an existing Resource without creating another", async (
         {
           type: "instance" as const,
           id: "form",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],

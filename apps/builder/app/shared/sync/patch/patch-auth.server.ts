@@ -19,6 +19,8 @@ import {
   parseStyleSourceSelections,
   parseStyles,
 } from "@webstudio-is/project-build/persistence";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
+import { hasHistoricalFormComponentIdentityVersion } from "@webstudio-is/project-migrations/pages";
 import env from "~/env/env.server";
 import { readAccessToken } from "~/services/token.server";
 import { componentMetas } from "~/shared/component-metas.server";
@@ -120,6 +122,7 @@ const hasProjectPermit = async ({
 };
 
 export const createContentModeCapabilities = (build: {
+  pages: string;
   instances: string;
   props: string;
   styleSources: string;
@@ -127,8 +130,13 @@ export const createContentModeCapabilities = (build: {
   styles: string;
   breakpoints: string;
 }) => {
+  const instances = parseInstanceData(build.instances);
+  migrateResourceFormInstancesMutable(
+    instances.values(),
+    hasHistoricalFormComponentIdentityVersion(JSON.parse(build.pages))
+  );
   return getContentModeCapabilities({
-    instances: parseInstanceData(build.instances),
+    instances,
     metas: componentMetas,
     props: parseData<Prop>(build.props),
     styleSources: parseData<StyleSource>(build.styleSources),

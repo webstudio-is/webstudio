@@ -61,7 +61,7 @@ test("Action + explains how to add a resource when none are available", async ()
         {
           type: "instance",
           id: "form",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -107,7 +107,12 @@ test("Action header and menu align while items sit below the full header", async
     new Map([
       [
         "form",
-        { type: "instance", id: "form", component: "Form", children: [] },
+        {
+          type: "instance",
+          id: "form",
+          component: "ResourceForm",
+          children: [],
+        },
       ],
     ])
   );
@@ -315,7 +320,7 @@ test("Action control handles an empty Resource list and can select an in-scope d
         {
           type: "instance",
           id: "form",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -500,7 +505,7 @@ test("a Form can select a Resource defined outside its scope", async () => {
         {
           type: "instance",
           id: "form",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -581,7 +586,7 @@ test("stored Form selection renders and a deleted Resource can be removed", asyn
         {
           type: "instance",
           id: "form",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -665,7 +670,7 @@ test("Actions only offers eligible in-scope Resources and disables an added one"
         {
           type: "instance",
           id: "form",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -772,7 +777,7 @@ test("a legacy Action stays visible and can be removed", async () => {
         {
           type: "instance",
           id: "form",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -902,7 +907,7 @@ test.each([
           {
             id: "form",
             type: "instance",
-            component: "Form",
+            component: "ResourceForm",
             children: [],
           },
         ],

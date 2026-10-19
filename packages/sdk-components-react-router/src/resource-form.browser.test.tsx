@@ -8,7 +8,7 @@ import {
   managedFormIdFieldName,
   managedFormRequestParamName,
 } from "@webstudio-is/sdk/runtime";
-import { Form } from "./resource-form";
+import { ResourceForm as Form } from "./resource-form";
 import { RemixForm } from "./remix-form";
 
 (

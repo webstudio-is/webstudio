@@ -1,12 +1,12 @@
 import { useVariableState } from "@webstudio-is/react-sdk/runtime";
-import { Box as Box, Form as Form } from "../components";
+import { Box as Box, WebhookForm as WebhookForm } from "../components";
 
 const Component = () => {
   let [formState, set$formState] = useVariableState<any>("initial");
   return (
     <Box className={`w-box`}>
-      <Form
-        state={formState}
+      <WebhookForm
+        state={formState == null ? formState : String(formState)}
         onStateChange={(state: any) => {
           formState = state;
           set$formState(formState);
@@ -28,13 +28,13 @@ const Component = () => {
         {formState === "error" && (
           <div className={`w-element`}>{"Sorry, something went wrong."}</div>
         )}
-      </Form>
+      </WebhookForm>
     </Box>
   );
 };
 
 export default {
-  title: "Components/Form",
+  title: "Components/WebhookForm",
 };
 
 const Story = {
@@ -102,4 +102,4 @@ const Story = {
   },
 };
 
-export { Story as Form };
+export { Story as WebhookForm };

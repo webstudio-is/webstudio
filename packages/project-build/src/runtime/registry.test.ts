@@ -111,7 +111,7 @@ test("rejects a fragment containing a Form with more than 10 actions", () => {
             {
               type: "instance",
               id: "new-form",
-              component: "Form",
+              component: "ResourceForm",
               children: [],
             },
           ],

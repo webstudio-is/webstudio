@@ -4939,7 +4939,7 @@ const assertNoDeprecatedWebhookFormInsertion = (
       ))
   ) {
     throw new Error(
-      'Webhook Form is deprecated and cannot be inserted through MCP. Use component "Form".'
+      'Webhook Form is deprecated and cannot be inserted through MCP. Use component "ResourceForm".'
     );
   }
   if (
@@ -4952,7 +4952,7 @@ const assertNoDeprecatedWebhookFormInsertion = (
     )
   ) {
     throw new Error(
-      'Webhook Form is deprecated and cannot be created through MCP patches. Use component "Form".'
+      'Webhook Form is deprecated and cannot be created through MCP patches. Use component "ResourceForm".'
     );
   }
 };
@@ -5015,7 +5015,7 @@ const assertNoDeprecatedWebhookFormCopy = (
   }
   if (hasDeprecatedWebhookFormInstancePatch(envelope.transaction.payload)) {
     throw new Error(
-      'Webhook Form is deprecated and cannot be copied through MCP. Use component "Form".'
+      'Webhook Form is deprecated and cannot be copied through MCP. Use component "ResourceForm".'
     );
   }
 };
@@ -9638,7 +9638,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           source.result.instances.length > 0
         ) {
           throw new Error(
-            'Webhook Form is deprecated and cannot be duplicated through MCP. Use component "Form".'
+            'Webhook Form is deprecated and cannot be duplicated through MCP. Use component "ResourceForm".'
           );
         }
       }

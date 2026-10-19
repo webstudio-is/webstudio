@@ -1,4 +1,9 @@
 import type { Patch } from "immer";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
+import {
+  hasHistoricalFormComponentIdentityVersion,
+  migratePages,
+} from "@webstudio-is/project-migrations/pages";
 import {
   type Breakpoints,
   breakpoints,
@@ -202,6 +207,31 @@ export const createBuildPatchUpdate = async ({
   const touchedStyleSourceSelections = createTouchedKeys();
   const assetPatches: Patch[][] = [];
   const assetFolderPatches: Patch[][] = [];
+
+  // Persist the identity transition in the same Build update as either namespace.
+  // A pages-only edit must not erase the historical discriminator while Form
+  // instances still depend on it.
+  const touchesFormIdentity = transactions.some((transaction) =>
+    transaction.payload.some(
+      ({ namespace, patches }) =>
+        patches.length > 0 &&
+        (namespace === "pages" || namespace === "instances")
+    )
+  );
+  if (touchesFormIdentity) {
+    const rawPages = parseConfig<unknown>(build.pages);
+    const hasModernFormMarker =
+      hasHistoricalFormComponentIdentityVersion(rawPages);
+    buildData.pages = migratePages(rawPages);
+    buildData.instances = parseInstanceData(build.instances);
+    const changedInstanceIds = migrateResourceFormInstancesMutable(
+      buildData.instances.values(),
+      hasModernFormMarker
+    );
+    for (const instanceId of changedInstanceIds) {
+      touchedInstances.keys.add(instanceId);
+    }
+  }
 
   for (const transaction of transactions) {
     for (const change of transaction.payload) {

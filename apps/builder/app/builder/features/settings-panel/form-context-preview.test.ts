@@ -69,7 +69,10 @@ test("Form parameter resolver gives the Resource scope the same public occurrenc
     scopeInstanceId: "other",
   };
   const instances: Instances = new Map([
-    ["form", { id: "form", type: "instance", component: "Form", children: [] }],
+    [
+      "form",
+      { id: "form", type: "instance", component: "ResourceForm", children: [] },
+    ],
     [
       "other",
       { id: "other", type: "instance", component: "Box", children: [] },

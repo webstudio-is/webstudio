@@ -934,7 +934,7 @@ describe("insert webstudio component at", () => {
       const body = $instances.get().get("bodyId");
       const formId =
         body?.children[0]?.type === "id" ? body.children[0].value : "";
-      expect($instances.get().get(formId)?.component).toBe("Form");
+      expect($instances.get().get(formId)?.component).toBe("ResourceForm");
       const formProps = Array.from($props.get().values()).filter(
         ({ instanceId }) => instanceId === formId
       );
@@ -1174,7 +1174,7 @@ describe("insert webstudio component at", () => {
 
   test("inserts component through runtime template application", async () => {
     expect(
-      await insertWebstudioComponentAt("Form", {
+      await insertWebstudioComponentAt("ResourceForm", {
         parentSelector: ["bodyId"],
         position: "end",
       })
@@ -1187,7 +1187,7 @@ describe("insert webstudio component at", () => {
     expect(form).toEqual({
       type: "instance",
       id: formId,
-      component: "Form",
+      component: "ResourceForm",
       children: expect.any(Array),
     });
   });
@@ -1225,7 +1225,7 @@ describe("insert webstudio component at", () => {
     const notify = vi.spyOn(toast, "error");
     try {
       expect(
-        await insertWebstudioComponentAt("Form", {
+        await insertWebstudioComponentAt("ResourceForm", {
           parentSelector: ["mdx", "block", "bodyId"],
           position: "end",
         })
