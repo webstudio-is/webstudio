@@ -12,7 +12,7 @@ import {
   getResourceDependencyIds,
   getResourceDataSourceIds,
 } from "./resource-dependencies";
-import { migrateLegacyWebhookFormActions } from "./form/legacy-webhook-form-actions";
+import { migrateDeprecatedWebhookFormActions } from "./form/deprecated-webhook-form-actions";
 
 export const generateResourceRequestFields = ({
   resource,
@@ -432,7 +432,7 @@ export const generateResources = ({
   }
 
   // Deprecated Webhook Form is the only production reader of this action lookup.
-  // Remove _action and its return field with the legacy adapter; actionResourceProps
+  // Remove _action and its return field with the deprecated Webhook Form adapter; actionResourceProps
   // also drives the shared resource graph and must remain.
   generated += `  const _action = new Map<string, { id: string; outputName: string }>([\n`;
   for (const prop of actionResourceProps) {
@@ -456,12 +456,12 @@ export const generateResources = ({
 
 /**
  * @deprecated Compatibility export for saved Webhook Form action migration.
- * Remove this wrapper with the legacy Webhook Form implementation.
+ * Remove this wrapper with the deprecated Webhook Form implementation.
  */
 export const replaceFormActionsWithResources = (options: {
   props: Props;
   instances: Instances;
   resources: Resources;
 }) => {
-  migrateLegacyWebhookFormActions(options);
+  migrateDeprecatedWebhookFormActions(options);
 };

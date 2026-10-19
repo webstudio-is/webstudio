@@ -1,7 +1,7 @@
 import { expect, test, vi } from "vitest";
 import type { ResourceRequestGraph } from "../resource-loader";
 import type { ResourceRequest } from "../schema/resources";
-import { handleLegacyWebhookFormSubmission } from "./legacy-webhook-form";
+import { handleDeprecatedWebhookFormSubmission } from "./deprecated-webhook-form";
 import { formBotFieldName, formIdFieldName } from "./fields";
 
 const url = new URL("https://site.example/contact");
@@ -10,12 +10,12 @@ const resourceFetch = Object.assign(
   { validateDestination: vi.fn() }
 );
 const submit = (
-  options: Partial<Parameters<typeof handleLegacyWebhookFormSubmission>[0]> = {}
+  options: Partial<Parameters<typeof handleDeprecatedWebhookFormSubmission>[0]> = {}
 ) => {
   const formData = new FormData();
   formData.set(formBotFieldName, "brave");
   formData.set("message", "Hello");
-  return handleLegacyWebhookFormSubmission({
+  return handleDeprecatedWebhookFormSubmission({
     request: new Request(url),
     formData,
     url,
@@ -30,7 +30,7 @@ const submit = (
 };
 
 test.each(["get", "post", "put", "delete"] as const)(
-  "keeps the legacy %s method, request fields, and last repeated value",
+  "keeps the deprecated Webhook Form %s method, request fields, and last repeated value",
   async (method) => {
     const formData = new FormData();
     formData.set(formIdFieldName, "action");

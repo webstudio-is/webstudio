@@ -3328,7 +3328,7 @@ sitemap.map((page) => page.path);`
   );
 
   test.each(["defaults", "react-router"])(
-    "uses route params and query values in a legacy Form Resource (%s)",
+    "uses route params and query values in a deprecated Webhook Form Resource (%s)",
     async (template) => {
       const system = encodeDataSourceVariable(SYSTEM_VARIABLE_ID);
       const siteData = createSiteData({
@@ -3381,7 +3381,7 @@ sitemap.map((page) => page.path);`
           tempDir,
           "app/__generated__/$resources.managed-form-fetch.server.ts"
         ),
-        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => Object.assign(globalThis.__legacyRouteFetch, { validateDestination: () => undefined });\n"
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => Object.assign(globalThis.__deprecatedWebhookFormRouteFetch, { validateDestination: () => undefined });\n"
       );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
@@ -3390,7 +3390,7 @@ sitemap.map((page) => page.path);`
             'export { action } from "./app/routes/[products].$slug._index"',
           resolveDir: tempDir,
         },
-        outfile: join(tempDir, "legacy-action.mjs"),
+        outfile: join(tempDir, "deprecated-webhook-form-action.mjs"),
         bundle: true,
         platform: "node",
         format: "esm",
@@ -3398,7 +3398,7 @@ sitemap.map((page) => page.path);`
         loader: { ".css": "text" },
       });
       const { action } = await import(
-        pathToFileURL(join(tempDir, "legacy-action.mjs")).href
+        pathToFileURL(join(tempDir, "deprecated-webhook-form-action.mjs")).href
       );
       const received: Array<{
         url: string;
@@ -3406,7 +3406,7 @@ sitemap.map((page) => page.path);`
         body: unknown;
       }> = [];
       vi.stubGlobal(
-        "__legacyRouteFetch",
+        "__deprecatedWebhookFormRouteFetch",
         vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
           const request = new Request(input, init);
           received.push({
@@ -3645,7 +3645,7 @@ export const createManagedFormResourceFetch = ({ request }) => createProtectedRe
       [0, 1, 6].map((recipients) => [template, recipients] as const)
     )
   )(
-    "sends and preflights legacy emails through the Form sender (%s, %i configured recipients)",
+    "sends and preflights deprecated Webhook Form emails through the Form sender (%s, %i configured recipients)",
     async (template, recipientCount) => {
       const siteData = createSiteData({
         instances: [
@@ -3793,7 +3793,7 @@ export const createManagedFormResourceFetch = ({ request }) => createProtectedRe
   );
 
   test.each(["defaults", "react-router"])(
-    "submits identical legacy forms twice while caching dependencies (%s)",
+    "submits identical deprecated Webhook Forms twice while caching dependencies (%s)",
     async (template) => {
       const siteData = createSiteData({
         instances: [["root", { id: "root", component: "Form", children: [] }]],

@@ -23,5 +23,5 @@ export const isBraveBrowser = (): boolean => {
   return navigator.brave?.isBrave?.() === true || navigator.brave !== undefined;
 };
 
-/** @deprecated Identifies legacy Webhook Form submissions. Use managedFormIdFieldName for new Forms. */
+/** @deprecated Identifies deprecated Webhook Form submissions. Use managedFormIdFieldName for new Forms. */
 export const formIdFieldName = `ws--form-id`;

@@ -4906,8 +4906,11 @@ const normalizeMcpOperationInput = async (name: string, input: unknown) => {
   return input;
 };
 
-/** @deprecated Guard only for the legacy Webhook Form component. */
-const assertNoLegacyWebhookFormInsertion = (name: string, input: unknown) => {
+/** @deprecated Guard only for the deprecated Webhook Form component. */
+const assertNoDeprecatedWebhookFormInsertion = (
+  name: string,
+  input: unknown
+) => {
   if (isRecord(input) === false) {
     return;
   }
@@ -4945,7 +4948,7 @@ const assertNoLegacyWebhookFormInsertion = (name: string, input: unknown) => {
     input.transactions.some(
       (transaction) =>
         isRecord(transaction) &&
-        hasLegacyWebhookFormInstancePatch(transaction.payload)
+        hasDeprecatedWebhookFormInstancePatch(transaction.payload)
     )
   ) {
     throw new Error(
@@ -4955,7 +4958,7 @@ const assertNoLegacyWebhookFormInsertion = (name: string, input: unknown) => {
 };
 
 /** @deprecated Copy operations inspected only for saved Webhook Forms. */
-const legacyWebhookFormCopyCommands = new Set([
+const deprecatedWebhookFormCopyCommands = new Set([
   "insert-mdx-text",
   "duplicate-page",
   "duplicate-page-template",
@@ -4966,24 +4969,26 @@ const legacyWebhookFormCopyCommands = new Set([
 ]);
 
 /** @deprecated Detects only saved Webhook Form instances. */
-const containsLegacyWebhookFormInstance = (value: unknown): boolean => {
+const containsDeprecatedWebhookFormInstance = (value: unknown): boolean => {
   if (value instanceof Map) {
-    return Array.from(value.values()).some(containsLegacyWebhookFormInstance);
+    return Array.from(value.values()).some(
+      containsDeprecatedWebhookFormInstance
+    );
   }
   if (Array.isArray(value)) {
-    return value.some(containsLegacyWebhookFormInstance);
+    return value.some(containsDeprecatedWebhookFormInstance);
   }
   if (isRecord(value)) {
     return (
       value.component === "WebhookForm" ||
-      Object.values(value).some(containsLegacyWebhookFormInstance)
+      Object.values(value).some(containsDeprecatedWebhookFormInstance)
     );
   }
   return false;
 };
 
 /** @deprecated Detects only patches that create Webhook Form instances. */
-const hasLegacyWebhookFormInstancePatch = (payload: unknown) =>
+const hasDeprecatedWebhookFormInstancePatch = (payload: unknown) =>
   Array.isArray(payload) &&
   payload.some(
     (change) =>
@@ -4997,16 +5002,18 @@ const hasLegacyWebhookFormInstancePatch = (payload: unknown) =>
           ((Array.isArray(patch.path) &&
             patch.path.at(-1) === "component" &&
             patch.value === "WebhookForm") ||
-            containsLegacyWebhookFormInstance(patch.value))
+            containsDeprecatedWebhookFormInstance(patch.value))
       )
   );
 
 /** @deprecated Copy guard only for saved Webhook Forms. */
-const assertNoLegacyWebhookFormCopy = (envelope: ProjectSessionEnvelope) => {
+const assertNoDeprecatedWebhookFormCopy = (
+  envelope: ProjectSessionEnvelope
+) => {
   if (envelope.transaction === undefined) {
     throw new Error("MCP could not inspect the planned copy transaction.");
   }
-  if (hasLegacyWebhookFormInstancePatch(envelope.transaction.payload)) {
+  if (hasDeprecatedWebhookFormInstancePatch(envelope.transaction.payload)) {
     throw new Error(
       'Webhook Form is deprecated and cannot be copied through MCP. Use component "Form".'
     );
@@ -9498,7 +9505,10 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           insertionOperation,
           await getInsertFragmentInput(transportInput.input)
         );
-        assertNoLegacyWebhookFormInsertion("insert-fragment", insertionInput);
+        assertNoDeprecatedWebhookFormInsertion(
+          "insert-fragment",
+          insertionInput
+        );
         const verificationInput = getNormalizedOperationInput(
           verificationOperation,
           { pagePath: transportInput.input.pagePath, limit: 200 }
@@ -9610,7 +9620,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       const toolInput = transportInput.input;
       dryRun = dryRun || transportInput.dryRun;
       const normalizedInput = await normalizeMcpOperationInput(name, toolInput);
-      assertNoLegacyWebhookFormInsertion(name, normalizedInput);
+      assertNoDeprecatedWebhookFormInsertion(name, normalizedInput);
       if (
         // Block duplication of a saved, deprecated Webhook Form.
         (name === "clone-instance" || name === "duplicate-instance") &&
@@ -9734,7 +9744,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             )
           : normalizedInput
       );
-      const plannedCopy = legacyWebhookFormCopyCommands.has(name)
+      const plannedCopy = deprecatedWebhookFormCopyCommands.has(name)
         ? await executeOperation({
             command: name as Command,
             input: operationInput,
@@ -9742,7 +9752,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           })
         : undefined;
       if (plannedCopy !== undefined) {
-        assertNoLegacyWebhookFormCopy(plannedCopy);
+        assertNoDeprecatedWebhookFormCopy(plannedCopy);
       }
       const [envelope, response] = operation.requiresConfirm
         ? await executeDestructiveMcpOperation({

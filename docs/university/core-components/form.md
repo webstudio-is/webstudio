@@ -61,5 +61,5 @@ For ordinary browser form behavior, add **Element**, set its tag to `form`, and 
 
 - [Input](input.md) – Name fields and choose input types
 - [Element](element.md) – Use native HTML form behavior
-- [Webhook Form](webhook-form.md) – Configure an existing legacy form
+- [Webhook Form](webhook-form.md) – Configure an existing deprecated form
 - [Self-Hosting](../self-hosting/README.md) – Choose a dynamic or static export

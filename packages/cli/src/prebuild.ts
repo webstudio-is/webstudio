@@ -1790,7 +1790,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
 
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
-    // Legacy-only conversion of saved Webhook Form action props.
+    // Deprecated Webhook Form-only conversion of saved action props.
     replaceFormActionsWithResources({
       instances,
       resources,

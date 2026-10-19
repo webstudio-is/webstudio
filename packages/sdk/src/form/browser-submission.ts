@@ -6,7 +6,7 @@ import {
 } from "./fields";
 import { internalFormFieldNames } from "./shared";
 
-// Managed Form shares the legacy Webhook Form's bot check. Keep this when
+// Managed Form shares the deprecated Webhook Form's bot check. Keep this when
 // removing Webhook Form so simple headless environments remain rejected.
 const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 

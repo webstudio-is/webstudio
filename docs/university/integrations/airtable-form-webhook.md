@@ -7,7 +7,7 @@ description: >-
 # How to integrate a Webhook Form with Airtable
 
 {% hint style="info" %}
-**Deprecated:** This guide uses the legacy [Webhook Form](../core-components/webhook-form.md). Use [Form](../core-components/form.md) for new forms.
+**Deprecated:** This guide uses the [Webhook Form](../core-components/webhook-form.md). Use [Form](../core-components/form.md) for new forms.
 {% endhint %}
 
 {% embed url="https://www.youtube.com/watch?v=xYJFh_u-8Tc" %}

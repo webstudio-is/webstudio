@@ -18,7 +18,7 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import {
   handleManagedFormSubmission,
-  handleLegacyWebhookFormSubmission,
+  handleDeprecatedWebhookFormSubmission,
   getManagedFormFailure,
   readFormDataWithLimit,
   type ManagedFormResponse,
@@ -293,7 +293,7 @@ export const action = async ({
       projectDomain,
     });
     if (isManagedFormRequest) {
-      // Reject legacy Webhook Form IDs on the new Form submission path.
+      // Reject deprecated Webhook Form IDs on the new Form submission path.
       if (managedFormIds.length !== 1 || formData.has(formIdFieldName)) {
         throw new Error("Invalid Form submission");
       }
@@ -319,7 +319,7 @@ export const action = async ({
     }
 
     // Compatibility path for saved, deprecated Webhook Forms.
-    return await handleLegacyWebhookFormSubmission({
+    return await handleDeprecatedWebhookFormSubmission({
       request,
       formData,
       url,

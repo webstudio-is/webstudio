@@ -14,7 +14,7 @@ import {
 
 // This module serves only the deprecated Webhook Form. Remove its private
 // fetch, state, aspect-ratio, and jsdom helpers with the component.
-/** @deprecated Tag for the legacy Webhook Form component. */
+/** @deprecated Tag for the deprecated Webhook Form component. */
 export const defaultTag = "form";
 
 const useOnFetchEnd = <Data,>(
@@ -83,7 +83,7 @@ const isJSDom = () => {
   return hasMatchMedia === false;
 };
 
-/** @deprecated Legacy Webhook Form is supported through the next release. Use Form for new forms. */
+/** @deprecated Webhook Form is supported through the next release. Use Form for new forms. */
 export const WebhookForm = forwardRef<
   ElementRef<typeof defaultTag>,
   Omit<ComponentProps<typeof defaultTag>, "action"> & {

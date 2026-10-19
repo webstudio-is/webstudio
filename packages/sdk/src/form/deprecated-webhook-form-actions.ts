@@ -17,7 +17,7 @@ const getMethod = (value: string | undefined) => {
 };
 
 /** @deprecated Convert saved Webhook Form action props to Resource actions. */
-export const migrateLegacyWebhookFormActions = ({
+export const migrateDeprecatedWebhookFormActions = ({
   props,
   instances,
   resources,

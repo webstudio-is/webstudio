@@ -10,7 +10,7 @@ import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
 
-test("MCP-edited saved legacy Webhook Form preserves single and repeated query bindings through navigation and submission", async ({
+test("MCP-edited saved deprecated Webhook Form preserves single and repeated query bindings through navigation and submission", async ({
   page,
   context,
 }) => {

@@ -199,7 +199,7 @@ export const migrateWebstudioDataMutable = (data: WebstudioData) => {
     data.instances.values(),
     data.pages.formComponentIdentityVersion === undefined
   );
-  // Marks completion of the deprecated Webhook Form identity migration.
+  // Records that the historical Form identity migration has run.
   data.pages.formComponentIdentityVersion = 1;
   migrateResourcesMutable(data.resources.values());
   migrateStylesMutable(data.styles);

@@ -207,7 +207,7 @@ While static site exporting and hosting are less technical, this comes at the co
 * Redirects
 * Statuses
 * Client navigation
-* Legacy Webhook Form (deprecated)
+* Webhook Form (deprecated)
 * Form submission to Resource actions
 * Image optimization
 * No robots.txt

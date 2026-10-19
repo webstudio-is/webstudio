@@ -15,7 +15,7 @@ import { isRootFolder, ROOT_FOLDER_ID } from "@webstudio-is/sdk";
 import { z } from "zod";
 
 type LegacyPages = {
-  /** @deprecated One-time identity migration for saved Webhook Forms. */
+  /** Keep while unversioned saved projects are supported; tracks the Form identity migration. */
   formComponentIdentityVersion?: Pages["formComponentIdentityVersion"];
   meta?: Pages["meta"];
   compiler?: Pages["compiler"];
@@ -35,7 +35,7 @@ export type SerializedPages = Omit<
 };
 
 export const serializedPages: z.ZodType<SerializedPages, unknown> = z.object({
-  // Retain the deprecated Webhook Form identity marker in saved project data.
+  // Retain the Form identity version while unversioned projects are supported.
   formComponentIdentityVersion: z.number().int().optional(),
   meta: projectMeta.optional(),
   compiler: compilerSettings.optional(),

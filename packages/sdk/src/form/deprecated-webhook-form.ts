@@ -18,7 +18,7 @@ import { prepareVisitorEmailRequest } from "./server-email";
 import { formBotFieldName, formIdFieldName } from "./fields";
 
 /** @deprecated Compatibility adapter for saved Webhook Forms. Use managed Form submissions for new forms. */
-export const handleLegacyWebhookFormSubmission = async ({
+export const handleDeprecatedWebhookFormSubmission = async ({
   request,
   formData,
   url,

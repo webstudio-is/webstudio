@@ -839,7 +839,7 @@ Use the exact component id returned by `components.search` for **Form (Beta)**.
 After inserting its registered template, use the Form instance id for the
 Form-scoped Resource and Action settings.
 
-The new Form's canonical component id is `Form`. The deprecated legacy
+The new Form's canonical component id is `Form`. The deprecated
 Webhook Form remains available in Builder for existing projects until the next
 release, but is omitted from MCP component discovery. `RemixForm` is deprecated
 compatibility and should not be used for new projects. Always use registry

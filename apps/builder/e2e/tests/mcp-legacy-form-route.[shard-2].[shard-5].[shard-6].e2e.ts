@@ -10,7 +10,7 @@ import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
 
-test("MCP-edited saved legacy Webhook Form action uses current dynamic route params in generated Preview", async ({
+test("MCP-edited saved deprecated Webhook Form action uses current dynamic route params in generated Preview", async ({
   page,
   context,
 }) => {
