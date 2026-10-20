@@ -253,7 +253,7 @@ const expandBorder = function* (property: string, value: CssNode) {
           if (color === undefined) {
             unresolvedIndex = 2;
           }
-        } else if (missing.length === 1) {
+        } else if (unresolvedNodes[0].name === "var" && missing.length === 1) {
           unresolvedIndex = missing[0];
         }
       }

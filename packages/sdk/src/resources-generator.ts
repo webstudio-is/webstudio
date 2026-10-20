@@ -303,19 +303,17 @@ export const generateResources = ({
         usedDataSources: selectionDataSources,
         scope,
       });
-      if (candidates.some(({ resourceIds }) => resourceIds.length > 0)) {
-        for (const dataSource of selectionDataSources.values()) {
-          if (
-            (dataSource.type === "parameter" &&
-              dataSource.id !== page.systemDataSourceId &&
-              dataSource.id !== SYSTEM_VARIABLE_ID) ||
-            (dataSource.type === "resource" &&
-              selectedResourceIds.has(dataSource.resourceId))
-          ) {
-            throw new Error(
-              "Dynamic Content Block Resources require a source available after base Resources load"
-            );
-          }
+      for (const dataSource of selectionDataSources.values()) {
+        if (
+          (dataSource.type === "parameter" &&
+            dataSource.id !== page.systemDataSourceId &&
+            dataSource.id !== SYSTEM_VARIABLE_ID) ||
+          (dataSource.type === "resource" &&
+            selectedResourceIds.has(dataSource.resourceId))
+        ) {
+          throw new Error(
+            "Dynamic Content Block Resources require a source available after base Resources load"
+          );
         }
       }
       for (const dataSource of selectionDataSources.values()) {
