@@ -131,6 +131,7 @@ import {
 import { flushExternalContentProject } from "~/shared/external-content-roots";
 import { getPublishValidationErrorMessage } from "./publish-error";
 import { runPublishAfterBestEffortChecks } from "./publish-preflight";
+import { usePublishProgress } from "./publish-progress";
 
 const PrePublishAuditMessage = ({
   finding,
@@ -568,34 +569,6 @@ const $restrictedFeatures = computed(
     })
 );
 
-const usePublishCountdown = (isPublishing: boolean) => {
-  const [countdown, setCountdown] = useState<number | undefined>(undefined);
-
-  useEffect(() => {
-    if (isPublishing === false) {
-      setCountdown(undefined);
-      return;
-    }
-
-    setCountdown(60);
-
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev === undefined || prev <= 0) {
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [isPublishing]);
-
-  return countdown;
-};
-
 const Publish = ({
   project,
   timesLeft,
@@ -605,7 +578,8 @@ const Publish = ({
   validationState,
   onValidationStateChange,
   isPublishing,
-  setIsPublishing,
+  countdown,
+  startPublishing,
 }: {
   project: Project;
   timesLeft: number;
@@ -615,7 +589,8 @@ const Publish = ({
   validationState: PublishValidationState;
   onValidationStateChange: (state: PublishValidationState) => void;
   isPublishing: boolean;
-  setIsPublishing: (isPublishing: boolean) => void;
+  countdown: number | undefined;
+  startPublishing: (publish: () => Promise<void>) => void;
 }) => {
   const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
   const [publishError, setPublishError] = useState<
@@ -633,7 +608,6 @@ const Publish = ({
     ? getPublishStatusAndText(project.latestBuildVirtual).status === "PENDING"
     : false;
   const isPublishInProgress = isPublishing || hasPendingState;
-  const countdown = usePublishCountdown(isPublishInProgress);
 
   useEffect(() => {
     const form = buttonRef.current?.closest("form");
@@ -736,42 +710,42 @@ const Publish = ({
 
     // Wait until project is published or failed
     while (Date.now() < timeToFinish) {
-      await refresh();
+      try {
+        const refreshedProject = await getRefreshedProject(project.id);
+        if (refreshedProject !== undefined) {
+          const { statusText, status } =
+            refreshedProject.latestBuildVirtual != null
+              ? getPublishStatusAndText(refreshedProject.latestBuildVirtual)
+              : {
+                  statusText: "Not published",
+                  status: "PENDING" as const,
+                };
 
-      const project = $project.get();
+          if (status === "PUBLISHED") {
+            toast.success(
+              <>
+                The project has been successfully published.{" "}
+                {timesLeft > 0 && timesLeft <= 10 && (
+                  <div>
+                    You have {timesLeft} out of {maxDailyPublishesPerUser} daily
+                    publications remaining. The counter resets tomorrow.
+                  </div>
+                )}
+              </>,
+              { duration: 10000 }
+            );
+            break;
+          }
 
-      if (project == null) {
-        throw new Error("Project not found");
-      }
-
-      const { statusText, status } =
-        project.latestBuildVirtual != null
-          ? getPublishStatusAndText(project.latestBuildVirtual)
-          : {
-              statusText: "Not published",
-              status: "PENDING" as const,
-            };
-
-      if (status === "PUBLISHED") {
-        toast.success(
-          <>
-            The project has been successfully published.{" "}
-            {timesLeft > 0 && timesLeft <= 10 && (
-              <div>
-                You have {timesLeft} out of {maxDailyPublishesPerUser} daily
-                publications remaining. The counter resets tomorrow.
-              </div>
-            )}
-          </>,
-          { duration: 10000 }
-        );
-        break;
-      }
-
-      if (status === "FAILED") {
-        toast.error(statusText);
-        setPublishError(statusText);
-        break;
+          if (status === "FAILED") {
+            toast.error(statusText);
+            setPublishError(statusText);
+            break;
+          }
+        }
+      } catch (error) {
+        // A failed status request should not stop watching an ongoing publish.
+        console.error("Could not refresh publish status", error);
       }
 
       await new Promise((resolve) => setTimeout(resolve, sleepTime));
@@ -829,9 +803,8 @@ const Publish = ({
       return;
     }
 
-    startTransition(async () => {
-      setIsPublishing(true);
-      await runPublishAfterBestEffortChecks({
+    startPublishing(() =>
+      runPublishAfterBestEffortChecks({
         checks: async () => {
           const checks = await runPublishDiagnostics(project.id);
           setPublishFindings(checks.findings);
@@ -839,8 +812,8 @@ const Publish = ({
         onCheckFailure: (error) =>
           reportPublishValidationFailure(error, setPublishFindings, true),
         publish: () => publish(domains),
-      });
-    });
+      })
+    );
   };
 
   const getForm = () => buttonRef.current?.closest("form");
@@ -1090,10 +1063,10 @@ const useUserPublishCount = () => {
   };
 };
 
-const refreshProject = async () => {
+const getRefreshedProject = async (projectId: Project["id"]) => {
   const result = await nativeClient.domain.project.query(
     {
-      projectId: $project.get()!.id,
+      projectId,
     }
     // Pass abort signal
     // { signal: undefined }
@@ -1101,10 +1074,14 @@ const refreshProject = async () => {
 
   if (result.success) {
     $project.set(result.project);
-    return;
+    return result.project;
   }
 
   toast.error(result.error);
+};
+
+const refreshProject = async () => {
+  await getRefreshedProject($project.get()!.id);
 };
 
 const buttonLinkClass = css({
@@ -1225,7 +1202,8 @@ const Content = (props: {
   validationState: PublishValidationState;
   onValidationStateChange: (state: PublishValidationState) => void;
   isPublishing: boolean;
-  setIsPublishing: (isPublishing: boolean) => void;
+  countdown: number | undefined;
+  startPublishing: (publish: () => Promise<void>) => void;
 }) => {
   const restrictedFeatures = useStore($restrictedFeatures);
   const [newDomains, setNewDomains] = useState(new Set<string>());
@@ -1344,7 +1322,8 @@ const Content = (props: {
             validationState={props.validationState}
             onValidationStateChange={props.onValidationStateChange}
             isPublishing={props.isPublishing}
-            setIsPublishing={props.setIsPublishing}
+            countdown={props.countdown}
+            startPublishing={props.startPublishing}
           />
         </PanelContent>
       </form>
@@ -1575,7 +1554,20 @@ export const PublishButton = ({ projectId }: PublishProps) => {
   const { validationState, update, reset } = usePublishValidationState(
     publishDialog === "publish"
   );
-  const [isPublishing, setIsPublishing] = useOptimistic(false);
+  const publishProgress = usePublishProgress();
+  const { dismissCountdown } = publishProgress;
+  useEffect(() => {
+    if (publishDialog !== "publish") {
+      dismissCountdown();
+    }
+  }, [publishDialog, dismissCountdown]);
+  useEffect(() => {
+    // Refresh a build that finished while the popover was closed, including
+    // after a publish status request failed.
+    if (publishDialog === "publish" && publishProgress.isPublishing === false) {
+      void refreshProject();
+    }
+  }, [publishDialog, publishProgress.isPublishing]);
   const { canPublishToStagingOnly } = useStore($permissions);
   const isPublishEnabled =
     authTokenPermissions.canPublish || canPublishToStagingOnly;
@@ -1585,12 +1577,14 @@ export const PublishButton = ({ projectId }: PublishProps) => {
 
   const handleExportClick = () => {
     reset();
+    publishProgress.dismissCountdown();
     $publishDialog.set("export");
   };
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen === false) {
       reset();
+      publishProgress.dismissCountdown();
     }
     $publishDialog.set(isOpen ? "publish" : "none");
   };
@@ -1633,8 +1627,9 @@ export const PublishButton = ({ projectId }: PublishProps) => {
             onExportClick={handleExportClick}
             validationState={validationState}
             onValidationStateChange={update}
-            isPublishing={isPublishing}
-            setIsPublishing={setIsPublishing}
+            isPublishing={publishProgress.isPublishing}
+            countdown={publishProgress.countdown}
+            startPublishing={publishProgress.start}
           />
         )}
       </PopoverContent>
