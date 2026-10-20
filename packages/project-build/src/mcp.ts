@@ -9978,7 +9978,10 @@ export const createProjectSessionMcpServer = async <
     elapsedMs: number,
     input: unknown
   ) => void | Promise<void>;
-  onToolSuccess?: (canonicalTool: string) => void | Promise<void>;
+  onToolSuccess?: (
+    canonicalTool: string,
+    input: unknown
+  ) => void | Promise<void>;
 }) => {
   const server = new Server(
     { name: "webstudio", version: "0.0.0" },
@@ -10132,7 +10135,7 @@ export const createProjectSessionMcpServer = async <
         signal: extra.signal,
       });
       const elapsedMs = Date.now() - startedAt;
-      await onToolSuccess?.(canonicalName ?? "unknown");
+      await onToolSuccess?.(canonicalName ?? "unknown", input);
       sendLog("info", `tool ${name} succeeded in ${elapsedMs}ms`);
       return result;
     } catch (error) {
