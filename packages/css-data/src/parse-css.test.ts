@@ -9,6 +9,23 @@ import {
 import { propertyVarTestFixtures } from "./__generated__/property-var-test-fixtures";
 
 describe("Parse CSS", () => {
+  test("border color-mix with a variable matches explicit longhands", () => {
+    const color = "color-mix(in srgb, var(--accent) 50%, transparent)";
+    const shorthand = parseCss(
+      `.test { border-top: 1px solid ${color}; }`,
+      new Map()
+    );
+    const longhands = parseCss(
+      `.test {
+        border-top-width: 1px;
+        border-top-style: solid;
+        border-top-color: ${color};
+      }`,
+      new Map()
+    );
+    expect(shorthand.styles).toEqual(longhands.styles);
+  });
+
   test.each([
     ["16px/1.5", "16px", "1.5", "var(--font-body)"],
     ["16px / 24px", "16px", "24px", "var(--font-body)"],
