@@ -244,12 +244,19 @@ const expandBorder = function* (property: string, value: CssNode) {
         .filter((index): index is number => index !== undefined);
       const unresolvedNodes =
         unresolved === undefined ? [] : getValueList(unresolved);
-      const unresolvedIndex =
-        missing.length === 1 &&
+      let unresolvedIndex: number | undefined;
+      if (
         unresolvedNodes.length === 1 &&
         unresolvedNodes[0]?.type === "Function"
-          ? missing[0]
-          : undefined;
+      ) {
+        if (unresolvedNodes[0].name.toLowerCase() === "color-mix") {
+          if (color === undefined) {
+            unresolvedIndex = 2;
+          }
+        } else if (missing.length === 1) {
+          unresolvedIndex = missing[0];
+        }
+      }
       const values = [width, style, color];
       if (unresolvedIndex !== undefined) {
         values[unresolvedIndex] = unresolved;
