@@ -48,6 +48,10 @@ const report: IssueReportInput = {
         },
       ],
     },
+    recentTarget: {
+      tool: "screenshot",
+      entityIds: [{ field: "pageId", id: "page-456" }],
+    },
     session: {
       staleNamespaces: ["styles"],
       missingNamespaces: ["instances"],
@@ -84,6 +88,8 @@ describe("GitHub issue reports", () => {
     expect(body).toContain("- Client: Codex 1.2.3");
     expect(body).toContain("- CLI: 1.2.3");
     expect(body).toContain("- Project ID: `project-123`");
+    expect(body).toContain("- Last targeted tool: `screenshot`");
+    expect(body).toContain("- Target pageId: `page-456`");
     expect(body).toContain("- pageId: `page-123`");
     expect(body).toContain("- instanceId: `instance-123`");
     expect(body).toContain("- Node.js: 22.14.0");
