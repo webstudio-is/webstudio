@@ -271,11 +271,28 @@ export const createBuildPatchUpdate = async ({
         const instances =
           buildData.instances ?? parseInstanceData(build.instances);
 
-        buildData.instances = applyBuildNamespacePatches(
+        const patchedInstances = applyBuildNamespacePatches(
           "instances",
           instances,
           patches
         );
+
+        // The stored instances were migrated before applying patches. A stale
+        // client may still send Form for a managed form, while an existing
+        // WebhookForm must keep its identity if that client replaces it.
+        let normalizedInstances: Instances | undefined;
+        for (const [instanceId, instance] of patchedInstances) {
+          if (instance.component !== "Form") {
+            continue;
+          }
+          const component =
+            instances.get(instanceId)?.component === "WebhookForm"
+              ? "WebhookForm"
+              : "ResourceForm";
+          normalizedInstances ??= new Map(patchedInstances);
+          normalizedInstances.set(instanceId, { ...instance, component });
+        }
+        buildData.instances = normalizedInstances ?? patchedInstances;
 
         const cycles = findCycles(buildData.instances?.values() ?? []);
         if (cycles.length > 0) {

@@ -159,6 +159,133 @@ test("a pages-only save persists marked modern Form as ResourceForm with pages",
   });
 });
 
+test("marked modern Form patches persist as ResourceForm without changing WebhookForm", async () => {
+  const result = await createBuildPatchUpdate({
+    build: {
+      ...buildRow,
+      pages: JSON.stringify({
+        ...JSON.parse(buildRow.pages),
+        formComponentIdentityVersion: 1,
+      }),
+      instances: JSON.stringify([
+        { id: "body-1", type: "instance", component: "Body", children: [] },
+        {
+          id: "webhook-1",
+          type: "instance",
+          component: "WebhookForm",
+          children: [],
+        },
+      ]),
+    },
+    clientVersion: 3,
+    transactions: [
+      transaction({
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                op: "add",
+                path: ["form-1"],
+                value: {
+                  id: "form-1",
+                  type: "instance",
+                  component: "Form",
+                  children: [],
+                },
+              },
+              {
+                op: "replace",
+                path: ["webhook-1", "component"],
+                value: "Form",
+              },
+            ],
+          },
+        ],
+      }),
+    ],
+  });
+
+  expect(result.status).toBe("ok");
+  if (result.status !== "ok" || result.update === undefined) {
+    return;
+  }
+  expect(result.update.pages).toBeDefined();
+  expect(JSON.parse(result.update.pages ?? "{}")).not.toHaveProperty(
+    "formComponentIdentityVersion"
+  );
+  const reloadedInstances = parseInstanceData(result.update.instances ?? "[]");
+  expect(reloadedInstances.get("form-1")?.component).toBe("ResourceForm");
+  expect(reloadedInstances.get("webhook-1")?.component).toBe("WebhookForm");
+});
+
+test("historical Form instances retain WebhookForm identity after a stale patch", async () => {
+  const result = await createBuildPatchUpdate({
+    build: {
+      ...buildRow,
+      instances: JSON.stringify([
+        { id: "body-1", type: "instance", component: "Body", children: [] },
+        { id: "form-1", type: "instance", component: "Form", children: [] },
+      ]),
+    },
+    clientVersion: 3,
+    transactions: [
+      transaction({
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              { op: "replace", path: ["form-1", "component"], value: "Form" },
+            ],
+          },
+        ],
+      }),
+    ],
+  });
+
+  expect(result.status).toBe("ok");
+  if (result.status !== "ok" || result.update === undefined) {
+    return;
+  }
+  const reloadedInstances = parseInstanceData(result.update.instances ?? "[]");
+  expect(reloadedInstances.get("form-1")?.component).toBe("WebhookForm");
+});
+
+test("a Form patch from the previous Builder persists as ResourceForm after marker removal", async () => {
+  const result = await createBuildPatchUpdate({
+    build: buildRow,
+    clientVersion: 3,
+    transactions: [
+      transaction({
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                op: "add",
+                path: ["form-1"],
+                value: {
+                  id: "form-1",
+                  type: "instance",
+                  component: "Form",
+                  children: [],
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    ],
+  });
+
+  expect(result.status).toBe("ok");
+  if (result.status !== "ok" || result.update === undefined) {
+    return;
+  }
+  const reloadedInstances = parseInstanceData(result.update.instances ?? "[]");
+  expect(reloadedInstances.get("form-1")?.component).toBe("ResourceForm");
+});
+
 describe("patchBuild", () => {
   test("rejects an over-limit Contact email raw patch before persistence", async () => {
     let didUpdateBuild = false;
