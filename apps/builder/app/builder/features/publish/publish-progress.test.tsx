@@ -281,6 +281,54 @@ test("an older popover refresh cannot overwrite a newer result", async () => {
   expect($project.get()).toBe(currentProject);
 });
 
+test("an older recovered poll cannot overwrite a newer popover refresh", async () => {
+  $project.set({ id: "project" } as Project);
+  let progress: ReturnType<typeof usePublishProgress> | undefined;
+  const Harness = () => {
+    progress = usePublishProgress("project");
+    return null;
+  };
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+
+  let finishOldQuery: (result: {
+    success: true;
+    project: Project;
+  }) => void = () => {};
+  const oldQuery = new Promise<{ success: true; project: Project }>(
+    (resolve) => {
+      finishOldQuery = resolve;
+    }
+  );
+  const oldGeneration = progress!.beginPopoverRefresh();
+  const polling = progress!.watchPendingPublish(
+    () =>
+      getRefreshedProject({
+        projectId: "project",
+        query: () => oldQuery,
+        isCurrent: () => progress!.isRefreshCurrent(oldGeneration),
+      }),
+    oldGeneration
+  );
+
+  const newGeneration = progress!.beginPopoverRefresh();
+  const currentProject = { id: "project", domain: "new" } as Project;
+  await getRefreshedProject({
+    projectId: "project",
+    query: async () => ({ success: true, project: currentProject }),
+    isCurrent: () => progress!.isRefreshCurrent(newGeneration),
+  });
+  finishOldQuery({
+    success: true,
+    project: { id: "project", domain: "old" } as Project,
+  });
+  await polling;
+
+  expect($project.get()).toBe(currentProject);
+});
+
 test("publish polling stops after navigating to another project", async () => {
   const oldProject = { id: "old-project" } as Project;
   const newProject = { id: "new-project" } as Project;

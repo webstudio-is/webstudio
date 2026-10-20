@@ -588,7 +588,11 @@ const usePublishProgress = (projectId: Project["id"]) => {
   const [now, setNow] = useState(Date.now);
   const isMounted = useRef(false);
   const requestBaselineBuildId = useRef<string>();
-  const recoveredPoll = useRef<Promise<void>>();
+  const refreshGeneration = useRef(0);
+  const recoveredPoll = useRef<{
+    generation: number;
+    promise: Promise<void>;
+  }>();
 
   useEffect(() => {
     isMounted.current = true;
@@ -600,6 +604,17 @@ const usePublishProgress = (projectId: Project["id"]) => {
   const isCurrentProject = useCallback(
     () => isMounted.current && $project.get()?.id === projectId,
     [projectId]
+  );
+
+  const beginPopoverRefresh = useCallback(() => {
+    refreshGeneration.current += 1;
+    return refreshGeneration.current;
+  }, []);
+
+  const isRefreshCurrent = useCallback(
+    (generation: number) =>
+      isCurrentProject() && refreshGeneration.current === generation,
+    [isCurrentProject]
   );
 
   const setPublishError = (value: JSX.Element | string | undefined) => {
@@ -635,12 +650,20 @@ const usePublishProgress = (projectId: Project["id"]) => {
   }, []);
 
   const watchPendingPublish = useCallback(
-    (refresh: () => Promise<Project | undefined>) => {
-      if (recoveredPoll.current !== undefined) {
-        return recoveredPoll.current;
+    (
+      refresh: () => Promise<Project | undefined>,
+      generation = refreshGeneration.current
+    ) => {
+      if (recoveredPoll.current?.generation === generation) {
+        return recoveredPoll.current.promise;
       }
-      const polling = waitForPublishStatus(refresh, isCurrentProject)
+      const polling = waitForPublishStatus(refresh, () =>
+        isRefreshCurrent(generation)
+      )
         .then((result) => {
+          if (isRefreshCurrent(generation) === false) {
+            return;
+          }
           reportPublishResult({
             result,
             setPublishError: setPublishStatusError,
@@ -648,12 +671,14 @@ const usePublishProgress = (projectId: Project["id"]) => {
           });
         })
         .finally(() => {
-          recoveredPoll.current = undefined;
+          if (recoveredPoll.current?.promise === polling) {
+            recoveredPoll.current = undefined;
+          }
         });
-      recoveredPoll.current = polling;
+      recoveredPoll.current = { generation, promise: polling };
       return polling;
     },
-    [isCurrentProject, setPublishStatusError]
+    [isCurrentProject, isRefreshCurrent, setPublishStatusError]
   );
 
   useEffect(() => {
@@ -705,6 +730,8 @@ const usePublishProgress = (projectId: Project["id"]) => {
     setPublishStatusError,
     clearErrors,
     isCurrentProject,
+    beginPopoverRefresh,
+    isRefreshCurrent,
     reconcileRefreshedProject,
     watchPendingPublish,
     countdown,
@@ -1872,8 +1899,13 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     publishDialog === "publish"
   );
   const publishProgress = usePublishProgress(projectId);
-  const { dismissCountdown, reconcileRefreshedProject, watchPendingPublish } =
-    publishProgress;
+  const {
+    dismissCountdown,
+    reconcileRefreshedProject,
+    watchPendingPublish,
+    beginPopoverRefresh,
+    isRefreshCurrent,
+  } = publishProgress;
   useEffect(() => {
     if (publishDialog !== "publish") {
       dismissCountdown();
@@ -1884,22 +1916,33 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     // after a publish status request failed.
     if (publishDialog === "publish" && publishProgress.isPublishing === false) {
       let isOpen = true;
+      const generation = beginPopoverRefresh();
       void refreshUntilSuccess(
         async (showError) => {
           const refreshedProject = await getRefreshedProject({
             projectId,
             showError,
-            isCurrent: () => isOpen,
+            isCurrent: () => isOpen && isRefreshCurrent(generation),
           });
-          if (isOpen && refreshedProject !== undefined) {
+          if (
+            isOpen &&
+            isRefreshCurrent(generation) &&
+            refreshedProject !== undefined
+          ) {
             reconcileRefreshedProject(refreshedProject);
           }
           return refreshedProject;
         },
         () => isOpen,
         () => {
-          void watchPendingPublish(() =>
-            getRefreshedProject({ projectId, showError: false })
+          void watchPendingPublish(
+            () =>
+              getRefreshedProject({
+                projectId,
+                showError: false,
+                isCurrent: () => isRefreshCurrent(generation),
+              }),
+            generation
           );
         }
       );
@@ -1913,6 +1956,8 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     publishProgress.isPublishing,
     reconcileRefreshedProject,
     watchPendingPublish,
+    beginPopoverRefresh,
+    isRefreshCurrent,
   ]);
   const { canPublishToStagingOnly } = useStore($permissions);
   const isPublishEnabled =
