@@ -605,6 +605,11 @@ const usePublishProgress = (projectId: Project["id"]) => {
     setPublishErrorState({ value, source: "status" });
   };
 
+  const clearErrors = useCallback(() => {
+    setRequestError(undefined);
+    setPublishErrorState(undefined);
+  }, []);
+
   const reconcileRefreshedProject = useCallback((project: Project) => {
     if (
       project.latestBuildVirtual != null &&
@@ -659,6 +664,7 @@ const usePublishProgress = (projectId: Project["id"]) => {
     publishError: publishErrorState?.value,
     setPublishError,
     setPublishStatusError,
+    clearErrors,
     isCurrentProject,
     reconcileRefreshedProject,
     countdown,
@@ -789,6 +795,7 @@ const Publish = ({
   publishError,
   setPublishError,
   setPublishStatusError,
+  clearErrors,
   isCurrentProject,
   countdown,
   startPublishing,
@@ -805,6 +812,7 @@ const Publish = ({
   publishError: JSX.Element | string | undefined;
   setPublishError: (error: JSX.Element | string | undefined) => void;
   setPublishStatusError: (error: JSX.Element | string) => void;
+  clearErrors: () => void;
   isCurrentProject: () => boolean;
   countdown: number | undefined;
   startPublishing: (publish: () => Promise<void>) => void;
@@ -938,7 +946,7 @@ const Publish = ({
       .map((domainEntry) => domainEntry.toString());
 
   const handleValidate = async (formData: FormData) => {
-    setPublishError(undefined);
+    clearErrors();
     setPublishFindings([]);
     const domains = getDomainsFromForm(formData);
     if (domains.length === 0) {
@@ -964,7 +972,7 @@ const Publish = ({
   };
 
   const handlePublish = (formData: FormData) => {
-    setPublishError(undefined);
+    clearErrors();
     setPublishFindings([]);
 
     // Custom domain checkboxes are disabled on free plan so they are never
@@ -1399,6 +1407,7 @@ const Content = (props: {
   publishError: JSX.Element | string | undefined;
   setPublishError: (error: JSX.Element | string | undefined) => void;
   setPublishStatusError: (error: JSX.Element | string) => void;
+  clearErrors: () => void;
   isCurrentProject: () => boolean;
   countdown: number | undefined;
   startPublishing: (publish: () => Promise<void>) => void;
@@ -1524,6 +1533,7 @@ const Content = (props: {
             publishError={props.publishError}
             setPublishError={props.setPublishError}
             setPublishStatusError={props.setPublishStatusError}
+            clearErrors={props.clearErrors}
             isCurrentProject={props.isCurrentProject}
             countdown={props.countdown}
             startPublishing={props.startPublishing}
@@ -1857,6 +1867,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
             publishError={publishProgress.publishError}
             setPublishError={publishProgress.setPublishError}
             setPublishStatusError={publishProgress.setPublishStatusError}
+            clearErrors={publishProgress.clearErrors}
             isCurrentProject={publishProgress.isCurrentProject}
             countdown={publishProgress.countdown}
             startPublishing={publishProgress.start}

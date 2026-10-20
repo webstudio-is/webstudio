@@ -363,6 +363,42 @@ test("a rejected publish request shows an inline error while the dialog is open"
   expect(errorToast).not.toHaveBeenCalled();
 });
 
+test("starting validation clears a previous request failure", async () => {
+  $project.set({ id: "project" } as Project);
+  $publishDialog.set("publish");
+
+  const Harness = () => {
+    const progress = usePublishProgress("project");
+    return (
+      <>
+        <button
+          onClick={() =>
+            progress.start(() =>
+              Promise.reject(new Error("Network unavailable"))
+            )
+          }
+        >
+          Publish
+        </button>
+        <button onClick={progress.clearErrors}>Validate</button>
+        <output>{progress.publishError ?? progress.requestError}</output>
+      </>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  const [publish, validate] = container.querySelectorAll("button");
+  await act(async () => publish.click());
+  expect(container.querySelector("output")?.textContent).toBe(
+    "Network unavailable"
+  );
+  act(() => validate.click());
+  expect(container.querySelector("output")?.textContent).toBe("");
+});
+
 test("a rejected publish request shows a toast after the dialog closes", async () => {
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   $publishDialog.set("publish");
