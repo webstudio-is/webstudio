@@ -598,7 +598,7 @@ const usePublishProgress = () => {
     setNow(startedAt);
     setShowCountdown(true);
     setIsPublishing(true);
-    void publish()
+    publish()
       .catch((error) => {
         console.error(error);
       })
