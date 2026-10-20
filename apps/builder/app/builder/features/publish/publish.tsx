@@ -615,14 +615,18 @@ const usePublishProgress = () => {
 };
 
 const waitForPublishStatus = async (
-  refresh: () => Promise<Project | undefined>
+  refresh: () => Promise<Project | undefined>,
+  isCurrentProject: () => boolean
 ) => {
   let sleepTime = 15000;
   const timeToFinish = Date.now() + PENDING_TIMEOUT + 2 * sleepTime;
 
-  while (Date.now() < timeToFinish) {
+  while (Date.now() < timeToFinish && isCurrentProject()) {
     try {
       const refreshedProject = await refresh();
+      if (isCurrentProject() === false) {
+        return;
+      }
       if (refreshedProject !== undefined) {
         const { statusText, status } =
           refreshedProject.latestBuildVirtual != null
@@ -637,6 +641,9 @@ const waitForPublishStatus = async (
         }
       }
     } catch (error) {
+      if (isCurrentProject() === false) {
+        return;
+      }
       // A failed status request should not stop watching an ongoing publish.
       console.error("Could not refresh publish status", error);
     }
@@ -803,8 +810,9 @@ const Publish = ({
       return;
     }
 
-    const result = await waitForPublishStatus(() =>
-      getRefreshedProject(project.id)
+    const result = await waitForPublishStatus(
+      () => getRefreshedProject(project.id),
+      () => $project.get()?.id === project.id
     );
     if (result?.status === "PUBLISHED") {
       toast.success(
@@ -1137,15 +1145,17 @@ const useUserPublishCount = () => {
 
 const getRefreshedProject = async (
   projectId: Project["id"],
-  showError = true
+  showError = true,
+  query = () => nativeClient.domain.project.query({ projectId })
 ) => {
-  const result = await nativeClient.domain.project.query(
-    {
-      projectId,
-    }
-    // Pass abort signal
-    // { signal: undefined }
-  );
+  if ($project.get()?.id !== projectId) {
+    return;
+  }
+
+  const result = await query();
+  if ($project.get()?.id !== projectId) {
+    return;
+  }
 
   if (result.success) {
     $project.set(result.project);
@@ -1725,4 +1735,5 @@ export const __testing__ = {
   usePublishProgress,
   waitForPublishStatus,
   refreshUntilSuccess,
+  getRefreshedProject,
 };

@@ -3,10 +3,15 @@ import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
 import type { Project } from "@webstudio-is/project";
+import { $project } from "~/shared/sync/data-stores";
 import { __testing__ } from "./publish";
 
-const { usePublishProgress, waitForPublishStatus, refreshUntilSuccess } =
-  __testing__;
+const {
+  usePublishProgress,
+  waitForPublishStatus,
+  refreshUntilSuccess,
+  getRefreshedProject,
+} = __testing__;
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -20,6 +25,7 @@ afterEach(() => {
   root = undefined;
   container?.remove();
   container = undefined;
+  $project.set(undefined);
   vi.useRealTimers();
 });
 
@@ -39,15 +45,18 @@ test("closing publish hides the countdown while polling continues and completion
         <button
           onClick={() =>
             progress.start(async () => {
-              const result = await waitForPublishStatus(async () => {
-                statusRequests += 1;
-                return {
-                  latestBuildVirtual: {
-                    createdAt: new Date().toISOString(),
-                    publishStatus: status,
-                  },
-                } as Project;
-              });
+              const result = await waitForPublishStatus(
+                async () => {
+                  statusRequests += 1;
+                  return {
+                    latestBuildVirtual: {
+                      createdAt: new Date().toISOString(),
+                      publishStatus: status,
+                    },
+                  } as Project;
+                },
+                () => true
+              );
               setCompletedStatus(result?.status);
             })
           }
@@ -126,4 +135,51 @@ test("reopening refresh retries after a rejected status request", async () => {
   } finally {
     errorLog.mockRestore();
   }
+});
+
+test("an in-flight status request cannot replace the project after navigation", async () => {
+  const oldProject = { id: "old-project" } as Project;
+  const newProject = { id: "new-project" } as Project;
+  $project.set(oldProject);
+
+  let finishQuery: (result: {
+    success: true;
+    project: Project;
+  }) => void = () => {};
+  const query = new Promise<{ success: true; project: Project }>((resolve) => {
+    finishQuery = resolve;
+  });
+  const refresh = getRefreshedProject(oldProject.id, false, () => query);
+
+  $project.set(newProject);
+  finishQuery({ success: true, project: oldProject });
+
+  await expect(refresh).resolves.toBeUndefined();
+  expect($project.get()).toBe(newProject);
+});
+
+test("publish polling stops after navigating to another project", async () => {
+  const oldProject = { id: "old-project" } as Project;
+  const newProject = { id: "new-project" } as Project;
+  $project.set(oldProject);
+
+  let finishRefresh: (project: Project) => void = () => {};
+  const refresh = new Promise<Project>((resolve) => {
+    finishRefresh = resolve;
+  });
+  const polling = waitForPublishStatus(
+    () => refresh,
+    () => $project.get()?.id === oldProject.id
+  );
+
+  $project.set(newProject);
+  finishRefresh({
+    latestBuildVirtual: {
+      createdAt: new Date().toISOString(),
+      publishStatus: "PUBLISHED",
+    },
+  } as Project);
+
+  await expect(polling).resolves.toBeUndefined();
+  expect($project.get()).toBe(newProject);
 });
