@@ -9400,6 +9400,8 @@ describe("project session mcp adapter", () => {
   });
 
   test("returns schema-valid rendered failures and stores their artifact manifest through the server", async () => {
+    const onToolSuccess = vi.fn();
+    const onToolFailure = vi.fn();
     const storeRenderedAuditArtifacts = vi.fn(async () => "/manifest.json");
     const executeOperation = createExecuteOperation(async ({ command }) => {
       if (command === "list-pages") {
@@ -9452,6 +9454,8 @@ describe("project session mcp adapter", () => {
       stopPreview: vi.fn(),
       captureScreenshot: vi.fn(),
       storeRenderedAuditArtifacts,
+      onToolSuccess,
+      onToolFailure,
     });
     const { client, close } = await createConnectedClient(server);
 
@@ -9460,6 +9464,17 @@ describe("project session mcp adapter", () => {
         name: "audit",
         arguments: { rendered: true, verbose: true },
       });
+
+      expect(onToolSuccess).not.toHaveBeenCalledWith(
+        "audit",
+        expect.anything()
+      );
+      expect(onToolFailure).toHaveBeenCalledWith(
+        "audit",
+        expect.objectContaining({ code: "RENDERED_AUDIT_FAILED" }),
+        expect.any(Number),
+        { rendered: true, verbose: true }
+      );
 
       expect(result).toMatchObject({
         isError: true,

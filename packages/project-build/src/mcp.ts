@@ -10135,8 +10135,18 @@ export const createProjectSessionMcpServer = async <
         signal: extra.signal,
       });
       const elapsedMs = Date.now() - startedAt;
-      await onToolSuccess?.(canonicalName ?? "unknown", input);
-      sendLog("info", `tool ${name} succeeded in ${elapsedMs}ms`);
+      if (result.structuredContent.ok === false) {
+        await onToolFailure?.(
+          canonicalName ?? "unknown",
+          result.structuredContent.error,
+          elapsedMs,
+          input
+        );
+        sendLog("error", `tool ${name} failed in ${elapsedMs}ms`);
+      } else {
+        await onToolSuccess?.(canonicalName ?? "unknown", input);
+        sendLog("info", `tool ${name} succeeded in ${elapsedMs}ms`);
+      }
       return result;
     } catch (error) {
       const elapsedMs = Date.now() - startedAt;

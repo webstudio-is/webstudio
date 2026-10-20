@@ -331,7 +331,7 @@ export const createIssueReportRuntime = (
   recentFailure?: IssueReportRecentFailure,
   diagnostics?: Pick<
     IssueReportRuntime,
-    "projectId" | "recentTarget" | "session" | "preview"
+    "projectId" | "recentTargets" | "session" | "preview"
   >
 ): IssueReportRuntime => ({
   cliVersion: packageJson.version,
@@ -420,31 +420,39 @@ export const createIssueReportTarget = (
 };
 
 export const createIssueReportTargetTracker = (now = Date.now) => {
-  let recent: { target: IssueReportRecentTarget; at: number } | undefined;
+  let recent: { target: IssueReportRecentTarget; at: number }[] = [];
   const snapshot = () => {
-    if (recent === undefined) {
-      return;
-    }
-    const age = now() - recent.at;
-    return age >= 0 && age <= 10 * 60_000 ? recent : undefined;
+    const valid = recent.filter(({ at }) => {
+      const age = now() - at;
+      return age >= 0 && age <= 10 * 60_000;
+    });
+    return valid.length === 0 ? undefined : valid;
   };
   return {
     record(tool: string, input: unknown, pageId?: string) {
       const target = createIssueReportTarget(tool, input, pageId);
-      if (target !== undefined) {
-        recent = { target, at: now() };
+      if (target === undefined) {
+        return false;
       }
+      recent = [
+        { target, at: now() },
+        ...(snapshot() ?? []).filter(({ target: old }) => old.tool !== tool),
+      ].slice(0, 3);
+      return true;
     },
-    get: () => snapshot()?.target,
+    get: () => snapshot()?.[0]?.target,
+    getAll: () => snapshot()?.map(({ target }) => target),
     restore(target: IssueReportRecentTarget, at: number) {
       const age = now() - at;
       if (age >= 0 && age <= 10 * 60_000) {
-        recent = { target, at };
+        recent.push({ target, at });
+        recent.sort((left, right) => right.at - left.at);
+        recent = recent.slice(0, 3);
       }
     },
     snapshot,
     clear() {
-      recent = undefined;
+      recent = [];
     },
   };
 };

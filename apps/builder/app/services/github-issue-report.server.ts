@@ -32,14 +32,12 @@ const formatRuntime = (runtime: IssueReportInput["runtime"]) =>
     ...(runtime?.projectId === undefined
       ? []
       : [`- Project ID: \`${runtime.projectId}\``]),
-    ...(runtime?.recentTarget === undefined
+    ...(runtime?.recentTargets === undefined
       ? []
-      : [
-          `- Last targeted tool: \`${runtime.recentTarget.tool}\``,
-          ...runtime.recentTarget.entityIds.map(
-            ({ field, id }) => `- Target ${field}: \`${id}\``
-          ),
-        ]),
+      : runtime.recentTargets.flatMap(({ tool, entityIds }) => [
+          `- Recent targeted tool: \`${tool}\``,
+          ...entityIds.map(({ field, id }) => `  - ${field}: \`${id}\``),
+        ])),
     ...(runtime === undefined
       ? []
       : [
