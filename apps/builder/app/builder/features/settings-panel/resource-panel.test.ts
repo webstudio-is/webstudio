@@ -624,6 +624,9 @@ test("Email Resource recipient modes and attachment radios", async () => {
   ).toBeVisible();
   expect(container.textContent).toContain("Attach submitted files");
   expect(container.textContent).toContain("Do not attach files");
+  expect(container.textContent).toContain(
+    "Attach up to 32 files. The email request is limited to 7 MiB, including encoded files. Cloudflare also limits the complete email to 5 MiB for most recipients, or 25 MiB for verified destinations."
+  );
   await act(
     async () => await userEvent.click(attachmentOptions[1] as HTMLElement)
   );

@@ -1272,10 +1272,32 @@ test("oversize Email preflight stops both Email and HTTP destinations", async ()
       validateEmail: (resource) =>
         validateCloudflareManagedFormEmail(resource, formData),
     })
-  ).rejects.toThrow("Email attachments are too large to encode");
+  ).rejects.toThrow(
+    "Email request exceeds the 7 MiB limit. Submit smaller files."
+  );
   expect(httpFetch).not.toHaveBeenCalled();
   expect(emailRpc).not.toHaveBeenCalled();
   expect(readFile).not.toHaveBeenCalled();
+});
+
+test("Email preflight enforces the 32 attachment limit before encoding", () => {
+  const formData = new FormData();
+  for (let index = 0; index < 32; index += 1) {
+    formData.append("upload", new File(["x"], `file-${index}.txt`));
+  }
+  expect(() =>
+    validateCloudflareManagedFormEmail(request, formData)
+  ).not.toThrow();
+  formData.append("upload", new File(["x"], "file-32.txt"));
+  expect(() => validateCloudflareManagedFormEmail(request, formData)).toThrow(
+    "An email can have at most 32 attachments. Submit fewer files."
+  );
+  expect(() =>
+    validateCloudflareManagedFormEmail(
+      { ...request, email: { ...request.email!, includeAttachments: false } },
+      formData
+    )
+  ).not.toThrow();
 });
 
 test("dependency-bound Email stops its HTTP lookup before dispatch", async () => {

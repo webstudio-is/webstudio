@@ -55,6 +55,12 @@ export const shouldRetryManagedFormDestination: NonNullable<
 > = (_resourceId, request) => request.control !== "email";
 
 const maxFormRequestBytes = 25 * 1024 * 1024;
+const formRequestTooLarge = (maximumBytes: number) =>
+  new Error(
+    maximumBytes === maxFormRequestBytes
+      ? "Form submission exceeds the 25 MiB limit. Reduce file sizes and try again."
+      : "Form submission is too large"
+  );
 export const maxFormTeamEmailDeliveries = 5;
 const messageIdBytes = 8;
 
@@ -112,9 +118,26 @@ export const getManagedFormResponse = (
         "statusText" in outcome && typeof outcome.statusText === "string"
           ? outcome.statusText.trim()
           : "";
+      const emailError =
+        resource?.control === "email" &&
+        typeof outcome.data === "object" &&
+        outcome.data !== null &&
+        "error" in outcome.data &&
+        typeof outcome.data.error === "object" &&
+        outcome.data.error !== null
+          ? outcome.data.error
+          : undefined;
+      const emailCode =
+        emailError !== undefined &&
+        "code" in emailError &&
+        typeof emailError.code === "string" &&
+        /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(emailError.code)
+          ? emailError.code
+          : undefined;
       errors.push({
         ...result,
         message: statusText || `Resource request failed (${outcome.status})`,
+        ...(emailCode === undefined ? {} : { code: emailCode }),
       });
     }
   }
@@ -137,7 +160,7 @@ export const readFormDataWithLimit = async (
 ) => {
   const contentLength = Number(request.headers.get("content-length"));
   if (Number.isFinite(contentLength) && contentLength > maximumBytes) {
-    throw new Error("Form submission is too large");
+    throw formRequestTooLarge(maximumBytes);
   }
   if (request.body === null) {
     return new FormData();
@@ -154,7 +177,7 @@ export const readFormDataWithLimit = async (
       totalBytes += value.byteLength;
       if (totalBytes > maximumBytes) {
         await reader.cancel();
-        throw new Error("Form submission is too large");
+        throw formRequestTooLarge(maximumBytes);
       }
       chunks.push(value);
     }

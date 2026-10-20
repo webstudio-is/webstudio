@@ -32,6 +32,8 @@ export type ManagedFormError = Omit<
   resourceId?: string;
   resourceName?: string;
   message: string;
+  /** Safe machine-readable code for a managed Email action, when available. */
+  code?: string;
 };
 
 export type ManagedFormResponse = {

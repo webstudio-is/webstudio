@@ -19,6 +19,7 @@ type EmailServiceFetch = (
 // Bound the extra allocation caused by Base64 before the Worker validates the
 // complete Email payload. The Worker owns attachment policy and payload limits.
 const maxEncodedAttachmentBytes = 7 * 1024 * 1024;
+const maxEmailAttachments = 32;
 const emailWorkerHost = "webstudio-email-service.wstd.workers.dev";
 const emailWorkerVersionHostSuffix =
   "-webstudio-email-service.wstd.workers.dev";
@@ -93,12 +94,20 @@ export const validateCloudflareManagedFormEmail = (
 ) => {
   const email = request.email;
   if (email?.includeAttachments) {
-    const encodedBytes = getEmailFiles(formData).reduce(
+    const files = getEmailFiles(formData);
+    if (files.length > maxEmailAttachments) {
+      throw new Error(
+        "An email can have at most 32 attachments. Submit fewer files."
+      );
+    }
+    const encodedBytes = files.reduce(
       (total, file) => total + 4 * Math.ceil(file.size / 3),
       0
     );
     if (encodedBytes > maxEncodedAttachmentBytes) {
-      throw new Error("Email attachments are too large to encode");
+      throw new Error(
+        "Email request exceeds the 7 MiB limit. Submit smaller files."
+      );
     }
   }
 };

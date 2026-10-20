@@ -855,10 +855,14 @@ export const apiRouter = router({
             status,
             resourceId,
           })),
-          errors: result.errors.map(({ status, message }) => ({
-            status,
-            message,
-          })),
+          errors: result.errors.map(
+            ({ status, message, code, resourceId }) => ({
+              status,
+              message,
+              ...(resourceId === undefined ? {} : { resourceId }),
+              ...(code === undefined ? {} : { code }),
+            })
+          ),
         };
       },
       { command: "simulate-form-submission", client: "simulateFormSubmission" }
