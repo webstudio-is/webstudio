@@ -171,6 +171,28 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
   ).toEqual([]);
 });
 
+test("retains safe error types and request IDs without leaking error messages", () => {
+  class AssetRevisionConflictError extends Error {}
+  const cause = Object.assign(
+    new AssetRevisionConflictError("Private article name"),
+    {
+      requestId: "abc123-LIS",
+    }
+  );
+  const failure = createIssueReportFailure(
+    "update-content-block-frontmatter",
+    new Error("Private project details", { cause })
+  );
+
+  expect(failure).toEqual({
+    tool: "update-content-block-frontmatter",
+    code: "MCP_TOOL_FAILED",
+    errorType: "AssetRevisionConflictError",
+    requestId: "abc123-LIS",
+  });
+  expect(JSON.stringify(failure)).not.toContain("Private");
+});
+
 test("captures only recognized IDs from nested failed tool input", () => {
   const failure = createIssueReportFailure(
     "update-styles",

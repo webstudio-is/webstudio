@@ -18,6 +18,8 @@ import {
   issueReportBrowserAttempt,
   issueReportBrowserSignal,
   issueReportEntityId,
+  issueReportErrorType,
+  issueReportRequestId,
   getPublicBuildIncludes,
   publicApiEntityIdFields,
   publicApiContractVersion,
@@ -377,6 +379,13 @@ export const createIssueReportFailure = (
 ): IssueReportRecentFailure => {
   const errorCode = getStableErrorCode(error);
   const records = getIssueReportErrorRecords(error);
+  const errorType = records
+    .map((record) =>
+      issueReportErrorType.safeParse(
+        record instanceof Error ? record.constructor.name : undefined
+      )
+    )
+    .find((result) => result.success && result.data !== "TRPCClientError");
   const record = records.find(
     (candidate) =>
       candidate.attempts !== undefined || candidate.processExit !== undefined
@@ -412,6 +421,13 @@ export const createIssueReportFailure = (
           ? "error"
           : "other";
   const httpStatus = httpClient.getErrorStatus(error) ?? response?.status;
+  const requestId = issueReportRequestId.safeParse(
+    records.find((record) => record.requestId !== undefined)?.requestId ??
+      (response?.headers instanceof Headers
+        ? (response.headers.get("x-request-id") ??
+          response.headers.get("cf-ray"))
+        : undefined)
+  );
   const isResponseTransformFailure = records.some((candidate) => {
     if (
       candidate.name !== "TRPCClientError" ||
@@ -482,6 +498,8 @@ export const createIssueReportFailure = (
     code: isResponseTransformFailure
       ? "API_RESPONSE_TRANSFORM_FAILED"
       : (errorCode ?? "MCP_TOOL_FAILED"),
+    ...(errorType?.success ? { errorType: errorType.data } : {}),
+    ...(requestId.success ? { requestId: requestId.data } : {}),
     ...(typeof httpStatus === "number" &&
     Number.isInteger(httpStatus) &&
     httpStatus >= 100 &&
