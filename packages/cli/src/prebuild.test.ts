@@ -2514,6 +2514,17 @@ sitemap.map((page) => page.path);`
     ).resolves.not.toHaveLength(0);
   }, 30_000);
 
+  test.each(["react-router-netlify", "react-router-cloudflare"])(
+    "pre-scans generated routes with the %s template overlay",
+    async (overlay) => {
+      await prebuild({ assets: false, template: ["react-router", overlay] });
+      const config = await readFile("vite.config.ts", "utf8");
+      expect(config).toContain(
+        'entries: ["app/root.tsx", "app/routes/**/*.{ts,tsx}"]'
+      );
+    }
+  );
+
   test("preserves an authored catch-all page when redirects are configured", async () => {
     await writeSiteData(
       createSiteData({
