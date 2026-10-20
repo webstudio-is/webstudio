@@ -593,7 +593,10 @@ const usePublishProgress = () => {
 
   const dismissCountdown = useCallback(() => setShowCountdown(false), []);
 
-  const start = (publish: () => Promise<void>) => {
+  const start = (
+    publish: () => Promise<void>,
+    onError: (error: unknown) => void
+  ) => {
     const startedAt = Date.now();
     setStartedAt(startedAt);
     setNow(startedAt);
@@ -602,6 +605,7 @@ const usePublishProgress = () => {
     publish()
       .catch((error) => {
         console.error(error);
+        onError(error);
       })
       .finally(() => setIsPublishing(false));
   };
@@ -711,6 +715,18 @@ const reportPublishResult = ({
   }
 };
 
+const reportPublishRejection = (
+  error: unknown,
+  setPublishError: (error: string) => void
+) => {
+  const message = error instanceof Error ? error.message : "Unknown error";
+  if ($publishDialog.get() === "publish") {
+    setPublishError(message);
+    return;
+  }
+  toast.error(message);
+};
+
 const Publish = ({
   project,
   timesLeft,
@@ -732,7 +748,10 @@ const Publish = ({
   onValidationStateChange: (state: PublishValidationState) => void;
   isPublishing: boolean;
   countdown: number | undefined;
-  startPublishing: (publish: () => Promise<void>) => void;
+  startPublishing: (
+    publish: () => Promise<void>,
+    onError: (error: unknown) => void
+  ) => void;
 }) => {
   const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
   const [publishError, setPublishError] = useState<
@@ -908,16 +927,18 @@ const Publish = ({
       return;
     }
 
-    startPublishing(() =>
-      runPublishAfterBestEffortChecks({
-        checks: async () => {
-          const checks = await runPublishDiagnostics(project.id);
-          setPublishFindings(checks.findings);
-        },
-        onCheckFailure: (error) =>
-          reportPublishValidationFailure(error, setPublishFindings, true),
-        publish: () => publish(domains),
-      })
+    startPublishing(
+      () =>
+        runPublishAfterBestEffortChecks({
+          checks: async () => {
+            const checks = await runPublishDiagnostics(project.id);
+            setPublishFindings(checks.findings);
+          },
+          onCheckFailure: (error) =>
+            reportPublishValidationFailure(error, setPublishFindings, true),
+          publish: () => publish(domains),
+        }),
+      (error) => reportPublishRejection(error, setPublishError)
     );
   };
 
@@ -1315,7 +1336,10 @@ const Content = (props: {
   onValidationStateChange: (state: PublishValidationState) => void;
   isPublishing: boolean;
   countdown: number | undefined;
-  startPublishing: (publish: () => Promise<void>) => void;
+  startPublishing: (
+    publish: () => Promise<void>,
+    onError: (error: unknown) => void
+  ) => void;
 }) => {
   const restrictedFeatures = useStore($restrictedFeatures);
   const [newDomains, setNewDomains] = useState(new Set<string>());
@@ -1762,4 +1786,5 @@ export const __testing__ = {
   refreshUntilSuccess,
   getRefreshedProject,
   reportPublishResult,
+  reportPublishRejection,
 };

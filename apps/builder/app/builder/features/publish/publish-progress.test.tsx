@@ -14,6 +14,7 @@ const {
   refreshUntilSuccess,
   getRefreshedProject,
   reportPublishResult,
+  reportPublishRejection,
 } = __testing__;
 
 let root: Root | undefined;
@@ -49,21 +50,24 @@ test("closing publish hides the countdown while polling continues and completion
       <>
         <button
           onClick={() =>
-            progress.start(async () => {
-              const result = await waitForPublishStatus(
-                async () => {
-                  statusRequests += 1;
-                  return {
-                    latestBuildVirtual: {
-                      createdAt: new Date().toISOString(),
-                      publishStatus: status,
-                    },
-                  } as Project;
-                },
-                () => true
-              );
-              setCompletedStatus(result?.status);
-            })
+            progress.start(
+              async () => {
+                const result = await waitForPublishStatus(
+                  async () => {
+                    statusRequests += 1;
+                    return {
+                      latestBuildVirtual: {
+                        createdAt: new Date().toISOString(),
+                        publishStatus: status,
+                      },
+                    } as Project;
+                  },
+                  () => true
+                );
+                setCompletedStatus(result?.status);
+              },
+              () => {}
+            )
           }
         >
           Start
@@ -241,4 +245,81 @@ test("publish completion shows a toast after the dialog closes", () => {
   expect(successToast).toHaveBeenCalledOnce();
   expect(errorToast).toHaveBeenCalledOnce();
   expect(setPublishError).toHaveBeenCalledWith(failedStatusText);
+});
+
+test("a rejected publish request shows an inline error while the dialog is open", async () => {
+  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
+  $publishDialog.set("publish");
+
+  const Harness = () => {
+    const [error, setError] = useState("");
+    const progress = usePublishProgress();
+    return (
+      <>
+        <button
+          onClick={() =>
+            progress.start(
+              () => Promise.reject(new Error("Network unavailable")),
+              (error) => reportPublishRejection(error, setError)
+            )
+          }
+        >
+          Start
+        </button>
+        <output>{error}</output>
+      </>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+
+  await act(async () => container?.querySelector("button")?.click());
+  expect(container.querySelector("output")?.textContent).toBe(
+    "Network unavailable"
+  );
+  expect(errorToast).not.toHaveBeenCalled();
+});
+
+test("a rejected publish request shows a toast after the dialog closes", async () => {
+  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
+  $publishDialog.set("publish");
+  let rejectPublish: (error: Error) => void = () => {};
+  const publish = new Promise<void>((_, reject) => {
+    rejectPublish = reject;
+  });
+
+  const Harness = () => {
+    const [error, setError] = useState("");
+    const progress = usePublishProgress();
+    return (
+      <>
+        <button
+          onClick={() =>
+            progress.start(
+              () => publish,
+              (error) => reportPublishRejection(error, setError)
+            )
+          }
+        >
+          Start
+        </button>
+        <output>{error}</output>
+      </>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  act(() => container?.querySelector("button")?.click());
+
+  $publishDialog.set("none");
+  await act(async () => rejectPublish(new Error("Network unavailable")));
+
+  expect(errorToast).toHaveBeenCalledOnce();
+  expect(container.querySelector("output")?.textContent).toBe("");
 });
