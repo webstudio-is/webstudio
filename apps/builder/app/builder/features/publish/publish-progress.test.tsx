@@ -123,7 +123,7 @@ test("reopening refresh retries after a rejected status request", async () => {
   vi.useFakeTimers();
   const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
   let attempts = 0;
-  const refresh = async () => {
+  const refresh = async (_showError: boolean) => {
     attempts += 1;
     if (attempts === 1) {
       throw new Error("Network unavailable");
@@ -140,6 +140,29 @@ test("reopening refresh retries after a rejected status request", async () => {
   } finally {
     errorLog.mockRestore();
   }
+});
+
+test("reopening stops after three unsuccessful project refreshes and shows the error", async () => {
+  vi.useFakeTimers();
+  $project.set({ id: "project" } as Project);
+  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
+  const query = vi.fn(async () => ({
+    success: false as const,
+    error: "Not found",
+  }));
+  let isOpen = true;
+
+  const done = refreshUntilSuccess(
+    (showError) => getRefreshedProject("project", showError, query),
+    () => isOpen
+  );
+  await vi.advanceTimersByTimeAsync(15_000);
+  isOpen = false;
+  await vi.runOnlyPendingTimersAsync();
+  await done;
+
+  expect(query).toHaveBeenCalledTimes(3);
+  expect(errorToast).toHaveBeenCalledOnce();
 });
 
 test("an in-flight status request cannot replace the project after navigation", async () => {
@@ -189,32 +212,53 @@ test("publish polling stops after navigating to another project", async () => {
   expect($project.get()).toBe(newProject);
 });
 
-test("publish completion does not show a toast while the dialog is open", () => {
+test("publish completion does not show a toast while the Publish panel is open", () => {
   const successToast = vi.spyOn(toast, "success").mockImplementation(() => "");
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   const setPublishError = vi.fn();
   const publishedStatusText = <>Published</>;
   const failedStatusText = <>Publish failed</>;
 
-  for (const dialog of ["publish", "export"] as const) {
-    $publishDialog.set(dialog);
-    reportPublishResult({
-      result: { status: "PUBLISHED", statusText: publishedStatusText },
-      timesLeft: 11,
-      maxDailyPublishesPerUser: 20,
-      setPublishError,
-    });
-    reportPublishResult({
-      result: { status: "FAILED", statusText: failedStatusText },
-      timesLeft: 11,
-      maxDailyPublishesPerUser: 20,
-      setPublishError,
-    });
-  }
+  $publishDialog.set("publish");
+  reportPublishResult({
+    result: { status: "PUBLISHED", statusText: publishedStatusText },
+    timesLeft: 11,
+    maxDailyPublishesPerUser: 20,
+    setPublishError,
+  });
+  reportPublishResult({
+    result: { status: "FAILED", statusText: failedStatusText },
+    timesLeft: 11,
+    maxDailyPublishesPerUser: 20,
+    setPublishError,
+  });
 
   expect(successToast).not.toHaveBeenCalled();
   expect(errorToast).not.toHaveBeenCalled();
-  expect(setPublishError).toHaveBeenCalledTimes(2);
+  expect(setPublishError).toHaveBeenCalledOnce();
+});
+
+test("publish completion shows a toast in the Export view", () => {
+  const successToast = vi.spyOn(toast, "success").mockImplementation(() => "");
+  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
+  const setPublishError = vi.fn();
+  $publishDialog.set("export");
+
+  reportPublishResult({
+    result: { status: "PUBLISHED", statusText: <>Published</> },
+    timesLeft: 11,
+    maxDailyPublishesPerUser: 20,
+    setPublishError,
+  });
+  reportPublishResult({
+    result: { status: "FAILED", statusText: <>Publish failed</> },
+    timesLeft: 11,
+    maxDailyPublishesPerUser: 20,
+    setPublishError,
+  });
+
+  expect(successToast).toHaveBeenCalledOnce();
+  expect(errorToast).toHaveBeenCalledOnce();
 });
 
 test("publish completion shows a toast after the dialog closes", () => {

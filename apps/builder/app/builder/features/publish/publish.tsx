@@ -571,6 +571,7 @@ const $restrictedFeatures = computed(
 
 const COUNTDOWN_DURATION = 60_000;
 const STATUS_REFRESH_RETRY_DELAY = 5_000;
+const STATUS_REFRESH_MAX_ATTEMPTS = 3;
 
 const usePublishProgress = () => {
   const [startedAt, setStartedAt] = useState<number>();
@@ -663,19 +664,27 @@ const waitForPublishStatus = async (
 };
 
 const refreshUntilSuccess = async (
-  refresh: () => Promise<Project | undefined>,
+  refresh: (showError: boolean) => Promise<Project | undefined>,
   isOpen: () => boolean
 ) => {
-  while (isOpen()) {
+  for (
+    let attempt = 1;
+    attempt <= STATUS_REFRESH_MAX_ATTEMPTS && isOpen();
+    attempt++
+  ) {
+    const isLastAttempt = attempt === STATUS_REFRESH_MAX_ATTEMPTS;
     try {
-      if ((await refresh()) !== undefined) {
+      if ((await refresh(isLastAttempt)) !== undefined) {
         return;
       }
     } catch (error) {
       console.error("Could not refresh publish status", error);
+      if (isLastAttempt && isOpen()) {
+        toast.error(error instanceof Error ? error.message : "Unknown error");
+      }
     }
 
-    if (isOpen()) {
+    if (isLastAttempt === false && isOpen()) {
       await new Promise((resolve) =>
         setTimeout(resolve, STATUS_REFRESH_RETRY_DELAY)
       );
@@ -695,7 +704,7 @@ const reportPublishResult = ({
   setPublishError: (error: string | JSX.Element) => void;
 }) => {
   if (result?.status === "PUBLISHED") {
-    if ($publishDialog.get() === "none") {
+    if ($publishDialog.get() !== "publish") {
       toast.success(
         <>
           The project has been successfully published.{" "}
@@ -713,7 +722,7 @@ const reportPublishResult = ({
   }
 
   if (result?.status === "FAILED") {
-    if ($publishDialog.get() === "none") {
+    if ($publishDialog.get() !== "publish") {
       toast.error(result.statusText);
     }
     setPublishError(result.statusText);
@@ -1694,7 +1703,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     if (publishDialog === "publish" && publishProgress.isPublishing === false) {
       let isOpen = true;
       void refreshUntilSuccess(
-        () => getRefreshedProject(projectId, false),
+        (showError) => getRefreshedProject(projectId, showError),
         () => isOpen
       );
       return () => {
