@@ -2503,6 +2503,10 @@ sitemap.map((page) => page.path);`
     );
     expect(loadedConfig?.config.resolve?.conditions).toContain("import");
     expect(loadedConfig?.config.ssr?.resolve?.conditions).toContain("import");
+    expect(loadedConfig?.config.optimizeDeps?.entries).toEqual([
+      "app/root.tsx",
+      "app/routes/**/*.{ts,tsx}",
+    ]);
     await runGeneratedCommand("react-router", ["build"]);
 
     await expect(
