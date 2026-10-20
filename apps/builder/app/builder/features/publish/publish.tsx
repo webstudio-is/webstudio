@@ -573,12 +573,24 @@ const COUNTDOWN_DURATION = 60_000;
 const STATUS_REFRESH_RETRY_DELAY = 5_000;
 const STATUS_REFRESH_MAX_ATTEMPTS = 3;
 
-const usePublishProgress = () => {
+const usePublishProgress = (projectId: Project["id"]) => {
   const [startedAt, setStartedAt] = useState<number>();
   const [showCountdown, setShowCountdown] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [requestError, setRequestError] = useState<string>();
+  const [publishError, setPublishError] = useState<JSX.Element | string>();
   const [now, setNow] = useState(Date.now);
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  const isCurrentProject = () =>
+    isMounted.current && $project.get()?.id === projectId;
 
   useEffect(() => {
     if (isPublishing === false || showCountdown === false) {
@@ -607,8 +619,10 @@ const usePublishProgress = () => {
         console.error(error);
         const message =
           error instanceof Error ? error.message : "Unknown error";
-        setRequestError(message);
-        if ($publishDialog.get() !== "publish") {
+        if (isCurrentProject()) {
+          setRequestError(message);
+        }
+        if ($publishDialog.get() !== "publish" || !isCurrentProject()) {
           toast.error(message);
         }
       })
@@ -618,6 +632,9 @@ const usePublishProgress = () => {
   return {
     isPublishing,
     requestError,
+    publishError,
+    setPublishError,
+    isCurrentProject,
     countdown,
     start,
     dismissCountdown,
@@ -697,14 +714,16 @@ const reportPublishResult = ({
   timesLeft,
   maxDailyPublishesPerUser,
   setPublishError,
+  isCurrentProject = () => true,
 }: {
   result: Awaited<ReturnType<typeof waitForPublishStatus>>;
   timesLeft: number;
   maxDailyPublishesPerUser: number;
   setPublishError: (error: string | JSX.Element) => void;
+  isCurrentProject?: () => boolean;
 }) => {
   if (result?.status === "PUBLISHED") {
-    if ($publishDialog.get() !== "publish") {
+    if ($publishDialog.get() !== "publish" || !isCurrentProject()) {
       toast.success(
         <>
           The project has been successfully published.{" "}
@@ -722,10 +741,12 @@ const reportPublishResult = ({
   }
 
   if (result?.status === "FAILED") {
-    if ($publishDialog.get() !== "publish") {
+    if ($publishDialog.get() !== "publish" || !isCurrentProject()) {
       toast.error(result.statusText);
     }
-    setPublishError(result.statusText);
+    if (isCurrentProject()) {
+      setPublishError(result.statusText);
+    }
   }
 };
 
@@ -739,6 +760,9 @@ const Publish = ({
   onValidationStateChange,
   isPublishing,
   requestError,
+  publishError,
+  setPublishError,
+  isCurrentProject,
   countdown,
   startPublishing,
 }: {
@@ -751,13 +775,13 @@ const Publish = ({
   onValidationStateChange: (state: PublishValidationState) => void;
   isPublishing: boolean;
   requestError: string | undefined;
+  publishError: JSX.Element | string | undefined;
+  setPublishError: (error: JSX.Element | string | undefined) => void;
+  isCurrentProject: () => boolean;
   countdown: number | undefined;
   startPublishing: (publish: () => Promise<void>) => void;
 }) => {
   const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
-  const [publishError, setPublishError] = useState<
-    undefined | JSX.Element | string
-  >();
   const [publishFindings, setPublishFindings] = useState<
     PublishValidationFinding[]
   >([]);
@@ -868,7 +892,7 @@ const Publish = ({
     }
 
     const result = await waitForPublishStatus(
-      () => getRefreshedProject(project.id),
+      () => getRefreshedProject({ projectId: project.id }),
       () => $project.get()?.id === project.id
     );
     reportPublishResult({
@@ -876,6 +900,7 @@ const Publish = ({
       timesLeft,
       maxDailyPublishesPerUser,
       setPublishError,
+      isCurrentProject,
     });
   };
 
@@ -1190,17 +1215,23 @@ const useUserPublishCount = () => {
   };
 };
 
-const getRefreshedProject = async (
-  projectId: Project["id"],
+const getRefreshedProject = async ({
+  projectId,
   showError = true,
-  query = () => nativeClient.domain.project.query({ projectId })
-) => {
-  if ($project.get()?.id !== projectId) {
+  query = () => nativeClient.domain.project.query({ projectId }),
+  isCurrent = () => true,
+}: {
+  projectId: Project["id"];
+  showError?: boolean;
+  query?: () => ReturnType<typeof nativeClient.domain.project.query>;
+  isCurrent?: () => boolean;
+}) => {
+  if ($project.get()?.id !== projectId || !isCurrent()) {
     return;
   }
 
   const result = await query();
-  if ($project.get()?.id !== projectId) {
+  if ($project.get()?.id !== projectId || !isCurrent()) {
     return;
   }
 
@@ -1215,7 +1246,7 @@ const getRefreshedProject = async (
 };
 
 const refreshProject = async () => {
-  await getRefreshedProject($project.get()!.id);
+  await getRefreshedProject({ projectId: $project.get()!.id });
 };
 
 const buttonLinkClass = css({
@@ -1337,6 +1368,9 @@ const Content = (props: {
   onValidationStateChange: (state: PublishValidationState) => void;
   isPublishing: boolean;
   requestError: string | undefined;
+  publishError: JSX.Element | string | undefined;
+  setPublishError: (error: JSX.Element | string | undefined) => void;
+  isCurrentProject: () => boolean;
   countdown: number | undefined;
   startPublishing: (publish: () => Promise<void>) => void;
 }) => {
@@ -1458,6 +1492,9 @@ const Content = (props: {
             onValidationStateChange={props.onValidationStateChange}
             isPublishing={props.isPublishing}
             requestError={props.requestError}
+            publishError={props.publishError}
+            setPublishError={props.setPublishError}
+            isCurrentProject={props.isCurrentProject}
             countdown={props.countdown}
             startPublishing={props.startPublishing}
           />
@@ -1690,7 +1727,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
   const { validationState, update, reset } = usePublishValidationState(
     publishDialog === "publish"
   );
-  const publishProgress = usePublishProgress();
+  const publishProgress = usePublishProgress(projectId);
   const { dismissCountdown } = publishProgress;
   useEffect(() => {
     if (publishDialog !== "publish") {
@@ -1703,7 +1740,12 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     if (publishDialog === "publish" && publishProgress.isPublishing === false) {
       let isOpen = true;
       void refreshUntilSuccess(
-        (showError) => getRefreshedProject(projectId, showError),
+        (showError) =>
+          getRefreshedProject({
+            projectId,
+            showError,
+            isCurrent: () => isOpen,
+          }),
         () => isOpen
       );
       return () => {
@@ -1772,6 +1814,9 @@ export const PublishButton = ({ projectId }: PublishProps) => {
             onValidationStateChange={update}
             isPublishing={publishProgress.isPublishing}
             requestError={publishProgress.requestError}
+            publishError={publishProgress.publishError}
+            setPublishError={publishProgress.setPublishError}
+            isCurrentProject={publishProgress.isCurrentProject}
             countdown={publishProgress.countdown}
             startPublishing={publishProgress.start}
           />

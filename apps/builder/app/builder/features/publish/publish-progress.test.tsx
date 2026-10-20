@@ -37,6 +37,7 @@ afterEach(() => {
 test("closing publish hides the countdown while polling continues and completion clears pending", async () => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-10-20T12:00:00Z"));
+  $project.set({ id: "project" } as Project);
 
   let status: "PENDING" | "PUBLISHED" = "PENDING";
   let statusRequests = 0;
@@ -44,7 +45,7 @@ test("closing publish hides the countdown while polling continues and completion
   const Harness = () => {
     const [isOpen, setIsOpen] = useState(true);
     const [completedStatus, setCompletedStatus] = useState<string>();
-    const progress = usePublishProgress();
+    const progress = usePublishProgress("project");
     return (
       <>
         <button
@@ -153,7 +154,8 @@ test("reopening stops after three unsuccessful project refreshes and shows the e
   let isOpen = true;
 
   const done = refreshUntilSuccess(
-    (showError) => getRefreshedProject("project", showError, query),
+    (showError) =>
+      getRefreshedProject({ projectId: "project", showError, query }),
     () => isOpen
   );
   await vi.advanceTimersByTimeAsync(15_000);
@@ -177,13 +179,52 @@ test("an in-flight status request cannot replace the project after navigation", 
   const query = new Promise<{ success: true; project: Project }>((resolve) => {
     finishQuery = resolve;
   });
-  const refresh = getRefreshedProject(oldProject.id, false, () => query);
+  const refresh = getRefreshedProject({
+    projectId: oldProject.id,
+    showError: false,
+    query: () => query,
+  });
 
   $project.set(newProject);
   finishQuery({ success: true, project: oldProject });
 
   await expect(refresh).resolves.toBeUndefined();
   expect($project.get()).toBe(newProject);
+});
+
+test("an older popover refresh cannot overwrite a newer result", async () => {
+  $project.set({ id: "project" } as Project);
+  let finishOldQuery: (result: {
+    success: true;
+    project: Project;
+  }) => void = () => {};
+  const oldQuery = new Promise<{ success: true; project: Project }>(
+    (resolve) => {
+      finishOldQuery = resolve;
+    }
+  );
+  let isOpen = true;
+  const oldRefresh = getRefreshedProject({
+    projectId: "project",
+    showError: false,
+    query: () => oldQuery,
+    isCurrent: () => isOpen,
+  });
+
+  isOpen = false;
+  const currentProject = { id: "project", domain: "new" } as Project;
+  await getRefreshedProject({
+    projectId: "project",
+    showError: false,
+    query: async () => ({ success: true, project: currentProject }),
+  });
+  finishOldQuery({
+    success: true,
+    project: { id: "project", domain: "old" } as Project,
+  });
+  await oldRefresh;
+
+  expect($project.get()).toBe(currentProject);
 });
 
 test("publish polling stops after navigating to another project", async () => {
@@ -290,9 +331,10 @@ test("publish completion shows a toast after the dialog closes", () => {
 test("a rejected publish request shows an inline error while the dialog is open", async () => {
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   $publishDialog.set("publish");
+  $project.set({ id: "project" } as Project);
 
   const Harness = () => {
-    const progress = usePublishProgress();
+    const progress = usePublishProgress("project");
     return (
       <>
         <button
@@ -324,13 +366,14 @@ test("a rejected publish request shows an inline error while the dialog is open"
 test("a rejected publish request shows a toast after the dialog closes", async () => {
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   $publishDialog.set("publish");
+  $project.set({ id: "project" } as Project);
   let rejectPublish: (error: Error) => void = () => {};
   const publish = new Promise<void>((_, reject) => {
     rejectPublish = reject;
   });
 
   const Harness = () => {
-    const progress = usePublishProgress();
+    const progress = usePublishProgress("project");
     return (
       <>
         <button onClick={() => progress.start(() => publish)}>Start</button>
@@ -357,6 +400,7 @@ test("a rejected publish request shows a toast after the dialog closes", async (
 test("a rejected publish request appears in the panel reopened before rejection", async () => {
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   $publishDialog.set("publish");
+  $project.set({ id: "project" } as Project);
   let rejectPublish: (error: Error) => void = () => {};
   const publish = new Promise<void>((_, reject) => {
     rejectPublish = reject;
@@ -364,7 +408,7 @@ test("a rejected publish request appears in the panel reopened before rejection"
 
   const Harness = () => {
     const [isOpen, setIsOpen] = useState(true);
-    const progress = usePublishProgress();
+    const progress = usePublishProgress("project");
     return (
       <>
         <button onClick={() => progress.start(() => publish)}>Start</button>
@@ -404,4 +448,72 @@ test("a rejected publish request appears in the panel reopened before rejection"
     "Network unavailable"
   );
   expect(errorToast).not.toHaveBeenCalled();
+});
+
+test("a publish failure remains visible after the panel remounts", () => {
+  $project.set({ id: "project" } as Project);
+  $publishDialog.set("publish");
+  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
+
+  const Harness = () => {
+    const [isOpen, setIsOpen] = useState(true);
+    const progress = usePublishProgress("project");
+    return (
+      <>
+        <button onClick={() => setIsOpen(false)}>Close</button>
+        <button onClick={() => setIsOpen(true)}>Reopen</button>
+        <button
+          onClick={() =>
+            reportPublishResult({
+              result: { status: "FAILED", statusText: <>Build failed</> },
+              timesLeft: 11,
+              maxDailyPublishesPerUser: 20,
+              setPublishError: progress.setPublishError,
+            })
+          }
+        >
+          Finish
+        </button>
+        {isOpen && <output>{progress.publishError}</output>}
+      </>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  const [close, reopen, finish] = container.querySelectorAll("button");
+  act(() => close.click());
+  act(() => reopen.click());
+  act(() => finish.click());
+
+  expect(container.querySelector("output")?.textContent).toBe("Build failed");
+  expect(errorToast).not.toHaveBeenCalled();
+});
+
+test("a rejected request after project navigation shows a toast", async () => {
+  $project.set({ id: "old-project" } as Project);
+  $publishDialog.set("publish");
+  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
+  let rejectPublish: (error: Error) => void = () => {};
+  const publish = new Promise<void>((_, reject) => {
+    rejectPublish = reject;
+  });
+
+  const Harness = () => {
+    const progress = usePublishProgress("old-project");
+    return <button onClick={() => progress.start(() => publish)}>Start</button>;
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  act(() => container?.querySelector("button")?.click());
+  act(() => root?.unmount());
+  $project.set({ id: "new-project" } as Project);
+
+  await act(async () => rejectPublish(new Error("Network unavailable")));
+  expect(errorToast).toHaveBeenCalledOnce();
 });
