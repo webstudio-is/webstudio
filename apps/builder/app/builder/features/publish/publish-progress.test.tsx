@@ -618,6 +618,97 @@ test("refreshing an older published build preserves a rejected request error", (
   );
 });
 
+test("a newer build clears a recovered transport error", async () => {
+  $project.set({
+    id: "project",
+    latestBuildVirtual: { buildId: "old" },
+  } as Project);
+  $publishDialog.set("publish");
+
+  const Harness = () => {
+    const progress = usePublishProgress("project");
+    return (
+      <>
+        <button
+          onClick={() =>
+            progress.start(() =>
+              Promise.reject(new Error("Network unavailable"))
+            )
+          }
+        >
+          Publish
+        </button>
+        <button
+          onClick={() =>
+            progress.reconcileRefreshedProject({
+              latestBuildVirtual: {
+                buildId: "new",
+                createdAt: new Date().toISOString(),
+                publishStatus: "PUBLISHED",
+              },
+            } as Project)
+          }
+        >
+          Refresh
+        </button>
+        <output>{progress.requestError}</output>
+      </>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  const [publish, refresh] = container.querySelectorAll("button");
+  await act(async () => publish.click());
+  expect(container.querySelector("output")?.textContent).toBe(
+    "Network unavailable"
+  );
+  act(() => refresh.click());
+  expect(container.querySelector("output")?.textContent).toBe("");
+});
+
+test("publish diagnostics remain visible after the panel remounts", () => {
+  $project.set({ id: "project" } as Project);
+
+  const Harness = () => {
+    const [isOpen, setIsOpen] = useState(true);
+    const progress = usePublishProgress("project");
+    return (
+      <>
+        <button onClick={() => setIsOpen(false)}>Close</button>
+        <button onClick={() => setIsOpen(true)}>Reopen</button>
+        <button
+          onClick={() =>
+            progress.setPublishFindings([
+              {
+                severity: "warning",
+                title: "Check",
+                reportText: "Check",
+              },
+            ])
+          }
+        >
+          Finish diagnostics
+        </button>
+        {isOpen && <output>{progress.publishFindings.length}</output>}
+      </>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  const [close, reopen, finish] = container.querySelectorAll("button");
+  act(() => close.click());
+  act(() => reopen.click());
+  act(() => finish.click());
+
+  expect(container.querySelector("output")?.textContent).toBe("1");
+});
+
 test("a rejected request after project navigation shows a toast", async () => {
   $project.set({ id: "old-project" } as Project);
   $publishDialog.set("publish");

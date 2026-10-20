@@ -578,12 +578,16 @@ const usePublishProgress = (projectId: Project["id"]) => {
   const [showCountdown, setShowCountdown] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [requestError, setRequestError] = useState<string>();
+  const [publishFindings, setPublishFindings] = useState<
+    PublishValidationFinding[]
+  >([]);
   const [publishErrorState, setPublishErrorState] = useState<{
     value: JSX.Element | string;
     source: "request" | "status";
   }>();
   const [now, setNow] = useState(Date.now);
   const isMounted = useRef(false);
+  const requestBaselineBuildId = useRef<string>();
 
   useEffect(() => {
     isMounted.current = true;
@@ -618,6 +622,12 @@ const usePublishProgress = (projectId: Project["id"]) => {
       setPublishErrorState((current) =>
         current?.source === "status" ? undefined : current
       );
+      if (
+        project.latestBuildVirtual.buildId !== undefined &&
+        project.latestBuildVirtual.buildId !== requestBaselineBuildId.current
+      ) {
+        setRequestError(undefined);
+      }
     }
   }, []);
 
@@ -638,6 +648,8 @@ const usePublishProgress = (projectId: Project["id"]) => {
 
   const start = (publish: () => Promise<void>) => {
     const startedAt = Date.now();
+    requestBaselineBuildId.current =
+      $project.get()?.latestBuildVirtual?.buildId;
     setStartedAt(startedAt);
     setNow(startedAt);
     setShowCountdown(true);
@@ -661,6 +673,8 @@ const usePublishProgress = (projectId: Project["id"]) => {
   return {
     isPublishing,
     requestError,
+    publishFindings,
+    setPublishFindings,
     publishError: publishErrorState?.value,
     setPublishError,
     setPublishStatusError,
@@ -792,6 +806,8 @@ const Publish = ({
   onValidationStateChange,
   isPublishing,
   requestError,
+  publishFindings,
+  setPublishFindings,
   publishError,
   setPublishError,
   setPublishStatusError,
@@ -809,6 +825,8 @@ const Publish = ({
   onValidationStateChange: (state: PublishValidationState) => void;
   isPublishing: boolean;
   requestError: string | undefined;
+  publishFindings: PublishValidationFinding[];
+  setPublishFindings: (findings: PublishValidationFinding[]) => void;
   publishError: JSX.Element | string | undefined;
   setPublishError: (error: JSX.Element | string | undefined) => void;
   setPublishStatusError: (error: JSX.Element | string) => void;
@@ -818,9 +836,6 @@ const Publish = ({
   startPublishing: (publish: () => Promise<void>) => void;
 }) => {
   const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
-  const [publishFindings, setPublishFindings] = useState<
-    PublishValidationFinding[]
-  >([]);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
   const [hasCustomDomainsSelected, setHasCustomDomainsSelected] =
@@ -1404,6 +1419,8 @@ const Content = (props: {
   onValidationStateChange: (state: PublishValidationState) => void;
   isPublishing: boolean;
   requestError: string | undefined;
+  publishFindings: PublishValidationFinding[];
+  setPublishFindings: (findings: PublishValidationFinding[]) => void;
   publishError: JSX.Element | string | undefined;
   setPublishError: (error: JSX.Element | string | undefined) => void;
   setPublishStatusError: (error: JSX.Element | string) => void;
@@ -1530,6 +1547,8 @@ const Content = (props: {
             onValidationStateChange={props.onValidationStateChange}
             isPublishing={props.isPublishing}
             requestError={props.requestError}
+            publishFindings={props.publishFindings}
+            setPublishFindings={props.setPublishFindings}
             publishError={props.publishError}
             setPublishError={props.setPublishError}
             setPublishStatusError={props.setPublishStatusError}
@@ -1864,6 +1883,8 @@ export const PublishButton = ({ projectId }: PublishProps) => {
             onValidationStateChange={update}
             isPublishing={publishProgress.isPublishing}
             requestError={publishProgress.requestError}
+            publishFindings={publishProgress.publishFindings}
+            setPublishFindings={publishProgress.setPublishFindings}
             publishError={publishProgress.publishError}
             setPublishError={publishProgress.setPublishError}
             setPublishStatusError={publishProgress.setPublishStatusError}
