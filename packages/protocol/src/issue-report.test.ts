@@ -116,7 +116,7 @@ describe("issue report contract", () => {
     ).toThrow();
   });
 
-  test("accepts only safe IDs for the last targeted tool", () => {
+  test("accepts only safe IDs for recent targeted tools", () => {
     const recentTarget = {
       tool: "screenshot",
       entityIds: [{ field: "pageId", id: "page-123" }],
@@ -124,18 +124,20 @@ describe("issue report contract", () => {
     expect(
       issueReportInput.parse({
         ...report,
-        runtime: { ...report.runtime, recentTarget },
-      }).runtime?.recentTarget
-    ).toEqual(recentTarget);
+        runtime: { ...report.runtime, recentTargets: [recentTarget] },
+      }).runtime?.recentTargets
+    ).toEqual([recentTarget]);
     expect(() =>
       issueReportInput.parse({
         ...report,
         runtime: {
           ...report.runtime,
-          recentTarget: {
-            ...recentTarget,
-            path: "/private-page?authToken=secret",
-          },
+          recentTargets: [
+            {
+              ...recentTarget,
+              path: "/private-page?authToken=secret",
+            },
+          ],
         },
       })
     ).toThrow();

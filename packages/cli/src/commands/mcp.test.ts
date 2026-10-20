@@ -561,6 +561,7 @@ test("restores a successful tool target across CLI processes without private inp
     { path: "/blog/private-post?authToken=secret" },
     "page-1"
   );
+  firstTarget.record("inspect-instance", { instanceId: "instance-1" });
   await persistIssueReportFailure(filePath, undefined, firstTarget.snapshot());
   const restoredTarget = createIssueReportTargetTracker();
   await restoreIssueReportFailure(
@@ -569,9 +570,16 @@ test("restores a successful tool target across CLI processes without private inp
     restoredTarget
   );
   expect(restoredTarget.get()).toEqual({
-    tool: "screenshot",
-    entityIds: [{ field: "pageId", id: "page-1" }],
+    tool: "inspect-instance",
+    entityIds: [{ field: "instanceId", id: "instance-1" }],
   });
+  expect(restoredTarget.getAll()).toEqual([
+    {
+      tool: "inspect-instance",
+      entityIds: [{ field: "instanceId", id: "instance-1" }],
+    },
+    { tool: "screenshot", entityIds: [{ field: "pageId", id: "page-1" }] },
+  ]);
   expect(await readFile(filePath, "utf8")).not.toContain("private-post");
   expect(await readFile(filePath, "utf8")).not.toContain("authToken");
 });

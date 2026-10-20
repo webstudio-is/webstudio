@@ -165,7 +165,7 @@ const issueReportRuntime = z
     bundleVersion: z.string().trim().min(1).max(100).optional(),
     projectId: issueReportId.optional(),
     recentFailure: issueReportRecentFailureSchema.optional(),
-    recentTarget: issueReportRecentTargetSchema.optional(),
+    recentTargets: z.array(issueReportRecentTargetSchema).max(3).optional(),
     session: issueReportSession.optional(),
     preview: issueReportPreview.optional(),
   })

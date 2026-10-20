@@ -274,27 +274,38 @@ test("keeps a failed mutation available after a successful diagnostic read", () 
   expect(restored.get()).toBeUndefined();
 });
 
-test("keeps only validated IDs from the most recent targeted tool", () => {
+test("keeps validated IDs from recent targeted tools without private input", () => {
   let now = 1_000;
   const tracker = createIssueReportTargetTracker(() => now);
   tracker.record("inspect-instance", {
     instanceId: "instance-1",
     url: "https://private.example/?authToken=secret",
   });
-  tracker.record("list-pages", {});
+  expect(tracker.record("list-pages", {})).toBe(false);
   expect(tracker.get()).toEqual({
     tool: "inspect-instance",
     entityIds: [{ field: "instanceId", id: "instance-1" }],
   });
-  tracker.record(
-    "screenshot",
-    { path: "/blog/private-slug?authToken=secret" },
-    "page-1"
-  );
+  expect(
+    tracker.record(
+      "screenshot",
+      { path: "/blog/private-slug?authToken=secret" },
+      "page-1"
+    )
+  ).toBe(true);
   expect(tracker.get()).toEqual({
     tool: "screenshot",
     entityIds: [{ field: "pageId", id: "page-1" }],
   });
+  expect(tracker.getAll()).toEqual([
+    { tool: "screenshot", entityIds: [{ field: "pageId", id: "page-1" }] },
+    {
+      tool: "inspect-instance",
+      entityIds: [{ field: "instanceId", id: "instance-1" }],
+    },
+  ]);
+  tracker.record("screenshot", { path: "/blog/another-post" }, "page-1");
+  expect(tracker.getAll()).toHaveLength(2);
   expect(JSON.stringify(tracker.snapshot())).not.toContain("private");
   expect(
     createIssueReportTarget("inspect-instance", {
@@ -303,6 +314,7 @@ test("keeps only validated IDs from the most recent targeted tool", () => {
   ).toBeUndefined();
   now += 10 * 60_000 + 1;
   expect(tracker.get()).toBeUndefined();
+  expect(tracker.getAll()).toBeUndefined();
 });
 
 test("reports only the shape of an untransformable server response", () => {
