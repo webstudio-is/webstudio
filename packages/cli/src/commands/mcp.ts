@@ -1868,7 +1868,7 @@ const getIssueReportFailureFile = (projectRoot: string, projectId?: string) =>
 const persistIssueReportFailure = async (
   filePath: string,
   snapshot: { failure: IssueReportRecentFailure; at: number } | undefined,
-  targetSnapshot?: { target: IssueReportRecentTarget; at: number }
+  targetSnapshot?: { target: IssueReportRecentTarget; at: number }[]
 ) => {
   if (snapshot === undefined && targetSnapshot === undefined) {
     await rm(filePath, { force: true }).catch(() => undefined);
@@ -1881,9 +1881,7 @@ const persistIssueReportFailure = async (
       temporaryPath,
       JSON.stringify({
         ...snapshot,
-        ...(targetSnapshot === undefined
-          ? {}
-          : { target: targetSnapshot.target, targetAt: targetSnapshot.at }),
+        ...(targetSnapshot === undefined ? {} : { targets: targetSnapshot }),
       }),
       "utf8"
     );
@@ -1912,13 +1910,20 @@ const restoreIssueReportFailure = async (
     ) {
       failureTracker.restore(failure.data, value.at);
     }
-    const target = issueReportRecentTargetSchema.safeParse(value.target);
-    if (
-      target.success &&
-      typeof value.targetAt === "number" &&
-      Number.isSafeInteger(value.targetAt)
-    ) {
-      targetTracker?.restore(target.data, value.targetAt);
+    if (Array.isArray(value.targets)) {
+      for (const entry of value.targets.slice(0, 3)) {
+        if (!isPlainRecord(entry)) {
+          continue;
+        }
+        const target = issueReportRecentTargetSchema.safeParse(entry.target);
+        if (
+          target.success &&
+          typeof entry.at === "number" &&
+          Number.isSafeInteger(entry.at)
+        ) {
+          targetTracker?.restore(target.data, entry.at);
+        }
+      }
     }
     if (
       failureTracker.snapshot() === undefined &&
@@ -2029,7 +2034,7 @@ const createCliMcpHost = async ({
               getBuilderStateNamespacesByStatus(snapshot.freshness, status);
       return createIssueReportRuntime(failureTracker.get(), {
         projectId: connection.projectId,
-        recentTarget: targetTracker.get(),
+        recentTargets: targetTracker.getAll(),
         ...(namespacesByStatus === undefined
           ? {}
           : {
@@ -2380,7 +2385,7 @@ const createCliMcpHost = async ({
         targetTracker.clear();
         await persistIssueReportFailure(issueReportFailureFile, undefined);
       } else {
-        targetTracker.record(
+        const hasTarget = targetTracker.record(
           canonicalTool,
           input,
           getIssueReportPageId(
@@ -2389,7 +2394,7 @@ const createCliMcpHost = async ({
             session.snapshot?.state.pages
           )
         );
-        if (targetTracker.get() !== undefined) {
+        if (hasTarget) {
           await persistIssueReportFailure(
             issueReportFailureFile,
             failureTracker.snapshot(),
