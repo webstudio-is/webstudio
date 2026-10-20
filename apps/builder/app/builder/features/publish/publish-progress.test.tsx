@@ -468,7 +468,7 @@ test("a publish failure remains visible after the panel remounts", () => {
               result: { status: "FAILED", statusText: <>Build failed</> },
               timesLeft: 11,
               maxDailyPublishesPerUser: 20,
-              setPublishError: progress.setPublishError,
+              setPublishError: progress.setPublishStatusError,
             })
           }
         >
@@ -506,7 +506,7 @@ test("a successful status refresh clears a persisted publish failure", () => {
               result: { status: "FAILED", statusText: <>Publish failed</> },
               timesLeft: 11,
               maxDailyPublishesPerUser: 20,
-              setPublishError: progress.setPublishError,
+              setPublishError: progress.setPublishStatusError,
             })
           }
         >
@@ -538,6 +538,48 @@ test("a successful status refresh clears a persisted publish failure", () => {
   expect(container.querySelector("output")?.textContent).toBe("Publish failed");
   act(() => refresh.click());
   expect(container.querySelector("output")?.textContent).toBe("");
+});
+
+test("refreshing an older published build preserves a rejected request error", () => {
+  $project.set({ id: "project" } as Project);
+  const oldPublishedProject = {
+    id: "project",
+    latestBuildVirtual: {
+      createdAt: new Date().toISOString(),
+      publishStatus: "PUBLISHED",
+    },
+  } as Project;
+
+  const Harness = () => {
+    const progress = usePublishProgress("project");
+    return (
+      <>
+        <button onClick={() => progress.setPublishError(<>Request rejected</>)}>
+          Reject
+        </button>
+        <button
+          onClick={() =>
+            progress.reconcileRefreshedProject(oldPublishedProject)
+          }
+        >
+          Refresh
+        </button>
+        <output>{progress.publishError}</output>
+      </>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  const [reject, refresh] = container.querySelectorAll("button");
+  act(() => reject.click());
+  act(() => refresh.click());
+
+  expect(container.querySelector("output")?.textContent).toBe(
+    "Request rejected"
+  );
 });
 
 test("a rejected request after project navigation shows a toast", async () => {

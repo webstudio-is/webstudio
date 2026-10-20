@@ -578,7 +578,10 @@ const usePublishProgress = (projectId: Project["id"]) => {
   const [showCountdown, setShowCountdown] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [requestError, setRequestError] = useState<string>();
-  const [publishError, setPublishError] = useState<JSX.Element | string>();
+  const [publishErrorState, setPublishErrorState] = useState<{
+    value: JSX.Element | string;
+    source: "request" | "status";
+  }>();
   const [now, setNow] = useState(Date.now);
   const isMounted = useRef(false);
 
@@ -592,12 +595,24 @@ const usePublishProgress = (projectId: Project["id"]) => {
   const isCurrentProject = () =>
     isMounted.current && $project.get()?.id === projectId;
 
+  const setPublishError = (value: JSX.Element | string | undefined) => {
+    setPublishErrorState(
+      value === undefined ? undefined : { value, source: "request" }
+    );
+  };
+
+  const setPublishStatusError = (value: JSX.Element | string) => {
+    setPublishErrorState({ value, source: "status" });
+  };
+
   const reconcileRefreshedProject = useCallback((project: Project) => {
     if (
       project.latestBuildVirtual != null &&
       getPublishStatusAndText(project.latestBuildVirtual).status !== "FAILED"
     ) {
-      setPublishError(undefined);
+      setPublishErrorState((current) =>
+        current?.source === "status" ? undefined : current
+      );
     }
   }, []);
 
@@ -641,8 +656,9 @@ const usePublishProgress = (projectId: Project["id"]) => {
   return {
     isPublishing,
     requestError,
-    publishError,
+    publishError: publishErrorState?.value,
     setPublishError,
+    setPublishStatusError,
     isCurrentProject,
     reconcileRefreshedProject,
     countdown,
@@ -772,6 +788,7 @@ const Publish = ({
   requestError,
   publishError,
   setPublishError,
+  setPublishStatusError,
   isCurrentProject,
   countdown,
   startPublishing,
@@ -787,6 +804,7 @@ const Publish = ({
   requestError: string | undefined;
   publishError: JSX.Element | string | undefined;
   setPublishError: (error: JSX.Element | string | undefined) => void;
+  setPublishStatusError: (error: JSX.Element | string) => void;
   isCurrentProject: () => boolean;
   countdown: number | undefined;
   startPublishing: (publish: () => Promise<void>) => void;
@@ -909,7 +927,7 @@ const Publish = ({
       result,
       timesLeft,
       maxDailyPublishesPerUser,
-      setPublishError,
+      setPublishError: setPublishStatusError,
       isCurrentProject,
     });
   };
@@ -1380,6 +1398,7 @@ const Content = (props: {
   requestError: string | undefined;
   publishError: JSX.Element | string | undefined;
   setPublishError: (error: JSX.Element | string | undefined) => void;
+  setPublishStatusError: (error: JSX.Element | string) => void;
   isCurrentProject: () => boolean;
   countdown: number | undefined;
   startPublishing: (publish: () => Promise<void>) => void;
@@ -1504,6 +1523,7 @@ const Content = (props: {
             requestError={props.requestError}
             publishError={props.publishError}
             setPublishError={props.setPublishError}
+            setPublishStatusError={props.setPublishStatusError}
             isCurrentProject={props.isCurrentProject}
             countdown={props.countdown}
             startPublishing={props.startPublishing}
@@ -1836,6 +1856,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
             requestError={publishProgress.requestError}
             publishError={publishProgress.publishError}
             setPublishError={publishProgress.setPublishError}
+            setPublishStatusError={publishProgress.setPublishStatusError}
             isCurrentProject={publishProgress.isCurrentProject}
             countdown={publishProgress.countdown}
             startPublishing={publishProgress.start}
