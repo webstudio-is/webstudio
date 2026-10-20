@@ -6052,7 +6052,7 @@ describe("project session mcp adapter", () => {
     ).toHaveLength(1);
   });
 
-  test("omits the legacy Webhook Form from MCP discovery", async () => {
+  test("omits the deprecated Webhook Form from MCP discovery", async () => {
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
@@ -6079,7 +6079,7 @@ describe("project session mcp adapter", () => {
       ({ template }) => template === "template:form"
     );
     expect(formResult?.component).toBe("form");
-    for (const component of [formResult!.component, "Form"]) {
+    for (const component of [formResult!.component, "ResourceForm"]) {
       const formDetails = await adapter.callTool({
         name: "components.get",
         input: { component },
@@ -6087,7 +6087,7 @@ describe("project session mcp adapter", () => {
       expect(formDetails.structuredContent.data).toEqual(
         expect.objectContaining({
           found: true,
-          component: "Form",
+          component: "ResourceForm",
           props: expect.objectContaining({ action: expect.any(Object) }),
         })
       );
@@ -6101,7 +6101,7 @@ describe("project session mcp adapter", () => {
     );
     const formTemplateByRoot = await adapter.callTool({
       name: "templates.get",
-      input: { component: "Form" },
+      input: { component: "ResourceForm" },
     });
     expect(formTemplateByRoot.structuredContent.data).toEqual(
       expect.objectContaining({
@@ -6164,7 +6164,7 @@ describe("project session mcp adapter", () => {
     } while (cursor !== undefined);
   });
 
-  test("rejects new legacy Webhook Forms through MCP insertion paths", async () => {
+  test("rejects new deprecated Webhook Forms through MCP insertion paths", async () => {
     const executeOperation = createExecuteOperation();
     const operations = [
       ...publicMcpOperations,
@@ -6274,13 +6274,14 @@ describe("project session mcp adapter", () => {
         })
       ).rejects.toThrow("Webhook Form is deprecated");
     }
-    const legacyFragment = await parseWebstudioJsxFragment("<WebhookForm />");
+    const deprecatedFormFragment =
+      await parseWebstudioJsxFragment("<WebhookForm />");
     for (const structure of [
-      { type: "fragment", fragment: legacyFragment },
+      { type: "fragment", fragment: deprecatedFormFragment },
       {
         type: "collection",
         data: { type: "json", value: [{ name: "example" }] },
-        itemFragment: legacyFragment,
+        itemFragment: deprecatedFormFragment,
       },
     ]) {
       await expect(
@@ -6320,7 +6321,7 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).not.toHaveBeenCalled();
   });
 
-  test("rejects cloning a saved legacy Webhook Form subtree through MCP", async () => {
+  test("rejects cloning a saved deprecated Webhook Form subtree through MCP", async () => {
     const executeOperation = createExecuteOperation(async ({ command }) => {
       if (command === "list-instances") {
         return createEnvelope({
@@ -6386,7 +6387,7 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).toHaveBeenCalledTimes(2);
   });
 
-  test("rejects page and template copies that would create legacy Webhook Forms", async () => {
+  test("rejects page and template copies that would create deprecated Webhook Forms", async () => {
     const inputs = [
       ["insert-mdx-text", { parentInstanceId: "body", source: "<Contact />" }],
       ["duplicate-page", { projectId: "project", pageId: "page" }],
@@ -6477,7 +6478,7 @@ describe("project session mcp adapter", () => {
     ).toBe(true);
   });
 
-  test("rejects a copied legacy form in a root Map replacement", async () => {
+  test("rejects a copied deprecated Webhook Form in a root Map replacement", async () => {
     const executeOperation = createExecuteOperation(async ({ dryRun }) => {
       if (dryRun === false) {
         throw new Error("Unexpected committed copy");
@@ -6536,7 +6537,7 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).toHaveBeenCalledTimes(1);
   });
 
-  test("keeps copying pages without legacy forms available through MCP", async () => {
+  test("keeps copying pages without deprecated Webhook Forms available through MCP", async () => {
     const executeOperation = createExecuteOperation(async ({ dryRun }) =>
       createEnvelope({
         operationId: "pages.duplicate",
@@ -6592,7 +6593,7 @@ describe("project session mcp adapter", () => {
     ).toEqual([true, false]);
   });
 
-  test("rejects raw MCP patches that create a legacy Webhook Form", async () => {
+  test("rejects raw MCP patches that create a deprecated Webhook Form", async () => {
     const executeOperation = createExecuteOperation();
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,

@@ -25,7 +25,7 @@ import { useFormFeedbackScroll } from "./form-feedback-scroll";
 
 export const defaultTag = "form";
 
-export const Form = forwardRef<
+export const ResourceForm = forwardRef<
   ElementRef<typeof defaultTag>,
   Omit<ComponentProps<typeof defaultTag>, "action"> & {
     action?: unknown;
@@ -266,4 +266,4 @@ export const Form = forwardRef<
   }
 );
 
-Form.displayName = "Form";
+ResourceForm.displayName = "ResourceForm";

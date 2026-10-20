@@ -324,8 +324,8 @@ const author = async () => {
       const fragment = await call("insert-fragment", {
         parentInstanceId: home.rootInstanceId,
         fragment: verifyFieldChange
-          ? '<Form id="callback-form" /><Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>'
-          : '<Form id="callback-form"><Input name="outcome" /><Button type="submit">Submit callback form</Button></Form><Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>',
+          ? '<ResourceForm id="callback-form" /><Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>'
+          : '<ResourceForm id="callback-form"><Input name="outcome" /><Button type="submit">Submit callback form</Button></ResourceForm><Text id="callback-audit">Pending callbacks</Text><Text id="callback-error">Pending errors</Text>',
       });
       [formId, auditId, errorId] = fragment.rootInstanceIds as string[];
       if (verifyFieldChange) {

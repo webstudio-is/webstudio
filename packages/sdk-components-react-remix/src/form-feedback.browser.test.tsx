@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, expect, test, vi } from "vitest";
-import { Form } from "./resource-form";
+import { ResourceForm } from "./resource-form";
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -46,12 +46,12 @@ test("managed Remix Form scrolls partial failure and reveals visible success", a
       errors: [],
     });
   vi.stubGlobal("fetch", async () => Response.json(await action()));
-  const FormFixture = () => {
+  const ResourceFormFixture = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
     );
     return (
-      <Form
+      <ResourceForm
         data-ws-managed-form-id="saved-managed-form"
         action={[{ dataSourceId: "first" }, { dataSourceId: "second" }]}
         state={state}
@@ -60,11 +60,11 @@ test("managed Remix Form scrolls partial failure and reveals visible success", a
         {state !== "success" && <button type="submit">Send</button>}
         {state === "error" && <div data-feedback="error">Partial failure</div>}
         {state === "success" && <div data-feedback="success">Done</div>}
-      </Form>
+      </ResourceForm>
     );
   };
   const router = createMemoryRouter([
-    { path: "/", element: <FormFixture />, action },
+    { path: "/", element: <ResourceFormFixture />, action },
   ]);
   const container = document.createElement("div");
   document.body.append(container);

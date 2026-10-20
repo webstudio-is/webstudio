@@ -71,6 +71,7 @@ import {
   migratePages,
   migrateResourceFormInstancesMutable,
 } from "@webstudio-is/project-migrations";
+import { hasHistoricalFormComponentIdentityVersion } from "@webstudio-is/project-migrations/pages";
 import {
   collectFontFamiliesFromStyleDecls,
   createWebstudioDataFromFragment,
@@ -119,7 +120,7 @@ import {
 } from "@webstudio-is/query-builder/runtime";
 import {
   bundleVersion,
-  publishedProjectBundle,
+  historicalPublishedProjectBundle,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
 import { createAuthConfigResources, LOCAL_AUTH_FILE } from "./auth-config";
@@ -970,7 +971,8 @@ export const prebuild = async (options: {
       `Project bundle is missing, please make sure the project is synced.`
     );
   }
-  const parsedSiteData = publishedProjectBundle.safeParse(loadedSiteData);
+  const parsedSiteData =
+    historicalPublishedProjectBundle.safeParse(loadedSiteData);
   if (parsedSiteData.success === false) {
     throw Object.assign(
       new Error(
@@ -989,9 +991,10 @@ export const prebuild = async (options: {
   const siteData = parsedSiteData.data;
   const pages = migratePages(siteData.build.pages);
   const migratedInstances = new Map(siteData.build.instances);
+  // Saved Form identities may still need the deprecated Webhook Form migration.
   migrateResourceFormInstancesMutable(
     migratedInstances.values(),
-    pages.formComponentIdentityVersion === undefined
+    hasHistoricalFormComponentIdentityVersion(siteData.build.pages)
   );
   const publicationBuild = { ...siteData.build, pages };
   const allAssetIds = new Set(siteData.assets.map(({ id }) => id));
@@ -1051,14 +1054,14 @@ export const prebuild = async (options: {
   const testFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const outgoing = new Request(input, init);
     const url = new URL(outgoing.url);
-    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || url.search !== "" || url.hash !== "" || outgoing.method !== "POST") {
+    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || [...url.searchParams.keys()].some((key) => key !== "slug" && key !== "tag") || url.hash !== "" || outgoing.method !== "POST") {
       throw new Error("Unexpected evaluation Form destination");
     }
     protectedFetch.validateDestination(url);
-    return fetch(new Request("http://127.0.0.1:${evaluationReceiverPort}" + url.pathname, outgoing));
+    return fetch(new Request("http://127.0.0.1:${evaluationReceiverPort}" + url.pathname + url.search, outgoing));
   };
   return Object.assign(testFetch, { validateDestination: (url: URL) => {
-    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || url.search !== "" || url.hash !== "") {
+    if (url.origin !== "https://mcp-delivery.example" || (url.pathname !== "/submit" && url.pathname !== "/reject") || [...url.searchParams.keys()].some((key) => key !== "slug" && key !== "tag") || url.hash !== "") {
       throw new Error("Unexpected evaluation Form destination");
     }
     protectedFetch.validateDestination(url);
@@ -1789,6 +1792,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
 
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
+    // Deprecated Webhook Form-only conversion of saved action props.
     replaceFormActionsWithResources({
       instances,
       resources,
@@ -1796,7 +1800,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     });
     const formInstances = Array.from(instances.values());
     const managedFormSubmissions = formInstances
-      .filter((instance) => instance.component === "Form")
+      .filter((instance) => instance.component === "ResourceForm")
       .map((instance) => {
         const actionProp = Array.from(props.values())
           .filter(
@@ -1859,6 +1863,8 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     });
 
     const projectMeta = siteData.build.projectSettings?.meta ?? pages.meta;
+    // The generated contactEmail export serves only saved Webhook Forms.
+    // projectMeta.contactEmail itself also serves managed Email Resources.
     const contactEmail: undefined | string =
       // fallback to user email when contact email is empty string
       projectMeta?.contactEmail || siteData.user?.email || undefined;
@@ -2010,6 +2016,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
           ${JSON.stringify(managedFormSubmissions)}
         );
 
+      /** @deprecated Generated only for saved Webhook Forms. */
       export const contactEmail = ${JSON.stringify(contactEmail)};
     `;
 

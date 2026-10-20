@@ -36,7 +36,7 @@ test("Preview Form posts to the authenticated Builder and sets error state witho
     {
       type: "instance",
       id: formId,
-      component: "Form",
+      component: "ResourceForm",
       children: [inputId, buttonId].map((value) => ({ type: "id", value })),
     },
     {
@@ -199,7 +199,7 @@ test("Preview Form success redirects navigate matched pages and keep feedback fo
       {
         type: "instance",
         id: formId,
-        component: "Form",
+        component: "ResourceForm",
         children: [{ type: "id", value: buttonId }],
       },
       {
@@ -403,7 +403,7 @@ test("Preview Form preserves browser FormData and runs legacy disabled actions i
       {
         type: "instance",
         id: formId,
-        component: "Form",
+        component: "ResourceForm",
         children: [
           firstInputId,
           secondInputId,
@@ -721,7 +721,7 @@ test("Preview Form with no Actions navigates query values without a Resource POS
       {
         type: "instance",
         id: formId,
-        component: "Form",
+        component: "ResourceForm",
         children: [firstInputId, secondInputId, buttonId].map((value) => ({
           type: "id",
           value,

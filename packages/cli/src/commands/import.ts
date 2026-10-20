@@ -6,7 +6,7 @@ import {
   bundleVersion,
   getBundleVersion,
   getBundleVersionMismatchMessage,
-  publishedProjectBundle,
+  historicalPublishedProjectBundle,
 } from "@webstudio-is/protocol";
 import { importProjectBundleWithAssets } from "@webstudio-is/http-client";
 import { LOCAL_DATA_FILE } from "../config";
@@ -135,7 +135,7 @@ export const importProject = async (
     throw new HandledCliError();
   }
 
-  const parsedData = publishedProjectBundle.safeParse(data);
+  const parsedData = historicalPublishedProjectBundle.safeParse(data);
   if (parsedData.success === false) {
     importing.stop(
       `${invalidProjectBundleMessage} Invalid fields: ${formatZodIssues(

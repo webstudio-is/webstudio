@@ -40,6 +40,7 @@ import {
   bundleVersion as currentBundleVersion,
   importProjectBundleResult,
   getMissingImportedAssetFiles,
+  historicalPublishedProjectBundle,
   publishedProjectBundle,
   maxProjectBundleSize,
   stagedUploadPath,
@@ -1286,7 +1287,7 @@ export const loadProjectBundleByBuildId = async (
   if (missingJsonPropValues !== undefined) {
     throw new MissingJsonPropValueError(missingJsonPropValues);
   }
-  return publishedProjectBundle.parse(data);
+  return historicalPublishedProjectBundle.parse(data);
 };
 
 export const loadProjectBundleByProjectId = async (
@@ -1297,10 +1298,21 @@ export const loadProjectBundleByProjectId = async (
     projectId: params.projectId,
     bundleVersion: currentBundleVersion,
   });
-  return publishedProjectBundle.parse(data);
+  return historicalPublishedProjectBundle.parse(data);
 };
 
 export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
+  if (
+    "formComponentIdentityVersion" in project.build.pages ||
+    project.build.instances.some(
+      ([, instance]) =>
+        instance.component === "Form" || instance.component === "NativeForm"
+    )
+  ) {
+    throw new Error(
+      "Historical form identities must be normalized before export."
+    );
+  }
   const normalizedProject = publishedProjectBundle.parse(project);
   const {
     assets,

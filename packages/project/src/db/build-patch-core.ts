@@ -1,4 +1,9 @@
 import type { Patch } from "immer";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
+import {
+  hasHistoricalFormComponentIdentityVersion,
+  migratePages,
+} from "@webstudio-is/project-migrations/pages";
 import {
   type Breakpoints,
   breakpoints,
@@ -203,6 +208,31 @@ export const createBuildPatchUpdate = async ({
   const assetPatches: Patch[][] = [];
   const assetFolderPatches: Patch[][] = [];
 
+  // Persist the identity transition in the same Build update as either namespace.
+  // A pages-only edit must not erase the historical discriminator while Form
+  // instances still depend on it.
+  const touchesFormIdentity = transactions.some((transaction) =>
+    transaction.payload.some(
+      ({ namespace, patches }) =>
+        patches.length > 0 &&
+        (namespace === "pages" || namespace === "instances")
+    )
+  );
+  if (touchesFormIdentity) {
+    const rawPages = parseConfig<unknown>(build.pages);
+    const hasModernFormMarker =
+      hasHistoricalFormComponentIdentityVersion(rawPages);
+    buildData.pages = migratePages(rawPages);
+    buildData.instances = parseInstanceData(build.instances);
+    const changedInstanceIds = migrateResourceFormInstancesMutable(
+      buildData.instances.values(),
+      hasModernFormMarker
+    );
+    for (const instanceId of changedInstanceIds) {
+      touchedInstances.keys.add(instanceId);
+    }
+  }
+
   for (const transaction of transactions) {
     for (const change of transaction.payload) {
       const { namespace, patches } = change;
@@ -241,11 +271,28 @@ export const createBuildPatchUpdate = async ({
         const instances =
           buildData.instances ?? parseInstanceData(build.instances);
 
-        buildData.instances = applyBuildNamespacePatches(
+        const patchedInstances = applyBuildNamespacePatches(
           "instances",
           instances,
           patches
         );
+
+        // The stored instances were migrated before applying patches. A stale
+        // client may still send Form for a managed form, while an existing
+        // WebhookForm must keep its identity if that client replaces it.
+        let normalizedInstances: Instances | undefined;
+        for (const [instanceId, instance] of patchedInstances) {
+          if (instance.component !== "Form") {
+            continue;
+          }
+          const component =
+            instances.get(instanceId)?.component === "WebhookForm"
+              ? "WebhookForm"
+              : "ResourceForm";
+          normalizedInstances ??= new Map(patchedInstances);
+          normalizedInstances.set(instanceId, { ...instance, component });
+        }
+        buildData.instances = normalizedInstances ?? patchedInstances;
 
         const cycles = findCycles(buildData.instances?.values() ?? []);
         if (cycles.length > 0) {

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -684,6 +684,105 @@ describe("cli project session storage", () => {
       )
     ).resolves.toEqual({ revision: expect.any(String) });
   });
+
+  test.each([
+    { marker: 1, expected: "ResourceForm" },
+    { marker: undefined, expected: "WebhookForm" },
+  ])(
+    "normalizes historical $expected in session and restore storage",
+    async ({ marker, expected }) => {
+      const directory = await createTemporaryDirectory();
+      const sessionPath = join(directory, ".webstudio", "project-session.json");
+      const restorePath = join(directory, ".webstudio", "restore-points.json");
+      const sessionStorage = createCliProjectSessionStorage(sessionPath);
+      const restoreStorage = createCliProjectRestorePointStorage(restorePath);
+      const state = createBuilderStateFromSnapshot({
+        pages: {
+          homePageId: "home",
+          rootFolderId: "root",
+          pages: new Map([
+            [
+              "home",
+              {
+                id: "home",
+                name: "Home",
+                path: "",
+                title: "Home",
+                rootInstanceId: "form",
+                meta: {},
+              },
+            ],
+          ]),
+          folders: new Map([
+            [
+              "root",
+              { id: "root", name: "Root", slug: "", children: ["home"] },
+            ],
+          ]),
+        },
+        instances: [
+          [
+            "form",
+            {
+              type: "instance",
+              id: "form",
+              component: "ResourceForm",
+              children: [],
+            },
+          ],
+        ],
+      });
+      const snapshot = {
+        projectId: "project-1",
+        buildId: "build-1",
+        version: 3,
+        state,
+        freshness: createBuilderStateFreshness({ state, version: 3 }),
+        compatibilityVersion: "test",
+        compatibility: {
+          sessionVersion: "test",
+          runtimeContractVersion: "test-runtime",
+          projectSchemaVersion: "test-schema",
+        },
+      };
+      const { revision } = (await sessionStorage.save(snapshot, {}))!;
+      const point = await restoreStorage.create("Historical", snapshot);
+
+      const makeHistorical = (saved: {
+        state: {
+          instances: [string, { component: string }][];
+          pages: Record<string, unknown>;
+        };
+      }) => {
+        saved.state.instances[0][1].component = "Form";
+        if (marker !== undefined) {
+          saved.state.pages.formComponentIdentityVersion = marker;
+        }
+        return saved;
+      };
+      await writeFile(
+        sessionPath,
+        JSON.stringify(
+          makeHistorical(JSON.parse(await readFile(sessionPath, "utf8")))
+        )
+      );
+      const restoreFile = JSON.parse(await readFile(restorePath, "utf8"));
+      makeHistorical(restoreFile.points[0].snapshot);
+      await writeFile(restorePath, JSON.stringify(restoreFile));
+
+      const loaded = await sessionStorage.load();
+      const restored = await restoreStorage.get(point.id);
+      for (const result of [loaded, restored]) {
+        expect(result?.state.instances?.get("form")?.component).toBe(expected);
+        expect(result?.state.pages).not.toHaveProperty(
+          "formComponentIdentityVersion"
+        );
+        expect(result?.compatibilityVersion).toBe("test");
+        expect(result?.version).toBe(3);
+      }
+      expect(loaded?.revision).toBe(revision);
+    }
+  );
 });
 
 describe("CLI/server operation contract", () => {
@@ -1081,6 +1180,12 @@ describe("cli project session transport", () => {
               type: "instance",
               id: "body",
               component: "Body",
+              children: [{ type: "id", value: "form" }],
+            },
+            {
+              type: "instance",
+              id: "form",
+              component: "Form",
               children: [],
             },
           ],
@@ -1094,7 +1199,9 @@ describe("cli project session transport", () => {
     });
 
     expect(snapshot.state.pages?.pages.get("home")?.name).toBe("Home");
-    expect(snapshot.state.pages?.formComponentIdentityVersion).toBe(1);
+    expect("formComponentIdentityVersion" in (snapshot.state.pages ?? {})).toBe(
+      false
+    );
     expect(snapshot.state.pages?.pageTemplates?.get("template-1")?.name).toBe(
       "Landing"
     );
@@ -1107,44 +1214,60 @@ describe("cli project session transport", () => {
       "home",
     ]);
     expect(snapshot.state.instances?.get("body")?.component).toBe("Body");
+    expect(snapshot.state.instances?.get("form")?.component).toBe(
+      "ResourceForm"
+    );
     expect(snapshot.state.projectSettings).toEqual({
       meta: { siteName: "Canonical Acme" },
       compiler: { atomicStyles: false },
     });
   });
 
-  test("preserves an absent Form identity version in legacy public snapshots", async () => {
+  test("reconstructs unmarked old-server Form snapshots as WebhookForm", async () => {
+    const includes: string[][] = [];
     const transport = createCliProjectSessionTransport({
       connection: {
         projectId: "project-1",
         origin: "https://example.com",
         authToken: "token",
       },
-      getBuildSnapshot: async () => ({
-        projectId: "project-1",
-        buildId: "build-1",
-        version: 1,
-        homePageId: "home",
-        rootFolderId: "root",
-        pages: [
-          {
-            id: "home",
-            name: "Home",
-            path: "",
-            title: "Home",
-            rootInstanceId: "body",
-            meta: {},
-          },
-        ],
-        folders: [{ id: "root", name: "Root", slug: "", children: ["home"] }],
-      }),
+      getBuildSnapshot: async ({ include }) => {
+        includes.push(include ?? []);
+        return {
+          projectId: "project-1",
+          buildId: "build-1",
+          version: 1,
+          homePageId: "home",
+          rootFolderId: "root",
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              path: "",
+              title: "Home",
+              rootInstanceId: "body",
+              meta: {},
+            },
+          ],
+          folders: [{ id: "root", name: "Root", slug: "", children: ["home"] }],
+          instances: [
+            { type: "instance", id: "form", component: "Form", children: [] },
+          ],
+        };
+      },
     });
 
     const snapshot = await transport.fetchNamespaces({
       projectId: "project-1",
-      namespaces: ["pages"],
+      namespaces: ["instances"],
     });
-    expect(snapshot.state.pages?.formComponentIdentityVersion).toBeUndefined();
+    expect("formComponentIdentityVersion" in (snapshot.state.pages ?? {})).toBe(
+      false
+    );
+    expect(snapshot.state.instances?.get("form")?.component).toBe(
+      "WebhookForm"
+    );
+    expect(includes[0]).toContain("pages");
   });
 
   test("falls back to legacy page settings when the server rejects projectSettings", async () => {

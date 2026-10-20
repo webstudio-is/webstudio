@@ -41,6 +41,7 @@ import {
   RadioAndLabel,
   RadioGroup,
   Select,
+  Text,
   TextArea,
 } from "@webstudio-is/design-system";
 import { $selectedInstance } from "~/shared/nano-states";
@@ -187,7 +188,7 @@ export const EmailResourceForm = forwardRef<
     variable?.scopeInstanceId ?? $selectedInstance.get()?.id;
   const formId = Array.from(instances.values()).find(
     (instance) =>
-      instance.component === "Form" &&
+      instance.component === "ResourceForm" &&
       scopeInstanceId !== undefined &&
       findTreeInstanceIds(instances, instance.id).has(scopeInstanceId)
   )?.id;
@@ -517,6 +518,7 @@ export const EmailResourceForm = forwardRef<
           <Label id={`${attachmentId}-label`}>Attachments</Label>
           <RadioGroup
             aria-labelledby={`${attachmentId}-label`}
+            aria-describedby={`${attachmentId}-limits`}
             value={
               settings.includeAttachments === false ? "exclude" : "include"
             }
@@ -537,6 +539,11 @@ export const EmailResourceForm = forwardRef<
               </Label>
             </RadioAndLabel>
           </RadioGroup>
+          <Text id={`${attachmentId}-limits`} variant="small" color="subtle">
+            Attach up to 32 files. The email request is limited to 7 MiB,
+            including encoded files. Cloudflare also limits the complete email
+            to 5 MiB for most recipients, or 25 MiB for verified destinations.
+          </Text>
         </Grid>
       </Row>
     </>

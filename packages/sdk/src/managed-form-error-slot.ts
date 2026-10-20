@@ -34,9 +34,10 @@ export const resolveManagedFormErrorSlot = (
     }
     const component = parent.component.split(":").at(-1);
     if (component === "WebhookForm") {
+      // Keep the deprecated Webhook Form's authored error message unchanged.
       return instance;
     }
-    if (component === "Form") {
+    if (component === "ResourceForm") {
       const resultAction = [...props.values()].find(
         (prop) =>
           prop.instanceId === parent.id &&

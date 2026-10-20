@@ -7,6 +7,7 @@ import {
   getMissingImportedAssetFiles,
   getBundleVersionMismatchMessage,
   importProjectBundleInput,
+  historicalPublishedProjectBundle,
   publishedProjectBundle,
   bundleVersion,
   stagedUploadPath,
@@ -69,6 +70,27 @@ describe("project bundle contract", () => {
       projectTitle: "Example",
       user: { email: "user@example.com", username: "Site Owner" },
     });
+  });
+
+  test("retains the historical Form marker only in input parsing", () => {
+    const bundle = createPublishedProjectBundleFixture();
+    const historical = {
+      ...bundle,
+      build: {
+        ...bundle.build,
+        pages: { ...bundle.build.pages, formComponentIdentityVersion: 1 },
+      },
+    };
+    expect(
+      historicalPublishedProjectBundle.parse(historical).build.pages
+    ).toHaveProperty("formComponentIdentityVersion", 1);
+    expect(
+      importProjectBundleInput.parse({ projectId: "project", data: historical })
+        .data?.build.pages
+    ).toHaveProperty("formComponentIdentityVersion", 1);
+    expect(
+      publishedProjectBundle.parse(historical).build.pages
+    ).not.toHaveProperty("formComponentIdentityVersion");
   });
 
   test("preserves build-versioned marketplace metadata", () => {

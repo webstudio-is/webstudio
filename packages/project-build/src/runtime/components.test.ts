@@ -1913,7 +1913,7 @@ test("uses component content models to require element children", async () => {
 test("reports unsupported existing resource references in jsx", async () => {
   await expect(
     parseWebstudioJsxFragment(
-      `<Form action={new ResourceValue("resource-id")} />`
+      `<ResourceForm action={new ResourceValue("resource-id")} />`
     )
   ).rejects.toThrow(
     "ResourceValue requires a resource definition. Existing resource ids are not supported in JSX"

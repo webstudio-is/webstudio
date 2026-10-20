@@ -8,7 +8,7 @@ import {
   useLoaderData,
 } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
-import { Form } from "./resource-form";
+import { ResourceForm } from "./resource-form";
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -57,13 +57,13 @@ test("managed submission refreshes mutable page data once without replaying POST
     return (
       <>
         <output>{value}</output>
-        <Form
+        <ResourceForm
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource" }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       </>
     );
   };
@@ -120,7 +120,7 @@ test("success feedback scroll waits until delayed route revalidation settles", a
     return (
       <>
         <output>{value}</output>
-        <Form
+        <ResourceForm
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource" }]}
           state={state}
@@ -128,7 +128,7 @@ test("success feedback scroll waits until delayed route revalidation settles", a
         >
           <button type="submit">Send</button>
           {state === "success" && <div>Submitted</div>}
-        </Form>
+        </ResourceForm>
       </>
     );
   };
@@ -177,7 +177,7 @@ test("success feedback stays visible when restoration follows route idle", async
       <>
         <ScrollRestoration />
         <div style={{ height: window.innerHeight * 2 }} />
-        <Form
+        <ResourceForm
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource" }]}
           state={state}
@@ -185,7 +185,7 @@ test("success feedback stays visible when restoration follows route idle", async
         >
           <button type="submit">Send</button>
           {state === "success" && <div data-feedback="success">Submitted</div>}
-        </Form>
+        </ResourceForm>
         <div style={{ height: window.innerHeight }} />
       </>
     );
@@ -262,12 +262,12 @@ test("failed submissions skip refresh and a later successful submission refreshe
     return (
       <>
         <output>{value}</output>
-        <Form
+        <ResourceForm
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource" }]}
         >
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       </>
     );
   };
@@ -303,13 +303,13 @@ test("a redirect skips refresh", async () => {
       path: "/",
       loader,
       element: (
-        <Form
+        <ResourceForm
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource" }]}
           successRedirect="#done"
         >
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       ),
     },
   ]);
@@ -346,13 +346,13 @@ test("navigation ignores an in-flight submission from the old page", async () =>
       path: "/",
       loader,
       element: (
-        <Form
+        <ResourceForm
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource" }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       ),
     },
     { path: "/next", element: <output>Next page</output> },
@@ -416,7 +416,7 @@ test("refresh failure retains the completed success result and does not replay P
     return (
       <>
         <output>{value}</output>
-        <Form
+        <ResourceForm
           data-ws-managed-form-id="form"
           action={[{ dataSourceId: "resource" }]}
           state={state}
@@ -425,7 +425,7 @@ test("refresh failure retains the completed success result and does not replay P
         >
           <button type="submit">Send</button>
           {state === "success" && <div>Submitted</div>}
-        </Form>
+        </ResourceForm>
       </>
     );
   };

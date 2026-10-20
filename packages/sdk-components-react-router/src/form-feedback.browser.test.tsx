@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
-import { Form } from "./resource-form";
+import { ResourceForm } from "./resource-form";
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -68,12 +68,12 @@ test("managed Form reveals partial failure and leaves visible success feedback i
       errors: [],
     });
   mockManagedHttpAction(action);
-  const FormFixture = () => {
+  const ResourceFormFixture = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
     );
     return (
-      <Form
+      <ResourceForm
         data-ws-managed-form-id="saved-managed-form"
         action={[{ dataSourceId: "first" }, { dataSourceId: "second" }]}
         state={state}
@@ -82,7 +82,7 @@ test("managed Form reveals partial failure and leaves visible success feedback i
         {state !== "success" && <button type="submit">Send</button>}
         {state === "error" && <div data-feedback="error">Partial failure</div>}
         {state === "success" && <div data-feedback="success">Done</div>}
-      </Form>
+      </ResourceForm>
     );
   };
   const scroll = vi
@@ -95,7 +95,7 @@ test("managed Form reveals partial failure and leaves visible success feedback i
       return { top, bottom: top + 30 } as DOMRect;
     }
   );
-  const view = await renderRoute(<FormFixture />, action);
+  const view = await renderRoute(<ResourceFormFixture />, action);
   try {
     await act(async () => view.container.querySelector("button")?.click());
     await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
@@ -139,13 +139,13 @@ test("managed Form reveals authored Error Message on repeated failures", async (
     ],
   }));
   mockManagedHttpAction(action);
-  const FormFixture = () => {
+  const ResourceFormFixture = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
     );
     const [errors, setErrors] = useState<Array<{ message: string }>>([]);
     return (
-      <Form
+      <ResourceForm
         data-ws-managed-form-id="saved-managed-form"
         action={[{ dataSourceId: "first" }]}
         state={state}
@@ -158,7 +158,7 @@ test("managed Form reveals authored Error Message on repeated failures", async (
             {errors.map(({ message }) => message).join("\n")}
           </div>
         )}
-      </Form>
+      </ResourceForm>
     );
   };
   const scroll = vi
@@ -170,7 +170,7 @@ test("managed Form reveals authored Error Message on repeated failures", async (
       return { top, bottom: top + 30 } as DOMRect;
     }
   );
-  const view = await renderRoute(<FormFixture />, action);
+  const view = await renderRoute(<ResourceFormFixture />, action);
   try {
     await act(async () => view.container.querySelector("button")?.click());
     await vi.waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
@@ -194,13 +194,13 @@ test("managed Form reveals authored Error Message on repeated failures", async (
 
 test("managed Form reveals a persistent configuration error", async () => {
   const action = vi.fn();
-  const FormFixture = () => {
+  const ResourceFormFixture = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
     );
     const [errors, setErrors] = useState<Array<{ message: string }>>([]);
     return (
-      <Form
+      <ResourceForm
         action={[{ dataSourceId: "resource" }, { dataSourceId: "resource" }]}
         state={state}
         onStateChange={setState}
@@ -212,10 +212,10 @@ test("managed Form reveals a persistent configuration error", async () => {
             {errors.map(({ message }) => message).join("\n")}
           </div>
         )}
-      </Form>
+      </ResourceForm>
     );
   };
-  const view = await renderRoute(<FormFixture />, action);
+  const view = await renderRoute(<ResourceFormFixture />, action);
   const scroll = vi
     .spyOn(HTMLElement.prototype, "scrollIntoView")
     .mockImplementation(() => {});
@@ -252,12 +252,12 @@ test("managed Form follows a valid success redirect without scrolling feedback",
     .fn()
     .mockResolvedValue({ success: true, status: 200, results: [], errors: [] });
   mockManagedHttpAction(action);
-  const FormFixture = () => {
+  const ResourceFormFixture = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
     );
     return (
-      <Form
+      <ResourceForm
         data-ws-managed-form-id="saved-managed-form"
         action={[{ dataSourceId: "first" }]}
         state={state}
@@ -266,7 +266,7 @@ test("managed Form follows a valid success redirect without scrolling feedback",
       >
         <button type="submit">Send</button>
         {state === "success" && <div data-feedback="success">Done</div>}
-      </Form>
+      </ResourceForm>
     );
   };
   const previousUrl = window.location.href;
@@ -280,7 +280,7 @@ test("managed Form follows a valid success redirect without scrolling feedback",
         bottom: window.innerHeight + 60,
       }) as DOMRect
   );
-  const view = await renderRoute(<FormFixture />, action);
+  const view = await renderRoute(<ResourceFormFixture />, action);
   try {
     await act(async () => view.container.querySelector("button")?.click());
     await vi.waitFor(() => expect(window.location.hash).toBe("#after-form"));

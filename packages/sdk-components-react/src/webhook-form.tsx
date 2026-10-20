@@ -1,5 +1,6 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
+// This module serves only the deprecated Webhook Form. Remove its private Props with it.
 type Props = ComponentProps<"form"> & {
   encType?:
     | "application/x-www-form-urlencoded"
@@ -10,7 +11,7 @@ type Props = ComponentProps<"form"> & {
   onStateChange: (state: "initial" | "success" | "error") => void;
 };
 
-/** @deprecated Legacy Webhook Form is supported through the next release. Use Form for new forms. */
+/** @deprecated Webhook Form is supported through the next release. Use Form for new forms. */
 export const WebhookForm = forwardRef<ElementRef<"form">, Props>(
   ({ children, state = "initial", ...props }, ref) => (
     <form {...props} ref={ref}>

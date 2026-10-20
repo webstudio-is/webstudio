@@ -139,7 +139,7 @@ If you want the export to contain human-readable class names, disable atomic CSS
 
 This is the default behavior if you were to publish to Webstudio Cloud.
 
-The JavaScript application supports dynamic functionality like [CMS integrations](../foundations/cms.md), [Forms](../core-components/form.md) with HTTP Resource actions, Webhook Forms, [image optimization](../core-components/image.md#optimize), and redirects.
+The JavaScript application supports dynamic functionality like [CMS integrations](../foundations/cms.md), [Forms](../core-components/form.md) with HTTP Resource actions, existing [deprecated Webhook Forms](../core-components/webhook-form.md), [image optimization](../core-components/image.md#optimize), and redirects.
 
 JavaScript applications require a hosting environment that handles server-side code execution, fetching data from CMS integrations, and more.
 
@@ -207,7 +207,7 @@ While static site exporting and hosting are less technical, this comes at the co
 * Redirects
 * Statuses
 * Client navigation
-* Webhook form
+* Webhook Form (deprecated)
 * Form submission to Resource actions
 * Image optimization
 * No robots.txt

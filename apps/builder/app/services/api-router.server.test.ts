@@ -150,6 +150,37 @@ describe("api router build operation adapters", () => {
     expect(simulate).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: "project-1", formId: "form-1" })
     );
+    simulate.mockResolvedValueOnce({
+      success: false,
+      status: 502,
+      results: [],
+      errors: [
+        {
+          status: 429,
+          resourceId: "email-resource",
+          code: "E_DAILY_LIMIT_EXCEEDED",
+          body: { error: { code: "E_DAILY_LIMIT_EXCEEDED" } },
+          message:
+            "Cloudflare's daily email sending limit was reached. Try again later.",
+        },
+      ],
+    });
+    await expect(
+      createCaller(createContext(true)).forms.simulateSubmission(input)
+    ).resolves.toEqual({
+      success: false,
+      status: 502,
+      results: [],
+      errors: [
+        {
+          status: 429,
+          resourceId: "email-resource",
+          code: "E_DAILY_LIMIT_EXCEEDED",
+          message:
+            "Cloudflare's daily email sending limit was reached. Try again later.",
+        },
+      ],
+    });
   });
   test("enforces plan contact-address limits through project settings updates", async () => {
     server.use(postgrestDb.get("Project", () => json({ userId: "owner-1" })));

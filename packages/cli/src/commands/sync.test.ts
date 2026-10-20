@@ -207,6 +207,51 @@ test("adds current bundle version when synchronizing data from old API", async (
   );
 });
 
+test.each([
+  { marker: 1, expected: "ResourceForm" },
+  { marker: undefined, expected: "WebhookForm" },
+])(
+  "exports an old API Form as $expected without a marker",
+  async ({ marker, expected }) => {
+    const bundle = createProjectBundle();
+    if (marker !== undefined) {
+      Object.assign(bundle.build.pages, {
+        formComponentIdentityVersion: marker,
+      });
+    }
+    bundle.build.instances.push([
+      "historical-form",
+      {
+        type: "instance",
+        id: "historical-form",
+        component: "Form",
+        children: [],
+      },
+    ]);
+    loadProjectBundleByBuildId.mockResolvedValue(bundle);
+
+    await sync(
+      {
+        authToken: "token-1",
+        buildId: "build-1",
+        origin: "https://example.com",
+      },
+      dependencies
+    );
+
+    const exported = JSON.parse(await readFile(".webstudio/data.json", "utf8"));
+    expect(exported.bundleVersion).toBe(bundleVersion);
+    expect(exported.build.pages).not.toHaveProperty(
+      "formComponentIdentityVersion"
+    );
+    expect(
+      exported.build.instances.find(
+        ([id]: [string]) => id === "historical-form"
+      )?.[1].component
+    ).toBe(expected);
+  }
+);
+
 test("downloads project bundle asset files into local project bundle", async () => {
   const assets = [createImageAssetFixture()];
   loadProjectBundleByBuildId.mockResolvedValue(createProjectBundle({ assets }));

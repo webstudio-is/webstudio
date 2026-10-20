@@ -35,7 +35,7 @@ test("renders templates that import an alternate registered implementation", () 
   expect(template?.instances[0]?.component).toBe("CodeText");
 });
 
-test("lists the managed Form while retaining deprecated Webhook Form", () => {
+test("lists the managed Form while retaining saved Webhook Forms", () => {
   for (const library of canvasComponentLibraries) {
     registerComponentLibrary(library);
   }
@@ -53,25 +53,28 @@ test("lists the managed Form while retaining deprecated Webhook Form", () => {
     expect.objectContaining({
       name: "form",
       label: "Form (Beta)",
-      firstInstance: expect.objectContaining({ component: "Form" }),
+      firstInstance: expect.objectContaining({ component: "ResourceForm" }),
     }),
   ]);
 
-  // The legacy template remains in its original category through the next release.
+  // New sites use Form while saved Webhook Forms remain registered for rendering.
   expect(
     itemsByCategory.get("data")?.some(({ name }) => name === "WebhookForm")
-  ).toBe(true);
+  ).toBe(false);
 
   // Saved instances keep their original component IDs and implementations.
-  expect($registeredComponents.get().has("Form")).toBe(true);
-  expect($registeredComponents.get().has("ResourceForm")).toBe(false);
+  expect($registeredComponents.get().has("ResourceForm")).toBe(true);
+  expect($registeredComponents.get().has("Form")).toBe(false);
   expect($registeredComponents.get().has("WebhookForm")).toBe(true);
   expect($registeredComponents.get().has("RemixForm")).toBe(true);
-  expect($registeredComponentMetas.get().get("Form")?.deprecated).toBe(
+  expect($registeredComponentMetas.get().get("ResourceForm")?.deprecated).toBe(
     undefined
   );
   expect($registeredComponentMetas.get().get("WebhookForm")?.label).toBe(
     "Webhook Form"
+  );
+  expect($registeredComponentMetas.get().get("WebhookForm")?.deprecated).toBe(
+    true
   );
   expect($registeredComponentMetas.get().get("RemixForm")?.deprecated).toBe(
     true

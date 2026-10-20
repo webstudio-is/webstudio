@@ -302,7 +302,7 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
     const variables = await call("list-variables", { limit: 50 });
     const form = (
       instances.data.instances as Array<{ id: string; component: string }>
-    ).find(({ component }) => component === "Form");
+    ).find(({ component }) => component === "ResourceForm");
     expect(form).toBeDefined();
     const formInspection = await call("inspect-instance", {
       instanceId: form?.id,

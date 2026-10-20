@@ -10,7 +10,7 @@ import { test } from "../test";
 
 const execFileAsync = promisify(execFile);
 
-test("MCP-edited saved legacy Webhook Form action uses current dynamic route params in generated Preview", async ({
+test("MCP-edited saved deprecated Webhook Form action uses current dynamic route params in generated Preview", async ({
   page,
   context,
 }) => {
@@ -42,7 +42,7 @@ test("MCP-edited saved legacy Webhook Form action uses current dynamic route par
           )
         ),
         fixture.projectId,
-        receiver.url,
+        "https://mcp-delivery.example/submit",
       ],
       {
         timeout: 60_000,
@@ -59,6 +59,7 @@ test("MCP-edited saved legacy Webhook Form action uses current dynamic route par
     );
     await withGeneratedPreview({
       projectId: fixture.projectId,
+      evaluationReceiverPort: new URL(receiver.url).port,
       callback: async ({ url }) => {
         await page.route("**/*", (route) =>
           new URL(route.request().url()).hostname === "127.0.0.1"

@@ -2,7 +2,7 @@ import type { DataSource, DataSources } from "./schema/data-sources";
 import type { Page } from "./schema/pages";
 import type { Resource, Resources } from "./schema/resources";
 import type { Prop, Props } from "./schema/props";
-import type { Instance, Instances } from "./schema/instances";
+import type { Instances } from "./schema/instances";
 import type { Scope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
 import { findTreeInstanceIds } from "./instances-utils";
@@ -12,6 +12,7 @@ import {
   getResourceDependencyIds,
   getResourceDataSourceIds,
 } from "./resource-dependencies";
+import { migrateDeprecatedWebhookFormActions } from "./form/deprecated-webhook-form-actions";
 
 export const generateResourceRequestFields = ({
   resource,
@@ -378,7 +379,7 @@ export const generateResources = ({
       resourceId
     )}, outputName: ${JSON.stringify(name)}, dependencies: ${JSON.stringify(
       dependencies
-    )}, createRequest: ${name} },\n`;
+    )}, createRequest: ${name}, control: ${JSON.stringify(resource.control)}, bodyFormat: ${JSON.stringify(resource.bodyFormat)} },\n`;
   }
   generated += `    ],\n`;
   generated += `    rootIds: [\n`;
@@ -432,6 +433,9 @@ export const generateResources = ({
     }
   }
 
+  // Deprecated Webhook Form is the only production reader of this action lookup.
+  // Remove _action and its return field with the deprecated Webhook Form adapter; actionResourceProps
+  // also drives the shared resource graph and must remain.
   generated += `  const _action = new Map<string, { id: string; outputName: string }>([\n`;
   for (const prop of actionResourceProps) {
     const resource = resources.get(prop.value);
@@ -452,82 +456,14 @@ export const generateResources = ({
   return generated;
 };
 
-const getMethod = (value: string | undefined) => {
-  switch (value?.toLowerCase()) {
-    case "get":
-      return "get";
-    case "delete":
-      return "delete";
-    case "put":
-      return "put";
-    default:
-      return "post";
-  }
-};
-
 /**
- * migrate webhook forms to resource action
- * @todo move to client migrations eventually
+ * @deprecated Compatibility export for saved Webhook Form action migration.
+ * Remove this wrapper with the deprecated Webhook Form implementation.
  */
-export const replaceFormActionsWithResources = ({
-  props,
-  instances,
-  resources,
-}: {
+export const replaceFormActionsWithResources = (options: {
   props: Props;
   instances: Instances;
   resources: Resources;
 }) => {
-  const formProps = new Map<
-    Instance["id"],
-    { method?: string; action?: string }
-  >();
-  for (const prop of props.values()) {
-    if (
-      prop.name === "method" &&
-      prop.type === "string" &&
-      instances.get(prop.instanceId)?.component === "WebhookForm"
-    ) {
-      let data = formProps.get(prop.instanceId);
-      if (data === undefined) {
-        data = {};
-        formProps.set(prop.instanceId, data);
-      }
-      data.method = prop.value;
-      props.delete(prop.id);
-    }
-    if (
-      prop.name === "action" &&
-      prop.type === "string" &&
-      prop.value &&
-      instances.get(prop.instanceId)?.component === "WebhookForm"
-    ) {
-      let data = formProps.get(prop.instanceId);
-      if (data === undefined) {
-        data = {};
-        formProps.set(prop.instanceId, data);
-      }
-      data.action = prop.value;
-      props.set(prop.id, {
-        id: prop.id,
-        instanceId: prop.instanceId,
-        name: prop.name,
-        type: "resource",
-        value: prop.instanceId,
-      });
-    }
-  }
-  for (const [instanceId, { action, method }] of formProps) {
-    if (action) {
-      resources.set(instanceId, {
-        id: instanceId,
-        name: "action",
-        method: getMethod(method),
-        url: JSON.stringify(action),
-        headers: [
-          { name: "Content-Type", value: JSON.stringify("application/json") },
-        ],
-      });
-    }
-  }
+  migrateDeprecatedWebhookFormActions(options);
 };

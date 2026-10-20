@@ -8,7 +8,10 @@ import {
   type StyleDecl,
   type WebstudioData,
 } from "@webstudio-is/sdk";
-import { migratePages } from "./pages";
+import {
+  hasHistoricalFormComponentIdentityVersion,
+  migratePages,
+} from "./pages";
 import { migrateResourcesMutable } from "./resources";
 import { migrateStylesMutable } from "./styles";
 
@@ -67,18 +70,24 @@ export const migrateContentBlockDocumentBindingsMutable = (
 
 export const migrateResourceFormInstancesMutable = (
   instances: Iterable<Instance>,
-  migrateLegacyForm: boolean
+  hasModernFormMarker: boolean
 ) => {
+  const changedInstanceIds = new Set<Instance["id"]>();
   for (const instance of instances) {
-    if (migrateLegacyForm && instance.component === "Form") {
-      instance.component = "WebhookForm";
+    const originalComponent = instance.component;
+    if (instance.component === "Form") {
+      instance.component = hasModernFormMarker ? "ResourceForm" : "WebhookForm";
     } else if (
       instance.component === "NativeForm" ||
       instance.component === "ResourceForm"
     ) {
-      instance.component = "Form";
+      instance.component = "ResourceForm";
+    }
+    if (instance.component !== originalComponent) {
+      changedInstanceIds.add(instance.id);
     }
   }
+  return changedInstanceIds;
 };
 
 export const migrateCodeTextContentMutable = (
@@ -193,12 +202,14 @@ const migrateContentBlockImageStylesMutable = (
  * load boundaries before all callers stop seeing older persisted shapes.
  */
 export const migrateWebstudioDataMutable = (data: WebstudioData) => {
+  const hasModernFormMarker = hasHistoricalFormComponentIdentityVersion(
+    data.pages
+  );
   data.pages = migratePages(data.pages);
   migrateResourceFormInstancesMutable(
     data.instances.values(),
-    data.pages.formComponentIdentityVersion === undefined
+    hasModernFormMarker
   );
-  data.pages.formComponentIdentityVersion = 1;
   migrateResourcesMutable(data.resources.values());
   migrateStylesMutable(data.styles);
   migrateCodeTextContentMutable(data);

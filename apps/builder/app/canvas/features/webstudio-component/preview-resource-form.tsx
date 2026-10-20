@@ -8,7 +8,7 @@ import {
 import { useStore } from "@nanostores/react";
 import { mergeRefs } from "@react-aria/utils";
 import { selectorIdAttribute } from "@webstudio-is/react-sdk";
-import { Form as ResourceForm } from "@webstudio-is/sdk-components-react/components";
+import { ResourceForm } from "@webstudio-is/sdk-components-react/components";
 import type { submitManagedForm } from "@webstudio-is/sdk-components-react";
 import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
 import { $selectedPageHash } from "~/shared/nano-states/pages";

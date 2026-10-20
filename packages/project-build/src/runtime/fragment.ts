@@ -58,6 +58,21 @@ import {
 } from "./style-utils";
 import { countDataSourceAssetReferences } from "./assets";
 import { throwBuilderRuntimeError } from "./errors";
+import {
+  ambiguousFormClipboardMessage,
+  hasAmbiguousFormInstance,
+} from "./fragment-identity";
+
+export const assertNoAmbiguousFormInstance = (
+  fragment: Pick<WebstudioFragment, "instances">
+) => {
+  if (hasAmbiguousFormInstance(fragment)) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      ambiguousFormClipboardMessage
+    );
+  }
+};
 
 const createNanoId = () => createId("nano");
 
@@ -105,6 +120,13 @@ export const listFragmentExpressions = (fragment: WebstudioFragment) => [
 
 export const webstudioFragmentMutationInput = webstudioFragment.superRefine(
   (fragment, context) => {
+    if (hasAmbiguousFormInstance(fragment)) {
+      context.addIssue({
+        code: "custom",
+        message: ambiguousFormClipboardMessage,
+        path: ["instances"],
+      });
+    }
     for (const entry of listFragmentExpressions(fragment)) {
       const errors = getExpressionErrorMessages({
         expression: entry.expression,
@@ -610,6 +632,7 @@ export const insertWebstudioFragmentCopy = ({
   createId?: () => string;
   contentMode?: boolean;
 }) => {
+  assertNoAmbiguousFormInstance(fragment);
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
   const newDataIds = {
@@ -858,7 +881,7 @@ export const insertWebstudioFragmentCopy = ({
     }
     const isResourceFormAction =
       prop.name === "action" &&
-      fragmentInstances.get(prop.instanceId)?.component === "Form";
+      fragmentInstances.get(prop.instanceId)?.component === "ResourceForm";
     prop = clonePropForInstance({
       prop: structuredClone(unwrap(prop)),
       propId: createId(),

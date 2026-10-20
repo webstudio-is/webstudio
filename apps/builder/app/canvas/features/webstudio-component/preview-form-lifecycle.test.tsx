@@ -199,7 +199,7 @@ test.each([
     const form: Instance = {
       type: "instance" as const,
       id: "form",
-      component: "Form",
+      component: "ResourceForm",
       children: [{ type: "id" as const, value: slot.id }],
     };
     $instances.set(

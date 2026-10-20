@@ -5,9 +5,9 @@ import {
   useNavigation,
   useRevalidator,
 } from "react-router";
-import { Form as SharedForm } from "@webstudio-is/sdk-components-react/components";
+import { ResourceForm as SharedForm } from "@webstudio-is/sdk-components-react/components";
 
-export const Form = forwardRef<
+export const ResourceForm = forwardRef<
   ElementRef<typeof SharedForm>,
   ComponentProps<typeof SharedForm>
 >((props, ref) => {
@@ -46,4 +46,4 @@ export const Form = forwardRef<
   );
 });
 
-Form.displayName = "Form";
+ResourceForm.displayName = "ResourceForm";

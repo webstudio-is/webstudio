@@ -2,7 +2,7 @@ export {
   Body,
   Link,
   RichTextLink,
-  Form,
+  ResourceForm,
   WebhookForm,
   RemixForm,
 } from "@webstudio-is/sdk-components-react/metas";

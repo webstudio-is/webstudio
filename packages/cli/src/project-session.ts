@@ -6,9 +6,11 @@ import { cwd } from "node:process";
 import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
 import { compileContentSource } from "@webstudio-is/content-engine/compiler";
 import {
+  hasHistoricalFormComponentIdentityVersion,
   migratePages,
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
 import * as httpClient from "@webstudio-is/http-client";
 import { createHttpAssetContentRepository } from "@webstudio-is/content-engine/asset-content-repository";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
@@ -187,6 +189,7 @@ type PublicBuildSnapshot = Omit<
   version: number;
   homePageId?: string;
   rootFolderId?: string;
+  /** Keep while unversioned saved projects are supported; tracks the Form identity migration. */
   formComponentIdentityVersion?: number;
   pages?: unknown;
   pageTemplates?: unknown;
@@ -280,7 +283,6 @@ const toPages = (snapshot: PublicBuildSnapshot) => {
   return migratePages({
     homePageId: snapshot.homePageId,
     rootFolderId: snapshot.rootFolderId,
-    formComponentIdentityVersion: snapshot.formComponentIdentityVersion,
     pages: snapshot.pages,
     pageTemplates: snapshot.pageTemplates,
     folders: snapshot.folders,
@@ -292,16 +294,32 @@ const toPages = (snapshot: PublicBuildSnapshot) => {
 
 const toRemoteSnapshot = (
   snapshot: PublicBuildSnapshot
-): ProjectSessionRemoteSnapshot => ({
-  projectId: snapshot.projectId,
-  buildId: snapshot.buildId,
-  version: snapshot.version,
-  state: createBuilderStateFromBuildData({
-    ...snapshot,
-    pages: toPages(snapshot),
-    dataSources: snapshot.dataSources ?? snapshot.variables ?? [],
-  }),
-});
+): ProjectSessionRemoteSnapshot => {
+  if (
+    snapshot.pages === undefined &&
+    snapshot.instances?.some((instance) => instance.component === "Form")
+  ) {
+    throw new Error("A snapshot with instances must include pages.");
+  }
+  const instances = snapshot.instances?.map((instance) => ({ ...instance }));
+  if (instances !== undefined) {
+    migrateResourceFormInstancesMutable(
+      instances,
+      hasHistoricalFormComponentIdentityVersion(snapshot)
+    );
+  }
+  return {
+    projectId: snapshot.projectId,
+    buildId: snapshot.buildId,
+    version: snapshot.version,
+    state: createBuilderStateFromBuildData({
+      ...snapshot,
+      instances,
+      pages: toPages(snapshot),
+      dataSources: snapshot.dataSources ?? snapshot.variables ?? [],
+    }),
+  };
+};
 
 const publicOperationById = new Map(
   publicApiOperations.map((operation) => [operation.id, operation])
@@ -641,10 +659,32 @@ const withMappedRemoteError = async <Result>(task: () => Promise<Result>) => {
 
 const parsePersistedSnapshot = (
   value: PersistedCliProjectSessionSnapshot
-): ProjectSessionPersistedSnapshot => ({
-  ...value,
-  state: createBuilderStateFromSerializedSnapshot(value.state),
-});
+): ProjectSessionPersistedSnapshot => {
+  const instances = value.state.instances?.map(
+    ([id, instance]) => [id, { ...instance }] as const
+  );
+  if (
+    value.state.pages === undefined &&
+    instances?.some(([, instance]) => instance.component === "Form")
+  ) {
+    throw new Error(
+      "A persisted snapshot with Form instances must include pages."
+    );
+  }
+  if (instances !== undefined) {
+    migrateResourceFormInstancesMutable(
+      instances.map(([, instance]) => instance),
+      hasHistoricalFormComponentIdentityVersion(value.state.pages)
+    );
+  }
+  return {
+    ...value,
+    state: createBuilderStateFromSerializedSnapshot({
+      ...value.state,
+      instances,
+    }),
+  };
+};
 
 const serializePersistedSnapshot = (
   snapshot: ProjectSessionPersistedSnapshot
@@ -793,7 +833,11 @@ export const createCliProjectSessionTransport = ({
           include,
         })
       ) as Promise<PublicBuildSnapshot>;
-    const includes = getPublicBuildIncludes(namespaces);
+    // Older servers need pages to disambiguate historical Form instances.
+    const readNamespaces = namespaces.includes("instances")
+      ? [...namespaces, "pages" as const]
+      : namespaces;
+    const includes = getPublicBuildIncludes(readNamespaces);
     let snapshot: PublicBuildSnapshot;
     try {
       snapshot = await fetchSnapshot(includes);
@@ -804,7 +848,7 @@ export const createCliProjectSessionTransport = ({
       ) {
         throw error;
       }
-      snapshot = await fetchSnapshot(getLegacyPublicApiInclude(namespaces));
+      snapshot = await fetchSnapshot(getLegacyPublicApiInclude(readNamespaces));
     }
     return toRemoteSnapshot(snapshot);
   },

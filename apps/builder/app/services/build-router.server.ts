@@ -28,6 +28,7 @@ import {
   importProjectBundleInput,
   bundleVersion,
   publishedProjectBundle,
+  historicalPublishedProjectBundle,
 } from "@webstudio-is/protocol";
 import { removeAgentInstructionsFromProjectSettings } from "@webstudio-is/project-build";
 import { hydrateRestorePointTransaction } from "@webstudio-is/project-build/project-session";
@@ -151,7 +152,7 @@ const createImportProjectBundleHandler =
         });
         return await importPublishedProjectBundle({
           ctx,
-          data: publishedProjectBundle.parse(JSON.parse(text)),
+          data: historicalPublishedProjectBundle.parse(JSON.parse(text)),
           ignoreVersionCheck: input.ignoreVersionCheck,
           projectId: input.projectId,
         });

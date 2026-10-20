@@ -21,7 +21,7 @@ const slot: Instance = {
 const form: Instance = {
   type: "instance",
   id: "form",
-  component: "Form",
+  component: "ResourceForm",
   children: [{ type: "id", value: slot.id }],
 };
 const instances: Instances = new Map([

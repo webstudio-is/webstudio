@@ -24,6 +24,7 @@ export type PrePublishAuditFinding = {
     pageName?: string;
     pagePath?: string;
     instanceId?: string;
+    instanceSelector?: string[];
     dataSourceId?: string;
     propId?: string;
     resourceId?: string;
@@ -155,8 +156,52 @@ const checkJsonPropValues: PrePublishAuditCheck = ({ props, instances }) =>
       };
     });
 
+const checkDeprecatedWebhookForms: PrePublishAuditCheck = ({
+  pages,
+  instances,
+}) => {
+  const findings: PrePublishAuditFinding[] = [];
+  for (const page of getPublishablePages(pages)) {
+    const visited = new Set<string>();
+    const visit = (instanceId: string, parentSelector: string[]) => {
+      if (visited.has(instanceId)) {
+        return;
+      }
+      visited.add(instanceId);
+      const instance = instances.get(instanceId);
+      if (instance === undefined) {
+        return;
+      }
+      const instanceSelector = [instanceId, ...parentSelector];
+      if (instance.component === "WebhookForm") {
+        findings.push({
+          ruleId: "deprecated-webhook-form",
+          severity: "warning",
+          message:
+            "Webhook Form is deprecated. Replace it with the Form component.",
+          location: {
+            pageId: page.id,
+            pageName: page.name,
+            pagePath: getPagePath(page.id, pages) || "/",
+            instanceId,
+            instanceSelector,
+          },
+        });
+      }
+      for (const child of instance.children ?? []) {
+        if (child.type === "id") {
+          visit(child.value, instanceSelector);
+        }
+      }
+    };
+    visit(page.rootInstanceId, []);
+  }
+  return findings;
+};
+
 const prePublishAuditChecks: PrePublishAuditCheck[] = [
   checkHtmlContentModel,
+  checkDeprecatedWebhookForms,
   checkJsonPropValues,
   checkBuildIntegrity,
 ];

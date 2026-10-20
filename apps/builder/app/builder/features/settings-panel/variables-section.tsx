@@ -237,7 +237,7 @@ const VariablesItem = ({
   const valueSourceId = variable.scopeInstanceId ?? ROOT_INSTANCE_ID;
   const valueSource = instances.get(valueSourceId);
   const formVariableDescription =
-    valueSource?.component === "Form"
+    valueSource?.component === "ResourceForm"
       ? formVariableDescriptions[variable.name]
       : undefined;
   const valueSourceName =

@@ -15,7 +15,8 @@ import { isRootFolder, ROOT_FOLDER_ID } from "@webstudio-is/sdk";
 import { z } from "zod";
 
 type LegacyPages = {
-  formComponentIdentityVersion?: Pages["formComponentIdentityVersion"];
+  /** Historical input only; read before normalizing paired pages and instances. */
+  formComponentIdentityVersion?: number;
   meta?: Pages["meta"];
   compiler?: Pages["compiler"];
   redirects?: Pages["redirects"];
@@ -23,6 +24,14 @@ type LegacyPages = {
   pages: Page[];
   folders?: Folder[];
 };
+
+export const hasHistoricalFormComponentIdentityVersion = (
+  pagesData: unknown
+): boolean =>
+  typeof pagesData === "object" &&
+  pagesData !== null &&
+  "formComponentIdentityVersion" in pagesData &&
+  pagesData.formComponentIdentityVersion !== undefined;
 
 export type SerializedPages = Omit<
   Pages,
@@ -34,7 +43,6 @@ export type SerializedPages = Omit<
 };
 
 export const serializedPages: z.ZodType<SerializedPages, unknown> = z.object({
-  formComponentIdentityVersion: z.number().int().optional(),
   meta: projectMeta.optional(),
   compiler: compilerSettings.optional(),
   redirects: z.array(pageRedirect).optional(),
@@ -115,7 +123,6 @@ const removeOrphanFolderChildren = (
 export const serializePages = (pagesData: Pages): SerializedPages => {
   const parsedPages = pages.parse(pagesData);
   return {
-    formComponentIdentityVersion: parsedPages.formComponentIdentityVersion,
     meta: parsedPages.meta,
     compiler: parsedPages.compiler,
     redirects: parsedPages.redirects,
@@ -139,9 +146,12 @@ export const migratePages = (pagesData: unknown): Pages => {
     const currentPages = pagesData as Pages;
     const result = pages.safeParse(currentPages);
     if (result.success && currentPages.pageTemplates !== undefined) {
+      if (hasHistoricalFormComponentIdentityVersion(currentPages)) {
+        return result.data;
+      }
       return currentPages;
     }
-    return {
+    const normalizedPages = {
       ...currentPages,
       pageTemplates: currentPages.pageTemplates ?? new Map(),
       folders: removeOrphanFolderChildren(
@@ -149,13 +159,16 @@ export const migratePages = (pagesData: unknown): Pages => {
         currentPages.folders
       ),
     };
+    if (hasHistoricalFormComponentIdentityVersion(currentPages)) {
+      return pages.parse(normalizedPages);
+    }
+    return normalizedPages;
   }
 
   if (isSerializedPages(pagesData)) {
     const nextPages = toMap<Page>(pagesData.pages, normalizePage);
     const nextFolders = toMap<Folder>(pagesData.folders);
     return {
-      formComponentIdentityVersion: pagesData.formComponentIdentityVersion,
       meta: pagesData.meta,
       compiler: pagesData.compiler,
       redirects: pagesData.redirects,
@@ -230,7 +243,6 @@ export const migratePages = (pagesData: unknown): Pages => {
   }
 
   return {
-    formComponentIdentityVersion: pagesData.formComponentIdentityVersion,
     meta: pagesData.meta,
     compiler: pagesData.compiler,
     redirects: pagesData.redirects,

@@ -30,7 +30,7 @@ const setup = (resourceNames: readonly string[]) => {
         {
           type: "instance" as const,
           id: "form",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],

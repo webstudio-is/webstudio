@@ -61,7 +61,7 @@ export const prepareManagedFormDraft = ({
   if (
     match === undefined ||
     !findTreeInstanceIds(instances, match.value.rootInstanceId).has(formId) ||
-    instances.get(formId)?.component !== "Form"
+    instances.get(formId)?.component !== "ResourceForm"
   ) {
     throw new Error("Form not found on this page");
   }

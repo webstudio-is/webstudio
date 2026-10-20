@@ -93,7 +93,7 @@ describe("canWrapInstance for components", () => {
       "box",
       ["box", "body"],
       "body",
-      "Form",
+      "ResourceForm",
       undefined,
       $instances.get(),
       $props.get(),

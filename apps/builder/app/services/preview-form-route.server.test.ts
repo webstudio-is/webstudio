@@ -89,7 +89,7 @@ const draftBuild = {
       component: "Body",
       children: [{ type: "id", value: "form" }],
     },
-    { type: "instance", id: "form", component: "Form", children: [] },
+    { type: "instance", id: "form", component: "ResourceForm", children: [] },
   ],
   props: [
     {
@@ -577,11 +577,11 @@ test.each([false, true])(
           contents: `
           import { createElement } from "react";
           import { createRoot } from "react-dom/client";
-          import { Form } from "./resource-form";
+          import { ResourceForm } from "./resource-form";
           import { submitPreviewForm } from "~/shared/preview-form-bridge";
 
           createRoot(document.getElementById("root")).render(
-            createElement(Form, {
+            createElement(ResourceForm, {
               "data-ws-managed-form-id": "form",
               action: [{ dataSourceId: "destination" }],
               onManagedSubmit: (values, signal) => submitPreviewForm({
@@ -1000,7 +1000,7 @@ test("Preview binds each page's submitted values and browser context to its own 
         component: "Body",
         children: [{ type: "id", value: formId }],
       },
-      { type: "instance", id: formId, component: "Form", children: [] },
+      { type: "instance", id: formId, component: "ResourceForm", children: [] },
     ]),
     props: pages.map(({ formId }) => ({
       id: `${formId}-action`,

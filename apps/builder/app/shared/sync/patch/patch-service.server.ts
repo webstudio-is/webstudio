@@ -28,6 +28,7 @@ const baseBuildPatchColumns = [
 ] as const satisfies BuildColumn[];
 
 const contentModeBuildColumns = [
+  "pages",
   "instances",
   "props",
   "styleSources",
@@ -37,10 +38,10 @@ const contentModeBuildColumns = [
 ] as const satisfies BuildColumn[];
 
 const namespaceBuildColumns = {
-  pages: ["pages"],
+  pages: ["pages", "instances"],
   projectSettings: ["projectSettings"],
   breakpoints: ["breakpoints"],
-  instances: ["instances"],
+  instances: ["pages", "instances"],
   props: ["props"],
   styleSourceSelections: ["styleSourceSelections"],
   styleSources: ["styleSources"],
@@ -332,6 +333,7 @@ export const applyPatchRequest = async (
     async () => {
       const build = await loadBuildForContentMode(context, patch.buildId);
       return createContentModeCapabilities({
+        pages: build.pages,
         instances: build.instances,
         props: build.props,
         styleSources: build.styleSources,

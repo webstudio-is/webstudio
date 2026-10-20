@@ -40,8 +40,7 @@ import {
 const Body = createTemplateComponentFixture("Body");
 const Box = createTemplateComponentFixture("Box");
 const Button = createTemplateComponentFixture("Button");
-const Form = createTemplateComponentFixture("Form");
-const ResourceForm = createTemplateComponentFixture("Form");
+const ResourceForm = createTemplateComponentFixture("ResourceForm");
 const Fragment = createTemplateComponentFixture("Fragment");
 const HeadSlot = createTemplateComponentFixture("HeadSlot");
 const Heading = createTemplateComponentFixture("Heading");
@@ -716,20 +715,20 @@ test("generate jsx children with nested instances", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       ...renderData(
-        <Form ws:id="form" prop="value">
+        <ResourceForm ws:id="form" prop="value">
           <Input></Input>
           <Button></Button>
-        </Form>
+        </ResourceForm>
       ),
     })
   ).toEqual(
     validateJSX(
       clear(`
-    <Form
+    <ResourceForm
     prop={"value"}>
     <Input />
     <Button />
-    </Form>
+    </ResourceForm>
     `)
     )
   );
@@ -1421,7 +1420,7 @@ test("generate resource prop with configured form method", () => {
       parameters: [],
       metas: new Map([
         [
-          "Form",
+          "ResourceForm",
           {
             props: {
               action: {
@@ -1436,22 +1435,26 @@ test("generate resource prop with configured form method", () => {
       ]),
       ...renderData(
         <Body ws:id="body">
-          <Form ws:id="form1" action={myResource}></Form>
-          <Form ws:id="form2" action={anotherResource}></Form>
-          <Form ws:id="form3" action={myResource} method="get"></Form>
+          <ResourceForm ws:id="form1" action={myResource}></ResourceForm>
+          <ResourceForm ws:id="form2" action={anotherResource}></ResourceForm>
+          <ResourceForm
+            ws:id="form3"
+            action={myResource}
+            method="get"
+          ></ResourceForm>
         </Body>
       ),
     })
   ).toMatchInlineSnapshot(`
     "const Page = () => {
     return <Body>
-    <Form
+    <ResourceForm
     action={"action"}
     method={"post"} />
-    <Form
+    <ResourceForm
     action={"action_1"}
     method={"get"} />
-    <Form
+    <ResourceForm
     action={"action"}
     method={"get"} />
     </Body>
@@ -2396,7 +2399,7 @@ test("saved managed Form errors render like Preview for malformed values while p
   const form: import("@webstudio-is/sdk").Instance = {
     type: "instance",
     id: "saved-form",
-    component: "Form",
+    component: "ResourceForm",
     children: [{ type: "id", value: slot.id }],
   };
   const dataSources: import("@webstudio-is/sdk").DataSources = new Map([
@@ -2453,7 +2456,7 @@ test("saved managed Form errors render like Preview for malformed values while p
     "createElement",
     "renderText",
     "formatManagedFormErrors",
-    "Form",
+    "ResourceForm",
     "errors",
     `${code}return Page();`
   );

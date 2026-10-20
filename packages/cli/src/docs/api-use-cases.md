@@ -424,14 +424,14 @@ Commands:
 
 - MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<section ws:style={css`padding: 32px;`}><h2>Product OS</h2><Switch><SwitchThumb /></Switch></section>"}
 - MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"@webstudio-is/sdk-components-react-radix:Switch"}
-- MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"Form"}
+- MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"ResourceForm"}
 
 Notes:
 
 - Use MCP `insert-fragment` as the default way to author styled component trees. It converts JSX to a structured fragment before mutation.
 - Use only exact component ids returned by `components.search`, `components.get`, or `templates.get`. Never derive or guess component ids.
 - Use lowercase HTML JSX such as `<div>` and `<form>`. The internal `ws:` namespace is not HTML-tag shorthand.
-- For Webstudio's complete form structure, discover the Form component and insert its automatic template with `insert-component` using component `"Form"`.
+- For Webstudio's complete form structure, discover the Form component and insert its automatic template with `insert-component` using component `"ResourceForm"`.
 - MCP receives JSX as a JSON string because MCP arguments are JSON. The CLI converts it locally before the runtime mutation, so the project session receives structured Webstudio data, not JSX source.
 - In `insert-fragment` JSX, use ``ws:style={css`...`}`` for Webstudio-native CSS, or use React-style object syntax such as `style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
 - Do not access host globals or dynamic code APIs in JSX fragments, including `process`, `globalThis`, `eval`, `Function`, or `constructor`.
@@ -839,7 +839,7 @@ Use the exact component id returned by `components.search` for **Form (Beta)**.
 After inserting its registered template, use the Form instance id for the
 Form-scoped Resource and Action settings.
 
-The new Form's canonical component id is `Form`. The deprecated legacy
+The new Form's canonical component id is `ResourceForm`. The deprecated
 Webhook Form remains available in Builder for existing projects until the next
 release, but is omitted from MCP component discovery. `RemixForm` is deprecated
 compatibility and should not be used for new projects. Always use registry

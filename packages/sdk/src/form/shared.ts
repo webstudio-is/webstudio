@@ -11,6 +11,7 @@ export const formDataParameterName = "formData";
 export const browserInfoParameterName = "browserInfo";
 
 export const internalFormFieldNames = new Set([
+  // Remove this field with the deprecated Webhook Form; the remaining fields serve Form.
   formIdFieldName,
   managedFormIdFieldName,
   managedFormArrayNamesFieldName,
@@ -31,6 +32,8 @@ export type ManagedFormError = Omit<
   resourceId?: string;
   resourceName?: string;
   message: string;
+  /** Safe machine-readable code for a managed Email action, when available. */
+  code?: string;
 };
 
 export type ManagedFormResponse = {

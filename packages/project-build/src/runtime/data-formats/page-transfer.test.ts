@@ -93,3 +93,51 @@ test("keeps clipboard source metadata out of the runtime input", () => {
     })
   ).toEqual(pageTransferItem);
 });
+
+test("rejects ambiguous Form in a nested folder page before paste", () => {
+  const bodyFragment = {
+    ...fragment,
+    instances: [
+      { type: "instance", id: "form", component: "Form", children: [] },
+    ],
+  };
+  const folder = {
+    type: "folder",
+    folder: { id: "folder", name: "Folder", slug: "folder", children: [] },
+    children: [
+      {
+        type: "folder",
+        folder: { id: "nested", name: "Nested", slug: "nested", children: [] },
+        children: [{ ...pageTransferItem, bodyFragment }],
+      },
+    ],
+  };
+  expect(
+    parsePageTransferData(JSON.stringify({ "@webstudio/page/v0.1": folder }))
+  ).toMatchObject({
+    owned: true,
+    valid: false,
+    error: expect.stringMatching(/Copy it again/),
+  });
+});
+
+test.each(["ResourceForm", "WebhookForm", "NativeForm"])(
+  "accepts unambiguous %s page clipboard data",
+  (component) => {
+    expect(
+      parsePageTransferData(
+        JSON.stringify({
+          "@webstudio/page/v0.1": {
+            ...pageTransferItem,
+            bodyFragment: {
+              ...fragment,
+              instances: [
+                { type: "instance", id: "form", component, children: [] },
+              ],
+            },
+          },
+        })
+      )
+    ).toMatchObject({ owned: true, valid: true });
+  }
+);

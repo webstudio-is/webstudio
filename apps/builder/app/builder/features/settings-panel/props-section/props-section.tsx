@@ -196,7 +196,7 @@ const getStandaloneInitialProps = ({
   initialProps: PropAndMeta[];
 }) => {
   const hasVisibleFormActionControl =
-    component === "Form" &&
+    component === "ResourceForm" &&
     [...addedProps, ...initialProps].some(
       (item) => item.meta.control === "form-action"
     );
@@ -236,7 +236,7 @@ const renderProperty = (
           getInstanceKey(item.instanceSelector)
         ) ?? propValues);
 
-  if (component === "Form" && meta.control === "form-action") {
+  if (component === "ResourceForm" && meta.control === "form-action") {
     const redirect = logic.initialProps.find(
       (item) => item.propName === "successRedirect"
     );

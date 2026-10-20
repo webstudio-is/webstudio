@@ -280,8 +280,6 @@ export const getPageDraftabilityError = ({
 
 export const pages = z
   .object({
-    /** One-time migration from the legacy Form component identity. */
-    formComponentIdentityVersion: z.number().int().optional(),
     meta: projectMeta.optional(),
     compiler: compilerSettings.optional(),
     redirects: z.array(pageRedirect).optional(),

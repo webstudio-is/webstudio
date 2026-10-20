@@ -46,7 +46,7 @@ export const HttpResourceForm = forwardRef<
     variable !== undefined &&
     Array.from(props.values()).some(
       (prop) =>
-        instances.get(prop.instanceId)?.component === "Form" &&
+        instances.get(prop.instanceId)?.component === "ResourceForm" &&
         prop.name === "action" &&
         prop.type === "json" &&
         isFormSubmission(prop.value) &&

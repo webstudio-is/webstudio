@@ -43,7 +43,7 @@ Some commonly used properties (see the Settings panel for all available options)
 
 ### Submit Button
 
-Submits the parent form when clicked. Use inside [Form](form.md) or [Webhook Form](webhook-form.md).
+Submits the parent form when clicked. Use inside [Form](form.md), or inside an existing [deprecated Webhook Form](webhook-form.md).
 
 ### Reset Button
 

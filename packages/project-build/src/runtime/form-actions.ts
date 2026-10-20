@@ -42,7 +42,7 @@ const validateFormActionMutation = (
       );
   for (const prop of changedProps) {
     if (
-      instances.get(prop.instanceId)?.component === "Form" &&
+      instances.get(prop.instanceId)?.component === "ResourceForm" &&
       prop.name === "action" &&
       prop.type === "json" &&
       Array.isArray(prop.value) &&

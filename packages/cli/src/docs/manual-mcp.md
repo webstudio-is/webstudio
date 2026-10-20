@@ -43,8 +43,9 @@ the saved Form instance ID and page path. The server uses this project's
 publisher origin. It can trigger the Form's configured HTTP and Email Resources, so verify
 every destination and recipient first. For dynamic checkbox or multiple-select fields,
 pass `arrayNames` to preserve an empty or single-value array when the saved
-field props do not identify the control. The result reports destination statuses
-and errors without Resource bodies. This server simulation does not exercise
+field props do not identify the control. The result reports destination IDs,
+statuses, and errors without Resource bodies. Managed Email errors include a
+code when available. This server simulation does not exercise
 client validation, browser event handlers, navigation, file bytes, or actual
 browser information. The Builder server loads the saved draft and holds the
 Email service credentials; the CLI does not receive those credentials.

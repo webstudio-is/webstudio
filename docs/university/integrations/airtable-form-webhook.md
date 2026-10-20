@@ -6,6 +6,10 @@ description: >-
 
 # How to integrate a Webhook Form with Airtable
 
+{% hint style="info" %}
+**Deprecated:** This guide uses the [Webhook Form](../core-components/webhook-form.md). Use [Form](../core-components/form.md) for new forms.
+{% endhint %}
+
 {% embed url="https://www.youtube.com/watch?v=xYJFh_u-8Tc" %}
 
 Out of the box, Webstudio automatically sends form data to the site owner’s registered email, effectively creating singular records. To expand this functionality, we can seamlessly integrate it with a relational database like Airtable. This will centralize, access, and analyze all your form submission data in one place, making data management a breeze and enabling efficient team collaboration.
