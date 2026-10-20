@@ -570,6 +570,7 @@ const $restrictedFeatures = computed(
 );
 
 const COUNTDOWN_DURATION = 60_000;
+const STATUS_REFRESH_RETRY_DELAY = 5_000;
 
 const usePublishProgress = () => {
   const [startedAt, setStartedAt] = useState<number>();
@@ -611,6 +612,59 @@ const usePublishProgress = () => {
     start,
     dismissCountdown,
   };
+};
+
+const waitForPublishStatus = async (
+  refresh: () => Promise<Project | undefined>
+) => {
+  let sleepTime = 15000;
+  const timeToFinish = Date.now() + PENDING_TIMEOUT + 2 * sleepTime;
+
+  while (Date.now() < timeToFinish) {
+    try {
+      const refreshedProject = await refresh();
+      if (refreshedProject !== undefined) {
+        const { statusText, status } =
+          refreshedProject.latestBuildVirtual != null
+            ? getPublishStatusAndText(refreshedProject.latestBuildVirtual)
+            : {
+                statusText: "Not published",
+                status: "PENDING" as const,
+              };
+
+        if (status === "PUBLISHED" || status === "FAILED") {
+          return { status, statusText };
+        }
+      }
+    } catch (error) {
+      // A failed status request should not stop watching an ongoing publish.
+      console.error("Could not refresh publish status", error);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, sleepTime));
+    sleepTime = Math.max(5000, sleepTime - 5000);
+  }
+};
+
+const refreshUntilSuccess = async (
+  refresh: () => Promise<Project | undefined>,
+  isOpen: () => boolean
+) => {
+  while (isOpen()) {
+    try {
+      if ((await refresh()) !== undefined) {
+        return;
+      }
+    } catch (error) {
+      console.error("Could not refresh publish status", error);
+    }
+
+    if (isOpen()) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, STATUS_REFRESH_RETRY_DELAY)
+      );
+    }
+  }
 };
 
 const Publish = ({
@@ -749,52 +803,26 @@ const Publish = ({
       return;
     }
 
-    let sleepTime = 15000;
-    const timeToFinish = Date.now() + PENDING_TIMEOUT + 2 * sleepTime;
-
-    // Wait until project is published or failed
-    while (Date.now() < timeToFinish) {
-      try {
-        const refreshedProject = await getRefreshedProject(project.id);
-        if (refreshedProject !== undefined) {
-          const { statusText, status } =
-            refreshedProject.latestBuildVirtual != null
-              ? getPublishStatusAndText(refreshedProject.latestBuildVirtual)
-              : {
-                  statusText: "Not published",
-                  status: "PENDING" as const,
-                };
-
-          if (status === "PUBLISHED") {
-            toast.success(
-              <>
-                The project has been successfully published.{" "}
-                {timesLeft > 0 && timesLeft <= 10 && (
-                  <div>
-                    You have {timesLeft} out of {maxDailyPublishesPerUser} daily
-                    publications remaining. The counter resets tomorrow.
-                  </div>
-                )}
-              </>,
-              { duration: 10000 }
-            );
-            break;
-          }
-
-          if (status === "FAILED") {
-            toast.error(statusText);
-            setPublishError(statusText);
-            break;
-          }
-        }
-      } catch (error) {
-        // A failed status request should not stop watching an ongoing publish.
-        console.error("Could not refresh publish status", error);
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, sleepTime));
-
-      sleepTime = Math.max(5000, sleepTime - 5000);
+    const result = await waitForPublishStatus(() =>
+      getRefreshedProject(project.id)
+    );
+    if (result?.status === "PUBLISHED") {
+      toast.success(
+        <>
+          The project has been successfully published.{" "}
+          {timesLeft > 0 && timesLeft <= 10 && (
+            <div>
+              You have {timesLeft} out of {maxDailyPublishesPerUser} daily
+              publications remaining. The counter resets tomorrow.
+            </div>
+          )}
+        </>,
+        { duration: 10000 }
+      );
+    }
+    if (result?.status === "FAILED") {
+      toast.error(result.statusText);
+      setPublishError(result.statusText);
     }
   };
 
@@ -1107,7 +1135,10 @@ const useUserPublishCount = () => {
   };
 };
 
-const getRefreshedProject = async (projectId: Project["id"]) => {
+const getRefreshedProject = async (
+  projectId: Project["id"],
+  showError = true
+) => {
   const result = await nativeClient.domain.project.query(
     {
       projectId,
@@ -1121,7 +1152,9 @@ const getRefreshedProject = async (projectId: Project["id"]) => {
     return result.project;
   }
 
-  toast.error(result.error);
+  if (showError) {
+    toast.error(result.error);
+  }
 };
 
 const refreshProject = async () => {
@@ -1609,9 +1642,16 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     // Refresh a build that finished while the popover was closed, including
     // after a publish status request failed.
     if (publishDialog === "publish" && publishProgress.isPublishing === false) {
-      void refreshProject();
+      let isOpen = true;
+      void refreshUntilSuccess(
+        () => getRefreshedProject(projectId, false),
+        () => isOpen
+      );
+      return () => {
+        isOpen = false;
+      };
     }
-  }, [publishDialog, publishProgress.isPublishing]);
+  }, [projectId, publishDialog, publishProgress.isPublishing]);
   const { canPublishToStagingOnly } = useStore($permissions);
   const isPublishEnabled =
     authTokenPermissions.canPublish || canPublishToStagingOnly;
@@ -1681,4 +1721,8 @@ export const PublishButton = ({ projectId }: PublishProps) => {
   );
 };
 
-export const __testing__ = { usePublishProgress };
+export const __testing__ = {
+  usePublishProgress,
+  waitForPublishStatus,
+  refreshUntilSuccess,
+};

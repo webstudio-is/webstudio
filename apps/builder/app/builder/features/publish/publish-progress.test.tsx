@@ -2,9 +2,11 @@ import { useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
+import type { Project } from "@webstudio-is/project";
 import { __testing__ } from "./publish";
 
-const { usePublishProgress } = __testing__;
+const { usePublishProgress, waitForPublishStatus, refreshUntilSuccess } =
+  __testing__;
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -25,17 +27,33 @@ test("closing publish hides the countdown while polling continues and completion
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-10-20T12:00:00Z"));
 
-  let finishPublish: () => void = () => {};
-  const publish = new Promise<void>((resolve) => {
-    finishPublish = resolve;
-  });
+  let status: "PENDING" | "PUBLISHED" = "PENDING";
+  let statusRequests = 0;
 
   const Harness = () => {
     const [isOpen, setIsOpen] = useState(true);
+    const [completedStatus, setCompletedStatus] = useState<string>();
     const progress = usePublishProgress();
     return (
       <>
-        <button onClick={() => progress.start(() => publish)}>Start</button>
+        <button
+          onClick={() =>
+            progress.start(async () => {
+              const result = await waitForPublishStatus(async () => {
+                statusRequests += 1;
+                return {
+                  latestBuildVirtual: {
+                    createdAt: new Date().toISOString(),
+                    publishStatus: status,
+                  },
+                } as Project;
+              });
+              setCompletedStatus(result?.status);
+            })
+          }
+        >
+          Start
+        </button>
         <button
           onClick={() => {
             progress.dismissCountdown();
@@ -48,7 +66,7 @@ test("closing publish hides the countdown while polling continues and completion
         {isOpen && (
           <output>
             {progress.isPublishing ? "pending" : "complete"}:
-            {progress.countdown ?? "no countdown"}
+            {progress.countdown ?? "no countdown"}:{completedStatus ?? "none"}
           </output>
         )}
       </>
@@ -62,21 +80,50 @@ test("closing publish hides the countdown while polling continues and completion
 
   const [start, close, open] = container.querySelectorAll("button");
   act(() => start.click());
-  expect(container.querySelector("output")?.textContent).toBe("pending:60");
+  expect(container.querySelector("output")?.textContent).toBe(
+    "pending:60:none"
+  );
 
-  act(() => vi.advanceTimersByTime(10_000));
-  expect(container.querySelector("output")?.textContent).toBe("pending:50");
+  await act(async () => vi.advanceTimersByTimeAsync(10_000));
+  expect(container.querySelector("output")?.textContent).toBe(
+    "pending:50:none"
+  );
 
   act(() => close.click());
   act(() => open.click());
   expect(container.querySelector("output")?.textContent).toBe(
-    "pending:no countdown"
+    "pending:no countdown:none"
   );
 
   act(() => close.click());
-  await act(async () => finishPublish());
+  status = "PUBLISHED";
+  await act(async () => vi.advanceTimersByTimeAsync(5_000));
   act(() => open.click());
   expect(container.querySelector("output")?.textContent).toBe(
-    "complete:no countdown"
+    "complete:no countdown:PUBLISHED"
   );
+  expect(statusRequests).toBe(2);
+});
+
+test("reopening refresh retries after a rejected status request", async () => {
+  vi.useFakeTimers();
+  const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+  let attempts = 0;
+  const refresh = async () => {
+    attempts += 1;
+    if (attempts === 1) {
+      throw new Error("Network unavailable");
+    }
+    return {} as Project;
+  };
+
+  try {
+    const done = refreshUntilSuccess(refresh, () => true);
+    expect(attempts).toBe(1);
+    await vi.advanceTimersByTimeAsync(5_000);
+    await done;
+    expect(attempts).toBe(2);
+  } finally {
+    errorLog.mockRestore();
+  }
 });
