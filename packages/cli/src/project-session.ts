@@ -20,6 +20,7 @@ import {
   issueReportEntityId,
   issueReportErrorType,
   issueReportRequestId,
+  issueReportRecentTargetSchema,
   getPublicBuildIncludes,
   publicApiEntityIdFields,
   publicApiContractVersion,
@@ -27,6 +28,7 @@ import {
   publicApiOperations,
   type IssueReportRuntime,
   type IssueReportRecentFailure,
+  type IssueReportRecentTarget,
   type PublicApiCommand,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
@@ -309,7 +311,10 @@ const publicOperationById = new Map(
 
 export const createIssueReportRuntime = (
   recentFailure?: IssueReportRecentFailure,
-  diagnostics?: Pick<IssueReportRuntime, "projectId" | "session" | "preview">
+  diagnostics?: Pick<
+    IssueReportRuntime,
+    "projectId" | "recentTarget" | "session" | "preview"
+  >
 ): IssueReportRuntime => ({
   cliVersion: packageJson.version,
   nodeVersion: process.versions.node,
@@ -369,6 +374,61 @@ const getIssueReportEntityIds = (input: unknown) => {
     }
   }
   return ids;
+};
+
+export const createIssueReportTarget = (
+  tool: string,
+  input: unknown,
+  pageId?: string
+): IssueReportRecentTarget | undefined => {
+  const entityIds = getIssueReportEntityIds(input);
+  if (
+    pageId !== undefined &&
+    !entityIds.some(({ field }) => field === "pageId")
+  ) {
+    const parsed = issueReportEntityId.safeParse({
+      field: "pageId",
+      id: pageId,
+    });
+    if (parsed.success) {
+      entityIds.unshift(parsed.data);
+    }
+  }
+  const target = issueReportRecentTargetSchema.safeParse({
+    tool,
+    entityIds: entityIds.slice(0, 20),
+  });
+  return target.success ? target.data : undefined;
+};
+
+export const createIssueReportTargetTracker = (now = Date.now) => {
+  let recent: { target: IssueReportRecentTarget; at: number } | undefined;
+  const snapshot = () => {
+    if (recent === undefined) {
+      return;
+    }
+    const age = now() - recent.at;
+    return age >= 0 && age <= 10 * 60_000 ? recent : undefined;
+  };
+  return {
+    record(tool: string, input: unknown, pageId?: string) {
+      const target = createIssueReportTarget(tool, input, pageId);
+      if (target !== undefined) {
+        recent = { target, at: now() };
+      }
+    },
+    get: () => snapshot()?.target,
+    restore(target: IssueReportRecentTarget, at: number) {
+      const age = now() - at;
+      if (age >= 0 && age <= 10 * 60_000) {
+        recent = { target, at };
+      }
+    },
+    snapshot,
+    clear() {
+      recent = undefined;
+    },
+  };
 };
 
 export const createIssueReportFailure = (

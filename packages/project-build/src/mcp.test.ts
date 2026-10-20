@@ -9389,7 +9389,9 @@ describe("project session mcp adapter", () => {
           },
         ])
       );
-      expect(onToolSuccess).toHaveBeenCalledWith("list-pages");
+      expect(onToolSuccess).toHaveBeenCalledWith("list-pages", {
+        includeFolders: true,
+      });
     } finally {
       await client.close();
       await server.close();

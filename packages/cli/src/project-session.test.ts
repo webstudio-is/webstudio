@@ -13,6 +13,8 @@ import {
   createCliProjectSessionTransport,
   createIssueReportFailure,
   createIssueReportFailureTracker,
+  createIssueReportTarget,
+  createIssueReportTargetTracker,
   addIssueReportRuntime,
   assertCliEditingContractVersion,
   getCliServerApiContract,
@@ -270,6 +272,37 @@ test("keeps a failed mutation available after a successful diagnostic read", () 
     now - 10 * 60_000 - 1
   );
   expect(restored.get()).toBeUndefined();
+});
+
+test("keeps only validated IDs from the most recent targeted tool", () => {
+  let now = 1_000;
+  const tracker = createIssueReportTargetTracker(() => now);
+  tracker.record("inspect-instance", {
+    instanceId: "instance-1",
+    url: "https://private.example/?authToken=secret",
+  });
+  tracker.record("list-pages", {});
+  expect(tracker.get()).toEqual({
+    tool: "inspect-instance",
+    entityIds: [{ field: "instanceId", id: "instance-1" }],
+  });
+  tracker.record(
+    "screenshot",
+    { path: "/blog/private-slug?authToken=secret" },
+    "page-1"
+  );
+  expect(tracker.get()).toEqual({
+    tool: "screenshot",
+    entityIds: [{ field: "pageId", id: "page-1" }],
+  });
+  expect(JSON.stringify(tracker.snapshot())).not.toContain("private");
+  expect(
+    createIssueReportTarget("inspect-instance", {
+      instanceId: "https://secret",
+    })
+  ).toBeUndefined();
+  now += 10 * 60_000 + 1;
+  expect(tracker.get()).toBeUndefined();
 });
 
 test("reports only the shape of an untransformable server response", () => {
