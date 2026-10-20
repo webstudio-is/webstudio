@@ -115,8 +115,12 @@ export const generateResources = ({
 }) => {
   const usedDataSources: DataSources = new Map();
   const contentInputDataSourceIds = new Set<string>();
+  const resourceSelections = contentBlockResourceSelections.filter(
+    ({ candidates }) =>
+      candidates.some(({ resourceIds }) => resourceIds.length > 0)
+  );
   const selectedResourceIds = new Set(
-    contentBlockResourceSelections.flatMap(({ candidates }) =>
+    resourceSelections.flatMap(({ candidates }) =>
       candidates.flatMap(({ resourceIds }) => resourceIds)
     )
   );
@@ -151,7 +155,7 @@ export const generateResources = ({
     props,
     dataSources,
   });
-  for (const { sourceExpression } of contentBlockResourceSelections) {
+  for (const { sourceExpression } of resourceSelections) {
     for (const dataSourceId of getExpressionDataSourceIds([sourceExpression])) {
       if (unavailableDataSourceIds.has(dataSourceId)) {
         throw new Error(
@@ -290,7 +294,7 @@ export const generateResources = ({
     generatedRequests += `  }\n`;
   }
 
-  const generatedContentSelections = contentBlockResourceSelections.map(
+  const generatedContentSelections = resourceSelections.map(
     ({ sourceExpression, candidates }) => {
       const selectionDataSources: DataSources = new Map();
       const source = generateExpression({

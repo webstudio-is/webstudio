@@ -593,7 +593,8 @@ export const resolvePublishedMdxAssetCandidates = ({
     dataSourceId: string,
     path: readonly string[],
     visiting = new Set<string>(),
-    mutableVariables = new Set<string>()
+    mutableVariables = new Set<string>(),
+    resolvedQueries = new Set<string>()
   ): unknown[] => {
     if (visiting.has(dataSourceId)) {
       throw new Error("Dynamic MDX source data dependency is cyclic");
@@ -625,6 +626,7 @@ export const resolvePublishedMdxAssetCandidates = ({
       if (query === undefined || basePlan === undefined) {
         return [];
       }
+      resolvedQueries.add(dataSource.id);
       if (documentGraph !== undefined) {
         if (
           getDocumentGraphQueryRootIds({
@@ -701,7 +703,8 @@ export const resolvePublishedMdxAssetCandidates = ({
           dependencyId,
           dataPath.slice(1),
           visiting,
-          mutableVariables
+          mutableVariables,
+          resolvedQueries
         );
         visiting.delete(dataSourceId);
       }
@@ -746,6 +749,7 @@ export const resolvePublishedMdxAssetCandidates = ({
       path === undefined ? undefined : decodeDataSourceVariable(path[0]);
     let assetIds: string[] = [];
     const mutableVariables = new Set<string>();
+    const resolvedQueries = new Set<string>();
     try {
       assetIds =
         dataSourceId === undefined || path === undefined
@@ -754,7 +758,8 @@ export const resolvePublishedMdxAssetCandidates = ({
               dataSourceId,
               path.slice(1),
               new Set(),
-              mutableVariables
+              mutableVariables,
+              resolvedQueries
             ).filter(
               (value): value is string =>
                 typeof value === "string" && value.length > 0
@@ -763,11 +768,16 @@ export const resolvePublishedMdxAssetCandidates = ({
       if (allowUnresolved === false) {
         throw error;
       }
+      resolvedQueries.clear();
     }
     if (mutableVariables.size > 0 && allMdxAssetIds !== undefined) {
       assetIds.push(...allMdxAssetIds);
     }
     if (assetIds.length === 0) {
+      if (resolvedQueries.size > 0 && mutableVariables.size === 0) {
+        candidatesByBlock.set(blockInstanceId, []);
+        continue;
+      }
       if (allowUnresolved) {
         continue;
       }
