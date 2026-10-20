@@ -576,6 +576,7 @@ const usePublishProgress = () => {
   const [startedAt, setStartedAt] = useState<number>();
   const [showCountdown, setShowCountdown] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [requestError, setRequestError] = useState<string>();
   const [now, setNow] = useState(Date.now);
 
   useEffect(() => {
@@ -593,25 +594,29 @@ const usePublishProgress = () => {
 
   const dismissCountdown = useCallback(() => setShowCountdown(false), []);
 
-  const start = (
-    publish: () => Promise<void>,
-    onError: (error: unknown) => void
-  ) => {
+  const start = (publish: () => Promise<void>) => {
     const startedAt = Date.now();
     setStartedAt(startedAt);
     setNow(startedAt);
     setShowCountdown(true);
     setIsPublishing(true);
+    setRequestError(undefined);
     publish()
       .catch((error) => {
         console.error(error);
-        onError(error);
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        setRequestError(message);
+        if ($publishDialog.get() !== "publish") {
+          toast.error(message);
+        }
       })
       .finally(() => setIsPublishing(false));
   };
 
   return {
     isPublishing,
+    requestError,
     countdown,
     start,
     dismissCountdown,
@@ -715,18 +720,6 @@ const reportPublishResult = ({
   }
 };
 
-const reportPublishRejection = (
-  error: unknown,
-  setPublishError: (error: string) => void
-) => {
-  const message = error instanceof Error ? error.message : "Unknown error";
-  if ($publishDialog.get() === "publish") {
-    setPublishError(message);
-    return;
-  }
-  toast.error(message);
-};
-
 const Publish = ({
   project,
   timesLeft,
@@ -736,6 +729,7 @@ const Publish = ({
   validationState,
   onValidationStateChange,
   isPublishing,
+  requestError,
   countdown,
   startPublishing,
 }: {
@@ -747,11 +741,9 @@ const Publish = ({
   validationState: PublishValidationState;
   onValidationStateChange: (state: PublishValidationState) => void;
   isPublishing: boolean;
+  requestError: string | undefined;
   countdown: number | undefined;
-  startPublishing: (
-    publish: () => Promise<void>,
-    onError: (error: unknown) => void
-  ) => void;
+  startPublishing: (publish: () => Promise<void>) => void;
 }) => {
   const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
   const [publishError, setPublishError] = useState<
@@ -927,18 +919,16 @@ const Publish = ({
       return;
     }
 
-    startPublishing(
-      () =>
-        runPublishAfterBestEffortChecks({
-          checks: async () => {
-            const checks = await runPublishDiagnostics(project.id);
-            setPublishFindings(checks.findings);
-          },
-          onCheckFailure: (error) =>
-            reportPublishValidationFailure(error, setPublishFindings, true),
-          publish: () => publish(domains),
-        }),
-      (error) => reportPublishRejection(error, setPublishError)
+    startPublishing(() =>
+      runPublishAfterBestEffortChecks({
+        checks: async () => {
+          const checks = await runPublishDiagnostics(project.id);
+          setPublishFindings(checks.findings);
+        },
+        onCheckFailure: (error) =>
+          reportPublishValidationFailure(error, setPublishFindings, true),
+        publish: () => publish(domains),
+      })
     );
   };
 
@@ -947,7 +937,9 @@ const Publish = ({
   return (
     <Flex gap={2} shrink={false} direction={"column"}>
       <PublishValidationResults findings={publishFindings} />
-      {publishError && <Text color="destructive">{publishError}</Text>}
+      {(publishError ?? requestError) && (
+        <Text color="destructive">{publishError ?? requestError}</Text>
+      )}
       <PublishActions
         publishButtonRef={buttonRef}
         validationState={validationState}
@@ -1335,11 +1327,9 @@ const Content = (props: {
   validationState: PublishValidationState;
   onValidationStateChange: (state: PublishValidationState) => void;
   isPublishing: boolean;
+  requestError: string | undefined;
   countdown: number | undefined;
-  startPublishing: (
-    publish: () => Promise<void>,
-    onError: (error: unknown) => void
-  ) => void;
+  startPublishing: (publish: () => Promise<void>) => void;
 }) => {
   const restrictedFeatures = useStore($restrictedFeatures);
   const [newDomains, setNewDomains] = useState(new Set<string>());
@@ -1458,6 +1448,7 @@ const Content = (props: {
             validationState={props.validationState}
             onValidationStateChange={props.onValidationStateChange}
             isPublishing={props.isPublishing}
+            requestError={props.requestError}
             countdown={props.countdown}
             startPublishing={props.startPublishing}
           />
@@ -1771,6 +1762,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
             validationState={validationState}
             onValidationStateChange={update}
             isPublishing={publishProgress.isPublishing}
+            requestError={publishProgress.requestError}
             countdown={publishProgress.countdown}
             startPublishing={publishProgress.start}
           />
@@ -1786,5 +1778,4 @@ export const __testing__ = {
   refreshUntilSuccess,
   getRefreshedProject,
   reportPublishResult,
-  reportPublishRejection,
 };
