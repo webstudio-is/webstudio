@@ -674,6 +674,43 @@ const refreshUntilSuccess = async (
   }
 };
 
+const reportPublishResult = ({
+  result,
+  timesLeft,
+  maxDailyPublishesPerUser,
+  setPublishError,
+}: {
+  result: Awaited<ReturnType<typeof waitForPublishStatus>>;
+  timesLeft: number;
+  maxDailyPublishesPerUser: number;
+  setPublishError: (error: string | JSX.Element) => void;
+}) => {
+  if (result?.status === "PUBLISHED") {
+    if ($publishDialog.get() === "none") {
+      toast.success(
+        <>
+          The project has been successfully published.{" "}
+          {timesLeft > 0 && timesLeft <= 10 && (
+            <div>
+              You have {timesLeft} out of {maxDailyPublishesPerUser} daily
+              publications remaining. The counter resets tomorrow.
+            </div>
+          )}
+        </>,
+        { duration: 10000 }
+      );
+    }
+    return;
+  }
+
+  if (result?.status === "FAILED") {
+    if ($publishDialog.get() === "none") {
+      toast.error(result.statusText);
+    }
+    setPublishError(result.statusText);
+  }
+};
+
 const Publish = ({
   project,
   timesLeft,
@@ -814,24 +851,12 @@ const Publish = ({
       () => getRefreshedProject(project.id),
       () => $project.get()?.id === project.id
     );
-    if (result?.status === "PUBLISHED") {
-      toast.success(
-        <>
-          The project has been successfully published.{" "}
-          {timesLeft > 0 && timesLeft <= 10 && (
-            <div>
-              You have {timesLeft} out of {maxDailyPublishesPerUser} daily
-              publications remaining. The counter resets tomorrow.
-            </div>
-          )}
-        </>,
-        { duration: 10000 }
-      );
-    }
-    if (result?.status === "FAILED") {
-      toast.error(result.statusText);
-      setPublishError(result.statusText);
-    }
+    reportPublishResult({
+      result,
+      timesLeft,
+      maxDailyPublishesPerUser,
+      setPublishError,
+    });
   };
 
   const getDomainsFromForm = (formData: FormData) =>
@@ -1736,4 +1761,5 @@ export const __testing__ = {
   waitForPublishStatus,
   refreshUntilSuccess,
   getRefreshedProject,
+  reportPublishResult,
 };

@@ -2,7 +2,9 @@ import { useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
+import { toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
+import { $publishDialog } from "~/builder/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
 import { __testing__ } from "./publish";
 
@@ -11,6 +13,7 @@ const {
   waitForPublishStatus,
   refreshUntilSuccess,
   getRefreshedProject,
+  reportPublishResult,
 } = __testing__;
 
 let root: Root | undefined;
@@ -25,8 +28,10 @@ afterEach(() => {
   root = undefined;
   container?.remove();
   container = undefined;
+  $publishDialog.set("none");
   $project.set(undefined);
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 test("closing publish hides the countdown while polling continues and completion clears pending", async () => {
@@ -182,4 +187,58 @@ test("publish polling stops after navigating to another project", async () => {
 
   await expect(polling).resolves.toBeUndefined();
   expect($project.get()).toBe(newProject);
+});
+
+test("publish completion does not show a toast while the dialog is open", () => {
+  const successToast = vi.spyOn(toast, "success").mockImplementation(() => "");
+  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
+  const setPublishError = vi.fn();
+  const publishedStatusText = <>Published</>;
+  const failedStatusText = <>Publish failed</>;
+
+  for (const dialog of ["publish", "export"] as const) {
+    $publishDialog.set(dialog);
+    reportPublishResult({
+      result: { status: "PUBLISHED", statusText: publishedStatusText },
+      timesLeft: 11,
+      maxDailyPublishesPerUser: 20,
+      setPublishError,
+    });
+    reportPublishResult({
+      result: { status: "FAILED", statusText: failedStatusText },
+      timesLeft: 11,
+      maxDailyPublishesPerUser: 20,
+      setPublishError,
+    });
+  }
+
+  expect(successToast).not.toHaveBeenCalled();
+  expect(errorToast).not.toHaveBeenCalled();
+  expect(setPublishError).toHaveBeenCalledTimes(2);
+});
+
+test("publish completion shows a toast after the dialog closes", () => {
+  const successToast = vi.spyOn(toast, "success").mockImplementation(() => "");
+  const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
+  const setPublishError = vi.fn();
+  const publishedStatusText = <>Published</>;
+  const failedStatusText = <>Publish failed</>;
+  $publishDialog.set("none");
+
+  reportPublishResult({
+    result: { status: "PUBLISHED", statusText: publishedStatusText },
+    timesLeft: 11,
+    maxDailyPublishesPerUser: 20,
+    setPublishError,
+  });
+  reportPublishResult({
+    result: { status: "FAILED", statusText: failedStatusText },
+    timesLeft: 11,
+    maxDailyPublishesPerUser: 20,
+    setPublishError,
+  });
+
+  expect(successToast).toHaveBeenCalledOnce();
+  expect(errorToast).toHaveBeenCalledOnce();
+  expect(setPublishError).toHaveBeenCalledWith(failedStatusText);
 });
