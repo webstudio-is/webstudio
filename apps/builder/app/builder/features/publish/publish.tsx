@@ -592,6 +592,15 @@ const usePublishProgress = (projectId: Project["id"]) => {
   const isCurrentProject = () =>
     isMounted.current && $project.get()?.id === projectId;
 
+  const reconcileRefreshedProject = useCallback((project: Project) => {
+    if (
+      project.latestBuildVirtual != null &&
+      getPublishStatusAndText(project.latestBuildVirtual).status !== "FAILED"
+    ) {
+      setPublishError(undefined);
+    }
+  }, []);
+
   useEffect(() => {
     if (isPublishing === false || showCountdown === false) {
       return;
@@ -635,6 +644,7 @@ const usePublishProgress = (projectId: Project["id"]) => {
     publishError,
     setPublishError,
     isCurrentProject,
+    reconcileRefreshedProject,
     countdown,
     start,
     dismissCountdown,
@@ -1728,7 +1738,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     publishDialog === "publish"
   );
   const publishProgress = usePublishProgress(projectId);
-  const { dismissCountdown } = publishProgress;
+  const { dismissCountdown, reconcileRefreshedProject } = publishProgress;
   useEffect(() => {
     if (publishDialog !== "publish") {
       dismissCountdown();
@@ -1740,19 +1750,29 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     if (publishDialog === "publish" && publishProgress.isPublishing === false) {
       let isOpen = true;
       void refreshUntilSuccess(
-        (showError) =>
-          getRefreshedProject({
+        async (showError) => {
+          const refreshedProject = await getRefreshedProject({
             projectId,
             showError,
             isCurrent: () => isOpen,
-          }),
+          });
+          if (isOpen && refreshedProject !== undefined) {
+            reconcileRefreshedProject(refreshedProject);
+          }
+          return refreshedProject;
+        },
         () => isOpen
       );
       return () => {
         isOpen = false;
       };
     }
-  }, [projectId, publishDialog, publishProgress.isPublishing]);
+  }, [
+    projectId,
+    publishDialog,
+    publishProgress.isPublishing,
+    reconcileRefreshedProject,
+  ]);
   const { canPublishToStagingOnly } = useStore($permissions);
   const isPublishEnabled =
     authTokenPermissions.canPublish || canPublishToStagingOnly;

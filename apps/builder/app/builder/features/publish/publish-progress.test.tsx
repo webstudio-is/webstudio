@@ -492,6 +492,54 @@ test("a publish failure remains visible after the panel remounts", () => {
   expect(errorToast).not.toHaveBeenCalled();
 });
 
+test("a successful status refresh clears a persisted publish failure", () => {
+  $project.set({ id: "project" } as Project);
+  $publishDialog.set("publish");
+
+  const Harness = () => {
+    const progress = usePublishProgress("project");
+    return (
+      <>
+        <button
+          onClick={() =>
+            reportPublishResult({
+              result: { status: "FAILED", statusText: <>Publish failed</> },
+              timesLeft: 11,
+              maxDailyPublishesPerUser: 20,
+              setPublishError: progress.setPublishError,
+            })
+          }
+        >
+          Fail
+        </button>
+        <button
+          onClick={() =>
+            progress.reconcileRefreshedProject({
+              latestBuildVirtual: {
+                createdAt: new Date().toISOString(),
+                publishStatus: "PUBLISHED",
+              },
+            } as Project)
+          }
+        >
+          Refresh
+        </button>
+        <output>{progress.publishError}</output>
+      </>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  const [fail, refresh] = container.querySelectorAll("button");
+  act(() => fail.click());
+  expect(container.querySelector("output")?.textContent).toBe("Publish failed");
+  act(() => refresh.click());
+  expect(container.querySelector("output")?.textContent).toBe("");
+});
+
 test("a rejected request after project navigation shows a toast", async () => {
   $project.set({ id: "old-project" } as Project);
   $publishDialog.set("publish");
