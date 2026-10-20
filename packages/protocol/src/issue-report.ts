@@ -94,10 +94,18 @@ export const issueReportEntityId = z
   .object({ field: issueReportEntityIdField, id: issueReportId })
   .strict();
 
+export const issueReportErrorType = z
+  .string()
+  .regex(/^[A-Za-z][A-Za-z0-9]{0,99}(Error|Exception)$/);
+
+export const issueReportRequestId = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
+
 export const issueReportRecentFailureSchema = z
   .object({
     tool: z.string().trim().min(1).max(160),
     code: z.string().trim().min(1).max(160),
+    errorType: issueReportErrorType.optional(),
+    requestId: issueReportRequestId.optional(),
     httpStatus: z.number().int().min(100).max(599).optional(),
     elapsedMs: z.number().int().nonnegative().optional(),
     entityIds: z.array(issueReportEntityId).max(20).optional(),

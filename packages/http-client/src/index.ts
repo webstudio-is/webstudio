@@ -879,7 +879,11 @@ const getAssetRestFailure = async (
   } catch {
     // Preserve the HTTP status when the server cannot return a JSON error.
   }
-  return Object.assign(new Error(message), { status: response.status });
+  return Object.assign(new Error(message), {
+    status: response.status,
+    requestId:
+      response.headers.get("x-request-id") ?? response.headers.get("cf-ray"),
+  });
 };
 
 const requestAssetRestJson = async <Result>(

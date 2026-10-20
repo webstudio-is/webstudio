@@ -462,6 +462,31 @@ test("generate resources loader", () => {
   `);
 });
 
+test("does not evaluate a Content Block source without candidate resources", () => {
+  const generated = generateResources({
+    scope: createScope(),
+    page: { rootInstanceId: "body" } as Page,
+    dataSources: toMap([
+      {
+        id: "collectionItem",
+        scopeInstanceId: "collection",
+        type: "parameter",
+        name: "collectionItem",
+      },
+    ]),
+    resources: new Map(),
+    props: new Map(),
+    contentBlockResourceSelections: [
+      {
+        sourceExpression: `${encodeDataSourceVariable("collectionItem")}.id`,
+        candidates: [{ assetId: "article", resourceIds: [] }],
+      },
+    ],
+  });
+
+  expect(generated).not.toContain("collectionItem");
+});
+
 test("selects only resources used by the resolved dynamic MDX candidate", () => {
   const generated = generateResources({
     scope: createScope(),

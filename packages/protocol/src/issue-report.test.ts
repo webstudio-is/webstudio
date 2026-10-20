@@ -140,6 +140,8 @@ describe("issue report contract", () => {
   test("accepts bounded response and browser diagnostics but no raw payloads", () => {
     const failure = {
       ...report.runtime.recentFailure,
+      errorType: "AssetRevisionConflictError",
+      requestId: "abc123-LIS",
       response: { format: "json", envelope: "result", batchSize: 1 },
       browser: {
         exitSignal: "SIGABRT",
@@ -158,6 +160,15 @@ describe("issue report contract", () => {
         runtime: {
           ...report.runtime,
           recentFailure: { ...failure, responseBody: "private content" },
+        },
+      })
+    ).toThrow();
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...report.runtime,
+          recentFailure: { ...failure, requestId: "https://private.example" },
         },
       })
     ).toThrow();

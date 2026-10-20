@@ -36,6 +36,8 @@ const report: IssueReportInput = {
       ],
       tool: "preview.start",
       code: "PROJECT_BUNDLE_INVALID",
+      errorType: "AssetRevisionConflictError",
+      requestId: "abc123-LIS",
       httpStatus: 504,
       elapsedMs: 17_000,
       issues: [
@@ -93,6 +95,8 @@ describe("GitHub issue reports", () => {
     expect(body).toContain("## Captured failure diagnostics");
     expect(body).toContain("- Tool: `preview.start`");
     expect(body).toContain("- Error code: `PROJECT_BUNDLE_INVALID`");
+    expect(body).toContain("- Error type: AssetRevisionConflictError");
+    expect(body).toContain("- Request ID: `abc123-LIS`");
     expect(body).toContain("- HTTP status: `504`");
     expect(body).toContain("- Duration: `17000ms`");
     expect(body).toContain("stale=styles");

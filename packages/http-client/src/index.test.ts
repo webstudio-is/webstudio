@@ -1976,7 +1976,10 @@ test("reports recovery guidance when an asset update commit cannot be confirmed"
     async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = new URL(input.toString());
       if (init?.method === "PUT") {
-        return new Response("response failed", { status: 500 });
+        return new Response("response failed", {
+          status: 500,
+          headers: { "cf-ray": "abc123-LIS" },
+        });
       }
       if (url.pathname.endsWith("/content")) {
         return new Response('{"theme":"light"}');
@@ -1997,6 +2000,7 @@ test("reports recovery guidance when an asset update commit cannot be confirmed"
     })
   ).rejects.toMatchObject({
     code: "ASSET_UPDATE_COMMIT_UNCERTAIN",
+    cause: expect.objectContaining({ requestId: "abc123-LIS" }),
     message: expect.stringContaining(
       "Read the current asset and download its content"
     ),

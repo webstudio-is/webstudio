@@ -2,7 +2,7 @@ import { API, type Snapshot } from "typescript/unstable/sync";
 import { afterAll, beforeAll, expect, test } from "vitest";
 import stripIndent from "strip-indent";
 import { transform } from "esbuild";
-import { createElement } from "react";
+import { createElement, Fragment as ReactFragment } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { renderText } from "./context";
 import { standardAttributesToReactProps } from "@webstudio-is/content-engine/jsx-attributes";
@@ -89,6 +89,37 @@ test("string props coerce repeated query values without changing missing values"
 
   expect(generated).toContain("String(SelectedTags)");
   expect(generated).toContain("SelectedTags == null ? SelectedTags");
+  expect(isValidJSX(generated)).toBe(true);
+});
+
+test("json-code props keep object expressions as objects", () => {
+  const code = new Variable("code", { "@type": "Article" });
+  const JsonLd = createTemplateComponentFixture("JsonLd");
+  const generated = generateWebstudioComponent({
+    classesMap: new Map(),
+    scope: createScope(),
+    name: "Page",
+    rootInstanceId: "body",
+    parameters: [],
+    metas: new Map<string, WsComponentMeta>([
+      [
+        "JsonLd",
+        {
+          props: {
+            code: { type: "string", control: "json-code", required: true },
+          },
+        },
+      ],
+    ]),
+    ...renderData(
+      <Body ws:id="body">
+        <JsonLd ws:id="jsonld" code={expression`${code}`} />
+      </Body>
+    ),
+  });
+
+  expect(generated).toContain("code={code}");
+  expect(generated).not.toContain("String(code)");
   expect(isValidJSX(generated)).toBe(true);
 });
 
@@ -1855,13 +1886,78 @@ test("renders pre-materialized dynamic Content Block candidates without loading"
   expect(isValidJSX(generated)).toBe(true);
 });
 
+test("renders a Content Block source inside its Collection item scope", async () => {
+  const collectionItem = new Parameter("collectionItem");
+  const data = renderData(
+    <Body ws:id="body">
+      <ws.collection
+        ws:id="collection"
+        data={[{ id: "article" }]}
+        item={collectionItem}
+      >
+        <ws.block ws:id="block" />
+      </ws.collection>
+    </Body>
+  );
+  const itemDataSource = Array.from(data.dataSources.values()).find(
+    ({ name }) => name === "collectionItem"
+  );
+  expect(itemDataSource).toBeDefined();
+  const generated = generateWebstudioComponent({
+    classesMap: new Map(),
+    scope: createScope(),
+    name: "Page",
+    rootInstanceId: "body",
+    parameters: [],
+    metas: new Map(),
+    ...data,
+    publishedContentBlocks: new Map([
+      [
+        "block",
+        {
+          sourceExpression: `${encodeDataVariableId(itemDataSource!.id)}.id`,
+          candidates: [
+            {
+              assetId: "article",
+              dependencyRevision: "revision",
+              children: [{ type: "text", value: "Article body" }],
+              frontmatter: {},
+            },
+          ],
+        },
+      ],
+    ]),
+  });
+
+  expect(generated).toContain("Article body");
+  expect(generated).toContain('contentSource === "article"');
+  expect(isValidJSX(generated)).toBe(true);
+  const { code } = await transform(generated, {
+    loader: "tsx",
+    jsxFactory: "createElement",
+    jsxFragment: "Fragment",
+  });
+  const Page = new Function(
+    "createElement",
+    "Fragment",
+    "Body",
+    `${code}return Page;`
+  )(createElement, ReactFragment, "main");
+  expect(renderToStaticMarkup(createElement(Page))).toContain("Article body");
+});
+
 test("renders a Content Block shell with candidate frontmatter and body", () => {
   const document = new Parameter("document");
+  const visible = new Variable("visible", true);
   const Block = ws.block;
   const BlockBody = ws.contentBlockBody;
   const data = renderData(
     <Body ws:id="page">
-      <Block ws:id="block" document={document}>
+      <Block
+        ws:id="block"
+        document={document}
+        data-ws-show={expression`${visible}`}
+      >
         <Heading ws:id="title">
           {expression`${document}.frontmatter.title`}
         </Heading>
