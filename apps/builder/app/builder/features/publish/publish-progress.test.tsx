@@ -12,6 +12,7 @@ const {
   usePublishProgress,
   waitForPublishStatus,
   refreshUntilSuccess,
+  useManualValidationFindings,
   getRefreshedProject,
   reportPublishResult,
 } = __testing__;
@@ -165,6 +166,59 @@ test("reopening stops after three unsuccessful project refreshes and shows the e
 
   expect(query).toHaveBeenCalledTimes(3);
   expect(errorToast).toHaveBeenCalledOnce();
+});
+
+test("a recovered pending build keeps polling after the popover closes", async () => {
+  vi.useFakeTimers();
+  $project.set({ id: "project" } as Project);
+  $publishDialog.set("publish");
+  const successToast = vi.spyOn(toast, "success").mockImplementation(() => "");
+  let status: "PENDING" | "PUBLISHED" = "PENDING";
+  let pollRequests = 0;
+  const refreshedProject = () =>
+    ({
+      id: "project",
+      latestBuildVirtual: {
+        buildId: "recovered",
+        createdAt: new Date().toISOString(),
+        publishStatus: status,
+      },
+    }) as Project;
+
+  const Harness = () => {
+    const progress = usePublishProgress("project");
+    return (
+      <button
+        onClick={() => {
+          void refreshUntilSuccess(
+            async () => refreshedProject(),
+            () => true,
+            () =>
+              progress.watchPendingPublish(async () => {
+                pollRequests += 1;
+                return refreshedProject();
+              })
+          );
+        }}
+      >
+        Recover
+      </button>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  await act(async () => container?.querySelector("button")?.click());
+  expect(pollRequests).toBe(1);
+
+  $publishDialog.set("none");
+  status = "PUBLISHED";
+  await act(async () => vi.advanceTimersByTimeAsync(15_000));
+
+  expect(pollRequests).toBe(2);
+  expect(successToast).toHaveBeenCalledOnce();
 });
 
 test("an in-flight status request cannot replace the project after navigation", async () => {
@@ -642,6 +696,19 @@ test("a newer build clears a recovered transport error", async () => {
           onClick={() =>
             progress.reconcileRefreshedProject({
               latestBuildVirtual: {
+                buildId: "old",
+                createdAt: new Date().toISOString(),
+                publishStatus: "PUBLISHED",
+              },
+            } as Project)
+          }
+        >
+          Old build
+        </button>
+        <button
+          onClick={() =>
+            progress.reconcileRefreshedProject({
+              latestBuildVirtual: {
                 buildId: "new",
                 createdAt: new Date().toISOString(),
                 publishStatus: "PUBLISHED",
@@ -660,8 +727,12 @@ test("a newer build clears a recovered transport error", async () => {
   document.body.appendChild(container);
   root = createRoot(container);
   act(() => root?.render(<Harness />));
-  const [publish, refresh] = container.querySelectorAll("button");
+  const [publish, oldBuild, refresh] = container.querySelectorAll("button");
   await act(async () => publish.click());
+  expect(container.querySelector("output")?.textContent).toBe(
+    "Network unavailable"
+  );
+  act(() => oldBuild.click());
   expect(container.querySelector("output")?.textContent).toBe(
     "Network unavailable"
   );
@@ -707,6 +778,43 @@ test("publish diagnostics remain visible after the panel remounts", () => {
   act(() => finish.click());
 
   expect(container.querySelector("output")?.textContent).toBe("1");
+});
+
+test("an older validation cannot replace newer findings", () => {
+  const finish: ((title: string) => void)[] = [];
+
+  const Harness = () => {
+    const validation = useManualValidationFindings();
+    return (
+      <>
+        <button
+          onClick={() => {
+            const session = validation.begin();
+            finish.push((title) =>
+              validation.update(session, [
+                { severity: "warning", title, reportText: title },
+              ])
+            );
+          }}
+        >
+          Validate
+        </button>
+        <output>{validation.findings[0]?.title}</output>
+      </>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  const validate = container.querySelector("button")!;
+  act(() => validate.click());
+  act(() => validate.click());
+  act(() => finish[1]("new"));
+  act(() => finish[0]("old"));
+
+  expect(container.querySelector("output")?.textContent).toBe("new");
 });
 
 test("a rejected request after project navigation shows a toast", async () => {
