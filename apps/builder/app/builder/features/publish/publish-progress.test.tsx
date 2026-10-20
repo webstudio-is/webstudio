@@ -2,7 +2,9 @@ import { useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
-import { usePublishProgress } from "./publish-progress";
+import { __testing__ } from "./publish";
+
+const { usePublishProgress } = __testing__;
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
