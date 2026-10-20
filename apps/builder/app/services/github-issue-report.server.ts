@@ -66,6 +66,12 @@ const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
     "",
     `- Tool: \`${failure.tool}\``,
     `- Error code: \`${failure.code}\``,
+    ...(failure.errorType === undefined
+      ? []
+      : [`- Error type: ${failure.errorType}`]),
+    ...(failure.requestId === undefined
+      ? []
+      : [`- Request ID: \`${failure.requestId}\``]),
     ...(failure.httpStatus === undefined
       ? []
       : [`- HTTP status: \`${failure.httpStatus}\``]),
