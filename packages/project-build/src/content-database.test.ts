@@ -818,6 +818,30 @@ describe("Content Block MDX compilation", () => {
     expect(() => resolvePublishedMdxAssetCandidates({ build })).toThrow(
       'Content Block "block" has no finite dynamic MDX Asset candidates'
     );
+
+    // A matching document with no src field is not an empty query result.
+    build.props[0].value = `${encodeDataVariableId("posts-data")}.data.properties.missing`;
+    expect(() =>
+      resolvePublishedMdxAssetCandidates({
+        build,
+        artifact: {
+          documents: [
+            {
+              _id: "article.mdx",
+              name: "article.mdx",
+              path: "posts/article.mdx",
+              key: "article",
+              extension: "mdx",
+              mimeType: "text/mdx",
+              size: 1,
+              properties: {},
+            },
+          ],
+        } as unknown as ContentArtifactV1,
+      })
+    ).toThrow(
+      'Content Block "block" has no finite dynamic MDX Asset candidates'
+    );
   });
 
   test("bounds a mutable project variable to the project's MDX assets", () => {

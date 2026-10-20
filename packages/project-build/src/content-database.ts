@@ -594,7 +594,8 @@ export const resolvePublishedMdxAssetCandidates = ({
     path: readonly string[],
     visiting = new Set<string>(),
     mutableVariables = new Set<string>(),
-    resolvedQueries = new Set<string>()
+    resolvedQueries = new Set<string>(),
+    queriesWithMatches = new Set<string>()
   ): unknown[] => {
     if (visiting.has(dataSourceId)) {
       throw new Error("Dynamic MDX source data dependency is cyclic");
@@ -657,6 +658,9 @@ export const resolvePublishedMdxAssetCandidates = ({
           ],
         },
       });
+      if (candidateIds.size > 0) {
+        queriesWithMatches.add(dataSource.id);
+      }
       const fieldPath = path[0] === "data" ? path.slice(1) : path;
       return documents
         .filter(({ _id }) => candidateIds.has(_id))
@@ -704,7 +708,8 @@ export const resolvePublishedMdxAssetCandidates = ({
           dataPath.slice(1),
           visiting,
           mutableVariables,
-          resolvedQueries
+          resolvedQueries,
+          queriesWithMatches
         );
         visiting.delete(dataSourceId);
       }
@@ -750,6 +755,7 @@ export const resolvePublishedMdxAssetCandidates = ({
     let assetIds: string[] = [];
     const mutableVariables = new Set<string>();
     const resolvedQueries = new Set<string>();
+    const queriesWithMatches = new Set<string>();
     try {
       assetIds =
         dataSourceId === undefined || path === undefined
@@ -759,7 +765,8 @@ export const resolvePublishedMdxAssetCandidates = ({
               path.slice(1),
               new Set(),
               mutableVariables,
-              resolvedQueries
+              resolvedQueries,
+              queriesWithMatches
             ).filter(
               (value): value is string =>
                 typeof value === "string" && value.length > 0
@@ -769,12 +776,17 @@ export const resolvePublishedMdxAssetCandidates = ({
         throw error;
       }
       resolvedQueries.clear();
+      queriesWithMatches.clear();
     }
     if (mutableVariables.size > 0 && allMdxAssetIds !== undefined) {
       assetIds.push(...allMdxAssetIds);
     }
     if (assetIds.length === 0) {
-      if (resolvedQueries.size > 0 && mutableVariables.size === 0) {
+      if (
+        resolvedQueries.size > 0 &&
+        queriesWithMatches.size === 0 &&
+        mutableVariables.size === 0
+      ) {
         candidatesByBlock.set(blockInstanceId, []);
         continue;
       }
