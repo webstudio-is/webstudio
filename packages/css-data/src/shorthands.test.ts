@@ -116,6 +116,21 @@ test("expand border edges", () => {
   ]);
 });
 
+test("expand border with color-mix containing a variable", () => {
+  expect(
+    expandShorthands([
+      [
+        "border-top",
+        "1px solid color-mix(in srgb, var(--accent) 50%, transparent)",
+      ],
+    ])
+  ).toEqual([
+    ["border-top-width", "1px"],
+    ["border-top-style", "solid"],
+    ["border-top-color", "color-mix(in srgb,var(--accent) 50%,transparent)"],
+  ]);
+});
+
 test("expand border types", () => {
   expect(expandShorthands([["border-width", "1px"]])).toEqual([
     ["border-top-width", "1px"],

@@ -247,8 +247,7 @@ const expandBorder = function* (property: string, value: CssNode) {
       const unresolvedIndex =
         missing.length === 1 &&
         unresolvedNodes.length === 1 &&
-        unresolvedNodes[0]?.type === "Function" &&
-        unresolvedNodes[0].name === "var"
+        unresolvedNodes[0]?.type === "Function"
           ? missing[0]
           : undefined;
       const values = [width, style, color];
