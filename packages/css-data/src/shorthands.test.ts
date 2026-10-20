@@ -129,6 +129,27 @@ test("expand border with color-mix containing a variable", () => {
     ["border-top-style", "solid"],
     ["border-top-color", "color-mix(in srgb,var(--accent) 50%,transparent)"],
   ]);
+  expect(
+    expandShorthands([
+      [
+        "border-top",
+        "solid color-mix(in srgb, var(--accent) 50%, transparent)",
+      ],
+    ])
+  ).toEqual([
+    ["border-top-width", "medium"],
+    ["border-top-style", "solid"],
+    ["border-top-color", "color-mix(in srgb,var(--accent) 50%,transparent)"],
+  ]);
+  expect(
+    expandShorthands([
+      ["border-top", "color-mix(in srgb, var(--accent) 50%, transparent)"],
+    ])
+  ).toEqual([
+    ["border-top-width", "medium"],
+    ["border-top-style", "none"],
+    ["border-top-color", "color-mix(in srgb,var(--accent) 50%,transparent)"],
+  ]);
 });
 
 test("expand border types", () => {
