@@ -267,6 +267,14 @@ export const serverOnlyRouterOperationMetadata = {
                   minLength: 1,
                   maxLength: 160,
                 },
+                errorType: {
+                  type: "string",
+                  pattern: "^[A-Za-z][A-Za-z0-9]{0,99}(Error|Exception)$",
+                },
+                requestId: {
+                  type: "string",
+                  pattern: "^[A-Za-z0-9_-]{1,100}$",
+                },
                 httpStatus: {
                   type: "integer",
                   minimum: 100,
@@ -287,6 +295,7 @@ export const serverOnlyRouterOperationMetadata = {
                         type: "string",
                         enum: [
                           "formId",
+                          "requestId",
                           "jobId",
                           "domainId",
                           "blockInstanceId",
