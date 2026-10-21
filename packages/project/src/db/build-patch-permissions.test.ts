@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { getRequiredPermitForBuildPatchTransaction } from "./build-patch-permissions";
 import type { BuildPatchTransaction } from "./build-patch-core";
-import type { ContentModeCapabilities } from "@webstudio-is/project-build/runtime";
+import { getContentModeCapabilities } from "@webstudio-is/project-build/runtime";
 
 const transaction = (
   namespace: string,
@@ -13,11 +13,33 @@ const transaction = (
   payload: [{ namespace, patches }],
 });
 
-const capabilities: ContentModeCapabilities = {
-  editablePropIds: new Set(["prop-1"]),
-  editableInstanceIds: new Set(["instance-1"]),
-  instances: new Map(),
-  metas: new Map(),
+const capabilities = getContentModeCapabilities({
+  instances: new Map([
+    [
+      "instance-1",
+      {
+        id: "instance-1",
+        type: "instance",
+        component: "Heading",
+        children: [],
+      },
+    ],
+  ]),
+  metas: new Map([
+    [
+      "Heading",
+      {
+        props: {
+          title: {
+            type: "string",
+            control: "text",
+            required: false,
+            contentMode: true,
+          },
+        },
+      },
+    ],
+  ]),
   props: new Map([
     [
       "prop-1",
@@ -30,12 +52,9 @@ const capabilities: ContentModeCapabilities = {
       },
     ],
   ]),
-  htmlTagsByInstanceId: new Map(),
   styleSources: new Map(),
-  styleSourceSelections: new Map(),
-  styles: new Map(),
-  contentRootIds: new Set(),
-};
+  contentRootIds: new Set(["instance-1"]),
+});
 
 const permit = (buildPatchTransaction: BuildPatchTransaction) =>
   getRequiredPermitForBuildPatchTransaction(
