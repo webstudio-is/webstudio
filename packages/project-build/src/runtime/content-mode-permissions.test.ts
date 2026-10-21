@@ -3110,6 +3110,30 @@ describe("content mode permissions", () => {
       success: false,
       error: "Instance patch is not editable in content mode.",
     });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("instances", [
+          {
+            op: "replace",
+            path: ["list-item"],
+            value: {
+              type: "instance",
+              id: "list-item",
+              component: "ws:element",
+              tag: "li",
+              name: "new-stable-name",
+              label: "List Item",
+              children: [{ type: "text", value: "New text" }],
+            },
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: "Instance patch is not editable in content mode.",
+    });
   });
 
   test("rejects whole-instance replacement with outside child reference", () => {

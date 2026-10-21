@@ -1,4 +1,5 @@
 import { z } from "zod";
+import equal from "fast-deep-equal";
 import {
   AuthorizationError,
   authorizeProject,
@@ -531,6 +532,24 @@ const createContentModeCapabilitiesFromBuild = (build: CompactBuild) => {
   });
 };
 
+const preservesNonTextChildren = (
+  before: CompactBuild["instances"][number]["children"] | undefined,
+  after: CompactBuild["instances"][number]["children"] | undefined
+) => {
+  if (before === undefined || after === undefined) {
+    return false;
+  }
+  if (
+    before.every((child) => child.type === "text") &&
+    after.every((child) => child.type === "text")
+  ) {
+    return true;
+  }
+  const keepNonText = (children: typeof before) =>
+    children.map((child) => (child.type === "text" ? "text" : child));
+  return equal(keepNonText(before), keepNonText(after));
+};
+
 const assertContentOrBuildTransactions = ({
   auth,
   build,
@@ -550,13 +569,7 @@ const assertContentOrBuildTransactions = ({
     if (
       scope === "text-and-props" &&
       transaction.payload.some(
-        ({ namespace, patches }) =>
-          (namespace !== "instances" && namespace !== "props") ||
-          (namespace === "instances" &&
-            patches.some(
-              ({ path }) =>
-                path.length < 2 || path.length > 3 || path[1] !== "children"
-            ))
+        ({ namespace }) => namespace !== "instances" && namespace !== "props"
       )
     ) {
       throw new AuthorizationError(
@@ -581,18 +594,7 @@ const assertContentOrBuildTransactions = ({
           }
           const before = capabilities.instances.get(instanceId)?.children;
           const after = result.capabilities.instances.get(instanceId)?.children;
-          const beforeIds = before
-            ?.filter((child) => child.type === "id")
-            .map((child) => child.value);
-          const afterIds = after
-            ?.filter((child) => child.type === "id")
-            .map((child) => child.value);
-          if (
-            beforeIds === undefined ||
-            afterIds === undefined ||
-            beforeIds.length !== afterIds.length ||
-            beforeIds.some((id, index) => id !== afterIds[index])
-          ) {
+          if (preservesNonTextChildren(before, after) === false) {
             throw new AuthorizationError(
               "You don't have permission to build this project."
             );

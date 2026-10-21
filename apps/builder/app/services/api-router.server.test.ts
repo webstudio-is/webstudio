@@ -1472,7 +1472,44 @@ describe("api router permits", () => {
         {
           op: "replace" as const,
           path: ["text-instance", "children"],
-          value: [{ type: "text", value: "Updated" }],
+          value: [
+            { type: "text", value: "Updated" },
+            { type: "text", value: " again" },
+          ],
+        },
+      ],
+    };
+    const replaceInstanceTextPatch = {
+      namespace: "instances" as const,
+      patches: [
+        {
+          op: "replace" as const,
+          path: ["text-instance"],
+          value: {
+            type: "instance",
+            id: "text-instance",
+            component: "ws:element",
+            tag: "p",
+            children: [{ type: "text", value: "Updated" }],
+          },
+        },
+      ],
+    };
+    const replaceInstanceStructurePatch = {
+      namespace: "instances" as const,
+      patches: [
+        {
+          op: "replace" as const,
+          path: ["block"],
+          value: {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [
+              { type: "id", value: "other-instance" },
+              { type: "id", value: "text-instance" },
+            ],
+          },
         },
       ],
     };
@@ -1483,6 +1520,16 @@ describe("api router permits", () => {
           op: "replace" as const,
           path: ["style", "value"],
           value: { type: "keyword", value: "red" },
+        },
+      ],
+    };
+    const expressionPatch = {
+      namespace: "instances" as const,
+      patches: [
+        {
+          op: "replace" as const,
+          path: ["text-instance", "children", 0],
+          value: { type: "expression", value: "someVariable", mode: "read" },
         },
       ],
     };
@@ -1511,16 +1558,7 @@ describe("api router permits", () => {
       ],
     };
     const patch = (
-      payloads: Array<
-        Array<
-          | ReturnType<typeof textPatch>
-          | typeof setTextPatch
-          | typeof stylePatch
-          | typeof assetPatch
-          | typeof structuralPatch
-          | typeof reorderPatch
-        >
-      >
+      payloads: Array<z.infer<typeof buildPatchTransaction>["payload"]>
     ) => ({
       projectId: "project-1",
       baseVersion: 3,
@@ -1538,18 +1576,27 @@ describe("api router permits", () => {
     await expect(caller.build.patch(patch([[setTextPatch]]))).resolves.toEqual({
       version: 4,
     });
-    expect(patchBuild).toHaveBeenCalledTimes(2);
+    await expect(
+      caller.build.patch(patch([[replaceInstanceTextPatch]]))
+    ).resolves.toEqual({ version: 4 });
+    expect(patchBuild).toHaveBeenCalledTimes(3);
     patchBuild.mockClear();
 
     await expect(
       caller.build.patch(patch([[textPatch("outside")]]))
     ).rejects.toThrow();
     await expect(caller.build.patch(patch([[stylePatch]]))).rejects.toThrow();
+    await expect(
+      caller.build.patch(patch([[expressionPatch]]))
+    ).rejects.toThrow();
     await expect(caller.build.patch(patch([[assetPatch]]))).rejects.toThrow();
     await expect(
       caller.build.patch(patch([[structuralPatch]]))
     ).rejects.toThrow();
     await expect(caller.build.patch(patch([[reorderPatch]]))).rejects.toThrow();
+    await expect(
+      caller.build.patch(patch([[replaceInstanceStructurePatch]]))
+    ).rejects.toThrow();
     await expect(
       caller.build.patch(patch([[textPatch("text-instance")], [stylePatch]]))
     ).rejects.toThrow();

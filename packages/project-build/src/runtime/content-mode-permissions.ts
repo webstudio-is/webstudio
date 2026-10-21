@@ -958,6 +958,7 @@ const hasSameInstanceMetadata = (left: Instance, right: Instance) =>
   left.id === right.id &&
   left.component === right.component &&
   left.tag === right.tag &&
+  left.name === right.name &&
   left.label === right.label;
 
 const hasOnlyKeys = (value: Record<string, unknown>, keys: Set<string>) => {
