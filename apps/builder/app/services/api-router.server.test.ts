@@ -1451,6 +1451,56 @@ describe("api router permits", () => {
     ).not.toThrow();
   });
 
+  test("preserves stale Editor retries without bypassing current or future patch validation", async () => {
+    const build = createEditableContentBuild();
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({ relation: "editors" })
+    );
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
+    const patchBuild = vi
+      .spyOn(projectApi, "patchBuild")
+      .mockResolvedValue({ status: "ok", version: 3 });
+    const caller = createCaller(createContext(true));
+    const input = {
+      projectId: "project-1",
+      baseVersion: 2,
+      transactions: [
+        {
+          id: "saved",
+          payload: [
+            {
+              namespace: "props" as const,
+              patches: [{ op: "remove" as const, path: ["already-removed"] }],
+            },
+          ],
+        },
+      ],
+    };
+    await expect(caller.build.patch(input)).resolves.toEqual({ version: 3 });
+    expect(patchBuild).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientVersion: 2,
+        transactions: input.transactions,
+      }),
+      expect.anything()
+    );
+    patchBuild.mockResolvedValue({
+      status: "version_mismatched",
+      errors: "Stale version",
+    });
+    await expect(caller.build.patch(input)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    patchBuild.mockClear();
+    for (const baseVersion of [3, 4]) {
+      await expect(
+        caller.build.patch({ ...input, baseVersion })
+      ).rejects.toThrow();
+    }
+    expect(patchBuild).not.toHaveBeenCalled();
+  });
+
   test("commits content-mode mutations with editor api tokens", async () => {
     const build = createEditableContentBuild();
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(

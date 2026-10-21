@@ -1013,12 +1013,15 @@ export const apiRouter = router({
       "edit",
       async ({ ctx, input, auth }) => {
         const build = await loadDevBuildByProjectId(ctx, input.projectId);
-        assertContentOrBuildTransactions({
-          auth,
-          build,
-          transactions: input.transactions,
-          scope: "text-and-props",
-        });
+        // Older versions cannot write; let persistence handle retries and conflicts.
+        if (input.baseVersion >= build.version) {
+          assertContentOrBuildTransactions({
+            auth,
+            build,
+            transactions: input.transactions,
+            scope: "text-and-props",
+          });
+        }
         return commitBuildTransactions({
           ctx,
           projectId: input.projectId,
