@@ -6,6 +6,7 @@ import {
 } from "./content-mode-capabilities";
 import type { Patch } from "immer";
 import { applyBuilderNamespacePatches } from "../state/patch";
+import { mergeBuilderPatchChanges } from "./mutation";
 import equal from "fast-deep-equal";
 import { isRecord } from "../shared/type-utils";
 import { findProp, getMediaAssetPropNames } from "./props";
@@ -1441,6 +1442,10 @@ export const applyContentModeTransaction = ({
   if (transaction.payload.every(({ patches }) => patches.length === 0)) {
     return { success: true, capabilities };
   }
+  transaction = {
+    ...transaction,
+    payload: mergeBuilderPatchChanges(transaction.payload),
+  };
   const transactionCapabilities: ContentModeCapabilities = {
     ...capabilities,
     editablePropIds: new Set(capabilities.editablePropIds),

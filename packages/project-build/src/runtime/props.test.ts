@@ -603,44 +603,53 @@ describe("updateProps", () => {
         )
       );
       expect([...state.props.values()]).toEqual(existing);
-      const authorized = applyContentModeTransaction({
-        capabilities: getContentModeCapabilities({
-          ...state,
-          contentRootIds: new Set([image.id]),
-          styleSources: new Map(),
-          metas: new Map([
-            [
-              component,
-              {
-                props: {
-                  src: {
-                    type: "string",
-                    control: "file",
-                    required: false,
-                    contentMode: true,
-                  },
-                  alt: {
-                    type: "string",
-                    control: "text",
-                    required: false,
-                    contentMode: true,
+      for (const payload of [
+        result.payload.map((change) => ({
+          ...change,
+          patches: [...change.patches].reverse(),
+        })),
+        result.payload.flatMap((change) =>
+          [...change.patches]
+            .reverse()
+            .map((patch) => ({ namespace: change.namespace, patches: [patch] }))
+        ),
+      ]) {
+        const authorized = applyContentModeTransaction({
+          capabilities: getContentModeCapabilities({
+            ...state,
+            contentRootIds: new Set([image.id]),
+            styleSources: new Map(),
+            metas: new Map([
+              [
+                component,
+                {
+                  props: {
+                    src: {
+                      type: "string",
+                      control: "file",
+                      required: false,
+                      contentMode: true,
+                    },
+                    alt: {
+                      type: "string",
+                      control: "text",
+                      required: false,
+                      contentMode: true,
+                    },
                   },
                 },
-              },
-            ],
-          ]),
-        }),
-        transaction: {
-          payload: result.payload.map((change) => ({
-            ...change,
-            patches: [...change.patches].reverse(),
-          })),
-        },
-        scope: "text-and-props",
-      });
-      expect(authorized.success).toBe(true);
-      if (authorized.success) {
-        expect(authorized.capabilities.props).toEqual(next);
+              ],
+            ]),
+          }),
+          transaction: {
+            payload,
+          },
+          scope: "text-and-props",
+        });
+        expect(authorized.success).toBe(true);
+        if (authorized.success) {
+          expect(authorized.capabilities.props).toEqual(next);
+        }
       }
     }
   );
