@@ -486,6 +486,30 @@ Map {
 `);
 });
 
+test("keeps a component preset class stable when its display label changes", () => {
+  const { cssText, classes } = generateCss({
+    ...renderData(<Box ws:id="box" />),
+    atomic: false,
+    componentMetas: new Map([
+      [
+        "Box",
+        {
+          label: "Box (Deprecated)",
+          presetClassName: "Box",
+          presetStyle: {
+            div: css`
+              display: block;
+            `,
+          },
+        },
+      ],
+    ]),
+    assetBaseUrl: "",
+  });
+  expect(cssText).toContain("div.w-box {");
+  expect(classes.get("box")).toContain("w-box");
+});
+
 test("generate :root preset and user styles", () => {
   const { cssText, atomicCssText, classes, atomicClasses } = generateAllCss({
     ...renderData(

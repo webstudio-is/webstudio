@@ -121,6 +121,8 @@ export const wsComponentMeta = z.object({
   indexWithinAncestor: z.optional(z.string()),
   selectionReveal: selectionReveal.optional(),
   label: z.optional(z.string()),
+  /** Stable base name for the generated preset CSS class when the display label changes. */
+  presetClassName: z.string().optional(),
   description: z.string().optional(),
   deprecated: z.boolean().optional(),
   icon: z.string().optional(),

@@ -127,7 +127,7 @@ export const generateCss = ({
   for (const [component, meta] of componentMetas) {
     const componentTags = tagsByComponent.get(component);
     const [_namespace, componentName] = parseComponentName(component);
-    const className = `w-${scope.getName(component, meta.label ?? componentName)}`;
+    const className = `w-${scope.getName(component, meta.presetClassName ?? meta.label ?? componentName)}`;
     const presetStyle = Object.entries(meta.presetStyle ?? {});
     if (presetStyle.length > 0) {
       // add preset class only when at least one style is defined
