@@ -2257,6 +2257,7 @@ describe("content mode permissions", () => {
       validateContentModeTransaction({
         capabilities,
         transaction: transaction("props", [
+          { op: "remove", path: ["alt-prop"] },
           {
             op: "add",
             path: ["new-alt-prop"],
