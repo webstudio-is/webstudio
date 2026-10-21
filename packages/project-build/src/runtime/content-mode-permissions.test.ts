@@ -349,6 +349,46 @@ test("empty Editor transactions do not revalidate unrelated content", () => {
   ).toEqual({ success: true, capabilities });
 });
 
+test("a rejected later prop edit leaves all capabilities unchanged and reusable", () => {
+  const capabilities = getContentModeCapabilities({
+    instances,
+    props,
+    metas,
+    styleSources,
+  });
+  const original = structuredClone(capabilities);
+  const allowed = transaction("props", [
+    { op: "replace", path: ["href-prop", "value"], value: "/updated" },
+  ]);
+  const rejected = {
+    payload: [
+      ...allowed.payload,
+      ...transaction("props", [
+        { op: "replace", path: ["target-prop", "value"], value: "_blank" },
+      ]).payload,
+    ],
+  };
+  expect(
+    applyContentModeTransaction({
+      capabilities,
+      transaction: rejected,
+      scope: "text-and-props",
+    }).success
+  ).toBe(false);
+  expect(capabilities).toEqual(original);
+  const retry = applyContentModeTransaction({
+    capabilities,
+    transaction: allowed,
+    scope: "text-and-props",
+  });
+  expect(retry.success).toBe(true);
+  if (retry.success) {
+    expect(retry.capabilities.props.get("href-prop")?.value).toBe("/updated");
+    expect(retry.capabilities.props.get("target-prop")?.value).toBe("_self");
+  }
+  expect(capabilities).toEqual(original);
+});
+
 test("does not reuse an editable prop id for a different name", () => {
   const capabilities = getContentModeCapabilities({
     instances,
@@ -4317,7 +4357,8 @@ describe("content mode permissions", () => {
       value: { type: "keyword", value: "red" },
     };
 
-    const result = validateContentModeTransaction({
+    const original = structuredClone(capabilities);
+    const result = applyContentModeTransaction({
       capabilities,
       transaction: {
         id: "tx-1",
@@ -4376,8 +4417,20 @@ describe("content mode permissions", () => {
       },
     });
 
-    expect(result).toEqual({ success: true });
-    expect(capabilities.styleSources.has("new-local")).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.capabilities.styleSources.get("new-local")).toEqual({
+        type: "local",
+        id: "new-local",
+      });
+      expect(result.capabilities.styleSourceSelections.get("new-link")).toEqual(
+        { instanceId: "new-link", values: ["new-local"] }
+      );
+      expect(
+        result.capabilities.styles.get(getStyleDeclKey(styleDecl))
+      ).toEqual(styleDecl);
+    }
+    expect(capabilities).toEqual(original);
 
     expect(
       validateContentModeTransaction({

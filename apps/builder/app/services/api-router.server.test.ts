@@ -10,6 +10,7 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { applyBuilderNamespacePatches } from "@webstudio-is/project-build/state";
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
 import * as projectBuild from "@webstudio-is/project-build/server";
 import * as projectApi from "@webstudio-is/project/index.server";
@@ -1578,6 +1579,23 @@ describe("api router permits", () => {
         authorization: expect.objectContaining({ type: "token" }),
       })
     );
+    expect(patchBuild).toHaveBeenCalledTimes(1);
+    const committed = patchBuild.mock.calls[0][0];
+    const changes = committed.transactions.flatMap(({ payload }) => payload);
+    expect(changes.map(({ namespace }) => namespace)).toEqual(["instances"]);
+    const saved = applyBuilderNamespacePatches(
+      new Map(build.instances.map((instance) => [instance.id, instance])),
+      changes.flatMap(({ patches }) => patches)
+    );
+    expect(saved.get("text-instance")?.children).toEqual([
+      { type: "text", value: "New" },
+    ]);
+    expect(saved.get("outside")).toEqual(
+      build.instances.find(({ id }) => id === "outside")
+    );
+    expect(
+      build.instances.find(({ id }) => id === "text-instance")?.children
+    ).toEqual([{ type: "text", value: "Old" }]);
   });
 
   test("limits editor api patches to content instances and props", async () => {

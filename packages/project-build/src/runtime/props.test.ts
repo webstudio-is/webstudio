@@ -511,6 +511,81 @@ describe("createPropUpsertPayload", () => {
 });
 
 describe("updateProps", () => {
+  test("coalesces by instance and property without merging unrelated updates", () => {
+    const other = { ...image, id: "other", component: "Link" };
+    const existing = prop("title", { value: "Original" });
+    const state = {
+      instances: new Map([
+        [image.id, image],
+        [other.id, other],
+      ]),
+      props: new Map([[existing.id, existing]]),
+    };
+    const updates = [
+      {
+        instanceId: image.id,
+        name: "title",
+        type: "string" as const,
+        value: "Discarded",
+      },
+      {
+        instanceId: other.id,
+        name: "title",
+        type: "string" as const,
+        value: "Other",
+      },
+      {
+        instanceId: image.id,
+        name: "alt",
+        type: "string" as const,
+        value: "Discarded alt",
+      },
+      {
+        instanceId: image.id,
+        name: "title",
+        type: "string" as const,
+        value: "Final",
+      },
+      {
+        instanceId: image.id,
+        name: "alt",
+        type: "string" as const,
+        value: "Final alt",
+      },
+    ];
+    const original = structuredClone({ state, updates });
+    let id = 0;
+    const result = updateProps(
+      state,
+      { updates },
+      { createId: () => `new-${id++}` }
+    );
+    const next = applyBuilderNamespacePatches(
+      state.props,
+      result.payload[0].patches
+    );
+    expect([...next.values()]).toEqual([
+      { ...existing, value: "Final" },
+      {
+        id: "new-0",
+        instanceId: other.id,
+        name: "title",
+        type: "string",
+        value: "Other",
+      },
+      {
+        id: "new-1",
+        instanceId: image.id,
+        name: "alt",
+        type: "string",
+        value: "Final alt",
+      },
+    ]);
+    expect(result.result.propIds).toEqual(["new-0", existing.id, "new-1"]);
+    expect(id).toBe(2);
+    expect({ state, updates }).toEqual(original);
+  });
+
   test.each(["Image", "Video"])(
     "coalesces new %s sources before assigning IDs",
     (component) => {
