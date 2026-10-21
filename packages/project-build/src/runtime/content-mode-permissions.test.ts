@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { Patch } from "immer";
-import { applyBuilderNamespacePatches } from "../state/patch";
+import type { BuilderPatch } from "../contracts/patch";
+import {
+  applyBuilderNamespacePatches,
+  applyBuilderPatchTransactions,
+} from "../state/patch";
 import {
   blockComponent,
   blockBodyComponent,
@@ -40,6 +44,56 @@ const {
   isContentModePropTransition,
   validateEditableInstanceReferences,
 } = contentModePermissionsTesting;
+
+test.each([false, true])(
+  "authorization preserves append-then-edit patches (split: %s)",
+  (split) => {
+    const capabilities = getContentModeCapabilities({
+      instances,
+      props,
+      metas,
+      styleSources,
+    });
+    const patches: BuilderPatch[] = [
+      {
+        op: "add",
+        path: ["link", "children", 0],
+        value: { type: "text", value: "New" },
+      },
+      {
+        op: "replace",
+        path: ["link", "children", 0],
+        value: { type: "text", value: "Edited" },
+      },
+    ];
+    const change = {
+      id: "append-edit",
+      payload: (split ? patches.map((patch) => [patch]) : [patches]).map(
+        (patches) => ({
+          namespace: "instances" as const,
+          patches,
+        })
+      ),
+    };
+    const result = applyContentModeTransaction({
+      capabilities,
+      transaction: change,
+      scope: "text-and-props",
+    });
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    const persisted = applyBuilderPatchTransactions({ instances, props }, [
+      change,
+    ]);
+    expect(result.capabilities.instances).toEqual(persisted.state.instances);
+    expect(result.capabilities.instances.get("link")?.children).toEqual([
+      { type: "text", value: "Edited" },
+    ]);
+    expect(instances.get("link")?.children).toEqual([]);
+  }
+);
 
 test("authorization rejects a child replacement that persistence cannot apply", () => {
   const capabilities = getContentModeCapabilities({
@@ -1337,10 +1391,7 @@ describe("content mode permissions", () => {
           },
         ]),
       })
-    ).toEqual({
-      success: false,
-      error: 'Namespace "props" is not editable in content mode.',
-    });
+    ).toEqual({ success: true });
 
     expect(
       validateContentModeTransaction({

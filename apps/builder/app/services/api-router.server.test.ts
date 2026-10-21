@@ -1501,6 +1501,45 @@ describe("api router permits", () => {
     expect(patchBuild).not.toHaveBeenCalled();
   });
 
+  test("rejects a future Editor version before persistence can catch up", async () => {
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({ relation: "editors" })
+    );
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(
+      createEditableContentBuild()
+    );
+    // Persistence could observe version 4 after a concurrent Builder save
+    // moves text-instance outside the editable Content Block.
+    const patchBuild = vi
+      .spyOn(projectApi, "patchBuild")
+      .mockResolvedValue({ status: "ok", version: 5 });
+    await expect(
+      createCaller(createContext(true)).build.patch({
+        projectId: "project-1",
+        baseVersion: 4,
+        transactions: [
+          {
+            id: "future-edit",
+            payload: [
+              {
+                namespace: "instances",
+                patches: [
+                  {
+                    op: "replace",
+                    path: ["text-instance", "children", 0],
+                    value: { type: "text", value: "Changed" },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(patchBuild).not.toHaveBeenCalled();
+  });
+
   test("commits content-mode mutations with editor api tokens", async () => {
     const build = createEditableContentBuild();
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(

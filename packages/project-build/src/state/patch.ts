@@ -1,4 +1,4 @@
-import { applyPatches, type Patch } from "immer";
+import { applyPatches, produce, type Patch } from "immer";
 import { enableImmerPatchPlugins } from "./immer";
 import type {
   BuilderPatch,
@@ -185,10 +185,12 @@ export const applyBuilderNamespacePatches = <State>(
   state: State,
   patches: readonly Patch[]
 ): State => {
-  for (const patch of patches) {
-    assertReplacePatchTargetsExistingPath(state, patch);
-  }
-  return applyPatches(state as never, patches as Patch[]) as State;
+  return produce({ state }, (draft) => {
+    for (const patch of patches) {
+      assertReplacePatchTargetsExistingPath(draft.state, patch);
+      draft.state = applyPatches(draft.state as never, [patch]);
+    }
+  }).state;
 };
 
 export const applyBuilderPatchPayloadMutable = (

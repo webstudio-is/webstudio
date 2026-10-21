@@ -12,6 +12,7 @@ import {
   setMarketplaceApprovalStatus,
 } from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
+import { singlePlayerVersionMismatchError } from "@webstudio-is/project/build-patch-core.server";
 import {
   createProjectDomain,
   createUnpublishJobId,
@@ -1013,8 +1014,11 @@ export const apiRouter = router({
       "edit",
       async ({ ctx, input, auth }) => {
         const build = await loadDevBuildByProjectId(ctx, input.projectId);
+        if (input.baseVersion > build.version) {
+          throwApiError("CONFLICT", singlePlayerVersionMismatchError);
+        }
         // Older versions cannot write; let persistence handle retries and conflicts.
-        if (input.baseVersion >= build.version) {
+        if (input.baseVersion === build.version) {
           assertContentOrBuildTransactions({
             auth,
             build,
