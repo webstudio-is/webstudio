@@ -78,7 +78,8 @@ Verification may take up to 24 hours but usually takes only a few minutes.
 You must publish your site _after_ the domain is verified, or else "[Worker not found](publishing-and-custom-domains.md#domain-issues)" will show on the site.
 {% endhint %}
 
-Keep the Publish dialog open to follow the build and deployment status. Resolve any reported error before trying again.
+You can close the Publish dialog while the build runs. Reopen it to see the
+latest status. Resolve any reported error before trying again.
 
 Each domain shows a yellow progress icon while publishing and a green checkmark
 once publishing finishes. A red icon indicates a failure. Hover over the icon
