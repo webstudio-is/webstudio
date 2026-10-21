@@ -957,6 +957,9 @@ export const updateProps = (
     if (
       source.name !== "src" ||
       source.type !== "asset" ||
+      nextProps.findLast(
+        (prop) => prop.instanceId === source.instanceId && prop.name === "src"
+      ) !== source ||
       findProp(props.values(), instance.id, "src")?.type === "expression"
     ) {
       continue;

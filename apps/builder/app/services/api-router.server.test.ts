@@ -1422,6 +1422,33 @@ describe("api router permits", () => {
         transactions: emptyTransactions,
       })
     ).not.toThrow();
+    const repeatedPayload = Array.from(
+      { length: 101 },
+      () => contentPayload[0]
+    );
+    expect(() =>
+      assertContentOrBuildTransactions({
+        auth: editorAuth,
+        build,
+        transactions: [{ id: "repeated", payload: repeatedPayload }],
+      })
+    ).toThrow("You don't have permission to build this project.");
+    expect(() =>
+      assertContentOrBuildTransactions({
+        auth: editorAuth,
+        build,
+        transactions: [
+          { id: "boundary", payload: repeatedPayload.slice(0, 100) },
+        ],
+      })
+    ).not.toThrow();
+    expect(() =>
+      assertContentOrBuildTransactions({
+        auth: builderAuth,
+        build,
+        transactions: [{ id: "repeated", payload: repeatedPayload }],
+      })
+    ).not.toThrow();
   });
 
   test("commits content-mode mutations with editor api tokens", async () => {

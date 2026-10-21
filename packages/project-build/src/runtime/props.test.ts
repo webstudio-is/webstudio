@@ -512,6 +512,50 @@ describe("createPropUpsertPayload", () => {
 
 describe("updateProps", () => {
   test.each(["Image", "Video"])(
+    "links %s metadata to the last source in a batch",
+    (component) => {
+      const existing = [
+        prop("src"),
+        prop("width"),
+        prop("height"),
+        prop("alt"),
+      ];
+      const state = {
+        instances: new Map([[image.id, { ...image, component }]]),
+        props: new Map(existing.map((prop) => [prop.id, prop])),
+      };
+      for (const type of ["asset", "string"] as const) {
+        const result = updateProps(
+          state,
+          {
+            updates: [
+              {
+                instanceId: image.id,
+                name: "src",
+                type: "asset",
+                value: "first",
+              },
+              { instanceId: image.id, name: "src", type, value: "last" },
+            ],
+          },
+          { createId: () => "unused" }
+        );
+        const next = applyBuilderNamespacePatches(
+          state.props,
+          result.payload[0].patches
+        );
+        expect([...next.values()]).toEqual(
+          existing.map((prop) =>
+            prop.name === "src" || type === "asset"
+              ? { ...prop, type, value: "last" }
+              : prop
+          )
+        );
+      }
+    }
+  );
+
+  test.each(["Image", "Video"])(
     "updates %s source and related asset props atomically",
     (component) => {
       const existing = [
