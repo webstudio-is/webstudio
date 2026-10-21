@@ -39,6 +39,7 @@ import {
 } from "./mcp";
 
 const {
+  createIssueReportStateWriter,
   getMcpDownloadAsset,
   getIssueReportFailureFile,
   getIssueReportPageId,
@@ -508,6 +509,44 @@ test("persists sanitized issue-report failure diagnostics for the next CLI proce
   const malformedProcess = createIssueReportFailureTracker();
   await restoreIssueReportFailure(filePath, malformedProcess);
   expect(malformedProcess.get()).toBeUndefined();
+  await expect(readFile(filePath, "utf8")).rejects.toMatchObject({
+    code: "ENOENT",
+  });
+});
+
+test("keeps the latest issue-report state when writes overlap", async () => {
+  const projectRoot = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-issue-report-writes-")
+  );
+  tempDirs.push(projectRoot);
+  const filePath = getIssueReportFailureFile(projectRoot, "project-1");
+  const tracker = createIssueReportFailureTracker();
+  tracker.record("update-text", new Error("failed"), 1, {
+    instanceId: "instance-1",
+  });
+  let releaseFirstWrite: () => void = () => undefined;
+  const firstWriteBlocked = new Promise<void>((resolve) => {
+    releaseFirstWrite = resolve;
+  });
+  const writes: string[] = [];
+  const writer = createIssueReportStateWriter(
+    filePath,
+    async (path, snapshot, targets) => {
+      if (snapshot !== undefined) {
+        await firstWriteBlocked;
+      }
+      writes.push(snapshot === undefined ? "clear" : "failure");
+      await persistIssueReportFailure(path, snapshot, targets);
+    }
+  );
+
+  const firstWrite = writer(tracker.snapshot());
+  const clear = writer(undefined);
+  await Promise.resolve();
+  expect(writes).toEqual([]);
+  releaseFirstWrite();
+  await Promise.all([firstWrite, clear]);
+  expect(writes).toEqual(["failure", "clear"]);
   await expect(readFile(filePath, "utf8")).rejects.toMatchObject({
     code: "ENOENT",
   });

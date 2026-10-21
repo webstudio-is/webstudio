@@ -1891,6 +1891,21 @@ const persistIssueReportFailure = async (
   }
 };
 
+const createIssueReportStateWriter = (
+  filePath: string,
+  write = persistIssueReportFailure
+) => {
+  let pending = Promise.resolve();
+  return (
+    snapshot: { failure: IssueReportRecentFailure; at: number } | undefined,
+    targetSnapshot?: { target: IssueReportRecentTarget; at: number }[]
+  ) => {
+    const persist = () => write(filePath, snapshot, targetSnapshot);
+    pending = pending.then(persist, persist);
+    return pending;
+  };
+};
+
 const restoreIssueReportFailure = async (
   filePath: string,
   failureTracker: ReturnType<typeof createIssueReportFailureTracker>,
@@ -2013,6 +2028,9 @@ const createCliMcpHost = async ({
   const issueReportFailureFile = getIssueReportFailureFile(
     projectRoot,
     connection.projectId
+  );
+  const persistIssueReportState = createIssueReportStateWriter(
+    issueReportFailureFile
   );
   await restoreIssueReportFailure(
     issueReportFailureFile,
@@ -2372,8 +2390,7 @@ const createCliMcpHost = async ({
             session.snapshot?.state.pages
           )
         );
-        await persistIssueReportFailure(
-          issueReportFailureFile,
+        await persistIssueReportState(
           failureTracker.snapshot(),
           targetTracker.snapshot()
         );
@@ -2383,7 +2400,7 @@ const createCliMcpHost = async ({
       failureTracker.succeed(canonicalTool);
       if (canonicalTool === "report-issue") {
         targetTracker.clear();
-        await persistIssueReportFailure(issueReportFailureFile, undefined);
+        await persistIssueReportState(undefined);
       } else {
         const hasTarget = targetTracker.record(
           canonicalTool,
@@ -2395,8 +2412,7 @@ const createCliMcpHost = async ({
           )
         );
         if (hasTarget) {
-          await persistIssueReportFailure(
-            issueReportFailureFile,
+          await persistIssueReportState(
             failureTracker.snapshot(),
             targetTracker.snapshot()
           );
@@ -3089,6 +3105,7 @@ export const mcp = async (
 };
 
 export const __testing__ = {
+  createIssueReportStateWriter,
   getIssueReportPageId,
   getMcpDownloadAsset,
   getIssueReportFailureFile,
