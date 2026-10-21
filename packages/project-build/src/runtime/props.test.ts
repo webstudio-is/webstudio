@@ -555,14 +555,23 @@ describe("updateProps", () => {
     }
   );
 
-  test.each(["Image", "Video"])(
-    "updates %s source and related asset props atomically",
-    (component) => {
+  test.each(
+    ["Image", "Video"].flatMap((component) =>
+      [false, true].map((bound) => ({ component, bound }))
+    )
+  )(
+    "updates $component source atomically and preserves bindings: $bound",
+    ({ component, bound }) => {
       const existing = [
         prop("src"),
-        prop("width", { type: "number", value: 100, required: true }),
+        prop(
+          "width",
+          bound
+            ? { type: "expression", value: "post.width", required: true }
+            : { type: "number", value: 100, required: true }
+        ),
         prop("height", { type: "number", value: 200 }),
-        prop("alt"),
+        prop("alt", bound ? { type: "expression", value: "post.alt" } : {}),
       ];
       const state = {
         instances: new Map([[image.id, { ...image, component }]]),
@@ -587,7 +596,11 @@ describe("updateProps", () => {
         result.payload[0].patches
       );
       expect([...next.values()]).toEqual(
-        existing.map((prop) => ({ ...prop, type: "asset", value: "new-asset" }))
+        existing.map((prop) =>
+          prop.type === "expression"
+            ? prop
+            : { ...prop, type: "asset", value: "new-asset" }
+        )
       );
       expect([...state.props.values()]).toEqual(existing);
       const authorized = applyContentModeTransaction({

@@ -965,10 +965,13 @@ export const updateProps = (
       continue;
     }
     for (const name of getMediaAssetPropNames(instance.component)) {
-      if (findProp(nextProps, instance.id, name)) {
+      const existing = findProp(props.values(), instance.id, name);
+      if (
+        existing?.type === "expression" ||
+        findProp(nextProps, instance.id, name)
+      ) {
         continue;
       }
-      const existing = findProp(props.values(), instance.id, name);
       nextProps.push(
         createPropValue({
           id: existing?.id ?? context.createId(),
