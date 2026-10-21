@@ -13,7 +13,6 @@ import { PublishValidationResults } from "./publish-validation-results";
 const {
   usePublishProgress,
   waitForPublishStatus,
-  waitForOwnedPublishStatus,
   refreshUntilSuccess,
   useManualValidationFindings,
   getRefreshedProject,
@@ -378,11 +377,15 @@ test("an old poll cannot update a newly mounted copy of the same project", async
   const query = new Promise<{ success: true; project: Project }>((resolve) => {
     finishQuery = resolve;
   });
-  const polling = waitForOwnedPublishStatus({
-    projectId: "project",
-    isCurrentProject: progress!.isCurrentProject,
-    query: () => query,
-  });
+  const polling = waitForPublishStatus(
+    () =>
+      getRefreshedProject({
+        projectId: "project",
+        isCurrent: progress!.isCurrentProject,
+        query: () => query,
+      }),
+    progress!.isCurrentProject
+  );
 
   act(() => root?.unmount());
   $project.set({ id: "another-project" } as Project);
@@ -503,7 +506,7 @@ test("a rejected publish request shows an inline error while the dialog is open"
         >
           Start
         </button>
-        <output>{progress.requestError}</output>
+        <output>{progress.publishError}</output>
       </>
     );
   };
@@ -538,7 +541,7 @@ test("starting validation clears a previous request failure", async () => {
           Publish
         </button>
         <button onClick={progress.clearErrors}>Validate</button>
-        <output>{progress.publishError ?? progress.requestError}</output>
+        <output>{progress.publishError}</output>
       </>
     );
   };
@@ -570,7 +573,7 @@ test("a rejected publish request shows a toast after the dialog closes", async (
     return (
       <>
         <button onClick={() => progress.start(() => publish)}>Start</button>
-        <output>{progress.requestError}</output>
+        <output>{progress.publishError}</output>
       </>
     );
   };
@@ -621,7 +624,7 @@ test("a rejected publish request appears in the panel reopened before rejection"
         >
           Reopen
         </button>
-        {isOpen && <output>{progress.requestError}</output>}
+        {isOpen && <output>{progress.publishError}</output>}
       </>
     );
   };
@@ -868,7 +871,7 @@ test("a newer build clears a recovered transport error", async () => {
         >
           Refresh
         </button>
-        <output>{progress.requestError}</output>
+        <output>{progress.publishError}</output>
       </>
     );
   };
@@ -923,7 +926,7 @@ test("a recovered failed build replaces a lost response error", async () => {
         >
           Refresh
         </button>
-        <output>{progress.publishError ?? progress.requestError}</output>
+        <output>{progress.publishError}</output>
       </>
     );
   };

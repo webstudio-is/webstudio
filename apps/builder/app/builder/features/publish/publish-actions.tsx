@@ -9,33 +9,24 @@ export const usePublishValidationState = (
 ) => {
   const [validationState, setValidationState] =
     useState<PublishValidationState>("idle");
-  const session = useRef(0);
-  const sessionAtRender = session.current;
   const dialogRef = useRef(dialog);
   dialogRef.current = dialog;
 
   const reset = useCallback(() => {
-    session.current += 1;
     setValidationState("idle");
   }, []);
 
-  const update = useCallback(
-    (state: PublishValidationState) => {
-      if (state === "passed" && dialogRef.current !== "publish") {
-        toast.success("Validation passed. Ready to publish.", {
-          duration: Number.POSITIVE_INFINITY,
-        });
-        return;
-      }
-      if (
-        dialogRef.current === "publish" &&
-        session.current === sessionAtRender
-      ) {
-        setValidationState(state);
-      }
-    },
-    [sessionAtRender]
-  );
+  const update = useCallback((state: PublishValidationState) => {
+    if (state === "passed" && dialogRef.current !== "publish") {
+      toast.success("Validation passed. Ready to publish.", {
+        duration: Number.POSITIVE_INFINITY,
+      });
+      return;
+    }
+    if (dialogRef.current === "publish") {
+      setValidationState(state);
+    }
+  }, []);
 
   useEffect(() => {
     if (dialog !== "publish") {

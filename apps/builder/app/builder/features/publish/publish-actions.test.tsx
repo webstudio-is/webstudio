@@ -142,11 +142,12 @@ test("clears the validation result when the publish popover closes", async () =>
 
 test.each([
   { destination: "none" as const, expectedToasts: 1 },
+  { destination: "none" as const, reopen: true, expectedToasts: 0 },
   { destination: "export" as const, expectedToasts: 1 },
   { destination: "publish" as const, expectedToasts: 0 },
 ])(
-  "reports validation success after switching to $destination",
-  async ({ destination, expectedToasts }) => {
+  "reports validation success after switching to $destination (reopen: $reopen)",
+  async ({ destination, reopen, expectedToasts }) => {
     const successToast = vi
       .spyOn(toast, "success")
       .mockImplementation(() => "");
@@ -182,6 +183,9 @@ test.each([
           <button type="button" onClick={() => setDialog(destination)}>
             Switch
           </button>
+          <button type="button" onClick={() => setDialog("publish")}>
+            Reopen
+          </button>
           <output>{validationState}</output>
         </TooltipProvider>
       );
@@ -191,9 +195,13 @@ test.each([
     document.body.appendChild(container);
     root = createRoot(container);
     act(() => root?.render(<Harness />));
-    const [validate, , switchDialog] = container.querySelectorAll("button");
+    const [validate, , switchDialog, reopenDialog] =
+      container.querySelectorAll("button");
     act(() => validate.click());
     act(() => switchDialog.click());
+    if (reopen) {
+      act(() => reopenDialog.click());
+    }
     await act(async () => {
       finishValidation();
       await validation;
@@ -201,7 +209,7 @@ test.each([
 
     expect(successToast).toHaveBeenCalledTimes(expectedToasts);
     expect(container.querySelector("output")?.textContent).toBe(
-      destination === "publish" ? "passed" : "idle"
+      destination === "publish" || reopen ? "passed" : "idle"
     );
   }
 );
