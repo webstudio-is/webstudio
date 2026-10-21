@@ -1163,9 +1163,6 @@ const Publish = ({
         return;
       }
       onValidationStateChange("passed");
-      toast.success("Validation passed. Ready to publish.", {
-        duration: Number.POSITIVE_INFINITY,
-      });
     } catch (error) {
       if (validationFindings.isCurrent(session) === false) {
         return;
