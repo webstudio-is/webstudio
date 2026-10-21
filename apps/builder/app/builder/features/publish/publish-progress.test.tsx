@@ -423,7 +423,20 @@ test("publish completion does not show a toast while the Publish panel is open",
   expect(setPublishError).toHaveBeenCalledOnce();
 });
 
-test("publish completion shows a toast in the Export view", () => {
+test("an old project completion does not show a success toast over an open Publish panel", () => {
+  const successToast = vi.spyOn(toast, "success").mockImplementation(() => "");
+  $publishDialog.set("publish");
+
+  reportPublishResult({
+    result: { status: "PUBLISHED", statusText: <>Published</> },
+    setPublishError: vi.fn(),
+    isCurrentProject: () => false,
+  });
+
+  expect(successToast).not.toHaveBeenCalled();
+});
+
+test("publish completion does not show a success toast in the Export view", () => {
   const successToast = vi.spyOn(toast, "success").mockImplementation(() => "");
   const errorToast = vi.spyOn(toast, "error").mockImplementation(() => "");
   const setPublishError = vi.fn();
@@ -442,7 +455,7 @@ test("publish completion shows a toast in the Export view", () => {
     setPublishError,
   });
 
-  expect(successToast).toHaveBeenCalledOnce();
+  expect(successToast).not.toHaveBeenCalled();
   expect(errorToast).toHaveBeenCalledOnce();
 });
 

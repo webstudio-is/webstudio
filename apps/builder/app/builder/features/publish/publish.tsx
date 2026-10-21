@@ -872,7 +872,7 @@ const reportPublishResult = ({
   isCurrentProject?: () => boolean;
 }) => {
   if (result?.status === "PUBLISHED") {
-    if ($publishDialog.get() !== "publish" || !isCurrentProject()) {
+    if ($publishDialog.get() === "none") {
       toast.success(
         <>
           The project has been successfully published.{" "}
