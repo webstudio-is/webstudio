@@ -1983,9 +1983,8 @@ type PublishProps = {
 export const PublishButton = ({ projectId }: PublishProps) => {
   const publishDialog = useStore($publishDialog);
   const authTokenPermissions = useStore($authTokenPermissions);
-  const { validationState, update, reset } = usePublishValidationState(
-    publishDialog === "publish"
-  );
+  const { validationState, update, reset } =
+    usePublishValidationState(publishDialog);
   const publishProgress = usePublishProgress(projectId);
   const {
     dismissCountdown,
