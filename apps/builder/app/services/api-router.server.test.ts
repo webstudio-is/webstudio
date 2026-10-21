@@ -1403,6 +1403,25 @@ describe("api router permits", () => {
         transactions: [{ id: "design", payload: designPayload }],
       })
     ).not.toThrow();
+
+    const emptyTransactions = Array.from({ length: 11 }, (_, index) => ({
+      id: `empty-${index}`,
+      payload: [],
+    }));
+    expect(() =>
+      assertContentOrBuildTransactions({
+        auth: editorAuth,
+        build,
+        transactions: emptyTransactions,
+      })
+    ).toThrow("You don't have permission to build this project.");
+    expect(() =>
+      assertContentOrBuildTransactions({
+        auth: builderAuth,
+        build,
+        transactions: emptyTransactions,
+      })
+    ).not.toThrow();
   });
 
   test("commits content-mode mutations with editor api tokens", async () => {

@@ -564,6 +564,11 @@ const assertContentOrBuildTransactions = ({
   if (auth.permits.includes("build")) {
     return;
   }
+  if (transactions.length > 10) {
+    throw new AuthorizationError(
+      "You don't have permission to build this project."
+    );
+  }
   let capabilities = createContentModeCapabilitiesFromBuild(build);
   for (const transaction of transactions) {
     if (
@@ -575,6 +580,9 @@ const assertContentOrBuildTransactions = ({
       throw new AuthorizationError(
         "You don't have permission to build this project."
       );
+    }
+    if (transaction.payload.every(({ patches }) => patches.length === 0)) {
+      continue;
     }
     const result = applyContentModeTransaction({ capabilities, transaction });
     if (result.success === false) {
