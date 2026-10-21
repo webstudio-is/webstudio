@@ -115,33 +115,6 @@ describe("issue report contract", () => {
       })
     ).toThrow();
   });
-
-  test("accepts only safe IDs for recent targeted tools", () => {
-    const recentTarget = {
-      tool: "screenshot",
-      entityIds: [{ field: "pageId", id: "page-123" }],
-    };
-    expect(
-      issueReportInput.parse({
-        ...report,
-        runtime: { ...report.runtime, recentTargets: [recentTarget] },
-      }).runtime?.recentTargets
-    ).toEqual([recentTarget]);
-    expect(() =>
-      issueReportInput.parse({
-        ...report,
-        runtime: {
-          ...report.runtime,
-          recentTargets: [
-            {
-              ...recentTarget,
-              path: "/private-page?authToken=secret",
-            },
-          ],
-        },
-      })
-    ).toThrow();
-  });
   test("accepts a complete anonymous LLM-authored report", () => {
     expect(issueReportInput.parse(report)).toEqual(report);
   });
