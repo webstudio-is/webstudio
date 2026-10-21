@@ -525,11 +525,14 @@ describe("component catalog", () => {
     const panelItemsWithDeprecatedBox = listBuilderComponentPanelItems({
       metas,
       templates,
-      includeDeprecatedComponents: new Set(["Box", "HiddenWidget"]),
+      showDeprecatedSection: true,
     });
     expect(
       panelItemsWithDeprecatedBox.get("general")?.map((item) => item.name)
-    ).toEqual(["Box", "LocalTemplateOnly"]);
+    ).toEqual(["LocalTemplateOnly"]);
+    expect(
+      panelItemsWithDeprecatedBox.get("deprecated")?.map((item) => item.name)
+    ).toEqual(["Box"]);
     expect(
       Array.from(panelItemsWithDeprecatedBox.values())
         .flat()
@@ -606,6 +609,61 @@ describe("component catalog", () => {
     ]);
     expect(itemsByCategory.get("general")?.[1]).not.toHaveProperty("icon");
     expect(itemsByCategory.has("hidden")).toBe(false);
+  });
+
+  test("keeps unavailable deprecated components out of the opt-in section", () => {
+    const metas = new Map<string, ComponentCatalogMeta>([
+      ["Legacy", { deprecated: true }],
+      ["Hidden", { category: "hidden", deprecated: true }],
+      ["Internal", { category: "internal", deprecated: true }],
+      ["Xml", { category: "xml", deprecated: true }],
+      [
+        "Part",
+        { contentModel: { category: "none", children: [] }, deprecated: true },
+      ],
+    ]);
+    const templates = new Map<string, ComponentCatalogTemplate>([
+      [
+        "Legacy",
+        { category: "general", template: createEmptyWebstudioFragment() },
+      ],
+      [
+        "Hidden",
+        { category: "general", template: createEmptyWebstudioFragment() },
+      ],
+      [
+        "Xml",
+        { category: "general", template: createEmptyWebstudioFragment() },
+      ],
+      [
+        "HiddenTemplate",
+        { category: "hidden", template: createEmptyWebstudioFragment() },
+      ],
+    ]);
+    metas.set("HiddenTemplate", { deprecated: true });
+
+    const items = listBuilderComponentPanelItems({
+      metas,
+      templates,
+      showDeprecatedSection: true,
+    });
+    expect(items.get("deprecated")?.map(({ name }) => name)).toEqual([
+      "Legacy",
+    ]);
+    expect(
+      items.get("general")?.some(({ name }) => name === "Legacy") ?? false
+    ).toBe(false);
+    expect(
+      listBuilderComponentPanelItems({ metas, templates }).has("deprecated")
+    ).toBe(false);
+    expect(
+      listBuilderComponentPanelItems({
+        metas,
+        templates,
+        showDeprecatedSection: true,
+        documentType: "xml",
+      }).has("deprecated")
+    ).toBe(false);
   });
 
   test("filters catalog items by visibility and document type", () => {
