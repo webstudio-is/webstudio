@@ -519,6 +519,40 @@ test.each(["expression", "string"] as const)(
   }
 );
 
+test.each([false, true])(
+  "rejects duplicate fresh props (split: %s)",
+  (split) => {
+    const capabilities = getContentModeCapabilities({
+      instances,
+      props: new Map(),
+      metas,
+      styleSources,
+    });
+    const patches: Patch[] = ["first", "second"].map((id) => ({
+      op: "add",
+      path: [id],
+      value: {
+        id,
+        instanceId: "link",
+        name: "href",
+        type: "string",
+        value: `/${id}`,
+      },
+    }));
+    expect(
+      applyContentModeTransaction({
+        capabilities,
+        transaction: {
+          payload: (split ? patches.map((patch) => [patch]) : [patches]).map(
+            (patches) => ({ namespace: "props", patches })
+          ),
+        },
+      }).success
+    ).toBe(false);
+    expect(capabilities.props.size).toBe(0);
+  }
+);
+
 test("rejects fresh linked Image dimensions shadowing a binding", () => {
   const image: Instance = {
     id: "image",

@@ -397,11 +397,11 @@ const isContentModePropTransition = ({
   const existingProp = capabilities.props.get(expectedPropId);
   if (
     existingProp === undefined &&
-    Array.from(capabilities.props.values()).some(
+    Array.from(nextProps.values()).some(
       (prop) =>
-        prop.instanceId === instance.id &&
+        prop?.instanceId === instance.id &&
         prop.name === parsedProp.data.name &&
-        nextProps.has(prop.id)
+        prop.id !== expectedPropId
     )
   ) {
     return false;

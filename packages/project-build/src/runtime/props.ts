@@ -962,14 +962,14 @@ export const updateProps = (
     if (
       source.name !== "src" ||
       source.type !== "asset" ||
-      findProp(props.values(), instance.id, "src")?.type === "expression"
+      isDynamicPropType(findProp(props.values(), instance.id, "src")?.type)
     ) {
       continue;
     }
     for (const name of getMediaAssetPropNames(instance.component)) {
       const existing = findProp(props.values(), instance.id, name);
       if (
-        existing?.type === "expression" ||
+        isDynamicPropType(existing?.type) ||
         findProp(nextProps, instance.id, name)
       ) {
         continue;

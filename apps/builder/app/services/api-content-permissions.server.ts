@@ -39,7 +39,14 @@ export const assertContentOrBuildTransactions = ({
   }
   if (
     transactions.length > 10 ||
-    transactions.reduce((count, { payload }) => count + payload.length, 0) > 100
+    transactions.reduce((count, { payload }) => count + payload.length, 0) >
+      100 ||
+    transactions.reduce(
+      (count, { payload }) =>
+        count +
+        payload.reduce((count, { patches }) => count + patches.length, 0),
+      0
+    ) > 1000
   ) {
     throw new AuthorizationError(
       "You don't have permission to build this project."

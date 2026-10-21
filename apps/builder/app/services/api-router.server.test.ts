@@ -1496,6 +1496,40 @@ describe("api router permits", () => {
         transactions: [{ id: "repeated", payload: repeatedPayload }],
       })
     ).not.toThrow();
+    for (const split of [false, true]) {
+      for (const count of [1000, 1001]) {
+        const patches = Array.from(
+          { length: count },
+          () => contentPayload[0].patches[0]
+        );
+        const transactions = (
+          split ? [patches.slice(0, 500), patches.slice(500)] : [patches]
+        ).map((patches, index) => ({
+          id: `patch-limit-${index}`,
+          payload: [{ namespace: "instances" as const, patches }],
+        }));
+        const assertEditor = () =>
+          assertContentOrBuildTransactions({
+            auth: editorAuth,
+            build,
+            transactions,
+          });
+        if (count === 1000) {
+          expect(assertEditor).not.toThrow();
+        } else {
+          expect(assertEditor).toThrow(
+            "You don't have permission to build this project."
+          );
+        }
+        expect(() =>
+          assertContentOrBuildTransactions({
+            auth: builderAuth,
+            build,
+            transactions,
+          })
+        ).not.toThrow();
+      }
+    }
   });
 
   test("preserves stale Editor retries without bypassing current or future patch validation", async () => {

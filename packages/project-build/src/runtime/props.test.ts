@@ -715,7 +715,9 @@ describe("updateProps", () => {
 
   test.each(
     ["Image", "Video"].flatMap((component) =>
-      [false, true].map((bound) => ({ component, bound }))
+      ([undefined, "expression", "resource", "parameter"] as const).map(
+        (bound) => ({ component, bound })
+      )
     )
   )(
     "updates $component source atomically and preserves bindings: $bound",
@@ -725,11 +727,11 @@ describe("updateProps", () => {
         prop(
           "width",
           bound
-            ? { type: "expression", value: "post.width", required: true }
+            ? { type: bound, value: "post.width", required: true }
             : { type: "number", value: 100, required: true }
         ),
         prop("height", { type: "number", value: 200 }),
-        prop("alt", bound ? { type: "expression", value: "post.alt" } : {}),
+        prop("alt", bound ? { type: bound, value: "post.alt" } : {}),
       ];
       const state = {
         instances: new Map([[image.id, { ...image, component }]]),
@@ -755,7 +757,8 @@ describe("updateProps", () => {
       );
       expect([...next.values()]).toEqual(
         existing.map((prop) =>
-          prop.type === "expression" ||
+          (bound !== undefined &&
+            (prop.name === "width" || prop.name === "alt")) ||
           (component === "Video" && prop.name !== "src")
             ? prop
             : { ...prop, type: "asset", value: "new-asset" }
@@ -864,12 +867,12 @@ describe("updateProps", () => {
       type: "asset" as const,
       source: prop("src"),
     },
-    {
+    ...(["expression", "resource", "parameter"] as const).map((type) => ({
       component: "Image",
       name: "src",
       type: "asset" as const,
-      source: prop("src", { type: "expression", value: "post.image" }),
-    },
+      source: prop("src", { type, value: "post.image" }),
+    })),
   ])(
     "does not sync unrelated or bound source edits: $component $name $type $source.type",
     ({ component, name, type, source }) => {
