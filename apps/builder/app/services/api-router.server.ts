@@ -539,15 +539,13 @@ const preservesNonTextChildren = (
   if (before === undefined || after === undefined) {
     return false;
   }
-  if (
-    before.every((child) => child.type === "text") &&
-    after.every((child) => child.type === "text")
-  ) {
-    return true;
-  }
   const keepNonText = (children: typeof before) =>
     children.map((child) => (child.type === "text" ? "text" : child));
-  return equal(keepNonText(before), keepNonText(after));
+  return (
+    (before.every((child) => child.type === "text") &&
+      after.every((child) => child.type === "text")) ||
+    equal(keepNonText(before), keepNonText(after))
+  );
 };
 
 const assertContentOrBuildTransactions = ({
@@ -588,27 +586,26 @@ const assertContentOrBuildTransactions = ({
     if (result.success === false) {
       throw new AuthorizationError(result.error);
     }
-    if (scope === "text-and-props") {
-      for (const change of transaction.payload) {
-        if (change.namespace !== "instances") {
-          continue;
-        }
-        for (const { path } of change.patches) {
-          const instanceId = path[0];
-          if (typeof instanceId !== "string") {
-            throw new AuthorizationError(
-              "You don't have permission to build this project."
+    if (
+      scope === "text-and-props" &&
+      transaction.payload.some(
+        ({ namespace, patches }) =>
+          namespace === "instances" &&
+          patches.some(({ path }) => {
+            const instanceId = path[0];
+            return (
+              typeof instanceId !== "string" ||
+              preservesNonTextChildren(
+                capabilities.instances.get(instanceId)?.children,
+                result.capabilities.instances.get(instanceId)?.children
+              ) === false
             );
-          }
-          const before = capabilities.instances.get(instanceId)?.children;
-          const after = result.capabilities.instances.get(instanceId)?.children;
-          if (preservesNonTextChildren(before, after) === false) {
-            throw new AuthorizationError(
-              "You don't have permission to build this project."
-            );
-          }
-        }
-      }
+          })
+      )
+    ) {
+      throw new AuthorizationError(
+        "You don't have permission to build this project."
+      );
     }
     capabilities = result.capabilities;
   }

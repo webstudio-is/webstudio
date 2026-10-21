@@ -1587,35 +1587,29 @@ describe("api router permits", () => {
       })),
     });
 
-    await expect(
-      caller.build.patch(patch([[textPatch("text-instance")]]))
-    ).resolves.toEqual({
-      version: 4,
-    });
-    await expect(caller.build.patch(patch([[setTextPatch]]))).resolves.toEqual({
-      version: 4,
-    });
-    await expect(
-      caller.build.patch(patch([[replaceInstanceTextPatch]]))
-    ).resolves.toEqual({ version: 4 });
+    for (const allowed of [
+      textPatch("text-instance"),
+      setTextPatch,
+      replaceInstanceTextPatch,
+    ]) {
+      await expect(caller.build.patch(patch([[allowed]]))).resolves.toEqual({
+        version: 4,
+      });
+    }
     expect(patchBuild).toHaveBeenCalledTimes(3);
     patchBuild.mockClear();
 
-    await expect(
-      caller.build.patch(patch([[textPatch("outside")]]))
-    ).rejects.toThrow();
-    await expect(caller.build.patch(patch([[stylePatch]]))).rejects.toThrow();
-    await expect(
-      caller.build.patch(patch([[expressionPatch]]))
-    ).rejects.toThrow();
-    await expect(caller.build.patch(patch([[assetPatch]]))).rejects.toThrow();
-    await expect(
-      caller.build.patch(patch([[structuralPatch]]))
-    ).rejects.toThrow();
-    await expect(caller.build.patch(patch([[reorderPatch]]))).rejects.toThrow();
-    await expect(
-      caller.build.patch(patch([[replaceInstanceStructurePatch]]))
-    ).rejects.toThrow();
+    for (const forbidden of [
+      textPatch("outside"),
+      stylePatch,
+      expressionPatch,
+      assetPatch,
+      structuralPatch,
+      reorderPatch,
+      replaceInstanceStructurePatch,
+    ]) {
+      await expect(caller.build.patch(patch([[forbidden]]))).rejects.toThrow();
+    }
     await expect(
       caller.build.patch(patch([[textPatch("text-instance")], [stylePatch]]))
     ).rejects.toThrow();
