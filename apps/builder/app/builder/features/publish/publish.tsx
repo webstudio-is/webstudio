@@ -1034,11 +1034,12 @@ const Publish = ({
       attributeFilter: ["value", "checked"],
     });
 
-    if (
-      validationFindings.domains !== undefined &&
-      restoreValidatedDomains(form, validationFindings.domains) === false
-    ) {
-      invalidateValidationFindings();
+    if (validationFindings.domains !== undefined) {
+      if (restoreValidatedDomains(form, validationFindings.domains)) {
+        previousDomainsKey.current = validationFindings.domains.join("\u0000");
+      } else {
+        invalidateValidationFindings();
+      }
     }
 
     handleFormInput();
