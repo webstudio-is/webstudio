@@ -10,7 +10,6 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import type { CompactBuild } from "@webstudio-is/project-build";
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
 import * as projectBuild from "@webstudio-is/project-build/server";
 import * as projectApi from "@webstudio-is/project/index.server";
@@ -48,7 +47,8 @@ import {
 const servicesDir = new URL(".", import.meta.url);
 const server = createTestServer();
 
-const { assertContentOrBuildPayload, assertApiPublishDomains } = __testing__;
+const { assertContentOrBuildTransactions, assertApiPublishDomains } =
+  __testing__;
 
 const createContext = (
   allowAdditionalPermissions: boolean,
@@ -95,6 +95,66 @@ type ApiRouterCaller = ReturnType<typeof apiRouter.createCaller>;
 
 const createCaller = (context: AppContext) =>
   apiRouter.createCaller(context) as ApiRouterCaller & RuntimeApiCaller;
+
+const createEditableContentBuild = () =>
+  ({
+    id: "build-1",
+    projectId: "project-1",
+    version: 3,
+    pages: createDefaultPages({ rootInstanceId: "root" }),
+    breakpoints: [],
+    styles: [],
+    styleSources: [],
+    styleSourceSelections: [],
+    props: [],
+    dataSources: [],
+    resources: [],
+    instances: [
+      {
+        type: "instance",
+        id: "root",
+        component: "ws:element",
+        tag: "body",
+        children: [
+          { type: "id", value: "block" },
+          { type: "id", value: "outside" },
+        ],
+      },
+      {
+        type: "instance",
+        id: "block",
+        component: blockComponent,
+        children: [
+          { type: "id", value: "text-instance" },
+          { type: "id", value: "other-instance" },
+        ],
+      },
+      {
+        type: "instance",
+        id: "text-instance",
+        component: "ws:element",
+        tag: "p",
+        children: [{ type: "text", value: "Old" }],
+      },
+      {
+        type: "instance",
+        id: "other-instance",
+        component: "ws:element",
+        tag: "p",
+        children: [{ type: "text", value: "Other" }],
+      },
+      {
+        type: "instance",
+        id: "outside",
+        component: "ws:element",
+        tag: "p",
+        children: [{ type: "text", value: "Old" }],
+      },
+    ],
+    marketplaceProduct: {},
+  }) as unknown as Awaited<
+    ReturnType<typeof projectBuild.loadDevBuildByProjectId>
+  >;
 
 describe("api router build operation adapters", () => {
   test("Form simulation requires API and build access before invoking the server engine", async () => {
@@ -1281,37 +1341,7 @@ describe("api router permits", () => {
   });
 
   test("allows editor api tokens to commit content-mode payloads only", () => {
-    const build = {
-      id: "build",
-      projectId: "project-1",
-      version: 1,
-      createdAt: "2024-01-01T00:00:00.000Z",
-      updatedAt: "2024-01-01T00:00:00.000Z",
-      pages: createDefaultPages({ rootInstanceId: "block" }),
-      breakpoints: [],
-      styles: [],
-      styleSources: [],
-      styleSourceSelections: [],
-      props: [],
-      dataSources: [],
-      resources: [],
-      instances: [
-        {
-          type: "instance",
-          id: "block",
-          component: blockComponent,
-          children: [{ type: "id", value: "text-instance" }],
-        },
-        {
-          type: "instance",
-          id: "text-instance",
-          component: "ws:element",
-          tag: "p",
-          children: [{ type: "text", value: "Old" }],
-        },
-      ],
-      marketplaceProduct: {},
-    } as unknown as CompactBuild;
+    const build = createEditableContentBuild();
     const editorAuth = {
       type: "token",
       token: createToken({ relation: "editors" }),
@@ -1353,60 +1383,30 @@ describe("api router permits", () => {
     ];
 
     expect(() =>
-      assertContentOrBuildPayload({
+      assertContentOrBuildTransactions({
         auth: editorAuth,
         build,
-        payload: contentPayload,
+        transactions: [{ id: "content", payload: contentPayload }],
       })
     ).not.toThrow();
     expect(() =>
-      assertContentOrBuildPayload({
+      assertContentOrBuildTransactions({
         auth: editorAuth,
         build,
-        payload: designPayload,
+        transactions: [{ id: "design", payload: designPayload }],
       })
     ).toThrow("content mode");
     expect(() =>
-      assertContentOrBuildPayload({
+      assertContentOrBuildTransactions({
         auth: builderAuth,
         build,
-        payload: designPayload,
+        transactions: [{ id: "design", payload: designPayload }],
       })
     ).not.toThrow();
   });
 
   test("commits content-mode mutations with editor api tokens", async () => {
-    const build = {
-      id: "build-1",
-      projectId: "project-1",
-      version: 3,
-      pages: createDefaultPages({ rootInstanceId: "block" }),
-      breakpoints: [],
-      styles: [],
-      styleSources: [],
-      styleSourceSelections: [],
-      props: [],
-      dataSources: [],
-      resources: [],
-      instances: [
-        {
-          type: "instance",
-          id: "block",
-          component: blockComponent,
-          children: [{ type: "id", value: "text-instance" }],
-        },
-        {
-          type: "instance",
-          id: "text-instance",
-          component: "ws:element",
-          tag: "p",
-          children: [{ type: "text", value: "Old" }],
-        },
-      ],
-      marketplaceProduct: {},
-    } as unknown as Awaited<
-      ReturnType<typeof projectBuild.loadDevBuildByProjectId>
-    >;
+    const build = createEditableContentBuild();
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
       createToken({ relation: "editors" })
     );
@@ -1443,6 +1443,139 @@ describe("api router permits", () => {
         authorization: expect.objectContaining({ type: "token" }),
       })
     );
+  });
+
+  test("limits editor api patches to content instances and props", async () => {
+    const build = createEditableContentBuild();
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({ relation: "editors" })
+    );
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
+    const patchBuild = vi
+      .spyOn(projectApi, "patchBuild")
+      .mockResolvedValue({ status: "ok", version: 4 });
+    const caller = createCaller(createContext(true));
+    const textPatch = (instanceId: string) => ({
+      namespace: "instances" as const,
+      patches: [
+        {
+          op: "replace" as const,
+          path: [instanceId, "children", 0],
+          value: { type: "text", value: "New" },
+        },
+      ],
+    });
+    const setTextPatch = {
+      namespace: "instances" as const,
+      patches: [
+        {
+          op: "replace" as const,
+          path: ["text-instance", "children"],
+          value: [{ type: "text", value: "Updated" }],
+        },
+      ],
+    };
+    const stylePatch = {
+      namespace: "styles" as const,
+      patches: [
+        {
+          op: "replace" as const,
+          path: ["style", "value"],
+          value: { type: "keyword", value: "red" },
+        },
+      ],
+    };
+    const assetPatch = {
+      namespace: "assets" as const,
+      patches: [{ op: "remove" as const, path: ["asset-id"] }],
+    };
+    const structuralPatch = {
+      namespace: "instances" as const,
+      patches: [
+        { op: "remove" as const, path: ["block", "children", 0] },
+        { op: "remove" as const, path: ["text-instance"] },
+      ],
+    };
+    const reorderPatch = {
+      namespace: "instances" as const,
+      patches: [
+        {
+          op: "replace" as const,
+          path: ["block", "children"],
+          value: [
+            { type: "id", value: "other-instance" },
+            { type: "id", value: "text-instance" },
+          ],
+        },
+      ],
+    };
+    const patch = (
+      payloads: Array<
+        Array<
+          | ReturnType<typeof textPatch>
+          | typeof setTextPatch
+          | typeof stylePatch
+          | typeof assetPatch
+          | typeof structuralPatch
+          | typeof reorderPatch
+        >
+      >
+    ) => ({
+      projectId: "project-1",
+      baseVersion: 3,
+      transactions: payloads.map((payload, index) => ({
+        id: `tx-${index}`,
+        payload,
+      })),
+    });
+
+    await expect(
+      caller.build.patch(patch([[textPatch("text-instance")]]))
+    ).resolves.toEqual({
+      version: 4,
+    });
+    await expect(caller.build.patch(patch([[setTextPatch]]))).resolves.toEqual({
+      version: 4,
+    });
+    expect(patchBuild).toHaveBeenCalledTimes(2);
+    patchBuild.mockClear();
+
+    await expect(
+      caller.build.patch(patch([[textPatch("outside")]]))
+    ).rejects.toThrow();
+    await expect(caller.build.patch(patch([[stylePatch]]))).rejects.toThrow();
+    await expect(caller.build.patch(patch([[assetPatch]]))).rejects.toThrow();
+    await expect(
+      caller.build.patch(patch([[structuralPatch]]))
+    ).rejects.toThrow();
+    await expect(caller.build.patch(patch([[reorderPatch]]))).rejects.toThrow();
+    await expect(
+      caller.build.patch(patch([[textPatch("text-instance")], [stylePatch]]))
+    ).rejects.toThrow();
+    expect(patchBuild).not.toHaveBeenCalled();
+
+    vi.mocked(authDb.getTokenInfo).mockResolvedValue(
+      createToken({ relation: "builders" })
+    );
+    await expect(caller.build.patch(patch([[stylePatch]]))).resolves.toEqual({
+      version: 4,
+    });
+
+    patchBuild.mockClear();
+    vi.mocked(authDb.getTokenInfo).mockResolvedValue(
+      createToken({ relation: "viewers" })
+    );
+    await expect(
+      caller.build.patch(patch([[textPatch("text-instance")]]))
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    vi.mocked(authDb.getTokenInfo).mockResolvedValue(
+      createToken({ relation: "editors", canUseApi: false })
+    );
+    await expect(
+      caller.build.patch(patch([[textPatch("text-instance")]]))
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(patchBuild).not.toHaveBeenCalled();
   });
 
   test("does not commit empty runtime mutation payloads", async () => {

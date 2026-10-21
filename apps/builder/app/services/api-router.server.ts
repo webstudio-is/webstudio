@@ -531,24 +531,76 @@ const createContentModeCapabilitiesFromBuild = (build: CompactBuild) => {
   });
 };
 
-const assertContentOrBuildPayload = ({
+const assertContentOrBuildTransactions = ({
   auth,
   build,
-  payload,
+  transactions,
+  scope = "content",
 }: {
   auth: Awaited<ReturnType<typeof assertApiProjectPermit>>;
   build: CompactBuild;
-  payload: z.infer<typeof buildPatchTransaction>["payload"];
+  transactions: z.infer<typeof buildPatchTransaction>[];
+  scope?: "content" | "text-and-props";
 }) => {
   if (auth.permits.includes("build")) {
     return;
   }
-  const result = applyContentModeTransaction({
-    capabilities: createContentModeCapabilitiesFromBuild(build),
-    transaction: { id: "api-content-mode", payload },
-  });
-  if (result.success === false) {
-    throw new AuthorizationError(result.error);
+  let capabilities = createContentModeCapabilitiesFromBuild(build);
+  for (const transaction of transactions) {
+    if (
+      scope === "text-and-props" &&
+      transaction.payload.some(
+        ({ namespace, patches }) =>
+          (namespace !== "instances" && namespace !== "props") ||
+          (namespace === "instances" &&
+            patches.some(
+              ({ path }) =>
+                path.length < 2 || path.length > 3 || path[1] !== "children"
+            ))
+      )
+    ) {
+      throw new AuthorizationError(
+        "You don't have permission to build this project."
+      );
+    }
+    const result = applyContentModeTransaction({ capabilities, transaction });
+    if (result.success === false) {
+      throw new AuthorizationError(result.error);
+    }
+    if (scope === "text-and-props") {
+      for (const change of transaction.payload) {
+        if (change.namespace !== "instances") {
+          continue;
+        }
+        for (const { path } of change.patches) {
+          const instanceId = path[0];
+          if (typeof instanceId !== "string") {
+            throw new AuthorizationError(
+              "You don't have permission to build this project."
+            );
+          }
+          const before = capabilities.instances.get(instanceId)?.children;
+          const after = result.capabilities.instances.get(instanceId)?.children;
+          const beforeIds = before
+            ?.filter((child) => child.type === "id")
+            .map((child) => child.value);
+          const afterIds = after
+            ?.filter((child) => child.type === "id")
+            .map((child) => child.value);
+          if (
+            beforeIds === undefined ||
+            afterIds === undefined ||
+            beforeIds.length !== afterIds.length ||
+            beforeIds.some((id, index) => id !== afterIds[index])
+          ) {
+            throw new AuthorizationError(
+              "You don't have permission to build this project."
+            );
+          }
+        }
+      }
+    }
+    capabilities = result.capabilities;
   }
 };
 
@@ -583,7 +635,11 @@ const contentOrBuildMutation = <
           payload: z.infer<typeof buildPatchTransaction>["payload"],
           result?: CommitResult
         ) => {
-          assertContentOrBuildPayload({ auth, build, payload });
+          assertContentOrBuildTransactions({
+            auth,
+            build,
+            transactions: [{ id: "api-content-mode", payload }],
+          });
           return (await applyBuildPayload(
             ctx,
             build,
@@ -1041,9 +1097,15 @@ export const apiRouter = router({
 
     patch: projectMutation(
       buildPatchInput,
-      "build",
-      async ({ ctx, input }) => {
+      "edit",
+      async ({ ctx, input, auth }) => {
         const build = await loadDevBuildByProjectId(ctx, input.projectId);
+        assertContentOrBuildTransactions({
+          auth,
+          build,
+          transactions: input.transactions,
+          scope: "text-and-props",
+        });
         return commitBuildTransactions({
           ctx,
           projectId: input.projectId,
@@ -1317,6 +1379,6 @@ export const apiRouter = router({
 });
 
 export const __testing__ = {
-  assertContentOrBuildPayload,
+  assertContentOrBuildTransactions,
   assertApiPublishDomains,
 };
