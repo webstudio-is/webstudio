@@ -1413,6 +1413,52 @@ describe("api router permits", () => {
       assertContentOrBuildTransactions({
         auth: editorAuth,
         build,
+        scope: "text-and-props",
+        transactions: [
+          {
+            id: "append",
+            payload: [
+              {
+                namespace: "instances",
+                patches: [
+                  {
+                    op: "add",
+                    path: ["text-instance", "children", 1],
+                    value: { type: "text", value: "Appended" },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            id: "edit-appended",
+            payload: [
+              {
+                namespace: "instances",
+                patches: [
+                  {
+                    op: "replace",
+                    path: ["text-instance", "children", 1],
+                    value: { type: "text", value: "Edited" },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+    ).not.toThrow();
+    expect(() =>
+      assertContentOrBuildTransactions({
+        auth: editorAuth,
+        build,
+        transactions: emptyTransactions.slice(0, 10),
+      })
+    ).not.toThrow();
+    expect(() =>
+      assertContentOrBuildTransactions({
+        auth: editorAuth,
+        build,
         transactions: emptyTransactions,
       })
     ).toThrow("You don't have permission to build this project.");

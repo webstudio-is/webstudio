@@ -321,6 +321,43 @@ test("text-and-props scope allows text edits but not structure or assets", () =>
   expect(capabilities.instances).toEqual(instances);
 });
 
+test.each([false, true])(
+  "text-and-props preserves inline child positions (move child: %s)",
+  (moveChild) => {
+    const children: Instance["children"] = [
+      { type: "text", value: "Before" },
+      { type: "id", value: "link" },
+      { type: "text", value: "After" },
+    ];
+    const capabilities = getContentModeCapabilities({
+      instances: new Map([
+        ...instances,
+        ["block", { ...instances.get("block")!, children }],
+      ]),
+      props,
+      metas,
+      styleSources,
+    });
+    const nextChildren: Instance["children"] = moveChild
+      ? [children[1], children[0], children[2]]
+      : [{ type: "text", value: "Changed" }, children[1], children[2]];
+    const result = applyContentModeTransaction({
+      capabilities,
+      scope: "text-and-props",
+      transaction: transaction("instances", [
+        { op: "replace", path: ["block", "children"], value: nextChildren },
+      ]),
+    });
+    expect(result.success).toBe(!moveChild);
+    if (result.success) {
+      expect(result.capabilities.instances.get("block")?.children).toEqual(
+        nextChildren
+      );
+    }
+    expect(capabilities.instances.get("block")?.children).toEqual(children);
+  }
+);
+
 test("empty Editor transactions do not revalidate unrelated content", () => {
   const capabilities = getContentModeCapabilities({
     instances: new Map([
