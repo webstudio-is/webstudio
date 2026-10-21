@@ -543,7 +543,7 @@ test("rejects fresh linked Image dimensions shadowing a binding", () => {
   const capabilities = getContentModeCapabilities({
     instances: new Map([[image.id, image]]),
     contentRootIds: new Set([image.id]),
-    props: new Map([
+    props: new Map<string, Prop>([
       [source.id, source],
       [width.id, width],
     ]),
