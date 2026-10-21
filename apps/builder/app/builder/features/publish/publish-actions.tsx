@@ -21,7 +21,7 @@ export const usePublishValidationState = (
 
   const update = useCallback(
     (state: PublishValidationState) => {
-      if (state === "passed" && dialogRef.current === "none") {
+      if (state === "passed" && dialogRef.current !== "publish") {
         toast.success("Validation passed. Ready to publish.", {
           duration: Number.POSITIVE_INFINITY,
         });

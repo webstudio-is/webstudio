@@ -142,7 +142,7 @@ test("clears the validation result when the publish popover closes", async () =>
 
 test.each([
   { destination: "none" as const, expectedToasts: 1 },
-  { destination: "export" as const, expectedToasts: 0 },
+  { destination: "export" as const, expectedToasts: 1 },
   { destination: "publish" as const, expectedToasts: 0 },
 ])(
   "reports validation success after switching to $destination",
