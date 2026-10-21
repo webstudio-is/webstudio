@@ -2,11 +2,12 @@ import { useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
-import { toast } from "@webstudio-is/design-system";
+import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { $publishDialog } from "~/builder/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
 import { __testing__ } from "./publish";
+import { DomainCheckbox, domainToPublishName } from "./domain-checkbox";
 import { PublishValidationResults } from "./publish-validation-results";
 
 const {
@@ -17,7 +18,6 @@ const {
   useManualValidationFindings,
   getRefreshedProject,
   reportPublishResult,
-  restoreValidatedDomains,
 } = __testing__;
 
 let root: Root | undefined;
@@ -1017,7 +1017,7 @@ test("manual validation report stays available after the popover reopens", () =>
   ).toBe(true);
 });
 
-test("reopening restores the domains used by the validation report", () => {
+test("reopening shows the domains used by the validation report and submits only those domains", () => {
   let validation: ReturnType<typeof useManualValidationFindings> | undefined;
   const Harness = () => {
     validation = useManualValidationFindings();
@@ -1034,15 +1034,43 @@ test("reopening restores the domains used by the validation report", () => {
     ]);
   });
 
-  const form = document.createElement("form");
-  form.innerHTML = `
-    <input type="checkbox" name="domainToPublish[]" value="staging.example" checked>
-    <input type="checkbox" name="domainToPublish[]" value="custom.example">
-  `;
-  expect(restoreValidatedDomains(form, validation!.domains!)).toBe(true);
-  expect([...new FormData(form).getAll("domainToPublish[]")]).toEqual([
+  act(() => root?.unmount());
+  $project.set({
+    id: "project",
+    domainsVirtual: [{ status: "ACTIVE", verified: true }],
+  } as Project);
+  root = createRoot(container);
+  act(() =>
+    root?.render(
+      <TooltipProvider>
+        <form>
+          <DomainCheckbox
+            domain="staging.example"
+            buildId={undefined}
+            defaultChecked
+            validatedDomains={validation!.domains}
+          />
+          <DomainCheckbox
+            domain="custom.example"
+            buildId={undefined}
+            defaultChecked={false}
+            validatedDomains={validation!.domains}
+          />
+        </form>
+      </TooltipProvider>
+    )
+  );
+
+  const form = container.querySelector("form")!;
+  const [staging, custom] = form.querySelectorAll('[role="checkbox"]');
+  expect(staging.getAttribute("aria-checked")).toBe("false");
+  expect(custom.getAttribute("aria-checked")).toBe("true");
+  expect([...new FormData(form).getAll(domainToPublishName)]).toEqual([
     "custom.example",
   ]);
+  act(() => (custom as HTMLButtonElement).click());
+  expect(custom.getAttribute("aria-checked")).toBe("false");
+  expect([...new FormData(form).getAll(domainToPublishName)]).toEqual([]);
 });
 
 test("older publish diagnostics cannot replace a newer operation", () => {

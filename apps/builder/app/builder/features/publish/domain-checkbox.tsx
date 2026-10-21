@@ -38,6 +38,7 @@ export const __testing__ = { isCustomDomainPublishRestricted };
 
 interface DomainCheckboxProps {
   defaultChecked?: boolean;
+  validatedDomains?: readonly string[];
   domain: string;
   buildId: string | undefined;
   disabled?: boolean;
@@ -97,7 +98,9 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
     canPublishToStagingOnly,
     isCustomDomain: props.isCustomDomain,
   });
-  const defaultChecked = isRestricted ? false : props.defaultChecked;
+  const defaultChecked = isRestricted
+    ? false
+    : (props.validatedDomains?.includes(props.domain) ?? props.defaultChecked);
   const disabled = isRestricted ? true : props.disabled;
 
   const hideDomainCheckbox =

@@ -338,11 +338,13 @@ type ChangeProjectDomainProps = {
   project: Project;
   projectState: "idle" | "submitting";
   refresh: () => Promise<void>;
+  validatedDomains?: readonly string[];
 };
 
 const ChangeProjectDomain = ({
   project,
   refresh,
+  validatedDomains,
 }: ChangeProjectDomainProps) => {
   const id = useId();
   const currentSystem = useStore($currentSystem);
@@ -426,6 +428,7 @@ const ChangeProjectDomain = ({
       prefix={
         <DomainCheckbox
           defaultChecked={latestProjectDomainBuild?.domain === domain}
+          validatedDomains={validatedDomains}
           buildId={latestProjectDomainBuild?.buildId}
           domain={domain}
         />
@@ -940,15 +943,8 @@ const useManualValidationFindings = () => {
   return { findings, domains, begin, invalidate, isCurrent, update };
 };
 
-const restoreValidatedDomains = (form: HTMLFormElement, domains: string[]) => {
+const matchesValidatedDomains = (form: HTMLFormElement, domains: string[]) => {
   const selected = new Set(domains);
-  for (const input of form.querySelectorAll<HTMLInputElement>(
-    'input[type="checkbox"]'
-  )) {
-    if (input.name === domainToPublishName && input.disabled === false) {
-      input.checked = selected.has(input.value);
-    }
-  }
   const current = new FormData(form)
     .getAll(domainToPublishName)
     .map((domain) => domain.toString());
@@ -1059,7 +1055,7 @@ const Publish = ({
     });
 
     if (validationFindings.domains !== undefined) {
-      if (restoreValidatedDomains(form, validationFindings.domains)) {
+      if (matchesValidatedDomains(form, validationFindings.domains)) {
         previousDomainsKey.current = validationFindings.domains.join("\u0000");
       } else {
         invalidateValidationFindings();
@@ -1701,6 +1697,7 @@ const Content = (props: {
               refresh={refreshProject}
               projectState={projectState}
               project={project}
+              validatedDomains={props.manualValidationFindings.domains}
             />
 
             <Domains
@@ -1708,6 +1705,7 @@ const Content = (props: {
               domains={project.domainsVirtual}
               refresh={refreshProject}
               project={project}
+              validatedDomains={props.manualValidationFindings.domains}
             />
           </RadioGroup>
         </ScrollArea>
@@ -2130,7 +2128,6 @@ export const PublishButton = ({ projectId }: PublishProps) => {
 export const __testing__ = {
   usePublishProgress,
   useManualValidationFindings,
-  restoreValidatedDomains,
   waitForPublishStatus,
   waitForOwnedPublishStatus,
   refreshUntilSuccess,
