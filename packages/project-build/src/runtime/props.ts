@@ -653,10 +653,12 @@ export const createPropUpsertPayload = ({
   };
 };
 
-export const imageAssetSizePropNames: ReadonlySet<string> = new Set([
-  "width",
-  "height",
-]);
+export const getMediaAssetPropNames = (
+  component: Instance["component"]
+): readonly string[] =>
+  component === "Image" || component === "Video"
+    ? ["width", "height", "alt"]
+    : [];
 
 export const getPropIdsToDelete = ({
   instanceComponent,
@@ -673,7 +675,7 @@ export const getPropIdsToDelete = ({
     propIds.add(prop.id);
   }
   if (instanceComponent === "Image" && propName === "src") {
-    for (const name of imageAssetSizePropNames) {
+    for (const name of ["width", "height"]) {
       const sizeProp = instanceProps.get(name);
       if (sizeProp) {
         propIds.add(sizeProp.id);
@@ -950,6 +952,32 @@ export const updateProps = (
     }
     return nextProp.prop;
   });
+  for (const source of [...nextProps]) {
+    const instance = instances.get(source.instanceId)!;
+    if (
+      source.name !== "src" ||
+      source.type !== "asset" ||
+      findProp(props.values(), instance.id, "src")?.type === "expression"
+    ) {
+      continue;
+    }
+    for (const name of getMediaAssetPropNames(instance.component)) {
+      if (findProp(nextProps, instance.id, name)) {
+        continue;
+      }
+      const existing = findProp(props.values(), instance.id, name);
+      nextProps.push(
+        createPropValue({
+          id: existing?.id ?? context.createId(),
+          instanceId: instance.id,
+          name,
+          type: "asset",
+          value: source.value,
+          required: existing?.required,
+        })
+      );
+    }
+  }
   assertReadwritePropBindingsSupported({ instances, props, nextProps });
   const { payload, propIds } = createPropUpsertPayload({
     props: props.values(),

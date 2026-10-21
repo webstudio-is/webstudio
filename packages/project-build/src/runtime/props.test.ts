@@ -1,4 +1,7 @@
 import { describe, expect, test } from "vitest";
+import { applyBuilderNamespacePatches } from "../state/patch";
+import { getContentModeCapabilities } from "./content-mode-capabilities";
+import { applyContentModeTransaction } from "./content-mode-permissions";
 import {
   blockComponent,
   contentBlockSourceProp,
@@ -508,6 +511,162 @@ describe("createPropUpsertPayload", () => {
 });
 
 describe("updateProps", () => {
+  test.each(["Image", "Video"])(
+    "updates %s source and related asset props atomically",
+    (component) => {
+      const existing = [
+        prop("src"),
+        prop("width", { type: "number", value: 100, required: true }),
+        prop("height", { type: "number", value: 200 }),
+        prop("alt"),
+      ];
+      const state = {
+        instances: new Map([[image.id, { ...image, component }]]),
+        props: new Map(existing.map((prop) => [prop.id, prop])),
+      };
+      const result = updateProps(
+        state,
+        {
+          updates: [
+            {
+              instanceId: image.id,
+              name: "src",
+              type: "asset",
+              value: "new-asset",
+            },
+          ],
+        },
+        { createId: () => "unused" }
+      );
+      const next = applyBuilderNamespacePatches(
+        state.props,
+        result.payload[0].patches
+      );
+      expect([...next.values()]).toEqual(
+        existing.map((prop) => ({ ...prop, type: "asset", value: "new-asset" }))
+      );
+      expect([...state.props.values()]).toEqual(existing);
+      const authorized = applyContentModeTransaction({
+        capabilities: getContentModeCapabilities({
+          ...state,
+          contentRootIds: new Set([image.id]),
+          styleSources: new Map(),
+          metas: new Map([
+            [
+              component,
+              {
+                props: {
+                  src: {
+                    type: "string",
+                    control: "file",
+                    required: false,
+                    contentMode: true,
+                  },
+                  alt: {
+                    type: "string",
+                    control: "text",
+                    required: false,
+                    contentMode: true,
+                  },
+                },
+              },
+            ],
+          ]),
+        }),
+        transaction: {
+          payload: result.payload.map((change) => ({
+            ...change,
+            patches: [...change.patches].reverse(),
+          })),
+        },
+        scope: "text-and-props",
+      });
+      expect(authorized.success).toBe(true);
+      if (authorized.success) {
+        expect(authorized.capabilities.props).toEqual(next);
+      }
+    }
+  );
+
+  test("keeps explicit media overrides and creates missing asset props", () => {
+    const state = {
+      instances: new Map([[image.id, image]]),
+      props: new Map<string, Prop>(),
+    };
+    let id = 0;
+    const result = updateProps(
+      state,
+      {
+        updates: [
+          { instanceId: image.id, name: "src", type: "asset", value: "asset" },
+          { instanceId: image.id, name: "width", type: "number", value: 300 },
+        ],
+      },
+      { createId: () => `new-${id++}` }
+    );
+    const next = applyBuilderNamespacePatches(
+      state.props,
+      result.payload[0].patches
+    );
+    expect(
+      [...next.values()].map(({ name, type, value }) => ({ name, type, value }))
+    ).toEqual([
+      { name: "src", type: "asset", value: "asset" },
+      { name: "width", type: "number", value: 300 },
+      { name: "height", type: "asset", value: "asset" },
+      { name: "alt", type: "asset", value: "asset" },
+    ]);
+    expect(next.size).toBe(4);
+    expect(state.props.size).toBe(0);
+  });
+
+  test.each([
+    {
+      component: "Image",
+      name: "alt",
+      type: "asset" as const,
+      source: prop("src"),
+    },
+    {
+      component: "Image",
+      name: "src",
+      type: "string" as const,
+      source: prop("src"),
+    },
+    {
+      component: "Link",
+      name: "src",
+      type: "asset" as const,
+      source: prop("src"),
+    },
+    {
+      component: "Image",
+      name: "src",
+      type: "asset" as const,
+      source: prop("src", { type: "expression", value: "post.image" }),
+    },
+  ])(
+    "does not sync unrelated or bound source edits: $component $name $type $source.type",
+    ({ component, name, type, source }) => {
+      const state = {
+        instances: new Map([[image.id, { ...image, component }]]),
+        props: new Map([[source.id, source]]),
+      };
+      const result = updateProps(
+        state,
+        { updates: [{ instanceId: image.id, name, type, value: "value" }] },
+        { createId: () => "new-id" }
+      );
+      expect(result.payload[0].patches).toHaveLength(1);
+      const next = applyBuilderNamespacePatches(
+        state.props,
+        result.payload[0].patches
+      );
+      expect(findProp(next.values(), image.id, "width")).toBeUndefined();
+      expect(findProp(next.values(), image.id, "height")).toBeUndefined();
+    }
+  );
+
   test("requires Content Block source lifecycle operations", () => {
     const contentBlock: Instance = {
       type: "instance",

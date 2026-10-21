@@ -1,5 +1,4 @@
 import { z } from "zod";
-import equal from "fast-deep-equal";
 import {
   AuthorizationError,
   authorizeProject,
@@ -65,9 +64,7 @@ import {
 import { componentMetas } from "~/shared/component-metas.server";
 import type { Asset, AssetFolder } from "@webstudio-is/sdk";
 import {
-  applyContentModeTransaction,
   createContentBlockApplication,
-  getContentModeCapabilities,
   type BuilderRuntimeContext,
 } from "@webstudio-is/project-build/runtime";
 import type { CompactBuild } from "@webstudio-is/project-build";
@@ -89,6 +86,7 @@ import {
   serializeProjectSummary,
 } from "./api-build.server";
 import { throwApiError } from "./api-errors.server";
+import { assertContentOrBuildTransactions } from "./api-content-permissions.server";
 import { validateProjectSettingsUpdate } from "./project-settings-mutation.server";
 import {
   createBuilderRuntimeState,
@@ -517,98 +515,6 @@ const commitRuntimeMutation = async <
     };
   }
   return await commit(mutation.payload, mutation.result);
-};
-
-const createContentModeCapabilitiesFromBuild = (build: CompactBuild) => {
-  const state = createBuilderRuntimeState(build);
-  return getContentModeCapabilities({
-    instances: state.instances!,
-    metas: componentMetas,
-    props: state.props!,
-    styleSources: state.styleSources!,
-    styleSourceSelections: state.styleSourceSelections,
-    styles: state.styles,
-    breakpoints: state.breakpoints,
-  });
-};
-
-const preservesNonTextChildren = (
-  before: CompactBuild["instances"][number]["children"] | undefined,
-  after: CompactBuild["instances"][number]["children"] | undefined
-) => {
-  if (before === undefined || after === undefined) {
-    return false;
-  }
-  const keepNonText = (children: typeof before) =>
-    children.map((child) => (child.type === "text" ? "text" : child));
-  return (
-    (before.every((child) => child.type === "text") &&
-      after.every((child) => child.type === "text")) ||
-    equal(keepNonText(before), keepNonText(after))
-  );
-};
-
-const assertContentOrBuildTransactions = ({
-  auth,
-  build,
-  transactions,
-  scope = "content",
-}: {
-  auth: Awaited<ReturnType<typeof assertApiProjectPermit>>;
-  build: CompactBuild;
-  transactions: z.infer<typeof buildPatchTransaction>[];
-  scope?: "content" | "text-and-props";
-}) => {
-  if (auth.permits.includes("build")) {
-    return;
-  }
-  if (transactions.length > 10) {
-    throw new AuthorizationError(
-      "You don't have permission to build this project."
-    );
-  }
-  let capabilities = createContentModeCapabilitiesFromBuild(build);
-  for (const transaction of transactions) {
-    if (
-      scope === "text-and-props" &&
-      transaction.payload.some(
-        ({ namespace }) => namespace !== "instances" && namespace !== "props"
-      )
-    ) {
-      throw new AuthorizationError(
-        "You don't have permission to build this project."
-      );
-    }
-    if (transaction.payload.every(({ patches }) => patches.length === 0)) {
-      continue;
-    }
-    const result = applyContentModeTransaction({ capabilities, transaction });
-    if (result.success === false) {
-      throw new AuthorizationError(result.error);
-    }
-    if (
-      scope === "text-and-props" &&
-      transaction.payload.some(
-        ({ namespace, patches }) =>
-          namespace === "instances" &&
-          patches.some(({ path }) => {
-            const instanceId = path[0];
-            return (
-              typeof instanceId !== "string" ||
-              preservesNonTextChildren(
-                capabilities.instances.get(instanceId)?.children,
-                result.capabilities.instances.get(instanceId)?.children
-              ) === false
-            );
-          })
-      )
-    ) {
-      throw new AuthorizationError(
-        "You don't have permission to build this project."
-      );
-    }
-    capabilities = result.capabilities;
-  }
 };
 
 const contentOrBuildMutation = <
@@ -1386,6 +1292,5 @@ export const apiRouter = router({
 });
 
 export const __testing__ = {
-  assertContentOrBuildTransactions,
   assertApiPublishDomains,
 };

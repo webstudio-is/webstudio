@@ -47,8 +47,8 @@ import {
 const servicesDir = new URL(".", import.meta.url);
 const server = createTestServer();
 
-const { assertContentOrBuildTransactions, assertApiPublishDomains } =
-  __testing__;
+import { assertContentOrBuildTransactions } from "./api-content-permissions.server";
+const { assertApiPublishDomains } = __testing__;
 
 const createContext = (
   allowAdditionalPermissions: boolean,

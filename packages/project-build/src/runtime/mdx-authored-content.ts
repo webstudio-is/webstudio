@@ -41,7 +41,7 @@ import {
   type MdxJsxPropContext,
   type MdxTemplateMaterialization,
 } from "./mdx-materialization";
-import { getContentModeCapabilities } from "./content-mode-permissions";
+import { getContentModeCapabilities } from "./content-mode-capabilities";
 import { createEmptyWebstudioFragment } from "./component-template";
 import {
   createWebstudioDataFromFragment,

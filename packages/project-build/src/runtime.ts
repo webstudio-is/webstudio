@@ -11,6 +11,7 @@ export * from "./runtime/component-catalog";
 export * from "./runtime/component-template";
 export * from "./runtime/content-mode-copy-policy";
 export * from "./runtime/content-mode-permissions";
+export * from "./runtime/content-mode-capabilities";
 export * from "./runtime/content-block-source-lifecycle";
 export * from "./runtime/content-block-application";
 export * from "./runtime/content-model";

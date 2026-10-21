@@ -28,7 +28,7 @@ import {
   getContentModeCapabilities,
   getContentModeEditableStaticPropNames,
   getContentModePropEligibility,
-} from "./content-mode-permissions";
+} from "./content-mode-capabilities";
 import { createFindAvailableVariables } from "./data";
 import {
   createWebstudioDataFromFragment,
