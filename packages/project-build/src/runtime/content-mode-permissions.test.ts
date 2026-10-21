@@ -1164,6 +1164,41 @@ describe("content mode permissions", () => {
     });
   });
 
+  test("does not overwrite non-editable props with an editable value", () => {
+    const capabilities = getContentModeCapabilities({
+      instances,
+      metas,
+      props,
+      styleSources,
+    });
+
+    expect(capabilities.editablePropIds.has("target-prop")).toBe(false);
+    for (const op of ["add", "replace"] as const) {
+      expect(
+        validateContentModeTransaction({
+          capabilities,
+          transaction: transaction("props", [
+            {
+              op,
+              path: ["target-prop"],
+              value: {
+                id: "target-prop",
+                instanceId: "link",
+                name: "href",
+                type: "string",
+                value: "/about",
+              },
+            },
+          ]),
+        })
+      ).toEqual({
+        success: false,
+        error: 'Prop "target-prop" is not editable in content mode.',
+      });
+    }
+    expect(capabilities.props.get("target-prop")?.name).toBe("target");
+  });
+
   test("returns advanced capabilities after applying a content mode transaction", () => {
     const capabilities = getContentModeCapabilities({
       instances,

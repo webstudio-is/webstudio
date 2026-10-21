@@ -258,7 +258,7 @@ Update a text child on an element:
 {
 "namespace": "instances",
 "patches": [
-{ "op": "replace", "path": ["instance-id", "children", 0, "value"], "value": "Launch faster" }
+{ "op": "replace", "path": ["instance-id", "children", 0], "value": { "type": "text", "value": "Launch faster" } }
 ]
 }
 ]
