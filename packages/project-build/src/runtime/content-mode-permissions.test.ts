@@ -1199,6 +1199,70 @@ describe("content mode permissions", () => {
     expect(capabilities.props.get("target-prop")?.name).toBe("target");
   });
 
+  test("replaces an image source string with an asset on the same prop", () => {
+    const image: Instance = {
+      type: "instance",
+      id: "image",
+      component: "Image",
+      children: [],
+    };
+    const capabilities = getContentModeCapabilities({
+      instances: new Map([
+        [
+          "block",
+          {
+            ...instances.get("block")!,
+            children: [{ type: "id", value: image.id }],
+          },
+        ],
+        [image.id, image],
+      ]),
+      metas: new Map([
+        [
+          "Image",
+          {
+            props: {
+              src: { type: "string", control: "text", required: false },
+            },
+          },
+        ],
+      ]),
+      props: new Map([
+        [
+          "image-src",
+          {
+            id: "image-src",
+            instanceId: image.id,
+            name: "src",
+            type: "string",
+            value: "/placeholder.svg",
+          },
+        ],
+      ]),
+      styleSources,
+    });
+
+    expect(capabilities.editablePropIds.has("image-src")).toBe(false);
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("props", [
+          {
+            op: "replace",
+            path: ["image-src"],
+            value: {
+              id: "image-src",
+              instanceId: image.id,
+              name: "src",
+              type: "asset",
+              value: "uploaded-asset",
+            },
+          },
+        ]),
+      })
+    ).toEqual({ success: true });
+  });
+
   test("returns advanced capabilities after applying a content mode transaction", () => {
     const capabilities = getContentModeCapabilities({
       instances,

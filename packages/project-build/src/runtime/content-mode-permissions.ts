@@ -734,9 +734,12 @@ const isContentModePropPatchValue = ({
   if (parsedProp.data.id !== expectedPropId) {
     return false;
   }
+  const existingProp = capabilities.props.get(expectedPropId);
   if (
-    capabilities.props.has(expectedPropId) &&
-    capabilities.editablePropIds.has(expectedPropId) === false
+    existingProp !== undefined &&
+    capabilities.editablePropIds.has(expectedPropId) === false &&
+    (existingProp.instanceId !== parsedProp.data.instanceId ||
+      existingProp.name !== parsedProp.data.name)
   ) {
     return false;
   }
