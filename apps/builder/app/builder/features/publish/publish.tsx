@@ -590,6 +590,7 @@ const usePublishProgress = (projectId: Project["id"]) => {
   const [now, setNow] = useState(Date.now);
   const isMounted = useRef(false);
   const requestBaselineBuildId = useRef<string>();
+  const hasStartedPublishRequest = useRef(false);
   const refreshGeneration = useRef(0);
   const recoveredPoll = useRef<{
     generation: number;
@@ -648,17 +649,24 @@ const usePublishProgress = (projectId: Project["id"]) => {
   }, []);
 
   const reconcileRefreshedProject = useCallback((project: Project) => {
-    if (
-      project.latestBuildVirtual != null &&
-      getPublishStatusAndText(project.latestBuildVirtual).status !== "FAILED"
-    ) {
+    const build = project.latestBuildVirtual;
+    if (build == null) {
+      return;
+    }
+    const { status, statusText } = getPublishStatusAndText(build);
+    const isNewBuild =
+      build.buildId !== undefined &&
+      build.buildId !== requestBaselineBuildId.current;
+    if (status === "FAILED") {
+      if (hasStartedPublishRequest.current && isNewBuild) {
+        setRequestError(undefined);
+        setPublishErrorState({ value: statusText, source: "status" });
+      }
+    } else {
       setPublishErrorState((current) =>
         current?.source === "status" ? undefined : current
       );
-      if (
-        project.latestBuildVirtual.buildId !== undefined &&
-        project.latestBuildVirtual.buildId !== requestBaselineBuildId.current
-      ) {
+      if (isNewBuild) {
         setRequestError(undefined);
       }
     }
@@ -713,6 +721,7 @@ const usePublishProgress = (projectId: Project["id"]) => {
 
   const start = (publish: () => Promise<void>) => {
     const startedAt = Date.now();
+    hasStartedPublishRequest.current = true;
     requestBaselineBuildId.current =
       $project.get()?.latestBuildVirtual?.buildId;
     setStartedAt(startedAt);
@@ -795,6 +804,21 @@ const waitForPublishStatus = async (
     sleepTime = Math.max(5000, sleepTime - 5000);
   }
 };
+
+const waitForOwnedPublishStatus = ({
+  projectId,
+  isCurrentProject,
+  query,
+}: {
+  projectId: Project["id"];
+  isCurrentProject: () => boolean;
+  query?: () => ReturnType<typeof nativeClient.domain.project.query>;
+}) =>
+  waitForPublishStatus(
+    () =>
+      getRefreshedProject({ projectId, isCurrent: isCurrentProject, query }),
+    isCurrentProject
+  );
 
 const refreshUntilSuccess = async (
   refresh: (showError: boolean) => Promise<Project | undefined>,
@@ -1100,10 +1124,10 @@ const Publish = ({
       return;
     }
 
-    const result = await waitForPublishStatus(
-      () => getRefreshedProject({ projectId: project.id }),
-      () => $project.get()?.id === project.id
-    );
+    const result = await waitForOwnedPublishStatus({
+      projectId: project.id,
+      isCurrentProject,
+    });
     reportPublishResult({
       result,
       timesLeft,
@@ -2111,6 +2135,7 @@ export const __testing__ = {
   useManualValidationFindings,
   restoreValidatedDomains,
   waitForPublishStatus,
+  waitForOwnedPublishStatus,
   refreshUntilSuccess,
   getRefreshedProject,
   reportPublishResult,

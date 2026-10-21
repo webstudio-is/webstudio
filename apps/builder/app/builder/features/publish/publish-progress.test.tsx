@@ -12,6 +12,7 @@ import { PublishValidationResults } from "./publish-validation-results";
 const {
   usePublishProgress,
   waitForPublishStatus,
+  waitForOwnedPublishStatus,
   refreshUntilSuccess,
   useManualValidationFindings,
   getRefreshedProject,
@@ -355,6 +356,45 @@ test("publish polling stops after navigating to another project", async () => {
 
   await expect(polling).resolves.toBeUndefined();
   expect($project.get()).toBe(newProject);
+});
+
+test("an old poll cannot update a newly mounted copy of the same project", async () => {
+  const firstProject = { id: "project" } as Project;
+  $project.set(firstProject);
+  let progress: ReturnType<typeof usePublishProgress> | undefined;
+  const Harness = () => {
+    progress = usePublishProgress("project");
+    return null;
+  };
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+
+  let finishQuery: (result: {
+    success: true;
+    project: Project;
+  }) => void = () => {};
+  const query = new Promise<{ success: true; project: Project }>((resolve) => {
+    finishQuery = resolve;
+  });
+  const polling = waitForOwnedPublishStatus({
+    projectId: "project",
+    isCurrentProject: progress!.isCurrentProject,
+    query: () => query,
+  });
+
+  act(() => root?.unmount());
+  $project.set({ id: "another-project" } as Project);
+  const reopenedProject = { id: "project", domain: "new" } as Project;
+  $project.set(reopenedProject);
+  finishQuery({
+    success: true,
+    project: { id: "project", domain: "old" } as Project,
+  });
+
+  await expect(polling).resolves.toBeUndefined();
+  expect($project.get()).toBe(reopenedProject);
 });
 
 test("publish completion does not show a toast while the Publish panel is open", () => {
@@ -788,6 +828,59 @@ test("a newer build clears a recovered transport error", async () => {
   );
   act(() => refresh.click());
   expect(container.querySelector("output")?.textContent).toBe("");
+});
+
+test("a recovered failed build replaces a lost response error", async () => {
+  $project.set({
+    id: "project",
+    latestBuildVirtual: { buildId: "old" },
+  } as Project);
+  $publishDialog.set("publish");
+
+  const Harness = () => {
+    const progress = usePublishProgress("project");
+    return (
+      <>
+        <button
+          onClick={() =>
+            progress.start(() =>
+              Promise.reject(new Error("Network unavailable"))
+            )
+          }
+        >
+          Publish
+        </button>
+        <button
+          onClick={() =>
+            progress.reconcileRefreshedProject({
+              latestBuildVirtual: {
+                buildId: "new",
+                createdAt: new Date().toISOString(),
+                publishStatus: "FAILED",
+              },
+            } as Project)
+          }
+        >
+          Refresh
+        </button>
+        <output>{progress.publishError ?? progress.requestError}</output>
+      </>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  const [publish, refresh] = container.querySelectorAll("button");
+  await act(async () => publish.click());
+  expect(container.querySelector("output")?.textContent).toBe(
+    "Network unavailable"
+  );
+  act(() => refresh.click());
+  expect(container.querySelector("output")?.textContent).toContain(
+    "Publish failed"
+  );
 });
 
 test("publish diagnostics remain visible after the panel remounts", () => {
