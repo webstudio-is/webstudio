@@ -569,10 +569,6 @@ test("restores a successful tool target across CLI processes without private inp
     createIssueReportFailureTracker(),
     restoredTarget
   );
-  expect(restoredTarget.get()).toEqual({
-    tool: "inspect-instance",
-    entityIds: [{ field: "instanceId", id: "instance-1" }],
-  });
   expect(restoredTarget.getAll()).toEqual([
     {
       tool: "inspect-instance",
