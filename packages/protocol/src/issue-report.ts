@@ -100,6 +100,13 @@ export const issueReportErrorType = z
 
 export const issueReportRequestId = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
 
+export const issueReportRecentTargetSchema = z
+  .object({
+    tool: z.string().trim().min(1).max(160),
+    entityIds: z.array(issueReportEntityId).min(1).max(20),
+  })
+  .strict();
+
 export const issueReportRecentFailureSchema = z
   .object({
     tool: z.string().trim().min(1).max(160),
@@ -158,12 +165,13 @@ const issueReportRuntime = z
     bundleVersion: z.string().trim().min(1).max(100).optional(),
     projectId: issueReportId.optional(),
     recentFailure: issueReportRecentFailureSchema.optional(),
+    recentTargets: z.array(issueReportRecentTargetSchema).max(3).optional(),
     session: issueReportSession.optional(),
     preview: issueReportPreview.optional(),
   })
   .strict()
   .describe(
-    "CLI-collected runtime metadata with the project ID and bounded entity IDs from the failed tool input; no raw arguments, URLs, credentials, or customer content."
+    "CLI-collected runtime metadata with the project ID and bounded entity IDs from recent tool inputs; no raw arguments, URLs, credentials, or customer content."
   );
 
 const issueReportContent = z
@@ -200,7 +208,7 @@ export const issueReportInput = z
   })
   .strict()
   .describe(
-    "LLM-authored technical report. The CLI attaches the project ID and recognized IDs from the failed tool input. Generalize all other context; exclude names, URLs, credentials, customer content, and raw tool data."
+    "LLM-authored technical report. The CLI attaches the project ID and recognized IDs from recent tool inputs. Generalize all other context; exclude names, URLs, credentials, customer content, and raw tool data."
   );
 
 export const issueReportResult = z
@@ -216,4 +224,7 @@ export type IssueReportResult = z.infer<typeof issueReportResult>;
 export type IssueReportRuntime = z.infer<typeof issueReportRuntime>;
 export type IssueReportRecentFailure = z.infer<
   typeof issueReportRecentFailureSchema
+>;
+export type IssueReportRecentTarget = z.infer<
+  typeof issueReportRecentTargetSchema
 >;

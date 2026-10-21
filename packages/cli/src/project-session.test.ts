@@ -13,6 +13,8 @@ import {
   createCliProjectSessionTransport,
   createIssueReportFailure,
   createIssueReportFailureTracker,
+  createIssueReportTarget,
+  createIssueReportTargetTracker,
   addIssueReportRuntime,
   assertCliEditingContractVersion,
   getCliServerApiContract,
@@ -270,6 +272,44 @@ test("keeps a failed mutation available after a successful diagnostic read", () 
     now - 10 * 60_000 - 1
   );
   expect(restored.get()).toBeUndefined();
+});
+
+test("keeps validated IDs from recent targeted tools without private input", () => {
+  let now = 1_000;
+  const tracker = createIssueReportTargetTracker(() => now);
+  tracker.record("inspect-instance", {
+    instanceId: "instance-1",
+    url: "https://private.example/?authToken=secret",
+  });
+  expect(tracker.record("list-pages", {})).toBe(false);
+  expect(tracker.getAll()?.[0]).toEqual({
+    tool: "inspect-instance",
+    entityIds: [{ field: "instanceId", id: "instance-1" }],
+  });
+  expect(
+    tracker.record(
+      "screenshot",
+      { path: "/blog/private-slug?authToken=secret" },
+      "page-1"
+    )
+  ).toBe(true);
+  expect(tracker.getAll()).toEqual([
+    { tool: "screenshot", entityIds: [{ field: "pageId", id: "page-1" }] },
+    {
+      tool: "inspect-instance",
+      entityIds: [{ field: "instanceId", id: "instance-1" }],
+    },
+  ]);
+  tracker.record("screenshot", { path: "/blog/another-post" }, "page-1");
+  expect(tracker.getAll()).toHaveLength(2);
+  expect(JSON.stringify(tracker.snapshot())).not.toContain("private");
+  expect(
+    createIssueReportTarget("inspect-instance", {
+      instanceId: "https://secret",
+    })
+  ).toBeUndefined();
+  now += 10 * 60_000 + 1;
+  expect(tracker.getAll()).toBeUndefined();
 });
 
 test("reports only the shape of an untransformable server response", () => {

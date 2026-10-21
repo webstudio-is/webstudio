@@ -24,11 +24,12 @@ import {
 } from "@webstudio-is/project-build/state";
 import { publicApiOperations } from "@webstudio-is/protocol";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
-import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
+import { ROOT_INSTANCE_ID, type Pages } from "@webstudio-is/sdk";
 import { updatePersistedMcpCheckpoint } from "./mcp-checkpoint";
 import {
   createCliProjectSessionStorage,
   createIssueReportFailureTracker,
+  createIssueReportTargetTracker,
 } from "../project-session";
 import {
   __testing__,
@@ -38,8 +39,10 @@ import {
 } from "./mcp";
 
 const {
+  createIssueReportStateWriter,
   getMcpDownloadAsset,
   getIssueReportFailureFile,
+  getIssueReportPageId,
   persistIssueReportFailure,
   restoreIssueReportFailure,
   assertSingleOpCallToolSupported,
@@ -509,6 +512,111 @@ test("persists sanitized issue-report failure diagnostics for the next CLI proce
   await expect(readFile(filePath, "utf8")).rejects.toMatchObject({
     code: "ENOENT",
   });
+});
+
+test("keeps the latest issue-report state when writes overlap", async () => {
+  const projectRoot = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-issue-report-writes-")
+  );
+  tempDirs.push(projectRoot);
+  const filePath = getIssueReportFailureFile(projectRoot, "project-1");
+  const tracker = createIssueReportFailureTracker();
+  tracker.record("update-text", new Error("failed"), 1, {
+    instanceId: "instance-1",
+  });
+  let releaseFirstWrite: () => void = () => undefined;
+  const firstWriteBlocked = new Promise<void>((resolve) => {
+    releaseFirstWrite = resolve;
+  });
+  const writes: string[] = [];
+  const writer = createIssueReportStateWriter(
+    filePath,
+    async (path, snapshot, targets) => {
+      if (snapshot !== undefined) {
+        await firstWriteBlocked;
+      }
+      writes.push(snapshot === undefined ? "clear" : "failure");
+      await persistIssueReportFailure(path, snapshot, targets);
+    }
+  );
+
+  const firstWrite = writer(tracker.snapshot());
+  const clear = writer(undefined);
+  await Promise.resolve();
+  expect(writes).toEqual([]);
+  releaseFirstWrite();
+  await Promise.all([firstWrite, clear]);
+  expect(writes).toEqual(["failure", "clear"]);
+  await expect(readFile(filePath, "utf8")).rejects.toMatchObject({
+    code: "ENOENT",
+  });
+});
+
+test("resolves a screenshot route to a page ID without retaining its URL", () => {
+  const pages = {
+    homePageId: "home",
+    rootFolderId: "root",
+    pages: new Map([
+      ["home", { id: "home", path: "" }],
+      ["blog", { id: "blog", path: "/blog/:slug" }],
+    ]),
+    folders: new Map(),
+  } as unknown as Pages;
+  expect(
+    getIssueReportPageId(
+      "screenshot",
+      { path: "/blog/private-post?authToken=secret" },
+      pages
+    )
+  ).toBe("blog");
+  expect(
+    getIssueReportPageId(
+      "screenshot",
+      { path: "https://private.example/" },
+      pages
+    )
+  ).toBeUndefined();
+  expect(
+    getIssueReportPageId(
+      "screenshot",
+      { path: "/blog/private-post", url: "https://private.example/" },
+      pages
+    )
+  ).toBeUndefined();
+  expect(
+    getIssueReportPageId("list-pages", { path: "/blog/private-post" }, pages)
+  ).toBeUndefined();
+});
+
+test("restores a successful tool target across CLI processes without private input", async () => {
+  const projectRoot = await mkdtemp(
+    path.join(tmpdir(), "webstudio-mcp-target-report-")
+  );
+  tempDirs.push(projectRoot);
+  const filePath = getIssueReportFailureFile(projectRoot, "project-1");
+  const firstTarget = createIssueReportTargetTracker();
+  firstTarget.record(
+    "screenshot",
+    { path: "/blog/private-post?authToken=secret" },
+    "page-1"
+  );
+  firstTarget.record("inspect-instance", { instanceId: "instance-1" });
+  await persistIssueReportFailure(filePath, undefined, firstTarget.snapshot());
+  const restoredTarget = createIssueReportTargetTracker();
+  await restoreIssueReportFailure(
+    filePath,
+    createIssueReportFailureTracker(),
+    restoredTarget
+  );
+  expect(restoredTarget.getAll()).toEqual([
+    {
+      tool: "inspect-instance",
+      entityIds: [{ field: "instanceId", id: "instance-1" }],
+    },
+    { tool: "screenshot", entityIds: [{ field: "pageId", id: "page-1" }] },
+  ]);
+  expect(await readFile(filePath, "utf8")).not.toContain("private-post");
+  expect(await readFile(filePath, "utf8")).not.toContain("authToken");
 });
 
 test("preserves a destructive confirmation failure reason without the token or plan", async () => {
