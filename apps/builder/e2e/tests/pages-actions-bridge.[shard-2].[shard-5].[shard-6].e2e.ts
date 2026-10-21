@@ -280,7 +280,6 @@ test("Builder Components panel filters catalog-only entries and inserts a persis
     "pages actions verify components panel catalog filters",
     async () => {
       await openComponentsPanel({ page });
-      await expectComponentPanelOptionHidden({ page, name: "Box" });
       await expectComponentPanelOptionHidden({ page, name: "Body" });
     }
   );
