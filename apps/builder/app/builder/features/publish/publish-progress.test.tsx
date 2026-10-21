@@ -16,6 +16,7 @@ const {
   useManualValidationFindings,
   getRefreshedProject,
   reportPublishResult,
+  restoreValidatedDomains,
 } = __testing__;
 
 let root: Root | undefined;
@@ -908,6 +909,62 @@ test("manual validation report stays available after the popover reopens", () =>
       (button) => button.textContent === "See issues"
     )
   ).toBe(true);
+});
+
+test("reopening restores the domains used by the validation report", () => {
+  let validation: ReturnType<typeof useManualValidationFindings> | undefined;
+  const Harness = () => {
+    validation = useManualValidationFindings();
+    return null;
+  };
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  act(() => {
+    const session = validation!.begin(["custom.example"]);
+    validation!.update(session, [
+      { severity: "warning", title: "Check", reportText: "Check" },
+    ]);
+  });
+
+  const form = document.createElement("form");
+  form.innerHTML = `
+    <input type="checkbox" name="domainToPublish[]" value="staging.example" checked>
+    <input type="checkbox" name="domainToPublish[]" value="custom.example">
+  `;
+  expect(restoreValidatedDomains(form, validation!.domains!)).toBe(true);
+  expect([...new FormData(form).getAll("domainToPublish[]")]).toEqual([
+    "custom.example",
+  ]);
+});
+
+test("older publish diagnostics cannot replace a newer operation", () => {
+  let progress: ReturnType<typeof usePublishProgress> | undefined;
+  const Harness = () => {
+    progress = usePublishProgress("project");
+    return <output>{progress.publishFindings[0]?.title}</output>;
+  };
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+
+  const oldAttempt = progress!.beginPublishDiagnostics();
+  const currentAttempt = progress!.beginPublishDiagnostics();
+  act(() =>
+    currentAttempt.setFindings([
+      { severity: "warning", title: "New", reportText: "New" },
+    ])
+  );
+  act(() =>
+    oldAttempt.setFindings([
+      { severity: "warning", title: "Old", reportText: "Old" },
+    ])
+  );
+
+  expect(oldAttempt.isCurrent()).toBe(false);
+  expect(container.querySelector("output")?.textContent).toBe("New");
 });
 
 test("a rejected request after project navigation shows a toast", async () => {

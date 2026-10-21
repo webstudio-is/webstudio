@@ -582,6 +582,7 @@ const usePublishProgress = (projectId: Project["id"]) => {
   const [publishFindings, setPublishFindings] = useState<
     PublishValidationFinding[]
   >([]);
+  const publishDiagnosticsSession = useRef(0);
   const [publishErrorState, setPublishErrorState] = useState<{
     value: JSX.Element | string;
     source: "request" | "status";
@@ -631,6 +632,19 @@ const usePublishProgress = (projectId: Project["id"]) => {
   const clearErrors = useCallback(() => {
     setRequestError(undefined);
     setPublishErrorState(undefined);
+  }, []);
+
+  const beginPublishDiagnostics = useCallback(() => {
+    const session = ++publishDiagnosticsSession.current;
+    setPublishFindings([]);
+    return {
+      isCurrent: () => publishDiagnosticsSession.current === session,
+      setFindings: (findings: PublishValidationFinding[]) => {
+        if (publishDiagnosticsSession.current === session) {
+          setPublishFindings(findings);
+        }
+      },
+    };
   }, []);
 
   const reconcileRefreshedProject = useCallback((project: Project) => {
@@ -727,6 +741,7 @@ const usePublishProgress = (projectId: Project["id"]) => {
     requestError,
     publishFindings,
     setPublishFindings,
+    beginPublishDiagnostics,
     publishError: publishErrorState?.value,
     setPublishError,
     setPublishStatusError,
@@ -865,7 +880,9 @@ const reportPublishResult = ({
 
 const useManualValidationFindings = () => {
   const [findings, setFindings] = useState<PublishValidationFinding[]>([]);
+  const [domains, setDomains] = useState<string[]>();
   const session = useRef(0);
+  const requestedDomains = useRef<string[]>([]);
 
   useEffect(() => {
     return () => {
@@ -873,15 +890,18 @@ const useManualValidationFindings = () => {
     };
   }, []);
 
-  const begin = useCallback(() => {
+  const begin = useCallback((domains: string[] = []) => {
     session.current += 1;
+    requestedDomains.current = domains;
     setFindings([]);
+    setDomains(undefined);
     return session.current;
   }, []);
 
   const invalidate = useCallback(() => {
     session.current += 1;
     setFindings([]);
+    setDomains(undefined);
   }, []);
 
   const isCurrent = useCallback((id: number) => session.current === id, []);
@@ -889,10 +909,29 @@ const useManualValidationFindings = () => {
   const update = useCallback((id: number, next: PublishValidationFinding[]) => {
     if (session.current === id) {
       setFindings(next);
+      setDomains(next.length > 0 ? requestedDomains.current : undefined);
     }
   }, []);
 
-  return { findings, begin, invalidate, isCurrent, update };
+  return { findings, domains, begin, invalidate, isCurrent, update };
+};
+
+const restoreValidatedDomains = (form: HTMLFormElement, domains: string[]) => {
+  const selected = new Set(domains);
+  for (const input of form.querySelectorAll<HTMLInputElement>(
+    'input[type="checkbox"]'
+  )) {
+    if (input.name === domainToPublishName && input.disabled === false) {
+      input.checked = selected.has(input.value);
+    }
+  }
+  const current = new FormData(form)
+    .getAll(domainToPublishName)
+    .map((domain) => domain.toString());
+  return (
+    current.length === selected.size &&
+    current.every((domain) => selected.has(domain))
+  );
 };
 
 const Publish = ({
@@ -907,7 +946,7 @@ const Publish = ({
   requestError,
   manualValidationFindings,
   publishFindings,
-  setPublishFindings,
+  beginPublishDiagnostics,
   publishError,
   setPublishError,
   setPublishStatusError,
@@ -927,7 +966,9 @@ const Publish = ({
   requestError: string | undefined;
   manualValidationFindings: ReturnType<typeof useManualValidationFindings>;
   publishFindings: PublishValidationFinding[];
-  setPublishFindings: (findings: PublishValidationFinding[]) => void;
+  beginPublishDiagnostics: ReturnType<
+    typeof usePublishProgress
+  >["beginPublishDiagnostics"];
   publishError: JSX.Element | string | undefined;
   setPublishError: (error: JSX.Element | string | undefined) => void;
   setPublishStatusError: (error: JSX.Element | string) => void;
@@ -993,12 +1034,24 @@ const Publish = ({
       attributeFilter: ["value", "checked"],
     });
 
+    if (
+      validationFindings.domains !== undefined &&
+      restoreValidatedDomains(form, validationFindings.domains) === false
+    ) {
+      invalidateValidationFindings();
+    }
+
     handleFormInput();
 
     return () => {
       observer.disconnect();
     };
-  }, [invalidateValidationFindings, onValidationStateChange, project.domain]);
+  }, [
+    invalidateValidationFindings,
+    onValidationStateChange,
+    project.domain,
+    validationFindings.domains,
+  ]);
 
   const publish = async (domains: string[]) => {
     const publishResult = await nativeClient.domain.publish.mutate({
@@ -1065,10 +1118,10 @@ const Publish = ({
       .map((domainEntry) => domainEntry.toString());
 
   const handleValidate = async (formData: FormData) => {
-    const session = validationFindings.begin();
-    clearErrors();
-    setPublishFindings([]);
     const domains = getDomainsFromForm(formData);
+    const session = validationFindings.begin(domains);
+    clearErrors();
+    beginPublishDiagnostics();
     if (domains.length === 0) {
       toast.error("Please select at least one domain to publish");
       return;
@@ -1102,7 +1155,7 @@ const Publish = ({
   const handlePublish = (formData: FormData) => {
     validationFindings.invalidate();
     clearErrors();
-    setPublishFindings([]);
+    const diagnostics = beginPublishDiagnostics();
 
     // Custom domain checkboxes are disabled on free plan so they are never
     // submitted — only the staging (wstd.io) domain can appear in formData.
@@ -1113,7 +1166,7 @@ const Publish = ({
       return;
     }
 
-    if (blockPublishOnLocalErrors(setPublishFindings)) {
+    if (blockPublishOnLocalErrors(diagnostics.setFindings)) {
       onValidationStateChange("idle");
       return;
     }
@@ -1122,10 +1175,17 @@ const Publish = ({
       runPublishAfterBestEffortChecks({
         checks: async () => {
           const checks = await runPublishDiagnostics(project.id);
-          setPublishFindings(checks.findings);
+          diagnostics.setFindings(checks.findings);
         },
-        onCheckFailure: (error) =>
-          reportPublishValidationFailure(error, setPublishFindings, true),
+        onCheckFailure: (error) => {
+          if (diagnostics.isCurrent()) {
+            reportPublishValidationFailure(
+              error,
+              diagnostics.setFindings,
+              true
+            );
+          }
+        },
         publish: () => publish(domains),
       })
     );
@@ -1537,7 +1597,9 @@ const Content = (props: {
   requestError: string | undefined;
   manualValidationFindings: ReturnType<typeof useManualValidationFindings>;
   publishFindings: PublishValidationFinding[];
-  setPublishFindings: (findings: PublishValidationFinding[]) => void;
+  beginPublishDiagnostics: ReturnType<
+    typeof usePublishProgress
+  >["beginPublishDiagnostics"];
   publishError: JSX.Element | string | undefined;
   setPublishError: (error: JSX.Element | string | undefined) => void;
   setPublishStatusError: (error: JSX.Element | string) => void;
@@ -1666,7 +1728,7 @@ const Content = (props: {
             requestError={props.requestError}
             manualValidationFindings={props.manualValidationFindings}
             publishFindings={props.publishFindings}
-            setPublishFindings={props.setPublishFindings}
+            beginPublishDiagnostics={props.beginPublishDiagnostics}
             publishError={props.publishError}
             setPublishError={props.setPublishError}
             setPublishStatusError={props.setPublishStatusError}
@@ -2028,7 +2090,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
             requestError={publishProgress.requestError}
             manualValidationFindings={publishProgress.manualValidationFindings}
             publishFindings={publishProgress.publishFindings}
-            setPublishFindings={publishProgress.setPublishFindings}
+            beginPublishDiagnostics={publishProgress.beginPublishDiagnostics}
             publishError={publishProgress.publishError}
             setPublishError={publishProgress.setPublishError}
             setPublishStatusError={publishProgress.setPublishStatusError}
@@ -2046,6 +2108,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
 export const __testing__ = {
   usePublishProgress,
   useManualValidationFindings,
+  restoreValidatedDomains,
   waitForPublishStatus,
   refreshUntilSuccess,
   getRefreshedProject,
