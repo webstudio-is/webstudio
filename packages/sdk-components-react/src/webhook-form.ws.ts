@@ -5,8 +5,7 @@ import { props } from "./__generated__/webhook-form.props";
 
 /** @deprecated Existing Webhook Forms remain supported through the next release. Use Form for new forms. */
 export const meta: WsComponentMeta = {
-  label: "Webhook Form (Deprecated)",
-  presetClassName: "Webhook Form",
+  label: "Webhook Form",
   description:
     "Deprecated. Existing Webhook Forms remain supported through the next release. Use the new Form component in the Forms section instead.",
   deprecated: true,

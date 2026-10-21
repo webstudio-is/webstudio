@@ -16,6 +16,7 @@ import {
 import {
   $registeredComponentMetas,
   $registeredTemplates,
+  insertableDeprecatedComponents,
 } from "~/shared/nano-states";
 import { humanizeString } from "~/shared/string-utils";
 import { $selectedPage } from "~/shared/nano-states";
@@ -49,6 +50,7 @@ export const $componentOptions = computed(
     const itemsByCategory = listBuilderComponentPanelItems({
       metas,
       templates,
+      includeDeprecatedComponents: insertableDeprecatedComponents,
       documentType: selectedPage?.meta.documentType ?? "html",
       getFallbackLabel: (component) => getInstanceLabel({ component }),
       getTemplateIcon: (_component, template, meta) =>

@@ -34,6 +34,11 @@ export const $registeredTemplates = atom(
   new Map<string, GeneratedTemplateMeta>()
 );
 
+// Keep Webhook Form insertable in Builder while marking it as deprecated.
+export const insertableDeprecatedComponents: ReadonlySet<string> = new Set([
+  "WebhookForm",
+]);
+
 export const registerComponentLibrary = ({
   namespace,
   components,

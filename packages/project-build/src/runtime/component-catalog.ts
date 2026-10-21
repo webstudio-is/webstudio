@@ -404,9 +404,12 @@ export const isComponentDeprecatedInCatalog = (
 
 export const isComponentMetaUnavailableInCatalog = (
   meta: ComponentCatalogMeta,
-  { showInternal = false }: { showInternal?: boolean } = {}
+  {
+    showInternal = false,
+    includeDeprecated = false,
+  }: { showInternal?: boolean; includeDeprecated?: boolean } = {}
 ) => {
-  if (isComponentDeprecatedInCatalog(meta)) {
+  if (isComponentDeprecatedInCatalog(meta) && !includeDeprecated) {
     return true;
   }
   if (meta.category !== undefined) {
@@ -716,6 +719,7 @@ export const listBuilderComponentPanelItems = ({
   templates,
   documentType = "html",
   showInternal = false,
+  includeDeprecatedComponents = new Set<string>(),
   getFallbackLabel = (component) => component,
   getMetaLabel = (component) => getFallbackLabel(component),
   getTemplateIcon = (_component, template) => template.icon,
@@ -724,6 +728,7 @@ export const listBuilderComponentPanelItems = ({
   templates: ReadonlyMap<string, ComponentCatalogTemplate>;
   documentType?: ComponentCatalogDocumentType;
   showInternal?: boolean;
+  includeDeprecatedComponents?: ReadonlySet<string>;
   getFallbackLabel?: (component: string) => string;
   getMetaLabel?: (component: string, meta: ComponentCatalogMeta) => string;
   getTemplateIcon?: (
@@ -734,7 +739,10 @@ export const listBuilderComponentPanelItems = ({
 }) => {
   const items: BuilderComponentPanelItem[] = [];
   for (const [name, meta] of metas) {
-    if (isComponentDeprecatedInCatalog(meta)) {
+    if (
+      isComponentDeprecatedInCatalog(meta) &&
+      !includeDeprecatedComponents.has(name)
+    ) {
       continue;
     }
     items.push({
@@ -748,7 +756,12 @@ export const listBuilderComponentPanelItems = ({
   }
   for (const [name, template] of templates) {
     const meta = metas.get(name);
-    if (meta !== undefined && isComponentMetaUnavailableInCatalog(meta)) {
+    if (
+      meta !== undefined &&
+      isComponentMetaUnavailableInCatalog(meta, {
+        includeDeprecated: includeDeprecatedComponents.has(name),
+      })
+    ) {
       continue;
     }
     items.push({

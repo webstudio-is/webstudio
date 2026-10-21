@@ -521,6 +521,20 @@ describe("component catalog", () => {
         .flat()
         .map((item) => item.name)
     ).not.toEqual(expect.arrayContaining(["Box", "HiddenWidget"]));
+
+    const panelItemsWithDeprecatedBox = listBuilderComponentPanelItems({
+      metas,
+      templates,
+      includeDeprecatedComponents: new Set(["Box", "HiddenWidget"]),
+    });
+    expect(
+      panelItemsWithDeprecatedBox.get("general")?.map((item) => item.name)
+    ).toEqual(["Box", "LocalTemplateOnly"]);
+    expect(
+      Array.from(panelItemsWithDeprecatedBox.values())
+        .flat()
+        .map((item) => item.name)
+    ).not.toContain("HiddenWidget");
   });
 
   test("preserves builder components panel raw grouping semantics", () => {

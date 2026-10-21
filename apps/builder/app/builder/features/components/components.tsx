@@ -30,6 +30,7 @@ import { dragItemAttribute, useDraggable } from "./use-draggable";
 import {
   $registeredComponentMetas,
   $registeredTemplates,
+  insertableDeprecatedComponents,
 } from "~/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 import { $selectedPage } from "~/shared/nano-states";
@@ -47,6 +48,7 @@ const $metas = computed(
     const metasByCategory = listBuilderComponentPanelItems({
       metas: componentMetas,
       templates,
+      includeDeprecatedComponents: insertableDeprecatedComponents,
       documentType: selectedPage?.meta.documentType ?? "html",
       showInternal: isFeatureEnabled("internalComponents"),
       getFallbackLabel: (component) => getInstanceLabel({ component }),
