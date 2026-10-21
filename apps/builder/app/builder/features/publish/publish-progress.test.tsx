@@ -7,6 +7,7 @@ import type { Project } from "@webstudio-is/project";
 import { $publishDialog } from "~/builder/shared/nano-states";
 import { $project } from "~/shared/sync/data-stores";
 import { __testing__ } from "./publish";
+import { PublishValidationResults } from "./publish-validation-results";
 
 const {
   usePublishProgress,
@@ -863,6 +864,50 @@ test("an older validation cannot replace newer findings", () => {
   act(() => finish[0]("old"));
 
   expect(container.querySelector("output")?.textContent).toBe("new");
+});
+
+test("manual validation report stays available after the popover reopens", () => {
+  const Harness = () => {
+    const [isOpen, setIsOpen] = useState(true);
+    const { manualValidationFindings } = usePublishProgress("project");
+    return (
+      <>
+        <button onClick={() => setIsOpen(false)}>Close</button>
+        <button onClick={() => setIsOpen(true)}>Reopen</button>
+        <button
+          onClick={() => {
+            const session = manualValidationFindings.begin();
+            manualValidationFindings.update(session, [
+              { severity: "warning", title: "Check", reportText: "Check" },
+            ]);
+          }}
+        >
+          Validate
+        </button>
+        {isOpen && (
+          <PublishValidationResults
+            findings={manualValidationFindings.findings}
+          />
+        )}
+      </>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  const [close, reopen, validate] = container.querySelectorAll("button");
+  act(() => validate.click());
+  expect(container.textContent).toContain("Publish check found 1 warning.");
+  act(() => close.click());
+  act(() => reopen.click());
+  expect(container.textContent).toContain("Publish check found 1 warning.");
+  expect(
+    [...container.querySelectorAll("button")].some(
+      (button) => button.textContent === "See issues"
+    )
+  ).toBe(true);
 });
 
 test("a rejected request after project navigation shows a toast", async () => {

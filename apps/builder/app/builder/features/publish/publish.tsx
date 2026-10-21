@@ -574,6 +574,7 @@ const STATUS_REFRESH_RETRY_DELAY = 5_000;
 const STATUS_REFRESH_MAX_ATTEMPTS = 3;
 
 const usePublishProgress = (projectId: Project["id"]) => {
+  const manualValidationFindings = useManualValidationFindings();
   const [startedAt, setStartedAt] = useState<number>();
   const [showCountdown, setShowCountdown] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -721,6 +722,7 @@ const usePublishProgress = (projectId: Project["id"]) => {
   };
 
   return {
+    manualValidationFindings,
     isPublishing,
     requestError,
     publishFindings,
@@ -903,6 +905,7 @@ const Publish = ({
   onValidationStateChange,
   isPublishing,
   requestError,
+  manualValidationFindings,
   publishFindings,
   setPublishFindings,
   publishError,
@@ -922,6 +925,7 @@ const Publish = ({
   onValidationStateChange: (state: PublishValidationState) => void;
   isPublishing: boolean;
   requestError: string | undefined;
+  manualValidationFindings: ReturnType<typeof useManualValidationFindings>;
   publishFindings: PublishValidationFinding[];
   setPublishFindings: (findings: PublishValidationFinding[]) => void;
   publishError: JSX.Element | string | undefined;
@@ -933,7 +937,7 @@ const Publish = ({
   startPublishing: (publish: () => Promise<void>) => void;
 }) => {
   const { userPublishCount, maxDailyPublishesPerUser } = useUserPublishCount();
-  const validationFindings = useManualValidationFindings();
+  const validationFindings = manualValidationFindings;
   const { invalidate: invalidateValidationFindings } = validationFindings;
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [hasSelectedDomains, setHasSelectedDomains] = useState(false);
@@ -1531,6 +1535,7 @@ const Content = (props: {
   onValidationStateChange: (state: PublishValidationState) => void;
   isPublishing: boolean;
   requestError: string | undefined;
+  manualValidationFindings: ReturnType<typeof useManualValidationFindings>;
   publishFindings: PublishValidationFinding[];
   setPublishFindings: (findings: PublishValidationFinding[]) => void;
   publishError: JSX.Element | string | undefined;
@@ -1659,6 +1664,7 @@ const Content = (props: {
             onValidationStateChange={props.onValidationStateChange}
             isPublishing={props.isPublishing}
             requestError={props.requestError}
+            manualValidationFindings={props.manualValidationFindings}
             publishFindings={props.publishFindings}
             setPublishFindings={props.setPublishFindings}
             publishError={props.publishError}
@@ -2020,6 +2026,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
             onValidationStateChange={update}
             isPublishing={publishProgress.isPublishing}
             requestError={publishProgress.requestError}
+            manualValidationFindings={publishProgress.manualValidationFindings}
             publishFindings={publishProgress.publishFindings}
             setPublishFindings={publishProgress.setPublishFindings}
             publishError={publishProgress.publishError}
