@@ -2379,7 +2379,7 @@ const createCliMcpHost = async ({
         );
       }
     },
-    async recordToolSuccess(canonicalTool: string, input?: unknown) {
+    async recordToolSuccess(canonicalTool: string, input: unknown) {
       failureTracker.succeed(canonicalTool);
       if (canonicalTool === "report-issue") {
         targetTracker.clear();
@@ -2830,7 +2830,7 @@ export const mcpRun = async (options: McpRunOptions) => {
       ) => Promise<void>)
     | undefined;
   let recordToolSuccess:
-    | ((tool: string, input?: unknown) => Promise<void>)
+    | ((tool: string, input: unknown) => Promise<void>)
     | undefined;
   let disposeHost: () => Promise<void> = async () => undefined;
   try {

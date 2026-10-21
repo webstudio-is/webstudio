@@ -422,7 +422,6 @@ export const createIssueReportTargetTracker = (now = Date.now) => {
       ].slice(0, 3);
       return true;
     },
-    get: () => snapshot()?.[0]?.target,
     getAll: () => snapshot()?.map(({ target }) => target),
     restore(target: IssueReportRecentTarget, at: number) {
       const age = now() - at;

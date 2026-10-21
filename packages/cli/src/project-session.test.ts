@@ -282,7 +282,7 @@ test("keeps validated IDs from recent targeted tools without private input", () 
     url: "https://private.example/?authToken=secret",
   });
   expect(tracker.record("list-pages", {})).toBe(false);
-  expect(tracker.get()).toEqual({
+  expect(tracker.getAll()?.[0]).toEqual({
     tool: "inspect-instance",
     entityIds: [{ field: "instanceId", id: "instance-1" }],
   });
@@ -293,10 +293,6 @@ test("keeps validated IDs from recent targeted tools without private input", () 
       "page-1"
     )
   ).toBe(true);
-  expect(tracker.get()).toEqual({
-    tool: "screenshot",
-    entityIds: [{ field: "pageId", id: "page-1" }],
-  });
   expect(tracker.getAll()).toEqual([
     { tool: "screenshot", entityIds: [{ field: "pageId", id: "page-1" }] },
     {
@@ -313,7 +309,6 @@ test("keeps validated IDs from recent targeted tools without private input", () 
     })
   ).toBeUndefined();
   now += 10 * 60_000 + 1;
-  expect(tracker.get()).toBeUndefined();
   expect(tracker.getAll()).toBeUndefined();
 });
 
