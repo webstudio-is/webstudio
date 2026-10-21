@@ -452,6 +452,121 @@ test("does not reuse an editable prop id for a different name", () => {
   ).toBe(false);
 });
 
+test.each(["expression", "string"] as const)(
+  "rejects a new prop ID shadowing an existing %s prop",
+  (type) => {
+    const existing: Prop = {
+      id: "href-prop",
+      instanceId: "link",
+      name: "href",
+      type,
+      value: type === "expression" ? "post.url" : "/original",
+    };
+    const capabilities = getContentModeCapabilities({
+      instances,
+      props: new Map([[existing.id, existing]]),
+      metas,
+      styleSources,
+    });
+    const original = structuredClone(capabilities);
+    for (const split of [false, true]) {
+      const patches: Patch[] = [
+        {
+          op: "add",
+          path: ["shadow"],
+          value: {
+            ...existing,
+            id: "shadow",
+            type: "string",
+            value: "/override",
+          },
+        },
+      ];
+      if (split) {
+        patches.push({
+          op: "replace",
+          path: ["shadow", "value"],
+          value: "/again",
+        });
+      }
+      expect(
+        applyContentModeTransaction({
+          capabilities,
+          scope: "text-and-props",
+          transaction: {
+            payload: patches.map((patch) => ({
+              namespace: "props",
+              patches: [patch],
+            })),
+          },
+        }).success
+      ).toBe(false);
+    }
+    expect(
+      applyContentModeTransaction({
+        capabilities,
+        scope: "text-and-props",
+        transaction: transaction("props", [
+          {
+            op: "replace",
+            path: [existing.id],
+            value: { ...existing, type: "string", value: "/updated" },
+          },
+        ]),
+      }).success
+    ).toBe(type === "string");
+    expect(capabilities).toEqual(original);
+  }
+);
+
+test("rejects fresh linked Image dimensions shadowing a binding", () => {
+  const image: Instance = {
+    id: "image",
+    type: "instance",
+    component: "Image",
+    children: [],
+  };
+  const source: Prop = {
+    id: "src",
+    instanceId: image.id,
+    name: "src",
+    type: "asset",
+    value: "asset",
+  };
+  const width: Prop = {
+    id: "width",
+    instanceId: image.id,
+    name: "width",
+    type: "expression",
+    value: "post.width",
+  };
+  const capabilities = getContentModeCapabilities({
+    instances: new Map([[image.id, image]]),
+    contentRootIds: new Set([image.id]),
+    props: new Map([
+      [source.id, source],
+      [width.id, width],
+    ]),
+    metas: new Map(),
+    styleSources,
+  });
+  expect(
+    applyContentModeTransaction({
+      capabilities,
+      scope: "text-and-props",
+      transaction: transaction("props", [
+        {
+          op: "add",
+          path: ["shadow"],
+          value: { ...width, id: "shadow", type: "asset", value: source.value },
+        },
+      ]),
+    }).success
+  ).toBe(false);
+  expect(capabilities.props.get(width.id)).toEqual(width);
+  expect(capabilities.props.has("shadow")).toBe(false);
+});
+
 const metas = new Map<string, WsComponentMeta>([
   [
     "Link",
@@ -1193,9 +1308,9 @@ describe("content mode permissions", () => {
       isContentModePropTransition({
         capabilities,
         editableInstanceIds: new Set(["link"]),
-        expectedPropId: "new-href-prop",
+        expectedPropId: "href-prop",
         value: {
-          id: "new-href-prop",
+          id: "href-prop",
           instanceId: "link",
           name: "href",
           type: "string",

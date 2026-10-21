@@ -511,6 +511,27 @@ describe("createPropUpsertPayload", () => {
 });
 
 describe("updateProps", () => {
+  test("coalescing reads a large rejected batch only linearly", () => {
+    let reads = 0;
+    const updates = Array.from({ length: 200 }, (_, index) => ({
+      get instanceId() {
+        reads += 1;
+        return "missing";
+      },
+      name: `prop-${index}`,
+      type: "string" as const,
+      value: "value",
+    }));
+    expect(() =>
+      updateProps(
+        { instances: new Map([[image.id, image]]), props: new Map() },
+        { updates },
+        { createId: () => "unused" }
+      )
+    ).toThrow();
+    expect(reads).toBeLessThanOrEqual(updates.length * 3);
+  });
+
   test("coalesces by instance and property without merging unrelated updates", () => {
     const other = { ...image, id: "other", component: "Link" };
     const existing = prop("title", { value: "Original" });

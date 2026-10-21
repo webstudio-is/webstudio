@@ -928,14 +928,13 @@ export const updateProps = (
   context: { createId: () => string }
 ) => {
   const { instances, props } = getRequiredPropState(state);
-  const updates = input.updates.filter(
-    (update, index, updates) =>
-      updates.findLastIndex(
-        (candidate) =>
-          candidate.instanceId === update.instanceId &&
-          candidate.name === update.name
-      ) === index
-  );
+  const updatesByProp = new Map<string, (typeof input.updates)[number]>();
+  for (const update of input.updates) {
+    const key = JSON.stringify([update.instanceId, update.name]);
+    updatesByProp.delete(key);
+    updatesByProp.set(key, update);
+  }
+  const updates = [...updatesByProp.values()];
   const nextProps = updates.map((update) => {
     assertRuntimeInstance(instances, update.instanceId);
     const instance = instances.get(update.instanceId)!;
