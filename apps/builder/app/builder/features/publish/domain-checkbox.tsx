@@ -1,4 +1,5 @@
 import { useStore } from "@nanostores/react";
+import { useEffect, useState } from "react";
 import {
   Flex,
   Tooltip,
@@ -49,6 +50,42 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
   const { allowStagingPublish, canPublishToStagingOnly } =
     useStore($permissions);
   const project = useStore($project);
+  const [selection, setSelection] = useState<{
+    buildId: string | undefined;
+    validatedDomains?: readonly string[];
+    checked: boolean;
+  }>({
+    buildId: props.buildId,
+    validatedDomains: props.validatedDomains,
+    checked:
+      props.validatedDomains?.includes(props.domain) ??
+      props.defaultChecked ??
+      false,
+  });
+  const restoredChecked =
+    props.validatedDomains?.includes(props.domain) ??
+    props.defaultChecked ??
+    false;
+  const hasNewValidation =
+    props.validatedDomains !== undefined &&
+    selection.validatedDomains !== props.validatedDomains;
+  const hasNewBuild = selection.buildId !== props.buildId;
+
+  useEffect(() => {
+    if (hasNewValidation || hasNewBuild) {
+      setSelection({
+        buildId: props.buildId,
+        validatedDomains: props.validatedDomains,
+        checked: restoredChecked,
+      });
+    }
+  }, [
+    hasNewValidation,
+    hasNewBuild,
+    props.validatedDomains,
+    props.buildId,
+    restoredChecked,
+  ]);
 
   if (project === undefined) {
     return;
@@ -98,9 +135,11 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
     canPublishToStagingOnly,
     isCustomDomain: props.isCustomDomain,
   });
-  const defaultChecked = isRestricted
+  const checked = isRestricted
     ? false
-    : (props.validatedDomains?.includes(props.domain) ?? props.defaultChecked);
+    : hasNewValidation || hasNewBuild
+      ? restoredChecked
+      : selection.checked;
   const disabled = isRestricted ? true : props.disabled;
 
   const hideDomainCheckbox =
@@ -114,7 +153,14 @@ export const DomainCheckbox = (props: DomainCheckboxProps) => {
         <Checkbox
           disabled={disabled}
           key={props.buildId ?? "-"}
-          defaultChecked={hideDomainCheckbox || defaultChecked}
+          checked={hideDomainCheckbox || checked}
+          onCheckedChange={(value) =>
+            setSelection({
+              buildId: props.buildId,
+              validatedDomains: props.validatedDomains,
+              checked: value === true,
+            })
+          }
           css={{ pointerEvents: "all" }}
           name={domainToPublishName}
           value={props.domain}

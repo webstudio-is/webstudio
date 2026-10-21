@@ -1040,35 +1040,42 @@ test("reopening shows the domains used by the validation report and submits only
     domainsVirtual: [{ status: "ACTIVE", verified: true }],
   } as Project);
   root = createRoot(container);
-  act(() =>
-    root?.render(
-      <TooltipProvider>
-        <form>
-          <DomainCheckbox
-            domain="staging.example"
-            buildId={undefined}
-            defaultChecked
-            validatedDomains={validation!.domains}
-          />
-          <DomainCheckbox
-            domain="custom.example"
-            buildId={undefined}
-            defaultChecked={false}
-            validatedDomains={validation!.domains}
-          />
-        </form>
-      </TooltipProvider>
-    )
-  );
+  const renderCheckboxes = (validatedDomains?: string[]) =>
+    act(() =>
+      root?.render(
+        <TooltipProvider>
+          <form>
+            <DomainCheckbox
+              domain="staging.example"
+              buildId={undefined}
+              defaultChecked
+              validatedDomains={validatedDomains}
+            />
+            <DomainCheckbox
+              domain="custom.example"
+              buildId={undefined}
+              defaultChecked={false}
+              validatedDomains={validatedDomains}
+            />
+          </form>
+        </TooltipProvider>
+      )
+    );
+  renderCheckboxes();
 
   const form = container.querySelector("form")!;
   const [staging, custom] = form.querySelectorAll('[role="checkbox"]');
+  expect(staging.getAttribute("aria-checked")).toBe("true");
+  expect(custom.getAttribute("aria-checked")).toBe("false");
+
+  renderCheckboxes(validation!.domains);
   expect(staging.getAttribute("aria-checked")).toBe("false");
   expect(custom.getAttribute("aria-checked")).toBe("true");
   expect([...new FormData(form).getAll(domainToPublishName)]).toEqual([
     "custom.example",
   ]);
   act(() => (custom as HTMLButtonElement).click());
+  renderCheckboxes();
   expect(custom.getAttribute("aria-checked")).toBe("false");
   expect([...new FormData(form).getAll(domainToPublishName)]).toEqual([]);
 });
