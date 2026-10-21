@@ -654,6 +654,9 @@ const usePublishProgress = (projectId: Project["id"]) => {
   const reconcileRefreshedProject = useCallback((project: Project) => {
     const build = project.latestBuildVirtual;
     if (build == null) {
+      setPublishErrorState((current) =>
+        current?.source === "status" ? undefined : current
+      );
       return;
     }
     const { status, statusText } = getPublishStatusAndText(build);

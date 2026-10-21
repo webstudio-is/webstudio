@@ -733,6 +733,53 @@ test("a successful status refresh clears a persisted publish failure", () => {
   expect(container.querySelector("output")?.textContent).toBe("");
 });
 
+test("refreshing a project without a build clears a status error but preserves a request error", () => {
+  $project.set({ id: "project" } as Project);
+
+  const Harness = () => {
+    const progress = usePublishProgress("project");
+    return (
+      <>
+        <button
+          onClick={() => progress.setPublishStatusError("Publish failed")}
+        >
+          Fail
+        </button>
+        <button onClick={() => progress.setPublishError("Request rejected")}>
+          Reject
+        </button>
+        <button
+          onClick={() =>
+            progress.reconcileRefreshedProject({
+              latestBuildVirtual: null,
+            } as Project)
+          }
+        >
+          Refresh
+        </button>
+        <output>{progress.publishError}</output>
+      </>
+    );
+  };
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  act(() => root?.render(<Harness />));
+  const [fail, reject, refresh] = container.querySelectorAll("button");
+
+  act(() => fail.click());
+  expect(container.querySelector("output")?.textContent).toBe("Publish failed");
+  act(() => refresh.click());
+  expect(container.querySelector("output")?.textContent).toBe("");
+
+  act(() => reject.click());
+  act(() => refresh.click());
+  expect(container.querySelector("output")?.textContent).toBe(
+    "Request rejected"
+  );
+});
+
 test("refreshing an older published build preserves a rejected request error", () => {
   $project.set({ id: "project" } as Project);
   const oldPublishedProject = {
