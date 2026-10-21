@@ -928,7 +928,15 @@ export const updateProps = (
   context: { createId: () => string }
 ) => {
   const { instances, props } = getRequiredPropState(state);
-  const nextProps = input.updates.map((update) => {
+  const updates = input.updates.filter(
+    (update, index, updates) =>
+      updates.findLastIndex(
+        (candidate) =>
+          candidate.instanceId === update.instanceId &&
+          candidate.name === update.name
+      ) === index
+  );
+  const nextProps = updates.map((update) => {
     assertRuntimeInstance(instances, update.instanceId);
     const instance = instances.get(update.instanceId)!;
     assertGenericPropMutationAllowed(instance, update.name);
@@ -955,9 +963,6 @@ export const updateProps = (
     if (
       source.name !== "src" ||
       source.type !== "asset" ||
-      nextProps.findLast(
-        (prop) => prop.instanceId === source.instanceId && prop.name === "src"
-      ) !== source ||
       findProp(props.values(), instance.id, "src")?.type === "expression"
     ) {
       continue;

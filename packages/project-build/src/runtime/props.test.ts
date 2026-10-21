@@ -512,6 +512,68 @@ describe("createPropUpsertPayload", () => {
 
 describe("updateProps", () => {
   test.each(["Image", "Video"])(
+    "coalesces new %s sources before assigning IDs",
+    (component) => {
+      const state = {
+        instances: new Map([[image.id, { ...image, component }]]),
+        props: new Map<string, Prop>(),
+      };
+      let id = 0;
+      const result = updateProps(
+        state,
+        {
+          updates: ["first", "last"].map((value) => ({
+            instanceId: image.id,
+            name: "src",
+            type: "asset" as const,
+            value,
+          })),
+        },
+        { createId: () => `new-${id++}` }
+      );
+      const next = applyBuilderNamespacePatches(
+        state.props,
+        result.payload[0].patches
+      );
+      expect(
+        [...next.values()].map(({ name, value }) => ({ name, value }))
+      ).toEqual(
+        (component === "Image"
+          ? ["src", "width", "height", "alt"]
+          : ["src"]
+        ).map((name) => ({ name, value: "last" }))
+      );
+      expect(id).toBe(next.size);
+      expect(
+        applyContentModeTransaction({
+          capabilities: getContentModeCapabilities({
+            ...state,
+            contentRootIds: new Set([image.id]),
+            styleSources: new Map(),
+            metas: new Map([
+              [
+                component,
+                {
+                  props: {
+                    src: {
+                      type: "string",
+                      control: "file",
+                      required: false,
+                      contentMode: true,
+                    },
+                  },
+                },
+              ],
+            ]),
+          }),
+          transaction: result,
+          scope: "text-and-props",
+        }).success
+      ).toBe(true);
+    }
+  );
+
+  test.each(["Image", "Video"])(
     "links %s metadata to the last source in a batch",
     (component) => {
       const existing = [
