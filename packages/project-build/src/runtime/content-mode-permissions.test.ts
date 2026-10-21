@@ -95,6 +95,87 @@ test.each([false, true])(
   }
 );
 
+test.each(["width", "height", "className", "unknown"])(
+  "asset additions respect metadata for %s",
+  (name) => {
+    const instance: Instance = {
+      id: "image",
+      type: "instance",
+      component: "Image",
+      children: [],
+    };
+    for (const source of [undefined, "other", "matching"]) {
+      const sourceProp: Prop = {
+        id: "src",
+        instanceId: instance.id,
+        name: "src",
+        type: "asset",
+        value: source ?? "unused",
+      };
+      const capabilities = getContentModeCapabilities({
+        instances: new Map([[instance.id, instance]]),
+        contentRootIds: new Set([instance.id]),
+        props: new Map(
+          source === undefined ? [] : [[sourceProp.id, sourceProp]]
+        ),
+        styleSources: new Map(),
+        metas: new Map([
+          [
+            "Image",
+            {
+              props: {
+                src: {
+                  type: "string",
+                  control: "file",
+                  required: false,
+                  contentMode: true,
+                },
+                width: {
+                  type: "number",
+                  control: "number",
+                  required: false,
+                  contentMode: false,
+                },
+                height: {
+                  type: "number",
+                  control: "number",
+                  required: false,
+                  contentMode: false,
+                },
+                className: {
+                  type: "string",
+                  control: "text",
+                  required: false,
+                  contentMode: false,
+                },
+              },
+            },
+          ],
+        ]),
+      });
+      expect(
+        applyContentModeTransaction({
+          capabilities,
+          scope: "text-and-props",
+          transaction: transaction("props", [
+            {
+              op: "add",
+              path: ["new"],
+              value: {
+                id: "new",
+                instanceId: instance.id,
+                name,
+                type: "asset",
+                value: "matching",
+              },
+            },
+          ]),
+        }).success
+      ).toBe(source === "matching" && (name === "width" || name === "height"));
+    }
+  }
+);
+
 test("authorization rejects a child replacement that persistence cannot apply", () => {
   const capabilities = getContentModeCapabilities({
     instances,
@@ -1581,8 +1662,8 @@ describe("content mode permissions", () => {
               },
             },
           ]),
-        })
-      ).toEqual({ success: true });
+        }).success
+      ).toBe(component === "Image");
     }
   );
 
@@ -1754,7 +1835,7 @@ describe("content mode permissions", () => {
     expect(capabilities.props.has("new-href-prop")).toBe(false);
   });
 
-  test("treats asset props as content props inside content roots", () => {
+  test("rejects asset props without content-editable metadata", () => {
     const capabilities = getContentModeCapabilities({
       instances,
       metas,
@@ -1773,7 +1854,7 @@ describe("content mode permissions", () => {
       styleSources,
     });
 
-    expect(capabilities.editablePropIds.has("asset-prop")).toBe(true);
+    expect(capabilities.editablePropIds.has("asset-prop")).toBe(false);
     expect(
       validateContentModeTransaction({
         capabilities,
@@ -1784,8 +1865,8 @@ describe("content mode permissions", () => {
             value: "asset-2",
           },
         ]),
-      })
-    ).toEqual({ success: true });
+      }).success
+    ).toBe(false);
     expect(
       validateContentModeTransaction({
         capabilities,
@@ -1802,8 +1883,8 @@ describe("content mode permissions", () => {
             },
           },
         ]),
-      })
-    ).toEqual({ success: true });
+      }).success
+    ).toBe(false);
   });
 
   test("identifies editable and copyable content mode props", () => {
@@ -1836,13 +1917,13 @@ describe("content mode permissions", () => {
       styleSources,
     });
 
-    expect(capabilities.editablePropIds.has("asset-prop")).toBe(true);
+    expect(capabilities.editablePropIds.has("asset-prop")).toBe(false);
     expect(
       isContentModeCopyableProp({
         capabilities,
         prop: contentProps.get("asset-prop")!,
       })
-    ).toBe(true);
+    ).toBe(false);
     expect(capabilities.editablePropIds.has("expression-prop")).toBe(false);
     expect(
       isContentModeCopyableProp({

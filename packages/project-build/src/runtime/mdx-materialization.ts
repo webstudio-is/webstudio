@@ -53,7 +53,7 @@ export const getMdxPropEligibility = ({
 }: {
   capabilities: ReturnType<typeof getContentModeCapabilities>;
   instance: Instance;
-  prop: Pick<Prop, "name" | "type">;
+  prop: Pick<Prop, "name" | "type"> & Partial<Pick<Prop, "value">>;
   jsxPropName?: string;
 }) => {
   const contentModeEligibility = getContentModePropEligibility({
@@ -559,7 +559,7 @@ export const materializeMdxTemplates = async ({
         getMdxPropEligibility({
           capabilities,
           instance: rootInstance,
-          prop: { name: instancePropName, type: rawBinding.type },
+          prop: { name: instancePropName, ...rawBinding },
           jsxPropName: authoredProp.name,
         }).editable
           ? rawBinding
@@ -602,7 +602,7 @@ export const materializeMdxTemplates = async ({
       const eligibility = getMdxPropEligibility({
         capabilities,
         instance: rootInstance,
-        prop: { name: instancePropName, type: rawBinding.type },
+        prop: { name: instancePropName, ...rawBinding },
         jsxPropName: authoredProp.name,
       });
       propNameMappings.push({

@@ -656,9 +656,7 @@ export const createPropUpsertPayload = ({
 export const getMediaAssetPropNames = (
   component: Instance["component"]
 ): readonly string[] =>
-  component === "Image" || component === "Video"
-    ? ["width", "height", "alt"]
-    : [];
+  component === "Image" ? ["width", "height", "alt"] : [];
 
 export const getPropIdsToDelete = ({
   instanceComponent,

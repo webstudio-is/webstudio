@@ -1040,7 +1040,11 @@ export const materializeMdxAuthoredContent = ({
                       : getMdxPropEligibility({
                             capabilities: overlayCapabilities,
                             instance,
-                            prop: { name: prop.name, type: "asset" },
+                            prop: {
+                              name: prop.name,
+                              type: "asset",
+                              value: assetReference.assetId,
+                            },
                             jsxPropName: authoredJsxPropNames[propIndex],
                           }).editable
                         ? {
@@ -1448,7 +1452,11 @@ export const materializeMdxAuthoredContent = ({
                 : getMdxPropEligibility({
                       capabilities: componentCapabilities,
                       instance,
-                      prop: { name: instanceProp.name, type: "asset" },
+                      prop: {
+                        name: instanceProp.name,
+                        type: "asset",
+                        value: assetReference.assetId,
+                      },
                       jsxPropName,
                     }).editable
                   ? { type: "asset" as const, value: assetReference.assetId }

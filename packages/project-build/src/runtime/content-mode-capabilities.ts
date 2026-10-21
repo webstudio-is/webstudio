@@ -15,6 +15,7 @@ import {
   type Styles,
   type WsComponentMeta,
 } from "@webstudio-is/sdk";
+import { findProp, getMediaAssetPropNames } from "./props";
 
 export type ContentModeCapabilities = {
   editablePropIds: Set<Prop["id"]>;
@@ -252,13 +253,21 @@ export const getContentModePropEligibility = ({
   capabilities,
   instance,
   prop,
+  props = capabilities.props,
 }: {
   capabilities: ContentModeCapabilities;
   instance: Instance;
-  prop: Pick<Prop, "name" | "type">;
+  prop: Pick<Prop, "name" | "type"> & Partial<Pick<Prop, "value">>;
+  props?: Props;
 }): ContentModePropEligibility => {
-  if (prop.type === "asset") {
-    return { editable: true };
+  if (
+    prop.type === "asset" &&
+    getMediaAssetPropNames(instance.component).includes(prop.name)
+  ) {
+    const source = findProp(props.values(), instance.id, "src");
+    if (source?.type === "asset" && source.value === prop.value) {
+      return { editable: true };
+    }
   }
   const propMetas = getInstancePropMetas({
     capabilities,
@@ -274,7 +283,10 @@ export const getContentModePropEligibility = ({
       reason: propMetas.length === 0 ? "unknown" : "design-only",
     };
   }
-  if (contentModePropMeta.type !== prop.type) {
+  if (
+    contentModePropMeta.type !== prop.type &&
+    !(prop.type === "asset" && contentModePropMeta.type === "string")
+  ) {
     return { editable: false, reason: "incompatible" };
   }
   return { editable: true };

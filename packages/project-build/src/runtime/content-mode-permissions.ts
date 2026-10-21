@@ -9,7 +9,6 @@ import { applyBuilderNamespacePatches } from "../state/patch";
 import { mergeBuilderPatchChanges } from "./mutation";
 import equal from "fast-deep-equal";
 import { isRecord } from "../shared/type-utils";
-import { findProp, getMediaAssetPropNames } from "./props";
 import {
   instance,
   instanceChild,
@@ -397,16 +396,6 @@ const isContentModePropTransition = ({
 
   const existingProp = capabilities.props.get(expectedPropId);
   if (existingProp !== undefined) {
-    const mediaSource = getMediaAssetPropNames(instance.component).includes(
-      existingProp.name
-    )
-      ? findProp(nextProps.values(), instance.id, "src")
-      : undefined;
-    const isLinkedMediaAsset =
-      existingProp.type === "number" &&
-      parsedProp.data.type === "asset" &&
-      mediaSource?.type === "asset" &&
-      mediaSource.value === parsedProp.data.value;
     if (
       existingProp.instanceId !== instance.id ||
       existingProp.name !== parsedProp.data.name ||
@@ -416,7 +405,10 @@ const isContentModePropTransition = ({
           instance,
           prop: existingProp,
         }).editable === false &&
-        isLinkedMediaAsset === false)
+        !(
+          (existingProp.type === "number" || existingProp.type === "asset") &&
+          parsedProp.data.type === "asset"
+        ))
     ) {
       return false;
     }
@@ -426,6 +418,7 @@ const isContentModePropTransition = ({
     capabilities,
     instance,
     prop: parsedProp.data,
+    props: nextProps,
   }).editable;
 };
 

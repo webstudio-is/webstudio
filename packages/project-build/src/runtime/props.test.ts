@@ -546,7 +546,7 @@ describe("updateProps", () => {
         );
         expect([...next.values()]).toEqual(
           existing.map((prop) =>
-            prop.name === "src" || type === "asset"
+            prop.name === "src" || (component === "Image" && type === "asset")
               ? { ...prop, type, value: "last" }
               : prop
           )
@@ -597,7 +597,8 @@ describe("updateProps", () => {
       );
       expect([...next.values()]).toEqual(
         existing.map((prop) =>
-          prop.type === "expression"
+          prop.type === "expression" ||
+          (component === "Video" && prop.name !== "src")
             ? prop
             : { ...prop, type: "asset", value: "new-asset" }
         )
