@@ -653,6 +653,11 @@ export const createPropUpsertPayload = ({
   };
 };
 
+export const imageAssetSizePropNames: ReadonlySet<string> = new Set([
+  "width",
+  "height",
+]);
+
 export const getPropIdsToDelete = ({
   instanceComponent,
   instanceProps,
@@ -668,13 +673,11 @@ export const getPropIdsToDelete = ({
     propIds.add(prop.id);
   }
   if (instanceComponent === "Image" && propName === "src") {
-    const widthProp = instanceProps.get("width");
-    if (widthProp) {
-      propIds.add(widthProp.id);
-    }
-    const heightProp = instanceProps.get("height");
-    if (heightProp) {
-      propIds.add(heightProp.id);
+    for (const name of imageAssetSizePropNames) {
+      const sizeProp = instanceProps.get(name);
+      if (sizeProp) {
+        propIds.add(sizeProp.id);
+      }
     }
   }
   return propIds;

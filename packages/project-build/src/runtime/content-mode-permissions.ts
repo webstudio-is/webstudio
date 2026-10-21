@@ -1,6 +1,7 @@
 import type { Patch } from "immer";
 import equal from "fast-deep-equal";
 import { isRecord } from "../shared/type-utils";
+import { findProp, imageAssetSizePropNames } from "./props";
 import {
   instance,
   instanceChild,
@@ -734,22 +735,41 @@ const isContentModePropPatchValue = ({
   if (parsedProp.data.id !== expectedPropId) {
     return false;
   }
-  const existingProp = capabilities.props.get(expectedPropId);
-  if (
-    existingProp !== undefined &&
-    capabilities.editablePropIds.has(expectedPropId) === false &&
-    (existingProp.instanceId !== parsedProp.data.instanceId ||
-      existingProp.name !== parsedProp.data.name)
-  ) {
-    return false;
-  }
-
   const instance = capabilities.instances.get(parsedProp.data.instanceId);
   if (instance === undefined) {
     return false;
   }
   if (editableInstanceIds.has(instance.id) === false) {
     return false;
+  }
+
+  const existingProp = capabilities.props.get(expectedPropId);
+  if (
+    existingProp !== undefined &&
+    capabilities.editablePropIds.has(expectedPropId) === false
+  ) {
+    const imageSource =
+      instance.component === "Image" &&
+      imageAssetSizePropNames.has(existingProp.name)
+        ? findProp(capabilities.props.values(), instance.id, "src")
+        : undefined;
+    const isLinkedImageSize =
+      existingProp.type === "number" &&
+      parsedProp.data.type === "asset" &&
+      imageSource?.type === "asset" &&
+      imageSource.value === parsedProp.data.value;
+    if (
+      existingProp.instanceId !== instance.id ||
+      existingProp.name !== parsedProp.data.name ||
+      (isContentModePropForInstance({
+        capabilities,
+        instance,
+        prop: existingProp,
+      }) === false &&
+        isLinkedImageSize === false)
+    ) {
+      return false;
+    }
   }
 
   return isContentModePropForInstance({

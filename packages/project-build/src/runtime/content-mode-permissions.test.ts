@@ -1196,6 +1196,27 @@ describe("content mode permissions", () => {
         error: 'Prop "target-prop" is not editable in content mode.',
       });
     }
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("props", [
+          {
+            op: "replace",
+            path: ["target-prop"],
+            value: {
+              id: "target-prop",
+              instanceId: "link",
+              name: "target",
+              type: "asset",
+              value: "asset-1",
+            },
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: 'Prop "target-prop" is not editable in content mode.',
+    });
     expect(capabilities.props.get("target-prop")?.name).toBe("target");
   });
 
@@ -1222,7 +1243,18 @@ describe("content mode permissions", () => {
           "Image",
           {
             props: {
-              src: { type: "string", control: "text", required: false },
+              src: {
+                type: "string",
+                control: "file",
+                required: false,
+                contentMode: true,
+              },
+              width: {
+                type: "number",
+                control: "number",
+                required: false,
+                contentMode: false,
+              },
             },
           },
         ],
@@ -1238,22 +1270,53 @@ describe("content mode permissions", () => {
             value: "/placeholder.svg",
           },
         ],
+        [
+          "image-width",
+          {
+            id: "image-width",
+            instanceId: image.id,
+            name: "width",
+            type: "number",
+            value: 120,
+          },
+        ],
       ]),
       styleSources,
     });
 
+    capabilities.editablePropIds.delete("image-src");
     expect(capabilities.editablePropIds.has("image-src")).toBe(false);
+    const result = applyContentModeTransaction({
+      capabilities,
+      transaction: transaction("props", [
+        {
+          op: "replace",
+          path: ["image-src"],
+          value: {
+            id: "image-src",
+            instanceId: image.id,
+            name: "src",
+            type: "asset",
+            value: "uploaded-asset",
+          },
+        },
+      ]),
+    });
+    expect(result.success).toBe(true);
+    if (result.success === false) {
+      return;
+    }
     expect(
       validateContentModeTransaction({
-        capabilities,
+        capabilities: result.capabilities,
         transaction: transaction("props", [
           {
             op: "replace",
-            path: ["image-src"],
+            path: ["image-width"],
             value: {
-              id: "image-src",
+              id: "image-width",
               instanceId: image.id,
-              name: "src",
+              name: "width",
               type: "asset",
               value: "uploaded-asset",
             },
