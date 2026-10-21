@@ -71,7 +71,7 @@ test("lists the managed Form while retaining saved Webhook Forms", () => {
     undefined
   );
   expect($registeredComponentMetas.get().get("WebhookForm")?.label).toBe(
-    "Webhook Form"
+    "Webhook Form (Deprecated)"
   );
   expect($registeredComponentMetas.get().get("WebhookForm")?.deprecated).toBe(
     true
