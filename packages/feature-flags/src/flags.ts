@@ -1,7 +1,8 @@
-// Show internal components in the Builder Components panel.
+// Development only: show internal components in the Builder Components panel.
+// Do not enable in general deployments.
 export const internalComponents = false;
 
-// Let browsers outside the supported Chromium family open the Builder.
+// Skip the unsupported-browser warning dialog in non-Chromium browsers.
 export const unsupportedBrowsers = false;
 
 // Show Resource settings beside URL props in the settings panel.
