@@ -644,10 +644,12 @@ const runtimeAssetsQuery = <Result = unknown>(id: RuntimeOperationId) =>
   });
 
 const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
-  id: RuntimeOperationId
-) =>
-  buildMutation(
-    runtimeMutationInput(id, true),
+  operation: RuntimeOperation
+) => {
+  const { id, permit, requiresConfirm } = operation;
+  const mutation = permit === "edit" ? contentOrBuildMutation : buildMutation;
+  return mutation(
+    runtimeMutationInput(id, permit === "edit" ? requiresConfirm : true),
     async ({ ctx, input, build, commit }) => {
       const { assets, assetFolders } = await loadRuntimeAssetData(
         ctx,
@@ -663,6 +665,7 @@ const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
       });
     }
   );
+};
 
 const runtimeContentBlockMutation = <
   Result extends Record<string, unknown> = {},
@@ -730,7 +733,7 @@ const createRuntimeOperationProcedure = (operation: RuntimeOperation) => {
       ? runtimeAssetsQuery(id)
       : id.startsWith("contentBlocks.")
         ? runtimeContentBlockMutation(id)
-        : runtimeAssetsMutation(id);
+        : runtimeAssetsMutation(operation);
   }
   if (operation.kind === "read") {
     return runtimeBuildQuery(id);

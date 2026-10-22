@@ -1678,6 +1678,98 @@ describe("api router permits", () => {
     ).toEqual([{ type: "text", value: "Old" }]);
   });
 
+  test("Editor property writes load assets without gaining Builder permissions", async () => {
+    const build = createEditableContentBuild();
+    const image = build.instances.find(({ id }) => id === "other-instance")!;
+    image.component = "Image";
+    image.children = [];
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({ relation: "editors" })
+    );
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
+    vi.spyOn(assetUploader, "loadAssetDataByProject").mockResolvedValue({
+      assets: [
+        {
+          id: "image",
+          projectId: "project-1",
+          name: "image.png",
+          type: "image",
+          format: "png",
+          meta: { width: 120, height: 80 },
+          size: 100,
+          createdAt: "",
+        },
+        {
+          id: "text",
+          projectId: "project-1",
+          name: "data.txt",
+          type: "file",
+          format: "txt",
+          meta: {},
+          size: 1,
+          createdAt: "",
+        },
+      ],
+      assetFolders: [],
+    });
+    const patchBuild = vi
+      .spyOn(projectApi, "patchBuild")
+      .mockResolvedValue({ status: "ok", version: 4 });
+    const caller = createCaller(createContext(true));
+    await expect(
+      caller.instances.updateProps({
+        projectId: "project-1",
+        updates: [
+          { instanceId: image.id, name: "src", type: "asset", value: "image" },
+        ],
+      })
+    ).resolves.toMatchObject({ version: 4 });
+    const changes = patchBuild.mock.calls[0][0].transactions.flatMap(
+      ({ payload }) => payload
+    );
+    expect(changes.map(({ namespace }) => namespace)).toEqual(["props"]);
+    const saved = applyBuilderNamespacePatches(
+      new Map(build.props.map((prop) => [prop.id, prop])),
+      changes[0].patches
+    );
+    expect(
+      [...saved.values()].map(({ name, type, value }) => ({
+        name,
+        type,
+        value,
+      }))
+    ).toEqual(
+      ["src", "width", "height", "alt"].map((name) => ({
+        name,
+        type: "asset",
+        value: "image",
+      }))
+    );
+    await expect(
+      caller.instances.updateProps({
+        projectId: "project-1",
+        updates: [
+          { instanceId: image.id, name: "src", type: "asset", value: "text" },
+        ],
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(
+      caller.instances.updateProps({
+        projectId: "project-1",
+        updates: [
+          {
+            instanceId: "outside",
+            name: "title",
+            type: "string",
+            value: "Forbidden",
+          },
+        ],
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(patchBuild).toHaveBeenCalledTimes(1);
+  });
+
   test("limits editor api patches to content instances and props", async () => {
     const build = createEditableContentBuild();
     vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(

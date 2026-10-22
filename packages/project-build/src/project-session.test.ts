@@ -1278,7 +1278,7 @@ describe("project session", () => {
       expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
     ]);
     expect(transport.loadedNamespaces).toEqual([
-      ["instances", "props", "dataSources"],
+      ["instances", "props", "dataSources", "assets"],
     ]);
   });
 

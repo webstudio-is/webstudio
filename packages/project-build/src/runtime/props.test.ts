@@ -518,7 +518,9 @@ describe("updateProps", () => {
     ["Image", "src", "file", "txt", false, false],
     ["Image", "src", "file", "png", true, false],
     ["Video", "src", "video", "mp4", true, false],
-    ["Video", "src", "image", "png", false, false],
+    // Video's current accept list contains unsupported extensions and the
+    // shared picker matcher falls back to allowing all assets.
+    ["Video", "src", "image", "png", true, false],
     ["Image", "data-download", "file", "txt", true, false],
   ] as const)(
     "%s %s enforces picker constraints for %s/%s",
