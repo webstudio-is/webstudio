@@ -80,7 +80,7 @@ export const ResourceForm = forwardRef<
     submissionController.current ??= new FormSubmissionController(
       () => callbacks.current!
     );
-    const { setFormRef, revealFeedback } = useFormFeedbackScroll(ref);
+    const { formRef, setFormRef, revealFeedback } = useFormFeedbackScroll(ref);
     const [hydrated, setHydrated] = useState(false);
     useEffect(() => setHydrated(true), []);
     useEffect(() => {
@@ -120,7 +120,13 @@ export const ResourceForm = forwardRef<
       onResult: (result) => onResultChange?.(result),
       onState: reportState,
       onFeedback: revealFeedback,
-      onRefresh: onSubmissionSuccess,
+      onRefresh: () => {
+        if (formRef.current) {
+          // A field named or identified as "reset" can shadow form.reset.
+          HTMLFormElement.prototype.reset.call(formRef.current);
+        }
+        return onSubmissionSuccess?.();
+      },
       onRedirect: (destination) => {
         if (onSuccessRedirect) {
           return onSuccessRedirect(destination);

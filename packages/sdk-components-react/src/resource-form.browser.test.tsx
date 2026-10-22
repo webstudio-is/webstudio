@@ -4,6 +4,9 @@ import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { expect, test, vi } from "vitest";
 import { ResourceForm } from "./resource-form";
+import { Input } from "./input";
+import { Textarea } from "./textarea";
+import { Select } from "./select";
 import {
   managedFormRequestParamName,
   managedFormIdFieldName,
@@ -48,6 +51,83 @@ test("a StrictMode Form submits after the effect cleanup probe", async () => {
     container.remove();
   }
 });
+
+test.each([true, false])(
+  "a visible Form resets edited fields only after success: %s",
+  async (success) => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    const onManagedSubmit = vi.fn(async () => ({
+      success,
+      status: success ? 200 : 422,
+      results: [],
+      errors: success ? [] : [{ status: 422, body: null, message: "Failed" }],
+    }));
+    try {
+      await act(async () => {
+        root.render(
+          <ResourceForm
+            action={[{ dataSourceId: "resource-one" }]}
+            onManagedSubmit={onManagedSubmit}
+          >
+            <Input name="name" defaultValue="Preset name" />
+            <Input name="reset" defaultValue="Preset reset" />
+            <Textarea name="message" defaultValue="Preset message" />
+            <Select name="category" defaultValue="sales">
+              <option value="sales">Sales</option>
+              <option value="support">Support</option>
+            </Select>
+            <Input name="subscribe" type="checkbox" defaultChecked />
+            <Input name="contact" type="radio" value="email" defaultChecked />
+            <Input name="attachment" type="file" />
+            <button type="submit">Send</button>
+          </ResourceForm>
+        );
+      });
+      const name = container.querySelector<HTMLInputElement>("[name=name]")!;
+      const reset = container.querySelector<HTMLInputElement>("[name=reset]")!;
+      const message =
+        container.querySelector<HTMLTextAreaElement>("[name=message]")!;
+      const category =
+        container.querySelector<HTMLSelectElement>("[name=category]")!;
+      const subscribe =
+        container.querySelector<HTMLInputElement>("[name=subscribe]")!;
+      const contact =
+        container.querySelector<HTMLInputElement>("[name=contact]")!;
+      const attachment =
+        container.querySelector<HTMLInputElement>("[name=attachment]")!;
+      name.value = "Entered name";
+      reset.value = "Entered reset";
+      message.value = "Entered message";
+      category.value = "support";
+      subscribe.checked = false;
+      contact.checked = false;
+      const files = new DataTransfer();
+      files.items.add(new File(["image"], "image.png", { type: "image/png" }));
+      attachment.files = files.files;
+      await act(async () => container.querySelector("button")?.click());
+      await vi.waitFor(() => expect(onManagedSubmit).toHaveBeenCalledOnce());
+      await vi.waitFor(() =>
+        expect(container.querySelector("form")?.dataset.state).toBe(
+          success ? "success" : "error"
+        )
+      );
+      expect(name.value).toBe(success ? "Preset name" : "Entered name");
+      expect(reset.value).toBe(success ? "Preset reset" : "Entered reset");
+      expect(message.value).toBe(
+        success ? "Preset message" : "Entered message"
+      );
+      expect(category.value).toBe(success ? "sales" : "support");
+      expect(subscribe.checked).toBe(success);
+      expect(contact.checked).toBe(success);
+      expect(attachment.files).toHaveLength(success ? 0 : 1);
+    } finally {
+      await act(async () => root.unmount());
+      container.remove();
+    }
+  }
+);
 
 test("a StrictMode Form aborts an active request on real unmount", async () => {
   const container = document.createElement("div");
@@ -144,6 +224,9 @@ test("empty Resource list uses query navigation instead of Resource submission",
     expect(onQueryNavigate).toHaveBeenCalledExactlyOnceWith(
       `${window.location.pathname}?query=chairs&tag=wood&tag=blue`
     );
+    expect(
+      container.querySelector<HTMLInputElement>("[name=query]")?.value
+    ).toBe("chairs");
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -581,6 +664,12 @@ test("managed Form submits by HTTP outside a router provider and reports pending
       )
     );
     await vi.waitFor(() => expect(states).toEqual(["initial", "success"]));
+    expect(container.querySelector<HTMLInputElement>("[name=tag]")?.value).toBe(
+      "a"
+    );
+    expect(
+      container.querySelector<HTMLInputElement>('[name="upload"]')?.files
+    ).toHaveLength(0);
     expect(container.querySelector("form")?.hasAttribute("aria-busy")).toBe(
       false
     );
