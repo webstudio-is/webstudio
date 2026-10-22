@@ -65,7 +65,16 @@ const createContext = () => {
             eq: () => {
               selectedColumns.push(columns);
               const result = Promise.resolve({
-                data: [buildRow],
+                data: [
+                  Object.fromEntries(
+                    columns
+                      .split(", ")
+                      .map((column) => [
+                        column,
+                        buildRow[column as keyof typeof buildRow],
+                      ])
+                  ),
+                ],
                 error: undefined,
               });
               return Object.assign(result, {
@@ -114,6 +123,33 @@ describe("applyPatchRequest", () => {
     authorizePatchEntries.mockReset();
     createContentModeCapabilities.mockClear();
   });
+
+  test.each(["pages", "instances", "props", "assets"])(
+    "loads the instance and prop data needed to validate %s saves",
+    async (namespace) => {
+      const entry = {
+        ...patch.entries[0],
+        transaction: transaction("asset-validation", namespace) as never,
+      };
+      authorizePatchEntries.mockResolvedValue({
+        authorized: [{ entry, context: { writer: 1 } }],
+        rejected: [],
+      });
+      patchLoadedBuild.mockImplementation(async ({ build }) => {
+        expect(JSON.parse(build.instances)).toEqual([]);
+        expect(JSON.parse(build.props)).toEqual([]);
+        return { status: "ok", version: 4, build: { ...build, version: 4 } };
+      });
+      const context = createContext();
+      await expect(
+        applyPatchRequestForTest(context, { ...patch, entries: [entry] })
+      ).resolves.toMatchObject({ status: "ok" });
+      const columns = context.selectedColumns.at(-1)?.split(", ");
+      expect(columns).toEqual(expect.arrayContaining(["instances", "props"]));
+      expect(columns).not.toContain("resources");
+      expect(patchLoadedBuild).toHaveBeenCalledTimes(1);
+    }
+  );
 
   test("applies a combined resource and asset patch without derived work", async () => {
     const combinedEntry = {
@@ -359,7 +395,7 @@ describe("applyPatchRequest", () => {
     expect(createContentModeCapabilities).not.toHaveBeenCalled();
     expect(context.selectedColumns).toEqual([
       "projectId, version",
-      "projectId, version, lastTransactionId, props",
+      "projectId, version, lastTransactionId, props, instances",
     ]);
     expect(authorizePatchEntries).toHaveBeenCalledWith(
       expect.anything(),
@@ -419,7 +455,7 @@ describe("applyPatchRequest", () => {
     expect(context.selectedColumns).toEqual([
       "projectId, version",
       "pages, instances, props, styleSources, styleSourceSelections, styles, breakpoints",
-      "projectId, version, lastTransactionId, props",
+      "projectId, version, lastTransactionId, props, instances",
     ]);
     expect(result).toEqual({
       status: "ok",
@@ -484,7 +520,7 @@ describe("applyPatchRequest", () => {
 
     expect(context.selectedColumns).toEqual([
       "projectId, version",
-      "projectId, version, lastTransactionId",
+      "projectId, version, lastTransactionId, props, instances",
     ]);
     expect(patchLoadedBuild).toHaveBeenCalledWith(
       expect.objectContaining({

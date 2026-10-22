@@ -38,11 +38,12 @@ const contentModeBuildColumns = [
 ] as const satisfies BuildColumn[];
 
 const namespaceBuildColumns = {
-  pages: ["pages", "instances"],
+  pages: ["pages", "instances", "props"],
   projectSettings: ["projectSettings"],
   breakpoints: ["breakpoints"],
-  instances: ["pages", "instances"],
-  props: ["props"],
+  instances: ["pages", "instances", "props"],
+  props: ["props", "instances"],
+  assets: ["props", "instances"],
   styleSourceSelections: ["styleSourceSelections"],
   styleSources: ["styleSources"],
   styles: ["styles"],
