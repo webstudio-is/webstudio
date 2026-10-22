@@ -21,6 +21,7 @@ import {
   publicApiOperations,
 } from "@webstudio-is/protocol";
 import {
+  AuthorizationError,
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
@@ -1766,7 +1767,7 @@ describe("api router permits", () => {
           },
         ],
       })
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    ).rejects.toMatchObject({ cause: expect.any(AuthorizationError) });
     expect(patchBuild).toHaveBeenCalledTimes(1);
   });
 
