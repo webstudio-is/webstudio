@@ -25,6 +25,28 @@ import { useFormFeedbackScroll } from "./form-feedback-scroll";
 
 export const defaultTag = "form";
 
+const clearFormFields = (form: HTMLFormElement) => {
+  for (const control of form.elements) {
+    if (control instanceof HTMLInputElement) {
+      if (control.type === "checkbox" || control.type === "radio") {
+        control.checked = false;
+      } else if (
+        control.type !== "hidden" &&
+        control.type !== "submit" &&
+        control.type !== "reset" &&
+        control.type !== "button" &&
+        control.type !== "image"
+      ) {
+        control.value = "";
+      }
+    } else if (control instanceof HTMLTextAreaElement) {
+      control.value = "";
+    } else if (control instanceof HTMLSelectElement) {
+      control.selectedIndex = -1;
+    }
+  }
+};
+
 export const ResourceForm = forwardRef<
   ElementRef<typeof defaultTag>,
   Omit<ComponentProps<typeof defaultTag>, "action"> & {
@@ -80,7 +102,7 @@ export const ResourceForm = forwardRef<
     submissionController.current ??= new FormSubmissionController(
       () => callbacks.current!
     );
-    const { setFormRef, revealFeedback } = useFormFeedbackScroll(ref);
+    const { formRef, setFormRef, revealFeedback } = useFormFeedbackScroll(ref);
     const [hydrated, setHydrated] = useState(false);
     useEffect(() => setHydrated(true), []);
     useEffect(() => {
@@ -120,7 +142,12 @@ export const ResourceForm = forwardRef<
       onResult: (result) => onResultChange?.(result),
       onState: reportState,
       onFeedback: revealFeedback,
-      onRefresh: onSubmissionSuccess,
+      onRefresh: () => {
+        if (formRef.current) {
+          clearFormFields(formRef.current);
+        }
+        return onSubmissionSuccess?.();
+      },
       onRedirect: (destination) => {
         if (onSuccessRedirect) {
           return onSuccessRedirect(destination);

@@ -53,5 +53,5 @@ export const useFormFeedbackScroll = (
     []
   );
 
-  return { setFormRef, revealFeedback };
+  return { formRef, setFormRef, revealFeedback };
 };
