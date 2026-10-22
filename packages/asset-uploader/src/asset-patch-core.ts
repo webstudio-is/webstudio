@@ -573,6 +573,49 @@ const persistAssetMetadataWithClient = async (
   }
 };
 
+export const prepareAssetPatchWithClient = async ({
+  projectId,
+  client,
+  patches,
+  canonicalize = true,
+}: {
+  projectId: string;
+  client: Client;
+  patches: Patch[];
+  canonicalize?: boolean;
+}) => {
+  const assetsList = await loadAssetsByProjectWithClient(projectId, client);
+  const assetsMap = new Map<Asset["id"], Asset>();
+  for (const asset of assetsList) {
+    assetsMap.set(asset.id, asset);
+  }
+  const patchedAssets = applyValidatedMapPatches(assetsMap, patches, (value) =>
+    assets.parse(value)
+  );
+  for (const [assetId, asset] of patchedAssets) {
+    if (asset.id !== assetId) {
+      throw new Error(
+        `Asset ${asset.id} does not match its map key ${assetId}`
+      );
+    }
+    if (asset.projectId !== projectId) {
+      throw new Error(`Asset ${asset.id} belongs to another project`);
+    }
+  }
+  let replacementFilesByName = new Map<string, FileRow>();
+  let canonicalAssets: ReadonlyMap<string, Asset> = patchedAssets;
+  if (canonicalize) {
+    const canonical = await getCanonicalAssetsForValidation({
+      current: assetsMap,
+      next: patchedAssets,
+      client,
+    });
+    replacementFilesByName = canonical.filesByName;
+    canonicalAssets = canonical.assets;
+  }
+  return { assetsMap, patchedAssets, canonicalAssets, replacementFilesByName };
+};
+
 /**
  * Persists asset additions, deletions, metadata updates, and file revisions.
  */
@@ -600,34 +643,14 @@ export const patchAssetsWithClient = async (
     allowSharedFileRestore?: boolean;
   } = {}
 ): Promise<void> => {
-  const assetsList = await loadAssetsByProjectWithClient(projectId, client);
-  const assetsMap = new Map<Asset["id"], Asset>();
-  for (const asset of assetsList) {
-    assetsMap.set(asset.id, asset);
-  }
-  const patchedAssets = applyValidatedMapPatches(assetsMap, patches, (value) =>
-    assets.parse(value)
-  );
-  for (const [assetId, asset] of patchedAssets) {
-    if (asset.id !== assetId) {
-      throw new Error(
-        `Asset ${asset.id} does not match its map key ${assetId}`
-      );
-    }
-    if (asset.projectId !== projectId) {
-      throw new Error(`Asset ${asset.id} belongs to another project`);
-    }
-  }
-  let replacementFilesByName = new Map<string, FileRow>();
-  if (validate !== undefined || allowSharedFileRestore) {
-    const canonical = await getCanonicalAssetsForValidation({
-      current: assetsMap,
-      next: patchedAssets,
+  const { assetsMap, patchedAssets, canonicalAssets, replacementFilesByName } =
+    await prepareAssetPatchWithClient({
+      projectId,
       client,
+      patches,
+      canonicalize: validate !== undefined || allowSharedFileRestore,
     });
-    replacementFilesByName = canonical.filesByName;
-    await validate?.({ current: assetsMap, next: canonical.assets });
-  }
+  await validate?.({ current: assetsMap, next: canonicalAssets });
   const {
     added,
     updated,

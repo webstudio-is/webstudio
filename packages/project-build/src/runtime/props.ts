@@ -10,6 +10,7 @@ import {
   findWritableContentBlockDocumentBindings,
   getExpressionBindingError,
   expressionBindingMode,
+  type Asset,
   prop as propSchema,
   type Instance,
   type Prop,
@@ -661,6 +662,33 @@ export const getMediaAssetPropNames = (
 ): readonly string[] =>
   component === "Image" ? ["width", "height", "alt"] : [];
 
+export const getPropAssetError = ({
+  instance,
+  prop,
+  asset,
+}: {
+  instance: Instance;
+  prop: Pick<Prop, "name" | "type">;
+  asset: Asset | undefined;
+}) => {
+  // Pending uploads do not have an asset record yet.
+  if (prop.type !== "asset" || asset === undefined) {
+    return;
+  }
+  const meta = componentMetas.get(instance.component)?.props?.[prop.name];
+  if (
+    (getMediaAssetPropNames(instance.component).includes(prop.name) &&
+      asset.type !== "image") ||
+    (meta?.control === "file" &&
+      !doesAssetMatchMimePatterns(
+        asset,
+        acceptToMimePatterns(meta.accept ?? "")
+      ))
+  ) {
+    return "This asset type is not allowed for this property.";
+  }
+};
+
 export const getPropIdsToDelete = ({
   instanceComponent,
   instanceProps,
@@ -942,23 +970,14 @@ export const updateProps = (
     assertRuntimeInstance(instances, update.instanceId);
     const instance = instances.get(update.instanceId)!;
     assertGenericPropMutationAllowed(instance, update.name);
-    const propMeta = componentMetas.get(instance.component)?.props?.[
-      update.name
-    ];
-    const asset =
-      update.type === "asset" ? state.assets?.get(update.value) : undefined;
-    if (
-      asset !== undefined &&
-      propMeta?.control === "file" &&
-      !doesAssetMatchMimePatterns(
-        asset,
-        acceptToMimePatterns(propMeta.accept ?? "")
-      )
-    ) {
-      return throwBuilderRuntimeError(
-        "BAD_REQUEST",
-        "This asset type is not allowed for this property."
-      );
+    const assetError = getPropAssetError({
+      instance,
+      prop: update,
+      asset:
+        update.type === "asset" ? state.assets?.get(update.value) : undefined,
+    });
+    if (assetError !== undefined) {
+      return throwBuilderRuntimeError("BAD_REQUEST", assetError);
     }
     const htmlEmbedCodeErrors = getHtmlEmbedCodeErrors(instance, update);
     const codeErrors = [

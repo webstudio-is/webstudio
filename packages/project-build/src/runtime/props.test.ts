@@ -517,6 +517,10 @@ describe("updateProps", () => {
     ["Image", "src", "video", "mp4", false, false],
     ["Image", "src", "file", "txt", false, false],
     ["Image", "src", "file", "png", true, false],
+    ["Image", "width", "file", "txt", false, false],
+    ["Image", "height", "video", "mp4", false, false],
+    ["Image", "alt", "file", "png", false, false],
+    ["Image", "width", "image", "png", true, false],
     ["Video", "src", "video", "mp4", true, false],
     // Video's current accept list contains unsupported extensions and the
     // shared picker matcher falls back to allowing all assets.
