@@ -67631,10 +67631,11 @@ export const runtimeOperationContractData = [
       required: ["propIds"],
       additionalProperties: {},
     },
-    readNamespaces: ["instances", "props", "dataSources"],
+    readNamespaces: ["instances", "props", "dataSources", "assets"],
     writeNamespaces: ["props"],
     invalidatesNamespaces: ["props"],
     retryOnConflict: false,
+    requiresAssets: true,
   },
   {
     id: "instances.replacePropText",

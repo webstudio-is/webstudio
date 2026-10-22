@@ -6,6 +6,7 @@ import {
   blockComponent,
   contentBlockSourceProp,
   encodeDataSourceVariable,
+  type Asset,
   type Instance,
   type Prop,
 } from "@webstudio-is/sdk";
@@ -511,6 +512,109 @@ describe("createPropUpsertPayload", () => {
 });
 
 describe("updateProps", () => {
+  test.each([
+    ["Image", "src", "image", "png", true, true],
+    ["Image", "src", "video", "mp4", false, false],
+    ["Image", "src", "file", "txt", false, false],
+    ["Image", "src", "file", "png", true, false],
+    ["Video", "src", "video", "mp4", true, false],
+    ["Video", "src", "image", "png", false, false],
+    ["Image", "data-download", "file", "txt", true, false],
+  ] as const)(
+    "%s %s enforces picker constraints for %s/%s",
+    (component, name, type, format, allowed, linksMetadata) => {
+      const asset: Asset = {
+        id: "asset",
+        projectId: "project",
+        name: `asset.${format}`,
+        format,
+        size: 100,
+        createdAt: "",
+        description: "Description",
+        ...(type === "file"
+          ? { type, meta: {} }
+          : { type, meta: { width: 120, height: 80 } }),
+      };
+      const state = {
+        instances: new Map([[image.id, { ...image, component }]]),
+        props: new Map<string, Prop>(),
+        assets: new Map([[asset.id, asset]]),
+      };
+      const before = structuredClone(state);
+      let id = 0;
+      const run = () =>
+        updateProps(
+          state,
+          {
+            updates: [
+              {
+                instanceId: image.id,
+                name: "title",
+                type: "string",
+                value: "New title",
+              },
+              { instanceId: image.id, name, type: "asset", value: asset.id },
+            ],
+          },
+          { createId: () => `new-${id++}` }
+        );
+      if (allowed) {
+        const result = run();
+        const next = applyBuilderNamespacePatches(
+          state.props,
+          result.payload[0].patches
+        );
+        expect([...next.values()].map(({ name }) => name)).toEqual(
+          linksMetadata
+            ? ["title", name, "width", "height", "alt"]
+            : ["title", name]
+        );
+        expect(findProp(next.values(), image.id, name)).toMatchObject({
+          type: "asset",
+          value: asset.id,
+        });
+      } else {
+        expect(run).toThrow(expect.objectContaining({ code: "BAD_REQUEST" }));
+      }
+      expect(state).toEqual(before);
+    }
+  );
+
+  test("does not apply asset-picker constraints to manually entered URLs", () => {
+    const state = {
+      instances: new Map([[image.id, image]]),
+      props: new Map<string, Prop>(),
+    };
+    const result = updateProps(
+      state,
+      {
+        updates: [
+          {
+            instanceId: image.id,
+            name: "src",
+            type: "string",
+            value: "https://example.com/dynamic-image",
+          },
+        ],
+      },
+      { createId: () => "src" }
+    );
+    expect([
+      ...applyBuilderNamespacePatches(
+        state.props,
+        result.payload[0].patches
+      ).values(),
+    ]).toEqual([
+      {
+        id: "src",
+        instanceId: image.id,
+        name: "src",
+        type: "string",
+        value: "https://example.com/dynamic-image",
+      },
+    ]);
+  });
+
   test("coalescing reads a large rejected batch only linearly", () => {
     let reads = 0;
     const updates = Array.from({ length: 200 }, (_, index) => ({

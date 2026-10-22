@@ -2,6 +2,8 @@ import { z } from "zod";
 import { parseCssValue } from "@webstudio-is/css-data";
 import { getExpressionValueKind } from "@webstudio-is/expression";
 import {
+  acceptToMimePatterns,
+  doesAssetMatchMimePatterns,
   blockComponent,
   contentBlockSourceProp,
   createAnimationActionInput,
@@ -13,6 +15,7 @@ import {
   type Prop,
   type PropMeta,
 } from "@webstudio-is/sdk";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { validateJsonLd } from "@webstudio-is/sdk/runtime";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
@@ -923,7 +926,7 @@ const getJsonLdCodeErrors = (instance: Instance, update: PropValueInput) => {
 };
 
 export const updateProps = (
-  state: Pick<BuilderState, "instances" | "props">,
+  state: Pick<BuilderState, "instances" | "props" | "assets">,
   input: z.infer<typeof propUpdatesInput>,
   context: { createId: () => string }
 ) => {
@@ -939,6 +942,24 @@ export const updateProps = (
     assertRuntimeInstance(instances, update.instanceId);
     const instance = instances.get(update.instanceId)!;
     assertGenericPropMutationAllowed(instance, update.name);
+    const propMeta = componentMetas.get(instance.component)?.props?.[
+      update.name
+    ];
+    const asset =
+      update.type === "asset" ? state.assets?.get(update.value) : undefined;
+    if (
+      asset !== undefined &&
+      propMeta?.control === "file" &&
+      !doesAssetMatchMimePatterns(
+        asset,
+        acceptToMimePatterns(propMeta.accept ?? "")
+      )
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "This asset type is not allowed for this property."
+      );
+    }
     const htmlEmbedCodeErrors = getHtmlEmbedCodeErrors(instance, update);
     const codeErrors = [
       ...htmlEmbedCodeErrors,
@@ -959,9 +980,12 @@ export const updateProps = (
   });
   for (const source of [...nextProps]) {
     const instance = instances.get(source.instanceId)!;
+    const asset =
+      source.type === "asset" ? state.assets?.get(source.value) : undefined;
     if (
       source.name !== "src" ||
       source.type !== "asset" ||
+      (asset !== undefined && asset.type !== "image") ||
       isDynamicPropType(findProp(props.values(), instance.id, "src")?.type)
     ) {
       continue;

@@ -1522,7 +1522,7 @@ export const builderRuntimeOperations = [
     "instances.updateProps",
     api("update-props", "updateProps", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "props", "dataSources"],
+      readNamespaces: ["instances", "props", "dataSources", "assets"],
       writeNamespaces: ["props"],
     }),
     props.propUpdatesInput,
