@@ -72,6 +72,7 @@ test.each([true, false])(
             onManagedSubmit={onManagedSubmit}
           >
             <Input name="name" defaultValue="Preset name" />
+            <Input name="reset" defaultValue="Preset reset" />
             <Textarea name="message" defaultValue="Preset message" />
             <Select name="category" defaultValue="sales">
               <option value="sales">Sales</option>
@@ -85,6 +86,7 @@ test.each([true, false])(
         );
       });
       const name = container.querySelector<HTMLInputElement>("[name=name]")!;
+      const reset = container.querySelector<HTMLInputElement>("[name=reset]")!;
       const message =
         container.querySelector<HTMLTextAreaElement>("[name=message]")!;
       const category =
@@ -96,6 +98,7 @@ test.each([true, false])(
       const attachment =
         container.querySelector<HTMLInputElement>("[name=attachment]")!;
       name.value = "Entered name";
+      reset.value = "Entered reset";
       message.value = "Entered message";
       category.value = "support";
       subscribe.checked = false;
@@ -111,6 +114,7 @@ test.each([true, false])(
         )
       );
       expect(name.value).toBe(success ? "Preset name" : "Entered name");
+      expect(reset.value).toBe(success ? "Preset reset" : "Entered reset");
       expect(message.value).toBe(
         success ? "Preset message" : "Entered message"
       );

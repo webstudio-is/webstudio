@@ -121,7 +121,9 @@ export const ResourceForm = forwardRef<
       onState: reportState,
       onFeedback: revealFeedback,
       onRefresh: () => {
-        formRef.current?.reset();
+        if (formRef.current) {
+          HTMLFormElement.prototype.reset.call(formRef.current);
+        }
         return onSubmissionSuccess?.();
       },
       onRedirect: (destination) => {
