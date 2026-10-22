@@ -34,6 +34,7 @@ import {
 } from "@webstudio-is/sdk";
 import {
   createMdxScopeIdGenerator,
+  getMdxPropApplicationIndexes,
   getMdxPropBinding,
   getMdxPropEligibility,
   resolveMdxPropCollisions,
@@ -993,7 +994,11 @@ export const materializeMdxAuthoredContent = ({
               const assetProps: AuthoredElementProvenance["assetProps"][number][] =
                 [];
               const ignoredInstancePropNames: string[] = [];
-              authoredProps.forEach((prop, propIndex) => {
+              for (const propIndex of getMdxPropApplicationIndexes(
+                instance.component,
+                authoredProps
+              )) {
+                const prop = authoredProps[propIndex]!;
                 const existing = Array.from(templateData.props.values()).find(
                   (candidate) =>
                     candidate.instanceId === instance.id &&
@@ -1016,7 +1021,7 @@ export const materializeMdxAuthoredContent = ({
                   if (existing !== undefined) {
                     templateData.props.delete(existing.id);
                   }
-                  return;
+                  continue;
                 }
                 let nextProp: Prop;
                 if (
@@ -1084,7 +1089,7 @@ export const materializeMdxAuthoredContent = ({
                           : "incompatible",
                       sourceRange: authored.child.sourceRange,
                     });
-                    return;
+                    continue;
                   }
                   nextProp = {
                     id: existing?.id ?? createOverlayId(),
@@ -1119,7 +1124,7 @@ export const materializeMdxAuthoredContent = ({
                     authoredValue: prop.value,
                   });
                 }
-              });
+              }
               matchedDescendants.push({
                 instanceId: instance.id,
                 path: authored.path,
@@ -1390,11 +1395,12 @@ export const materializeMdxAuthoredContent = ({
             });
           }
         }
-        for (const {
-          prop,
-          source,
-          requiresAssetReference,
-        } of materializedComponent.props) {
+        for (const index of getMdxPropApplicationIndexes(
+          instance.component,
+          materializedComponent.props.map(({ prop }) => prop)
+        )) {
+          const { prop, source, requiresAssetReference } =
+            materializedComponent.props[index]!;
           const sourcePropIndex =
             source?.nodePath.length === 0 ? source.propIndex : undefined;
           if (
