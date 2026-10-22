@@ -122,6 +122,7 @@ export const ResourceForm = forwardRef<
       onFeedback: revealFeedback,
       onRefresh: () => {
         if (formRef.current) {
+          // A field named or identified as "reset" can shadow form.reset.
           HTMLFormElement.prototype.reset.call(formRef.current);
         }
         return onSubmissionSuccess?.();
