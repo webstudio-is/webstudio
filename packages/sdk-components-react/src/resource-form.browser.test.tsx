@@ -53,7 +53,7 @@ test("a StrictMode Form submits after the effect cleanup probe", async () => {
 });
 
 test.each([true, false])(
-  "a visible Form clears submitted fields only after success: %s",
+  "a visible Form resets edited fields only after success: %s",
   async (success) => {
     const container = document.createElement("div");
     document.body.append(container);
@@ -95,6 +95,11 @@ test.each([true, false])(
         container.querySelector<HTMLInputElement>("[name=contact]")!;
       const attachment =
         container.querySelector<HTMLInputElement>("[name=attachment]")!;
+      name.value = "Entered name";
+      message.value = "Entered message";
+      category.value = "support";
+      subscribe.checked = false;
+      contact.checked = false;
       const files = new DataTransfer();
       files.items.add(new File(["image"], "image.png", { type: "image/png" }));
       attachment.files = files.files;
@@ -105,11 +110,13 @@ test.each([true, false])(
           success ? "success" : "error"
         )
       );
-      expect(name.value).toBe(success ? "" : "Preset name");
-      expect(message.value).toBe(success ? "" : "Preset message");
-      expect(category.selectedIndex).toBe(success ? -1 : 0);
-      expect(subscribe.checked).toBe(!success);
-      expect(contact.checked).toBe(!success);
+      expect(name.value).toBe(success ? "Preset name" : "Entered name");
+      expect(message.value).toBe(
+        success ? "Preset message" : "Entered message"
+      );
+      expect(category.value).toBe(success ? "sales" : "support");
+      expect(subscribe.checked).toBe(success);
+      expect(contact.checked).toBe(success);
       expect(attachment.files).toHaveLength(success ? 0 : 1);
     } finally {
       await act(async () => root.unmount());
@@ -654,7 +661,7 @@ test("managed Form submits by HTTP outside a router provider and reports pending
     );
     await vi.waitFor(() => expect(states).toEqual(["initial", "success"]));
     expect(container.querySelector<HTMLInputElement>("[name=tag]")?.value).toBe(
-      ""
+      "a"
     );
     expect(
       container.querySelector<HTMLInputElement>('[name="upload"]')?.files
