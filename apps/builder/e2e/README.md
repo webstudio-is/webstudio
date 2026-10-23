@@ -32,7 +32,7 @@ Pass normal Playwright Test arguments after `--`. For example:
 
 ```sh
 pnpm e2e:builder -- --grep "Builder can copy, duplicate, and delete a page"
-pnpm e2e:builder -- 'apps/builder/e2e/tests/pages-actions.[shard-5].e2e.ts'
+pnpm e2e:builder -- 'apps/builder/e2e/tests/pages-actions.e2e.ts'
 pnpm e2e:builder -- --debug --grep "Builder can copy"
 ```
 
@@ -88,19 +88,10 @@ each invocation.
 - Keep tests in a file independent even though Playwright runs them in
   declaration order by default.
 
-CI discovers isolated Playwright shards from filename tags. Each shard uses
-four workers, and files are assigned by measured CI duration to keep jobs near
-three to four minutes:
+CI runs six isolated Playwright shards with four workers each. Playwright
+distributes whole test files across the shards by test count. The shard count
+is set in the CI workflow and its E2E action.
 
-```txt
-pages-actions.[shard-2].[shard-5].[shard-6].e2e.ts
-```
-
-Every E2E filename must contain at least one unique shard tag. CI derives its
-matrix from those tags, so adding or removing a shard does not require editing
-the workflow. Files with multiple tags are partitioned across those shards. All
-files selected by a shard must use the same set of tags. Rebalance by changing
-filename tags when measured job durations drift.
 Suites may opt into parallel mode only when every worker creates uniquely named
 setup data and the tests do not depend on each other's mutations.
 

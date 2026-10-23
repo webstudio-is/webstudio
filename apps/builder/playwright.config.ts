@@ -4,7 +4,6 @@ import {
   builderUrl,
   getBrowserLaunchOptions,
 } from "./e2e/test";
-import { getE2eTestMatch } from "./e2e/test-shards";
 
 const testTimeout =
   Number.parseInt(process.env.E2E_TEST_TIMEOUT_MS ?? "", 10) || 120_000;
@@ -34,7 +33,7 @@ export default defineConfig({
     },
     {
       name: "chromium",
-      testMatch: getE2eTestMatch(process.env.E2E_TEST_SHARD),
+      testMatch: /tests\/.*\.e2e\.ts/,
       dependencies: ["setup"],
       use: { browserName: "chromium" },
     },
