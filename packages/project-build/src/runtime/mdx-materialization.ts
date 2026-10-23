@@ -28,7 +28,7 @@ import {
   getContentModeCapabilities,
   getContentModeEditableStaticPropNames,
   getContentModePropEligibility,
-} from "./content-mode-permissions";
+} from "./content-mode-capabilities";
 import { createFindAvailableVariables } from "./data";
 import {
   createWebstudioDataFromFragment,
@@ -53,7 +53,7 @@ export const getMdxPropEligibility = ({
 }: {
   capabilities: ReturnType<typeof getContentModeCapabilities>;
   instance: Instance;
-  prop: Pick<Prop, "name" | "type">;
+  prop: Pick<Prop, "name" | "type"> & Partial<Pick<Prop, "value">>;
   jsxPropName?: string;
 }) => {
   const contentModeEligibility = getContentModePropEligibility({
@@ -169,6 +169,19 @@ export const resolveMdxPropCollisions = ({
   }
   return { conflictingPropIndexes, collidedInstancePropNames };
 };
+
+export const getMdxPropApplicationIndexes = (
+  component: Instance["component"],
+  props: readonly Pick<MdxAuthoredProp, "name">[]
+) =>
+  // Image metadata is checked against the current src. Keep original indexes
+  // so asset references and diagnostics still point to the authored props.
+  Array.from(props.keys()).toSorted((left, right) =>
+    component === "Image"
+      ? Number(props[right]?.name === "src") -
+        Number(props[left]?.name === "src")
+      : 0
+  );
 
 export type MdxJsxPropContext = Readonly<{
   acceptsHtmlAttributes: boolean;
@@ -473,7 +486,11 @@ export const materializeMdxTemplates = async ({
       instancePropName: string;
     }> = [];
     const ignoredJsxPropNames = new Set<string>();
-    for (const [index, authoredProp] of reference.props.entries()) {
+    for (const index of getMdxPropApplicationIndexes(
+      rootInstance.component,
+      reference.props
+    )) {
+      const authoredProp = reference.props[index]!;
       const instanceProp = mappedReferenceProps[index];
       if (instanceProp === undefined) {
         throw new Error("Mapped MDX template prop is missing");
@@ -559,7 +576,7 @@ export const materializeMdxTemplates = async ({
         getMdxPropEligibility({
           capabilities,
           instance: rootInstance,
-          prop: { name: instancePropName, type: rawBinding.type },
+          prop: { name: instancePropName, ...rawBinding },
           jsxPropName: authoredProp.name,
         }).editable
           ? rawBinding
@@ -602,7 +619,7 @@ export const materializeMdxTemplates = async ({
       const eligibility = getMdxPropEligibility({
         capabilities,
         instance: rootInstance,
-        prop: { name: instancePropName, type: rawBinding.type },
+        prop: { name: instancePropName, ...rawBinding },
         jsxPropName: authoredProp.name,
       });
       propNameMappings.push({

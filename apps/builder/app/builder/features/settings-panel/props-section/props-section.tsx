@@ -144,22 +144,6 @@ const shouldRenderPropsSectionContainer = ({
   return propsMetasSize > 0 || (isContentMode && hasVisibleProps);
 };
 
-const shouldSyncMediaAssetProps = ({
-  component,
-  propName,
-  propValue,
-  propType,
-}: {
-  component: Instance["component"];
-  propName: string;
-  propValue: { type: string };
-  propType?: Prop["type"];
-}) =>
-  (component === "Image" || component === "Video") &&
-  propName === "src" &&
-  propValue.type === "asset" &&
-  propType !== "expression";
-
 const findExpressionPropByStandardName = ({
   props,
   instanceId,
@@ -282,19 +266,6 @@ const renderProperty = (
     propName,
     onChange: (propValue) => {
       logic.handleChange({ prop, propName }, propValue);
-
-      if (
-        shouldSyncMediaAssetProps({
-          component,
-          propName,
-          propValue,
-          propType: prop?.type,
-        })
-      ) {
-        logic.handleChangeByPropName("width", propValue);
-        logic.handleChangeByPropName("height", propValue);
-        logic.handleChangeByPropName("alt", propValue);
-      }
     },
   });
   return control === undefined ? undefined : (
@@ -514,7 +485,6 @@ export const PropsSection = (props: PropsSectionProps) => {
 export const __testing__ = {
   shouldShowPropertiesSection,
   shouldRenderPropsSectionContainer,
-  shouldSyncMediaAssetProps,
   findExpressionPropByStandardName,
   shouldWriteBoundValue,
   getStandaloneInitialProps,

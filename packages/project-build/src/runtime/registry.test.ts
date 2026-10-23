@@ -96,6 +96,55 @@ const paginatedReadOperationIds = [
 
 const maxCompactListBytes = 16 * 1024;
 
+test("property writes load assets and reject an incompatible Image source", () => {
+  const operation = getBuilderRuntimeOperation("instances.updateProps");
+  expect(operation.readNamespaces).toContain("assets");
+  expect(operation.requiresAssets).toBe(true);
+  const image: Instance = {
+    type: "instance",
+    id: "image",
+    component: "Image",
+    children: [],
+  };
+  const assets: Assets = new Map([
+    [
+      "text",
+      {
+        id: "text",
+        projectId: "project",
+        name: "data.txt",
+        type: "file",
+        format: "txt",
+        meta: {},
+        size: 1,
+        createdAt: "",
+      },
+    ],
+  ]);
+  expect(() =>
+    executeBuilderRuntimeOperation({
+      id: "instances.updateProps",
+      state: {
+        instances: new Map([[image.id, image]]),
+        props: new Map(),
+        assets,
+      },
+      input: {
+        updates: [
+          { instanceId: image.id, name: "src", type: "asset", value: "text" },
+        ],
+      },
+      context,
+    })
+  ).toThrow(expect.objectContaining({ code: "BAD_REQUEST" }));
+});
+
+test("fragment insertion is available to Content mode editors", () => {
+  expect(getBuilderRuntimeOperation("instances.insertFragment").permit).toBe(
+    "edit"
+  );
+});
+
 test("rejects a fragment containing a Form with more than 10 actions", () => {
   let nextId = 0;
   expect(() =>

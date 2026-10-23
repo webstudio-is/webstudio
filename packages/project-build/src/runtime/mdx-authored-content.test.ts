@@ -1968,6 +1968,155 @@ describe("MDX authored content", () => {
     );
   });
 
+  test.each([
+    ["first", "new-image", true],
+    ["last", "new-image", true],
+    ["first", "old-image", false],
+    ["last", "old-image", false],
+  ] as const)(
+    "links named Image dimensions to its final src (%s, %s)",
+    async (sourcePosition, dimensionAssetId, acceptsDimensions) => {
+      const names =
+        sourcePosition === "first"
+          ? ["src", "width", "height"]
+          : ["width", "height", "src"];
+      const document = await parseMdxDocument({
+        source: `<Image ${names.map((name) => `${name}="./${name}.png"`).join(" ")} />`,
+      });
+      const root = materializeMdxAuthoredContent({
+        identity,
+        document,
+        templateMaterialization: emptyTemplates,
+        metas: componentMetas,
+        assetReferences: names.map((name, index) => ({
+          path: ["children", 0, "props", index, "value"],
+          assetId: name === "src" ? "new-image" : dimensionAssetId,
+        })),
+      });
+      const props = root.fragment.props;
+      expect(props.find(({ name }) => name === "src")).toMatchObject({
+        type: "asset",
+        value: "new-image",
+      });
+      expect(
+        props
+          .filter(({ name }) => name === "width" || name === "height")
+          .map(({ name, type, value }) => ({ name, type, value }))
+      ).toEqual(
+        acceptsDimensions
+          ? [
+              { name: "width", type: "asset", value: "new-image" },
+              { name: "height", type: "asset", value: "new-image" },
+            ]
+          : []
+      );
+      expect(root.diagnostics?.map(({ code }) => code) ?? []).toEqual(
+        acceptsDimensions
+          ? []
+          : ["ignored-template-prop", "ignored-template-prop"]
+      );
+    }
+  );
+
+  test.each([
+    ["new-image", true],
+    ["old-image", false],
+  ] as const)(
+    "links overlaid Image dimensions to its replaced src (%s)",
+    async (dimensionAssetId, acceptsDimensions) => {
+      const document = await parseMdxDocument({
+        source:
+          '<ws.element ws:name="Card"><Image width="./width.png" height="./height.png" src="./src.png" /></ws.element>',
+      });
+      const root = materializeMdxAuthoredContent({
+        identity,
+        document,
+        metas: componentMetas,
+        assetReferences: ["width", "height", "src"].map((name, index) => ({
+          path: ["children", 0, "children", 0, "props", index, "value"],
+          assetId: name === "src" ? "new-image" : dimensionAssetId,
+        })),
+        templateMaterialization: {
+          templates: [
+            {
+              type: "resolved-template",
+              reference: {
+                type: "resolved-template",
+                path: [0],
+                templateName: "Card",
+                templateInstanceId: "card-template",
+                props: [],
+              },
+              fragment: {
+                children: [{ type: "id", value: "card" }],
+                instances: [
+                  {
+                    type: "instance",
+                    id: "card",
+                    component: elementComponent,
+                    tag: "section",
+                    children: [{ type: "id", value: "image" }],
+                  },
+                  {
+                    type: "instance",
+                    id: "image",
+                    component: "Image",
+                    children: [],
+                  },
+                ],
+                props: [
+                  {
+                    id: "old-src",
+                    instanceId: "image",
+                    name: "src",
+                    type: "asset",
+                    value: "old-image",
+                  },
+                ],
+                assets: [],
+                dataSources: [],
+                resources: [],
+                breakpoints: [],
+                styleSourceSelections: [],
+                styleSources: [],
+                styles: [],
+              },
+              editablePropNames: [],
+              jsxPropContext: htmlJsxPropContext,
+              propNameMappings: [],
+              ignoredJsxPropNames: [],
+            },
+          ],
+          diagnostics: [],
+          dependencies: { templateNames: ["Card"], templates: [] },
+        },
+      });
+      expect(
+        root.fragment.props.find(({ name }) => name === "src")
+      ).toMatchObject({
+        type: "asset",
+        value: "new-image",
+      });
+      expect(
+        root.fragment.props
+          .filter(({ name }) => name === "width" || name === "height")
+          .map(({ name, type, value }) => ({ name, type, value }))
+      ).toEqual(
+        acceptsDimensions
+          ? [
+              { name: "width", type: "asset", value: "new-image" },
+              { name: "height", type: "asset", value: "new-image" },
+            ]
+          : []
+      );
+      expect(root.diagnostics?.map(({ code }) => code) ?? []).toEqual(
+        acceptsDimensions
+          ? []
+          : ["ignored-template-prop", "ignored-template-prop"]
+      );
+    }
+  );
+
   test("updates template shell props without serializing expanded internals", async () => {
     const document = await parseMdxDocument({
       source: `<ws.element ws:name="Card" tone="quiet" legacy="authored" />`,

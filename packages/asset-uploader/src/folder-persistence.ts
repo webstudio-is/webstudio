@@ -293,14 +293,34 @@ export const patchAssetFoldersWithClient = async (
       (previous, folder) =>
         previous.name === folder.name && previous.parentId === folder.parentId
     );
+    const updatedIds = new Set(updated.map(({ id }) => id));
+    const removedIds = new Set<string>();
+    for (const patch of patches) {
+      const id = patch.path[0];
+      if (patch.path.length !== 1 || typeof id !== "string") {
+        continue;
+      }
+      if (patch.op === "remove") {
+        removedIds.add(id);
+      }
+      if (patch.op === "add") {
+        if (updatedIds.has(id) && removedIds.has(id) === false) {
+          throw new AssetRepositoryConflictError(
+            "A different asset folder already uses this identifier"
+          );
+        }
+        removedIds.delete(id);
+      }
+    }
     const changed = [...added, ...updated];
     if (changed.length > 0) {
-      const result = await client
-        .from("AssetFolder")
-        .upsert(createAssetFolderRows(changed, projectId), {
-          onConflict: "id,projectId",
-        })
-        .select("id, name, parentId");
+      const rows = createAssetFolderRows(changed, projectId);
+      const query = client.from("AssetFolder");
+      const result = await (
+        updated.length === 0
+          ? query.insert(rows)
+          : query.upsert(rows, { onConflict: "id,projectId" })
+      ).select("id, name, parentId");
       assertPostgrestSuccess(result);
       const persisted = new Map(
         (result.data ?? []).map((row) => [row.id, row])

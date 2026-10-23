@@ -723,7 +723,7 @@ export const serverOnlyRouterOperationMetadata = {
     method: "mutation",
     path: "api.build.patch",
     client: "applyBuildPatch",
-    permit: "build",
+    permit: "edit",
     invalidatesNamespaces: [
       "pages",
       "instances",
