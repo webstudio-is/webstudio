@@ -532,10 +532,7 @@ const expandFlex = function* (value: CssNode) {
       grow !== undefined &&
       shrink !== undefined &&
       unresolvedNodes?.length === 1 &&
-      unresolvedNodes[0]?.type === "Function" &&
-      ["calc", "min", "max", "clamp", "var"].includes(
-        unresolvedNodes[0].name.toLowerCase()
-      )
+      unresolvedNodes[0]?.type === "Function"
     ) {
       basis = unresolved;
     }

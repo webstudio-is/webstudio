@@ -716,6 +716,8 @@ test.each([
   ["min(50%, var(--wide))", "min(50%,var(--wide))"],
   ["max(20rem, var(--wide))", "max(20rem,var(--wide))"],
   ["clamp(20rem, var(--basis), 50%)", "clamp(20rem,var(--basis),50%)"],
+  ["round(var(--basis), 1px)", "round(var(--basis),1px)"],
+  ["calc-size(auto, size + 2rem)", "calc-size(auto,size + 2rem)"],
   ["var(--basis)", "var(--basis)"],
 ])("expand flex with %s as its basis", (basis, expected) => {
   expect(expandShorthands([["flex", `0 1 ${basis}`]])).toEqual([
