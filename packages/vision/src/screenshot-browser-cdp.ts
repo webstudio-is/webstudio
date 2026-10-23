@@ -133,6 +133,7 @@ export type BrowserScreenshotTimings = {
 };
 
 export type BrowserScreenshotDependencies = {
+  platform: NodeJS.Platform;
   spawnBrowser: (file: string, args: readonly string[]) => BrowserProcess;
   readFile: typeof readFile;
   writeFile: typeof writeFile;
@@ -144,6 +145,7 @@ export type BrowserScreenshotDependencies = {
 
 export const defaultBrowserScreenshotDependencies: BrowserScreenshotDependencies =
   {
+    platform: process.platform,
     spawnBrowser(file, args) {
       return spawn(file, [...args], { stdio: ["ignore", "ignore", "pipe"] });
     },
@@ -699,12 +701,14 @@ const createBrowserLaunchArgs = ({
   height,
   uid,
   disableSandbox,
+  disableDevShmUsage,
 }: {
   userDataDir: string;
   width: number;
   height: number;
   uid?: number;
   disableSandbox?: boolean;
+  disableDevShmUsage?: boolean;
 }) => [
   "--headless=new",
   "--disable-gpu",
@@ -717,6 +721,7 @@ const createBrowserLaunchArgs = ({
   `--window-size=${width},${height}`,
   "--no-first-run",
   "--no-default-browser-check",
+  ...(disableDevShmUsage === true ? ["--disable-dev-shm-usage"] : []),
   ...(uid === 0 || disableSandbox === true ? ["--no-sandbox"] : []),
   "about:blank",
 ];
@@ -1508,7 +1513,8 @@ const removeBrowserProfile = async (
 
 const startBrowserRuntimeOnce = async (
   options: BrowserScreenshotOptions,
-  dependencies: BrowserScreenshotDependencies
+  dependencies: BrowserScreenshotDependencies,
+  disableDevShmUsage = false
 ): Promise<BrowserRuntime> => {
   const startupTimeout = options.startupTimeout ?? options.timeout;
   const userDataDir = await dependencies.mkdtemp(
@@ -1524,6 +1530,7 @@ const startBrowserRuntimeOnce = async (
         height: options.height,
         uid: options.uid,
         disableSandbox: options.disableSandbox,
+        disableDevShmUsage,
       })
     );
   } catch (error) {
@@ -1633,7 +1640,11 @@ const startBrowserRuntime = async (
     }
   }
   try {
-    return await startBrowserRuntimeOnce(options, dependencies);
+    return await startBrowserRuntimeOnce(
+      options,
+      dependencies,
+      dependencies.platform === "linux"
+    );
   } catch (error) {
     throw new BrowserStartupError(
       error instanceof Error ? error.message : String(error),

@@ -583,6 +583,7 @@ const createDependencies = ({
         : {},
   })) as unknown as typeof globalThis.fetch;
   return {
+    platform: process.platform,
     spawnBrowser: vi.fn(
       () => browserProcess
     ) as unknown as BrowserScreenshotDependencies["spawnBrowser"],
@@ -1737,6 +1738,45 @@ test("keeps a browser startup signal as structured diagnostics", async () => {
     code: "BROWSER_STARTUP_FAILED",
     processExit: { signal: "SIGABRT" },
   });
+});
+
+test("retries Linux browser startup without /dev/shm after an abort", async () => {
+  const dependencies = Object.assign(createDependencies(), {
+    platform: "linux" as const,
+  });
+  vi.mocked(dependencies.spawnBrowser)
+    .mockImplementationOnce(() => {
+      const browserProcess = new FakeBrowserProcess();
+      setTimeout(() => browserProcess.emit("exit", undefined, "SIGABRT"), 0);
+      return browserProcess as never;
+    })
+    .mockImplementationOnce(() => new FakeBrowserProcess() as never);
+  vi.mocked(dependencies.readFile)
+    .mockImplementationOnce(async () => await new Promise(() => undefined))
+    .mockResolvedValue("9222\n/devtools/browser/1\n");
+
+  const session = await createBrowserScreenshotSession(
+    {
+      url: "https://example.com",
+      output: "/tmp/current.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "load",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    dependencies
+  );
+
+  expect(dependencies.spawnBrowser).toHaveBeenCalledTimes(2);
+  expect(vi.mocked(dependencies.spawnBrowser).mock.calls[0]?.[1]).not.toContain(
+    "--disable-dev-shm-usage"
+  );
+  expect(vi.mocked(dependencies.spawnBrowser).mock.calls[1]?.[1]).toContain(
+    "--disable-dev-shm-usage"
+  );
+  await session.close();
 });
 
 test("does not restart a browser session after cleanup", async () => {
