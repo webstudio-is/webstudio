@@ -2174,6 +2174,9 @@ describe("prebuild", () => {
     await expect(
       readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
     ).resolves.not.toContain('"path": "/draft"');
+    await expect(
+      readFile("app/routes/[sitemap.xml]._index.tsx", "utf8")
+    ).resolves.toContain("sitemap.map");
   });
 
   test(
@@ -7635,11 +7638,29 @@ export const createManagedFormResourceFetch = () => {
     ];
     await writeSiteData(siteData);
 
-    await prebuild({ assets: false, template: ["react-router"] });
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
 
     await expect(
       readFile("app/__generated__/[sitemap.xml]._index.server.tsx", "utf8")
     ).resolves.toContain('rootIds: [\n      "sitemap-resource"');
+    await expect(
+      readFile("app/routes/[sitemap.xml]._index.tsx", "utf8")
+    ).resolves.toContain("../__generated__/[sitemap.xml]._index");
+
+    siteData.build.version += 1;
+    await writeSiteData(siteData);
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      incremental: true,
+    });
+    await expect(
+      readFile("app/routes/[sitemap.xml]._index.tsx", "utf8")
+    ).resolves.toContain("../__generated__/[sitemap.xml]._index");
   });
 
   test("emits static text pages at their configured paths", async () => {

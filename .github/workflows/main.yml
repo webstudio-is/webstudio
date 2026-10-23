@@ -199,7 +199,7 @@ jobs:
 
   builder-e2e:
     name: builder-e2e (${{ matrix.shard }})
-    timeout-minutes: ${{ matrix.shard == 'shard-5' && 18 || 12 }}
+    timeout-minutes: ${{ (matrix.shard == 'shard-2' || matrix.shard == 'shard-5') && 18 || 12 }}
 
     needs: builder-e2e-build
 
