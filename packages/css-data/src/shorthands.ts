@@ -514,6 +514,7 @@ const expandFlex = function* (value: CssNode) {
   let grow: undefined | Value;
   let shrink: undefined | Value;
   let basis: undefined | Value;
+  let unresolved: undefined | Value;
   if (lexer.match("initial", value).matched) {
     [grow, shrink, basis] = [zero, one, auto];
   } else if (lexer.match("auto", value).matched) {
@@ -521,19 +522,16 @@ const expandFlex = function* (value: CssNode) {
   } else if (lexer.match("none", value).matched) {
     [grow, shrink, basis] = [zero, zero, auto];
   } else {
-    const parsed = parseUnordered(
+    [grow, shrink, basis, unresolved] = parseUnordered(
       ["<'flex-grow'>", "<'flex-shrink'>", "<'flex-basis'>"],
       value
     );
-    [grow, shrink, basis] = parsed;
-    const unresolved = parsed[3];
-    const unresolvedNodes =
-      unresolved === undefined ? [] : getValueList(unresolved);
+    const unresolvedNodes = unresolved?.children.toArray();
     if (
       basis === undefined &&
       grow !== undefined &&
       shrink !== undefined &&
-      unresolvedNodes.length === 1 &&
+      unresolvedNodes?.length === 1 &&
       unresolvedNodes[0]?.type === "Function" &&
       ["calc", "min", "max", "clamp", "var"].includes(
         unresolvedNodes[0].name.toLowerCase()
