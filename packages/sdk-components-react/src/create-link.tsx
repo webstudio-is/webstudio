@@ -7,6 +7,7 @@ import {
   type ReactNode,
   forwardRef,
   useContext,
+  useSyncExternalStore,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
 import { BaseLink } from "./link";
@@ -55,6 +56,16 @@ const getRouterHref = (href: string, location: UrlParts) => {
 const getCurrentHref = (location: UrlParts) =>
   `https://webstudio.local${location.pathname}${location.search}${location.hash}`;
 
+const useHydrationSafeLocation = (location: UrlParts) => {
+  // Fragments are not sent to the server, so defer hash-dependent link state.
+  const isHydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+  return isHydrated ? location : { ...location, hash: "" };
+};
+
 const CurrentUrlProvider = ({
   children,
   location,
@@ -89,7 +100,7 @@ export const createLink = ({
     HTMLAnchorElement,
     LinkProps & { href: string }
   >((props, ref) => {
-    const location = useLocation();
+    const location = useHydrationSafeLocation(useLocation());
     const href = getRouterHref(props.href, location);
     const { linkProps, currentLinkProps } = getCurrentLinkProps(
       props,
@@ -106,7 +117,7 @@ export const createLink = ({
 
   const HashLink = forwardRef<HTMLAnchorElement, LinkProps & { href: string }>(
     (props, ref) => {
-      const location = useLocation();
+      const location = useHydrationSafeLocation(useLocation());
       return (
         <CurrentUrlProvider location={location}>
           <BaseLink
