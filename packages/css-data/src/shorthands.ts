@@ -514,6 +514,7 @@ const expandFlex = function* (value: CssNode) {
   let grow: undefined | Value;
   let shrink: undefined | Value;
   let basis: undefined | Value;
+  let unresolved: undefined | Value;
   if (lexer.match("initial", value).matched) {
     [grow, shrink, basis] = [zero, one, auto];
   } else if (lexer.match("auto", value).matched) {
@@ -521,10 +522,29 @@ const expandFlex = function* (value: CssNode) {
   } else if (lexer.match("none", value).matched) {
     [grow, shrink, basis] = [zero, zero, auto];
   } else {
-    [grow, shrink, basis] = parseUnordered(
+    [grow, shrink, basis, unresolved] = parseUnordered(
       ["<'flex-grow'>", "<'flex-shrink'>", "<'flex-basis'>"],
       value
     );
+    const nodes = getValueList(value);
+    const functionBasis = unresolved?.children
+      .toArray()
+      .find((node) => node.type === "Function");
+    const factors = nodes.filter((node) => node !== functionBasis);
+    if (
+      basis === undefined &&
+      functionBasis !== undefined &&
+      (nodes[0] === functionBasis || nodes.at(-1) === functionBasis) &&
+      (factors.length === 0 ||
+        lexer.match("<'flex-grow'> <'flex-shrink'>?", createValueNode(factors))
+          .matched)
+    ) {
+      [grow, shrink] = parseUnordered(
+        ["<'flex-grow'>", "<'flex-shrink'>"],
+        createValueNode(factors)
+      );
+      basis = createValueNode([functionBasis]);
+    }
   }
   yield ["flex-grow", grow ?? one] as const;
   yield ["flex-shrink", shrink ?? one] as const;

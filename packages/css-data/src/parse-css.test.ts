@@ -9,6 +9,36 @@ import {
 import { propertyVarTestFixtures } from "./__generated__/property-var-test-fixtures";
 
 describe("Parse CSS", () => {
+  test("flex with a nested calc basis matches explicit longhands", () => {
+    const basis = "calc((100% - var(--space-lg)) / 2)";
+    const shorthand = parseCss(`.test { flex: 0 1 ${basis}; }`, new Map());
+    const longhands = parseCss(
+      `.test { flex-grow: 0; flex-shrink: 1; flex-basis: ${basis}; }`,
+      new Map()
+    );
+    expect(shorthand.styles).toEqual(longhands.styles);
+  });
+
+  test.each([
+    ["", "", "1", "1"],
+    ["2 ", "", "2", "1"],
+    ["", " 2", "2", "1"],
+    ["", " 2 3", "2", "3"],
+  ])(
+    "flex function basis between %s and %s matches explicit longhands",
+    (before, after, grow, shrink) => {
+      const basis = "calc((100% - var(--gap)) / 2)";
+      expect(
+        parseCss(`.test { flex: ${before}${basis}${after}; }`, new Map()).styles
+      ).toEqual(
+        parseCss(
+          `.test { flex-grow: ${grow}; flex-shrink: ${shrink}; flex-basis: ${basis}; }`,
+          new Map()
+        ).styles
+      );
+    }
+  );
+
   test("border color-mix with a variable matches explicit longhands", () => {
     const color = "color-mix(in srgb, var(--accent) 50%, transparent)";
     const shorthand = parseCss(

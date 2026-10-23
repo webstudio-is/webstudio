@@ -157,6 +157,7 @@ const contentRuntimeBundleUrl = new URL(
 const contentRuntimeFile = "$resources.asset-query-vendor.js";
 const appRoot = "app";
 const generatedDir = join(appRoot, "__generated__");
+const sitemapModule = join(generatedDir, "$resources.sitemap.xml");
 const routesDir = join(appRoot, "routes");
 const generatedOutputDirectories = [generatedDir, routesDir] as const;
 
@@ -2041,10 +2042,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     })) {
       const content = template
         .replaceAll("__CONSTANTS__", importFrom("./app/constants.mjs", file))
-        .replaceAll(
-          "__SITEMAP__",
-          importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
-        )
+        .replaceAll("__SITEMAP__", importFrom(sitemapModule, file))
         .replaceAll(
           "__ASSETS__",
           importFrom(`./app/__generated__/$resources.assets`, file)
@@ -2130,17 +2128,23 @@ export const action = async (args: Parameters<typeof pageAction>[0]) => {
   }
 
   // MARK: - Default sitemap.xml
-  for (const { file, template } of framework.defaultSitemap()) {
-    const content = template.replaceAll(
-      "__SITEMAP__",
-      importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
-    );
-    await writeGeneratedFile(file, content);
+  if (
+    generatedPages.some(
+      (page) => getPagePath(page.id, pages) === "/sitemap.xml"
+    ) === false
+  ) {
+    for (const { file, template } of framework.defaultSitemap()) {
+      const content = template.replaceAll(
+        "__SITEMAP__",
+        importFrom(sitemapModule, file)
+      );
+      await writeGeneratedFile(file, content);
+    }
   }
 
   const sitemap = getStaticSiteMapXml(pages, siteData.build.updatedAt);
   await writeGeneratedFile(
-    join(generatedDir, "$resources.sitemap.xml.ts"),
+    `${sitemapModule}.ts`,
     `
       export const sitemap: Array<{ path: string; lastModified: string }> = ${JSON.stringify(
         sitemap,

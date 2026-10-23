@@ -1640,8 +1640,8 @@ importers:
         specifier: ^0.25.3
         version: 0.25.3
       mdn-data:
-        specifier: 2.33.0
-        version: 2.33.0
+        specifier: 2.37.2
+        version: 2.37.2
       openai:
         specifier: ^3.2.1
         version: 3.2.1
@@ -10240,8 +10240,8 @@ packages:
   mdn-data@2.27.1:
     resolution: {integrity: sha512-9Yubnt3e8A0OKwxYSXyhLymGW4sCufcLG6VdiDdUGVkPhpqLxlvP5vl1983gQjJl3tqbrM731mjaZaP68AgosQ==}
 
-  mdn-data@2.33.0:
-    resolution: {integrity: sha512-w08CU5UMJbpIsoyl7Aw3zgV9jHK+SWPB2WlWsy7+IQeFwr52yJkPh6xK+u+1i+/7ctPk3xYnW+acso56uQ5caw==}
+  mdn-data@2.37.2:
+    resolution: {integrity: sha512-rz9YOBGItdSbe7HcSArUbhiAv4SB/4DKRYg96CSFS2CcIYMbUvBtZlzA1NCbk2AdgbmYwMqwNblLpR441lLeiQ==}
 
   media-query-parser@2.0.2:
     resolution: {integrity: sha512-1N4qp+jE0pL5Xv4uEcwVUhIkwdUO3S/9gML90nqKA7v7FcOS5vUtatfzok9S9U1EJU8dHWlcv95WLnKmmxZI9w==}
@@ -20999,7 +20999,7 @@ snapshots:
 
   mdn-data@2.27.1: {}
 
-  mdn-data@2.33.0: {}
+  mdn-data@2.37.2: {}
 
   media-query-parser@2.0.2:
     dependencies:
