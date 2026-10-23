@@ -418,8 +418,8 @@ terms, agents can:
 - Publish to staging or production.
 - Publish to selected domains.
 - List publish builds.
-- Check publish job status.
-- Unpublish staging or production deployments.
+- Check publish job status after publishing.
+- Unpublish staging or production deployments. Unpublish completes without a publish job.
 - List, create, update, delete, and verify custom domains.
 - Start and stop preview.
 - Capture screenshots of generated pages.

@@ -1166,13 +1166,13 @@ export const validatePublishCommandOptions = (yargs: CommonYargsArgv) =>
 export const publishJobCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs).option("job", {
     type: "string",
-    describe: "Required publish job id returned by publish or unpublish",
+    describe: "Required publish job id returned by publish",
     demandOption: true,
   });
 
 export const unpublishCommandOptions = (yargs: CommonYargsArgv) =>
   confirmOption(
-    publishCommandOptions(yargs),
+    publishDomainsOption(publishTargetOption(apiCommandOptions(yargs))),
     "Required. Confirm that selected domains should be unpublished"
   );
 
@@ -3073,8 +3073,6 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
     const input = {
       target: publishTargetValue(options.target),
       domains: listStringOption(options.domain),
-      message: options.message,
-      idempotencyKey: options.idempotencyKey,
     };
     return runProjectSessionCommand(
       "unpublish",

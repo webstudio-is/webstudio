@@ -11,6 +11,7 @@ import {
   auditCommandOptions,
   createPageCommandOptions,
   createPageTemplateCommandOptions,
+  unpublishCommandOptions,
 } from "./api-command";
 import type { CommonYargsArgv } from "./yargs-types";
 import { apiCommandMetadata } from "./api-command-metadata";
@@ -1922,10 +1923,24 @@ test("unpublishes project with confirmation", async () => {
     connection: {
       target: "production",
       domains: ["example.com"],
-      message: undefined,
-      idempotencyKey: undefined,
     },
   });
+  expect(apiCalls.unpublish.mock.calls.at(-1)?.[0]).not.toHaveProperty(
+    "message"
+  );
+  expect(apiCalls.unpublish.mock.calls.at(-1)?.[0]).not.toHaveProperty(
+    "idempotencyKey"
+  );
+});
+
+test("unpublish help does not advertise publish-only flags", async () => {
+  const help = await unpublishCommandOptions(
+    makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+  ).getHelp();
+  expect(help).toContain("--target");
+  expect(help).toContain("--domain");
+  expect(help).not.toContain("--message");
+  expect(help).not.toContain("--idempotency-key");
 });
 
 test("lists domains", async () => {

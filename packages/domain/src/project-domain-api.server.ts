@@ -493,5 +493,3 @@ export const verifyProjectDomainResult = async (
 ) => {
   return await db.verify(input, context);
 };
-
-export const createUnpublishJobId = () => `unpublish-${createId("nano")}`;

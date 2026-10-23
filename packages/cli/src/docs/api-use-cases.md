@@ -1101,6 +1101,8 @@ Commands:
 
 ## Unpublish
 
+Unpublish completes without a publish job.
+
 Commands:
 
 - webstudio publish unpublish --target production --confirm --json

@@ -15,7 +15,6 @@ import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import { singlePlayerVersionMismatchError } from "@webstudio-is/project/build-patch-core.server";
 import {
   createProjectDomain,
-  createUnpublishJobId,
   deleteProjectDomain,
   getDefaultPublishDomains,
   getVerifiedPublishDomains,
@@ -1255,7 +1254,7 @@ export const apiRouter = router({
           { projectId: input.projectId, domains },
           ctx
         );
-        return { jobId: input.idempotencyKey ?? createUnpublishJobId() };
+        return { unpublishedDomains: domains };
       },
       { command: "unpublish", client: "unpublish" }
     ),

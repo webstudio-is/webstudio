@@ -15,6 +15,7 @@ import { applyBuilderNamespacePatches } from "@webstudio-is/project-build/state"
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
 import * as projectBuild from "@webstudio-is/project-build/server";
 import * as projectApi from "@webstudio-is/project/index.server";
+import * as domainApi from "@webstudio-is/domain/index.server";
 import {
   buildPatchTransaction,
   publicApiContractVersion,
@@ -819,6 +820,50 @@ afterEach(() => {
 });
 
 describe("api router permits", () => {
+  test("missing publish jobs carry a not-found error marker", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(createToken());
+    vi.spyOn(domainApi, "getProjectPublishJob").mockResolvedValue(undefined);
+
+    await expect(
+      createCaller(createContext(true)).publish.getJob({
+        projectId: "project-1",
+        jobId: "missing-job",
+      })
+    ).rejects.toMatchObject({
+      code: "NOT_FOUND",
+      message: "Publish job not found",
+      cause: { webstudioCode: "NOT_FOUND" },
+    });
+  });
+
+  test("unpublish completes without returning a nonexistent publish job", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({ relation: "editors", canPublish: true })
+    );
+    vi.spyOn(projectApi, "loadById").mockResolvedValue({
+      domain: "project.wstd.dev",
+      domainsVirtual: [],
+    } as never);
+    const unpublish = vi
+      .spyOn(domainApi, "unpublishProjectDomains")
+      .mockResolvedValue(undefined);
+
+    await expect(
+      createCaller(createContext(true)).publish.unpublish({
+        projectId: "project-1",
+        target: "production",
+        domains: ["custom.example.com"],
+        confirm: true,
+      })
+    ).resolves.toEqual({ unpublishedDomains: ["custom.example.com"] });
+    expect(unpublish).toHaveBeenCalledWith(
+      { projectId: "project-1", domains: ["custom.example.com"] },
+      expect.anything()
+    );
+  });
+
   test("uses content-mode page copying for Editors without changing Builder copies", async () => {
     const getTokenInfo = vi
       .spyOn(authDb, "getTokenInfo")
