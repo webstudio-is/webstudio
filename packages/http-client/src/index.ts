@@ -685,7 +685,8 @@ export const uploadAssets = async (
     throw new Error(
       `Failed to upload assets: ${failed
         .map(({ asset, error }) => `${asset.name}: ${formatError(error)}`)
-        .join("; ")}`
+        .join("; ")}`,
+      { cause: failed.length === 1 ? failed[0]?.error : undefined }
     );
   }
   return results.flatMap((result) =>
@@ -882,6 +883,7 @@ const getAssetRestFailure = async (
   }
   return Object.assign(new Error(message), {
     status: response.status,
+    ...(response.status === 403 ? { code: "FORBIDDEN" } : {}),
     requestId:
       response.headers.get("x-request-id") ?? response.headers.get("cf-ray"),
   });

@@ -5,6 +5,7 @@ import {
   migratePages,
 } from "@webstudio-is/project-migrations/pages";
 import {
+  type Asset,
   type Breakpoints,
   breakpoints,
   type Breakpoint,
@@ -36,7 +37,10 @@ import {
   type ProjectSettings,
   marketplaceProduct,
 } from "@webstudio-is/project-build";
-import { findCycles } from "@webstudio-is/project-build/runtime";
+import {
+  findCycles,
+  getPropAssetError,
+} from "@webstudio-is/project-build/runtime";
 import {
   parsePages,
   serializePages,
@@ -154,10 +158,18 @@ export const createBuildPatchUpdate = async ({
   build,
   clientVersion,
   transactions,
+  loadAssets,
 }: {
   build: Database["public"]["Tables"]["Build"]["Row"];
   clientVersion: number;
   transactions: BuildPatchTransaction[];
+  loadAssets: (
+    ids: string[],
+    patches: Patch[]
+  ) => Promise<{
+    assets: Asset[];
+    changedAssetIds: Set<string>;
+  }>;
 }): Promise<BuildPatchUpdateResult> => {
   const lastTransactionId = transactions.at(-1)?.id;
 
@@ -445,6 +457,57 @@ export const createBuildPatchUpdate = async ({
     const propsData = buildData.props;
     validateTouchedMap(props, propsData, touchedProps);
     update.props = serializeData<Prop>(propsData);
+  }
+
+  if (buildData.props || buildData.instances || assetPatches.length > 0) {
+    const previousInstances = parseInstanceData(build.instances);
+    const nextInstances = buildData.instances ?? previousInstances;
+    const nextProps = buildData.props ?? parseData<Prop>(build.props);
+    const assetProps = new Map<string, Extract<Prop, { type: "asset" }>>();
+    const changedPropIds = new Set<string>();
+    for (const [id, prop] of nextProps) {
+      if (
+        touchedProps.wholeMap ||
+        touchedProps.keys.has(id) ||
+        nextInstances.get(prop.instanceId)?.component !==
+          previousInstances.get(prop.instanceId)?.component
+      ) {
+        changedPropIds.add(id);
+      }
+      if (
+        prop.type === "asset" &&
+        (changedPropIds.has(id) || assetPatches.length > 0)
+      ) {
+        assetProps.set(id, prop);
+      }
+    }
+    if (assetProps.size > 0) {
+      const loaded = await loadAssets(
+        [...new Set([...assetProps.values()].map((prop) => prop.value))],
+        assetPatches.flat()
+      );
+      const assets = new Map(loaded.assets.map((asset) => [asset.id, asset]));
+      for (const [id, prop] of assetProps) {
+        if (
+          !changedPropIds.has(id) &&
+          !loaded.changedAssetIds.has(prop.value)
+        ) {
+          continue;
+        }
+        const instance = nextInstances.get(prop.instanceId);
+        if (instance === undefined) {
+          continue;
+        }
+        const error = getPropAssetError({
+          instance,
+          prop,
+          asset: assets.get(prop.value),
+        });
+        if (error !== undefined) {
+          return { status: "error", errors: error };
+        }
+      }
+    }
   }
 
   if (buildData.dataSources) {

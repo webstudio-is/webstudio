@@ -364,6 +364,9 @@ describe("asset folder persistence", () => {
     server.use(
       db.get("AssetFolder", () => json([])),
       db.post("AssetFolder", async ({ request }) => {
+        expect(request.headers.get("prefer")).not.toContain(
+          "resolution=merge-duplicates"
+        );
         inserted = (await request.json()) as Array<{ id: string }>;
         return json(inserted);
       })
@@ -397,6 +400,49 @@ describe("asset folder persistence", () => {
     );
 
     expect(inserted.map(({ id }) => id)).toEqual(["parent", "child"]);
+  });
+
+  test("does not turn an added folder into an update after a concurrent save", async () => {
+    const projectId = uid();
+    const folder = {
+      id: "folder",
+      projectId,
+      name: "Original",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    let folders = [{ ...folder, parentId: null }];
+    let writes = 0;
+    server.use(
+      db.get("AssetFolder", () => json(folders)),
+      db.post("AssetFolder", async ({ request }) => {
+        writes += 1;
+        folders = (await request.json()) as typeof folders;
+        return json(folders);
+      })
+    );
+
+    await expect(
+      patchAssetFoldersWithClient(
+        { projectId, client: testContext.postgrest.client },
+        [
+          {
+            op: "add",
+            path: [folder.id],
+            value: { ...folder, name: "Overwritten" },
+          },
+        ]
+      )
+    ).rejects.toThrow("A different asset folder already uses this identifier");
+    expect(folders).toEqual([{ ...folder, parentId: null }]);
+    expect(writes).toBe(0);
+
+    await expect(
+      patchAssetFoldersWithClient(
+        { projectId, client: testContext.postgrest.client },
+        [{ op: "add", path: [folder.id], value: folder }]
+      )
+    ).resolves.toEqual([]);
+    expect(writes).toBe(0);
   });
 
   test("can defer folder deletion until assets are moved", async () => {

@@ -66,6 +66,7 @@ export const localOnlyOperationInputs = [
       id: "assets.upload",
       method: "mutation",
       client: "uploadProjectAsset",
+      permit: "edit" as const,
       invalidatesNamespaces: ["assets"] as const,
     },
     localUploadAssetInput
@@ -76,6 +77,7 @@ export const localOnlyOperationInputs = [
       id: "assets.uploadMany",
       method: "mutation",
       client: "uploadProjectAssets",
+      permit: "edit" as const,
       invalidatesNamespaces: ["assets"] as const,
     },
     localUploadAssetsInput

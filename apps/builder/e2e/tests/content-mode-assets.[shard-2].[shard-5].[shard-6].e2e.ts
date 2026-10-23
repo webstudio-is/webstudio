@@ -1,3 +1,4 @@
+import { expect } from "@playwright/test";
 import {
   createAssetFolder,
   deleteSelectedAsset,
@@ -7,7 +8,11 @@ import {
   uploadAsset,
   waitForAsset,
 } from "../flows/assets-panel";
-import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
+import {
+  openProjectBuilder,
+  waitForCanvasFrame,
+  waitForCanvasText,
+} from "../flows/builder";
 import {
   selectCanvasImage,
   waitForCanvasImage,
@@ -226,6 +231,32 @@ test("Editor can upload, replace, and delete asset in content mode", async ({
   await waitForSyncStatus({ page, status: "idle" });
 });
 
+test("Editor can create and reload an ordinary asset folder", async ({
+  page,
+}) => {
+  const folderName = "Editor ordinary assets";
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  await waitForSyncStatus({ page, status: "idle" });
+  await openAssetsPanel({ page });
+  await createAssetFolder({ page, name: folderName });
+
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  await openAssetsPanel({ page });
+  await page
+    .getByRole("button", { name: `Folder ${folderName}`, exact: true })
+    .waitFor();
+});
+
 test("Editor can create and reload a content collection entry", async ({
   page,
 }) => {
@@ -285,7 +316,7 @@ test("Editor can create and reload a content collection entry", async ({
 test("Editor can replace image source with asset in content mode", async ({
   page,
 }) => {
-  const uploadFilename = "upload-image.svg";
+  const uploadFilename = "large-image.svg";
   const replacementFilename = "replacement-image.svg";
 
   await measure(
@@ -332,7 +363,11 @@ test("Editor can replace image source with asset in content mode", async ({
       assetFilename: uploadFilename,
     });
   });
-  await waitForCanvasImageSourceName({ page, sourceName: "upload-image_" });
+  await waitForCanvasImageSourceName({ page, sourceName: "large-image_" });
+  const canvas = await waitForCanvasFrame({ page });
+  const uploadedImage = canvas.locator('img[src*="large-image_"]');
+  await expect(uploadedImage).toHaveAttribute("width", "240");
+  await expect(uploadedImage).toHaveAttribute("height", "160");
 
   let replacementAssetTitle = "";
   await measure("content mode replace used image source asset", async () => {
@@ -370,6 +405,12 @@ test("Editor can replace image source with asset in content mode", async ({
   await openAssetsPanel({ page });
   await page.getByTitle(replacementAssetTitle).waitFor();
   await waitForSyncStatus({ page, status: "idle" });
+  const reloadedCanvas = await waitForCanvasFrame({ page });
+  const replacementImage = reloadedCanvas.locator(
+    'img[src*="replacement-image_"]'
+  );
+  await expect(replacementImage).toHaveAttribute("width", "120");
+  await expect(replacementImage).toHaveAttribute("height", "80");
 });
 
 test("Builder copy/paste preserves image asset references after reload", async ({

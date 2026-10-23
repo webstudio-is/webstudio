@@ -21,6 +21,7 @@ import {
   loadAuthorizedPatchState,
 } from "./patch-service.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import * as assetUploader from "@webstudio-is/asset-uploader/server";
 import type { NormalizedPatchRequest } from "./patch-normalize.server";
 
 const applyPatchRequestForTest = (
@@ -65,7 +66,16 @@ const createContext = () => {
             eq: () => {
               selectedColumns.push(columns);
               const result = Promise.resolve({
-                data: [buildRow],
+                data: [
+                  Object.fromEntries(
+                    columns
+                      .split(", ")
+                      .map((column) => [
+                        column,
+                        buildRow[column as keyof typeof buildRow],
+                      ])
+                  ),
+                ],
                 error: undefined,
               });
               return Object.assign(result, {
@@ -114,6 +124,33 @@ describe("applyPatchRequest", () => {
     authorizePatchEntries.mockReset();
     createContentModeCapabilities.mockClear();
   });
+
+  test.each(["pages", "instances", "props", "assets"])(
+    "loads the instance and prop data needed to validate %s saves",
+    async (namespace) => {
+      const entry = {
+        ...patch.entries[0],
+        transaction: transaction("asset-validation", namespace) as never,
+      };
+      authorizePatchEntries.mockResolvedValue({
+        authorized: [{ entry, context: { writer: 1 } }],
+        rejected: [],
+      });
+      patchLoadedBuild.mockImplementation(async ({ build }) => {
+        expect(JSON.parse(build.instances)).toEqual([]);
+        expect(JSON.parse(build.props)).toEqual([]);
+        return { status: "ok", version: 4, build: { ...build, version: 4 } };
+      });
+      const context = createContext();
+      await expect(
+        applyPatchRequestForTest(context, { ...patch, entries: [entry] })
+      ).resolves.toMatchObject({ status: "ok" });
+      const columns = context.selectedColumns.at(-1)?.split(", ");
+      expect(columns).toEqual(expect.arrayContaining(["instances", "props"]));
+      expect(columns).not.toContain("resources");
+      expect(patchLoadedBuild).toHaveBeenCalledTimes(1);
+    }
+  );
 
   test("applies a combined resource and asset patch without derived work", async () => {
     const combinedEntry = {
@@ -359,7 +396,7 @@ describe("applyPatchRequest", () => {
     expect(createContentModeCapabilities).not.toHaveBeenCalled();
     expect(context.selectedColumns).toEqual([
       "projectId, version",
-      "projectId, version, lastTransactionId, props",
+      "projectId, version, lastTransactionId, props, instances",
     ]);
     expect(authorizePatchEntries).toHaveBeenCalledWith(
       expect.anything(),
@@ -419,13 +456,51 @@ describe("applyPatchRequest", () => {
     expect(context.selectedColumns).toEqual([
       "projectId, version",
       "pages, instances, props, styleSources, styleSourceSelections, styles, breakpoints",
-      "projectId, version, lastTransactionId, props",
+      "projectId, version, lastTransactionId, props, instances",
     ]);
     expect(result).toEqual({
       status: "ok",
       version: 4,
       entries: [{ seq: 1, transactionId: "tx-1", status: "accepted" }],
     });
+  });
+
+  test("loads existing folders only for Editor folder saves", async () => {
+    const loadFolders = vi
+      .spyOn(assetUploader, "loadAssetFoldersByProject")
+      .mockResolvedValue([{ id: "existing-folder" }] as never);
+    const folderPatch: NormalizedPatchRequest = {
+      ...patch,
+      entries: [
+        {
+          ...patch.entries[0],
+          transaction: transaction("tx-folder", "assetFolders") as never,
+        },
+      ],
+    };
+    authorizePatchEntries.mockImplementation(
+      async (_context, _patch, getInitialContentModeCapabilities) => {
+        const capabilities = await getInitialContentModeCapabilities();
+        expect(capabilities.assetFolders).toEqual(
+          _patch === folderPatch
+            ? new Map([["existing-folder", { id: "existing-folder" }]])
+            : undefined
+        );
+        return { authorized: [], rejected: [] };
+      }
+    );
+
+    try {
+      await applyPatchRequestForTest(createContext(), folderPatch);
+      expect(loadFolders).toHaveBeenCalledTimes(1);
+      expect(loadFolders).toHaveBeenCalledWith("project-1", expect.anything(), {
+        skipPermissionsCheck: true,
+      });
+      await applyPatchRequestForTest(createContext(), patch);
+      expect(loadFolders).toHaveBeenCalledTimes(1);
+    } finally {
+      loadFolders.mockRestore();
+    }
   });
 
   test("does not load patch columns or persist when every entry is rejected", async () => {
@@ -484,7 +559,7 @@ describe("applyPatchRequest", () => {
 
     expect(context.selectedColumns).toEqual([
       "projectId, version",
-      "projectId, version, lastTransactionId",
+      "projectId, version, lastTransactionId, props, instances",
     ]);
     expect(patchLoadedBuild).toHaveBeenCalledWith(
       expect.objectContaining({

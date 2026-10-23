@@ -1504,6 +1504,30 @@ test("uploads assets with one retry and aggregated failures", async () => {
   expect(fetch).toHaveBeenCalledTimes(4);
 });
 
+test("preserves a single asset upload permission error", async () => {
+  const asset = createImageAssetFixture({ name: "image.png" });
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () =>
+      Response.json(
+        { errors: "Authorization token does not have edit permission" },
+        { status: 403 }
+      )
+    )
+  );
+
+  await expect(
+    uploadAssets({
+      assets: [asset],
+      ...apiParams,
+      readAssetData: async () => new Blob(["image"]),
+    })
+  ).rejects.toMatchObject({
+    message: expect.stringContaining("Failed to upload assets: image.png"),
+    cause: expect.objectContaining({ code: "FORBIDDEN", status: 403 }),
+  });
+});
+
 test("keeps uploaded assets in input order", async () => {
   const first = createImageAssetFixture({ id: "first", name: "first.png" });
   const second = createImageAssetFixture({ id: "second", name: "second.png" });

@@ -805,7 +805,7 @@ export const builderRuntimeOperations = [
   ),
   runtimeOperation(
     "pages.updateSettings",
-    api("update-page-settings", "updatePageSettings"),
+    api("update-page-settings", "updatePageSettings", "edit"),
     mutationContract({
       readNamespaces: pageExpressionNamespaces,
       writeNamespaces: ["pages"],
@@ -1097,7 +1097,7 @@ export const builderRuntimeOperations = [
   ),
   runtimeOperation(
     "pageTemplates.createPage",
-    api("create-page-from-template", "createPageFromTemplate"),
+    api("create-page-from-template", "createPageFromTemplate", "edit"),
     mutationContract({
       readNamespaces: pageCopyNamespaces,
       writeNamespaces: pageCopyNamespaces,
@@ -1325,7 +1325,7 @@ export const builderRuntimeOperations = [
   ),
   runtimeOperation(
     "instances.insertFragment",
-    api("insert-fragment", "insertFragment"),
+    api("insert-fragment", "insertFragment", "edit"),
     mutationContract({
       readNamespaces: components.componentInsertReadNamespaces,
       writeNamespaces: components.componentInsertNamespaces,
@@ -1366,7 +1366,7 @@ export const builderRuntimeOperations = [
   ),
   runtimeOperation(
     "instances.reparent",
-    api("reparent-instance", "reparentInstance"),
+    api("reparent-instance", "reparentInstance", "edit"),
     mutationContract({
       readNamespaces: [
         "pages",
@@ -1483,7 +1483,7 @@ export const builderRuntimeOperations = [
   ),
   runtimeOperation(
     "instances.delete",
-    api("delete-instance", "deleteInstance"),
+    api("delete-instance", "deleteInstance", "edit"),
     mutationContract({
       readNamespaces: treeMutationNamespaces,
       writeNamespaces: treeMutationNamespaces,
@@ -1493,7 +1493,7 @@ export const builderRuntimeOperations = [
   ),
   runtimeOperation(
     "instances.deleteBySelector",
-    api("delete-instance-by-selector", "deleteInstanceBySelector"),
+    api("delete-instance-by-selector", "deleteInstanceBySelector", "edit"),
     mutationContract({
       readNamespaces: [
         "pages",
@@ -1522,7 +1522,7 @@ export const builderRuntimeOperations = [
     "instances.updateProps",
     api("update-props", "updateProps", "edit"),
     mutationContract({
-      readNamespaces: ["instances", "props", "dataSources"],
+      readNamespaces: ["instances", "props", "dataSources", "assets"],
       writeNamespaces: ["props"],
     }),
     props.propUpdatesInput,
@@ -2306,7 +2306,7 @@ export const builderRuntimeOperations = [
   ),
   runtimeOperation(
     "assetFolders.create",
-    api("create-asset-folder", "createAssetFolder"),
+    api("create-asset-folder", "createAssetFolder", "edit"),
     mutationContract({
       readNamespaces: ["assetFolders"],
       writeNamespaces: ["assetFolders"],
