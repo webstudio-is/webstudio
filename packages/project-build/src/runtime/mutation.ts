@@ -31,15 +31,17 @@ export const createRuntimeMutation = <
   noop: payload.length === 0,
 });
 
-const appendBuilderPatchChanges = (
-  changes: Map<BuilderNamespace, BuilderPatchChange>,
-  payload: readonly BuilderPatchChange[]
+const appendBuilderPatchChanges = <
+  Change extends { namespace: string; patches: unknown[] },
+>(
+  changes: Map<Change["namespace"], Change>,
+  payload: readonly Change[]
 ) => {
   for (const change of payload) {
     const accumulated = changes.get(change.namespace);
     if (accumulated === undefined) {
       changes.set(change.namespace, {
-        namespace: change.namespace,
+        ...change,
         patches: [...change.patches],
       });
     } else {
@@ -48,10 +50,12 @@ const appendBuilderPatchChanges = (
   }
 };
 
-export const mergeBuilderPatchChanges = (
-  ...payloads: readonly (readonly BuilderPatchChange[])[]
+export const mergeBuilderPatchChanges = <
+  Change extends { namespace: string; patches: unknown[] },
+>(
+  ...payloads: readonly (readonly Change[])[]
 ) => {
-  const changes = new Map<BuilderNamespace, BuilderPatchChange>();
+  const changes = new Map<Change["namespace"], Change>();
   for (const payload of payloads) {
     appendBuilderPatchChanges(changes, payload);
   }

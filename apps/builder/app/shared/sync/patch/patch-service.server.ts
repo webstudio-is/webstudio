@@ -5,6 +5,7 @@ import {
 import { patchLoadedBuild } from "@webstudio-is/project/index.server";
 import type { Database } from "@webstudio-is/postgrest/index.server";
 import type { AssetObjectReader } from "@webstudio-is/asset-uploader/server";
+import { loadAssetFoldersByProject } from "@webstudio-is/asset-uploader/server";
 import { createAssetClient } from "~/shared/asset-client";
 import {
   assertProjectPermit,
@@ -38,11 +39,12 @@ const contentModeBuildColumns = [
 ] as const satisfies BuildColumn[];
 
 const namespaceBuildColumns = {
-  pages: ["pages", "instances"],
+  pages: ["pages", "instances", "props"],
   projectSettings: ["projectSettings"],
   breakpoints: ["breakpoints"],
-  instances: ["pages", "instances"],
-  props: ["props"],
+  instances: ["pages", "instances", "props"],
+  props: ["props", "instances"],
+  assets: ["props", "instances"],
   styleSourceSelections: ["styleSourceSelections"],
   styleSources: ["styleSources"],
   styles: ["styles"],
@@ -332,7 +334,7 @@ export const applyPatchRequest = async (
     patch,
     async () => {
       const build = await loadBuildForContentMode(context, patch.buildId);
-      return createContentModeCapabilities({
+      const capabilities = createContentModeCapabilities({
         pages: build.pages,
         instances: build.instances,
         props: build.props,
@@ -341,6 +343,25 @@ export const applyPatchRequest = async (
         styles: build.styles,
         breakpoints: build.breakpoints,
       });
+      if (
+        patch.entries.some(({ transaction }) =>
+          transaction.payload.some(
+            ({ namespace }) => namespace === "assetFolders"
+          )
+        )
+      ) {
+        const folders = await loadAssetFoldersByProject(
+          patch.projectId,
+          context,
+          {
+            skipPermissionsCheck: true,
+          }
+        );
+        capabilities.assetFolders = new Map(
+          folders.map((folder) => [folder.id, folder])
+        );
+      }
+      return capabilities;
     }
   );
   const build =

@@ -2,6 +2,8 @@ import {
   deleteAssetFoldersWithClient,
   patchAssetFoldersWithClient,
   patchAssets,
+  loadAssetsByProjectWithClient,
+  prepareAssetPatchWithClient,
   type AssetObjectReader,
 } from "@webstudio-is/asset-uploader/server";
 import type { Build, ProjectSettings } from "@webstudio-is/project-build";
@@ -57,6 +59,32 @@ export const patchLoadedBuild = async (
     build,
     clientVersion,
     transactions,
+    loadAssets: async (ids, patches) => {
+      const client = context.postgrest.client;
+      if (patches.length === 0) {
+        return {
+          assets: await loadAssetsByProjectWithClient(projectId, client, ids),
+          changedAssetIds: new Set(),
+        };
+      }
+      const { assetsMap, canonicalAssets } = await prepareAssetPatchWithClient({
+        projectId,
+        client,
+        patches,
+      });
+      const changedAssetIds = new Set<string>();
+      for (const [id, asset] of canonicalAssets) {
+        const previous = assetsMap.get(id);
+        if (
+          previous?.type !== asset.type ||
+          previous?.format !== asset.format ||
+          previous?.name !== asset.name
+        ) {
+          changedAssetIds.add(id);
+        }
+      }
+      return { assets: [...canonicalAssets.values()], changedAssetIds };
+    },
   });
 
   if (result.status !== "ok") {

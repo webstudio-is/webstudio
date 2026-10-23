@@ -297,6 +297,25 @@ describe("public api operation catalog", () => {
     expect(JSON.stringify(uploadMany.inputSchema)).toContain('"folderId"');
     expect(JSON.stringify(upload.inputSchema)).toContain('"force"');
     expect(JSON.stringify(uploadMany.inputSchema)).toContain('"force"');
+    expect(upload.permit).toBe("edit");
+    expect(uploadMany.permit).toBe("edit");
+  });
+
+  test("keeps collection-sensitive asset mutations Builder-only", () => {
+    for (const command of [
+      "update-asset-folder",
+      "delete-asset-folder",
+      "duplicate-asset-folder",
+      "update-asset",
+      "set-image-descriptions",
+      "duplicate-asset",
+      "replace-asset",
+      "delete-asset",
+    ]) {
+      expect(getPublicApiOperation(command).permit, command).toBe("build");
+    }
+    expect(getPublicApiOperation("create-asset-folder").permit).toBe("edit");
+    expect(getPublicApiOperation("add-asset").permit).toBe("build");
   });
 
   test("exposes every supported upload type to MCP", () => {

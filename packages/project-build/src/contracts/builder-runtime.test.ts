@@ -59,6 +59,11 @@ describe("builder runtime operation contracts", () => {
     expect(getContract("instances.updateProps").permit).toBe("edit");
     expect(getContract("instances.deleteProps").permit).toBe("edit");
     expect(getContract("instances.updateText").permit).toBe("edit");
+    expect(getContract("instances.reparent").permit).toBe("edit");
+    expect(getContract("instances.delete").permit).toBe("edit");
+    expect(getContract("instances.deleteBySelector").permit).toBe("edit");
+    expect(getContract("pageTemplates.createPage").permit).toBe("edit");
+    expect(getContract("pages.updateSettings").permit).toBe("edit");
   });
 
   test("describes reads and mutations with namespace metadata", () => {
