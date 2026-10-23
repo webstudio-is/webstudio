@@ -711,6 +711,20 @@ test("expand flex", () => {
   ]);
 });
 
+test.each([
+  ["calc((100% - var(--space-lg)) / 2)", "calc((100% - var(--space-lg))/2)"],
+  ["min(50%, var(--wide))", "min(50%,var(--wide))"],
+  ["max(20rem, var(--wide))", "max(20rem,var(--wide))"],
+  ["clamp(20rem, var(--basis), 50%)", "clamp(20rem,var(--basis),50%)"],
+  ["var(--basis)", "var(--basis)"],
+])("expand flex with %s as its basis", (basis, expected) => {
+  expect(expandShorthands([["flex", `0 1 ${basis}`]])).toEqual([
+    ["flex-grow", "0"],
+    ["flex-shrink", "1"],
+    ["flex-basis", expected],
+  ]);
+});
+
 test("expand flex with css-wide keywords", () => {
   expect(expandShorthands([["flex", "inherit"]])).toEqual([
     ["flex-grow", "inherit"],

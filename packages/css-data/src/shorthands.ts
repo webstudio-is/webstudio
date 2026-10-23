@@ -521,10 +521,26 @@ const expandFlex = function* (value: CssNode) {
   } else if (lexer.match("none", value).matched) {
     [grow, shrink, basis] = [zero, zero, auto];
   } else {
-    [grow, shrink, basis] = parseUnordered(
+    const parsed = parseUnordered(
       ["<'flex-grow'>", "<'flex-shrink'>", "<'flex-basis'>"],
       value
     );
+    [grow, shrink, basis] = parsed;
+    const unresolved = parsed[3];
+    const unresolvedNodes =
+      unresolved === undefined ? [] : getValueList(unresolved);
+    if (
+      basis === undefined &&
+      grow !== undefined &&
+      shrink !== undefined &&
+      unresolvedNodes.length === 1 &&
+      unresolvedNodes[0]?.type === "Function" &&
+      ["calc", "min", "max", "clamp", "var"].includes(
+        unresolvedNodes[0].name.toLowerCase()
+      )
+    ) {
+      basis = unresolved;
+    }
   }
   yield ["flex-grow", grow ?? one] as const;
   yield ["flex-shrink", shrink ?? one] as const;
