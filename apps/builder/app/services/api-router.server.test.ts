@@ -22,7 +22,6 @@ import {
   publicApiOperations,
 } from "@webstudio-is/protocol";
 import {
-  AuthorizationError,
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
@@ -1769,7 +1768,7 @@ describe("api router permits", () => {
         childIndex: 0,
         text: "Changed template default",
       })
-    ).rejects.toThrow("Instance patch is outside content roots.");
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
 
     const templateFragment = await parseWebstudioJsxFragment(
       "<p>New template child</p>"
@@ -1782,7 +1781,7 @@ describe("api router permits", () => {
           fragment: templateFragment,
           ...(contentMode === undefined ? {} : { contentMode }),
         })
-      ).rejects.toThrow("Instance patch is outside content roots.");
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
     }
     expect(patchBuild).toHaveBeenCalledTimes(2);
   });
@@ -1875,7 +1874,7 @@ describe("api router permits", () => {
           },
         ],
       })
-    ).rejects.toMatchObject({ cause: expect.any(AuthorizationError) });
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(patchBuild).toHaveBeenCalledTimes(1);
   });
 

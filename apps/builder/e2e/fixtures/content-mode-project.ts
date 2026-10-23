@@ -989,6 +989,7 @@ const createContentModeBuildData = ({
 export const prepareExistingContentModeProject = async ({
   projectId,
   editorToken: editorTokenLabel = "e2e-editor-token",
+  editorCanUseApi = false,
   builderToken: builderTokenLabel = "e2e-builder-token",
   listItemInstanceId = "list-item",
   linkInstanceId = "content-link",
@@ -998,6 +999,7 @@ export const prepareExistingContentModeProject = async ({
 }: {
   projectId: string;
   editorToken?: string;
+  editorCanUseApi?: boolean;
   builderToken?: string;
   listItemInstanceId?: string;
   linkInstanceId?: string;
@@ -1067,6 +1069,7 @@ export const prepareExistingContentModeProject = async ({
       projectId,
       name: "E2E editor token",
       relation: "editors",
+      canUseApi: editorCanUseApi,
     }),
     insertAuthorizationToken({
       token: builderToken,

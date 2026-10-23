@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
+import { TRPCError } from "@trpc/server";
 import type { CompactBuild } from "@webstudio-is/project-build";
 import {
   applyContentModeTransaction,
@@ -48,9 +48,10 @@ export const assertContentOrBuildTransactions = ({
       0
     ) > 1000
   ) {
-    throw new AuthorizationError(
-      "You don't have permission to build this project."
-    );
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You don't have permission to build this project.",
+    });
   }
   let capabilities = createContentModeCapabilitiesFromBuild(build);
   for (const transaction of transactions) {
@@ -60,7 +61,7 @@ export const assertContentOrBuildTransactions = ({
       scope,
     });
     if (result.success === false) {
-      throw new AuthorizationError(result.error);
+      throw new TRPCError({ code: "FORBIDDEN", message: result.error });
     }
     capabilities = result.capabilities;
   }
