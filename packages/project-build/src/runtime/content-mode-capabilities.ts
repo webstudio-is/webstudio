@@ -5,6 +5,7 @@ import {
   findWritableContentBlockDocumentBindings,
   getHtmlTagsFromProps,
   getHtmlTagFromInstance,
+  type AssetFolder,
   type Breakpoints,
   type Instance,
   type Prop,
@@ -18,6 +19,7 @@ import {
 import { findProp, getMediaAssetPropNames } from "./props";
 
 export type ContentModeCapabilities = {
+  assetFolders?: Map<string, AssetFolder>;
   editablePropIds: Set<Prop["id"]>;
   editableInstanceIds: Set<Instance["id"]>;
   instances: Map<Instance["id"], Instance>;

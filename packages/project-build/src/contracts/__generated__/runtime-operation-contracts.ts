@@ -77311,6 +77311,7 @@ export const runtimeOperationContractData = [
     id: "assetFolders.create",
     command: "create-asset-folder",
     client: "createAssetFolder",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",

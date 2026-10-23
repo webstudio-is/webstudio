@@ -23,6 +23,7 @@ import {
   getHtmlTagsFromProps,
   isPathnamePattern,
   getStyleDeclKey,
+  type AssetFolder,
   type Instance,
   type Prop,
   type Props,
@@ -78,6 +79,14 @@ export const isContentModePagePath = (value: unknown) =>
 const isString = (value: unknown) => typeof value === "string";
 const isOptionalString = (value: unknown) =>
   value === undefined || typeof value === "string";
+
+const isSameAssetFolder = (saved: AssetFolder, incoming: AssetFolder) =>
+  saved.id === incoming.id &&
+  saved.projectId === incoming.projectId &&
+  saved.name === incoming.name &&
+  saved.parentId === incoming.parentId &&
+  (saved.createdAt === incoming.createdAt ||
+    Date.parse(saved.createdAt) === Date.parse(incoming.createdAt));
 
 const isContentModeCustomMeta = (value: unknown) =>
   Array.isArray(value) &&
@@ -1396,6 +1405,36 @@ const validatePatchChange = (
   if (change.namespace === "assets") {
     return { success: true };
   }
+  if (change.namespace === "assetFolders") {
+    const folders = context.capabilities.assetFolders;
+    if (folders === undefined) {
+      return {
+        success: false,
+        error: "Asset folder change is not editable in content mode.",
+      };
+    }
+    for (const patch of change.patches) {
+      const id = patch.path[0];
+      const savedFolder = typeof id === "string" ? folders.get(id) : undefined;
+      if (
+        patch.op !== "add" ||
+        patch.path.length !== 1 ||
+        typeof id !== "string" ||
+        typeof patch.value !== "object" ||
+        patch.value === null ||
+        (patch.value as { id?: unknown }).id !== id ||
+        (savedFolder !== undefined &&
+          isSameAssetFolder(savedFolder, patch.value as AssetFolder) === false)
+      ) {
+        return {
+          success: false,
+          error: "Asset folder change is not editable in content mode.",
+        };
+      }
+      folders.set(id, patch.value as AssetFolder);
+    }
+    return { success: true };
+  }
 
   if (change.namespace === "pages") {
     return validatePagePatches(context, change.patches);
@@ -1452,6 +1491,10 @@ export const applyContentModeTransaction = ({
   };
   const transactionCapabilities: ContentModeCapabilities = {
     ...capabilities,
+    assetFolders:
+      capabilities.assetFolders === undefined
+        ? undefined
+        : new Map(capabilities.assetFolders),
     editablePropIds: new Set(capabilities.editablePropIds),
     editableInstanceIds: new Set(capabilities.editableInstanceIds),
     htmlTagsByInstanceId: getHtmlTagsFromProps(capabilities.props),

@@ -21,6 +21,7 @@ import {
   loadAuthorizedPatchState,
 } from "./patch-service.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import * as assetUploader from "@webstudio-is/asset-uploader/server";
 import type { NormalizedPatchRequest } from "./patch-normalize.server";
 
 const applyPatchRequestForTest = (
@@ -462,6 +463,44 @@ describe("applyPatchRequest", () => {
       version: 4,
       entries: [{ seq: 1, transactionId: "tx-1", status: "accepted" }],
     });
+  });
+
+  test("loads existing folders only for Editor folder saves", async () => {
+    const loadFolders = vi
+      .spyOn(assetUploader, "loadAssetFoldersByProject")
+      .mockResolvedValue([{ id: "existing-folder" }] as never);
+    const folderPatch: NormalizedPatchRequest = {
+      ...patch,
+      entries: [
+        {
+          ...patch.entries[0],
+          transaction: transaction("tx-folder", "assetFolders") as never,
+        },
+      ],
+    };
+    authorizePatchEntries.mockImplementation(
+      async (_context, _patch, getInitialContentModeCapabilities) => {
+        const capabilities = await getInitialContentModeCapabilities();
+        expect(capabilities.assetFolders).toEqual(
+          _patch === folderPatch
+            ? new Map([["existing-folder", { id: "existing-folder" }]])
+            : undefined
+        );
+        return { authorized: [], rejected: [] };
+      }
+    );
+
+    try {
+      await applyPatchRequestForTest(createContext(), folderPatch);
+      expect(loadFolders).toHaveBeenCalledTimes(1);
+      expect(loadFolders).toHaveBeenCalledWith("project-1", expect.anything(), {
+        skipPermissionsCheck: true,
+      });
+      await applyPatchRequestForTest(createContext(), patch);
+      expect(loadFolders).toHaveBeenCalledTimes(1);
+    } finally {
+      loadFolders.mockRestore();
+    }
   });
 
   test("does not load patch columns or persist when every entry is rejected", async () => {

@@ -2306,7 +2306,7 @@ export const builderRuntimeOperations = [
   ),
   runtimeOperation(
     "assetFolders.create",
-    api("create-asset-folder", "createAssetFolder"),
+    api("create-asset-folder", "createAssetFolder", "edit"),
     mutationContract({
       readNamespaces: ["assetFolders"],
       writeNamespaces: ["assetFolders"],

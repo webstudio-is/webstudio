@@ -514,7 +514,7 @@ Use `node packages/cli/local.js mcp` from the Webstudio monorepo root for local 
 - Operate on the configured project only.
 - Read ids before writing.
 - Prefer semantic tools over `apply-patch`.
-- Editor links with API access can edit Content Block text and props, insert or move eligible content, delete eligible instances, create pages from templates, and change allowed page settings through semantic tools. The server checks each change against Content-mode rules. Raw `apply-patch` remains limited to text and editable props; other page, asset, and design changes require Builder access.
+- Editor links with API access can edit Content Block text and props, insert or move eligible content, delete eligible instances, create pages from templates, change allowed page settings, upload assets, and create asset folders through semantic tools. The server checks each change against Content-mode rules. Raw `apply-patch` remains limited to text and editable props; other asset, folder, and design changes require Builder access.
 - Use `status` and `refresh` when cached namespaces may be stale. Pass `status {"verbose":true}` only when debugging full namespace arrays, freshness, compatibility, or diagnostic details.
 - Read `meta.session.commitStatus` before interpreting durability. Read-only results report `not-applicable` and retain `committed:false` for compatibility; dry-run plans report `planned`; failed mutations report `failed`; no-op mutations report `unchanged`; durable mutations report `committed` with `meta.session.committed:true`.
 - Never run visual verification automatically. Ask first unless the user explicitly requested screenshots, visual verification, or a rendered audit; if they do not opt in, use focused non-visual assertions.

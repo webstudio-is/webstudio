@@ -858,6 +858,77 @@ describe("api router permits", () => {
     ]);
   });
 
+  test("lets Editors save asset folders without granting Viewer access", async () => {
+    const getTokenInfo = vi
+      .spyOn(authDb, "getTokenInfo")
+      .mockResolvedValue(createToken({ relation: "editors" }));
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(
+      createEditableContentBuild()
+    );
+    const loadAssetData = vi
+      .spyOn(assetUploader, "loadAssetDataByProject")
+      .mockResolvedValue({
+        assets: [],
+        assetFolders: [],
+      });
+    const folder = {
+      id: "folder-1",
+      projectId: "project-1",
+      name: "Editor assets",
+      parentId: undefined,
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    vi.spyOn(apiRuntime, "executeApiRuntimeMutation").mockResolvedValue({
+      payload: [
+        {
+          namespace: "assetFolders",
+          patches: [{ op: "add", path: ["folder-1"], value: folder }],
+        },
+      ],
+      result: { folderId: "folder-1" },
+    } as never);
+    const patchBuild = vi
+      .spyOn(projectApi, "patchBuild")
+      .mockResolvedValue({ status: "ok", version: 4 });
+    const caller = createCaller(createContext(true));
+    const input = {
+      projectId: "project-1",
+      name: "Editor assets",
+      confirm: true,
+    };
+
+    await expect(caller.assetFolders.create(input)).resolves.toMatchObject({
+      folderId: "folder-1",
+      version: 4,
+    });
+    expect(patchBuild).toHaveBeenCalledTimes(1);
+
+    loadAssetData.mockResolvedValue({
+      assets: [],
+      assetFolders: [{ ...folder, createdAt: "2026-01-01T00:00:00Z" }],
+    });
+    await expect(caller.assetFolders.create(input)).resolves.toMatchObject({
+      folderId: "folder-1",
+    });
+    expect(patchBuild).toHaveBeenCalledTimes(2);
+
+    loadAssetData.mockResolvedValue({
+      assets: [],
+      assetFolders: [{ ...folder, name: "Existing folder" }],
+    } as never);
+    await expect(caller.assetFolders.create(input)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect(patchBuild).toHaveBeenCalledTimes(2);
+
+    getTokenInfo.mockResolvedValue(createToken({ relation: "viewers" }));
+    await expect(caller.assetFolders.create(input)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect(patchBuild).toHaveBeenCalledTimes(2);
+  });
+
   test("adds api permit only when token and plan both allow it", () => {
     const token = createToken();
 

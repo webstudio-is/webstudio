@@ -6,6 +6,7 @@ import {
   getContentModeCapabilities,
 } from "@webstudio-is/project-build/runtime";
 import type { buildPatchTransaction } from "@webstudio-is/protocol/schema";
+import type { AssetFolder } from "@webstudio-is/sdk";
 import { componentMetas } from "~/shared/component-metas.server";
 import type { assertApiProjectPermit } from "./api-permits.server";
 import { createBuilderRuntimeState } from "./api-runtime.server";
@@ -27,11 +28,13 @@ export const assertContentOrBuildTransactions = ({
   auth,
   build,
   transactions,
+  assetFolders,
   scope = "content",
 }: {
   auth: Awaited<ReturnType<typeof assertApiProjectPermit>>;
   build: CompactBuild;
   transactions: z.infer<typeof buildPatchTransaction>[];
+  assetFolders?: readonly AssetFolder[];
   scope?: "content" | "text-and-props";
 }) => {
   if (auth.permits.includes("build")) {
@@ -54,6 +57,11 @@ export const assertContentOrBuildTransactions = ({
     });
   }
   let capabilities = createContentModeCapabilitiesFromBuild(build);
+  if (assetFolders !== undefined) {
+    capabilities.assetFolders = new Map(
+      assetFolders.map((folder) => [folder.id, folder])
+    );
+  }
   for (const transaction of transactions) {
     const result = applyContentModeTransaction({
       capabilities,

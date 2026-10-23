@@ -3618,6 +3618,103 @@ describe("content mode permissions", () => {
     ).toEqual({ success: true });
   });
 
+  test("allows asset folder changes only in full Content mode", () => {
+    const capabilities = getContentModeCapabilities({
+      instances,
+      metas,
+      props,
+      styleSources,
+    });
+    const existingFolder = {
+      id: "existing-folder",
+      projectId: "project-1",
+      name: "Original",
+      parentId: undefined,
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    capabilities.assetFolders = new Map([[existingFolder.id, existingFolder]]);
+    const folderChange = transaction("assetFolders", [
+      {
+        op: "add",
+        path: ["folder-1"],
+        value: { id: "folder-1" },
+      },
+    ]);
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: folderChange,
+      })
+    ).toEqual({ success: true });
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("assetFolders", [
+          {
+            op: "add",
+            path: ["existing-folder"],
+            value: JSON.parse(
+              JSON.stringify({
+                ...existingFolder,
+                createdAt: "2026-01-01T00:00:00Z",
+              })
+            ),
+          },
+        ]),
+      }).success
+    ).toBe(true);
+    expect(
+      applyContentModeTransaction({
+        capabilities,
+        transaction: folderChange,
+        scope: "text-and-props",
+      }).success
+    ).toBe(false);
+
+    for (const patch of [
+      {
+        op: "add" as const,
+        path: ["existing-folder"],
+        value: { id: "existing-folder" },
+      },
+      {
+        op: "add" as const,
+        path: ["existing-folder"],
+        value: { ...existingFolder, createdAt: "2026-01-02T00:00:00Z" },
+      },
+      {
+        op: "add" as const,
+        path: ["existing-folder"],
+        value: { ...existingFolder, name: "Changed" },
+      },
+      {
+        op: "replace" as const,
+        path: ["existing-folder", "name"],
+        value: "Renamed",
+      },
+      { op: "remove" as const, path: ["existing-folder"] },
+    ]) {
+      expect(
+        validateContentModeTransaction({
+          capabilities,
+          transaction: transaction("assetFolders", [patch]),
+        }).success
+      ).toBe(false);
+    }
+    expect(capabilities.assetFolders).toEqual(
+      new Map([[existingFolder.id, existingFolder]])
+    );
+
+    capabilities.assetFolders = undefined;
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: folderChange,
+      }).success
+    ).toBe(false);
+  });
+
   test("allows removing content page meta fields", () => {
     const capabilities = getContentModeCapabilities({
       instances,

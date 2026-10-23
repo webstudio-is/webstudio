@@ -231,6 +231,32 @@ test("Editor can upload, replace, and delete asset in content mode", async ({
   await waitForSyncStatus({ page, status: "idle" });
 });
 
+test("Editor can create and reload an ordinary asset folder", async ({
+  page,
+}) => {
+  const folderName = "Editor ordinary assets";
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  await waitForSyncStatus({ page, status: "idle" });
+  await openAssetsPanel({ page });
+  await createAssetFolder({ page, name: folderName });
+
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  await openAssetsPanel({ page });
+  await page
+    .getByRole("button", { name: `Folder ${folderName}`, exact: true })
+    .waitFor();
+});
+
 test("Editor can create and reload a content collection entry", async ({
   page,
 }) => {

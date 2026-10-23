@@ -485,7 +485,8 @@ const runtimeMutationValidators: Partial<
 
 type BuildCommit = <CommitResult extends Record<string, unknown> = {}>(
   payload: z.infer<typeof buildPatchTransaction>["payload"],
-  result?: CommitResult
+  result?: CommitResult,
+  assetFolders?: readonly AssetFolder[]
 ) => Promise<{ version: number } & CommitResult>;
 
 const commitRuntimeMutation = async <
@@ -555,12 +556,14 @@ const contentOrBuildMutation = <
         build,
         commit: async <CommitResult extends Record<string, unknown> = {}>(
           payload: z.infer<typeof buildPatchTransaction>["payload"],
-          result?: CommitResult
+          result?: CommitResult,
+          assetFolders?: readonly AssetFolder[]
         ) => {
           assertContentOrBuildTransactions({
             auth,
             build,
             transactions: [{ id: "api-content-mode", payload }],
+            assetFolders,
           });
           return (await applyBuildPayload(
             ctx,
@@ -673,7 +676,10 @@ const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
           auth.permits.includes("build") === false
             ? { ...input, contentMode: true }
             : input,
-        commit,
+        commit:
+          id === "assetFolders.create"
+            ? (payload, result) => commit(payload, result, assetFolders)
+            : commit,
       });
     }
   );

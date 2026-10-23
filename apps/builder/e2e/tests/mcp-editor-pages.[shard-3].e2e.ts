@@ -8,6 +8,7 @@ import { expect } from "@playwright/test";
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { openProjectBuilder } from "../flows/builder";
 import { openPage, openPageSettings } from "../flows/pages-panel";
+import { openAssetsPanel, waitForAsset } from "../flows/assets-panel";
 import { loadDevBuild } from "../db";
 import { e2ePaidPlanName } from "../plans";
 import { dashboardUrl, test } from "../test";
@@ -17,7 +18,7 @@ const cliPath = fileURLToPath(
   new URL("../../../../packages/cli/local.js", import.meta.url)
 );
 
-test("Editor MCP creates a content page and edits only allowed page settings", async ({
+test("Editor MCP saves permitted pages, folders, and assets", async ({
   page,
   context,
 }) => {
@@ -132,6 +133,49 @@ test("Editor MCP creates a content page and edits only allowed page settings", a
     const afterDenied = await loadDevBuild({ projectId: fixture.projectId });
     expect(afterDenied.version).toBe(beforeDenied.version);
     expect(afterDenied.pages).toEqual(beforeDenied.pages);
+
+    const folder = await call("create-asset-folder", {
+      name: "Editor MCP assets",
+    });
+    expect(folder.ok, folder.error?.message).toBe(true);
+    expect(folder.meta.session.commitStatus).toBe("committed");
+    const folderId = folder.data.folderId;
+
+    const filename = "mcp-editor-asset.txt";
+    await writeFile(join(directory, filename), "Editor asset content");
+    const uploaded = await call("upload-asset", {
+      asset: { name: filename, type: "file", format: "txt", folderId },
+      assetsDir: directory,
+    });
+    expect(uploaded.ok, uploaded.error?.message).toBe(true);
+    expect(uploaded.meta.session.commitStatus).toBe("committed");
+    const assetId = uploaded.data.uploaded[0].id;
+
+    const asset = await call("get-asset", { assetId }, true);
+    expect(asset.ok).toBe(true);
+    expect(asset.data.asset).toMatchObject({
+      id: assetId,
+      folderId,
+    });
+    const folders = await call("list-asset-folders", {}, true);
+    expect(folders.ok).toBe(true);
+    expect(folders.data.folders).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: folderId, name: "Editor MCP assets" }),
+      ])
+    );
+
+    await openProjectBuilder({
+      page,
+      projectId: fixture.projectId,
+      authToken: fixture.editorToken,
+      mode: "content",
+    });
+    await openAssetsPanel({ page });
+    await page
+      .getByRole("button", { name: "Folder Editor MCP assets" })
+      .dblclick();
+    await waitForAsset({ page, filename });
   } finally {
     await Promise.all([
       rm(directory, { recursive: true, force: true }),
