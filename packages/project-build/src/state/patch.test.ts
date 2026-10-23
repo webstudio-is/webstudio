@@ -37,6 +37,36 @@ test("root-replaces an optional marketplace product from missing state", () => {
   ).toEqual(marketplaceProduct);
 });
 
+test("checks replacement targets against preceding patches", () => {
+  const original = ["old"];
+  expect(
+    applyBuilderNamespacePatches(original, [
+      { op: "replace", path: [0], value: "changed" },
+      { op: "replace", path: [], value: ["first", "second"] },
+      { op: "replace", path: [1], value: "edited" },
+    ])
+  ).toEqual(["first", "edited"]);
+  expect(original).toEqual(["old"]);
+  expect(
+    applyBuilderNamespacePatches(
+      [],
+      [
+        { op: "add", path: [0], value: "new" },
+        { op: "replace", path: [0], value: "edited" },
+      ]
+    )
+  ).toEqual(["edited"]);
+  expect(() =>
+    applyBuilderNamespacePatches(
+      ["old"],
+      [
+        { op: "remove", path: [0] },
+        { op: "replace", path: [0], value: "edited" },
+      ]
+    )
+  ).toThrow();
+});
+
 test("applies namespace patches", () => {
   const nextProps = applyBuilderNamespacePatches<Props>(new Map(build.props), [
     {

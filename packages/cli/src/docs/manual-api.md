@@ -88,6 +88,9 @@ These are MCP tools. From a shell, call them with the shortcut form `webstudio <
 ## Raw Patch Fallback
 
 apply-patch accepts either BuildPatchTransaction[] or { "transactions": BuildPatchTransaction[] }.
+An Editor link with API access can patch text and editable props inside a
+Content Block. The server checks the complete batch before saving it. Pages,
+assets, component structure, and design changes still require Builder access.
 
 Each transaction has:
 
@@ -255,7 +258,7 @@ Update a text child on an element:
 {
 "namespace": "instances",
 "patches": [
-{ "op": "replace", "path": ["instance-id", "children", 0, "value"], "value": "Launch faster" }
+{ "op": "replace", "path": ["instance-id", "children", 0], "value": { "type": "text", "value": "Launch faster" } }
 ]
 }
 ]

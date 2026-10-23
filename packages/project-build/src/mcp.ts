@@ -4962,7 +4962,6 @@ const deprecatedWebhookFormCopyCommands = new Set([
   "insert-mdx-text",
   "duplicate-page",
   "duplicate-page-template",
-  "create-page-from-template",
   "duplicate-folder",
   "copy-page",
   "insert-page-transfer-item",

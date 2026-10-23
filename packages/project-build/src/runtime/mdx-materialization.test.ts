@@ -274,6 +274,112 @@ const getUnresolvedTemplate = (
 };
 
 describe("materializeMdxTemplates", () => {
+  test.each([
+    ["existing source", undefined, "image", true],
+    ["existing source, mismatched", undefined, "other-image", false],
+    ["new source first", "first", "other-image", true],
+    ["new source last", "last", "other-image", true],
+    ["old source, new source first", "first", "image", false],
+    ["old source, new source last", "last", "image", false],
+  ] as const)(
+    "only materializes Image dimensions linked to its final source (%s)",
+    async (_scenario, sourcePosition, dimensionAssetId, acceptsDimensions) => {
+      const data = createData();
+      data.instances.set("hero", {
+        type: "instance",
+        id: "hero",
+        component: "Image",
+        children: [],
+      });
+      data.props = new Map([
+        [
+          "src",
+          {
+            id: "src",
+            instanceId: "hero",
+            name: "src",
+            type: "asset",
+            value: "image",
+          },
+        ],
+      ]);
+      const imageMetas = new Map<string, WsComponentMeta>([
+        [
+          "Image",
+          {
+            props: {
+              src: {
+                type: "string",
+                control: "file",
+                required: false,
+                contentMode: true,
+              },
+              width: { type: "number", control: "number", required: false },
+              height: { type: "number", control: "number", required: false },
+            },
+          },
+        ],
+      ]);
+      const original = structuredClone(data);
+      const dimensionProps = [
+        { name: "width", value: "./hero.png" },
+        { name: "height", value: "./hero.png" },
+      ];
+      const authoredProps =
+        sourcePosition === undefined
+          ? dimensionProps
+          : sourcePosition === "first"
+            ? [{ name: "src", value: "./new.png" }, ...dimensionProps]
+            : [...dimensionProps, { name: "src", value: "./new.png" }];
+      const materialization = await materializeMdxTemplates({
+        identity,
+        resolution: {
+          templateNames: ["Image"],
+          diagnostics: [],
+          references: [
+            {
+              type: "resolved-template",
+              path: [0],
+              templateName: "Image",
+              templateInstanceId: "hero",
+              props: authoredProps,
+            },
+          ],
+        },
+        data,
+        metas: imageMetas,
+        projectId: "target-project",
+        assetReferences: authoredProps.map((prop, index) => ({
+          path: ["children", 0, "props", index, "value"],
+          assetId: prop.name === "src" ? "other-image" : dimensionAssetId,
+        })),
+      });
+      const props = getResolvedTemplate(materialization.templates).fragment
+        .props;
+      expect(props.find(({ name }) => name === "src")).toMatchObject({
+        type: "asset",
+        value: sourcePosition === undefined ? "image" : "other-image",
+      });
+      const dimensions = props
+        .filter(({ name }) => name === "width" || name === "height")
+        .map(({ name, type, value }) => ({ name, type, value }));
+      expect(dimensions).toEqual(
+        acceptsDimensions
+          ? [
+              { name: "width", type: "asset", value: dimensionAssetId },
+              { name: "height", type: "asset", value: dimensionAssetId },
+            ]
+          : []
+      );
+      expect(materialization.diagnostics.map(({ code }) => code)).toEqual(
+        acceptsDimensions
+          ? []
+          : ["ignored-template-prop", "ignored-template-prop"]
+      );
+      expect(data).toEqual(original);
+    }
+  );
+
   test("materializes repeated resolved references with consistent scope", async () => {
     const materialization = await materializeMdxTemplates({
       identity,

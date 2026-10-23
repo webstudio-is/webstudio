@@ -10,6 +10,7 @@ type ContentModeProjectOptions = {
   devPlan?: string;
   assetNamePrefix?: string;
   editorToken?: string;
+  editorCanUseApi?: boolean;
   builderToken?: string;
 };
 
@@ -20,6 +21,7 @@ export const createContentModeProject = async ({
   devPlan,
   assetNamePrefix,
   editorToken,
+  editorCanUseApi,
   builderToken,
 }: ContentModeProjectOptions) => {
   const ownerPage = await context.newPage();
@@ -41,6 +43,7 @@ export const createContentModeProject = async ({
         projectId,
         assetNamePrefix,
         editorToken,
+        editorCanUseApi,
         builderToken,
       });
     });

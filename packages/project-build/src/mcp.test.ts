@@ -321,7 +321,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     command: "insert-fragment",
     id: "instances.insertFragment",
     method: "mutation",
-    permit: "build",
+    permit: "edit",
     description: "Insert fragment",
     inputSchema: getTestInputSchema(insertFragmentInput),
     readNamespaces: ["pages", "instances"],
@@ -1062,6 +1062,7 @@ describe("project session mcp adapter", () => {
       "parentInstanceId",
       "fragment",
     ]);
+    expect(insertFragmentTool?.annotations.permit).toBe("edit");
     expect(
       Object.keys(insertFragmentTool?.inputSchema.properties ?? {})
     ).toEqual([
@@ -6387,7 +6388,7 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).toHaveBeenCalledTimes(2);
   });
 
-  test("rejects page and template copies that would create deprecated Webhook Forms", async () => {
+  test("keeps Editor page-template copying available while guarding other deprecated-form copies", async () => {
     const inputs = [
       ["insert-mdx-text", { parentInstanceId: "body", source: "<Contact />" }],
       ["duplicate-page", { projectId: "project", pageId: "page" }],
@@ -6434,6 +6435,12 @@ describe("project session mcp adapter", () => {
     ];
     const executeOperation = createExecuteOperation(
       async ({ command, dryRun }) => {
+        if (command === "create-page-from-template" && dryRun === false) {
+          return createEnvelope({
+            operationId: command,
+            result: { pageId: "copied-page" },
+          });
+        }
         if (dryRun === false) {
           throw new Error(`Unexpected committed copy: ${command}`);
         }
@@ -6466,6 +6473,13 @@ describe("project session mcp adapter", () => {
     });
 
     for (const [name, input] of inputs) {
+      if (name === "create-page-from-template") {
+        const result = await adapter.callTool({ name, input });
+        expect(result.structuredContent.data).toEqual({
+          pageId: "copied-page",
+        });
+        continue;
+      }
       await expect(adapter.callTool({ name, input })).rejects.toThrow(
         "Webhook Form is deprecated"
       );
@@ -6474,7 +6488,10 @@ describe("project session mcp adapter", () => {
     expect(
       vi
         .mocked(executeOperation)
-        .mock.calls.every(([call]) => call.dryRun === true)
+        .mock.calls.every(
+          ([call]) =>
+            call.dryRun === (call.command !== "create-page-from-template")
+        )
     ).toBe(true);
   });
 

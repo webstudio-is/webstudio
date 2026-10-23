@@ -1,9 +1,40 @@
 import { expect, test } from "vitest";
+import type { BuilderPatchChange } from "../contracts/patch";
 import { createDefaultPages } from "../shared/pages-utils";
 import {
   createRuntimeMutation,
   createRuntimeMutationAccumulator,
+  mergeBuilderPatchChanges,
 } from "./mutation";
+
+test("merges repeated namespaces in order without modifying input patch arrays", () => {
+  const first: BuilderPatchChange[] = [
+    {
+      namespace: "props",
+      patches: [{ op: "add", path: ["prop"], value: "old" }],
+    },
+  ];
+  const second: BuilderPatchChange[] = [
+    { namespace: "instances", patches: [{ op: "remove", path: ["instance"] }] },
+    {
+      namespace: "props",
+      patches: [{ op: "replace", path: ["prop"], value: "new" }],
+    },
+  ];
+  const original = structuredClone([first, second]);
+  const merged = mergeBuilderPatchChanges(first, second);
+  expect(merged).toEqual([
+    {
+      namespace: "props",
+      patches: [...first[0].patches, ...second[1].patches],
+    },
+    second[0],
+  ]);
+  expect([first, second]).toEqual(original);
+  expect(mergeBuilderPatchChanges(first, second)).toEqual(merged);
+  expect(merged[0].patches).not.toBe(first[0].patches);
+  expect(mergeBuilderPatchChanges()).toEqual([]);
+});
 
 test("creates mutation result and marks noop from payload", () => {
   expect(
