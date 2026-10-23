@@ -34,6 +34,7 @@ import {
 import { AssetIndexRevisionError } from "@webstudio-is/content-engine";
 import { DocumentSourceDiagnosticsError } from "@webstudio-is/content-engine/compiler";
 import * as assetUploader from "@webstudio-is/asset-uploader/server";
+import * as apiRuntime from "./api-runtime.server";
 import * as issueReportService from "./github-issue-report.server";
 import { apiRouter, __testing__ } from "./api-router.server";
 import * as assetQueryPreview from "./asset-query-preview.server";
@@ -818,6 +819,45 @@ afterEach(() => {
 });
 
 describe("api router permits", () => {
+  test("uses content-mode page copying for Editors without changing Builder copies", async () => {
+    const getTokenInfo = vi
+      .spyOn(authDb, "getTokenInfo")
+      .mockResolvedValue(createToken({ relation: "editors" }));
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(
+      createEditableContentBuild()
+    );
+    vi.spyOn(assetUploader, "loadAssetDataByProject").mockResolvedValue({
+      assets: [],
+      assetFolders: [],
+    });
+    const execute = vi
+      .spyOn(apiRuntime, "executeApiRuntimeMutation")
+      .mockResolvedValue({
+        noop: true,
+        payload: [],
+        result: { pageId: "copied-page" },
+      } as never);
+    const caller = createCaller(createContext(true));
+    const input = {
+      projectId: "project-1",
+      templateId: "template-1",
+      name: "Copied page",
+      path: "/copied-page",
+    };
+
+    await caller.pageTemplates.createPage(input);
+    await caller.pageTemplates.createPage({ ...input, contentMode: false });
+    getTokenInfo.mockResolvedValue(createToken({ relation: "builders" }));
+    await caller.pageTemplates.createPage(input);
+
+    expect(execute.mock.calls.map(([{ input }]) => input)).toEqual([
+      { ...input, contentMode: true },
+      { ...input, contentMode: true },
+      input,
+    ]);
+  });
+
   test("adds api permit only when token and plan both allow it", () => {
     const token = createToken();
 

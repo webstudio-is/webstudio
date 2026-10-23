@@ -81,7 +81,6 @@ test("Editor MCP creates a content page and edits only allowed page settings", a
       templateId: template.id,
       name: "MCP content page",
       path: "/mcp-content-page",
-      contentMode: true,
     });
     expect(created.ok, created.error?.message).toBe(true);
     expect(created.meta.session.commitStatus).toBe("committed");

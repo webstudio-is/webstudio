@@ -410,6 +410,7 @@ const buildMutation = <Schema extends z.ZodType<{ projectId: string }>, Result>(
   input: Schema,
   handler: (args: {
     ctx: AppContext;
+    auth: Awaited<ReturnType<typeof assertApiProjectPermit>>;
     input: z.infer<Schema>;
     build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
     commit: BuildCommit;
@@ -420,10 +421,15 @@ const buildMutation = <Schema extends z.ZodType<{ projectId: string }>, Result>(
     .input(input)
     .mutation(async ({ ctx, input }) => {
       const parsedInput = input as z.infer<Schema>;
-      await assertApiProjectPermit(ctx, parsedInput.projectId, "build");
+      const auth = await assertApiProjectPermit(
+        ctx,
+        parsedInput.projectId,
+        "build"
+      );
       const build = await loadDevBuildByProjectId(ctx, parsedInput.projectId);
       return await handler({
         ctx,
+        auth,
         input: parsedInput,
         build,
         commit: async <CommitResult extends Record<string, unknown> = {}>(
@@ -525,6 +531,7 @@ const contentOrBuildMutation = <
   input: Schema,
   handler: (args: {
     ctx: AppContext;
+    auth: Awaited<ReturnType<typeof assertApiProjectPermit>>;
     input: z.infer<Schema>;
     build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
     commit: BuildCommit;
@@ -543,6 +550,7 @@ const contentOrBuildMutation = <
       const build = await loadDevBuildByProjectId(ctx, parsedInput.projectId);
       return await handler({
         ctx,
+        auth,
         input: parsedInput,
         build,
         commit: async <CommitResult extends Record<string, unknown> = {}>(
@@ -650,7 +658,7 @@ const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
   const mutation = permit === "edit" ? contentOrBuildMutation : buildMutation;
   return mutation(
     runtimeMutationInput(id, permit === "edit" ? requiresConfirm : true),
-    async ({ ctx, input, build, commit }) => {
+    async ({ ctx, auth, input, build, commit }) => {
       const { assets, assetFolders } = await loadRuntimeAssetData(
         ctx,
         input.projectId
@@ -660,7 +668,11 @@ const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
         build,
         assets,
         assetFolders,
-        input,
+        input:
+          id === "pageTemplates.createPage" &&
+          auth.permits.includes("build") === false
+            ? { ...input, contentMode: true }
+            : input,
         commit,
       });
     }
