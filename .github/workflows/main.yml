@@ -163,13 +163,17 @@ jobs:
     environment:
       name: development
 
+    outputs:
+      shards: ${{ steps.build.outputs.shards }}
+
     steps:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' && github.event.action == 'labeled' && github.event.label.name == 'safe-to-deploy' }}
 
-      - uses: ./.github/actions/builder-e2e-build
+      - id: build
+        uses: ./.github/actions/builder-e2e-build
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
 
@@ -194,8 +198,8 @@ jobs:
         run: pnpm --filter @webstudio-is/builder e2e:supabase-migrations
 
   builder-e2e:
-    name: builder-e2e (shard-${{ matrix.shard }})
-    timeout-minutes: 18
+    name: builder-e2e (${{ matrix.shard }})
+    timeout-minutes: 12
 
     needs: builder-e2e-build
 
@@ -203,7 +207,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
+        include: ${{ fromJSON(needs.builder-e2e-build.outputs.shards) }}
 
     environment:
       name: development
@@ -218,4 +222,4 @@ jobs:
         with:
           submodules-ssh-key: ${{ secrets.PRIVATE_GITHUB_DEPLOY_TOKEN }}
           shard: ${{ matrix.shard }}
-          shard-count: ${{ strategy.job-total }}
+          partition: ${{ matrix.partition }}

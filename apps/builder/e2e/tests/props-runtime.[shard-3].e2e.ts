@@ -22,6 +22,8 @@ import { withGeneratedPreview } from "../flows/generated-app";
 import { test } from "../test";
 import { measure } from "../perf";
 
+test.describe.configure({ mode: "parallel" });
+
 const openComponentsPanel = async ({ page }: { page: Page }) => {
   await page.getByRole("tab", { name: "Components" }).click();
   await page.getByPlaceholder("Find components").waitFor();

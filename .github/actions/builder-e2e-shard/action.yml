@@ -7,11 +7,11 @@ inputs:
     description: SSH key for private E2E dependencies.
     required: false
   shard:
-    description: Playwright shard number.
+    description: Filename-derived shard name.
     required: true
-  shard-count:
-    description: Total number of Playwright shards.
-    required: true
+  partition:
+    description: Optional Playwright partition within the selected files.
+    required: false
 
 runs:
   using: composite
@@ -43,8 +43,13 @@ runs:
       shell: bash
       env:
         E2E_TEST_SHARD: ${{ inputs.shard }}
-        E2E_TEST_SHARD_COUNT: ${{ inputs.shard-count }}
-      run: pnpm --filter @webstudio-is/builder e2e:ci:shard -- --workers=4 --shard="$E2E_TEST_SHARD/$E2E_TEST_SHARD_COUNT"
+        E2E_TEST_PARTITION: ${{ inputs.partition }}
+      run: |
+        args=(--workers=4)
+        if [ -n "$E2E_TEST_PARTITION" ]; then
+          args+=(--shard="$E2E_TEST_PARTITION")
+        fi
+        pnpm --filter @webstudio-is/builder e2e:ci:shard -- "${args[@]}"
 
     - name: Upload report
       if: failure()

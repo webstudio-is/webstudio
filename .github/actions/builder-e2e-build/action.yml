@@ -7,6 +7,11 @@ inputs:
     description: SSH key for private E2E dependencies.
     required: false
 
+outputs:
+  shards:
+    description: Filename-derived E2E shard matrix.
+    value: ${{ steps.shards.outputs.value }}
+
 runs:
   using: composite
   steps:
@@ -17,6 +22,13 @@ runs:
     - uses: ./.github/actions/ci-setup
       with:
         run-scripts: "true"
+
+    - name: Discover shards
+      id: shards
+      shell: bash
+      run: |
+        shards=$(pnpm --dir apps/builder exec tsx ./e2e/print-shards.ts)
+        echo "value=$shards" >> "$GITHUB_OUTPUT"
 
     - name: Build Builder
       shell: bash
