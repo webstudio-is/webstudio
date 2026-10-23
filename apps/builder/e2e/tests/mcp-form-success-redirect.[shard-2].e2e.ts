@@ -10,6 +10,8 @@ import {
 import { submitPreviewFormViaMcp } from "../flows/mcp-preview-submit";
 import { test } from "../test";
 
+test.describe.configure({ mode: "parallel" });
+
 const execFileAsync = promisify(execFile);
 const authorPath = fileURLToPath(
   new URL("../fixtures/mcp-managed-form-author.ts", import.meta.url)

@@ -12,6 +12,8 @@ import {
 import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { test } from "../test";
 
+test.describe.configure({ mode: "parallel" });
+
 test("Assets can be selected by dragging across the panel", async ({
   page,
   context,

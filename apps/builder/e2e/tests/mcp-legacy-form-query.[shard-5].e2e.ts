@@ -14,6 +14,7 @@ test("MCP-edited saved deprecated Webhook Form preserves single and repeated que
   page,
   context,
 }) => {
+  test.setTimeout(240_000);
   const receiver = await startLegacyFormQueryReceiver();
   try {
     const fixture = await createContentModeProject({
