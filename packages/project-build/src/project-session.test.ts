@@ -1712,6 +1712,7 @@ describe("project session", () => {
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
         level: "error",
+        code: "FORBIDDEN",
         message: "Authorization token does not have build permission.",
       }),
     ]);
@@ -1794,7 +1795,7 @@ describe("project session", () => {
 
     expect(result.state.committed).toBe(false);
     expect(result.diagnostics).toEqual([
-      expect.objectContaining({ level: "error" }),
+      expect.objectContaining({ level: "error", code: "FORBIDDEN" }),
     ]);
     expect(transport.patchCommits).toEqual([]);
     expect(transport.serverOperations).toEqual([]);

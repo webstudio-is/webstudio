@@ -1552,8 +1552,9 @@ export class ProjectSession {
     }
     const permissions = await this.getPermissions();
     if (hasProjectSessionPermit(permissions, permit) === false) {
-      throw new Error(
-        `Authorization token does not have ${permit} permission.`
+      throw Object.assign(
+        new Error(`Authorization token does not have ${permit} permission.`),
+        { code: "FORBIDDEN" }
       );
     }
   }
