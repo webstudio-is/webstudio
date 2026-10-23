@@ -9173,6 +9173,7 @@ export const keywordValues: KeywordValues = {
   rx: ["auto", "initial", "inherit", "unset"],
   ry: ["auto", "initial", "inherit", "unset"],
   scale: ["none", "initial", "inherit", "unset"],
+  "scroll-axis-lock": ["auto", "none", "initial", "inherit", "unset"],
   "scroll-behavior": ["auto", "smooth", "initial", "inherit", "unset"],
   "scroll-initial-target": ["none", "nearest", "initial", "inherit", "unset"],
   "scroll-margin-block-end": ["initial", "inherit", "unset"],
@@ -10800,6 +10801,7 @@ export const keywordValues: KeywordValues = {
     "inherit",
     "unset",
   ],
+  "window-drag": ["none", "move", "initial", "inherit", "unset"],
   "word-break": [
     "normal",
     "break-all",
