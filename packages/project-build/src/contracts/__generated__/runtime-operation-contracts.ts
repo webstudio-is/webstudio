@@ -5213,6 +5213,7 @@ export const runtimeOperationContractData = [
     id: "pages.updateSettings",
     command: "update-page-settings",
     client: "updatePageSettings",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",
@@ -7628,6 +7629,7 @@ export const runtimeOperationContractData = [
     id: "pageTemplates.createPage",
     command: "create-page-from-template",
     client: "createPageFromTemplate",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",
@@ -64573,6 +64575,7 @@ export const runtimeOperationContractData = [
     id: "instances.reparent",
     command: "reparent-instance",
     client: "reparentInstance",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",
@@ -65073,6 +65076,7 @@ export const runtimeOperationContractData = [
     id: "instances.delete",
     command: "delete-instance",
     client: "deleteInstance",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",
@@ -65167,6 +65171,7 @@ export const runtimeOperationContractData = [
     id: "instances.deleteBySelector",
     command: "delete-instance-by-selector",
     client: "deleteInstanceBySelector",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",

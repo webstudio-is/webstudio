@@ -1449,7 +1449,11 @@ export class ProjectSession {
         ],
       });
     }
-    if (hasGeneratedRecordWritePatch(mutation.payload)) {
+    if (
+      hasGeneratedRecordWritePatch(mutation.payload) ||
+      (options.permit === "edit" &&
+        (await this.getPermissions()).canBuild === false)
+    ) {
       return await this.executeServerOperation<Result>(
         {
           id: operationId,
