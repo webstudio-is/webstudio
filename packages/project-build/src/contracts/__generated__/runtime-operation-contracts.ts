@@ -58491,6 +58491,7 @@ export const runtimeOperationContractData = [
     id: "instances.insertFragment",
     command: "insert-fragment",
     client: "insertFragment",
+    permit: "edit",
     kind: "mutation",
     inputSchema: {
       type: "object",

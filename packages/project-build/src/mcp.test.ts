@@ -321,7 +321,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     command: "insert-fragment",
     id: "instances.insertFragment",
     method: "mutation",
-    permit: "build",
+    permit: "edit",
     description: "Insert fragment",
     inputSchema: getTestInputSchema(insertFragmentInput),
     readNamespaces: ["pages", "instances"],
@@ -1062,6 +1062,7 @@ describe("project session mcp adapter", () => {
       "parentInstanceId",
       "fragment",
     ]);
+    expect(insertFragmentTool?.annotations.permit).toBe("edit");
     expect(
       Object.keys(insertFragmentTool?.inputSchema.properties ?? {})
     ).toEqual([

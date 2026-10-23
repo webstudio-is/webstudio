@@ -1325,7 +1325,7 @@ export const builderRuntimeOperations = [
   ),
   runtimeOperation(
     "instances.insertFragment",
-    api("insert-fragment", "insertFragment"),
+    api("insert-fragment", "insertFragment", "edit"),
     mutationContract({
       readNamespaces: components.componentInsertReadNamespaces,
       writeNamespaces: components.componentInsertNamespaces,

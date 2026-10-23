@@ -10,6 +10,7 @@ import {
 } from "@webstudio-is/postgrest/testing";
 import { defaultPlanFeatures } from "@webstudio-is/plans";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { parseWebstudioJsxFragment } from "@webstudio-is/project-build/transfer/server";
 import { applyBuilderNamespacePatches } from "@webstudio-is/project-build/state";
 import { createPublishedProjectBundleFixture } from "@webstudio-is/protocol/fixtures";
 import * as projectBuild from "@webstudio-is/project-build/server";
@@ -26,7 +27,11 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
-import { blockComponent } from "@webstudio-is/sdk";
+import {
+  blockBodyComponent,
+  blockComponent,
+  blockTemplateComponent,
+} from "@webstudio-is/sdk";
 import { AssetIndexRevisionError } from "@webstudio-is/content-engine";
 import { DocumentSourceDiagnosticsError } from "@webstudio-is/content-engine/compiler";
 import * as assetUploader from "@webstudio-is/asset-uploader/server";
@@ -1677,6 +1682,109 @@ describe("api router permits", () => {
     expect(
       build.instances.find(({ id }) => id === "text-instance")?.children
     ).toEqual([{ type: "text", value: "Old" }]);
+  });
+
+  test("rejects Editor mutations inside protected Content Block templates", async () => {
+    const build = createEditableContentBuild();
+    const block = build.instances.find(({ id }) => id === "block")!;
+    block.children = [
+      { type: "id", value: "block-body" },
+      { type: "id", value: "template-container" },
+    ];
+    build.instances.push({
+      type: "instance",
+      id: "block-body",
+      component: blockBodyComponent,
+      children: [
+        { type: "id", value: "text-instance" },
+        { type: "id", value: "other-instance" },
+      ],
+    });
+    const nestedBody = build.instances.find(
+      ({ id }) => id === "other-instance"
+    )!;
+    nestedBody.tag = "div";
+    nestedBody.children = [{ type: "id", value: "nested-text" }];
+    build.instances.push({
+      type: "instance",
+      id: "nested-text",
+      component: "ws:element",
+      tag: "p",
+      children: [{ type: "text", value: "Nested body" }],
+    });
+    build.instances.push(
+      {
+        type: "instance",
+        id: "template-container",
+        component: blockTemplateComponent,
+        children: [{ type: "id", value: "template-paragraph" }],
+      },
+      {
+        type: "instance",
+        id: "template-paragraph",
+        component: "Paragraph",
+        children: [{ type: "text", value: "Template default" }],
+      }
+    );
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({ relation: "editors" })
+    );
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
+    vi.spyOn(assetUploader, "loadAssetDataByProject").mockResolvedValue({
+      assets: [],
+      assetFolders: [],
+    });
+    const patchBuild = vi
+      .spyOn(projectApi, "patchBuild")
+      .mockResolvedValue({ status: "ok", version: 4 });
+    const caller = createCaller(createContext(true));
+
+    await expect(
+      caller.instances.insertFragment({
+        projectId: "project-1",
+        parentInstanceId: "block-body",
+        fragment: await parseWebstudioJsxFragment(
+          "<p>New editable content</p>"
+        ),
+        contentMode: true,
+      })
+    ).resolves.toMatchObject({ version: 4 });
+
+    await expect(
+      caller.instances.insertFragment({
+        projectId: "project-1",
+        parentInstanceId: "other-instance",
+        fragment: await parseWebstudioJsxFragment(
+          "<p>New nested editable content</p>"
+        ),
+        contentMode: true,
+      })
+    ).resolves.toMatchObject({ version: 4 });
+
+    await expect(
+      caller.instances.updateText({
+        projectId: "project-1",
+        instanceId: "template-paragraph",
+        childIndex: 0,
+        text: "Changed template default",
+      })
+    ).rejects.toThrow("Instance patch is outside content roots.");
+
+    const templateFragment = await parseWebstudioJsxFragment(
+      "<p>New template child</p>"
+    );
+    for (const contentMode of [true, false, undefined]) {
+      await expect(
+        caller.instances.insertFragment({
+          projectId: "project-1",
+          parentInstanceId: "template-container",
+          fragment: templateFragment,
+          ...(contentMode === undefined ? {} : { contentMode }),
+        })
+      ).rejects.toThrow("Instance patch is outside content roots.");
+    }
+    expect(patchBuild).toHaveBeenCalledTimes(2);
   });
 
   test("Editor property writes load assets without gaining Builder permissions", async () => {

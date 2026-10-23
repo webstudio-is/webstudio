@@ -139,6 +139,12 @@ test("property writes load assets and reject an incompatible Image source", () =
   ).toThrow(expect.objectContaining({ code: "BAD_REQUEST" }));
 });
 
+test("fragment insertion is available to Content mode editors", () => {
+  expect(getBuilderRuntimeOperation("instances.insertFragment").permit).toBe(
+    "edit"
+  );
+});
+
 test("rejects a fragment containing a Form with more than 10 actions", () => {
   let nextId = 0;
   expect(() =>
