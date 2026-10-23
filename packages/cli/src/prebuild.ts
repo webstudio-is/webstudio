@@ -2130,12 +2130,18 @@ export const action = async (args: Parameters<typeof pageAction>[0]) => {
   }
 
   // MARK: - Default sitemap.xml
-  for (const { file, template } of framework.defaultSitemap()) {
-    const content = template.replaceAll(
-      "__SITEMAP__",
-      importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
-    );
-    await writeGeneratedFile(file, content);
+  if (
+    generatedPages.some(
+      (page) => getPagePath(page.id, pages) === "/sitemap.xml"
+    ) === false
+  ) {
+    for (const { file, template } of framework.defaultSitemap()) {
+      const content = template.replaceAll(
+        "__SITEMAP__",
+        importFrom(`./app/__generated__/$resources.sitemap.xml`, file)
+      );
+      await writeGeneratedFile(file, content);
+    }
   }
 
   const sitemap = getStaticSiteMapXml(pages, siteData.build.updatedAt);
