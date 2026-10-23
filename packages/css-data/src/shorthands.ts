@@ -526,15 +526,24 @@ const expandFlex = function* (value: CssNode) {
       ["<'flex-grow'>", "<'flex-shrink'>", "<'flex-basis'>"],
       value
     );
-    const unresolvedNodes = unresolved?.children.toArray();
+    const nodes = getValueList(value);
+    const functionBasis = unresolved?.children
+      .toArray()
+      .find((node) => node.type === "Function");
+    const factors = nodes.filter((node) => node !== functionBasis);
     if (
       basis === undefined &&
-      grow !== undefined &&
-      shrink !== undefined &&
-      unresolvedNodes?.length === 1 &&
-      unresolvedNodes[0]?.type === "Function"
+      functionBasis !== undefined &&
+      (nodes[0] === functionBasis || nodes.at(-1) === functionBasis) &&
+      (factors.length === 0 ||
+        lexer.match("<'flex-grow'> <'flex-shrink'>?", createValueNode(factors))
+          .matched)
     ) {
-      basis = unresolved;
+      [grow, shrink] = parseUnordered(
+        ["<'flex-grow'>", "<'flex-shrink'>"],
+        createValueNode(factors)
+      );
+      basis = createValueNode([functionBasis]);
     }
   }
   yield ["flex-grow", grow ?? one] as const;

@@ -727,6 +727,23 @@ test.each([
   ]);
 });
 
+test.each([
+  ["", "", "1", "1"],
+  ["2 ", "", "2", "1"],
+  ["", " 2", "2", "1"],
+  ["", " 2 3", "2", "3"],
+])(
+  "expand flex function basis between %s and %s",
+  (before, after, grow, shrink) => {
+    const basis = "calc((100% - var(--gap)) / 2)";
+    expect(expandShorthands([["flex", `${before}${basis}${after}`]])).toEqual([
+      ["flex-grow", grow],
+      ["flex-shrink", shrink],
+      ["flex-basis", "calc((100% - var(--gap))/2)"],
+    ]);
+  }
+);
+
 test("expand flex with css-wide keywords", () => {
   expect(expandShorthands([["flex", "inherit"]])).toEqual([
     ["flex-grow", "inherit"],

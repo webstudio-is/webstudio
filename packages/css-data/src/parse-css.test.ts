@@ -19,6 +19,26 @@ describe("Parse CSS", () => {
     expect(shorthand.styles).toEqual(longhands.styles);
   });
 
+  test.each([
+    ["", "", "1", "1"],
+    ["2 ", "", "2", "1"],
+    ["", " 2", "2", "1"],
+    ["", " 2 3", "2", "3"],
+  ])(
+    "flex function basis between %s and %s matches explicit longhands",
+    (before, after, grow, shrink) => {
+      const basis = "calc((100% - var(--gap)) / 2)";
+      expect(
+        parseCss(`.test { flex: ${before}${basis}${after}; }`, new Map()).styles
+      ).toEqual(
+        parseCss(
+          `.test { flex-grow: ${grow}; flex-shrink: ${shrink}; flex-basis: ${basis}; }`,
+          new Map()
+        ).styles
+      );
+    }
+  );
+
   test("border color-mix with a variable matches explicit longhands", () => {
     const color = "color-mix(in srgb, var(--accent) 50%, transparent)";
     const shorthand = parseCss(
