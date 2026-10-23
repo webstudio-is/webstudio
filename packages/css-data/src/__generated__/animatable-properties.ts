@@ -218,4 +218,5 @@ export const animatableProperties = [
   "x",
   "y",
   "z-index",
+  "zoom",
 ] as const;
