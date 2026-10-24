@@ -98,9 +98,9 @@ Tab Triggers and Tab Contents maintain their relationship by having the same val
 
 <div>
 
-<figure><img src="../../.gitbook/assets/tab-trigger.png" alt="Tab Trigger settings with a custom Value property"><figcaption><p>Tab Trigger with custom value</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/tab-trigger-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/tab-trigger-light.png" alt="Tab Trigger settings with custom Value account" width="240"></picture><figcaption><p>Tab Trigger with custom value</p></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/tab-content.png" alt="Tab Content settings with the corresponding custom Value property"><figcaption><p>Tab Content with custom value</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/tab-content-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/tab-content-light.png" alt="Tab Content settings with matching custom Value account" width="240"></picture><figcaption><p>Tab Content with custom value</p></figcaption></figure>
 
 </div>
 

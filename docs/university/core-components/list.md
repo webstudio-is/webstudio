@@ -19,15 +19,15 @@ The outer container — renders as `<ul>` (unordered) or `<ol>` (ordered) depend
 
 ### List Item
 
-The individual item inside a List — renders as `<li>`. Add List Item children to a legacy List as needed. Duplicate an existing item with **Cmd+D** / **Ctrl+D** to add more.
+The individual item inside a List — renders as `<li>`. Add List Item children from **Components > Typography**. Duplicate an existing item with **Cmd+D** / **Ctrl+D** to add more.
 
 List Items can contain any component — text, images, links, buttons — making them suitable for rich, interactive lists beyond simple bullet points.
 
 ### How to use the List Component
 
-The legacy List component is hidden from the default Components picker. For a new list, use the **Ordered List** or **Unordered List** template. Existing List instances can still be edited.
+Add a List from **Components > Typography**, then add List Item children. Use the **Ordered** setting when you want a numbered list.
 
-To add more items to a legacy List, add List Item children or duplicate an existing one.
+To add more items, insert another List Item or duplicate an existing one.
 
 #### Duplicating List Items
 
@@ -52,9 +52,9 @@ Setting the List Style Type allows you to define the appearance of the bullet po
 
 ### How to customize a List instance's properties in Webstudio
 
-<figure><picture><source srcset="../../.gitbook/assets/list-component-properties-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/list-component-properties-light.png" alt="List settings showing the Ordered property on an existing legacy List" width="240"></picture></figure>
+<figure><picture><source srcset="../../.gitbook/assets/list-component-properties-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/list-component-properties-light.png" alt="List settings showing the Ordered property" width="240"></picture></figure>
 
-You can customize a List’s properties by selecting it and going to Settings. A fresh legacy List shows the Ordered property. To add Start or Reversed, click the “+” next to Properties and add that property.
+You can customize a List’s properties by selecting it and going to Settings. A new List shows the Ordered property. To add Start or Reversed, click the “+” next to Properties and add that property.
 
 #### Ordered
 

@@ -61,7 +61,7 @@ The Vimeo component comes with several properties that you can use to customize 
 
 Here’s how you can use the following properties:&#x20;
 
-![Vimeo properties in the Settings panel](../../.gitbook/assets/vimeo-instance-properties.avif)
+<figure><picture><source srcset="../../.gitbook/assets/vimeo-instance-properties-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/vimeo-instance-properties-light.png" alt="Vimeo settings with Background Mode, Loop, and Muted enabled" width="240"></picture></figure>
 
 
 - **Show Preview**\
