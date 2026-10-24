@@ -79,7 +79,12 @@ Each input field must have a `name` attribute for its data to appear in email no
 
 Ensure every form input has a value for the `name` field to be included in submissions.
 
-<figure><img src="../../.gitbook/assets/form-name.png" alt="Form input name"><figcaption></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-name-dark.png">
+    <img src="../../.gitbook/assets/form-name-light.png" alt="Input Settings with Name set to email" width="240">
+  </picture>
+</figure>
 
 For a full list of input types, including checkboxes and radio buttons, refer to [Form inputs](form.md#collect-the-information-you-need).
 
