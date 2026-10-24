@@ -39,6 +39,8 @@ case "$mode" in
     export E2E_BUILD_DATABASE_IMAGE=false
     export E2E_SKIP_BUILDER_BUILD=true
     export E2E_SKIP_CLEANUP=true
+    export E2E_PGPORT="${E2E_PGPORT:-0}"
+    export E2E_POSTGREST_PORT="${E2E_POSTGREST_PORT:-0}"
     ;;
   *)
     echo "Unknown Builder E2E mode: $mode" >&2
@@ -59,9 +61,6 @@ export POSTGRES_DB="${E2E_POSTGRES_DB:-webstudio}"
 # E2E_DIRECT_URL.
 export POSTGRES_USER="supabase_admin"
 export POSTGRES_PASSWORD="${E2E_POSTGRES_PASSWORD:-pass}"
-export DATABASE_URL="${E2E_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${PGPORT}/${POSTGRES_DB}?pgbouncer=true}"
-export DIRECT_URL="${E2E_DIRECT_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${PGPORT}/${POSTGRES_DB}}"
-export POSTGREST_URL="${E2E_POSTGREST_URL:-http://localhost:${POSTGREST_PORT}}"
 export E2E_BACKEND_MODE="${E2E_BACKEND_MODE:-test}"
 
 source "$ROOT_DIR/apps/builder/backend/lib.sh"
@@ -193,6 +192,14 @@ run_step "prepare e2e database image" "$E2E_DOCKER_PULL_TIMEOUT_SECONDS" \
 run_step "start e2e database" "$E2E_DOCKER_TIMEOUT_SECONDS" \
   builder_backend_start_db
 
+db_port="$PGPORT"
+if [ "$db_port" = 0 ]; then
+  db_port="$(builder_compose port db 5432)"
+  db_port="${db_port##*:}"
+fi
+export DATABASE_URL="${E2E_DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${db_port}/${POSTGRES_DB}?pgbouncer=true}"
+export DIRECT_URL="${E2E_DIRECT_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${db_port}/${POSTGRES_DB}}"
+
 run_step "generate prisma client" "$E2E_MIGRATIONS_TIMEOUT_SECONDS" \
   builder_generate_prisma_client "$E2E_GENERATE_PRISMA"
 
@@ -206,6 +213,12 @@ if [ "$E2E_START_POSTGREST" = "true" ]; then
   run_step "start e2e postgrest" "$E2E_DOCKER_TIMEOUT_SECONDS" \
     builder_backend_start_postgrest
 fi
+postgrest_port="$POSTGREST_PORT"
+if [ "$E2E_START_POSTGREST" = "true" ] && [ "$postgrest_port" = 0 ]; then
+  postgrest_port="$(builder_compose port postgrest 3000)"
+  postgrest_port="${postgrest_port##*:}"
+fi
+export POSTGREST_URL="${E2E_POSTGREST_URL:-http://localhost:${postgrest_port}}"
 
 if [ "$E2E_RUN_TESTS" = "true" ]; then
   run_step "install playwright chromium" "$E2E_PLAYWRIGHT_INSTALL_TIMEOUT_SECONDS" \
