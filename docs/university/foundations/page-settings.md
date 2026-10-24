@@ -108,7 +108,13 @@ To create a plain text page:
 5. Enter the plain text, or bind the field to an expression
 6. Publish the site
 
-<figure><img src="../../.gitbook/assets/page-settings-plain-text-page.png" alt="Page Settings showing Document type set to TEXT and the Content section with a plain text field"><figcaption><p>Plain text page settings</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-plain-text-page-dark.png">
+    <img src="../../.gitbook/assets/page-settings-plain-text-page-light.png" alt="Page settings with TEXT selected as the document type and a plain text Content field" width="448">
+  </picture>
+  <figcaption><p>Plain text page settings</p></figcaption>
+</figure>
 
 Plain text pages can still use Page Settings fields such as Status code, Redirect, Authentication, and Dynamic data. SEO, social image, and custom metadata fields apply only to HTML pages, so they are hidden when the document type is TEXT.
 
@@ -126,7 +132,13 @@ Use Authentication to require HTTP Basic Auth credentials before visitors can lo
 
 Page authentication is useful for private previews, client-only pages, internal pages, or temporary gated content.
 
-<figure><img src="../../.gitbook/assets/page-settings-authentication-enabled.png" alt="Page Settings Authentication section enabled with Login and Password fields"><figcaption><p>Page authentication</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-authentication-enabled-dark.png">
+    <img src="../../.gitbook/assets/page-settings-authentication-enabled-light.png" alt="Authentication enabled with empty Login and Password fields" width="448">
+  </picture>
+  <figcaption><p>Page authentication</p></figcaption>
+</figure>
 
 {% hint style="info" %}
 Authentication applies to protected pages on custom domains. Staging domains have their own built-in password protection, described in [Publishing & custom domains](publishing-and-custom-domains.md#staging-password-protection).
