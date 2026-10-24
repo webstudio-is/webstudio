@@ -185,7 +185,7 @@ The Open Graph image displayed when the page is shared on social media (Facebook
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-social-dark.png">
-  <img src="../../.gitbook/assets/page-settings-social-light.png" alt="Page settings Social image section with a selected blue and purple glass wave image and its social sharing preview">
+  <img src="../../.gitbook/assets/page-settings-social-light.png" alt="Page settings Social image section with an empty image field and default social sharing preview" width="447">
 </picture>
 
 ## Custom metadata
@@ -194,7 +194,7 @@ Add arbitrary `<meta>` tags to the page's `<head>`. Each entry has a **property*
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-custom-metadata-dark.png">
-  <img src="../../.gitbook/assets/page-settings-custom-metadata-light.png" alt="Page settings with a blue and purple wave image in the Social sharing preview above empty Custom metadata fields">
+  <img src="../../.gitbook/assets/page-settings-custom-metadata-light.png" alt="Page settings Custom metadata section with empty Property and Content fields and Add another metadata pair button" width="447">
 </picture>
 
 Use this for meta tags not covered by the fields above, such as `og:type`, `twitter:card`, or any custom meta needed by third-party integrations.
