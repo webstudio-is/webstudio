@@ -673,9 +673,23 @@ export const createMcpPreviewHandlers = ({
           });
         } catch (error) {
           if (process.env.WEBSTUDIO_E2E_SUBMIT_DIAGNOSTIC === "1") {
+            const causeCodes: string[] = [];
+            let cause: unknown = error;
+            for (let index = 0; index < 4 && cause instanceof Error; index++) {
+              const code = "code" in cause ? cause.code : undefined;
+              causeCodes.push(
+                code === "SCREENSHOT_TIMEOUT" ||
+                  code === "BROWSER_SESSION_CLOSED" ||
+                  code === "BROWSER_STARTUP_FAILED"
+                  ? code
+                  : "other"
+              );
+              cause = cause.cause;
+            }
             console.error(
               `[E2E submit diagnostic] ${JSON.stringify({
                 stage: "CLI catch",
+                causeCodes,
                 kind:
                   error instanceof BrowserStartupError
                     ? "browser_startup"
