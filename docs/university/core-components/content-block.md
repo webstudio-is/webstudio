@@ -54,7 +54,7 @@ Editors don’t have access to the Style Panel, so be sure to provide fully desi
 
 Reusable top-level templates appear in Content mode like this. Structural and inline templates supplied for MDX styling, such as table cells and emphasis, do not appear as standalone insertion choices.
 
-<div><figure><img src="../../.gitbook/assets/templates-design-mode.png" alt="Templates in Design mode"><figcaption><p>Templates in Design mode</p></figcaption></figure> <figure><picture><source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/templates-content-mode-dark.png"><img src="../../.gitbook/assets/templates-content-mode-light.png" alt="Content mode insert menu with standard blocks and Feature templates" width="220"></picture><figcaption><p>Templates in Content mode</p></figcaption></figure></div>
+<div><figure><picture><source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/templates-design-mode-dark.png"><img src="../../.gitbook/assets/templates-design-mode-light.png" alt="Feature and Coming Soon Feature templates in the Design mode Navigator" width="240"></picture><figcaption><p>Templates in Design mode</p></figcaption></figure> <figure><picture><source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/templates-content-mode-dark.png"><img src="../../.gitbook/assets/templates-content-mode-light.png" alt="Content mode insert menu with standard blocks and Feature templates" width="220"></picture><figcaption><p>Templates in Content mode</p></figcaption></figure></div>
 
 
 Each time they insert a template, its copy appears alongside the existing content: directly inside an unconnected Content Block, or inside **MDX content** when a file is connected. The Templates container remains protected source material.
