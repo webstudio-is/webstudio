@@ -13,7 +13,13 @@ They live in the **Style Sources** dropdown alongside your [Tokens](design-token
 
 <!-- Screenshot 1: states-dropdown.png — The Style Sources dropdown open on a Button, showing the list of available states (:hover, :focus-visible, etc.) at the bottom. -->
 
-<figure><img src="../../.gitbook/assets/states-dropdown.png" alt="States in the Style Sources dropdown" width="375"><figcaption><p>Available states appear at the bottom of the Style Sources dropdown</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/states-dropdown-dark.png">
+    <img src="../../.gitbook/assets/states-dropdown-light.png" alt="Style Sources dropdown listing hover, focus, and active states" width="240">
+  </picture>
+  <figcaption><p>Available states appear at the bottom of the Style Sources dropdown</p></figcaption>
+</figure>
 
 ## States (pseudo-classes)
 

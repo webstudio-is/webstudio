@@ -85,7 +85,10 @@ You can style your site using Local or Tokens like this:
 
 Use the Local source for styles that apply only to the selected instance. You can convert Local styles into a reusable Token later.
 
-<img src="../../.gitbook/assets/convert-to-token.png" alt="Local style source menu with the action to convert its styles to a Token" data-size="original">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/convert-to-token-dark.png">
+  <img src="../../.gitbook/assets/convert-to-token-light.png" alt="Local style source menu with the Convert to token action" width="240">
+</picture>
 
 Hover a property label to see which breakpoint and style source provides its current value. See [Label colors](anatomy-of-the-webstudio-builder.md#label-colors) for the full reference.
 
