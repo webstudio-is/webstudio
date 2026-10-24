@@ -101,9 +101,7 @@ Pseudo-elements target virtual parts of an element, such as inserting content be
 4. Set `display` to `block` and give it a width, height, and background.
 5. Deselect the `::before` tag to go back to the base styles.
 
-<!-- Screenshot 4: before-example.png — A Box with a ::before pseudo-element styled as a colored bar or icon. -->
-
-<figure><img src="../../.gitbook/assets/before-example.png" alt="Styling a ::before pseudo-element" width="375"><figcaption><p>A ::before element styled as a decorative bar</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/before-example-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/before-example-light.png" alt="Style sources with the ::before pseudo-element selected" width="240"></picture><figcaption><p>Select ::before to edit its styles</p></figcaption></figure>
 
 ## Combining states and tokens
 

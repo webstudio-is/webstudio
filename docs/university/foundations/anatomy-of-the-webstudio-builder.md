@@ -140,7 +140,7 @@ You can use this panel to add new pages to your Webstudio site, set the homepage
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/pages-panel-dark.png">
-  <img src="../../.gitbook/assets/pages-panel-light.png" alt="Pages panel with Home and an expanded Blog folder containing Post, Author, and Posts pages">
+  <img src="../../.gitbook/assets/pages-panel-light.png" alt="Pages panel with Home and an expanded Screenshot demos and Blog folder with a nested page" width="241">
 </picture>
 
 ### Page folders
