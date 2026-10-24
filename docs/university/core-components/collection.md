@@ -66,7 +66,7 @@ It's unclear why each item is correct or incorrect by just looking at the image,
 
 **You'll know when you get to the array when the next items in the autocomplete are numbers.** The numbers represent each item in the list. Once you see the numbers, backspace, as you don't want to select one item; you want the list.
 
-<figure><img src="../../.gitbook/assets/component-array.png" alt="Autocomplete showing array items in Binding"><figcaption><p>The numbers indicate each item in the list/array</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/component-array-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/component-array-light.png" alt="Binding autocomplete showing array indexes 0, 1, and 2 beside the demoPosts array preview" width="480"></picture><figcaption><p>The numbers indicate each item in the list/array</p></figcaption></figure>
 
 ## How to use Collection
 
