@@ -15,7 +15,12 @@ Webstudio automatically generates a sitemap for static pages such as Home and Ab
 
 1.  Go to Page Settings > Document Type and select XML from the dropdown&#x20;
 
-    <figure><img src="../../.gitbook/assets/page-settings-xml-doc-type.png" alt="Page Settings with Document type set to XML"><figcaption></figcaption></figure>
+    <figure>
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-xml-doc-type-dark.png">
+        <img src="../../.gitbook/assets/page-settings-xml-doc-type-light.png" alt="Sitemap page settings with Document type set to XML" width="448">
+      </picture>
+    </figure>
 
 
 2.  Go to Components > XML and add XML Node (this component won’t show until Step 1 is completed)
