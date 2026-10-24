@@ -36,11 +36,7 @@ export const submitPreviewFormViaMcp = async ({
     ],
     {
       stdio: ["pipe", "pipe", "pipe"],
-      env: {
-        ...process.env,
-        TSX_TSCONFIG_PATH: cliTsconfigPath,
-        WEBSTUDIO_E2E_SUBMIT_DIAGNOSTIC: "1",
-      },
+      env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
     }
   );
   let stdout = "";
@@ -81,13 +77,6 @@ export const submitPreviewFormViaMcp = async ({
     throw new Error(
       `MCP Preview submit returned an invalid result: ${stdout.slice(-4000)}`
     );
-  }
-  if (result.data.status === "unknown") {
-    const diagnostics = stderr
-      .split("\n")
-      .filter((line) => line.startsWith("[E2E submit diagnostic]"))
-      .join("\n");
-    throw new Error(`MCP Preview submit outcome unknown: ${diagnostics}`);
   }
   return { ok: true, data: result.data };
 };

@@ -12,7 +12,6 @@ import { inspectGeneratedBuildMetrics } from "../generated-build-metrics";
 import { createExclusiveAsyncRunner, withTimeout } from "../async-utils";
 import { getStableErrorCode } from "../error-codes";
 import {
-  BrowserStartupError,
   defaultScreenshotTimeout,
   isBrowserSessionClosedError,
   type BrowserFormValue,
@@ -671,44 +670,7 @@ export const createMcpPreviewHandlers = ({
             timeout: input.timeout ?? defaultScreenshotTimeout,
             browser: "auto",
           });
-        } catch (error) {
-          if (process.env.WEBSTUDIO_E2E_SUBMIT_DIAGNOSTIC === "1") {
-            const causeCodes: string[] = [];
-            let cause: unknown = error;
-            for (let index = 0; index < 4 && cause instanceof Error; index++) {
-              const code = "code" in cause ? cause.code : undefined;
-              causeCodes.push(
-                code === "SCREENSHOT_TIMEOUT" ||
-                  code === "BROWSER_SESSION_CLOSED" ||
-                  code === "BROWSER_STARTUP_FAILED"
-                  ? code
-                  : "other"
-              );
-              cause = cause.cause;
-            }
-            console.error(
-              `[E2E submit diagnostic] ${JSON.stringify({
-                stage: "CLI catch",
-                causeCodes,
-                kind:
-                  error instanceof BrowserStartupError
-                    ? "browser_startup"
-                    : error instanceof Error && error.name === "TimeoutError"
-                      ? "timeout"
-                      : error instanceof Error
-                        ? "error"
-                        : "other",
-                startupReason:
-                  error instanceof BrowserStartupError
-                    ? error.diagnostic?.reason
-                    : undefined,
-                browserExitCode:
-                  error instanceof BrowserStartupError
-                    ? error.processExit?.code
-                    : undefined,
-              })}`
-            );
-          }
+        } catch {
           // The request may already have reached a service. Never replay it.
           await closeCaptureSession().catch(() => undefined);
           return {
