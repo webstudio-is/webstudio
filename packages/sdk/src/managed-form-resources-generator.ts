@@ -48,7 +48,7 @@ export const generatePageResources = (
   const parentInstanceById = getParentInstanceById(instances);
   const isInFormScope = (instanceId: string | undefined) => {
     while (instanceId !== undefined) {
-      if (instances.get(instanceId)?.component === "Form") {
+      if (instances.get(instanceId)?.component === "ResourceForm") {
         return true;
       }
       instanceId = parentInstanceById.get(instanceId);
@@ -91,7 +91,7 @@ export const generatePageResources = (
     if (
       prop.type !== "json" ||
       prop.name !== "action" ||
-      instances.get(prop.instanceId)?.component !== "Form" ||
+      instances.get(prop.instanceId)?.component !== "ResourceForm" ||
       !isFormSubmission(prop.value)
     ) {
       continue;

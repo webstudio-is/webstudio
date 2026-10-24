@@ -21,9 +21,11 @@ import {
   type StyleDecl,
 } from "@webstudio-is/sdk";
 import {
+  hasHistoricalFormComponentIdentityVersion,
   migratePages,
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
 import { migrateResourcesMutable } from "@webstudio-is/project-migrations/resources";
 import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
@@ -95,7 +97,12 @@ const parseCompactContentEngineData = (build: ContentEngineBuildRow) => {
 const parseCompactBuild = async (
   build: Database["public"]["Tables"]["Build"]["Row"]
 ) => {
-  const pages = migratePages(parseConfig<unknown>(build.pages));
+  const rawPages = parseConfig<unknown>(build.pages);
+  const hasModernFormMarker =
+    hasHistoricalFormComponentIdentityVersion(rawPages);
+  const pages = migratePages(rawPages);
+  const instances = parseCompactInstanceData(build.instances);
+  migrateResourceFormInstancesMutable(instances, hasModernFormMarker);
   const contentEngineData = parseCompactContentEngineData(build);
   const parsedProjectSettings =
     build.projectSettings === undefined || build.projectSettings === null
@@ -116,7 +123,7 @@ const parseCompactBuild = async (
       build.styleSourceSelections
     ),
     ...contentEngineData,
-    instances: parseCompactInstanceData(build.instances),
+    instances,
     deployment: parseDeployment(build.deployment),
     marketplaceProduct: parseMarketplaceProduct(build.marketplaceProduct),
   } satisfies CompactBuild;
@@ -343,10 +350,6 @@ export const unpublishBuild = async (
     }
     return deployment.domains.includes(props.domain);
   });
-
-  if (targetBuilds.length === 0) {
-    throw new Error(`Domain ${props.domain} is not published`);
-  }
 
   // Process all builds that contain this domain
   for (const targetBuild of targetBuilds) {

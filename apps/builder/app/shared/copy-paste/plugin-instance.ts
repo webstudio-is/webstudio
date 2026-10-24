@@ -446,7 +446,11 @@ const handlePasteInstance = async (clipboardData: string) => {
     return pasteIgnored;
   }
   if (transferData.valid === false) {
-    return { success: false, error: invalidPasteDataMessage } as const;
+    return {
+      success: false,
+      error:
+        "error" in transferData ? transferData.error : invalidPasteDataMessage,
+    } as const;
   }
   const projectId = $project.get()?.id;
   if (projectId === undefined) {

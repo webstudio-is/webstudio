@@ -424,14 +424,14 @@ Commands:
 
 - MCP tool: insert-fragment {"parentInstanceId":"<instanceId>","fragment":"<section ws:style={css`padding: 32px;`}><h2>Product OS</h2><Switch><SwitchThumb /></Switch></section>"}
 - MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"@webstudio-is/sdk-components-react-radix:Switch"}
-- MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"Form"}
+- MCP tool: insert-component {"parentInstanceId":"<instanceId>","component":"ResourceForm"}
 
 Notes:
 
 - Use MCP `insert-fragment` as the default way to author styled component trees. It converts JSX to a structured fragment before mutation.
 - Use only exact component ids returned by `components.search`, `components.get`, or `templates.get`. Never derive or guess component ids.
 - Use lowercase HTML JSX such as `<div>` and `<form>`. The internal `ws:` namespace is not HTML-tag shorthand.
-- For Webstudio's complete form structure, discover the Form component and insert its automatic template with `insert-component` using component `"Form"`.
+- For Webstudio's complete form structure, discover the Form component and insert its automatic template with `insert-component` using component `"ResourceForm"`.
 - MCP receives JSX as a JSON string because MCP arguments are JSON. The CLI converts it locally before the runtime mutation, so the project session receives structured Webstudio data, not JSX source.
 - In `insert-fragment` JSX, use ``ws:style={css`...`}`` for Webstudio-native CSS, or use React-style object syntax such as `style={{ padding: 24 }}` when that is simpler. Both forms create editable Webstudio style data.
 - Do not access host globals or dynamic code APIs in JSX fragments, including `process`, `globalThis`, `eval`, `Function`, or `constructor`.
@@ -839,7 +839,7 @@ Use the exact component id returned by `components.search` for **Form (Beta)**.
 After inserting its registered template, use the Form instance id for the
 Form-scoped Resource and Action settings.
 
-The new Form's canonical component id is `Form`. The deprecated legacy
+The new Form's canonical component id is `ResourceForm`. The deprecated
 Webhook Form remains available in Builder for existing projects until the next
 release, but is omitted from MCP component discovery. `RemixForm` is deprecated
 compatibility and should not be used for new projects. Always use registry
@@ -848,12 +848,11 @@ discovery instead of assuming the display label is its component id.
 The new Form has two modes derived from its Action array:
 
 - One or more connected Resources: the rendered action is
-  `?__webstudio__=resources` and submission runs the enabled Resource actions.
+  `?__webstudio__=resources` and submission runs the Resource actions.
 - No connected Resources (`action: []`): the rendered action is
   `?__webstudio__=navigate` and submission updates URL query parameters through
   client-side navigation. Use this for search and filters with page Resources
-  bound to `system.search`. Removing the last Action switches to Navigation mode;
-  disabling an Action does not remove it.
+  bound to `system.search`. Removing the last Action switches to Navigation mode.
 - For ordinary browser submission, insert an `Element` with `tag: "form"`.
   It has no managed action marker and retains native browser behavior.
 
@@ -869,13 +868,13 @@ Commands:
 
 - MCP tool: insert-component {"parentInstanceId":"<parentInstanceId>","component":"<componentId from components.search>"}
 - MCP tool: create-resource {"resource":{"name":"Send submission","method":"post","url":"https://api.example.com/submit","headers":[],"body":"formData"},"scopeInstanceId":"<formInstanceId>","dataSourceName":"Send submission","exposeAsDataSource":true}
-- MCP tool: update-props {"updates":[{"instanceId":"<formInstanceId>","name":"action","type":"json","value":[{"dataSourceId":"<returned dataSourceId>","enabled":true}]}]}
+- MCP tool: update-props {"updates":[{"instanceId":"<formInstanceId>","name":"action","type":"json","value":[{"dataSourceId":"<returned dataSourceId>"}]}]}
 - MCP tool: update-resource {"resourceId":"<emailResourceId>","values":{"email":{"recipientMode":"visitor","visitorEmailField":"email","includeAttachments":true}}}
 - MCP tool: update-project-settings {"meta":{"emailSender":"Acme <hello@example.com>"}}
 
 Notes:
 
-- Use `update-props` with a JSON Action array to add, order, enable, disable, or remove destinations. The Action entries use `{ "dataSourceId": "...", "enabled": true }` and support up to ten Resources, matching the Builder control.
+- Use `update-props` with a JSON Action array to add, order, or remove destinations. The Action entries use `{ "dataSourceId": "..." }` and support up to ten Resources, matching the Builder control. Each connected Action runs in its configured order. An extra `enabled` key in older saved settings is ignored.
 - Create each destination Resource in the Form's scope so it can use `formData` and `browserInfo`. Set `exposeAsDataSource:true` to receive the data-source id used by the Action array. When a Resource uses Form-only parameters, it is kept out of page-load requests and runs with the Form submission.
 - `update-resource` accepts the same Email settings as the Builder: project, custom, or visitor recipients; sender; subject; body; and submitted-file attachments. Use expressions in string fields for dynamic values.
 - `update-project-settings` edits the project-wide Email recipients and Reply to. `update-props` also sets Form fields and Success redirect, while `bind-props` supplies dynamic expressions. `insert-component` uses the registered Form template, including its default contact fields and Email Actions. Set subject and body on each Email Resource.
@@ -1101,6 +1100,8 @@ Commands:
 - webstudio publish status --job <buildId> --json
 
 ## Unpublish
+
+Unpublish completes without a publish job.
 
 Commands:
 

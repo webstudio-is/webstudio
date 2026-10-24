@@ -3,6 +3,7 @@ import { encodeDataVariableId, getStyleDeclKey } from "@webstudio-is/sdk";
 import type { BuilderNamespace } from "./contracts/namespaces";
 import type { BuilderPatchTransaction } from "./contracts/patch";
 import {
+  ProjectSessionBusyError,
   createDefaultProjectSessionCompatibility,
   createProjectSession,
   hasProjectSessionPermit,
@@ -136,7 +137,7 @@ const createOneTimeConflictingStorage = (
       if (saveAttempts === 1) {
         revision = "rev-concurrent";
         current = { ...current, revision };
-        throw new Error("Project session snapshot changed on disk.");
+        throw new ProjectSessionBusyError();
       }
       expect(options.expectedRevision).toBe(revision);
       revision = "rev-reconciled";
@@ -327,6 +328,48 @@ describe("project session", () => {
       op: "replace",
       path: [],
       value: undefined,
+    });
+  });
+
+  test("hydrates a canonical instances-only restore without pages", () => {
+    const transaction = {
+      id: "restore",
+      payload: [
+        {
+          namespace: "instances",
+          patches: [
+            {
+              op: "replace",
+              path: [],
+              value: [
+                [
+                  "form",
+                  {
+                    id: "form",
+                    type: "instance",
+                    component: "ResourceForm",
+                    children: [],
+                  },
+                ],
+              ],
+            },
+          ],
+        },
+      ],
+    } as BuilderPatchTransaction;
+    const hydrated = hydrateRestorePointTransaction(transaction);
+    expect(hydrated.payload[0]?.patches[0]).toMatchObject({
+      value: new Map([
+        [
+          "form",
+          {
+            id: "form",
+            type: "instance",
+            component: "ResourceForm",
+            children: [],
+          },
+        ],
+      ]),
     });
   });
 
@@ -628,7 +671,7 @@ describe("project session", () => {
             revision: "rev-concurrent",
           });
           revision = current.revision;
-          throw new Error("Project session snapshot changed on disk.");
+          throw new ProjectSessionBusyError();
         }
         expect(options.expectedRevision).toBe(revision);
         revision = "rev-retry";
@@ -685,7 +728,7 @@ describe("project session", () => {
         return createPersistedSnapshot({ revision: "rev-concurrent" });
       },
       async save() {
-        throw new Error("Project session snapshot changed on disk.");
+        throw new ProjectSessionBusyError();
       },
       async clear() {},
     };
@@ -1018,7 +1061,7 @@ describe("project session", () => {
       },
       async save() {
         saveAttempts += 1;
-        throw new Error("Project session snapshot changed on disk.");
+        throw new ProjectSessionBusyError();
       },
       async clear() {},
     };
@@ -1235,7 +1278,7 @@ describe("project session", () => {
       expect.objectContaining({ code: "CONFLICT_REFRESHED" }),
     ]);
     expect(transport.loadedNamespaces).toEqual([
-      ["instances", "props", "dataSources"],
+      ["instances", "props", "dataSources", "assets"],
     ]);
   });
 
@@ -1669,10 +1712,129 @@ describe("project session", () => {
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
         level: "error",
+        code: "FORBIDDEN",
         message: "Authorization token does not have build permission.",
       }),
     ]);
     expect(transport.commits).toEqual([]);
+  });
+
+  test("routes Editor semantic mutations through the server without raw patch access", async () => {
+    const transport = createTransport();
+    transport.getPermissions = async () => ({
+      canView: true,
+      canEdit: true,
+      canBuild: false,
+      canAdmin: false,
+      canUseApi: true,
+    });
+    const session = createSession({
+      storage: createStorage(createPersistedSnapshot()),
+      transport,
+    });
+
+    await session.initialize();
+    const result = await session.mutate(
+      "pages.updateSettings",
+      { pageId: "page-home", values: { title: '"Edited title"' } },
+      { permit: "edit" }
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.source).toBe("server");
+    expect(result.state.committed).toBe(true);
+    expect(transport.serverOperations).toEqual([
+      {
+        operationId: "pages.updateSettings",
+        input: { pageId: "page-home", values: { title: '"Edited title"' } },
+      },
+    ]);
+    expect(transport.patchCommits).toEqual([]);
+  });
+
+  test("keeps Builder semantic mutations on the local patch path", async () => {
+    const transport = createTransport();
+    const session = createSession({
+      storage: createStorage(createPersistedSnapshot()),
+      transport,
+    });
+
+    await session.initialize();
+    const result = await session.mutate(
+      "pages.updateSettings",
+      { pageId: "page-home", values: { title: '"Builder title"' } },
+      { permit: "edit" }
+    );
+
+    expect(result.source).toBe("local");
+    expect(result.state.committed).toBe(true);
+    expect(transport.patchCommits).toHaveLength(1);
+    expect(transport.serverOperations).toEqual([]);
+  });
+
+  test("does not run Editor semantic mutations without edit permission", async () => {
+    const transport = createTransport();
+    transport.getPermissions = async () => ({
+      canView: true,
+      canEdit: false,
+      canBuild: false,
+      canAdmin: false,
+      canUseApi: true,
+    });
+    const session = createSession({
+      storage: createStorage(createPersistedSnapshot()),
+      transport,
+    });
+
+    await session.initialize();
+    const result = await session.mutate(
+      "pages.updateSettings",
+      { pageId: "page-home", values: { title: '"Viewer title"' } },
+      { permit: "edit" }
+    );
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ level: "error", code: "FORBIDDEN" }),
+    ]);
+    expect(transport.patchCommits).toEqual([]);
+    expect(transport.serverOperations).toEqual([]);
+  });
+
+  test("does not report rejected Editor server mutations as committed", async () => {
+    const transport = createTransport();
+    transport.getPermissions = async () => ({
+      canView: true,
+      canEdit: true,
+      canBuild: false,
+      canAdmin: false,
+      canUseApi: true,
+    });
+    transport.executeServerOperation = async () => {
+      throw Object.assign(
+        new Error("Page patch is not editable in content mode."),
+        {
+          code: "FORBIDDEN",
+        }
+      );
+    };
+    const session = createSession({
+      storage: createStorage(createPersistedSnapshot()),
+      transport,
+    });
+
+    await session.initialize();
+    const result = await session.mutate(
+      "pages.updateSettings",
+      { pageId: "page-home", values: { status: "draft" } },
+      { permit: "edit" }
+    );
+
+    expect(result.state.committed).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ level: "error", code: "FORBIDDEN" }),
+    ]);
+    expect(transport.patchCommits).toEqual([]);
   });
 
   test("clears cached permissions after plan errors", async () => {

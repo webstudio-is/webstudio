@@ -36,7 +36,100 @@ There are two types of exports:
 * **JavaScript application** – Builds a dynamic app with server routes. This is the default behavior of Webstudio Cloud and provides the most functionality, but it requires hosting that runs the app.
 * **Static site** – Outputs a static site (HTML/CSS/JS) with limited functionality, but has more versatile hosting options.
 
-On Webstudio Cloud, a published Cloudflare-hosted site can send Email Resources through Webstudio's private Email Service when its `EMAIL_SERVICE` binding is configured. That binding and service are not included in an export. A self-hosted JavaScript application needs a custom server-side email integration before Email Resources, including visitor-addressed ones, can send; without one, delivery fails explicitly. A static export has no managed Form submission endpoint and cannot send them.
+#### tRPC email service endpoint
+
+The Builder calls the email service with a tRPC mutation:
+
+```text
+POST <EMAIL_SERVICE_URL>/trpc/email.send
+```
+
+This endpoint does not configure Email Resources in exported projects. Current CLI exports do not support an arbitrary self-hosted email service URL for managed form delivery.
+
+The request uses HTTPS, `Content-Type: application/json`, and `Authorization: Bearer <token>`. The JSON request body is the email object itself; do not wrap it in a `json` property.
+
+The email service also requires `X-Webstudio-Project-Id`, a UUID used for routing and rate limiting. It is caller-supplied metadata, not authentication. The service must authorize the request using the bearer token.
+
+##### Builder configuration
+
+Set `TRPC_SERVER_API_TOKEN` on the Builder server and configure the email service with the same secret. Never expose this token to browser code.
+
+`EMAIL_SERVICE_URL` is the service's HTTPS origin, without a path or query string. The current Builder accepts only approved Webstudio email Worker origins, including its version URLs. It rejects arbitrary self-hosted origins. Therefore, implementing this endpoint alone does not currently let a self-hosted service replace Webstudio's service; Builder URL validation must also support that origin.
+
+##### Request body
+
+| Field | Required | Type and meaning |
+| --- | --- | --- |
+| `to` | Yes | Array of 1–50 mailbox objects. Each has a valid `address` email string and optional `name`. |
+| `subject` | Yes | Nonempty email subject string, up to 998 characters. |
+| `text` | Yes | Plain-text email body string. |
+| `replyTo` | No | Mailbox object with a valid `address` email string and optional `name`. |
+| `fromName` | No | Display name for the service's configured sender address, 1–256 characters. |
+| `headers` | No | Object with the nonempty `X-Message-ID` string used for message correlation. |
+| `attachments` | No | Array of up to 32 objects. Each has a nonempty `filename` (up to 255 characters), a `contentType` string, and standard Base64 `contentBase64`. Do not include a data URL prefix. |
+
+The complete JSON request must be no larger than 7 MiB. The service chooses and verifies its sender address; the request does not set a From address.
+
+Example request:
+
+```json
+{
+  "to": [{ "address": "team@example.com", "name": "Team" }],
+  "subject": "New message",
+  "text": "Hello from Ada.",
+  "replyTo": { "address": "ada@example.com", "name": "Ada" },
+  "fromName": "Example Website",
+  "headers": { "X-Message-ID": "0123456789abcdef" },
+  "attachments": [
+    {
+      "filename": "note.txt",
+      "contentType": "text/plain",
+      "contentBase64": "aGVsbG8="
+    }
+  ]
+}
+```
+
+##### tRPC response
+
+Return the standard tRPC result envelope. Its `result.data` contains the delivery result.
+
+Success — HTTP `200 OK`:
+
+```json
+{
+  "result": {
+    "data": {
+      "ok": true,
+      "status": 200,
+      "statusText": "OK",
+      "data": { "id": "provider-message-id" }
+    }
+  }
+}
+```
+
+A delivery failure is still a successful tRPC procedure call: return HTTP `200 OK` with `ok: false` and the delivery status in the nested result.
+
+```json
+{
+  "result": {
+    "data": {
+      "ok": false,
+      "status": 429,
+      "statusText": "Email sending limit reached",
+      "data": {
+        "error": {
+          "code": "email_rate_limited",
+          "message": "Email sending limit reached"
+        }
+      }
+    }
+  }
+}
+```
+
+Authentication, request, and transport failures use a non-2xx HTTP status and an error response with a human-readable `error.message`. The Builder treats these as call failures; it does not confuse them with a completed email delivery result.
 
 {% hint style="warning" %}
 If you want the export to contain human-readable class names, disable atomic CSS. See [Atomic CSS](../foundations/project-settings.md#atomic-css) for more information.
@@ -46,7 +139,7 @@ If you want the export to contain human-readable class names, disable atomic CSS
 
 This is the default behavior if you were to publish to Webstudio Cloud.
 
-The JavaScript application supports dynamic functionality like [CMS integrations](../foundations/cms.md), [Forms](../core-components/form.md) with HTTP Resource actions, Webhook Forms, [image optimization](../core-components/image.md#optimize), and redirects.
+The JavaScript application supports dynamic functionality like [CMS integrations](../foundations/cms.md), [Forms](../core-components/form.md) with HTTP Resource actions, existing [deprecated Webhook Forms](../core-components/webhook-form.md), [image optimization](../core-components/image.md#optimize), and redirects.
 
 JavaScript applications require a hosting environment that handles server-side code execution, fetching data from CMS integrations, and more.
 
@@ -114,7 +207,7 @@ While static site exporting and hosting are less technical, this comes at the co
 * Redirects
 * Statuses
 * Client navigation
-* Webhook form
+* Webhook Form (deprecated)
 * Form submission to Resource actions
 * Image optimization
 * No robots.txt

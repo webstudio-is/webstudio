@@ -64,7 +64,7 @@ test("Email Request preview uses current Form data and settings without sending"
           {
             id: "form",
             type: "instance",
-            component: "Form",
+            component: "ResourceForm",
             children: [{ type: "id", value: "password-input" }],
           },
         ],
@@ -136,7 +136,7 @@ test("Email Request preview formats formData in an explicit body expression", as
         {
           id: "form",
           type: "instance" as const,
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -170,7 +170,7 @@ test("Email Request preview formats uploaded files like the submitted Email", as
         {
           id: "form",
           type: "instance" as const,
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -209,7 +209,7 @@ test("Email Request preview includes the known submission page URL", async () =>
         {
           id: "form",
           type: "instance" as const,
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -251,7 +251,7 @@ test("Visitor Email Request preview leaves missing addresses empty and never fab
           {
             id: "form",
             type: "instance",
-            component: "Form",
+            component: "ResourceForm",
             children: [],
           },
         ],
@@ -284,7 +284,7 @@ test("Visitor Email Request preview uses sender defaults without rewriting custo
         {
           id: "form",
           type: "instance" as const,
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -375,7 +375,7 @@ test.each(["name", "type"] as const)(
           {
             id: "form",
             type: "instance",
-            component: "Form",
+            component: "ResourceForm",
             children: [{ type: "id", value: "input" }],
           },
         ],
@@ -447,7 +447,7 @@ test("Email Request preview blocks explicit access to known password and interna
         {
           id: "form",
           type: "instance",
-          component: "Form",
+          component: "ResourceForm",
           children: [{ type: "id", value: "password-input" }],
         },
       ],
@@ -503,7 +503,7 @@ test("Email Request preview does not fall back to scoped Form data when current 
         {
           id: "form",
           type: "instance",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -541,7 +541,7 @@ test("Email Request preview preserves user variables named like managed Form par
         {
           id: "form",
           type: "instance",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],

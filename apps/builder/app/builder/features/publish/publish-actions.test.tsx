@@ -2,7 +2,7 @@ import { createRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { afterEach, expect, test, vi } from "vitest";
-import { TooltipProvider } from "@webstudio-is/design-system";
+import { TooltipProvider, toast } from "@webstudio-is/design-system";
 import { PublishActions, usePublishValidationState } from "./publish-actions";
 
 let root: Root | undefined;
@@ -17,6 +17,7 @@ afterEach(() => {
   root = undefined;
   container?.remove();
   container = undefined;
+  vi.restoreAllMocks();
 });
 
 const render = (
@@ -76,8 +77,9 @@ test("shows the successful validation state in the action", () => {
 test("clears the validation result when the publish popover closes", async () => {
   const Harness = () => {
     const [isOpen, setIsOpen] = useState(true);
-    const { validationState, update, reset } =
-      usePublishValidationState(isOpen);
+    const { validationState, update, reset } = usePublishValidationState(
+      isOpen ? "publish" : "none"
+    );
 
     return (
       <TooltipProvider>
@@ -137,6 +139,80 @@ test("clears the validation result when the publish popover closes", async () =>
   expect(reopenedValidate.textContent).toBe("Validate");
   expect(reopenedValidate.querySelector("svg")).toBeNull();
 });
+
+test.each([
+  { destination: "none" as const, expectedToasts: 1 },
+  { destination: "none" as const, reopen: true, expectedToasts: 0 },
+  { destination: "export" as const, expectedToasts: 1 },
+  { destination: "publish" as const, expectedToasts: 0 },
+])(
+  "reports validation success after switching to $destination (reopen: $reopen)",
+  async ({ destination, reopen, expectedToasts }) => {
+    const successToast = vi
+      .spyOn(toast, "success")
+      .mockImplementation(() => "");
+    let finishValidation: () => void = () => {};
+    const validation = new Promise<void>((resolve) => {
+      finishValidation = resolve;
+    });
+
+    const Harness = () => {
+      const [dialog, setDialog] = useState<"none" | "publish" | "export">(
+        "publish"
+      );
+      const { validationState, update } = usePublishValidationState(dialog);
+      return (
+        <TooltipProvider>
+          {dialog === "publish" && (
+            <PublishActions
+              validationState={validationState}
+              validateDisabled={false}
+              publishDisabled={false}
+              publishInProgress={false}
+              publishPending={false}
+              hasSelectedDomains
+              publishLabel="Publish"
+              publishButtonRef={createRef<HTMLButtonElement>()}
+              onValidate={async () => {
+                await validation;
+                update("passed");
+              }}
+              onPublish={vi.fn()}
+            />
+          )}
+          <button type="button" onClick={() => setDialog(destination)}>
+            Switch
+          </button>
+          <button type="button" onClick={() => setDialog("publish")}>
+            Reopen
+          </button>
+          <output>{validationState}</output>
+        </TooltipProvider>
+      );
+    };
+
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+    act(() => root?.render(<Harness />));
+    const [validate, , switchDialog, reopenDialog] =
+      container.querySelectorAll("button");
+    act(() => validate.click());
+    act(() => switchDialog.click());
+    if (reopen) {
+      act(() => reopenDialog.click());
+    }
+    await act(async () => {
+      finishValidation();
+      await validation;
+    });
+
+    expect(successToast).toHaveBeenCalledTimes(expectedToasts);
+    expect(container.querySelector("output")?.textContent).toBe(
+      destination === "publish" || reopen ? "passed" : "idle"
+    );
+  }
+);
 
 test("shows the countdown and disables actions during publish progress", () => {
   const [validate, publish] = render(

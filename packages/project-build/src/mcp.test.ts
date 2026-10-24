@@ -321,7 +321,7 @@ const publicMcpOperations: readonly PublicMcpOperation[] = [
     command: "insert-fragment",
     id: "instances.insertFragment",
     method: "mutation",
-    permit: "build",
+    permit: "edit",
     description: "Insert fragment",
     inputSchema: getTestInputSchema(insertFragmentInput),
     readNamespaces: ["pages", "instances"],
@@ -1062,6 +1062,7 @@ describe("project session mcp adapter", () => {
       "parentInstanceId",
       "fragment",
     ]);
+    expect(insertFragmentTool?.annotations.permit).toBe("edit");
     expect(
       Object.keys(insertFragmentTool?.inputSchema.properties ?? {})
     ).toEqual([
@@ -6052,7 +6053,7 @@ describe("project session mcp adapter", () => {
     ).toHaveLength(1);
   });
 
-  test("omits the legacy Webhook Form from MCP discovery", async () => {
+  test("omits the deprecated Webhook Form from MCP discovery", async () => {
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
       createProjectSession: createSessionFactory(),
@@ -6079,7 +6080,7 @@ describe("project session mcp adapter", () => {
       ({ template }) => template === "template:form"
     );
     expect(formResult?.component).toBe("form");
-    for (const component of [formResult!.component, "Form"]) {
+    for (const component of [formResult!.component, "ResourceForm"]) {
       const formDetails = await adapter.callTool({
         name: "components.get",
         input: { component },
@@ -6087,7 +6088,7 @@ describe("project session mcp adapter", () => {
       expect(formDetails.structuredContent.data).toEqual(
         expect.objectContaining({
           found: true,
-          component: "Form",
+          component: "ResourceForm",
           props: expect.objectContaining({ action: expect.any(Object) }),
         })
       );
@@ -6101,7 +6102,7 @@ describe("project session mcp adapter", () => {
     );
     const formTemplateByRoot = await adapter.callTool({
       name: "templates.get",
-      input: { component: "Form" },
+      input: { component: "ResourceForm" },
     });
     expect(formTemplateByRoot.structuredContent.data).toEqual(
       expect.objectContaining({
@@ -6164,7 +6165,7 @@ describe("project session mcp adapter", () => {
     } while (cursor !== undefined);
   });
 
-  test("rejects new legacy Webhook Forms through MCP insertion paths", async () => {
+  test("rejects new deprecated Webhook Forms through MCP insertion paths", async () => {
     const executeOperation = createExecuteOperation();
     const operations = [
       ...publicMcpOperations,
@@ -6274,13 +6275,14 @@ describe("project session mcp adapter", () => {
         })
       ).rejects.toThrow("Webhook Form is deprecated");
     }
-    const legacyFragment = await parseWebstudioJsxFragment("<WebhookForm />");
+    const deprecatedFormFragment =
+      await parseWebstudioJsxFragment("<WebhookForm />");
     for (const structure of [
-      { type: "fragment", fragment: legacyFragment },
+      { type: "fragment", fragment: deprecatedFormFragment },
       {
         type: "collection",
         data: { type: "json", value: [{ name: "example" }] },
-        itemFragment: legacyFragment,
+        itemFragment: deprecatedFormFragment,
       },
     ]) {
       await expect(
@@ -6320,7 +6322,7 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).not.toHaveBeenCalled();
   });
 
-  test("rejects cloning a saved legacy Webhook Form subtree through MCP", async () => {
+  test("rejects cloning a saved deprecated Webhook Form subtree through MCP", async () => {
     const executeOperation = createExecuteOperation(async ({ command }) => {
       if (command === "list-instances") {
         return createEnvelope({
@@ -6386,7 +6388,7 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).toHaveBeenCalledTimes(2);
   });
 
-  test("rejects page and template copies that would create legacy Webhook Forms", async () => {
+  test("keeps Editor page-template copying available while guarding other deprecated-form copies", async () => {
     const inputs = [
       ["insert-mdx-text", { parentInstanceId: "body", source: "<Contact />" }],
       ["duplicate-page", { projectId: "project", pageId: "page" }],
@@ -6433,6 +6435,12 @@ describe("project session mcp adapter", () => {
     ];
     const executeOperation = createExecuteOperation(
       async ({ command, dryRun }) => {
+        if (command === "create-page-from-template" && dryRun === false) {
+          return createEnvelope({
+            operationId: command,
+            result: { pageId: "copied-page" },
+          });
+        }
         if (dryRun === false) {
           throw new Error(`Unexpected committed copy: ${command}`);
         }
@@ -6465,6 +6473,13 @@ describe("project session mcp adapter", () => {
     });
 
     for (const [name, input] of inputs) {
+      if (name === "create-page-from-template") {
+        const result = await adapter.callTool({ name, input });
+        expect(result.structuredContent.data).toEqual({
+          pageId: "copied-page",
+        });
+        continue;
+      }
       await expect(adapter.callTool({ name, input })).rejects.toThrow(
         "Webhook Form is deprecated"
       );
@@ -6473,11 +6488,14 @@ describe("project session mcp adapter", () => {
     expect(
       vi
         .mocked(executeOperation)
-        .mock.calls.every(([call]) => call.dryRun === true)
+        .mock.calls.every(
+          ([call]) =>
+            call.dryRun === (call.command !== "create-page-from-template")
+        )
     ).toBe(true);
   });
 
-  test("rejects a copied legacy form in a root Map replacement", async () => {
+  test("rejects a copied deprecated Webhook Form in a root Map replacement", async () => {
     const executeOperation = createExecuteOperation(async ({ dryRun }) => {
       if (dryRun === false) {
         throw new Error("Unexpected committed copy");
@@ -6536,7 +6554,7 @@ describe("project session mcp adapter", () => {
     expect(executeOperation).toHaveBeenCalledTimes(1);
   });
 
-  test("keeps copying pages without legacy forms available through MCP", async () => {
+  test("keeps copying pages without deprecated Webhook Forms available through MCP", async () => {
     const executeOperation = createExecuteOperation(async ({ dryRun }) =>
       createEnvelope({
         operationId: "pages.duplicate",
@@ -6592,7 +6610,7 @@ describe("project session mcp adapter", () => {
     ).toEqual([true, false]);
   });
 
-  test("rejects raw MCP patches that create a legacy Webhook Form", async () => {
+  test("rejects raw MCP patches that create a deprecated Webhook Form", async () => {
     const executeOperation = createExecuteOperation();
     const adapter = createProjectSessionMcpCore({
       operations: publicMcpOperations,
@@ -9389,7 +9407,9 @@ describe("project session mcp adapter", () => {
           },
         ])
       );
-      expect(onToolSuccess).toHaveBeenCalledWith("list-pages");
+      expect(onToolSuccess).toHaveBeenCalledWith("list-pages", {
+        includeFolders: true,
+      });
     } finally {
       await client.close();
       await server.close();
@@ -9397,6 +9417,8 @@ describe("project session mcp adapter", () => {
   });
 
   test("returns schema-valid rendered failures and stores their artifact manifest through the server", async () => {
+    const onToolSuccess = vi.fn();
+    const onToolFailure = vi.fn();
     const storeRenderedAuditArtifacts = vi.fn(async () => "/manifest.json");
     const executeOperation = createExecuteOperation(async ({ command }) => {
       if (command === "list-pages") {
@@ -9449,6 +9471,8 @@ describe("project session mcp adapter", () => {
       stopPreview: vi.fn(),
       captureScreenshot: vi.fn(),
       storeRenderedAuditArtifacts,
+      onToolSuccess,
+      onToolFailure,
     });
     const { client, close } = await createConnectedClient(server);
 
@@ -9457,6 +9481,17 @@ describe("project session mcp adapter", () => {
         name: "audit",
         arguments: { rendered: true, verbose: true },
       });
+
+      expect(onToolSuccess).not.toHaveBeenCalledWith(
+        "audit",
+        expect.anything()
+      );
+      expect(onToolFailure).toHaveBeenCalledWith(
+        "audit",
+        expect.objectContaining({ code: "RENDERED_AUDIT_FAILED" }),
+        expect.any(Number),
+        { rendered: true, verbose: true }
+      );
 
       expect(result).toMatchObject({
         isError: true,

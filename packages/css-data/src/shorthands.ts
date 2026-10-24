@@ -244,13 +244,19 @@ const expandBorder = function* (property: string, value: CssNode) {
         .filter((index): index is number => index !== undefined);
       const unresolvedNodes =
         unresolved === undefined ? [] : getValueList(unresolved);
-      const unresolvedIndex =
-        missing.length === 1 &&
+      let unresolvedIndex: number | undefined;
+      if (
         unresolvedNodes.length === 1 &&
-        unresolvedNodes[0]?.type === "Function" &&
-        unresolvedNodes[0].name === "var"
-          ? missing[0]
-          : undefined;
+        unresolvedNodes[0]?.type === "Function"
+      ) {
+        if (unresolvedNodes[0].name.toLowerCase() === "color-mix") {
+          if (color === undefined) {
+            unresolvedIndex = 2;
+          }
+        } else if (unresolvedNodes[0].name === "var" && missing.length === 1) {
+          unresolvedIndex = missing[0];
+        }
+      }
       const values = [width, style, color];
       if (unresolvedIndex !== undefined) {
         values[unresolvedIndex] = unresolved;
@@ -395,17 +401,17 @@ const expandFont = function* (value: CssNode) {
   let lineHeight: CssNode = createInitialNode();
   let fontFamily: CssNode = createInitialNode();
   if (config) {
-    if (
-      lexer.match("<'font-size'> / <'line-height'> <'font-family'>#", config)
-        .matched
-    ) {
+    const nodes = getValueList(config);
+    // Match the separator structurally: the lexer cannot match a grammar
+    // containing var(), even when size, line-height, and family are unambiguous.
+    if (nodes[1]?.type === "Operator" && nodes[1].value === "/") {
       const [fontSizeNode, _slashNode, lineHeightNode, ...fontFamilyNodes] =
-        getValueList(config);
+        nodes;
       fontSize = fontSizeNode;
       lineHeight = lineHeightNode;
       fontFamily = createValueNode(fontFamilyNodes);
     } else {
-      const [fontSizeNode, ...fontFamilyNodes] = getValueList(config);
+      const [fontSizeNode, ...fontFamilyNodes] = nodes;
       fontSize = fontSizeNode;
       fontFamily = createValueNode(fontFamilyNodes);
     }
@@ -508,6 +514,7 @@ const expandFlex = function* (value: CssNode) {
   let grow: undefined | Value;
   let shrink: undefined | Value;
   let basis: undefined | Value;
+  let unresolved: undefined | Value;
   if (lexer.match("initial", value).matched) {
     [grow, shrink, basis] = [zero, one, auto];
   } else if (lexer.match("auto", value).matched) {
@@ -515,10 +522,29 @@ const expandFlex = function* (value: CssNode) {
   } else if (lexer.match("none", value).matched) {
     [grow, shrink, basis] = [zero, zero, auto];
   } else {
-    [grow, shrink, basis] = parseUnordered(
+    [grow, shrink, basis, unresolved] = parseUnordered(
       ["<'flex-grow'>", "<'flex-shrink'>", "<'flex-basis'>"],
       value
     );
+    const nodes = getValueList(value);
+    const functionBasis = unresolved?.children
+      .toArray()
+      .find((node) => node.type === "Function");
+    const factors = nodes.filter((node) => node !== functionBasis);
+    if (
+      basis === undefined &&
+      functionBasis !== undefined &&
+      (nodes[0] === functionBasis || nodes.at(-1) === functionBasis) &&
+      (factors.length === 0 ||
+        lexer.match("<'flex-grow'> <'flex-shrink'>?", createValueNode(factors))
+          .matched)
+    ) {
+      [grow, shrink] = parseUnordered(
+        ["<'flex-grow'>", "<'flex-shrink'>"],
+        createValueNode(factors)
+      );
+      basis = createValueNode([functionBasis]);
+    }
   }
   yield ["flex-grow", grow ?? one] as const;
   yield ["flex-shrink", shrink ?? one] as const;

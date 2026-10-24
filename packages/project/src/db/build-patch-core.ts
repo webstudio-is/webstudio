@@ -1,5 +1,11 @@
 import type { Patch } from "immer";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
 import {
+  hasHistoricalFormComponentIdentityVersion,
+  migratePages,
+} from "@webstudio-is/project-migrations/pages";
+import {
+  type Asset,
   type Breakpoints,
   breakpoints,
   type Breakpoint,
@@ -31,7 +37,10 @@ import {
   type ProjectSettings,
   marketplaceProduct,
 } from "@webstudio-is/project-build";
-import { findCycles } from "@webstudio-is/project-build/runtime";
+import {
+  findCycles,
+  getPropAssetError,
+} from "@webstudio-is/project-build/runtime";
 import {
   parsePages,
   serializePages,
@@ -149,10 +158,18 @@ export const createBuildPatchUpdate = async ({
   build,
   clientVersion,
   transactions,
+  loadAssets,
 }: {
   build: Database["public"]["Tables"]["Build"]["Row"];
   clientVersion: number;
   transactions: BuildPatchTransaction[];
+  loadAssets: (
+    ids: string[],
+    patches: Patch[]
+  ) => Promise<{
+    assets: Asset[];
+    changedAssetIds: Set<string>;
+  }>;
 }): Promise<BuildPatchUpdateResult> => {
   const lastTransactionId = transactions.at(-1)?.id;
 
@@ -203,6 +220,31 @@ export const createBuildPatchUpdate = async ({
   const assetPatches: Patch[][] = [];
   const assetFolderPatches: Patch[][] = [];
 
+  // Persist the identity transition in the same Build update as either namespace.
+  // A pages-only edit must not erase the historical discriminator while Form
+  // instances still depend on it.
+  const touchesFormIdentity = transactions.some((transaction) =>
+    transaction.payload.some(
+      ({ namespace, patches }) =>
+        patches.length > 0 &&
+        (namespace === "pages" || namespace === "instances")
+    )
+  );
+  if (touchesFormIdentity) {
+    const rawPages = parseConfig<unknown>(build.pages);
+    const hasModernFormMarker =
+      hasHistoricalFormComponentIdentityVersion(rawPages);
+    buildData.pages = migratePages(rawPages);
+    buildData.instances = parseInstanceData(build.instances);
+    const changedInstanceIds = migrateResourceFormInstancesMutable(
+      buildData.instances.values(),
+      hasModernFormMarker
+    );
+    for (const instanceId of changedInstanceIds) {
+      touchedInstances.keys.add(instanceId);
+    }
+  }
+
   for (const transaction of transactions) {
     for (const change of transaction.payload) {
       const { namespace, patches } = change;
@@ -241,11 +283,28 @@ export const createBuildPatchUpdate = async ({
         const instances =
           buildData.instances ?? parseInstanceData(build.instances);
 
-        buildData.instances = applyBuildNamespacePatches(
+        const patchedInstances = applyBuildNamespacePatches(
           "instances",
           instances,
           patches
         );
+
+        // The stored instances were migrated before applying patches. A stale
+        // client may still send Form for a managed form, while an existing
+        // WebhookForm must keep its identity if that client replaces it.
+        let normalizedInstances: Instances | undefined;
+        for (const [instanceId, instance] of patchedInstances) {
+          if (instance.component !== "Form") {
+            continue;
+          }
+          const component =
+            instances.get(instanceId)?.component === "WebhookForm"
+              ? "WebhookForm"
+              : "ResourceForm";
+          normalizedInstances ??= new Map(patchedInstances);
+          normalizedInstances.set(instanceId, { ...instance, component });
+        }
+        buildData.instances = normalizedInstances ?? patchedInstances;
 
         const cycles = findCycles(buildData.instances?.values() ?? []);
         if (cycles.length > 0) {
@@ -398,6 +457,57 @@ export const createBuildPatchUpdate = async ({
     const propsData = buildData.props;
     validateTouchedMap(props, propsData, touchedProps);
     update.props = serializeData<Prop>(propsData);
+  }
+
+  if (buildData.props || buildData.instances || assetPatches.length > 0) {
+    const previousInstances = parseInstanceData(build.instances);
+    const nextInstances = buildData.instances ?? previousInstances;
+    const nextProps = buildData.props ?? parseData<Prop>(build.props);
+    const assetProps = new Map<string, Extract<Prop, { type: "asset" }>>();
+    const changedPropIds = new Set<string>();
+    for (const [id, prop] of nextProps) {
+      if (
+        touchedProps.wholeMap ||
+        touchedProps.keys.has(id) ||
+        nextInstances.get(prop.instanceId)?.component !==
+          previousInstances.get(prop.instanceId)?.component
+      ) {
+        changedPropIds.add(id);
+      }
+      if (
+        prop.type === "asset" &&
+        (changedPropIds.has(id) || assetPatches.length > 0)
+      ) {
+        assetProps.set(id, prop);
+      }
+    }
+    if (assetProps.size > 0) {
+      const loaded = await loadAssets(
+        [...new Set([...assetProps.values()].map((prop) => prop.value))],
+        assetPatches.flat()
+      );
+      const assets = new Map(loaded.assets.map((asset) => [asset.id, asset]));
+      for (const [id, prop] of assetProps) {
+        if (
+          !changedPropIds.has(id) &&
+          !loaded.changedAssetIds.has(prop.value)
+        ) {
+          continue;
+        }
+        const instance = nextInstances.get(prop.instanceId);
+        if (instance === undefined) {
+          continue;
+        }
+        const error = getPropAssetError({
+          instance,
+          prop,
+          asset: assets.get(prop.value),
+        });
+        if (error !== undefined) {
+          return { status: "error", errors: error };
+        }
+      }
+    }
   }
 
   if (buildData.dataSources) {

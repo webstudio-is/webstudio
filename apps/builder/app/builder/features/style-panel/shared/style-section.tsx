@@ -36,12 +36,10 @@ export const getDots = (styles: ComputedStyleDecl[]) => {
 export const StyleSection = (props: {
   label: string;
   properties: CssProperty[];
-  // @todo remove to keep sections consistent
-  fullWidth?: boolean;
   suffix?: ReactNode;
   children: ReactNode;
 }) => {
-  const { label, children, properties, fullWidth, suffix } = props;
+  const { label, children, properties, suffix } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
   const styles = useComputedStyles(properties);
   return (
@@ -54,7 +52,7 @@ export const StyleSection = (props: {
           <SectionTitleLabel>{label}</SectionTitleLabel>
         </SectionTitle>
       }
-      fullWidth={fullWidth}
+      fullWidth
     >
       {children}
     </CollapsibleSectionRoot>

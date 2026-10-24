@@ -1504,6 +1504,30 @@ test("uploads assets with one retry and aggregated failures", async () => {
   expect(fetch).toHaveBeenCalledTimes(4);
 });
 
+test("preserves a single asset upload permission error", async () => {
+  const asset = createImageAssetFixture({ name: "image.png" });
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () =>
+      Response.json(
+        { errors: "Authorization token does not have edit permission" },
+        { status: 403 }
+      )
+    )
+  );
+
+  await expect(
+    uploadAssets({
+      assets: [asset],
+      ...apiParams,
+      readAssetData: async () => new Blob(["image"]),
+    })
+  ).rejects.toMatchObject({
+    message: expect.stringContaining("Failed to upload assets: image.png"),
+    cause: expect.objectContaining({ code: "FORBIDDEN", status: 403 }),
+  });
+});
+
 test("keeps uploaded assets in input order", async () => {
   const first = createImageAssetFixture({ id: "first", name: "first.png" });
   const second = createImageAssetFixture({ id: "second", name: "second.png" });
@@ -1976,7 +2000,10 @@ test("reports recovery guidance when an asset update commit cannot be confirmed"
     async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = new URL(input.toString());
       if (init?.method === "PUT") {
-        return new Response("response failed", { status: 500 });
+        return new Response("response failed", {
+          status: 500,
+          headers: { "cf-ray": "abc123-LIS" },
+        });
       }
       if (url.pathname.endsWith("/content")) {
         return new Response('{"theme":"light"}');
@@ -1997,6 +2024,7 @@ test("reports recovery guidance when an asset update commit cannot be confirmed"
     })
   ).rejects.toMatchObject({
     code: "ASSET_UPDATE_COMMIT_UNCERTAIN",
+    cause: expect.objectContaining({ requestId: "abc123-LIS" }),
     message: expect.stringContaining(
       "Read the current asset and download its content"
     ),
@@ -2327,9 +2355,16 @@ test("imports project bundle through staged upload", async () => {
   expect(JSON.stringify(trpcBody)).not.toContain("largeContent");
 });
 
-test.each([undefined, "source-folder"])(
-  "imports assets from folder %s and preserves their final placement",
-  async (folderId) => {
+test.each(
+  [true, false].flatMap((supportsStructuredImportErrors) =>
+    [undefined, "source-folder"].map((folderId) => ({
+      folderId,
+      supportsStructuredImportErrors,
+    }))
+  )
+)(
+  "imports assets from folder $folderId (structured errors: $supportsStructuredImportErrors)",
+  async ({ folderId, supportsStructuredImportErrors }) => {
     const asset = createImageAssetFixture({ name: "image.png", folderId });
     const assetFolders =
       folderId === undefined
@@ -2363,7 +2398,17 @@ test.each([undefined, "source-folder"])(
         url.pathname === "/trpc/build.checkProjectBuildPermission"
       ) {
         response.writeHead(200, { "content-type": "application/json" });
-        response.end(JSON.stringify([{ result: { data: undefined } }]));
+        response.end(
+          JSON.stringify([
+            {
+              result: {
+                data: supportsStructuredImportErrors
+                  ? { supportsStructuredImportErrors: true }
+                  : undefined,
+              },
+            },
+          ])
+        );
         return;
       }
 
@@ -2426,12 +2471,16 @@ test.each([undefined, "source-folder"])(
         response.writeHead(200, { "content-type": "application/json" });
         response.end(
           JSON.stringify([
-            importAttempts === 1
+            supportsStructuredImportErrors && importAttempts === 1
               ? {
                   error: {
-                    message: "Imported asset files are missing: image.png",
+                    message: "Import requires uploaded files",
                     code: -32603,
-                    data: { code: "INTERNAL_SERVER_ERROR" },
+                    data: {
+                      code: "INTERNAL_SERVER_ERROR",
+                      webstudioCode: "MISSING_IMPORTED_ASSET_FILES",
+                      missingAssetNames: ["image.png"],
+                    },
                   },
                 }
               : { result: { data: { version: 2 } } },
@@ -2486,7 +2535,13 @@ test.each([undefined, "source-folder"])(
     }
 
     expect(calls).toContain("GET /trpc/build.checkProjectBuildPermission");
-    expect(importAttempts).toBe(2);
+    if (!supportsStructuredImportErrors) {
+      expect(calls.indexOf("POST /rest/assets/uploads/image.png")).toBeLessThan(
+        calls.indexOf("POST /trpc/build.importProjectBundle")
+      );
+    }
+    const expectedImportAttempts = supportsStructuredImportErrors ? 2 : 1;
+    expect(importAttempts).toBe(expectedImportAttempts);
     expect(uploadAttempts).toBe(1);
     expect(
       uploadUrls.map((url) => new URL(url).searchParams.get("folderId"))
@@ -2497,19 +2552,20 @@ test.each([undefined, "source-folder"])(
     const importedBundles = Array.from(uploadChunks.values(), (chunks) =>
       JSON.parse(Buffer.concat(chunks).toString("utf8"))
     );
-    expect(importedBundles.map((bundle) => bundle.assetFolders)).toEqual([
-      assetFolders,
-      assetFolders,
-    ]);
+    expect(importedBundles.map((bundle) => bundle.assetFolders)).toEqual(
+      Array.from({ length: expectedImportAttempts }, () => assetFolders)
+    );
     expect(importedBundles.map((bundle) => bundle.assets)).toEqual([
-      [asset],
+      ...(supportsStructuredImportErrors ? [[asset]] : []),
       [{ ...asset, name: "image_destination.png" }],
     ]);
     expect(uploadUrls.every((url) => url.includes("assetId=") === false)).toBe(
       true
     );
-    expect(uploadOffsets.size).toBe(2);
-    expect(importAttemptMessages).toEqual(["attempt", "attempt"]);
+    expect(uploadOffsets.size).toBe(expectedImportAttempts);
+    expect(importAttemptMessages).toEqual(
+      Array.from({ length: expectedImportAttempts }, () => "attempt")
+    );
     expect(missingAssetMessages).toEqual([]);
     expect(uploadAssetMessages).toEqual(["image.png"]);
   }

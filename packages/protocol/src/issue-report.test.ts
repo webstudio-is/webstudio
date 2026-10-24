@@ -115,6 +115,33 @@ describe("issue report contract", () => {
       })
     ).toThrow();
   });
+
+  test("accepts only safe IDs for recent targeted tools", () => {
+    const recentTarget = {
+      tool: "screenshot",
+      entityIds: [{ field: "pageId", id: "page-123" }],
+    };
+    expect(
+      issueReportInput.parse({
+        ...report,
+        runtime: { ...report.runtime, recentTargets: [recentTarget] },
+      }).runtime?.recentTargets
+    ).toEqual([recentTarget]);
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...report.runtime,
+          recentTargets: [
+            {
+              ...recentTarget,
+              path: "/private-page?authToken=secret",
+            },
+          ],
+        },
+      })
+    ).toThrow();
+  });
   test("accepts a complete anonymous LLM-authored report", () => {
     expect(issueReportInput.parse(report)).toEqual(report);
   });
@@ -140,6 +167,8 @@ describe("issue report contract", () => {
   test("accepts bounded response and browser diagnostics but no raw payloads", () => {
     const failure = {
       ...report.runtime.recentFailure,
+      errorType: "AssetRevisionConflictError",
+      requestId: "abc123-LIS",
       response: { format: "json", envelope: "result", batchSize: 1 },
       browser: {
         exitSignal: "SIGABRT",
@@ -158,6 +187,15 @@ describe("issue report contract", () => {
         runtime: {
           ...report.runtime,
           recentFailure: { ...failure, responseBody: "private content" },
+        },
+      })
+    ).toThrow();
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...report.runtime,
+          recentFailure: { ...failure, requestId: "https://private.example" },
         },
       })
     ).toThrow();

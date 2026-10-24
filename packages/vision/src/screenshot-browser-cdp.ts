@@ -133,6 +133,7 @@ export type BrowserScreenshotTimings = {
 };
 
 export type BrowserScreenshotDependencies = {
+  platform: NodeJS.Platform;
   spawnBrowser: (file: string, args: readonly string[]) => BrowserProcess;
   readFile: typeof readFile;
   writeFile: typeof writeFile;
@@ -144,6 +145,7 @@ export type BrowserScreenshotDependencies = {
 
 export const defaultBrowserScreenshotDependencies: BrowserScreenshotDependencies =
   {
+    platform: process.platform,
     spawnBrowser(file, args) {
       return spawn(file, [...args], { stdio: ["ignore", "ignore", "pipe"] });
     },
@@ -432,6 +434,14 @@ type NavigationResult = {
   loaderId?: string;
 };
 
+const getExecutionContextId = (params: unknown) =>
+  typeof params === "object" &&
+  params !== null &&
+  "executionContextId" in params &&
+  typeof params.executionContextId === "number"
+    ? params.executionContextId
+    : undefined;
+
 const navigateAndWaitForLifecycle = async (
   cdp: CdpSession,
   waitUntil: ScreenshotWaitUntil,
@@ -473,7 +483,11 @@ const navigateAndWaitForLifecycle = async (
   });
   try {
     navigation = await navigate();
-    if (navigation.errorText !== undefined || waitUntil === "commit") {
+    if (
+      navigation.errorText !== undefined ||
+      navigation.loaderId === undefined ||
+      waitUntil === "commit"
+    ) {
       return navigation;
     }
     if (pendingEvents.some(matchesNavigation)) {
@@ -687,12 +701,14 @@ const createBrowserLaunchArgs = ({
   height,
   uid,
   disableSandbox,
+  disableDevShmUsage,
 }: {
   userDataDir: string;
   width: number;
   height: number;
   uid?: number;
   disableSandbox?: boolean;
+  disableDevShmUsage?: boolean;
 }) => [
   "--headless=new",
   "--disable-gpu",
@@ -705,6 +721,7 @@ const createBrowserLaunchArgs = ({
   `--window-size=${width},${height}`,
   "--no-first-run",
   "--no-default-browser-check",
+  ...(disableDevShmUsage === true ? ["--disable-dev-shm-usage"] : []),
   ...(uid === 0 || disableSandbox === true ? ["--no-sandbox"] : []),
   "about:blank",
 ];
@@ -773,6 +790,7 @@ export type BrowserScreenshotNavigation = {
   mimeType?: string;
   redirects: string[];
   documentReadyState: string;
+  javascriptErrorPresent?: boolean;
   pageMetadata?: BrowserScreenshotPageMetadata;
   layoutStable: boolean;
 };
@@ -1495,7 +1513,8 @@ const removeBrowserProfile = async (
 
 const startBrowserRuntimeOnce = async (
   options: BrowserScreenshotOptions,
-  dependencies: BrowserScreenshotDependencies
+  dependencies: BrowserScreenshotDependencies,
+  disableDevShmUsage = false
 ): Promise<BrowserRuntime> => {
   const startupTimeout = options.startupTimeout ?? options.timeout;
   const userDataDir = await dependencies.mkdtemp(
@@ -1511,6 +1530,7 @@ const startBrowserRuntimeOnce = async (
         height: options.height,
         uid: options.uid,
         disableSandbox: options.disableSandbox,
+        disableDevShmUsage,
       })
     );
   } catch (error) {
@@ -1620,7 +1640,11 @@ const startBrowserRuntime = async (
     }
   }
   try {
-    return await startBrowserRuntimeOnce(options, dependencies);
+    return await startBrowserRuntimeOnce(
+      options,
+      dependencies,
+      dependencies.platform === "linux"
+    );
   } catch (error) {
     throw new BrowserStartupError(
       error instanceof Error ? error.message : String(error),
@@ -1695,6 +1719,64 @@ const capturePageWithBrowserRuntime = async (
             mimeType?: string;
           }
         >();
+        let javascriptErrorPresent = false;
+        let navigationFrameId: string | undefined;
+        let navigationExecutionContextFrames: Map<number, string> | undefined;
+        let navigationJavascriptErrorContextIds = new Set<number>();
+        let activeExecutionContextIds = new Set<number>();
+        const recordJavascriptError = (params: unknown) => {
+          const executionContextId = getExecutionContextId(params);
+          if (executionContextId === undefined) {
+            return;
+          }
+          if (navigationExecutionContextFrames !== undefined) {
+            navigationJavascriptErrorContextIds.add(executionContextId);
+          } else if (activeExecutionContextIds.has(executionContextId)) {
+            javascriptErrorPresent = true;
+          }
+        };
+        cdp.on("Runtime.executionContextCreated", (params) => {
+          const context = (
+            params as {
+              context?: {
+                id: number;
+                auxData?: { frameId?: string; isDefault?: boolean };
+              };
+            } | null
+          )?.context;
+          if (context?.auxData?.isDefault !== true) {
+            return;
+          }
+          const { id, auxData } = context;
+          const { frameId } = auxData;
+          if (typeof frameId !== "string") {
+            return;
+          }
+          if (navigationExecutionContextFrames !== undefined) {
+            navigationExecutionContextFrames.set(id, frameId);
+          } else if (frameId === navigationFrameId) {
+            activeExecutionContextIds.add(id);
+          }
+        });
+        cdp.on("Runtime.exceptionThrown", (params) => {
+          if (
+            typeof params === "object" &&
+            params !== null &&
+            "exceptionDetails" in params
+          ) {
+            recordJavascriptError(params.exceptionDetails);
+          }
+        });
+        cdp.on("Runtime.consoleAPICalled", (params) => {
+          if (
+            typeof params === "object" &&
+            params !== null &&
+            "type" in params &&
+            params.type === "error"
+          ) {
+            recordJavascriptError(params);
+          }
+        });
         cdp.on("Network.requestWillBeSent", (params) => {
           if (
             typeof params !== "object" ||
@@ -1755,7 +1837,6 @@ const capturePageWithBrowserRuntime = async (
           send("Page.setLifecycleEventsEnabled", { enabled: true }),
         ]);
         const targetSetupMs = Date.now() - setupStartedAt;
-        let navigationFrameId: string | undefined;
         let previousUrl: string | undefined;
         for (const [index, options] of optionsList.entries()) {
           const viewportStartedAt = Date.now();
@@ -1771,6 +1852,14 @@ const capturePageWithBrowserRuntime = async (
           );
           let navigationMs = 0;
           if (options.url !== previousUrl) {
+            const previousNavigationFrameId = navigationFrameId;
+            const previousExecutionContextIds = new Set(
+              activeExecutionContextIds
+            );
+            javascriptErrorPresent = false;
+            navigationExecutionContextFrames = new Map();
+            navigationJavascriptErrorContextIds.clear();
+            activeExecutionContextIds = new Set();
             redirectsByFrame.clear();
             documentResponsesByFrame.clear();
             const navigationStartedAt = Date.now();
@@ -1790,7 +1879,32 @@ const capturePageWithBrowserRuntime = async (
                 `Browser navigation failed: ${navigation.errorText}`
               );
             }
+            const sameDocumentNavigation =
+              navigation.loaderId === undefined &&
+              navigation.frameId !== undefined &&
+              navigation.frameId === previousNavigationFrameId;
             navigationFrameId = navigation.frameId;
+            if (sameDocumentNavigation) {
+              for (const executionContextId of previousExecutionContextIds) {
+                activeExecutionContextIds.add(executionContextId);
+              }
+            }
+            for (const [
+              executionContextId,
+              frameId,
+            ] of navigationExecutionContextFrames ?? []) {
+              if (frameId === navigationFrameId) {
+                activeExecutionContextIds.add(executionContextId);
+              }
+            }
+            for (const executionContextId of activeExecutionContextIds) {
+              if (navigationJavascriptErrorContextIds.has(executionContextId)) {
+                javascriptErrorPresent = true;
+                break;
+              }
+            }
+            navigationExecutionContextFrames = undefined;
+            navigationJavascriptErrorContextIds.clear();
             navigationMs = Date.now() - navigationStartedAt;
             previousUrl = options.url;
           } else {
@@ -2009,6 +2123,7 @@ const capturePageWithBrowserRuntime = async (
                 }),
             redirects,
             ...readiness,
+            ...(javascriptErrorPresent ? { javascriptErrorPresent: true } : {}),
           };
           if (images === undefined) {
             delete layout.images;

@@ -100,7 +100,7 @@ This expression will now show “false” meaning “turn this off” if the rel
 
 ## Related
 
-- [Data variables](variables.md) – Define and use data throughout your pages
+- [Variables](variables.md) – Define and use data throughout your pages
 - [CMS](cms.md) – Connect to external content management systems
 - [Dynamic 404 handling](cms.md#handling-dynamic-404s) – Return 404 when CMS data is missing on a dynamic page
 - [Collection](../core-components/collection.md) – Iterate over data to create dynamic lists

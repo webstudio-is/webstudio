@@ -684,6 +684,13 @@ describe("Content Block MDX compilation", () => {
       ).toThrow(
         "Dynamic MDX source candidates through resolved document references"
       );
+      expect(
+        resolvePublishedMdxAssetCandidates({
+          build,
+          artifact,
+          allowUnresolved: true,
+        }).has("block")
+      ).toBe(false);
     }
   );
 
@@ -767,6 +774,74 @@ describe("Content Block MDX compilation", () => {
         allMdxAssetIds: new Set(["article.mdx"]),
       }).get("block")
     ).toEqual(["collection.json"]);
+  });
+
+  test("allows a valid Content Block query with no matching documents", () => {
+    const build = createBuild({ sourceType: "expression" });
+    build.props[0].value = `${encodeDataVariableId("posts-data")}.data.id`;
+    build.dataSources.push({
+      type: "resource",
+      id: "posts-data",
+      scopeInstanceId: "block",
+      name: "posts",
+      resourceId: "posts",
+    });
+    build.resources.push({
+      id: "posts",
+      name: "Posts",
+      control: "system",
+      method: "post",
+      url: '"/$resources/assets"',
+      headers: [],
+      body: createStructuredAssetQueryResourceBody({
+        where: { all: [] },
+        sort: [],
+        limit: "10",
+        offset: "0",
+        output: { mode: "all", includeMetadata: true },
+        content: { mode: "none" },
+      }),
+    });
+
+    const candidates = resolvePublishedMdxAssetCandidates({
+      build,
+      artifact: { documents: [] } as unknown as ContentArtifactV1,
+    });
+    expect(candidates.get("block")).toEqual([]);
+    expect(
+      createPublishedBuildContentCompilationPlan(build, candidates)?.queries
+    ).not.toContainEqual(
+      expect.objectContaining({
+        id: expect.stringContaining("__content-block-mdx__"),
+      })
+    );
+    expect(() => resolvePublishedMdxAssetCandidates({ build })).toThrow(
+      'Content Block "block" has no finite dynamic MDX Asset candidates'
+    );
+
+    // A matching document with no src field is not an empty query result.
+    build.props[0].value = `${encodeDataVariableId("posts-data")}.data.properties.missing`;
+    expect(() =>
+      resolvePublishedMdxAssetCandidates({
+        build,
+        artifact: {
+          documents: [
+            {
+              _id: "article.mdx",
+              name: "article.mdx",
+              path: "posts/article.mdx",
+              key: "article",
+              extension: "mdx",
+              mimeType: "text/mdx",
+              size: 1,
+              properties: {},
+            },
+          ],
+        } as unknown as ContentArtifactV1,
+      })
+    ).toThrow(
+      'Content Block "block" has no finite dynamic MDX Asset candidates'
+    );
   });
 
   test("bounds a mutable project variable to the project's MDX assets", () => {

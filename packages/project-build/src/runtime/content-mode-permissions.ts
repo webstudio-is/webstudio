@@ -1,4 +1,12 @@
+import {
+  getContentModeEditableInstanceRootIds,
+  getContentModeFrontmatterBoundTargets,
+  getContentModePropEligibility,
+  type ContentModeCapabilities,
+} from "./content-mode-capabilities";
 import type { Patch } from "immer";
+import { applyBuilderNamespacePatches } from "../state/patch";
+import { mergeBuilderPatchChanges } from "./mutation";
 import equal from "fast-deep-equal";
 import { isRecord } from "../shared/type-utils";
 import {
@@ -12,22 +20,15 @@ import {
   blockComponent,
   blockTemplateComponent,
   findContentBlockBodyContainers,
-  findWritableContentBlockDocumentBindings,
   getHtmlTagsFromProps,
-  getHtmlTagFromInstance,
   isPathnamePattern,
   getStyleDeclKey,
-  type Breakpoints,
+  type AssetFolder,
   type Instance,
   type Prop,
-  type PropMeta,
   type Props,
   type StyleDecl,
   type StyleSource,
-  type StyleSourceSelections,
-  type StyleSources,
-  type Styles,
-  type WsComponentMeta,
 } from "@webstudio-is/sdk";
 
 export type ContentModePatchTransaction = {
@@ -36,22 +37,6 @@ export type ContentModePatchTransaction = {
     namespace: string;
     patches: Patch[];
   }>;
-};
-
-export type ContentModeCapabilities = {
-  editablePropIds: Set<Prop["id"]>;
-  editableInstanceIds: Set<Instance["id"]>;
-  instances: Map<Instance["id"], Instance>;
-  metas: Map<Instance["component"], WsComponentMeta>;
-  props: Props;
-  htmlTagsByInstanceId: Map<Instance["id"], string>;
-  styleSources: StyleSources;
-  styleSourceSelections: StyleSourceSelections;
-  styles: Styles;
-  breakpoints?: Breakpoints;
-  contentRootIds: Set<Instance["id"]>;
-  frontmatterBoundPropIds?: ReadonlySet<Prop["id"]>;
-  frontmatterBoundTextInstanceIds?: ReadonlySet<Instance["id"]>;
 };
 
 type ContentModeTransactionContext = {
@@ -94,6 +79,14 @@ export const isContentModePagePath = (value: unknown) =>
 const isString = (value: unknown) => typeof value === "string";
 const isOptionalString = (value: unknown) =>
   value === undefined || typeof value === "string";
+
+const isSameAssetFolder = (saved: AssetFolder, incoming: AssetFolder) =>
+  saved.id === incoming.id &&
+  saved.projectId === incoming.projectId &&
+  saved.name === incoming.name &&
+  saved.parentId === incoming.parentId &&
+  (saved.createdAt === incoming.createdAt ||
+    Date.parse(saved.createdAt) === Date.parse(incoming.createdAt));
 
 const isContentModeCustomMeta = (value: unknown) =>
   Array.isArray(value) &&
@@ -152,123 +145,6 @@ const isContentModeCustomMetaPatch = (patch: Patch) => {
   return patch.op === "replace" && typeof patch.value === "string";
 };
 
-export const getContentModePropNamesByTag = (
-  metas: Map<Instance["component"], WsComponentMeta>
-) => {
-  const propNamesByTag = new Map<string, Set<Prop["name"]>>();
-
-  for (const meta of metas.values()) {
-    const tags = Object.keys(meta.presetStyle ?? {});
-    if (tags.length === 0) {
-      continue;
-    }
-    for (const [propName, propMeta] of Object.entries(meta.props ?? {})) {
-      if (propMeta.contentMode !== true) {
-        continue;
-      }
-      for (const tag of tags) {
-        let propNames = propNamesByTag.get(tag);
-        if (propNames === undefined) {
-          propNames = new Set();
-          propNamesByTag.set(tag, propNames);
-        }
-        propNames.add(propName);
-      }
-    }
-  }
-
-  return propNamesByTag;
-};
-
-const getDefaultContentRootIds = (instances: Map<Instance["id"], Instance>) => {
-  const contentRootIds = new Set<Instance["id"]>();
-  for (const instance of instances.values()) {
-    if (instance.component === blockComponent) {
-      const bodies = findContentBlockBodyContainers({
-        blockInstance: instance,
-        instances,
-      });
-      if (bodies.length === 1) {
-        contentRootIds.add(bodies[0].id);
-      } else if (bodies.length === 0) {
-        contentRootIds.add(instance.id);
-      }
-    }
-  }
-  return contentRootIds;
-};
-
-export const getContentModeFrontmatterBoundTargets = ({
-  instances,
-  props,
-}: {
-  instances: Map<Instance["id"], Instance>;
-  props: Props;
-}) => {
-  const bindings = findWritableContentBlockDocumentBindings({
-    instances,
-    props,
-  });
-  const propIds = new Set(bindings.props.map(({ propId }) => propId));
-  const textInstanceIds = new Set<Instance["id"]>();
-  for (const { instanceId, childIndex } of bindings.children) {
-    if (childIndex === 0 && instances.get(instanceId)?.children.length === 1) {
-      textInstanceIds.add(instanceId);
-    }
-  }
-  return { propIds, textInstanceIds };
-};
-
-export const getContentModeEditableInstanceIds = ({
-  contentRootIds,
-  instances,
-}: {
-  contentRootIds?: Set<Instance["id"]>;
-  instances: Map<Instance["id"], Instance>;
-}) => {
-  contentRootIds ??= getDefaultContentRootIds(instances);
-  return new Set(
-    getContentModeEditableInstanceRootIds({
-      contentRootIds,
-      instances,
-    }).keys()
-  );
-};
-
-const getContentModeEditableInstanceRootIds = ({
-  contentRootIds,
-  instances,
-}: {
-  contentRootIds: Set<Instance["id"]>;
-  instances: Map<Instance["id"], Instance>;
-}) => {
-  const editableInstanceIds = new Set<Instance["id"]>();
-  const rootIdsByInstanceId = new Map<Instance["id"], Instance["id"]>();
-  const visit = (instanceId: Instance["id"], rootId: Instance["id"]) => {
-    if (editableInstanceIds.has(instanceId)) {
-      return;
-    }
-    const instance = instances.get(instanceId);
-    if (
-      instance === undefined ||
-      instance.component === blockTemplateComponent
-    ) {
-      return;
-    }
-    editableInstanceIds.add(instanceId);
-    rootIdsByInstanceId.set(instanceId, rootId);
-    for (const child of instance.children ?? []) {
-      if (child.type === "id") {
-        visit(child.value, rootId);
-      }
-    }
-  };
-  for (const rootId of contentRootIds) {
-    visit(rootId, rootId);
-  }
-  return rootIdsByInstanceId;
-};
-
 const getBlockTemplateChildIdsByInstanceId = (
   instances: Map<Instance["id"], Instance>
 ) => {
@@ -315,14 +191,6 @@ export const isContentModeTemplateDefaultPropType = (
       return false;
   }
 };
-
-const contentModeNonCopyablePropTypes = new Set<Prop["type"]>([
-  "resource",
-  "parameter",
-  "expression",
-  "action",
-  "animationAction",
-]);
 
 const getMatchingTemplateInstanceIds = ({
   sourceId,
@@ -506,225 +374,18 @@ const getCopiedTemplateProps = ({
   return copiedProps;
 };
 
-const getInstancePropMetas = ({
-  capabilities,
-  instance,
-  propName,
-}: {
-  capabilities: ContentModeCapabilities;
-  instance: Instance;
-  propName: Prop["name"];
-}) => {
-  const propMetas: PropMeta[] = [];
-  const propMeta = capabilities.metas.get(instance.component)?.props?.[
-    propName
-  ];
-  if (propMeta !== undefined) {
-    propMetas.push(propMeta);
-  }
-
-  const tag = getHtmlTagFromInstance({
-    instance,
-    metas: capabilities.metas,
-    props: capabilities.props,
-    htmlTagsByInstanceId: capabilities.htmlTagsByInstanceId,
-  });
-  if (tag === undefined) {
-    return propMetas;
-  }
-  for (const componentMeta of capabilities.metas.values()) {
-    if (Object.keys(componentMeta.presetStyle ?? {}).includes(tag) === false) {
-      continue;
-    }
-    const propMeta = componentMeta.props?.[propName];
-    if (propMeta !== undefined) {
-      propMetas.push(propMeta);
-    }
-  }
-  return propMetas;
-};
-
-export const getContentModeEditableStaticPropNames = ({
-  capabilities,
-  instance,
-}: {
-  capabilities: ContentModeCapabilities;
-  instance: Instance;
-}) => {
-  const names = new Set<string>();
-  for (const [name, propMeta] of Object.entries(
-    capabilities.metas.get(instance.component)?.props ?? {}
-  )) {
-    if (
-      propMeta.contentMode === true &&
-      (propMeta.type === "string" ||
-        propMeta.type === "number" ||
-        propMeta.type === "boolean")
-    ) {
-      names.add(name);
-    }
-  }
-  const tag = getHtmlTagFromInstance({
-    instance,
-    metas: capabilities.metas,
-    props: capabilities.props,
-    htmlTagsByInstanceId: capabilities.htmlTagsByInstanceId,
-  });
-  if (tag !== undefined) {
-    for (const name of getContentModePropNamesByTag(capabilities.metas).get(
-      tag
-    ) ?? []) {
-      if (
-        getInstancePropMetas({ capabilities, instance, propName: name }).some(
-          (propMeta) =>
-            propMeta.contentMode === true &&
-            (propMeta.type === "string" ||
-              propMeta.type === "number" ||
-              propMeta.type === "boolean")
-        )
-      ) {
-        names.add(name);
-      }
-    }
-  }
-  return names;
-};
-
-export type ContentModePropEligibility =
-  | { editable: true }
-  | {
-      editable: false;
-      reason: "unknown" | "incompatible" | "design-only";
-    };
-
-export const getContentModePropEligibility = ({
-  capabilities,
-  instance,
-  prop,
-}: {
-  capabilities: ContentModeCapabilities;
-  instance: Instance;
-  prop: Pick<Prop, "name" | "type">;
-}): ContentModePropEligibility => {
-  if (prop.type === "asset") {
-    return { editable: true };
-  }
-  const propMetas = getInstancePropMetas({
-    capabilities,
-    instance,
-    propName: prop.name,
-  });
-  const contentModePropMeta = propMetas.find(
-    (propMeta) => propMeta.contentMode === true
-  );
-  if (contentModePropMeta === undefined) {
-    return {
-      editable: false,
-      reason: propMetas.length === 0 ? "unknown" : "design-only",
-    };
-  }
-  if (contentModePropMeta.type !== prop.type) {
-    return { editable: false, reason: "incompatible" };
-  }
-  return { editable: true };
-};
-
-const isContentModePropForInstance = ({
-  capabilities,
-  instance,
-  prop,
-}: {
-  capabilities: ContentModeCapabilities;
-  instance: Instance;
-  prop: Prop;
-}) => getContentModePropEligibility({ capabilities, instance, prop }).editable;
-
-export const isContentModeCopyableProp = ({
-  capabilities,
-  prop,
-}: {
-  capabilities: ContentModeCapabilities;
-  prop: Prop;
-}) =>
-  capabilities.editablePropIds.has(prop.id) &&
-  contentModeNonCopyablePropTypes.has(prop.type) === false;
-
-export const getContentModeCapabilities = ({
-  instances,
-  metas,
-  props,
-  styleSources,
-  styleSourceSelections = new Map(),
-  styles = new Map(),
-  breakpoints,
-  contentRootIds: providedContentRootIds,
-}: {
-  instances: Map<Instance["id"], Instance>;
-  metas: Map<Instance["component"], WsComponentMeta>;
-  props: Props;
-  styleSources: StyleSources;
-  styleSourceSelections?: StyleSourceSelections;
-  styles?: Styles;
-  breakpoints?: Breakpoints;
-  contentRootIds?: Set<Instance["id"]>;
-}): ContentModeCapabilities => {
-  const editablePropIds = new Set<Prop["id"]>();
-  const contentRootIds = new Set<Instance["id"]>();
-  for (const instanceId of providedContentRootIds ??
-    getDefaultContentRootIds(instances)) {
-    if (instances.has(instanceId)) {
-      contentRootIds.add(instanceId);
-    }
-  }
-  const editableInstanceIds = getContentModeEditableInstanceIds({
-    contentRootIds,
-    instances,
-  });
-  const frontmatterTargets = getContentModeFrontmatterBoundTargets({
-    instances,
-    props,
-  });
-  const capabilities = {
-    editablePropIds,
-    editableInstanceIds,
-    instances,
-    metas,
-    props,
-    htmlTagsByInstanceId: getHtmlTagsFromProps(props),
-    styleSources,
-    styleSourceSelections,
-    styles,
-    breakpoints,
-    contentRootIds,
-    frontmatterBoundPropIds: frontmatterTargets.propIds,
-    frontmatterBoundTextInstanceIds: frontmatterTargets.textInstanceIds,
-  };
-  for (const prop of props.values()) {
-    const instance = instances.get(prop.instanceId);
-    if (instance === undefined) {
-      continue;
-    }
-    if (editableInstanceIds.has(instance.id) === false) {
-      continue;
-    }
-    if (isContentModePropForInstance({ capabilities, instance, prop })) {
-      editablePropIds.add(prop.id);
-    }
-  }
-
-  return capabilities;
-};
-
-const isContentModePropPatchValue = ({
+const isContentModePropTransition = ({
   capabilities,
   editableInstanceIds,
   expectedPropId,
   value,
+  nextProps = capabilities.props,
 }: {
   capabilities: ContentModeCapabilities;
   editableInstanceIds: ReadonlySet<Instance["id"]>;
   expectedPropId: Prop["id"];
   value: unknown;
+  nextProps?: Props;
 }) => {
   const parsedProp = prop.safeParse(value);
   if (parsedProp.success === false) {
@@ -734,7 +395,6 @@ const isContentModePropPatchValue = ({
   if (parsedProp.data.id !== expectedPropId) {
     return false;
   }
-
   const instance = capabilities.instances.get(parsedProp.data.instanceId);
   if (instance === undefined) {
     return false;
@@ -743,85 +403,120 @@ const isContentModePropPatchValue = ({
     return false;
   }
 
-  return isContentModePropForInstance({
+  const existingProp = capabilities.props.get(expectedPropId);
+  if (
+    existingProp === undefined &&
+    Array.from(nextProps.values()).some(
+      (prop) =>
+        prop?.instanceId === instance.id &&
+        prop.name === parsedProp.data.name &&
+        prop.id !== expectedPropId
+    )
+  ) {
+    return false;
+  }
+  if (existingProp !== undefined) {
+    if (
+      existingProp.instanceId !== instance.id ||
+      existingProp.name !== parsedProp.data.name ||
+      (capabilities.editablePropIds.has(expectedPropId) === false &&
+        getContentModePropEligibility({
+          capabilities,
+          instance,
+          prop: existingProp,
+        }).editable === false &&
+        !(
+          (existingProp.type === "number" || existingProp.type === "asset") &&
+          parsedProp.data.type === "asset"
+        ))
+    ) {
+      return false;
+    }
+  }
+
+  return getContentModePropEligibility({
     capabilities,
     instance,
     prop: parsedProp.data,
-  });
+    props: nextProps,
+  }).editable;
 };
 
-const validatePropPatch = (
+const validatePropPatches = (
   context: ContentModeTransactionContext,
-  patch: Patch
+  patches: Patch[]
 ): ContentModeValidationResult => {
   const { capabilities } = context;
-  const [propId] = patch.path;
-  if (typeof propId !== "string") {
+  const copiedPropIds = new Set<string>();
+  let nextProps: Props;
+  try {
+    nextProps = applyBuilderNamespacePatches(capabilities.props, patches);
+  } catch {
     return {
       success: false,
-      error: "Prop patch is not editable in content mode.",
+      error: 'Namespace "props" is not editable in content mode.',
     };
   }
-
-  if (patch.op === "remove" && patch.path.length === 1) {
-    const existingProp = capabilities.props.get(propId);
-    if (
-      existingProp &&
-      context.removedEditableInstanceIds.has(existingProp.instanceId)
-    ) {
-      capabilities.editablePropIds.delete(propId);
-      capabilities.props.delete(propId);
-      return { success: true };
+  for (const patch of patches) {
+    const [propId, field] = patch.path;
+    if (typeof propId !== "string") {
+      return {
+        success: false,
+        error: "Prop patch is not editable in content mode.",
+      };
     }
-  }
-
-  if (capabilities.editablePropIds.has(propId)) {
-    if (patch.op === "remove" && patch.path.length === 1) {
-      capabilities.editablePropIds.delete(propId);
-      capabilities.props.delete(propId);
-      return { success: true };
-    }
-    const existingProp = capabilities.props.get(propId);
-    if (
-      existingProp &&
+    const before = capabilities.props.get(propId);
+    const after = nextProps.get(propId);
+    const removedWithInstance =
+      before !== undefined &&
+      context.removedEditableInstanceIds.has(before.instanceId);
+    const removesProp = patch.path.length === 1 && patch.op === "remove";
+    const replacesProp =
+      patch.path.length === 1 && (patch.op === "add" || patch.op === "replace");
+    const changesValue =
       patch.path.length === 2 &&
-      patch.path[1] === "value" &&
+      field === "value" &&
       (patch.op === "add" || patch.op === "replace") &&
-      prop.safeParse({ ...existingProp, value: patch.value }).success
+      capabilities.editablePropIds.has(propId);
+    const copiedProp = context.copiedTemplateProps.get(patch);
+    if (
+      after === undefined &&
+      removesProp &&
+      (removedWithInstance || capabilities.editablePropIds.has(propId))
     ) {
-      capabilities.props.set(propId, {
-        ...existingProp,
-        value: patch.value,
-      } as Prop);
-      return { success: true };
+      capabilities.editablePropIds.delete(propId);
+      continue;
     }
+    if (
+      after !== undefined &&
+      (replacesProp || changesValue) &&
+      isContentModePropTransition({
+        capabilities,
+        editableInstanceIds: context.editableInstanceIds,
+        expectedPropId: propId,
+        value: after,
+        nextProps,
+      })
+    ) {
+      capabilities.editablePropIds.add(propId);
+      continue;
+    }
+    if (
+      before === undefined &&
+      copiedProp !== undefined &&
+      equal(copiedProp, after) &&
+      copiedPropIds.has(propId) === false
+    ) {
+      copiedPropIds.add(propId);
+      continue;
+    }
+    return {
+      success: false,
+      error: `Prop "${propId}" is not editable in content mode.`,
+    };
   }
-
-  if (
-    patch.path.length === 1 &&
-    (patch.op === "add" || patch.op === "replace") &&
-    isContentModePropPatchValue({
-      capabilities,
-      editableInstanceIds: context.editableInstanceIds,
-      expectedPropId: propId,
-      value: patch.value,
-    })
-  ) {
-    capabilities.editablePropIds.add(propId);
-    capabilities.props.set(propId, patch.value as Prop);
-    return { success: true };
-  }
-
-  const copiedProp = context.copiedTemplateProps.get(patch);
-  if (copiedProp !== undefined && capabilities.props.has(propId) === false) {
-    capabilities.props.set(propId, copiedProp);
-    return { success: true };
-  }
-
-  return {
-    success: false,
-    error: `Prop "${propId}" is not editable in content mode.`,
-  };
+  capabilities.props = nextProps;
+  return { success: true };
 };
 
 const isContentModePagePatch = (patch: Patch) => {
@@ -958,6 +653,7 @@ const hasSameInstanceMetadata = (left: Instance, right: Instance) =>
   left.id === right.id &&
   left.component === right.component &&
   left.tag === right.tag &&
+  left.name === right.name &&
   left.label === right.label;
 
 const hasOnlyKeys = (value: Record<string, unknown>, keys: Set<string>) => {
@@ -1247,7 +943,6 @@ const validateStyleSourceSelectionPatch = (
     patch.path.length === 1 &&
     context.removedEditableInstanceIds.has(instanceId)
   ) {
-    capabilities.styleSourceSelections.delete(instanceId);
     return { success: true };
   }
 
@@ -1309,7 +1004,6 @@ const validateStyleSourceSelectionPatch = (
     }
   }
 
-  capabilities.styleSourceSelections.set(instanceId, selection.data);
   return { success: true };
 };
 
@@ -1435,7 +1129,7 @@ export const contentModePermissionsTesting = {
   isContentModePageMetaValue,
   hasOnlyContentModePageMeta,
   hasOnlyAddedInstancesInSubtree,
-  isContentModePropPatchValue,
+  isContentModePropTransition,
   validateEditableInstanceReferences,
 };
 
@@ -1454,7 +1148,6 @@ const validateStyleSourcePatch = (
       styleSource?.type === "local" &&
       context.removedLocalStyleSourceIds.has(styleSourceId)
     ) {
-      context.capabilities.styleSources.delete(styleSourceId);
       return { success: true };
     }
   }
@@ -1470,7 +1163,10 @@ const validateStyleSourcePatch = (
     };
   }
 
-  if (context.capabilities.styleSources.has(styleSourceId)) {
+  if (
+    context.capabilities.styleSources.has(styleSourceId) ||
+    context.addedLocalStyleSourceIds.has(styleSourceId)
+  ) {
     return {
       success: false,
       error: "Style source patch is not editable in content mode.",
@@ -1490,7 +1186,6 @@ const validateStyleSourcePatch = (
   }
 
   context.addedLocalStyleSourceIds.add(styleSourceId);
-  context.capabilities.styleSources.set(styleSourceId, parsedStyleSource.data);
   return { success: true };
 };
 
@@ -1588,7 +1283,6 @@ const validateStylePatch = (
       styleDecl &&
       context.removedLocalStyleSourceIds.has(styleDecl.styleSourceId)
     ) {
-      context.capabilities.styles.delete(styleDeclKey);
       return { success: true };
     }
   }
@@ -1631,7 +1325,39 @@ const validateStylePatch = (
   }
 
   context.styledLocalStyleSourceIds.add(parsedStyleDecl.data.styleSourceId);
-  context.capabilities.styles.set(styleDeclKey, parsedStyleDecl.data);
+  return { success: true };
+};
+
+const validateMapChange = <
+  Namespace extends "styleSourceSelections" | "styleSources" | "styles",
+>(
+  context: ContentModeTransactionContext,
+  namespace: Namespace,
+  patches: Patch[],
+  validate: (
+    context: ContentModeTransactionContext,
+    patch: Patch
+  ) => ContentModeValidationResult
+): ContentModeValidationResult => {
+  let next;
+  try {
+    next = applyBuilderNamespacePatches(
+      context.capabilities[namespace],
+      patches
+    );
+  } catch {
+    return {
+      success: false,
+      error: `Namespace "${namespace}" is not editable in content mode.`,
+    };
+  }
+  for (const patch of patches) {
+    const result = validate(context, patch);
+    if (result.success === false) {
+      return result;
+    }
+  }
+  context.capabilities[namespace] = next;
   return { success: true };
 };
 
@@ -1650,46 +1376,63 @@ const validatePatchChange = (
   }
 
   if (change.namespace === "props") {
-    for (const patch of change.patches) {
-      const result = validatePropPatch(context, patch);
-      if (result.success === false) {
-        return result;
-      }
-    }
-    return { success: true };
+    return validatePropPatches(context, change.patches);
   }
-
   if (change.namespace === "styleSourceSelections") {
-    for (const patch of change.patches) {
-      const result = validateStyleSourceSelectionPatch(context, patch);
-      if (result.success === false) {
-        return result;
-      }
-    }
-    return { success: true };
+    return validateMapChange(
+      context,
+      change.namespace,
+      change.patches,
+      validateStyleSourceSelectionPatch
+    );
   }
-
   if (change.namespace === "styleSources") {
-    for (const patch of change.patches) {
-      const result = validateStyleSourcePatch(context, patch);
-      if (result.success === false) {
-        return result;
-      }
-    }
-    return { success: true };
+    return validateMapChange(
+      context,
+      change.namespace,
+      change.patches,
+      validateStyleSourcePatch
+    );
   }
-
   if (change.namespace === "styles") {
-    for (const patch of change.patches) {
-      const result = validateStylePatch(context, patch);
-      if (result.success === false) {
-        return result;
-      }
-    }
+    return validateMapChange(
+      context,
+      change.namespace,
+      change.patches,
+      validateStylePatch
+    );
+  }
+  if (change.namespace === "assets") {
     return { success: true };
   }
-
-  if (change.namespace === "assets") {
+  if (change.namespace === "assetFolders") {
+    const folders = context.capabilities.assetFolders;
+    if (folders === undefined) {
+      return {
+        success: false,
+        error: "Asset folder change is not editable in content mode.",
+      };
+    }
+    for (const patch of change.patches) {
+      const id = patch.path[0];
+      const savedFolder = typeof id === "string" ? folders.get(id) : undefined;
+      if (
+        patch.op !== "add" ||
+        patch.path.length !== 1 ||
+        typeof id !== "string" ||
+        typeof patch.value !== "object" ||
+        patch.value === null ||
+        (patch.value as { id?: unknown }).id !== id ||
+        (savedFolder !== undefined &&
+          isSameAssetFolder(savedFolder, patch.value as AssetFolder) === false)
+      ) {
+        return {
+          success: false,
+          error: "Asset folder change is not editable in content mode.",
+        };
+      }
+      folders.set(id, patch.value as AssetFolder);
+    }
     return { success: true };
   }
 
@@ -1703,116 +1446,58 @@ const validatePatchChange = (
   };
 };
 
-const applyValidatedInstancePatch = (
-  capabilities: ContentModeCapabilities,
-  patch: Patch
+const preservesNonTextChildren = (
+  before: Instance["children"] | undefined,
+  after: Instance["children"] | undefined
 ) => {
-  const [instanceId, field, index] = patch.path;
-  if (patch.op === "remove") {
-    if (patch.path.length === 1) {
-      capabilities.instances.delete(instanceId as Instance["id"]);
-      capabilities.contentRootIds.delete(instanceId as Instance["id"]);
-      return;
-    }
-    if (
-      field === "children" &&
-      typeof index === "number" &&
-      patch.path.length === 3
-    ) {
-      const instance = capabilities.instances.get(instanceId as Instance["id"]);
-      if (instance) {
-        instance.children ??= [];
-        instance.children.splice(index, 1);
-      }
-    }
-    return;
+  if (before === undefined || after === undefined) {
+    return false;
   }
-  if (patch.op === "add") {
-    if (patch.path.length === 1) {
-      capabilities.instances.set(
-        instanceId as Instance["id"],
-        patch.value as Instance
-      );
-      return;
-    }
-    if (
-      field === "children" &&
-      typeof index === "number" &&
-      patch.path.length === 3
-    ) {
-      const instance = capabilities.instances.get(instanceId as Instance["id"]);
-      if (instance) {
-        instance.children ??= [];
-        instance.children.splice(index, 0, patch.value);
-      }
-    }
-    if (field === "children" && patch.path.length === 2) {
-      const instance = capabilities.instances.get(instanceId as Instance["id"]);
-      if (instance) {
-        instance.children = patch.value;
-      }
-    }
-    return;
-  }
-  if (
-    patch.op === "replace" &&
-    patch.path.length === 1 &&
-    typeof instanceId === "string"
-  ) {
-    capabilities.instances.set(instanceId, patch.value as Instance);
-    return;
-  }
-  if (
-    patch.op === "replace" &&
-    field === "children" &&
-    typeof index === "number" &&
-    patch.path.length === 3
-  ) {
-    const instance = capabilities.instances.get(instanceId as Instance["id"]);
-    if (instance) {
-      instance.children ??= [];
-      instance.children[index] = patch.value;
-    }
-    return;
-  }
-  if (
-    patch.op === "replace" &&
-    field === "children" &&
-    patch.path.length === 2
-  ) {
-    const instance = capabilities.instances.get(instanceId as Instance["id"]);
-    if (instance) {
-      instance.children = patch.value;
-    }
-  }
+  const keepNonText = (children: typeof before) =>
+    children.map((child) => (child.type === "text" ? "text" : child));
+  return (
+    (before.every((child) => child.type === "text") &&
+      after.every((child) => child.type === "text")) ||
+    equal(keepNonText(before), keepNonText(after))
+  );
 };
 
 export const applyContentModeTransaction = ({
   capabilities,
   transaction,
+  scope = "content",
 }: {
   capabilities: ContentModeCapabilities;
   transaction: ContentModePatchTransaction;
+  scope?: "content" | "text-and-props";
 }): AppliedContentModeTransactionResult => {
+  if (
+    scope === "text-and-props" &&
+    transaction.payload.some(
+      ({ namespace }) => namespace !== "instances" && namespace !== "props"
+    )
+  ) {
+    return {
+      success: false,
+      error: "You don't have permission to build this project.",
+    };
+  }
+  if (transaction.payload.every(({ patches }) => patches.length === 0)) {
+    return { success: true, capabilities };
+  }
+  transaction = {
+    ...transaction,
+    payload: mergeBuilderPatchChanges(transaction.payload),
+  };
   const transactionCapabilities: ContentModeCapabilities = {
     ...capabilities,
+    assetFolders:
+      capabilities.assetFolders === undefined
+        ? undefined
+        : new Map(capabilities.assetFolders),
     editablePropIds: new Set(capabilities.editablePropIds),
     editableInstanceIds: new Set(capabilities.editableInstanceIds),
-    instances: new Map(
-      Array.from(capabilities.instances, ([id, instance]) => [
-        id,
-        structuredClone(instance),
-      ])
-    ),
-    props: new Map(capabilities.props),
     htmlTagsByInstanceId: getHtmlTagsFromProps(capabilities.props),
-    styleSources: new Map(capabilities.styleSources),
-    styleSourceSelections: new Map(capabilities.styleSourceSelections),
-    styles: new Map(capabilities.styles),
-    breakpoints:
-      capabilities.breakpoints === undefined
-        ? undefined
-        : new Map(capabilities.breakpoints),
     contentRootIds: new Set(capabilities.contentRootIds),
   };
   const initialEditableInstanceRootIds = getContentModeEditableInstanceRootIds({
@@ -1854,6 +1539,12 @@ export const applyContentModeTransaction = ({
         patch.path.length === 1 &&
         typeof patch.path[0] === "string"
       ) {
+        if (context.addedInstanceIds.has(patch.path[0])) {
+          return {
+            success: false,
+            error: "Instance patch is not editable in content mode.",
+          };
+        }
         context.addedInstanceIds.add(patch.path[0]);
       }
       if (
@@ -1865,7 +1556,17 @@ export const applyContentModeTransaction = ({
         context.removedEditableInstanceIds.add(patch.path[0]);
         addRemovedInstanceLocalStyleSources(context, patch.path[0]);
       }
-      applyValidatedInstancePatch(transactionCapabilities, patch);
+    }
+    try {
+      transactionCapabilities.instances = applyBuilderNamespacePatches(
+        transactionCapabilities.instances,
+        change.patches
+      );
+    } catch {
+      return {
+        success: false,
+        error: "Instance patch is not editable in content mode.",
+      };
     }
   }
 
@@ -1988,6 +1689,26 @@ export const applyContentModeTransaction = ({
     return styledLocalStyleSourceResult;
   }
 
+  if (
+    scope === "text-and-props" &&
+    transaction.payload.some(
+      ({ namespace, patches }) =>
+        namespace === "instances" &&
+        patches.some(
+          ({ path }) =>
+            typeof path[0] !== "string" ||
+            !preservesNonTextChildren(
+              capabilities.instances.get(path[0])?.children,
+              transactionCapabilities.instances.get(path[0])?.children
+            )
+        )
+    )
+  ) {
+    return {
+      success: false,
+      error: "You don't have permission to build this project.",
+    };
+  }
   return { success: true, capabilities: transactionCapabilities };
 };
 

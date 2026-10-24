@@ -51,7 +51,7 @@ const addManagedContactPage = (): EvaluationProject => {
   const instances = [
     {
       id: formId,
-      component: "Form",
+      component: "ResourceForm",
       children: [
         { type: "id" as const, value: "form-content" },
         { type: "id" as const, value: "form-success" },
@@ -199,8 +199,8 @@ const addManagedContactPage = (): EvaluationProject => {
         name: "action",
         type: "json",
         value: [
-          { dataSourceId: projectDataSourceId, enabled: true },
-          { dataSourceId: visitorDataSourceId, enabled: true },
+          { dataSourceId: projectDataSourceId },
+          { dataSourceId: visitorDataSourceId },
         ],
       },
       {
@@ -761,6 +761,31 @@ describe("high-impact fixture validation", () => {
 });
 
 describe("managed Form evaluation", () => {
+  test("checks intended Form action IDs and order despite legacy keys", () => {
+    const project = addManagedContactPage();
+    const action = project.props.find(
+      ({ instanceId, name }) =>
+        instanceId === "contact-form" && name === "action"
+    )!;
+    const selected = action.value as Array<{ dataSourceId: string }>;
+    action.value = selected.map((entry) => ({ ...entry, enabled: false }));
+    expect(
+      evaluateHighImpactOutcome({
+        fixture: managedFormAuthoringFixture,
+        project,
+        toolCalls: managedFormCalls(),
+      }).checks.formActionsPreserved
+    ).toBe("passed");
+    action.value = [selected[1], selected[0]];
+    expect(
+      evaluateHighImpactOutcome({
+        fixture: managedFormAuthoringFixture,
+        project,
+        toolCalls: managedFormCalls(),
+      }).checks.formActionsPreserved
+    ).toBe("failed");
+  });
+
   test("accepts contact heading text inside an inline child", () => {
     const project = addManagedContactPage();
     const heading = project.instances.find(
@@ -907,7 +932,7 @@ describe("managed Form evaluation", () => {
     const project = addManagedContactPage();
     const calls = managedFormCalls();
     const form = project.instances.find(
-      ({ component }) => component === "Form"
+      ({ component }) => component === "ResourceForm"
     )!;
     const button = project.instances.find(
       ({ component }) => component === "Button"
@@ -1098,12 +1123,12 @@ describe("Form modes evaluation", () => {
     project.instances.push(
       {
         id: "mode-contact",
-        component: "Form",
+        component: "ResourceForm",
         children: [],
       },
       {
         id: "mode-search",
-        component: "Form",
+        component: "ResourceForm",
         children: [],
       },
       {
@@ -1140,7 +1165,7 @@ describe("Form modes evaluation", () => {
         instanceId: "mode-contact",
         name: "action",
         type: "json",
-        value: [{ dataSourceId: "email-owner", enabled: true }],
+        value: [{ dataSourceId: "email-owner" }],
       },
       {
         id: "mode-search-actions",
@@ -2234,13 +2259,13 @@ describe("Form modes authoring evaluation", () => {
     instances: [
       {
         id: "contact",
-        component: "Form",
+        component: "ResourceForm",
         label: "Contact",
         children: [],
       },
       {
         id: "search",
-        component: "Form",
+        component: "ResourceForm",
         label: "Search",
         children: [],
       },
@@ -2258,7 +2283,7 @@ describe("Form modes authoring evaluation", () => {
         instanceId: "contact",
         name: "action",
         type: "json",
-        value: [{ dataSourceId: "email", enabled: true }],
+        value: [{ dataSourceId: "email" }],
       },
       {
         id: "search-action",
@@ -2295,7 +2320,7 @@ describe("Form modes authoring evaluation", () => {
   test("rejects the legacy identity and navigation with connected actions", () => {
     const invalid = project();
     invalid.instances[0].component = "WebhookForm";
-    invalid.props[1].value = [{ dataSourceId: "email", enabled: true }];
+    invalid.props[1].value = [{ dataSourceId: "email" }];
     const result = evaluateHighImpactOutcome({
       fixture: formModesAuthoringFixture,
       project: invalid,

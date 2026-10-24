@@ -294,8 +294,8 @@ const author = async () => {
       exposeAsDataSource: true,
     });
     const actions = [
-      { dataSourceId: email.dataSourceId, enabled: true },
-      { dataSourceId: http.dataSourceId, enabled: true },
+      { dataSourceId: email.dataSourceId },
+      { dataSourceId: http.dataSourceId },
     ];
     await call("update-props", {
       updates: [

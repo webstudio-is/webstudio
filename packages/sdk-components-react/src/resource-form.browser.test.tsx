@@ -3,7 +3,10 @@ import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { expect, test, vi } from "vitest";
-import { Form } from "./resource-form";
+import { ResourceForm } from "./resource-form";
+import { Input } from "./input";
+import { Textarea } from "./textarea";
+import { Select } from "./select";
 import {
   managedFormRequestParamName,
   managedFormIdFieldName,
@@ -28,14 +31,14 @@ test("a StrictMode Form submits after the effect cleanup probe", async () => {
     await act(async () => {
       root.render(
         <StrictMode>
-          <Form
-            action={[{ dataSourceId: "resource-one", enabled: true }]}
+          <ResourceForm
+            action={[{ dataSourceId: "resource-one" }]}
             onManagedSubmit={onManagedSubmit}
             onResultChange={onResultChange}
           >
             <input name="email" defaultValue="person@example.com" />
             <button type="submit">Send</button>
-          </Form>
+          </ResourceForm>
         </StrictMode>
       );
     });
@@ -49,6 +52,83 @@ test("a StrictMode Form submits after the effect cleanup probe", async () => {
   }
 });
 
+test.each([true, false])(
+  "a visible Form resets edited fields only after success: %s",
+  async (success) => {
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    const onManagedSubmit = vi.fn(async () => ({
+      success,
+      status: success ? 200 : 422,
+      results: [],
+      errors: success ? [] : [{ status: 422, body: null, message: "Failed" }],
+    }));
+    try {
+      await act(async () => {
+        root.render(
+          <ResourceForm
+            action={[{ dataSourceId: "resource-one" }]}
+            onManagedSubmit={onManagedSubmit}
+          >
+            <Input name="name" defaultValue="Preset name" />
+            <Input name="reset" defaultValue="Preset reset" />
+            <Textarea name="message" defaultValue="Preset message" />
+            <Select name="category" defaultValue="sales">
+              <option value="sales">Sales</option>
+              <option value="support">Support</option>
+            </Select>
+            <Input name="subscribe" type="checkbox" defaultChecked />
+            <Input name="contact" type="radio" value="email" defaultChecked />
+            <Input name="attachment" type="file" />
+            <button type="submit">Send</button>
+          </ResourceForm>
+        );
+      });
+      const name = container.querySelector<HTMLInputElement>("[name=name]")!;
+      const reset = container.querySelector<HTMLInputElement>("[name=reset]")!;
+      const message =
+        container.querySelector<HTMLTextAreaElement>("[name=message]")!;
+      const category =
+        container.querySelector<HTMLSelectElement>("[name=category]")!;
+      const subscribe =
+        container.querySelector<HTMLInputElement>("[name=subscribe]")!;
+      const contact =
+        container.querySelector<HTMLInputElement>("[name=contact]")!;
+      const attachment =
+        container.querySelector<HTMLInputElement>("[name=attachment]")!;
+      name.value = "Entered name";
+      reset.value = "Entered reset";
+      message.value = "Entered message";
+      category.value = "support";
+      subscribe.checked = false;
+      contact.checked = false;
+      const files = new DataTransfer();
+      files.items.add(new File(["image"], "image.png", { type: "image/png" }));
+      attachment.files = files.files;
+      await act(async () => container.querySelector("button")?.click());
+      await vi.waitFor(() => expect(onManagedSubmit).toHaveBeenCalledOnce());
+      await vi.waitFor(() =>
+        expect(container.querySelector("form")?.dataset.state).toBe(
+          success ? "success" : "error"
+        )
+      );
+      expect(name.value).toBe(success ? "Preset name" : "Entered name");
+      expect(reset.value).toBe(success ? "Preset reset" : "Entered reset");
+      expect(message.value).toBe(
+        success ? "Preset message" : "Entered message"
+      );
+      expect(category.value).toBe(success ? "sales" : "support");
+      expect(subscribe.checked).toBe(success);
+      expect(contact.checked).toBe(success);
+      expect(attachment.files).toHaveLength(success ? 0 : 1);
+    } finally {
+      await act(async () => root.unmount());
+      container.remove();
+    }
+  }
+);
+
 test("a StrictMode Form aborts an active request on real unmount", async () => {
   const container = document.createElement("div");
   document.body.append(container);
@@ -58,15 +138,15 @@ test("a StrictMode Form aborts an active request on real unmount", async () => {
     await act(async () => {
       root.render(
         <StrictMode>
-          <Form
-            action={[{ dataSourceId: "resource-one", enabled: true }]}
+          <ResourceForm
+            action={[{ dataSourceId: "resource-one" }]}
             onManagedSubmit={(_values, requestSignal) => {
               signal = requestSignal;
               return new Promise(() => {});
             }}
           >
             <button type="submit">Send</button>
-          </Form>
+          </ResourceForm>
         </StrictMode>
       );
     });
@@ -81,10 +161,10 @@ test("a StrictMode Form aborts an active request on real unmount", async () => {
 
 test("an unconfigured Form blocks native navigation", async () => {
   const html = renderToStaticMarkup(
-    <Form method="get">
+    <ResourceForm method="get">
       <input name="email" type="email" required />
       <button type="submit">Send</button>
-    </Form>
+    </ResourceForm>
   );
   const iframe = document.createElement("iframe");
   document.body.append(iframe);
@@ -120,7 +200,7 @@ test("empty Resource list uses query navigation instead of Resource submission",
   try {
     await act(async () => {
       root.render(
-        <Form
+        <ResourceForm
           action={[]}
           onQueryNavigate={onQueryNavigate}
           onResultChange={onResultChange}
@@ -129,7 +209,7 @@ test("empty Resource list uses query navigation instead of Resource submission",
           <input name="tag" defaultValue="wood" />
           <input name="tag" defaultValue="blue" />
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       );
     });
     expect(container.querySelector("form")?.getAttribute("action")).toBe(
@@ -144,6 +224,9 @@ test("empty Resource list uses query navigation instead of Resource submission",
     expect(onQueryNavigate).toHaveBeenCalledExactlyOnceWith(
       `${window.location.pathname}?query=chairs&tag=wood&tag=blue`
     );
+    expect(
+      container.querySelector<HTMLInputElement>("[name=query]")?.value
+    ).toBe("chairs");
   } finally {
     await act(async () => root.unmount());
     container.remove();
@@ -157,9 +240,9 @@ test("malformed submission settings do not fall back to native delivery", async 
   try {
     await act(async () => {
       root.render(
-        <Form action={{ destinations: "invalid" }}>
+        <ResourceForm action={{ destinations: "invalid" }}>
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       );
     });
     expect(container.querySelector('[role="alert"]')).toBeNull();
@@ -179,8 +262,8 @@ test("a throwing submit callback cannot trigger native delivery", async () => {
   try {
     await act(async () => {
       root.render(
-        <Form
-          action={[{ dataSourceId: "resource-one", enabled: true }]}
+        <ResourceForm
+          action={[{ dataSourceId: "resource-one" }]}
           onSubmit={() => {
             throw new Error("Submit callback failed");
           }}
@@ -193,7 +276,7 @@ test("a throwing submit callback cannot trigger native delivery", async () => {
           >
             Send
           </button>
-        </Form>
+        </ResourceForm>
       );
     });
     const form = container.querySelector("form");
@@ -224,12 +307,12 @@ test("legacy native-mode settings do not activate saved Resource actions", async
   try {
     await act(async () => {
       root.render(
-        <Form
+        <ResourceForm
           action={{ mode: "native", destinations: ["legacy-resource"] }}
           onManagedSubmit={onManagedSubmit}
         >
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       );
     });
     expect(container.querySelector('[role="alert"]')).toBeNull();
@@ -244,10 +327,10 @@ test("legacy native-mode settings do not activate saved Resource actions", async
 
 test("a Resource Form cannot natively submit without hydration", async () => {
   const html = renderToStaticMarkup(
-    <Form method="post" action={[{ dataSourceId: "resource", enabled: true }]}>
+    <ResourceForm method="post" action={[{ dataSourceId: "resource" }]}>
       <input name="email" defaultValue="person@example.com" />
       <button type="submit">Send</button>
-    </Form>
+    </ResourceForm>
   );
   const iframe = document.createElement("iframe");
   document.body.append(iframe);
@@ -267,13 +350,13 @@ test("a Resource Form cannot natively submit without hydration", async () => {
 test("managed mode blocks submitter overrides before hydration", async () => {
   const html = renderToStaticMarkup(
     <>
-      <Form
+      <ResourceForm
         id="managed-form"
         action="/__must_not_navigate__/form"
         method="post"
       >
         <input name="email" defaultValue="person@example.com" />
-      </Form>
+      </ResourceForm>
       <button
         type="submit"
         form="managed-form"
@@ -309,13 +392,13 @@ test("a hydrated Form handles submit buttons associated by form id", async () =>
     await act(async () => {
       root.render(
         <>
-          <Form
+          <ResourceForm
             id="managed-form"
-            action={[{ dataSourceId: "resource-one", enabled: true }]}
+            action={[{ dataSourceId: "resource-one" }]}
             onManagedSubmit={onManagedSubmit}
           >
             <input name="email" defaultValue="person@example.com" />
-          </Form>
+          </ResourceForm>
           <button type="submit" form="managed-form">
             Send
           </button>
@@ -343,13 +426,13 @@ test("Form passes one structured submission to its dispatcher", async () => {
   try {
     await act(async () => {
       root.render(
-        <Form
-          action={[{ dataSourceId: "resource-one", enabled: true }]}
+        <ResourceForm
+          action={[{ dataSourceId: "resource-one" }]}
           onManagedSubmit={onManagedSubmit}
         >
           <input name="name" defaultValue="Ada" />
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       );
     });
     await act(async () => {
@@ -373,8 +456,8 @@ test("Form resolves Preview success redirects against the Preview page", async (
   try {
     await act(async () => {
       root.render(
-        <Form
-          action={[{ dataSourceId: "resource-one", enabled: true }]}
+        <ResourceForm
+          action={[{ dataSourceId: "resource-one" }]}
           successRedirect="thanks"
           getRedirectBaseUrl={() => "https://webstudio.local/contact"}
           onManagedSubmit={async () => ({
@@ -393,7 +476,7 @@ test("Form resolves Preview success redirects against the Preview page", async (
           onSuccessRedirect={onSuccessRedirect}
         >
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       );
     });
     await act(async () => container.querySelector("button")?.click());
@@ -416,8 +499,8 @@ test("unmatched Preview redirect keeps successful Form feedback on the current p
   try {
     await act(async () => {
       root.render(
-        <Form
-          action={[{ dataSourceId: "resource-one", enabled: true }]}
+        <ResourceForm
+          action={[{ dataSourceId: "resource-one" }]}
           successRedirect="/missing"
           getRedirectBaseUrl={() => "https://webstudio.local/contact"}
           onManagedSubmit={async () => ({
@@ -432,7 +515,7 @@ test("unmatched Preview redirect keeps successful Form feedback on the current p
         >
           <div>Submitted</div>
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       );
     });
     await act(async () => container.querySelector("button")?.click());
@@ -460,8 +543,8 @@ test("file-input settings enforce required uploads and keep optional or multiple
   const render = async (required: boolean) =>
     act(async () =>
       root.render(
-        <Form
-          action={[{ dataSourceId: "resource-one", enabled: true }]}
+        <ResourceForm
+          action={[{ dataSourceId: "resource-one" }]}
           onManagedSubmit={onManagedSubmit}
         >
           <input
@@ -472,7 +555,7 @@ test("file-input settings enforce required uploads and keep optional or multiple
             required={required}
           />
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       )
     );
   try {
@@ -524,9 +607,9 @@ test("managed Form submits by HTTP outside a router provider and reports pending
   try {
     await act(async () =>
       root.render(
-        <Form
+        <ResourceForm
           data-ws-managed-form-id="form-one"
-          action={[{ dataSourceId: "destination", enabled: true }]}
+          action={[{ dataSourceId: "destination" }]}
           onStateChange={(state) => states.push(state)}
           onResultChange={(result) => results.push(result)}
         >
@@ -534,7 +617,7 @@ test("managed Form submits by HTTP outside a router provider and reports pending
           <input name="tag" defaultValue="b" />
           <input name="upload" type="file" />
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       )
     );
     const files = new DataTransfer();
@@ -581,6 +664,12 @@ test("managed Form submits by HTTP outside a router provider and reports pending
       )
     );
     await vi.waitFor(() => expect(states).toEqual(["initial", "success"]));
+    expect(container.querySelector<HTMLInputElement>("[name=tag]")?.value).toBe(
+      "a"
+    );
+    expect(
+      container.querySelector<HTMLInputElement>('[name="upload"]')?.files
+    ).toHaveLength(0);
     expect(container.querySelector("form")?.hasAttribute("aria-busy")).toBe(
       false
     );
@@ -632,14 +721,14 @@ test("Preview runs the supplied submission and reports its result without the pu
   try {
     await act(async () =>
       root.render(
-        <Form
-          action={[{ dataSourceId: "email", enabled: true }]}
+        <ResourceForm
+          action={[{ dataSourceId: "email" }]}
           onManagedSubmit={onManagedSubmit}
           onResultChange={onResultChange}
         >
           <input name="email" defaultValue="ada@example.com" />
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       )
     );
     await act(async () => container.querySelector("button")?.click());
@@ -679,14 +768,14 @@ test("Preview reports rejected submissions as failures and clears pending state"
   try {
     await act(async () =>
       root.render(
-        <Form
-          action={[{ dataSourceId: "email", enabled: true }]}
+        <ResourceForm
+          action={[{ dataSourceId: "email" }]}
           onManagedSubmit={onManagedSubmit}
           onResultChange={onResultChange}
           onStateChange={(state) => states.push(state)}
         >
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       )
     );
 
@@ -771,13 +860,13 @@ test("managed Form reports HTTP and network failures without native navigation",
   try {
     await act(async () =>
       root.render(
-        <Form
+        <ResourceForm
           data-ws-managed-form-id="form-one"
-          action={[{ dataSourceId: "destination", enabled: true }]}
+          action={[{ dataSourceId: "destination" }]}
           onResultChange={(result) => results.push(result)}
         >
           <button type="submit">Send</button>
-        </Form>
+        </ResourceForm>
       )
     );
     await act(async () => container.querySelector("button")?.click());
@@ -861,8 +950,8 @@ test.each([
       const [state, setState] = useState("initial");
       const [errors, setErrors] = useState<Array<{ message: string }>>([]);
       return (
-        <Form
-          action={[{ dataSourceId: "request", enabled: true }]}
+        <ResourceForm
+          action={[{ dataSourceId: "request" }]}
           onManagedSubmit={async () => ({
             success: false,
             status: 422,
@@ -890,7 +979,7 @@ test.each([
               ))}
             </div>
           )}
-        </Form>
+        </ResourceForm>
       );
     };
     try {

@@ -22,6 +22,14 @@ const payload = z.object({
   references: z.array(z.object({ id: z.string(), name: z.string() })),
 });
 
+export const isVariableClipboardData = (text: string) => {
+  try {
+    return Object.hasOwn(JSON.parse(text), namespace);
+  } catch {
+    return false;
+  }
+};
+
 export const serializeVariable = (
   variable: DataSource,
   resources: ReadonlyMap<string, Resource>,

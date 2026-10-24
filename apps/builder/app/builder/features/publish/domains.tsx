@@ -189,11 +189,13 @@ const DomainItem = ({
   projectDomain,
   project,
   refresh,
+  validatedDomains,
 }: {
   initiallyOpen: boolean;
   projectDomain: Domain;
   project: Project;
   refresh: () => Promise<void>;
+  validatedDomains?: readonly string[];
 }) => {
   const timeSinceLastUpdateMs =
     Date.now() - new Date(projectDomain.updatedAt).getTime();
@@ -355,6 +357,7 @@ const DomainItem = ({
             projectDomain.latestBuildVirtual.buildId ===
               project.latestBuildVirtual?.buildId
           }
+          validatedDomains={validatedDomains}
           domain={projectDomain.domain}
           disabled={domainStatus !== "VERIFIED_ACTIVE"}
           isCustomDomain
@@ -578,6 +581,7 @@ type DomainsProps = {
   domains: Domain[];
   refresh: () => Promise<void>;
   project: Project;
+  validatedDomains?: readonly string[];
 };
 
 export const Domains = ({
@@ -585,6 +589,7 @@ export const Domains = ({
   domains,
   refresh,
   project,
+  validatedDomains,
 }: DomainsProps) => {
   return (
     <>
@@ -595,6 +600,7 @@ export const Domains = ({
           initiallyOpen={newDomains.has(projectDomain.domain)}
           refresh={refresh}
           project={project}
+          validatedDomains={validatedDomains}
         />
       ))}
     </>

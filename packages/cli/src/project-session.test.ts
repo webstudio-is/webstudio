@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -13,6 +13,8 @@ import {
   createCliProjectSessionTransport,
   createIssueReportFailure,
   createIssueReportFailureTracker,
+  createIssueReportTarget,
+  createIssueReportTargetTracker,
   addIssueReportRuntime,
   assertCliEditingContractVersion,
   getCliServerApiContract,
@@ -171,6 +173,28 @@ test("keeps only anonymous structured fields from the latest tool failure", () =
   ).toEqual([]);
 });
 
+test("retains safe error types and request IDs without leaking error messages", () => {
+  class AssetRevisionConflictError extends Error {}
+  const cause = Object.assign(
+    new AssetRevisionConflictError("Private article name"),
+    {
+      requestId: "abc123-LIS",
+    }
+  );
+  const failure = createIssueReportFailure(
+    "update-content-block-frontmatter",
+    new Error("Private project details", { cause })
+  );
+
+  expect(failure).toEqual({
+    tool: "update-content-block-frontmatter",
+    code: "MCP_TOOL_FAILED",
+    errorType: "AssetRevisionConflictError",
+    requestId: "abc123-LIS",
+  });
+  expect(JSON.stringify(failure)).not.toContain("Private");
+});
+
 test("captures only recognized IDs from nested failed tool input", () => {
   const failure = createIssueReportFailure(
     "update-styles",
@@ -250,6 +274,44 @@ test("keeps a failed mutation available after a successful diagnostic read", () 
   expect(restored.get()).toBeUndefined();
 });
 
+test("keeps validated IDs from recent targeted tools without private input", () => {
+  let now = 1_000;
+  const tracker = createIssueReportTargetTracker(() => now);
+  tracker.record("inspect-instance", {
+    instanceId: "instance-1",
+    url: "https://private.example/?authToken=secret",
+  });
+  expect(tracker.record("list-pages", {})).toBe(false);
+  expect(tracker.getAll()?.[0]).toEqual({
+    tool: "inspect-instance",
+    entityIds: [{ field: "instanceId", id: "instance-1" }],
+  });
+  expect(
+    tracker.record(
+      "screenshot",
+      { path: "/blog/private-slug?authToken=secret" },
+      "page-1"
+    )
+  ).toBe(true);
+  expect(tracker.getAll()).toEqual([
+    { tool: "screenshot", entityIds: [{ field: "pageId", id: "page-1" }] },
+    {
+      tool: "inspect-instance",
+      entityIds: [{ field: "instanceId", id: "instance-1" }],
+    },
+  ]);
+  tracker.record("screenshot", { path: "/blog/another-post" }, "page-1");
+  expect(tracker.getAll()).toHaveLength(2);
+  expect(JSON.stringify(tracker.snapshot())).not.toContain("private");
+  expect(
+    createIssueReportTarget("inspect-instance", {
+      instanceId: "https://secret",
+    })
+  ).toBeUndefined();
+  now += 10 * 60_000 + 1;
+  expect(tracker.getAll()).toBeUndefined();
+});
+
 test("reports only the shape of an untransformable server response", () => {
   const error = Object.assign(
     new Error("Unable to transform response from server"),
@@ -260,7 +322,7 @@ test("reports only the shape of an untransformable server response", () => {
           status: 200,
           headers: { "content-type": "application/json" },
         }),
-        responseJSON: [{ result: { data: "private customer content" } }],
+        responseJSON: [{ result: "private customer content" }],
       },
     }
   );
@@ -650,7 +712,7 @@ describe("cli project session storage", () => {
         },
         { expectedRevision: "stale" }
       )
-    ).rejects.toThrow("changed on disk");
+    ).rejects.toMatchObject({ code: "PROJECT_SESSION_BUSY" });
 
     await expect(
       storage.save(
@@ -662,6 +724,105 @@ describe("cli project session storage", () => {
       )
     ).resolves.toEqual({ revision: expect.any(String) });
   });
+
+  test.each([
+    { marker: 1, expected: "ResourceForm" },
+    { marker: undefined, expected: "WebhookForm" },
+  ])(
+    "normalizes historical $expected in session and restore storage",
+    async ({ marker, expected }) => {
+      const directory = await createTemporaryDirectory();
+      const sessionPath = join(directory, ".webstudio", "project-session.json");
+      const restorePath = join(directory, ".webstudio", "restore-points.json");
+      const sessionStorage = createCliProjectSessionStorage(sessionPath);
+      const restoreStorage = createCliProjectRestorePointStorage(restorePath);
+      const state = createBuilderStateFromSnapshot({
+        pages: {
+          homePageId: "home",
+          rootFolderId: "root",
+          pages: new Map([
+            [
+              "home",
+              {
+                id: "home",
+                name: "Home",
+                path: "",
+                title: "Home",
+                rootInstanceId: "form",
+                meta: {},
+              },
+            ],
+          ]),
+          folders: new Map([
+            [
+              "root",
+              { id: "root", name: "Root", slug: "", children: ["home"] },
+            ],
+          ]),
+        },
+        instances: [
+          [
+            "form",
+            {
+              type: "instance",
+              id: "form",
+              component: "ResourceForm",
+              children: [],
+            },
+          ],
+        ],
+      });
+      const snapshot = {
+        projectId: "project-1",
+        buildId: "build-1",
+        version: 3,
+        state,
+        freshness: createBuilderStateFreshness({ state, version: 3 }),
+        compatibilityVersion: "test",
+        compatibility: {
+          sessionVersion: "test",
+          runtimeContractVersion: "test-runtime",
+          projectSchemaVersion: "test-schema",
+        },
+      };
+      const { revision } = (await sessionStorage.save(snapshot, {}))!;
+      const point = await restoreStorage.create("Historical", snapshot);
+
+      const makeHistorical = (saved: {
+        state: {
+          instances: [string, { component: string }][];
+          pages: Record<string, unknown>;
+        };
+      }) => {
+        saved.state.instances[0][1].component = "Form";
+        if (marker !== undefined) {
+          saved.state.pages.formComponentIdentityVersion = marker;
+        }
+        return saved;
+      };
+      await writeFile(
+        sessionPath,
+        JSON.stringify(
+          makeHistorical(JSON.parse(await readFile(sessionPath, "utf8")))
+        )
+      );
+      const restoreFile = JSON.parse(await readFile(restorePath, "utf8"));
+      makeHistorical(restoreFile.points[0].snapshot);
+      await writeFile(restorePath, JSON.stringify(restoreFile));
+
+      const loaded = await sessionStorage.load();
+      const restored = await restoreStorage.get(point.id);
+      for (const result of [loaded, restored]) {
+        expect(result?.state.instances?.get("form")?.component).toBe(expected);
+        expect(result?.state.pages).not.toHaveProperty(
+          "formComponentIdentityVersion"
+        );
+        expect(result?.compatibilityVersion).toBe("test");
+        expect(result?.version).toBe(3);
+      }
+      expect(loaded?.revision).toBe(revision);
+    }
+  );
 });
 
 describe("CLI/server operation contract", () => {
@@ -1059,6 +1220,12 @@ describe("cli project session transport", () => {
               type: "instance",
               id: "body",
               component: "Body",
+              children: [{ type: "id", value: "form" }],
+            },
+            {
+              type: "instance",
+              id: "form",
+              component: "Form",
               children: [],
             },
           ],
@@ -1072,7 +1239,9 @@ describe("cli project session transport", () => {
     });
 
     expect(snapshot.state.pages?.pages.get("home")?.name).toBe("Home");
-    expect(snapshot.state.pages?.formComponentIdentityVersion).toBe(1);
+    expect("formComponentIdentityVersion" in (snapshot.state.pages ?? {})).toBe(
+      false
+    );
     expect(snapshot.state.pages?.pageTemplates?.get("template-1")?.name).toBe(
       "Landing"
     );
@@ -1085,44 +1254,60 @@ describe("cli project session transport", () => {
       "home",
     ]);
     expect(snapshot.state.instances?.get("body")?.component).toBe("Body");
+    expect(snapshot.state.instances?.get("form")?.component).toBe(
+      "ResourceForm"
+    );
     expect(snapshot.state.projectSettings).toEqual({
       meta: { siteName: "Canonical Acme" },
       compiler: { atomicStyles: false },
     });
   });
 
-  test("preserves an absent Form identity version in legacy public snapshots", async () => {
+  test("reconstructs unmarked old-server Form snapshots as WebhookForm", async () => {
+    const includes: string[][] = [];
     const transport = createCliProjectSessionTransport({
       connection: {
         projectId: "project-1",
         origin: "https://example.com",
         authToken: "token",
       },
-      getBuildSnapshot: async () => ({
-        projectId: "project-1",
-        buildId: "build-1",
-        version: 1,
-        homePageId: "home",
-        rootFolderId: "root",
-        pages: [
-          {
-            id: "home",
-            name: "Home",
-            path: "",
-            title: "Home",
-            rootInstanceId: "body",
-            meta: {},
-          },
-        ],
-        folders: [{ id: "root", name: "Root", slug: "", children: ["home"] }],
-      }),
+      getBuildSnapshot: async ({ include }) => {
+        includes.push(include ?? []);
+        return {
+          projectId: "project-1",
+          buildId: "build-1",
+          version: 1,
+          homePageId: "home",
+          rootFolderId: "root",
+          pages: [
+            {
+              id: "home",
+              name: "Home",
+              path: "",
+              title: "Home",
+              rootInstanceId: "body",
+              meta: {},
+            },
+          ],
+          folders: [{ id: "root", name: "Root", slug: "", children: ["home"] }],
+          instances: [
+            { type: "instance", id: "form", component: "Form", children: [] },
+          ],
+        };
+      },
     });
 
     const snapshot = await transport.fetchNamespaces({
       projectId: "project-1",
-      namespaces: ["pages"],
+      namespaces: ["instances"],
     });
-    expect(snapshot.state.pages?.formComponentIdentityVersion).toBeUndefined();
+    expect("formComponentIdentityVersion" in (snapshot.state.pages ?? {})).toBe(
+      false
+    );
+    expect(snapshot.state.instances?.get("form")?.component).toBe(
+      "WebhookForm"
+    );
+    expect(includes[0]).toContain("pages");
   });
 
   test("falls back to legacy page settings when the server rejects projectSettings", async () => {
@@ -1136,9 +1321,17 @@ describe("cli project session transport", () => {
       getBuildSnapshot: async (input) => {
         includes.push(input.include);
         if (input.include?.includes("projectSettings")) {
-          throw new Error(
-            'invalid_enum_value: received "projectSettings", expected one of pages|folders'
-          );
+          throw Object.assign(new Error("Unsupported include"), {
+            data: {
+              code: "BAD_REQUEST",
+              issues: [
+                {
+                  code: "invalid_value",
+                  path: ["include", input.include.indexOf("projectSettings")],
+                },
+              ],
+            },
+          });
         }
         return {
           projectId: "project-1",

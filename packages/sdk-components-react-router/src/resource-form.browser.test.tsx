@@ -8,7 +8,7 @@ import {
   managedFormIdFieldName,
   managedFormRequestParamName,
 } from "@webstudio-is/sdk/runtime";
-import { Form } from "./resource-form";
+import { ResourceForm } from "./resource-form";
 import { RemixForm } from "./remix-form";
 
 (
@@ -50,12 +50,12 @@ test("an empty Resource list submits query values through client navigation", as
     const location = useLocation();
     return (
       <>
-        <Form action={[]}>
+        <ResourceForm action={[]}>
           <input name="query" defaultValue="chairs" />
           <input name="tag" defaultValue="wood" />
           <input name="tag" defaultValue="blue" />
           <button type="submit">Search</button>
-        </Form>
+        </ResourceForm>
         <output>{location.search}</output>
       </>
     );
@@ -120,15 +120,15 @@ test("managed Form posts its server identity and shows the action error", async 
   vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) =>
     Response.json(await action({ request: new Request(input, init) }))
   );
-  const FormFixture = () => {
+  const ResourceFormFixture = () => {
     const [state, setState] = useState<"initial" | "success" | "error">(
       "initial"
     );
     const [errors, setErrors] = useState<Array<{ message: string }>>([]);
     return (
-      <Form
+      <ResourceForm
         data-ws-managed-form-id="form-instance"
-        action={[{ dataSourceId: "resource-id", enabled: true }]}
+        action={[{ dataSourceId: "resource-id" }]}
         state={state}
         onStateChange={(state) => {
           stateChanges.push(state);
@@ -152,14 +152,14 @@ test("managed Form posts its server identity and shows the action error", async 
             {errors.map(({ message }) => message).join("\n")}
           </div>
         )}
-      </Form>
+      </ResourceForm>
     );
   };
   const router = createMemoryRouter(
     [
       {
         path: "/",
-        element: <FormFixture />,
+        element: <ResourceFormFixture />,
         action,
       },
     ],
@@ -244,15 +244,15 @@ test("managed Form reports success after the action succeeds", async () => {
       {
         path: "/",
         element: (
-          <Form
+          <ResourceForm
             data-ws-managed-form-id="form-instance"
-            action={[{ dataSourceId: "resource-id", enabled: true }]}
+            action={[{ dataSourceId: "resource-id" }]}
             onStateChange={(state) => stateChanges.push(state)}
             onResultChange={(result) => resultChanges.push(result)}
           >
             <input name="message" defaultValue="Hello" />
             <button type="submit">Send</button>
-          </Form>
+          </ResourceForm>
         ),
         action,
       },

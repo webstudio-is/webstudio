@@ -108,6 +108,39 @@ describe("loadRawBuildById (msw)", () => {
 // ---------------------------------------------------------------------------
 
 describe("loadBuildById (msw)", () => {
+  test.each([
+    { marker: 1, expected: "ResourceForm" },
+    { marker: undefined, expected: "WebhookForm" },
+  ])(
+    "normalizes stored Form as $expected before exposing pages",
+    async ({ marker, expected }) => {
+      server.use(
+        db.get("Build", () =>
+          json([
+            {
+              ...buildRow,
+              pages: JSON.stringify({
+                ...JSON.parse(buildRow.pages),
+                formComponentIdentityVersion: marker,
+              }),
+              instances: JSON.stringify([
+                {
+                  id: "form",
+                  type: "instance",
+                  component: "Form",
+                  children: [],
+                },
+              ]),
+            },
+          ])
+        )
+      );
+      const result = await loadBuildById(createContext(), "build-1");
+      expect(result.instances[0]?.component).toBe(expected);
+      expect(result.pages).not.toHaveProperty("formComponentIdentityVersion");
+    }
+  );
+
   test("returns parsed build with id and projectId", async () => {
     server.use(db.get("Build", () => json([buildRow])));
     const result = await loadBuildById(createContext(), "build-1");
@@ -840,7 +873,7 @@ describe("unpublishBuild (msw)", () => {
     ).rejects.toThrow(AuthorizationError);
   });
 
-  test("throws when domain is not published", async () => {
+  test("succeeds when the domain is already unpublished", async () => {
     const projectId = uid();
     server.use(
       ownershipHandler,
@@ -850,7 +883,7 @@ describe("unpublishBuild (msw)", () => {
 
     await expect(
       unpublishBuild({ projectId, domain: "example.com" }, createContext())
-    ).rejects.toThrow("is not published");
+    ).resolves.toBeUndefined();
   });
 
   test("deletes build when it has only the one domain", async () => {

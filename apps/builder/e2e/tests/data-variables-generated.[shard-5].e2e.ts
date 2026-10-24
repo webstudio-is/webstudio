@@ -15,6 +15,8 @@ import { createContentModeProject } from "../fixtures/content-mode-suite";
 import { test } from "../test";
 import { measure } from "../perf";
 
+test.describe.configure({ mode: "parallel" });
+
 const openGeneratedResourceProject = async ({
   context,
   page,

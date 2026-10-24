@@ -2,7 +2,7 @@ import { API, type Snapshot } from "typescript/unstable/sync";
 import { afterAll, beforeAll, expect, test } from "vitest";
 import stripIndent from "strip-indent";
 import { transform } from "esbuild";
-import { createElement } from "react";
+import { createElement, Fragment as ReactFragment } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { renderText } from "./context";
 import { standardAttributesToReactProps } from "@webstudio-is/content-engine/jsx-attributes";
@@ -40,8 +40,7 @@ import {
 const Body = createTemplateComponentFixture("Body");
 const Box = createTemplateComponentFixture("Box");
 const Button = createTemplateComponentFixture("Button");
-const Form = createTemplateComponentFixture("Form");
-const ResourceForm = createTemplateComponentFixture("Form");
+const ResourceForm = createTemplateComponentFixture("ResourceForm");
 const Fragment = createTemplateComponentFixture("Fragment");
 const HeadSlot = createTemplateComponentFixture("HeadSlot");
 const Heading = createTemplateComponentFixture("Heading");
@@ -89,6 +88,37 @@ test("string props coerce repeated query values without changing missing values"
 
   expect(generated).toContain("String(SelectedTags)");
   expect(generated).toContain("SelectedTags == null ? SelectedTags");
+  expect(isValidJSX(generated)).toBe(true);
+});
+
+test("json-code props keep object expressions as objects", () => {
+  const code = new Variable("code", { "@type": "Article" });
+  const JsonLd = createTemplateComponentFixture("JsonLd");
+  const generated = generateWebstudioComponent({
+    classesMap: new Map(),
+    scope: createScope(),
+    name: "Page",
+    rootInstanceId: "body",
+    parameters: [],
+    metas: new Map<string, WsComponentMeta>([
+      [
+        "JsonLd",
+        {
+          props: {
+            code: { type: "string", control: "json-code", required: true },
+          },
+        },
+      ],
+    ]),
+    ...renderData(
+      <Body ws:id="body">
+        <JsonLd ws:id="jsonld" code={expression`${code}`} />
+      </Body>
+    ),
+  });
+
+  expect(generated).toContain("code={code}");
+  expect(generated).not.toContain("String(code)");
   expect(isValidJSX(generated)).toBe(true);
 });
 
@@ -148,7 +178,7 @@ test("managed Forms own their server identity after custom props and action dedu
     instanceId: "form",
     name: "action",
     type: "json",
-    value: [{ dataSourceId: "request", enabled: true }],
+    value: [{ dataSourceId: "request" }],
   });
   const managed = generate(true);
   expect(managed.match(/data-ws-managed-form-id/g)).toHaveLength(1);
@@ -169,7 +199,7 @@ test("managed Forms own their server identity after custom props and action dedu
     instanceId: "form",
     name: "action",
     type: "json",
-    value: [{ dataSourceId: "final", enabled: true }],
+    value: [{ dataSourceId: "final" }],
   });
   expect(generate(true)).toContain('data-ws-managed-form-id="form"');
 });
@@ -200,7 +230,7 @@ test("managed Form policy applies to a root Form and leaves other elements' prop
     instanceId: "form",
     name: "action",
     type: "json",
-    value: [{ dataSourceId: "request", enabled: true }],
+    value: [{ dataSourceId: "request" }],
   });
   const generate = (rootInstanceId: string) =>
     generateManagedFormComponent({
@@ -685,20 +715,20 @@ test("generate jsx children with nested instances", () => {
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       ...renderData(
-        <Form ws:id="form" prop="value">
+        <ResourceForm ws:id="form" prop="value">
           <Input></Input>
           <Button></Button>
-        </Form>
+        </ResourceForm>
       ),
     })
   ).toEqual(
     validateJSX(
       clear(`
-    <Form
+    <ResourceForm
     prop={"value"}>
     <Input />
     <Button />
-    </Form>
+    </ResourceForm>
     `)
     )
   );
@@ -1390,7 +1420,7 @@ test("generate resource prop with configured form method", () => {
       parameters: [],
       metas: new Map([
         [
-          "Form",
+          "ResourceForm",
           {
             props: {
               action: {
@@ -1405,22 +1435,26 @@ test("generate resource prop with configured form method", () => {
       ]),
       ...renderData(
         <Body ws:id="body">
-          <Form ws:id="form1" action={myResource}></Form>
-          <Form ws:id="form2" action={anotherResource}></Form>
-          <Form ws:id="form3" action={myResource} method="get"></Form>
+          <ResourceForm ws:id="form1" action={myResource}></ResourceForm>
+          <ResourceForm ws:id="form2" action={anotherResource}></ResourceForm>
+          <ResourceForm
+            ws:id="form3"
+            action={myResource}
+            method="get"
+          ></ResourceForm>
         </Body>
       ),
     })
   ).toMatchInlineSnapshot(`
     "const Page = () => {
     return <Body>
-    <Form
+    <ResourceForm
     action={"action"}
     method={"post"} />
-    <Form
+    <ResourceForm
     action={"action_1"}
     method={"get"} />
-    <Form
+    <ResourceForm
     action={"action"}
     method={"get"} />
     </Body>
@@ -1855,13 +1889,78 @@ test("renders pre-materialized dynamic Content Block candidates without loading"
   expect(isValidJSX(generated)).toBe(true);
 });
 
+test("renders a Content Block source inside its Collection item scope", async () => {
+  const collectionItem = new Parameter("collectionItem");
+  const data = renderData(
+    <Body ws:id="body">
+      <ws.collection
+        ws:id="collection"
+        data={[{ id: "article" }]}
+        item={collectionItem}
+      >
+        <ws.block ws:id="block" />
+      </ws.collection>
+    </Body>
+  );
+  const itemDataSource = Array.from(data.dataSources.values()).find(
+    ({ name }) => name === "collectionItem"
+  );
+  expect(itemDataSource).toBeDefined();
+  const generated = generateWebstudioComponent({
+    classesMap: new Map(),
+    scope: createScope(),
+    name: "Page",
+    rootInstanceId: "body",
+    parameters: [],
+    metas: new Map(),
+    ...data,
+    publishedContentBlocks: new Map([
+      [
+        "block",
+        {
+          sourceExpression: `${encodeDataVariableId(itemDataSource!.id)}.id`,
+          candidates: [
+            {
+              assetId: "article",
+              dependencyRevision: "revision",
+              children: [{ type: "text", value: "Article body" }],
+              frontmatter: {},
+            },
+          ],
+        },
+      ],
+    ]),
+  });
+
+  expect(generated).toContain("Article body");
+  expect(generated).toContain('contentSource === "article"');
+  expect(isValidJSX(generated)).toBe(true);
+  const { code } = await transform(generated, {
+    loader: "tsx",
+    jsxFactory: "createElement",
+    jsxFragment: "Fragment",
+  });
+  const Page = new Function(
+    "createElement",
+    "Fragment",
+    "Body",
+    `${code}return Page;`
+  )(createElement, ReactFragment, "main");
+  expect(renderToStaticMarkup(createElement(Page))).toContain("Article body");
+});
+
 test("renders a Content Block shell with candidate frontmatter and body", () => {
   const document = new Parameter("document");
+  const visible = new Variable("visible", true);
   const Block = ws.block;
   const BlockBody = ws.contentBlockBody;
   const data = renderData(
     <Body ws:id="page">
-      <Block ws:id="block" document={document}>
+      <Block
+        ws:id="block"
+        document={document}
+        data-ws-show={expression`${visible}`}
+      >
         <Heading ws:id="title">
           {expression`${document}.frontmatter.title`}
         </Heading>
@@ -2300,7 +2399,7 @@ test("saved managed Form errors render like Preview for malformed values while p
   const form: import("@webstudio-is/sdk").Instance = {
     type: "instance",
     id: "saved-form",
-    component: "Form",
+    component: "ResourceForm",
     children: [{ type: "id", value: slot.id }],
   };
   const dataSources: import("@webstudio-is/sdk").DataSources = new Map([
@@ -2357,7 +2456,7 @@ test("saved managed Form errors render like Preview for malformed values while p
     "createElement",
     "renderText",
     "formatManagedFormErrors",
-    "Form",
+    "ResourceForm",
     "errors",
     `${code}return Page();`
   );

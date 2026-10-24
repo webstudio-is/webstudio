@@ -30,7 +30,7 @@ Each email from a Form submission includes an `X-Message-ID` header. Email actio
 
 An email resource without a custom body includes submitted Form fields and browser information by default when used on a Form. The automatic text includes submitted hidden fields, but excludes password inputs and Webstudio's internal bot fields. Set the resource body to customize the message, including an explicitly empty body. To use `formData` or `browserInfo` in a resource expression, define the resource on the Form; resources on an ancestor or global root cannot bind that Form's data.
 
-Email resources inherit project recipients and Reply to unless overridden. Republish to update the settings included in a published site. On Webstudio Cloud, published email resources use the private Cloudflare email service when the `EMAIL_SERVICE` binding is configured. Saving settings or publishing does not itself send email; a visitor must submit the Form. Delivery fails explicitly if the service is unavailable. Self-hosted sites need a custom server-side email integration. The existing Contact email recipient setting continues to serve legacy Webhook Forms.
+Email resources inherit project recipients and Reply to unless overridden. Republish to update the settings included in a published site. On Webstudio Cloud, published email resources use the private Cloudflare email service when the `EMAIL_SERVICE` binding is configured. Saving settings or publishing does not itself send email; a visitor must submit the Form. Delivery fails explicitly if the service is unavailable. Self-hosted sites need a custom server-side email integration. The existing Contact email recipient setting continues to serve deprecated Webhook Forms.
 
 ## Publishing
 

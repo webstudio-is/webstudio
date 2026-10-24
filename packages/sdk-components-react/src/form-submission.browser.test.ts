@@ -47,7 +47,7 @@ test("generates one fresh bot field for each managed submission", () => {
   expect(getManagedFormValues(second)).toEqual({ name: "Visitor" });
 });
 
-test("rejects a broken matchMedia browser like the legacy Webhook Form", () => {
+test("rejects a broken matchMedia browser like the deprecated Webhook Form", () => {
   vi.stubGlobal("matchMedia", () => ({ matches: false }));
   const formData = submit();
   expect(formData.getAll(formBotFieldName)).toEqual(["jsdom"]);

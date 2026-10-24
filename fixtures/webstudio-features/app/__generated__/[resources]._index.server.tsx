@@ -20,7 +20,7 @@ export const getResources = (_props: { system: System; resources?: Record<string
   }
   const _data: ResourceRequestGraph = {
     resources: [
-      { id: "1vX6SQdaCjJN6MvJlG_cQ", outputName: "list_1", dependencies: [], createRequest: list_1 },
+      { id: "1vX6SQdaCjJN6MvJlG_cQ", outputName: "list_1", dependencies: [], createRequest: list_1, control: undefined, bodyFormat: undefined },
     ],
     rootIds: [
       "1vX6SQdaCjJN6MvJlG_cQ",
@@ -73,5 +73,6 @@ export const getManagedFormResourceGraph = (formId: string, _managedFormProps: {
           []
         );
 
+      /** @deprecated Generated only for saved Webhook Forms. */
       export const contactEmail = "hello@webstudio.is";
     

@@ -86,6 +86,56 @@ test("formats ordered final outcomes without response headers", () => {
   );
 });
 
+test("keeps safe Email error codes without copying codes from HTTP responses", () => {
+  const graph = {
+    rootIds: ["email", "http"],
+    resources: [
+      {
+        id: "email",
+        outputName: "email",
+        control: "email" as const,
+        dependencies: [],
+        createRequest: vi.fn(),
+      },
+      {
+        id: "http",
+        outputName: "http",
+        dependencies: [],
+        createRequest: vi.fn(),
+      },
+    ],
+  };
+  const body = {
+    error: { code: "E_DAILY_LIMIT_EXCEEDED", message: "Daily limit reached" },
+  };
+  const result = getManagedFormResponse(graph, {
+    email: {
+      ok: false,
+      status: 429,
+      statusText: "Daily limit reached",
+      data: body,
+    },
+    http: { ok: false, status: 429, statusText: "Failed", data: body },
+  });
+  expect(result.errors.map(({ code }) => code)).toEqual([
+    "E_DAILY_LIMIT_EXCEEDED",
+    undefined,
+  ]);
+  expect(
+    getManagedFormResponse(
+      { ...graph, rootIds: ["email"] },
+      {
+        email: {
+          ok: false,
+          status: 502,
+          statusText: "Failed",
+          data: { error: { code: "private@example.com" } },
+        },
+      }
+    ).errors[0].code
+  ).toBeUndefined();
+});
+
 test("keeps parallel results and errors in Action order when completion is reversed", async () => {
   let resolveFirst: ((response: Response) => void) | undefined;
   let resolveSecond: ((response: Response) => void) | undefined;
@@ -873,6 +923,15 @@ test("parses bounded request bodies and rejects oversized streamed bodies", asyn
   });
   await expect(readFormDataWithLimit(oversized, 3)).rejects.toThrow(
     "Form submission is too large"
+  );
+
+  const oversizedDefault = new Request("https://example.com/submit", {
+    method: "POST",
+    headers: { "content-length": String(25 * 1024 * 1024 + 1) },
+    body: "x",
+  });
+  await expect(readFormDataWithLimit(oversizedDefault)).rejects.toThrow(
+    "Form submission exceeds the 25 MiB limit. Reduce file sizes and try again."
   );
 });
 

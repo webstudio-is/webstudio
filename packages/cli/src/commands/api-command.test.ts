@@ -11,6 +11,7 @@ import {
   auditCommandOptions,
   createPageCommandOptions,
   createPageTemplateCommandOptions,
+  unpublishCommandOptions,
 } from "./api-command";
 import type { CommonYargsArgv } from "./yargs-types";
 import { apiCommandMetadata } from "./api-command-metadata";
@@ -830,10 +831,9 @@ test("explains missing Builder API access instead of leaking token ownership err
   mockConfig();
   createCliProjectSession.mockImplementationOnce(() => ({
     initialize: vi.fn(async () => {
-      throw Object.assign(
-        new Error("Project owner can't be found for token token-1"),
-        { data: { code: "INTERNAL_SERVER_ERROR" } }
-      );
+      throw Object.assign(new Error("The credential has been revoked"), {
+        data: { code: "UNAUTHORIZED", webstudioCode: "INVALID_AUTH_TOKEN" },
+      });
     }),
     refresh: vi.fn(),
     executeServerOperation: vi.fn(),
@@ -1152,7 +1152,7 @@ test("rejects redirect status and clear-status together", async () => {
 
   expectJsonErrorOutput({
     command: "update-redirect",
-    code: "API_COMMAND_FAILED",
+    code: "INVALID_ARGUMENT",
     message: "--clear-status cannot be used with --status.",
   });
   expect(apiCalls.updateRedirect).not.toHaveBeenCalled();
@@ -1268,7 +1268,7 @@ test("rejects breakpoint clear and value options together", async () => {
 
   expectJsonErrorOutput({
     command: "update-breakpoint",
-    code: "API_COMMAND_FAILED",
+    code: "INVALID_ARGUMENT",
     message: "--clear-min-width cannot be used with --min-width.",
   });
   expect(apiCalls.updateBreakpoint).not.toHaveBeenCalled();
@@ -1923,10 +1923,24 @@ test("unpublishes project with confirmation", async () => {
     connection: {
       target: "production",
       domains: ["example.com"],
-      message: undefined,
-      idempotencyKey: undefined,
     },
   });
+  expect(apiCalls.unpublish.mock.calls.at(-1)?.[0]).not.toHaveProperty(
+    "message"
+  );
+  expect(apiCalls.unpublish.mock.calls.at(-1)?.[0]).not.toHaveProperty(
+    "idempotencyKey"
+  );
+});
+
+test("unpublish help does not advertise publish-only flags", async () => {
+  const help = await unpublishCommandOptions(
+    makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+  ).getHelp();
+  expect(help).toContain("--target");
+  expect(help).toContain("--domain");
+  expect(help).not.toContain("--message");
+  expect(help).not.toContain("--idempotency-key");
 });
 
 test("lists domains", async () => {
@@ -2454,5 +2468,25 @@ test("requires global config for configured project", async () => {
     message:
       "Project config is not found. Run webstudio init --link <api-share-link>.",
     projectId: false,
+  });
+});
+
+test.each([
+  "version details are unavailable",
+  "CONFLICT in a log message",
+  "A token is required by a remote dependency",
+])("does not infer error codes from prose: %s", async (message) => {
+  mockConfig();
+  apiCalls.getPage.mockRejectedValueOnce(new Error(message));
+  await expect(
+    apiCommand(
+      { command: "get-page", page: "page-1", json: true },
+      dependencies
+    )
+  ).rejects.toThrow("Handled CLI error");
+  expectJsonErrorOutput({
+    command: "get-page",
+    code: "API_COMMAND_FAILED",
+    message,
   });
 });

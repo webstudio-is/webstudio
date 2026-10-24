@@ -29,34 +29,38 @@ const assetFileName = z
 export const isAssetFileName = (value: string) =>
   assetFileName.safeParse(value).success;
 
-const missingImportedAssetFilesPrefix = "Imported asset files are missing: ";
-
-export const getMissingImportedAssetFilesMessage = (assetNames: string[]) =>
-  `${missingImportedAssetFilesPrefix}${JSON.stringify(assetNames)}`;
-
-export const parseMissingImportedAssetFilesMessage = (error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  const start = message.indexOf(missingImportedAssetFilesPrefix);
-  if (start === -1) {
-    return;
+export class MissingImportedAssetFilesError extends Error {
+  readonly webstudioCode = "MISSING_IMPORTED_ASSET_FILES";
+  readonly missingAssetNames: string[];
+  constructor(missingAssetNames: string[]) {
+    super(
+      `Imported asset files are missing: ${JSON.stringify(missingAssetNames)}`
+    );
+    this.missingAssetNames = missingAssetNames;
+    this.name = "MissingImportedAssetFilesError";
   }
-  const data = message.slice(start + missingImportedAssetFilesPrefix.length);
-  try {
-    const names = JSON.parse(data);
-    if (
-      Array.isArray(names) &&
-      names.every((name) => typeof name === "string")
-    ) {
-      return names;
+}
+
+export const getMissingImportedAssetFiles = (
+  error: unknown
+): string[] | undefined => {
+  const visited = new Set<unknown>();
+  const visit = (value: unknown): string[] | undefined => {
+    if (typeof value !== "object" || value === null || visited.has(value)) {
+      return;
     }
-  } catch {
-    // Support already-deployed API responses using the previous comma-separated
-    // format. New responses use JSON so valid filenames can contain commas.
-  }
-  return data
-    .split(",")
-    .map((name) => name.trim())
-    .filter((name) => name !== "");
+    visited.add(value);
+    const record = value as Record<string, unknown>;
+    if (
+      record.webstudioCode === "MISSING_IMPORTED_ASSET_FILES" &&
+      Array.isArray(record.missingAssetNames) &&
+      record.missingAssetNames.every((name) => typeof name === "string")
+    ) {
+      return record.missingAssetNames;
+    }
+    return visit(record.data) ?? visit(record.cause);
+  };
+  return visit(error);
 };
 
 export const projectBundle = z.object({
@@ -83,10 +87,21 @@ export const publishedProjectBundle = projectBundle.extend({
 });
 export type PublishedProjectBundle = z.infer<typeof publishedProjectBundle>;
 
+// Input-only compatibility for bundles produced before Form identities were
+// canonicalized. Keep this out of publishedProjectBundle and bundleVersion.
+export const historicalPublishedProjectBundle = publishedProjectBundle.extend({
+  build: serializedBuild.extend({
+    pages: z.intersection(
+      serializedBuild.shape.pages,
+      z.object({ formComponentIdentityVersion: z.number().int().optional() })
+    ),
+  }),
+});
+
 export const importProjectBundleInput = z
   .object({
     projectId: z.string().min(1),
-    data: publishedProjectBundle.optional(),
+    data: historicalPublishedProjectBundle.optional(),
     uploadId: z.string().min(1).optional(),
     ignoreVersionCheck: z.boolean().optional(),
   })

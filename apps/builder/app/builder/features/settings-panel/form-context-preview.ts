@@ -53,7 +53,7 @@ export const getFormParameterName = (
     (formId === undefined && instances === undefined) ||
     (formId !== undefined && source.scopeInstanceId !== formId) ||
     (instances !== undefined &&
-      instances.get(source.scopeInstanceId)?.component !== "Form")
+      instances.get(source.scopeInstanceId)?.component !== "ResourceForm")
   ) {
     return;
   }

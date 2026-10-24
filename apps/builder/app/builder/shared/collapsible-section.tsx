@@ -209,7 +209,7 @@ export const CollapsibleSectionWithAddButton = ({
   return (
     <CollapsibleSectionRoot
       label={label}
-      fullWidth={false}
+      fullWidth={props.fullWidth}
       showSeparator={props.showSeparator}
       isOpen={isOpenFinal}
       onOpenChange={(nextIsOpen) => {

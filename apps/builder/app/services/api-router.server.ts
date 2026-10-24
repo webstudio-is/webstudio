@@ -12,9 +12,9 @@ import {
   setMarketplaceApprovalStatus,
 } from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
+import { singlePlayerVersionMismatchError } from "@webstudio-is/project/build-patch-core.server";
 import {
   createProjectDomain,
-  createUnpublishJobId,
   deleteProjectDomain,
   getDefaultPublishDomains,
   getVerifiedPublishDomains,
@@ -64,9 +64,7 @@ import {
 import { componentMetas } from "~/shared/component-metas.server";
 import type { Asset, AssetFolder } from "@webstudio-is/sdk";
 import {
-  applyContentModeTransaction,
   createContentBlockApplication,
-  getContentModeCapabilities,
   type BuilderRuntimeContext,
 } from "@webstudio-is/project-build/runtime";
 import type { CompactBuild } from "@webstudio-is/project-build";
@@ -88,6 +86,7 @@ import {
   serializeProjectSummary,
 } from "./api-build.server";
 import { throwApiError } from "./api-errors.server";
+import { assertContentOrBuildTransactions } from "./api-content-permissions.server";
 import { validateProjectSettingsUpdate } from "./project-settings-mutation.server";
 import {
   createBuilderRuntimeState,
@@ -410,6 +409,7 @@ const buildMutation = <Schema extends z.ZodType<{ projectId: string }>, Result>(
   input: Schema,
   handler: (args: {
     ctx: AppContext;
+    auth: Awaited<ReturnType<typeof assertApiProjectPermit>>;
     input: z.infer<Schema>;
     build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
     commit: BuildCommit;
@@ -420,10 +420,15 @@ const buildMutation = <Schema extends z.ZodType<{ projectId: string }>, Result>(
     .input(input)
     .mutation(async ({ ctx, input }) => {
       const parsedInput = input as z.infer<Schema>;
-      await assertApiProjectPermit(ctx, parsedInput.projectId, "build");
+      const auth = await assertApiProjectPermit(
+        ctx,
+        parsedInput.projectId,
+        "build"
+      );
       const build = await loadDevBuildByProjectId(ctx, parsedInput.projectId);
       return await handler({
         ctx,
+        auth,
         input: parsedInput,
         build,
         commit: async <CommitResult extends Record<string, unknown> = {}>(
@@ -479,7 +484,8 @@ const runtimeMutationValidators: Partial<
 
 type BuildCommit = <CommitResult extends Record<string, unknown> = {}>(
   payload: z.infer<typeof buildPatchTransaction>["payload"],
-  result?: CommitResult
+  result?: CommitResult,
+  assetFolders?: readonly AssetFolder[]
 ) => Promise<{ version: number } & CommitResult>;
 
 const commitRuntimeMutation = async <
@@ -518,40 +524,6 @@ const commitRuntimeMutation = async <
   return await commit(mutation.payload, mutation.result);
 };
 
-const createContentModeCapabilitiesFromBuild = (build: CompactBuild) => {
-  const state = createBuilderRuntimeState(build);
-  return getContentModeCapabilities({
-    instances: state.instances!,
-    metas: componentMetas,
-    props: state.props!,
-    styleSources: state.styleSources!,
-    styleSourceSelections: state.styleSourceSelections,
-    styles: state.styles,
-    breakpoints: state.breakpoints,
-  });
-};
-
-const assertContentOrBuildPayload = ({
-  auth,
-  build,
-  payload,
-}: {
-  auth: Awaited<ReturnType<typeof assertApiProjectPermit>>;
-  build: CompactBuild;
-  payload: z.infer<typeof buildPatchTransaction>["payload"];
-}) => {
-  if (auth.permits.includes("build")) {
-    return;
-  }
-  const result = applyContentModeTransaction({
-    capabilities: createContentModeCapabilitiesFromBuild(build),
-    transaction: { id: "api-content-mode", payload },
-  });
-  if (result.success === false) {
-    throw new AuthorizationError(result.error);
-  }
-};
-
 const contentOrBuildMutation = <
   Schema extends z.ZodType<{ projectId: string }>,
   Result,
@@ -559,6 +531,7 @@ const contentOrBuildMutation = <
   input: Schema,
   handler: (args: {
     ctx: AppContext;
+    auth: Awaited<ReturnType<typeof assertApiProjectPermit>>;
     input: z.infer<Schema>;
     build: Awaited<ReturnType<typeof loadDevBuildByProjectId>>;
     commit: BuildCommit;
@@ -577,13 +550,20 @@ const contentOrBuildMutation = <
       const build = await loadDevBuildByProjectId(ctx, parsedInput.projectId);
       return await handler({
         ctx,
+        auth,
         input: parsedInput,
         build,
         commit: async <CommitResult extends Record<string, unknown> = {}>(
           payload: z.infer<typeof buildPatchTransaction>["payload"],
-          result?: CommitResult
+          result?: CommitResult,
+          assetFolders?: readonly AssetFolder[]
         ) => {
-          assertContentOrBuildPayload({ auth, build, payload });
+          assertContentOrBuildTransactions({
+            auth,
+            build,
+            transactions: [{ id: "api-content-mode", payload }],
+            assetFolders,
+          });
           return (await applyBuildPayload(
             ctx,
             build,
@@ -674,11 +654,13 @@ const runtimeAssetsQuery = <Result = unknown>(id: RuntimeOperationId) =>
   });
 
 const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
-  id: RuntimeOperationId
-) =>
-  buildMutation(
-    runtimeMutationInput(id, true),
-    async ({ ctx, input, build, commit }) => {
+  operation: RuntimeOperation
+) => {
+  const { id, permit, requiresConfirm } = operation;
+  const mutation = permit === "edit" ? contentOrBuildMutation : buildMutation;
+  return mutation(
+    runtimeMutationInput(id, permit === "edit" ? requiresConfirm : true),
+    async ({ ctx, auth, input, build, commit }) => {
       const { assets, assetFolders } = await loadRuntimeAssetData(
         ctx,
         input.projectId
@@ -688,11 +670,19 @@ const runtimeAssetsMutation = <Result extends Record<string, unknown> = {}>(
         build,
         assets,
         assetFolders,
-        input,
-        commit,
+        input:
+          id === "pageTemplates.createPage" &&
+          auth.permits.includes("build") === false
+            ? { ...input, contentMode: true }
+            : input,
+        commit:
+          id === "assetFolders.create"
+            ? (payload, result) => commit(payload, result, assetFolders)
+            : commit,
       });
     }
   );
+};
 
 const runtimeContentBlockMutation = <
   Result extends Record<string, unknown> = {},
@@ -760,7 +750,7 @@ const createRuntimeOperationProcedure = (operation: RuntimeOperation) => {
       ? runtimeAssetsQuery(id)
       : id.startsWith("contentBlocks.")
         ? runtimeContentBlockMutation(id)
-        : runtimeAssetsMutation(id);
+        : runtimeAssetsMutation(operation);
   }
   if (operation.kind === "read") {
     return runtimeBuildQuery(id);
@@ -855,10 +845,14 @@ export const apiRouter = router({
             status,
             resourceId,
           })),
-          errors: result.errors.map(({ status, message }) => ({
-            status,
-            message,
-          })),
+          errors: result.errors.map(
+            ({ status, message, code, resourceId }) => ({
+              status,
+              message,
+              ...(resourceId === undefined ? {} : { resourceId }),
+              ...(code === undefined ? {} : { code }),
+            })
+          ),
         };
       },
       { command: "simulate-form-submission", client: "simulateFormSubmission" }
@@ -1037,9 +1031,21 @@ export const apiRouter = router({
 
     patch: projectMutation(
       buildPatchInput,
-      "build",
-      async ({ ctx, input }) => {
+      "edit",
+      async ({ ctx, input, auth }) => {
         const build = await loadDevBuildByProjectId(ctx, input.projectId);
+        if (input.baseVersion > build.version) {
+          throwApiError("CONFLICT", singlePlayerVersionMismatchError);
+        }
+        // Older versions cannot write; let persistence handle retries and conflicts.
+        if (input.baseVersion === build.version) {
+          assertContentOrBuildTransactions({
+            auth,
+            build,
+            transactions: input.transactions,
+            scope: "text-and-props",
+          });
+        }
         return commitBuildTransactions({
           ctx,
           projectId: input.projectId,
@@ -1248,7 +1254,7 @@ export const apiRouter = router({
           { projectId: input.projectId, domains },
           ctx
         );
-        return { jobId: input.idempotencyKey ?? createUnpublishJobId() };
+        return { unpublishedDomains: domains };
       },
       { command: "unpublish", client: "unpublish" }
     ),
@@ -1313,6 +1319,5 @@ export const apiRouter = router({
 });
 
 export const __testing__ = {
-  assertContentOrBuildPayload,
   assertApiPublishDomains,
 };

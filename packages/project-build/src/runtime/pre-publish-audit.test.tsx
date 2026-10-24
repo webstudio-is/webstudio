@@ -3,10 +3,12 @@ import {
   ROOT_FOLDER_ID,
   blockComponent,
   type Folder,
+  type Instance,
   type Page,
   type Pages,
 } from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
 import {
   createTemplateComponentFixture,
   renderData,
@@ -96,6 +98,139 @@ test("warns without blocking legacy invalid HTML", () => {
   expect(formatPrePublishAuditFinding(findings[0]!)).toBe(
     'Publish warning for "MarketEdge" (/marketedge): Placing <h3> element inside a <button> violates HTML spec.'
   );
+});
+
+test("warns for nested and shared Webhook Forms on every published page", () => {
+  const pages = createPages(marketEdgePage);
+  pages.pages.set("other", {
+    ...marketEdgePage,
+    id: "other",
+    name: "Other",
+    path: "/other",
+    rootInstanceId: "other-body",
+  });
+  pages.pages.set("draft", {
+    ...marketEdgePage,
+    id: "draft",
+    name: "Draft",
+    path: "/draft",
+    rootInstanceId: "draft-body",
+    isDraft: true,
+  });
+  pages.folders.get(ROOT_FOLDER_ID)!.children.push("other", "draft");
+
+  const instance = (
+    id: string,
+    component: string,
+    children: string[] = []
+  ): Instance => ({
+    type: "instance" as const,
+    id,
+    component,
+    children: children.map((value) => ({ type: "id" as const, value })),
+  });
+  const instances = new Map<string, Instance>([
+    ["body", instance("body", "Body", ["box", "modern", "native"])],
+    ["box", instance("box", "Box", ["nested", "shared"])],
+    ["nested", instance("nested", "WebhookForm")],
+    ["shared", instance("shared", "WebhookForm")],
+    ["modern", instance("modern", "ResourceForm")],
+    ["native", { ...instance("native", "Element"), tag: "form" }],
+    ["other-body", instance("other-body", "Body", ["shared"])],
+    ["draft-body", instance("draft-body", "Body", ["draft-form"])],
+    ["draft-form", instance("draft-form", "WebhookForm")],
+    ["orphan", instance("orphan", "WebhookForm")],
+  ]);
+  const findings = runAudit({ pages, instances, props: new Map() }).filter(
+    ({ ruleId }) => ruleId === "deprecated-webhook-form"
+  );
+
+  expect(findings).toEqual([
+    {
+      ruleId: "deprecated-webhook-form",
+      severity: "warning",
+      message:
+        "Webhook Form is deprecated. Replace it with the Form component.",
+      location: {
+        pageId: "marketedge",
+        pageName: "MarketEdge",
+        pagePath: "/marketedge",
+        instanceId: "nested",
+        instanceSelector: ["nested", "box", "body"],
+      },
+    },
+    {
+      ruleId: "deprecated-webhook-form",
+      severity: "warning",
+      message:
+        "Webhook Form is deprecated. Replace it with the Form component.",
+      location: {
+        pageId: "marketedge",
+        pageName: "MarketEdge",
+        pagePath: "/marketedge",
+        instanceId: "shared",
+        instanceSelector: ["shared", "box", "body"],
+      },
+    },
+    {
+      ruleId: "deprecated-webhook-form",
+      severity: "warning",
+      message:
+        "Webhook Form is deprecated. Replace it with the Form component.",
+      location: {
+        pageId: "other",
+        pageName: "Other",
+        pagePath: "/other",
+        instanceId: "shared",
+        instanceSelector: ["shared", "other-body"],
+      },
+    },
+  ]);
+  expect(formatPrePublishAuditFinding(findings[0]!)).toBe(
+    'Publish warning for "MarketEdge" (/marketedge): Webhook Form is deprecated. Replace it with the Form component.'
+  );
+});
+
+test("historical unmarked Form becomes a warning while marked Form is modern", () => {
+  const createData = () => {
+    const instances = new Map([
+      [
+        "body",
+        {
+          type: "instance" as const,
+          id: "body",
+          component: "Body",
+          children: [{ type: "id" as const, value: "form" }],
+        },
+      ],
+      [
+        "form",
+        {
+          type: "instance" as const,
+          id: "form",
+          component: "Form",
+          children: [],
+        },
+      ],
+    ]);
+    return instances;
+  };
+  const legacyInstances = createData();
+  migrateResourceFormInstancesMutable(legacyInstances.values(), false);
+  expect(
+    runAudit({ instances: legacyInstances, props: new Map() }).filter(
+      ({ ruleId }) => ruleId === "deprecated-webhook-form"
+    )
+  ).toHaveLength(1);
+
+  const modernInstances = createData();
+  migrateResourceFormInstancesMutable(modernInstances.values(), true);
+  expect(modernInstances.get("form")?.component).toBe("ResourceForm");
+  expect(
+    runAudit({ instances: modernInstances, props: new Map() }).filter(
+      ({ ruleId }) => ruleId === "deprecated-webhook-form"
+    )
+  ).toEqual([]);
 });
 
 test("blocks publishing when a JSON prop has no value", () => {

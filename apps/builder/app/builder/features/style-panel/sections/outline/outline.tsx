@@ -28,6 +28,7 @@ export const Section = () => {
     <StyleSection label="Outline" properties={properties}>
       <Grid
         css={{
+          paddingInline: theme.panel.paddingInline,
           gridTemplateColumns: `1fr ${theme.spacing[22]}`,
         }}
         gap={2}

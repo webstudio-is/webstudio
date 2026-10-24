@@ -6,9 +6,11 @@ import { cwd } from "node:process";
 import { parseContentDatabaseMaxBytes } from "@webstudio-is/content-engine";
 import { compileContentSource } from "@webstudio-is/content-engine/compiler";
 import {
+  hasHistoricalFormComponentIdentityVersion,
   migratePages,
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
 import * as httpClient from "@webstudio-is/http-client";
 import { createHttpAssetContentRepository } from "@webstudio-is/content-engine/asset-content-repository";
 import { createAssetContentSession } from "@webstudio-is/content-engine/asset-content-session";
@@ -18,6 +20,9 @@ import {
   issueReportBrowserAttempt,
   issueReportBrowserSignal,
   issueReportEntityId,
+  issueReportErrorType,
+  issueReportRequestId,
+  issueReportRecentTargetSchema,
   getPublicBuildIncludes,
   publicApiEntityIdFields,
   publicApiContractVersion,
@@ -25,6 +30,7 @@ import {
   publicApiOperations,
   type IssueReportRuntime,
   type IssueReportRecentFailure,
+  type IssueReportRecentTarget,
   type PublicApiCommand,
   type PublishedProjectBundle,
 } from "@webstudio-is/protocol";
@@ -34,6 +40,7 @@ import {
   getHomePage,
 } from "@webstudio-is/sdk";
 import {
+  ProjectSessionBusyError,
   createProjectSession,
   createDefaultProjectSessionCompatibility,
   serializeRestorePointTransaction,
@@ -184,6 +191,7 @@ type PublicBuildSnapshot = Omit<
   version: number;
   homePageId?: string;
   rootFolderId?: string;
+  /** Keep while unversioned saved projects are supported; tracks the Form identity migration. */
   formComponentIdentityVersion?: number;
   pages?: unknown;
   pageTemplates?: unknown;
@@ -234,12 +242,34 @@ const createCliProjectSessionCompatibility = (
   apiCompatibilityVersion: connection.headers?.["x-webstudio-client-version"],
 });
 
-const isUnsupportedProjectSettingsIncludeError = (error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  return (
-    message.includes("invalid_enum_value") &&
-    message.includes('received "projectSettings"')
-  );
+const isUnsupportedProjectSettingsIncludeError = (
+  error: unknown,
+  includes: readonly string[]
+) => {
+  return getIssueReportErrorRecords(error).some((record) => {
+    const data = isPlainRecord(record.data) ? record.data : record;
+    return (
+      Array.isArray(data.issues) &&
+      data.issues.some((issue) => {
+        if (
+          !isPlainRecord(issue) ||
+          (issue.code !== "invalid_enum_value" &&
+            issue.code !== "invalid_value") ||
+          !Array.isArray(issue.path) ||
+          issue.path.length !== 2 ||
+          issue.path[0] !== "include"
+        ) {
+          return false;
+        }
+        const index = issue.path[1];
+        return (
+          (typeof index === "number" || typeof index === "string") &&
+          Number.isInteger(Number(index)) &&
+          includes[Number(index)] === "projectSettings"
+        );
+      })
+    );
+  });
 };
 
 const getLegacyPublicApiInclude = (namespaces: readonly BuilderNamespace[]) =>
@@ -255,7 +285,6 @@ const toPages = (snapshot: PublicBuildSnapshot) => {
   return migratePages({
     homePageId: snapshot.homePageId,
     rootFolderId: snapshot.rootFolderId,
-    formComponentIdentityVersion: snapshot.formComponentIdentityVersion,
     pages: snapshot.pages,
     pageTemplates: snapshot.pageTemplates,
     folders: snapshot.folders,
@@ -267,16 +296,32 @@ const toPages = (snapshot: PublicBuildSnapshot) => {
 
 const toRemoteSnapshot = (
   snapshot: PublicBuildSnapshot
-): ProjectSessionRemoteSnapshot => ({
-  projectId: snapshot.projectId,
-  buildId: snapshot.buildId,
-  version: snapshot.version,
-  state: createBuilderStateFromBuildData({
-    ...snapshot,
-    pages: toPages(snapshot),
-    dataSources: snapshot.dataSources ?? snapshot.variables ?? [],
-  }),
-});
+): ProjectSessionRemoteSnapshot => {
+  if (
+    snapshot.pages === undefined &&
+    snapshot.instances?.some((instance) => instance.component === "Form")
+  ) {
+    throw new Error("A snapshot with instances must include pages.");
+  }
+  const instances = snapshot.instances?.map((instance) => ({ ...instance }));
+  if (instances !== undefined) {
+    migrateResourceFormInstancesMutable(
+      instances,
+      hasHistoricalFormComponentIdentityVersion(snapshot)
+    );
+  }
+  return {
+    projectId: snapshot.projectId,
+    buildId: snapshot.buildId,
+    version: snapshot.version,
+    state: createBuilderStateFromBuildData({
+      ...snapshot,
+      instances,
+      pages: toPages(snapshot),
+      dataSources: snapshot.dataSources ?? snapshot.variables ?? [],
+    }),
+  };
+};
 
 const publicOperationById = new Map(
   publicApiOperations.map((operation) => [operation.id, operation])
@@ -284,7 +329,10 @@ const publicOperationById = new Map(
 
 export const createIssueReportRuntime = (
   recentFailure?: IssueReportRecentFailure,
-  diagnostics?: Pick<IssueReportRuntime, "projectId" | "session" | "preview">
+  diagnostics?: Pick<
+    IssueReportRuntime,
+    "projectId" | "recentTargets" | "session" | "preview"
+  >
 ): IssueReportRuntime => ({
   cliVersion: packageJson.version,
   nodeVersion: process.versions.node,
@@ -346,6 +394,68 @@ const getIssueReportEntityIds = (input: unknown) => {
   return ids;
 };
 
+export const createIssueReportTarget = (
+  tool: string,
+  input: unknown,
+  pageId?: string
+): IssueReportRecentTarget | undefined => {
+  const entityIds = getIssueReportEntityIds(input);
+  if (
+    pageId !== undefined &&
+    !entityIds.some(({ field }) => field === "pageId")
+  ) {
+    const parsed = issueReportEntityId.safeParse({
+      field: "pageId",
+      id: pageId,
+    });
+    if (parsed.success) {
+      entityIds.unshift(parsed.data);
+    }
+  }
+  const target = issueReportRecentTargetSchema.safeParse({
+    tool,
+    entityIds: entityIds.slice(0, 20),
+  });
+  return target.success ? target.data : undefined;
+};
+
+export const createIssueReportTargetTracker = (now = Date.now) => {
+  let recent: { target: IssueReportRecentTarget; at: number }[] = [];
+  const snapshot = () => {
+    const valid = recent.filter(({ at }) => {
+      const age = now() - at;
+      return age >= 0 && age <= 10 * 60_000;
+    });
+    return valid.length === 0 ? undefined : valid;
+  };
+  return {
+    record(tool: string, input: unknown, pageId?: string) {
+      const target = createIssueReportTarget(tool, input, pageId);
+      if (target === undefined) {
+        return false;
+      }
+      recent = [
+        { target, at: now() },
+        ...(snapshot() ?? []).filter(({ target: old }) => old.tool !== tool),
+      ].slice(0, 3);
+      return true;
+    },
+    getAll: () => snapshot()?.map(({ target }) => target),
+    restore(target: IssueReportRecentTarget, at: number) {
+      const age = now() - at;
+      if (age >= 0 && age <= 10 * 60_000) {
+        recent.push({ target, at });
+        recent.sort((left, right) => right.at - left.at);
+        recent = recent.slice(0, 3);
+      }
+    },
+    snapshot,
+    clear() {
+      recent = [];
+    },
+  };
+};
+
 export const createIssueReportFailure = (
   canonicalTool: string,
   error: unknown,
@@ -354,6 +464,13 @@ export const createIssueReportFailure = (
 ): IssueReportRecentFailure => {
   const errorCode = getStableErrorCode(error);
   const records = getIssueReportErrorRecords(error);
+  const errorType = records
+    .map((record) =>
+      issueReportErrorType.safeParse(
+        record instanceof Error ? record.constructor.name : undefined
+      )
+    )
+    .find((result) => result.success && result.data !== "TRPCClientError");
   const record = records.find(
     (candidate) =>
       candidate.attempts !== undefined || candidate.processExit !== undefined
@@ -389,11 +506,34 @@ export const createIssueReportFailure = (
           ? "error"
           : "other";
   const httpStatus = httpClient.getErrorStatus(error) ?? response?.status;
-  const isResponseTransformFailure = records.some(
-    (candidate) =>
-      candidate.name === "TRPCClientError" &&
-      candidate.message === "Unable to transform response from server"
+  const requestId = issueReportRequestId.safeParse(
+    records.find((record) => record.requestId !== undefined)?.requestId ??
+      (response?.headers instanceof Headers
+        ? (response.headers.get("x-request-id") ??
+          response.headers.get("cf-ray"))
+        : undefined)
   );
+  const isResponseTransformFailure = records.some((candidate) => {
+    if (
+      candidate.name !== "TRPCClientError" ||
+      !isPlainRecord(candidate.meta)
+    ) {
+      return false;
+    }
+    const json = candidate.meta.responseJSON;
+    const envelopes = Array.isArray(json) ? json : [json];
+    return (
+      json !== undefined &&
+      envelopes.some(
+        (envelope) =>
+          !isPlainRecord(envelope) ||
+          ("error" in envelope
+            ? !isPlainRecord(envelope.error) ||
+              typeof envelope.error.code !== "number"
+            : !isPlainRecord(envelope.result))
+      )
+    );
+  });
   const processExit = isPlainRecord(record?.processExit)
     ? record.processExit
     : undefined;
@@ -443,6 +583,8 @@ export const createIssueReportFailure = (
     code: isResponseTransformFailure
       ? "API_RESPONSE_TRANSFORM_FAILED"
       : (errorCode ?? "MCP_TOOL_FAILED"),
+    ...(errorType?.success ? { errorType: errorType.data } : {}),
+    ...(requestId.success ? { requestId: requestId.data } : {}),
     ...(typeof httpStatus === "number" &&
     Number.isInteger(httpStatus) &&
     httpStatus >= 100 &&
@@ -584,10 +726,32 @@ const withMappedRemoteError = async <Result>(task: () => Promise<Result>) => {
 
 const parsePersistedSnapshot = (
   value: PersistedCliProjectSessionSnapshot
-): ProjectSessionPersistedSnapshot => ({
-  ...value,
-  state: createBuilderStateFromSerializedSnapshot(value.state),
-});
+): ProjectSessionPersistedSnapshot => {
+  const instances = value.state.instances?.map(
+    ([id, instance]) => [id, { ...instance }] as const
+  );
+  if (
+    value.state.pages === undefined &&
+    instances?.some(([, instance]) => instance.component === "Form")
+  ) {
+    throw new Error(
+      "A persisted snapshot with Form instances must include pages."
+    );
+  }
+  if (instances !== undefined) {
+    migrateResourceFormInstancesMutable(
+      instances.map(([, instance]) => instance),
+      hasHistoricalFormComponentIdentityVersion(value.state.pages)
+    );
+  }
+  return {
+    ...value,
+    state: createBuilderStateFromSerializedSnapshot({
+      ...value.state,
+      instances,
+    }),
+  };
+};
 
 const serializePersistedSnapshot = (
   snapshot: ProjectSessionPersistedSnapshot
@@ -609,7 +773,7 @@ export const createCliProjectSessionStorage = (
       options.expectedRevision !== undefined &&
       current?.revision !== options.expectedRevision
     ) {
-      throw new Error("Project session snapshot changed on disk.");
+      throw new ProjectSessionBusyError();
     }
     const revision = randomUUID();
     await writeFileAtomic(
@@ -736,17 +900,22 @@ export const createCliProjectSessionTransport = ({
           include,
         })
       ) as Promise<PublicBuildSnapshot>;
+    // Older servers need pages to disambiguate historical Form instances.
+    const readNamespaces = namespaces.includes("instances")
+      ? [...namespaces, "pages" as const]
+      : namespaces;
+    const includes = getPublicBuildIncludes(readNamespaces);
     let snapshot: PublicBuildSnapshot;
     try {
-      snapshot = await fetchSnapshot(getPublicBuildIncludes(namespaces));
+      snapshot = await fetchSnapshot(includes);
     } catch (error) {
       if (
         namespaces.includes("projectSettings") === false ||
-        isUnsupportedProjectSettingsIncludeError(error) === false
+        isUnsupportedProjectSettingsIncludeError(error, includes) === false
       ) {
         throw error;
       }
-      snapshot = await fetchSnapshot(getLegacyPublicApiInclude(namespaces));
+      snapshot = await fetchSnapshot(getLegacyPublicApiInclude(readNamespaces));
     }
     return toRemoteSnapshot(snapshot);
   },

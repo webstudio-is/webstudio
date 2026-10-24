@@ -1,17 +1,17 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
-import { Form } from "./resource-form";
+import { ResourceForm } from "./resource-form";
 
 test("Form exposes a valid action URL that identifies its mode", () => {
   const html = renderToStaticMarkup(
-    <Form
-      action={[{ dataSourceId: "request", enabled: true }]}
+    <ResourceForm
+      action={[{ dataSourceId: "request" }]}
       method="post"
       encType="multipart/form-data"
     >
       <input name="message" />
       <button type="submit">Send</button>
-    </Form>
+    </ResourceForm>
   );
 
   expect(html).toContain(
@@ -24,9 +24,9 @@ test("Form exposes a valid action URL that identifies its mode", () => {
 
 test("Form action URL identifies Navigation mode when no Resources are connected", () => {
   const html = renderToStaticMarkup(
-    <Form action={[]}>
+    <ResourceForm action={[]}>
       <input name="query" />
-    </Form>
+    </ResourceForm>
   );
   expect(html).toContain(
     '<form action="?__webstudio__=navigate" method="get">'
@@ -35,18 +35,18 @@ test("Form action URL identifies Navigation mode when no Resources are connected
 
 test("server rendering blocks an over-limit managed Form", () => {
   const html = renderToStaticMarkup(
-    <Form
+    <ResourceForm
       action={[
-        { dataSourceId: "one", enabled: true },
-        { dataSourceId: "two", enabled: true },
-        { dataSourceId: "three", enabled: true },
-        { dataSourceId: "four", enabled: true },
-        { dataSourceId: "five", enabled: true },
-        { dataSourceId: "six", enabled: true },
+        { dataSourceId: "one" },
+        { dataSourceId: "two" },
+        { dataSourceId: "three" },
+        { dataSourceId: "four" },
+        { dataSourceId: "five" },
+        { dataSourceId: "six" },
       ]}
     >
       <button type="submit">Send</button>
-    </Form>
+    </ResourceForm>
   );
   expect(html).toContain('action="?__webstudio__=resources"');
   expect(html).toContain('method="dialog"');

@@ -81,7 +81,6 @@ test("migrates legacy pages inside webstudio data", () => {
   migrateWebstudioDataMutable(data);
 
   expect(data.pages).toEqual({
-    formComponentIdentityVersion: 1,
     meta: undefined,
     compiler: undefined,
     redirects: undefined,
@@ -106,7 +105,7 @@ test("migrates legacy pages inside webstudio data", () => {
   });
 });
 
-test("migrates saved legacy and managed form identities exactly once", () => {
+test("migrates unmarked historical and mixed form identities exactly once", () => {
   const data = structuredClone(emptyData);
   data.instances.set("native", {
     type: "instance",
@@ -126,29 +125,60 @@ test("migrates saved legacy and managed form identities exactly once", () => {
     component: "Form",
     children: [],
   });
+  data.instances.set("webhook", {
+    type: "instance",
+    id: "webhook",
+    component: "WebhookForm",
+    children: [],
+  });
 
   migrateWebstudioDataMutable(data);
 
-  expect(data.instances.get("native")?.component).toBe("Form");
-  expect(data.instances.get("managed")?.component).toBe("Form");
+  expect(data.instances.get("native")?.component).toBe("ResourceForm");
+  expect(data.instances.get("managed")?.component).toBe("ResourceForm");
   expect(data.instances.get("legacy")?.component).toBe("WebhookForm");
-  expect(data.pages.formComponentIdentityVersion).toBe(1);
+  expect(data.instances.get("webhook")?.component).toBe("WebhookForm");
+  expect("formComponentIdentityVersion" in data.pages).toBe(false);
   data.instances.set("new", {
     type: "instance",
     id: "new",
-    component: "Form",
+    component: "ResourceForm",
     children: [],
   });
   migrateWebstudioDataMutable(data);
-  expect(data.instances.get("native")?.component).toBe("Form");
-  expect(data.instances.get("managed")?.component).toBe("Form");
+  expect(data.instances.get("native")?.component).toBe("ResourceForm");
+  expect(data.instances.get("managed")?.component).toBe("ResourceForm");
   expect(data.instances.get("legacy")?.component).toBe("WebhookForm");
-  expect(data.instances.get("new")?.component).toBe("Form");
+  expect(data.instances.get("webhook")?.component).toBe("WebhookForm");
+  expect(data.instances.get("new")?.component).toBe("ResourceForm");
   const reloaded = structuredClone(data);
   reloaded.pages = migratePages(serializePages(data.pages));
-  expect(reloaded.pages.formComponentIdentityVersion).toBe(1);
+  expect("formComponentIdentityVersion" in reloaded.pages).toBe(false);
   migrateWebstudioDataMutable(reloaded);
-  expect(reloaded.instances.get("new")?.component).toBe("Form");
+  expect(reloaded.instances.get("new")?.component).toBe("ResourceForm");
+});
+
+test("migrates marked modern Form and preserves all instance data", () => {
+  const data = structuredClone(emptyData);
+  (
+    data.pages as Pages & { formComponentIdentityVersion: number }
+  ).formComponentIdentityVersion = 1;
+  data.instances.set("modern", {
+    type: "instance",
+    id: "modern",
+    component: "Form",
+    children: [{ type: "text", value: "keep" }],
+  });
+  migrateWebstudioDataMutable(data);
+  expect(data.instances.get("modern")).toEqual({
+    type: "instance",
+    id: "modern",
+    component: "ResourceForm",
+    children: [{ type: "text", value: "keep" }],
+  });
+  expect("formComponentIdentityVersion" in data.pages).toBe(false);
+  migrateWebstudioDataMutable(data);
+  expect(data.instances.get("modern")?.component).toBe("ResourceForm");
 });
 
 test("migrates styles inside webstudio data", () => {

@@ -1,6 +1,8 @@
 import hash from "@emotion/hash";
 import deepEqual from "fast-deep-equal";
 import { z } from "zod";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
+import { hasHistoricalFormComponentIdentityVersion } from "@webstudio-is/project-migrations/pages";
 import type {
   RuntimeOperationContract,
   RuntimeOperationId,
@@ -204,11 +206,28 @@ export const hydrateRestorePointTransaction = (
   transaction: BuilderPatchTransaction
 ) =>
   transformRestorePointTransaction(transaction, (state) => {
+    const hasModernFormMarker = hasHistoricalFormComponentIdentityVersion(
+      state.pages
+    );
     const serialized = serializedRestorePointState.parse(state);
     const hydrated = createBuilderStateFromSerializedSnapshot({
       ...serialized,
       marketplaceProduct: serialized.marketplaceProduct ?? undefined,
     }) as Record<string, unknown>;
+    if (hydrated.instances instanceof Map) {
+      if (
+        state.pages === undefined &&
+        Array.from(hydrated.instances.values()).some(
+          (instance) => instance.component === "Form"
+        )
+      ) {
+        throw new Error("A restore point with instances must include pages.");
+      }
+      migrateResourceFormInstancesMutable(
+        hydrated.instances.values(),
+        hasModernFormMarker
+      );
+    }
     if (serialized.marketplaceProduct === null) {
       hydrated.marketplaceProduct = undefined;
     }
@@ -346,7 +365,7 @@ const wait = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
-class ProjectSessionBusyError extends Error {
+export class ProjectSessionBusyError extends Error {
   code = "PROJECT_SESSION_BUSY";
 
   constructor(options: { cause?: unknown } = {}) {
@@ -522,12 +541,6 @@ const redactKeys = new Set([
 const getProjectSessionErrorCode = (error: unknown) => {
   if (error instanceof BuilderRuntimeError) {
     return error.code;
-  }
-  if (
-    error instanceof Error &&
-    error.message.includes("Project session snapshot changed on disk")
-  ) {
-    return "PROJECT_SESSION_BUSY";
   }
   if (typeof error === "object" && error !== null) {
     if ("code" in error) {
@@ -1436,7 +1449,11 @@ export class ProjectSession {
         ],
       });
     }
-    if (hasGeneratedRecordWritePatch(mutation.payload)) {
+    if (
+      hasGeneratedRecordWritePatch(mutation.payload) ||
+      (options.permit === "edit" &&
+        (await this.getPermissions()).canBuild === false)
+    ) {
       return await this.executeServerOperation<Result>(
         {
           id: operationId,
@@ -1535,8 +1552,9 @@ export class ProjectSession {
     }
     const permissions = await this.getPermissions();
     if (hasProjectSessionPermit(permissions, permit) === false) {
-      throw new Error(
-        `Authorization token does not have ${permit} permission.`
+      throw Object.assign(
+        new Error(`Authorization token does not have ${permit} permission.`),
+        { code: "FORBIDDEN" }
       );
     }
   }

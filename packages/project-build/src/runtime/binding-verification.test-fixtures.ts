@@ -131,7 +131,7 @@ export const createBindingVerificationFixture = (): BuilderState => {
         {
           type: "instance",
           id: "checkout",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],

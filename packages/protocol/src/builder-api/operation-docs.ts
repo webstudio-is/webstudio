@@ -759,7 +759,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "unpublish",
     description:
-      "Remove staging or production deployment records for selected domains",
+      "Remove staging or production deployment records for selected domains. This completes without a publish job",
     requiredOptions: ["target", "confirm", "json"],
     examples: ["webstudio unpublish --target production --confirm --json"],
   },

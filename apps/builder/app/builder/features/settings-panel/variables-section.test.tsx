@@ -145,7 +145,7 @@ test.each(["formState", "results", "errors"] as const)(
           {
             id: "form",
             type: "instance" as const,
-            component: "Form",
+            component: "ResourceForm",
             children: [],
           },
         ],
@@ -272,7 +272,7 @@ test("Variables list preview uses server browser info after Preview submission",
         {
           id: "form",
           type: "instance",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -332,7 +332,7 @@ test.each([
           {
             id: "form",
             type: "instance" as const,
-            component: "Form",
+            component: "ResourceForm",
             children: [],
           },
         ],
@@ -587,7 +587,7 @@ test("clicking an Action opens its Resource editor and highlights its Variables 
               instanceId: "child",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: resourceVariable.id, enabled: true }],
+              value: [{ dataSourceId: resourceVariable.id }],
             }}
             onChange={() => {}}
             propName="action"
@@ -622,17 +622,6 @@ test("clicking an Action opens its Resource editor and highlights its Variables 
       .querySelector("[data-drag-handle]")
       ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   });
-  expect($variableToFocus.get()).toBeUndefined();
-  expect($variableToOpen.get()).toBeUndefined();
-  expect(document.querySelector('[role="dialog"]')).toBeNull();
-  await act(
-    async () =>
-      await userEvent.click(
-        container.querySelector<HTMLButtonElement>(
-          '[aria-label="Disable action Request"]'
-        )!
-      )
-  );
   expect($variableToFocus.get()).toBeUndefined();
   expect($variableToOpen.get()).toBeUndefined();
   expect(document.querySelector('[role="dialog"]')).toBeNull();
@@ -722,7 +711,7 @@ test("an Action Resource unavailable in Variables does not open a stale dialog",
               instanceId: "child",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: parentResource.id, enabled: true }],
+              value: [{ dataSourceId: parentResource.id }],
             }}
             computedValue={[]}
             meta={{

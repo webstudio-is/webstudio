@@ -9,6 +9,81 @@ import {
 import { propertyVarTestFixtures } from "./__generated__/property-var-test-fixtures";
 
 describe("Parse CSS", () => {
+  test("flex with a nested calc basis matches explicit longhands", () => {
+    const basis = "calc((100% - var(--space-lg)) / 2)";
+    const shorthand = parseCss(`.test { flex: 0 1 ${basis}; }`, new Map());
+    const longhands = parseCss(
+      `.test { flex-grow: 0; flex-shrink: 1; flex-basis: ${basis}; }`,
+      new Map()
+    );
+    expect(shorthand.styles).toEqual(longhands.styles);
+  });
+
+  test.each([
+    ["", "", "1", "1"],
+    ["2 ", "", "2", "1"],
+    ["", " 2", "2", "1"],
+    ["", " 2 3", "2", "3"],
+  ])(
+    "flex function basis between %s and %s matches explicit longhands",
+    (before, after, grow, shrink) => {
+      const basis = "calc((100% - var(--gap)) / 2)";
+      expect(
+        parseCss(`.test { flex: ${before}${basis}${after}; }`, new Map()).styles
+      ).toEqual(
+        parseCss(
+          `.test { flex-grow: ${grow}; flex-shrink: ${shrink}; flex-basis: ${basis}; }`,
+          new Map()
+        ).styles
+      );
+    }
+  );
+
+  test("border color-mix with a variable matches explicit longhands", () => {
+    const color = "color-mix(in srgb, var(--accent) 50%, transparent)";
+    const shorthand = parseCss(
+      `.test { border-top: 1px solid ${color}; }`,
+      new Map()
+    );
+    const longhands = parseCss(
+      `.test {
+        border-top-width: 1px;
+        border-top-style: solid;
+        border-top-color: ${color};
+      }`,
+      new Map()
+    );
+    expect(shorthand.styles).toEqual(longhands.styles);
+  });
+
+  test.each([
+    ["16px/1.5", "16px", "1.5", "var(--font-body)"],
+    ["16px / 24px", "16px", "24px", "var(--font-body)"],
+    ["16px/var(--leading)", "16px", "var(--leading)", "var(--font-body)"],
+    ["16px", "16px", "initial", "var(--font-body)"],
+  ])(
+    "font shorthand %s %s %s %s matches explicit longhands",
+    (sizeAndHeight, size, height, family) => {
+      const shorthand = parseCss(
+        `.test { font: 600 ${sizeAndHeight} ${family} }`,
+        new Map()
+      );
+      const longhands = parseCss(
+        `.test {
+          font-style: initial;
+          font-variant-caps: initial;
+          font-weight: 600;
+          font-stretch: initial;
+          font-size: ${size};
+          line-height: ${height};
+          font-family: ${family};
+        }`,
+        new Map()
+      );
+      expect(shorthand.styles).toEqual(longhands.styles);
+    }
+  );
+
   test("detects rules unsupported by template CSS", () => {
     expect(hasUnsupportedCssTemplateRules("color: red")).toBe(false);
     expect(

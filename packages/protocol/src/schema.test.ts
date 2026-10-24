@@ -3,10 +3,11 @@ import { builderNamespaces } from "@webstudio-is/project-build/contracts";
 import { builderPatchTransactionSchema } from "@webstudio-is/project-build/contracts";
 import {
   isAssetFileName,
-  getMissingImportedAssetFilesMessage,
-  parseMissingImportedAssetFilesMessage,
+  MissingImportedAssetFilesError,
+  getMissingImportedAssetFiles,
   getBundleVersionMismatchMessage,
   importProjectBundleInput,
+  historicalPublishedProjectBundle,
   publishedProjectBundle,
   bundleVersion,
   stagedUploadPath,
@@ -35,30 +36,26 @@ describe("project bundle contract", () => {
     expect(isAssetFileName("folder\\image.png")).toBe(false);
   });
 
-  test("formats and parses missing imported asset file messages", () => {
-    const message = getMissingImportedAssetFilesMessage([
-      "image.png",
-      "font,latin.woff2",
-    ]);
-
-    expect(message).toBe(
-      'Imported asset files are missing: ["image.png","font,latin.woff2"]'
-    );
-    expect(parseMissingImportedAssetFilesMessage(new Error(message))).toEqual([
-      "image.png",
-      "font,latin.woff2",
-    ]);
+  test("reads missing imported asset files from structured local and remote errors", () => {
+    const names = ["image.png", "font,latin.woff2"];
+    const error = new MissingImportedAssetFilesError(names);
+    error.message = "Wording may change";
+    expect(getMissingImportedAssetFiles(error)).toEqual(names);
     expect(
-      parseMissingImportedAssetFilesMessage("Other error")
-    ).toBeUndefined();
-  });
-
-  test("parses already-deployed comma-separated missing asset messages", () => {
+      getMissingImportedAssetFiles({
+        data: {
+          webstudioCode: "MISSING_IMPORTED_ASSET_FILES",
+          missingAssetNames: names,
+        },
+      })
+    ).toEqual(names);
     expect(
-      parseMissingImportedAssetFilesMessage(
-        new Error("Imported asset files are missing: image.png, font.woff2")
+      getMissingImportedAssetFiles(
+        new Error(
+          'Imported asset files are missing: ["image.png","font,latin.woff2"]'
+        )
       )
-    ).toEqual(["image.png", "font.woff2"]);
+    ).toBeUndefined();
   });
 
   test("preserves published project metadata", () => {
@@ -73,6 +70,27 @@ describe("project bundle contract", () => {
       projectTitle: "Example",
       user: { email: "user@example.com", username: "Site Owner" },
     });
+  });
+
+  test("retains the historical Form marker only in input parsing", () => {
+    const bundle = createPublishedProjectBundleFixture();
+    const historical = {
+      ...bundle,
+      build: {
+        ...bundle.build,
+        pages: { ...bundle.build.pages, formComponentIdentityVersion: 1 },
+      },
+    };
+    expect(
+      historicalPublishedProjectBundle.parse(historical).build.pages
+    ).toHaveProperty("formComponentIdentityVersion", 1);
+    expect(
+      importProjectBundleInput.parse({ projectId: "project", data: historical })
+        .data?.build.pages
+    ).toHaveProperty("formComponentIdentityVersion", 1);
+    expect(
+      publishedProjectBundle.parse(historical).build.pages
+    ).not.toHaveProperty("formComponentIdentityVersion");
   });
 
   test("preserves build-versioned marketplace metadata", () => {

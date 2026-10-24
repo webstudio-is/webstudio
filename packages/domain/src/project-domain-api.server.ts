@@ -378,17 +378,7 @@ export const unpublishProjectDomains = async (
   for (const domain of domains) {
     const dbDomain = domain.replace(`.${env.PUBLISHER_HOST}`, "");
     const result = await deploymentTrpc.unpublish.mutate({ domain });
-    await unpublishBuild({ projectId, domain: dbDomain }, context).catch(
-      (error) => {
-        if (
-          error instanceof Error &&
-          error.message === `Domain ${dbDomain} is not published`
-        ) {
-          return;
-        }
-        throw error;
-      }
-    );
+    await unpublishBuild({ projectId, domain: dbDomain }, context);
     if (result.success === false && result.error !== "NOT_IMPLEMENTED") {
       throw new Error(`Failed to unpublish ${domain}: ${result.error}`);
     }
@@ -503,5 +493,3 @@ export const verifyProjectDomainResult = async (
 ) => {
   return await db.verify(input, context);
 };
-
-export const createUnpublishJobId = () => `unpublish-${createId("nano")}`;

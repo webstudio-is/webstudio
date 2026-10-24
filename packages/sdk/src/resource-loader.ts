@@ -157,10 +157,18 @@ export const assetsFieldCatalogApiUrl = `${assetsApiUrl}/field-catalog`;
 export const assetsOpenApiUrl = `${assetsApiUrl}/openapi.json`;
 export const assetsQuerySchemaApiUrl = `${assetsApiUrl}/query-schema.json`;
 
+export type PreparedHttpRequest = {
+  type: "prepared-http";
+  url: string;
+  method: string;
+  headers: Headers;
+  body?: RequestInit["body"];
+};
+
 export type ResourceExchange = {
   /** The configured Resource type; never infer this from the request URL. */
   kind?: "http" | "email";
-  request: Request | ResourceRequest;
+  request: Request | ResourceRequest | PreparedHttpRequest;
   response: {
     status: number;
     statusText: string;
@@ -429,7 +437,7 @@ export const loadResource = async (
           controller.abort();
         }, options.timeoutMs);
 
-  let inspectionRequest: Request | undefined;
+  let inspectionRequest: PreparedHttpRequest | undefined;
   let inspectionResponse: ResourceExchange["response"] | undefined;
   try {
     const { method, searchParams, headers, body } = resourceRequest;
@@ -527,16 +535,17 @@ export const loadResource = async (
         requestInit.body = serializeValue(body);
       }
     }
-    const outgoing =
-      options.onExchange && !isLocalResource(href)
-        ? new Request(href, requestInit)
-        : undefined;
-    // Cloudflare adds generic metadata to clone(); inspection uses Web Request fields.
-    inspectionRequest = outgoing?.clone() as Request | undefined;
+    if (options.onExchange && !isLocalResource(href)) {
+      inspectionRequest = {
+        type: "prepared-http",
+        url: href,
+        method: method.toUpperCase(),
+        headers: new Headers(requestHeaders),
+        body: requestInit.body,
+      };
+    }
     const response = await awaitWithSignal(
-      outgoing === undefined
-        ? customFetch(href, requestInit)
-        : customFetch(outgoing),
+      customFetch(href, requestInit),
       signal
     );
 

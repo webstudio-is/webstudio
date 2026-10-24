@@ -20,16 +20,18 @@ import {
 } from "@webstudio-is/asset-uploader/server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
 import {
+  hasHistoricalFormComponentIdentityVersion,
   migratePages,
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
+import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
 import {
   createProjectSettingsFromPages,
   removeLegacyProjectSettingsFromPages,
 } from "@webstudio-is/project-build";
 import {
   isAssetFileName,
-  getMissingImportedAssetFilesMessage,
+  MissingImportedAssetFilesError,
   getBundleVersionMismatchMessage,
   bundleVersion,
   type PublishedProjectBundle,
@@ -96,7 +98,14 @@ const createBuildImportUpdate = ({
   updatedAt: string;
   version: number;
 }) => {
+  const hasModernFormMarker = hasHistoricalFormComponentIdentityVersion(
+    data.build.pages
+  );
   const pages = migratePages(data.build.pages);
+  const instances = toMap(
+    data.build.instances.map(([id, instance]) => [id, { ...instance }])
+  );
+  migrateResourceFormInstancesMutable(instances.values(), hasModernFormMarker);
   const projectSettings =
     data.build.projectSettings ?? createProjectSettingsFromPages(pages);
   return {
@@ -121,7 +130,7 @@ const createBuildImportUpdate = ({
     props: serializeData<Prop>(toMap(data.build.props)),
     dataSources: serializeData<DataSource>(toMap(data.build.dataSources)),
     resources: serializeData<Resource>(toMap(data.build.resources)),
-    instances: serializeData<Instance>(toMap(data.build.instances)),
+    instances: serializeData<Instance>(instances),
   };
 };
 
@@ -208,10 +217,8 @@ const loadImportedAssetFiles = async ({
     (asset) => filesByName.has(asset.name) === false
   );
   if (missingAssets.length > 0) {
-    throw new Error(
-      getMissingImportedAssetFilesMessage(
-        missingAssets.map((asset) => asset.name)
-      )
+    throw new MissingImportedAssetFilesError(
+      missingAssets.map((asset) => asset.name)
     );
   }
 

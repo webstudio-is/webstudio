@@ -243,7 +243,7 @@ test("Form success and error feedback render without DOM markers", () => {
 test("Form state stays internal while feedback uses the formState variable", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
   const form = fragment.instances.find(
-    ({ component }) => component === "Form"
+    ({ component }) => component === "ResourceForm"
   )!;
   const formProps = fragment.props.filter(
     ({ instanceId }) => instanceId === form.id
@@ -258,7 +258,9 @@ test("Form state stays internal while feedback uses the formState variable", () 
 
 test("default Form leaves layout to its Form content", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
-  const form = fragment.instances.find(({ component }) => component === "Form");
+  const form = fragment.instances.find(
+    ({ component }) => component === "ResourceForm"
+  );
   const content = fragment.instances.find(
     ({ label }) => label === "Form content"
   );
@@ -292,7 +294,7 @@ test("new Form templates select project and visitor Email Resources", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
   const renderedTemplate = JSON.stringify(fragment);
   const form = fragment.instances.find(
-    ({ component }) => component === "Form"
+    ({ component }) => component === "ResourceForm"
   )!;
   const action = fragment.props.find(
     ({ instanceId, name }) => instanceId === form.id && name === "action"
@@ -302,7 +304,7 @@ test("new Form templates select project and visitor Email Resources", () => {
   );
   expect(action).toMatchObject({
     type: "json",
-    value: emailSources.map(({ id }) => ({ dataSourceId: id, enabled: true })),
+    value: emailSources.map(({ id }) => ({ dataSourceId: id })),
   });
   expect(emailSources.map(({ scopeInstanceId }) => scopeInstanceId)).toEqual([
     form.id,

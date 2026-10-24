@@ -64,3 +64,49 @@ test("accepts optional source origin metadata", () => {
     },
   });
 });
+
+test.each([
+  ["@webstudio/instance/v0.1", { instanceSelector: ["form", "body"] }],
+  ["@webstudio/instances/v0.1", { rootInstanceIds: ["form"] }],
+] as const)(
+  "rejects ambiguous historical Form in %s before paste",
+  (version, metadata) => {
+    const formFragment = {
+      ...fragment,
+      children: [{ type: "id", value: "form" }],
+      instances: [
+        { type: "instance", id: "form", component: "Form", children: [] },
+      ],
+    };
+    const data =
+      version === "@webstudio/instance/v0.1"
+        ? { ...formFragment, ...metadata }
+        : { fragment: formFragment, ...metadata };
+    expect(
+      parseInstanceTransferData(JSON.stringify({ [version]: data }))
+    ).toMatchObject({
+      owned: true,
+      valid: false,
+      error: expect.stringMatching(/Copy it again/),
+    });
+  }
+);
+
+test.each(["ResourceForm", "WebhookForm", "NativeForm"])(
+  "accepts unambiguous %s clipboard data",
+  (component) => {
+    expect(
+      parseInstanceTransferData(
+        JSON.stringify({
+          "@webstudio/instance/v0.1": {
+            ...fragment,
+            instanceSelector: ["form", "body"],
+            instances: [
+              { type: "instance", id: "form", component, children: [] },
+            ],
+          },
+        })
+      )
+    ).toMatchObject({ owned: true, valid: true });
+  }
+);

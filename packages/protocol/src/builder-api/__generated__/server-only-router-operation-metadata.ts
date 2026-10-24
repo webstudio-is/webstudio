@@ -267,6 +267,14 @@ export const serverOnlyRouterOperationMetadata = {
                   minLength: 1,
                   maxLength: 160,
                 },
+                errorType: {
+                  type: "string",
+                  pattern: "^[A-Za-z][A-Za-z0-9]{0,99}(Error|Exception)$",
+                },
+                requestId: {
+                  type: "string",
+                  pattern: "^[A-Za-z0-9_-]{1,100}$",
+                },
                 httpStatus: {
                   type: "integer",
                   minimum: 100,
@@ -287,6 +295,7 @@ export const serverOnlyRouterOperationMetadata = {
                         type: "string",
                         enum: [
                           "formId",
+                          "requestId",
                           "jobId",
                           "domainId",
                           "blockInstanceId",
@@ -439,6 +448,77 @@ export const serverOnlyRouterOperationMetadata = {
               required: ["tool", "code"],
               additionalProperties: false,
             },
+            recentTargets: {
+              maxItems: 3,
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  tool: {
+                    type: "string",
+                    minLength: 1,
+                    maxLength: 160,
+                  },
+                  entityIds: {
+                    minItems: 1,
+                    maxItems: 20,
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        field: {
+                          type: "string",
+                          enum: [
+                            "formId",
+                            "requestId",
+                            "jobId",
+                            "domainId",
+                            "blockInstanceId",
+                            "assetId",
+                            "pageId",
+                            "parentFolderId",
+                            "socialImageAssetId",
+                            "thumbnailAssetId",
+                            "faviconAssetId",
+                            "breakpointId",
+                            "templateId",
+                            "sourceTemplateId",
+                            "targetTemplateId",
+                            "folderId",
+                            "targetFolderId",
+                            "scopeInstanceId",
+                            "resourceId",
+                            "instanceId",
+                            "styleSourceId",
+                            "childId",
+                            "rootInstanceId",
+                            "parentInstanceId",
+                            "sourceSlotId",
+                            "sourceInstanceId",
+                            "targetParentInstanceId",
+                            "designTokenId",
+                            "dataSourceId",
+                            "parentId",
+                            "fromAssetId",
+                            "toAssetId",
+                          ],
+                        },
+                        id: {
+                          type: "string",
+                          minLength: 1,
+                          maxLength: 160,
+                          pattern: "^[A-Za-z0-9_-]+$",
+                        },
+                      },
+                      required: ["field", "id"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["tool", "entityIds"],
+                additionalProperties: false,
+              },
+            },
             session: {
               type: "object",
               properties: {
@@ -502,7 +582,7 @@ export const serverOnlyRouterOperationMetadata = {
           ],
           additionalProperties: false,
           description:
-            "CLI-collected runtime metadata with the project ID and bounded entity IDs from the failed tool input; no raw arguments, URLs, credentials, or customer content.",
+            "CLI-collected runtime metadata with the project ID and bounded entity IDs from recent tool inputs; no raw arguments, URLs, credentials, or customer content.",
         },
         report: {
           type: "object",
@@ -592,7 +672,7 @@ export const serverOnlyRouterOperationMetadata = {
       ],
       additionalProperties: false,
       description:
-        "LLM-authored technical report. The CLI attaches the project ID and recognized IDs from the failed tool input. Generalize all other context; exclude names, URLs, credentials, customer content, and raw tool data.",
+        "LLM-authored technical report. The CLI attaches the project ID and recognized IDs from recent tool inputs. Generalize all other context; exclude names, URLs, credentials, customer content, and raw tool data.",
     },
   },
   "build.get": {
@@ -643,7 +723,7 @@ export const serverOnlyRouterOperationMetadata = {
     method: "mutation",
     path: "api.build.patch",
     client: "applyBuildPatch",
-    permit: "build",
+    permit: "edit",
     invalidatesNamespaces: [
       "pages",
       "instances",

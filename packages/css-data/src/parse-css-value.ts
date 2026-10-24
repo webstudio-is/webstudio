@@ -394,7 +394,7 @@ export const isValidDeclaration = (
   const matchResult = lexer.matchProperty(property, ast);
 
   // allow to parse unknown properties as unparsed
-  if (matchResult.error?.message.includes("Unknown property")) {
+  if (lexer.getProperty(property) === null) {
     return true;
   }
 

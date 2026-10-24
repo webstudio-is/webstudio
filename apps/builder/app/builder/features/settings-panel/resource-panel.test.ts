@@ -624,6 +624,9 @@ test("Email Resource recipient modes and attachment radios", async () => {
   ).toBeVisible();
   expect(container.textContent).toContain("Attach submitted files");
   expect(container.textContent).toContain("Do not attach files");
+  expect(container.textContent).toContain(
+    "Attach up to 32 files. The email request is limited to 7 MiB, including encoded files. Cloudflare also limits the complete email to 5 MiB for most recipients, or 25 MiB for verified destinations."
+  );
   await act(
     async () => await userEvent.click(attachmentOptions[1] as HTMLElement)
   );
@@ -646,7 +649,7 @@ test.each(["sender", "recipients"] as const)(
           {
             id: "form",
             type: "instance",
-            component: "Form",
+            component: "ResourceForm",
             children: [{ type: "id", value: "contact-input" }],
           },
         ],
@@ -1068,7 +1071,7 @@ test("visitor Email Resource selects a named Form email field", async () => {
         {
           type: "instance",
           id: "form",
-          component: "Form",
+          component: "ResourceForm",
           children: [{ type: "id", value: "email-input" }],
         },
       ],
@@ -1333,7 +1336,7 @@ test("unrelated Resource edits preserve recipient scope and aliases", async () =
         {
           type: "instance",
           id: "form",
-          component: "Form",
+          component: "ResourceForm",
           children: [],
         },
       ],
@@ -1443,7 +1446,7 @@ test("body controls follow the effective method for standalone GET and Form Acti
           {
             type: "instance",
             id: "form",
-            component: "Form",
+            component: "ResourceForm",
             children: [],
           },
         ],
@@ -1458,7 +1461,7 @@ test("body controls follow the effective method for standalone GET and Form Acti
             instanceId: "form",
             name: "action",
             type: "json",
-            value: [{ dataSourceId: variable.id, enabled: true }],
+            value: [{ dataSourceId: variable.id }],
           },
         ],
       ])
@@ -2227,7 +2230,7 @@ test.each([
           {
             id: "form",
             type: "instance",
-            component: "Form",
+            component: "ResourceForm",
             children: [{ type: "id", value: "contact-input" }],
           },
         ],

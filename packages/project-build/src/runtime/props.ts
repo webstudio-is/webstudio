@@ -2,17 +2,21 @@ import { z } from "zod";
 import { parseCssValue } from "@webstudio-is/css-data";
 import { getExpressionValueKind } from "@webstudio-is/expression";
 import {
+  acceptToMimePatterns,
+  doesAssetMatchMimePatterns,
   blockComponent,
   contentBlockSourceProp,
   createAnimationActionInput,
   findWritableContentBlockDocumentBindings,
   getExpressionBindingError,
   expressionBindingMode,
+  type Asset,
   prop as propSchema,
   type Instance,
   type Prop,
   type PropMeta,
 } from "@webstudio-is/sdk";
+import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { validateJsonLd } from "@webstudio-is/sdk/runtime";
 import type { BuilderState } from "../state/builder-state";
 import { throwBuilderRuntimeError } from "./errors";
@@ -653,6 +657,38 @@ export const createPropUpsertPayload = ({
   };
 };
 
+export const getMediaAssetPropNames = (
+  component: Instance["component"]
+): readonly string[] =>
+  component === "Image" ? ["width", "height", "alt"] : [];
+
+export const getPropAssetError = ({
+  instance,
+  prop,
+  asset,
+}: {
+  instance: Instance;
+  prop: Pick<Prop, "name" | "type">;
+  asset: Asset | undefined;
+}) => {
+  // Pending uploads do not have an asset record yet.
+  if (prop.type !== "asset" || asset === undefined) {
+    return;
+  }
+  const meta = componentMetas.get(instance.component)?.props?.[prop.name];
+  if (
+    (getMediaAssetPropNames(instance.component).includes(prop.name) &&
+      asset.type !== "image") ||
+    (meta?.control === "file" &&
+      !doesAssetMatchMimePatterns(
+        asset,
+        acceptToMimePatterns(meta.accept ?? "")
+      ))
+  ) {
+    return "This asset type is not allowed for this property.";
+  }
+};
+
 export const getPropIdsToDelete = ({
   instanceComponent,
   instanceProps,
@@ -668,13 +704,11 @@ export const getPropIdsToDelete = ({
     propIds.add(prop.id);
   }
   if (instanceComponent === "Image" && propName === "src") {
-    const widthProp = instanceProps.get("width");
-    if (widthProp) {
-      propIds.add(widthProp.id);
-    }
-    const heightProp = instanceProps.get("height");
-    if (heightProp) {
-      propIds.add(heightProp.id);
+    for (const name of ["width", "height"]) {
+      const sizeProp = instanceProps.get(name);
+      if (sizeProp) {
+        propIds.add(sizeProp.id);
+      }
     }
   }
   return propIds;
@@ -920,15 +954,31 @@ const getJsonLdCodeErrors = (instance: Instance, update: PropValueInput) => {
 };
 
 export const updateProps = (
-  state: Pick<BuilderState, "instances" | "props">,
+  state: Pick<BuilderState, "instances" | "props" | "assets">,
   input: z.infer<typeof propUpdatesInput>,
   context: { createId: () => string }
 ) => {
   const { instances, props } = getRequiredPropState(state);
-  const nextProps = input.updates.map((update) => {
+  const updatesByProp = new Map<string, (typeof input.updates)[number]>();
+  for (const update of input.updates) {
+    const key = JSON.stringify([update.instanceId, update.name]);
+    updatesByProp.delete(key);
+    updatesByProp.set(key, update);
+  }
+  const updates = [...updatesByProp.values()];
+  const nextProps = updates.map((update) => {
     assertRuntimeInstance(instances, update.instanceId);
     const instance = instances.get(update.instanceId)!;
     assertGenericPropMutationAllowed(instance, update.name);
+    const assetError = getPropAssetError({
+      instance,
+      prop: update,
+      asset:
+        update.type === "asset" ? state.assets?.get(update.value) : undefined,
+    });
+    if (assetError !== undefined) {
+      return throwBuilderRuntimeError("BAD_REQUEST", assetError);
+    }
     const htmlEmbedCodeErrors = getHtmlEmbedCodeErrors(instance, update);
     const codeErrors = [
       ...htmlEmbedCodeErrors,
@@ -947,6 +997,38 @@ export const updateProps = (
     }
     return nextProp.prop;
   });
+  for (const source of [...nextProps]) {
+    const instance = instances.get(source.instanceId)!;
+    const asset =
+      source.type === "asset" ? state.assets?.get(source.value) : undefined;
+    if (
+      source.name !== "src" ||
+      source.type !== "asset" ||
+      (asset !== undefined && asset.type !== "image") ||
+      isDynamicPropType(findProp(props.values(), instance.id, "src")?.type)
+    ) {
+      continue;
+    }
+    for (const name of getMediaAssetPropNames(instance.component)) {
+      const existing = findProp(props.values(), instance.id, name);
+      if (
+        isDynamicPropType(existing?.type) ||
+        findProp(nextProps, instance.id, name)
+      ) {
+        continue;
+      }
+      nextProps.push(
+        createPropValue({
+          id: existing?.id ?? context.createId(),
+          instanceId: instance.id,
+          name,
+          type: "asset",
+          value: source.value,
+          required: existing?.required,
+        })
+      );
+    }
+  }
   assertReadwritePropBindingsSupported({ instances, props, nextProps });
   const { payload, propIds } = createPropUpsertPayload({
     props: props.values(),

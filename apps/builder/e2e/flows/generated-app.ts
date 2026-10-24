@@ -182,9 +182,11 @@ export const expectGeneratedAppBuild = async ({
 export const withGeneratedPreview = async <Result>({
   projectId,
   callback,
+  evaluationReceiverPort,
 }: {
   projectId: string;
   callback: ({ url, html }: { url: string; html: string }) => Promise<Result>;
+  evaluationReceiverPort?: string;
 }) => {
   const tempDir = await mkdtemp(join(tmpdir(), "webstudio-e2e-generated-"));
   let preview: ChildProcess | undefined;
@@ -218,7 +220,15 @@ export const withGeneratedPreview = async <Result>({
         cwd: tempDir,
         detached: process.platform !== "win32",
         stdio: ["ignore", "pipe", "pipe"],
-        env: { ...process.env, PWD: tempDir },
+        env: {
+          ...process.env,
+          PWD: tempDir,
+          ...(evaluationReceiverPort === undefined
+            ? {}
+            : {
+                WEBSTUDIO_FORM_EVALUATION_RECEIVER_PORT: evaluationReceiverPort,
+              }),
+        },
       }
     );
     const appendOutput = (chunk: unknown) => {

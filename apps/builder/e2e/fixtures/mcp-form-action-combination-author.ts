@@ -297,7 +297,6 @@ const author = async () => {
       }
       const actions = created.slice(0, 10).map(({ dataSourceId }) => ({
         dataSourceId,
-        enabled: true,
       }));
       await call("update-props", {
         updates: [
@@ -312,10 +311,7 @@ const author = async () => {
               instanceId: form.id,
               name: "action",
               type: "json",
-              value: [
-                ...actions,
-                { dataSourceId: created[10].dataSourceId, enabled: true },
-              ],
+              value: [...actions, { dataSourceId: created[10].dataSourceId }],
             },
           ],
         },
@@ -349,12 +345,12 @@ const author = async () => {
       "graphql",
       `{ query: "mutation Record($name: String!) { record(name: $name) }", variables: { name: ${formData}.name } }`
     );
-    const disabled = await createAction("Disabled HTTP action", "/reject");
+    const middle = await createAction("Middle HTTP action", "/submit");
     const http = await createAction("Last HTTP action", "/submit");
     const actions = [
-      { dataSourceId: graphql.dataSourceId, enabled: true },
-      { dataSourceId: disabled.dataSourceId, enabled: false },
-      { dataSourceId: http.dataSourceId, enabled: true },
+      { dataSourceId: graphql.dataSourceId },
+      { dataSourceId: middle.dataSourceId },
+      { dataSourceId: http.dataSourceId },
     ];
     await call("update-props", {
       updates: [
@@ -375,7 +371,7 @@ const author = async () => {
       `${JSON.stringify({
         formId: form.id,
         graphqlResourceId: graphql.resourceId,
-        disabledResourceId: disabled.resourceId,
+        middleResourceId: middle.resourceId,
         httpResourceId: http.resourceId,
       })}\n`
     );

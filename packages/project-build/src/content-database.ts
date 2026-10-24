@@ -592,10 +592,14 @@ export const resolvePublishedMdxAssetCandidates = ({
   const evaluateDataSource = (
     dataSourceId: string,
     path: readonly string[],
-    visiting = new Set<string>(),
-    mutableVariables = new Set<string>()
+    evaluation: {
+      visiting: Set<string>;
+      mutableVariables: Set<string>;
+      hasResolvedQuery: boolean;
+      hasMatchingDocuments: boolean;
+    }
   ): unknown[] => {
-    if (visiting.has(dataSourceId)) {
+    if (evaluation.visiting.has(dataSourceId)) {
       throw new Error("Dynamic MDX source data dependency is cyclic");
     }
     const dataSource = dataSources.get(dataSourceId);
@@ -605,7 +609,7 @@ export const resolvePublishedMdxAssetCandidates = ({
     if (dataSource.type === "variable") {
       // Project variables can be changed by actions after publication. Their
       // initial value is therefore not a complete dependency set.
-      mutableVariables.add(dataSourceId);
+      evaluation.mutableVariables.add(dataSourceId);
       return [];
     }
     if (dataSource.type === "resource") {
@@ -625,6 +629,7 @@ export const resolvePublishedMdxAssetCandidates = ({
       if (query === undefined || basePlan === undefined) {
         return [];
       }
+      evaluation.hasResolvedQuery = true;
       if (documentGraph !== undefined) {
         if (
           getDocumentGraphQueryRootIds({
@@ -655,6 +660,9 @@ export const resolvePublishedMdxAssetCandidates = ({
           ],
         },
       });
+      if (candidateIds.size > 0) {
+        evaluation.hasMatchingDocuments = true;
+      }
       const fieldPath = path[0] === "data" ? path.slice(1) : path;
       return documents
         .filter(({ _id }) => candidateIds.has(_id))
@@ -696,14 +704,13 @@ export const resolvePublishedMdxAssetCandidates = ({
           ? undefined
           : decodeDataSourceVariable(dataPath[0]);
       if (dependencyId !== undefined && dataPath !== undefined) {
-        visiting.add(dataSourceId);
+        evaluation.visiting.add(dataSourceId);
         iterables = evaluateDataSource(
           dependencyId,
           dataPath.slice(1),
-          visiting,
-          mutableVariables
+          evaluation
         );
-        visiting.delete(dataSourceId);
+        evaluation.visiting.delete(dataSourceId);
       }
     }
     const items = iterables.flatMap((iterable) => {
@@ -745,17 +752,17 @@ export const resolvePublishedMdxAssetCandidates = ({
     const dataSourceId =
       path === undefined ? undefined : decodeDataSourceVariable(path[0]);
     let assetIds: string[] = [];
-    const mutableVariables = new Set<string>();
+    const evaluation = {
+      visiting: new Set<string>(),
+      mutableVariables: new Set<string>(),
+      hasResolvedQuery: false,
+      hasMatchingDocuments: false,
+    };
     try {
       assetIds =
         dataSourceId === undefined || path === undefined
           ? []
-          : evaluateDataSource(
-              dataSourceId,
-              path.slice(1),
-              new Set(),
-              mutableVariables
-            ).filter(
+          : evaluateDataSource(dataSourceId, path.slice(1), evaluation).filter(
               (value): value is string =>
                 typeof value === "string" && value.length > 0
             );
@@ -763,11 +770,20 @@ export const resolvePublishedMdxAssetCandidates = ({
       if (allowUnresolved === false) {
         throw error;
       }
+      evaluation.hasResolvedQuery = false;
     }
-    if (mutableVariables.size > 0 && allMdxAssetIds !== undefined) {
+    if (evaluation.mutableVariables.size > 0 && allMdxAssetIds !== undefined) {
       assetIds.push(...allMdxAssetIds);
     }
     if (assetIds.length === 0) {
+      if (
+        evaluation.hasResolvedQuery &&
+        evaluation.hasMatchingDocuments === false &&
+        evaluation.mutableVariables.size === 0
+      ) {
+        candidatesByBlock.set(blockInstanceId, []);
+        continue;
+      }
       if (allowUnresolved) {
         continue;
       }

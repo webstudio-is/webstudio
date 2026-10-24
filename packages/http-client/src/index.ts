@@ -39,7 +39,8 @@ import {
   buildPatchNamespaces,
   bundleVersion as currentBundleVersion,
   importProjectBundleResult,
-  parseMissingImportedAssetFilesMessage,
+  getMissingImportedAssetFiles,
+  historicalPublishedProjectBundle,
   publishedProjectBundle,
   maxProjectBundleSize,
   stagedUploadPath,
@@ -684,7 +685,8 @@ export const uploadAssets = async (
     throw new Error(
       `Failed to upload assets: ${failed
         .map(({ asset, error }) => `${asset.name}: ${formatError(error)}`)
-        .join("; ")}`
+        .join("; ")}`,
+      { cause: failed.length === 1 ? failed[0]?.error : undefined }
     );
   }
   return results.flatMap((result) =>
@@ -879,7 +881,12 @@ const getAssetRestFailure = async (
   } catch {
     // Preserve the HTTP status when the server cannot return a JSON error.
   }
-  return Object.assign(new Error(message), { status: response.status });
+  return Object.assign(new Error(message), {
+    status: response.status,
+    ...(response.status === 403 ? { code: "FORBIDDEN" } : {}),
+    requestId:
+      response.headers.get("x-request-id") ?? response.headers.get("cf-ray"),
+  });
 };
 
 const requestAssetRestJson = async <Result>(
@@ -1282,7 +1289,7 @@ export const loadProjectBundleByBuildId = async (
   if (missingJsonPropValues !== undefined) {
     throw new MissingJsonPropValueError(missingJsonPropValues);
   }
-  return publishedProjectBundle.parse(data);
+  return historicalPublishedProjectBundle.parse(data);
 };
 
 export const loadProjectBundleByProjectId = async (
@@ -1293,10 +1300,21 @@ export const loadProjectBundleByProjectId = async (
     projectId: params.projectId,
     bundleVersion: currentBundleVersion,
   });
-  return publishedProjectBundle.parse(data);
+  return historicalPublishedProjectBundle.parse(data);
 };
 
 export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
+  if (
+    "formComponentIdentityVersion" in project.build.pages ||
+    project.build.instances.some(
+      ([, instance]) =>
+        instance.component === "Form" || instance.component === "NativeForm"
+    )
+  ) {
+    throw new Error(
+      "Historical form identities must be normalized before export."
+    );
+  }
   const normalizedProject = publishedProjectBundle.parse(project);
   const {
     assets,
@@ -1327,13 +1345,20 @@ export const toLocalProjectBundle = (project: PublishedProjectBundle) => {
 
 export const checkProjectBuildPermission = async (
   params: AuthProjectParams
-): Promise<void> => {
-  await createAuthTrpcClient(params).query(
+): Promise<{ supportsStructuredImportErrors: boolean }> => {
+  const result = await createAuthTrpcClient(params).query(
     "build.checkProjectBuildPermission",
     {
       projectId: params.projectId,
     }
   );
+  return {
+    supportsStructuredImportErrors:
+      typeof result === "object" &&
+      result !== null &&
+      "supportsStructuredImportErrors" in result &&
+      result.supportsStructuredImportErrors === true,
+  };
 };
 
 const formatSchemaIssues = (
@@ -1356,8 +1381,11 @@ export const parseBuildPatchTransactions = (transactions: unknown) => {
 
   const result = buildPatchTransaction.array().safeParse(input);
   if (result.success === false) {
-    throw new Error(
-      `Invalid patch JSON: ${formatSchemaIssues(result.error.issues)}`
+    throw Object.assign(
+      new Error(
+        `Invalid patch JSON: ${formatSchemaIssues(result.error.issues)}`
+      ),
+      { code: "INVALID_PATCH", issues: result.error.issues }
     );
   }
   return result.data;
@@ -2544,13 +2572,67 @@ export const importProjectBundleWithAssets = async (
         }
     )
 ): Promise<ImportProjectBundleResult> => {
-  await checkProjectBuildPermission(params);
+  const capabilities = await checkProjectBuildPermission(params);
 
   let dataToImport =
     params.skipAssets === true ? { ...params.data, assets: [] } : params.data;
 
   const maxRetries = params.maxMissingAssetImportRetries ?? 5;
   let uploadAttempts = 0;
+  const uploadImportAssets = async (
+    assetsToUpload: Asset[],
+    readAssetData: (asset: Asset) => Promise<BinaryAssetData>
+  ) => {
+    if (uploadAttempts === 0) {
+      params.onUploadAssets?.(assetsToUpload);
+    } else {
+      params.onMissingAssets?.(assetsToUpload);
+    }
+    const originalAssetsById = new Map(
+      assetsToUpload.map((asset) => [asset.id, asset])
+    );
+    const uploadedAssets = await uploadAssets({
+      ...params,
+      // Source folders do not exist in the destination yet. The final
+      // bundle import creates them and restores the original assignments.
+      assets: assetsToUpload.map((asset) => ({
+        ...asset,
+        folderId: undefined,
+      })),
+      readAssetData: (asset) =>
+        readAssetData(originalAssetsById.get(asset.id)!),
+    });
+    if (uploadedAssets.length !== assetsToUpload.length) {
+      throw new Error(
+        `Expected ${assetsToUpload.length} uploaded assets, received ${uploadedAssets.length}.`
+      );
+    }
+    const uploadedNamesById = new Map(
+      assetsToUpload.map((asset, index) => [
+        asset.id,
+        uploadedAssets[index].name,
+      ])
+    );
+    dataToImport = {
+      ...dataToImport,
+      assets: dataToImport.assets.map((asset) => {
+        const name = uploadedNamesById.get(asset.id);
+        return name === undefined ? asset : { ...asset, name };
+      }),
+    };
+    uploadAttempts += 1;
+  };
+
+  // Older servers return no capabilities. Upload first rather than inferring
+  // missing files from their unstructured import error messages.
+  if (
+    capabilities.supportsStructuredImportErrors === false &&
+    params.skipAssets !== true &&
+    dataToImport.assets.length > 0
+  ) {
+    await uploadImportAssets(params.data.assets, params.readAssetData);
+  }
+
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     params.onImportAttempt?.();
     try {
@@ -2563,7 +2645,7 @@ export const importProjectBundleWithAssets = async (
       const missingAssetNames =
         params.skipAssets === true
           ? undefined
-          : parseMissingImportedAssetFilesMessage(error);
+          : getMissingImportedAssetFiles(error);
       const assetNames = missingAssetNames ?? [];
       if (assetNames.length === 0 || attempt === maxRetries) {
         throw error;
@@ -2592,44 +2674,7 @@ export const importProjectBundleWithAssets = async (
         throw error;
       }
 
-      if (uploadAttempts === 0) {
-        params.onUploadAssets?.(missingAssets);
-      } else {
-        params.onMissingAssets?.(missingAssets);
-      }
-      const originalAssetsById = new Map(
-        missingAssets.map((asset) => [asset.id, asset])
-      );
-      const uploadedAssets = await uploadAssets({
-        ...params,
-        // Source folders do not exist in the destination yet. The final
-        // bundle import creates them and restores the original assignments.
-        assets: missingAssets.map((asset) => ({
-          ...asset,
-          folderId: undefined,
-        })),
-        readAssetData: (asset) =>
-          readAssetData(originalAssetsById.get(asset.id)!),
-      });
-      if (uploadedAssets.length !== missingAssets.length) {
-        throw new Error(
-          `Expected ${missingAssets.length} uploaded assets, received ${uploadedAssets.length}.`
-        );
-      }
-      const uploadedNamesById = new Map(
-        missingAssets.map((asset, index) => [
-          asset.id,
-          uploadedAssets[index].name,
-        ])
-      );
-      dataToImport = {
-        ...dataToImport,
-        assets: dataToImport.assets.map((asset) => {
-          const name = uploadedNamesById.get(asset.id);
-          return name === undefined ? asset : { ...asset, name };
-        }),
-      };
-      uploadAttempts += 1;
+      await uploadImportAssets(missingAssets, readAssetData);
     }
   }
 

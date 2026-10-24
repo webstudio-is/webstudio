@@ -816,7 +816,11 @@ export const Section = () => {
 
   return (
     <StyleSection label="Layout" properties={properties}>
-      <Flex direction="column" gap="2">
+      <Flex
+        direction="column"
+        gap="2"
+        css={{ paddingInline: theme.panel.paddingInline }}
+      >
         <Grid
           css={{
             gridTemplateColumns: `1fr 2fr`,

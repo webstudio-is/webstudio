@@ -5,6 +5,7 @@
 import { templates as basicTemplates } from "./basic.template";
 import { meta as contentEmbed } from "./content-embed.template";
 import { meta as markdownEmbed } from "./markdown-embed.template";
+// Retain stories for the deprecated Webhook Form template.
 import { meta as form } from "./webhook-form.template";
 import { meta as vimeo } from "./vimeo.template";
 import { meta as youtube } from "./youtube.template";

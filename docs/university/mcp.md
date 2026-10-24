@@ -70,8 +70,9 @@ the saved Form instance ID and page path. The server uses this project's
 publisher origin. It can trigger the Form's configured HTTP and Email Resources, so verify
 every destination and recipient first. For dynamic checkbox or multiple-select fields,
 pass `arrayNames` to preserve an empty or single-value array when the saved
-field props do not identify the control. The result reports destination statuses
-and errors without Resource bodies. This server simulation does not exercise
+field props do not identify the control. The result reports destination IDs,
+statuses, and errors without Resource bodies. Managed Email errors include a
+code when available. This server simulation does not exercise
 client validation, browser event handlers, navigation, file bytes, or actual
 browser information. The Builder server loads the saved draft and holds the
 Email service credentials; the CLI does not receive those credentials.
@@ -444,8 +445,8 @@ terms, agents can:
 - Publish to staging or production.
 - Publish to selected domains.
 - List publish builds.
-- Check publish job status.
-- Unpublish staging or production deployments.
+- Check publish job status after publishing.
+- Unpublish staging or production deployments. Unpublish completes without a publish job.
 - List, create, update, delete, and verify custom domains.
 - Start and stop preview.
 - Capture screenshots of generated pages.
@@ -513,6 +514,7 @@ Use `node packages/cli/local.js mcp` from the Webstudio monorepo root for local 
 - Operate on the configured project only.
 - Read ids before writing.
 - Prefer semantic tools over `apply-patch`.
+- Editor links with API access can edit Content Block text and props, insert or move eligible content, delete eligible instances, create pages from templates, change allowed page settings, upload assets, and create asset folders through semantic tools. The server checks each change against Content-mode rules. Raw `apply-patch` remains limited to text and editable props; other asset, folder, and design changes require Builder access.
 - Use `status` and `refresh` when cached namespaces may be stale. Pass `status {"verbose":true}` only when debugging full namespace arrays, freshness, compatibility, or diagnostic details.
 - Read `meta.session.commitStatus` before interpreting durability. Read-only results report `not-applicable` and retain `committed:false` for compatibility; dry-run plans report `planned`; failed mutations report `failed`; no-op mutations report `unchanged`; durable mutations report `committed` with `meta.session.committed:true`.
 - Never run visual verification automatically. Ask first unless the user explicitly requested screenshots, visual verification, or a rendered audit; if they do not opt in, use focused non-visual assertions.
@@ -522,6 +524,8 @@ Use `node packages/cli/local.js mcp` from the Webstudio monorepo root for local 
 `convert-instance` changes one instance and validates its entire descendant tree after that change. For a Tabs tree, changing `Tabs` to a `div` first fails because `TabsList`, `TabsTrigger`, and `TabsContent` still require their composite parents. Convert from the leaves upward instead: `TabsTrigger` to `ws:element` with tag `button`, `TabsContent` to `ws:element` with tag `div`, `TabsList` to `ws:element` with tag `div`, then `Tabs` to `ws:element` with tag `div`. Pass the complete, current `instanceSelector` for each call, starting with the target. Read the actual tree first; convert every remaining required part before its parent. Each step is a separate mutation, so this recipe is not atomic.
 
 Conversion retains instance ids, children (including editable copy), styles, and most props; it removes a legacy `tag` prop and normalizes React prop aliases when converting to `ws:element`. Review component-specific props and behavior afterward: replacing Tabs with HTML does not recreate tab selection, keyboard behavior, or accessibility semantics. If a project requires the whole tree to change in one commit, use `snapshot` to read the current build version and exact records, then a single versioned `apply-patch` transaction for the existing instance component/tag fields. Preserve all existing ids and child references, include any needed prop changes in that same transaction, and verify the final tree.
+
+For composite media such as Vimeo, inspect the player subtree and surrounding content first. A native `video` cannot retain provider-only parts such as `VimeoPlayButton`, `VimeoSpinner`, or `VimeoPreviewImage`. Use `delete-instance` with `instanceIds` containing the exact obsolete part ids (deleting a part also cleans its descendants and owned data), then `convert-instance` on the player root with `component: "ws:element"`, `tag: "video"`, and its current `instanceSelector`. Keep surrounding wrappers, captions, and other content outside the deletion set; move any content that must survive out of an obsolete part before deleting it. The player keeps its id and styles. Remove the provider-specific props with `delete-props`, using `{"deletions":[{"instanceId":"<player-id>","name":"url"}]}` for the old Vimeo URL prop and adding one entry for each other obsolete prop found during inspection. Then use `update-props` to set the native video source and playback props, and `update-styles` for any styling changes. A native video source must be a playable media URL or asset, not a Vimeo watch-page URL. These are separate semantic mutations; no raw instance patch is needed for this sequence.
 
 ## Vision Verification Loop
 

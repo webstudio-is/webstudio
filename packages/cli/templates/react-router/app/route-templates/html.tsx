@@ -13,13 +13,12 @@ import {
 import {
   isLocalResource,
   loadResources,
-  loadResourceWithEmail,
-  loadResourcesWithEmail,
   getSystemSearch,
   cachedFetch,
 } from "@webstudio-is/sdk/runtime";
 import {
   handleManagedFormSubmission,
+  handleDeprecatedWebhookFormSubmission,
   getManagedFormFailure,
   readFormDataWithLimit,
   type ManagedFormResponse,
@@ -28,7 +27,6 @@ import {
   managedFormRequestParamName,
   formIdFieldName,
   managedFormIdFieldName,
-  formBotFieldName,
 } from "@webstudio-is/sdk/form";
 import { authenticateProjectRequest } from "@webstudio-is/wsauth";
 import {
@@ -276,9 +274,7 @@ export const action = async ({
     if (!isManagedFormRequest) {
       url.host = getRequestHost(request);
     }
-    const formData = isManagedFormRequest
-      ? await readFormDataWithLimit(request)
-      : await request.formData();
+    const formData = await readFormDataWithLimit(request);
 
     const system = {
       params: getRemixParams(params ?? {}),
@@ -291,15 +287,16 @@ export const action = async ({
     if (!isManagedFormRequest && managedFormIds.length > 0) {
       throw new Error("Invalid Form submission");
     }
+    const protectedFetch = createManagedFormResourceFetch({
+      request,
+      context,
+      projectDomain,
+    });
     if (isManagedFormRequest) {
+      // Reject deprecated Webhook Form IDs on the new Form submission path.
       if (managedFormIds.length !== 1 || formData.has(formIdFieldName)) {
         throw new Error("Invalid Form submission");
       }
-      const protectedFetch = createManagedFormResourceFetch({
-        request,
-        context,
-        projectDomain,
-      });
       return await handleManagedFormSubmission({
         request,
         formData,
@@ -321,86 +318,23 @@ export const action = async ({
       });
     }
 
-    const resourceName = formData.get(formIdFieldName);
-    const generatedResources = getResources({ system });
-    const actionResource =
-      typeof resourceName === "string"
-        ? generatedResources.action.get(resourceName)
-        : undefined;
-
-    const formBotValue = formData.get(formBotFieldName);
-
-    if (formBotValue == null || typeof formBotValue !== "string") {
-      throw new Error("Form bot field not found");
-    }
-
-    // Skip timestamp validation for Brave browser
-    // Brave Shields blocks matchMedia fingerprinting detection used in bot protection
-    // See: https://github.com/brave/brave-browser/issues/46541
-    if (formBotValue !== "brave") {
-      const submitTime = parseInt(formBotValue, 16);
-      // Assumes that the difference between the server time and the form submission time,
-      // including any client-server time drift, is within a 5-minute range.
-      // Note: submitTime might be NaN because formBotValue can be any string used for logging purposes.
-      // Example: `formBotValue: jsdom`, or `formBotValue: headless-env`
-      if (
-        Number.isNaN(submitTime) ||
-        Math.abs(Date.now() - submitTime) > 1000 * 60 * 5
-      ) {
-        throw new Error(`Form bot value invalid ${formBotValue}`);
-      }
-    }
-
-    formData.delete(formIdFieldName);
-    formData.delete(formBotFieldName);
-
-    let result: Awaited<ReturnType<typeof loadResourceWithEmail>>;
-    if (actionResource === undefined) {
-      if (contactEmail === undefined) {
-        throw new Error("Contact email not found");
-      }
-      const resource = context.getDefaultActionResource?.({
-        url,
-        projectId,
-        contactEmail,
-        formData,
-      });
-      if (resource === undefined) {
-        throw Error("Resource not found");
-      }
-      result = await loadResourceWithEmail(fetch, resource);
-    } else {
-      const actionFetch = await createGeneratedAssetResourceFetch({
+    // Compatibility path for saved, deprecated Webhook Forms.
+    return await handleDeprecatedWebhookFormSubmission({
+      request,
+      formData,
+      url,
+      resources: getResources({ system }),
+      contactEmail,
+      resourceFetch: protectedFetch,
+      dependencyFetch: await createGeneratedAssetResourceFetch({
         request,
         context,
         fallback: customFetch,
-      });
-      const results = await loadResourcesWithEmail(
-        actionFetch,
-        {
-          ...generatedResources.data,
-          rootIds: [actionResource.id],
-        },
-        url,
-        {
-          requestOverrides: new Map([
-            // Mutations must reach the backend on every submission, even when
-            // the resource has caching enabled. Dependencies can stay cached.
-            [actionResource.id, { body: Object.fromEntries(formData), fetch }],
-          ]),
-        }
-      );
-      const actionResult = results[actionResource.outputName];
-      if (actionResult === undefined) {
-        throw Error("Resource not found");
-      }
-      result = actionResult as Awaited<ReturnType<typeof loadResourceWithEmail>>;
-    }
-    const { ok, statusText } = result;
-    if (ok) {
-      return { success: true };
-    }
-    return { success: false, errors: [statusText] };
+      }),
+      createEmailSender: (data) =>
+        createManagedFormEmailSender({ context, formData: data, projectId }),
+      validateEmail: validateManagedFormEmail,
+    });
   } catch (error) {
     console.error(error);
 

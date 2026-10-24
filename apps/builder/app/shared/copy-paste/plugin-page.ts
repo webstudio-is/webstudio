@@ -422,7 +422,11 @@ export const handlePastePage = async (
     return pasteIgnored;
   }
   if (transferData.valid === false) {
-    return { success: false, error: invalidPasteDataMessage } as const;
+    return {
+      success: false,
+      error:
+        "error" in transferData ? transferData.error : invalidPasteDataMessage,
+    } as const;
   }
   const { sourceOrigin, assetPaths, ...transferItem } = transferData.data;
   let item: PageTransferItem = transferItem;

@@ -47,6 +47,7 @@ const $metas = computed(
     const metasByCategory = listBuilderComponentPanelItems({
       metas: componentMetas,
       templates,
+      showDeprecatedSection: isFeatureEnabled("deprecatedComponents"),
       documentType: selectedPage?.meta.documentType ?? "html",
       showInternal: isFeatureEnabled("internalComponents"),
       getFallbackLabel: (component) => getInstanceLabel({ component }),

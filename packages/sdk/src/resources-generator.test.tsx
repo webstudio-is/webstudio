@@ -17,7 +17,7 @@ import { generatePageResources } from "./managed-form-resources-generator";
 import type { DataSource } from "./schema/data-sources";
 
 const Body = createTemplateComponentFixture("Body");
-const Form = createTemplateComponentFixture("Form");
+const Form = createTemplateComponentFixture("ResourceForm");
 const WebhookForm = createTemplateComponentFixture("WebhookForm");
 
 test("base request fields do not generate Email delivery configuration", () => {
@@ -45,7 +45,7 @@ test("does not fetch a Form-bound Resource during page load", () => {
     scope: createScope(),
     page: { rootInstanceId: "form" } as Page,
     instances: toMap([
-      { type: "instance", id: "form", component: "Form", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ]),
     dataSources: toMap([
       {
@@ -78,7 +78,7 @@ test("does not fetch a Form-bound Resource during page load", () => {
         instanceId: "form",
         type: "json",
         name: "action",
-        value: [{ dataSourceId: "resourceVariableId", enabled: true }],
+        value: [{ dataSourceId: "resourceVariableId" }],
       },
     ]),
   });
@@ -93,7 +93,7 @@ test("does not evaluate configured Form Actions during page load", () => {
     scope: createScope(),
     page: { rootInstanceId: "form" } as Page,
     instances: toMap([
-      { type: "instance", id: "form", component: "Form", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ]),
     dataSources: toMap([
       {
@@ -150,8 +150,8 @@ test("does not evaluate configured Form Actions during page load", () => {
         type: "json",
         name: "action",
         value: [
-          { dataSourceId: "graphql-source", enabled: true },
-          { dataSourceId: "disabled-source", enabled: false },
+          { dataSourceId: "graphql-source" },
+          { dataSourceId: "disabled-source" },
         ],
       },
     ]),
@@ -163,7 +163,7 @@ test("does not evaluate configured Form Actions during page load", () => {
   expect(generated).not.toContain("formData.name");
 });
 
-test("keeps a page-used Resource selected as a disabled Form Action", () => {
+test("keeps a page-used Resource selected as a Form Action", () => {
   const generated = generatePageResources({
     scope: createScope(),
     page: { rootInstanceId: "body" } as Page,
@@ -174,7 +174,7 @@ test("keeps a page-used Resource selected as a disabled Form Action", () => {
         component: "Body",
         children: [{ type: "id", value: "form" }],
       },
-      { type: "instance", id: "form", component: "Form", children: [] },
+      { type: "instance", id: "form", component: "ResourceForm", children: [] },
     ]),
     dataSources: toMap([
       {
@@ -221,7 +221,7 @@ test("keeps a page-used Resource selected as a disabled Form Action", () => {
         instanceId: "form",
         type: "json",
         name: "action",
-        value: [{ dataSourceId: "form-shared-source", enabled: false }],
+        value: [{ dataSourceId: "form-shared-source" }],
       },
     ]),
   });
@@ -332,7 +332,7 @@ test("excludes transitive Form-only Resources and rejects Dynamic Content Block 
       {
         type: "instance" as const,
         id: "form",
-        component: "Form",
+        component: "ResourceForm",
         children: [],
       },
     ]),
@@ -448,7 +448,7 @@ test("generate resources loader", () => {
       }
       const _data: ResourceRequestGraph = {
         resources: [
-          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName },
+          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName, control: undefined, bodyFormat: undefined },
         ],
         rootIds: [
         ],
@@ -460,6 +460,31 @@ test("generate resources loader", () => {
     }
     "
   `);
+});
+
+test("does not evaluate a Content Block source without candidate resources", () => {
+  const generated = generateResources({
+    scope: createScope(),
+    page: { rootInstanceId: "body" } as Page,
+    dataSources: toMap([
+      {
+        id: "collectionItem",
+        scopeInstanceId: "collection",
+        type: "parameter",
+        name: "collectionItem",
+      },
+    ]),
+    resources: new Map(),
+    props: new Map(),
+    contentBlockResourceSelections: [
+      {
+        sourceExpression: `${encodeDataSourceVariable("collectionItem")}.id`,
+        candidates: [{ assetId: "article", resourceIds: [] }],
+      },
+    ],
+  });
+
+  expect(generated).not.toContain("collectionItem");
 });
 
 test("selects only resources used by the resolved dynamic MDX candidate", () => {
@@ -665,7 +690,7 @@ test("generate variable and use in resources loader", () => {
       }
       const _data: ResourceRequestGraph = {
         resources: [
-          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName },
+          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName, control: undefined, bodyFormat: undefined },
         ],
         rootIds: [
         ],
@@ -911,7 +936,7 @@ test("generate page system variable and use in resources loader", () => {
       }
       const _data: ResourceRequestGraph = {
         resources: [
-          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName },
+          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName, control: undefined, bodyFormat: undefined },
         ],
         rootIds: [
         ],
@@ -964,7 +989,7 @@ test("generate global system variable and use in resources loader", () => {
       }
       const _data: ResourceRequestGraph = {
         resources: [
-          { id: "resource:0", outputName: "MyResource", dependencies: [], createRequest: MyResource },
+          { id: "resource:0", outputName: "MyResource", dependencies: [], createRequest: MyResource, control: "system", bodyFormat: undefined },
         ],
         rootIds: [
           "resource:0",
@@ -1064,7 +1089,7 @@ test("generate resource loader with search params", () => {
       }
       const _data: ResourceRequestGraph = {
         resources: [
-          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName },
+          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName, control: undefined, bodyFormat: undefined },
         ],
         rootIds: [
         ],
@@ -1205,7 +1230,7 @@ test("generates action resources as lazy roots without loading stale data", () =
       }
       const _data: ResourceRequestGraph = {
         resources: [
-          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName },
+          { id: "resourceId", outputName: "resourceName", dependencies: [], createRequest: resourceName, control: undefined, bodyFormat: undefined },
         ],
         rootIds: [
         ],

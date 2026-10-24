@@ -110,7 +110,6 @@ export type ScreenshotDependencies = {
 
 export const defaultScreenshotDependencies: ScreenshotDependencies = {
   env: process.env,
-  platform: process.platform,
   access,
   mkdir,
   which: async (command) =>

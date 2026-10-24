@@ -89,7 +89,7 @@ const draftBuild = {
       component: "Body",
       children: [{ type: "id", value: "form" }],
     },
-    { type: "instance", id: "form", component: "Form", children: [] },
+    { type: "instance", id: "form", component: "ResourceForm", children: [] },
   ],
   props: [
     {
@@ -97,7 +97,7 @@ const draftBuild = {
       instanceId: "form",
       name: "action",
       type: "json",
-      value: [{ dataSourceId: "destination", enabled: true }],
+      value: [{ dataSourceId: "destination" }],
     },
   ],
   dataSources: [
@@ -194,9 +194,12 @@ test("an unpublished project's current draft executes its HTTP Resource", async 
   });
   const resourceFetch = vi.mocked(createNodeProtectedResourceFetch).mock
     .results[0].value;
-  expect(resourceFetch).toHaveBeenCalledWith(expect.any(Request));
-  const outgoing = resourceFetch.mock.calls[0][0] as Request;
-  expect(outgoing.url).toContain("https://example.com/contact");
+  expect(resourceFetch).toHaveBeenCalledWith(
+    "https://example.com/contact",
+    expect.objectContaining({ method: "post" })
+  );
+  const [input, init] = resourceFetch.mock.calls[0];
+  const outgoing = new Request(input, init);
   expect(outgoing.method).toBe("POST");
   expect(loadDevBuildByProjectId).toHaveBeenCalledWith(
     expect.anything(),
@@ -320,6 +323,29 @@ test("server MCP simulation and Builder Preview use the same saved Form setup an
     status: browserResult.status,
     results: browserResult.results,
   });
+});
+
+test("Builder Preview executes a legacy Action with an enabled key", async () => {
+  vi.mocked(loadDevBuildByProjectId).mockResolvedValue({
+    ...draftBuild,
+    props: [
+      {
+        ...draftBuild.props[0],
+        value: [{ dataSourceId: "destination", enabled: false }],
+      },
+    ],
+  } as never);
+  const response = await action({ request: request() } as never);
+  expect((await response.json()).success).toBe(true);
+  expect(
+    vi.mocked(createNodeProtectedResourceFetch).mock.results[0].value
+  ).toHaveBeenCalledWith(
+    "https://example.com/contact",
+    expect.objectContaining({
+      method: "post",
+      body: '{"email":"ada@example.com"}',
+    })
+  );
 });
 
 test.each([
@@ -454,7 +480,8 @@ test("Preview Actions resolve the matched page's legacy System binding", async (
   const fetch = vi.mocked(createNodeProtectedResourceFetch).mock.results[0]
     .value;
   expect(fetch).toHaveBeenCalledOnce();
-  const outgoing = fetch.mock.calls[0][0] as Request;
+  const [input, init] = fetch.mock.calls[0];
+  const outgoing = new Request(input, init);
   expect(await outgoing.json()).toEqual({
     pathname: "/contact",
     origin: "https://site.wstd.work",
@@ -550,13 +577,13 @@ test.each([false, true])(
           contents: `
           import { createElement } from "react";
           import { createRoot } from "react-dom/client";
-          import { Form } from "./resource-form";
+          import { ResourceForm } from "./resource-form";
           import { submitPreviewForm } from "~/shared/preview-form-bridge";
 
           createRoot(document.getElementById("root")).render(
-            createElement(Form, {
+            createElement(ResourceForm, {
               "data-ws-managed-form-id": "form",
-              action: [{ dataSourceId: "destination", enabled: true }],
+              action: [{ dataSourceId: "destination" }],
               onManagedSubmit: (values, signal) => submitPreviewForm({
                 values,
                 managedFormId: "form",
@@ -676,7 +703,7 @@ test.each([false, true])(
           props: [
             {
               ...draftBuild.props[0],
-              value: [{ dataSourceId: "new-email", enabled: true }],
+              value: [{ dataSourceId: "new-email" }],
             },
           ],
           dataSources: [
@@ -768,9 +795,9 @@ test.each([false, true])(
           "server-only-test-token"
         );
       } else {
-        expect(resourceFetch).toHaveBeenCalledWith(expect.any(Request));
-        expect((resourceFetch.mock.calls[0][0] as Request).url).toContain(
-          "https://example.com/contact"
+        expect(resourceFetch).toHaveBeenCalledWith(
+          "https://example.com/contact",
+          expect.objectContaining({ method: "post" })
         );
       }
     } finally {
@@ -865,9 +892,12 @@ test("Preview uses changed draft Resource settings without republishing", async 
   expect(((await response.json()) as { success: boolean }).success).toBe(true);
   const resourceFetch = vi.mocked(createNodeProtectedResourceFetch).mock
     .results[0].value;
-  expect(resourceFetch).toHaveBeenCalledWith(expect.any(Request));
-  expect((resourceFetch.mock.calls[0][0] as Request).url).toContain(
-    "https://new.example/updated"
+  expect(resourceFetch).toHaveBeenCalledWith(
+    "https://new.example/updated",
+    expect.objectContaining({
+      method: "post",
+      body: '{"email":"ada@example.com"}',
+    })
   );
 });
 
@@ -915,8 +945,12 @@ test("Preview binds trusted server browser info without forwarding Referer crede
   expect(JSON.stringify(responseBody)).not.toContain("local-test-token");
   const resourceFetch = vi.mocked(createNodeProtectedResourceFetch).mock
     .results[0].value;
-  expect(resourceFetch).toHaveBeenCalledWith(expect.any(Request));
-  const outgoing = resourceFetch.mock.calls[0][0] as Request;
+  expect(resourceFetch).toHaveBeenCalledWith(
+    "https://example.com/contact",
+    expect.objectContaining({ method: "post" })
+  );
+  const [input, init] = resourceFetch.mock.calls[0];
+  const outgoing = new Request(input, init);
   expect(await outgoing.json()).toEqual({
     ip: "203.0.113.77",
     referrer: `https://p-${projectId}.localhost/`,
@@ -966,14 +1000,14 @@ test("Preview binds each page's submitted values and browser context to its own 
         component: "Body",
         children: [{ type: "id", value: formId }],
       },
-      { type: "instance", id: formId, component: "Form", children: [] },
+      { type: "instance", id: formId, component: "ResourceForm", children: [] },
     ]),
     props: pages.map(({ formId }) => ({
       id: `${formId}-action`,
       instanceId: formId,
       name: "action",
       type: "json",
-      value: [{ dataSourceId: `${formId}-destination`, enabled: true }],
+      value: [{ dataSourceId: `${formId}-destination` }],
     })),
     dataSources: pages.flatMap(({ formId }) => [
       {
@@ -1041,7 +1075,8 @@ test("Preview binds each page's submitted values and browser context to its own 
       .mocked(createNodeProtectedResourceFetch)
       .mock.results.at(-1)?.value;
     expect(resourceFetch).toHaveBeenCalledTimes(index + 1);
-    const outgoing = resourceFetch.mock.calls[index][0] as Request;
+    const [input, init] = resourceFetch.mock.calls[index];
+    const outgoing = new Request(input, init);
     expect(outgoing.url).toBe(`https://example.com/${page.formId}`);
     expect(await outgoing.json()).toEqual({
       email: page.email,
@@ -1261,8 +1296,8 @@ test("two Email actions identify each credential failure in local Preview", asyn
       {
         ...draftBuild.props[0],
         value: [
-          { dataSourceId: "destination", enabled: true },
-          { dataSourceId: "visitorDestination", enabled: true },
+          { dataSourceId: "destination" },
+          { dataSourceId: "visitorDestination" },
         ],
       },
     ],
@@ -1430,7 +1465,8 @@ test("a parent-scope Action with no Body sends entered Form values in the actual
   const fetch = vi.mocked(createNodeProtectedResourceFetch).mock.results[0]
     .value;
   expect(fetch).toHaveBeenCalledTimes(1);
-  const outgoing = vi.mocked(fetch).mock.calls[0][0] as Request;
+  const [input, init] = vi.mocked(fetch).mock.calls[0];
+  const outgoing = new Request(input, init);
   expect(outgoing.method).toBe("POST");
   expect(outgoing.headers.get("content-type")).toBe("application/json");
   expect(await outgoing.clone().json()).toEqual({ email: "ada@example.com" });

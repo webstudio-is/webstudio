@@ -47,7 +47,24 @@ const HtmlEmbed = createTemplateComponentFixture("HtmlEmbed");
 const Paragraph = createTemplateComponentFixture("Paragraph");
 const Slot = createTemplateComponentFixture("Slot");
 const Text = createTemplateComponentFixture("Text");
-const ResourceForm = createTemplateComponentFixture("Form");
+const ResourceForm = createTemplateComponentFixture("ResourceForm");
+
+test("rejects an ambiguous historical Form before mutating fragment data", () => {
+  const data = renderData(<Body ws:id="bodyId" />);
+  const fragment = renderTemplate(<Box ws:id="boxId" />);
+  fragment.instances[0].component = "Form";
+  const before = structuredClone(data);
+
+  expect(() =>
+    insertWebstudioFragmentCopy({
+      data,
+      fragment,
+      availableVariables: [],
+      projectId: "project",
+    })
+  ).toThrow(/Copy it again/);
+  expect(data).toEqual(before);
+});
 
 test("copying Email Resources restores parent bindings by name in the target scope", () => {
   const parentVariable = new Variable("Owner", "Source owner");
@@ -146,7 +163,7 @@ test("copying a Form remaps its local Resource actions", () => {
     instanceId: "formId",
     name: "action",
     type: "json",
-    value: [{ dataSourceId: "localResourceVariable", enabled: false }],
+    value: [{ dataSourceId: "localResourceVariable" }],
   });
 
   const fragment = webstudioFragment.parse(
@@ -159,7 +176,7 @@ test("copying a Form remaps its local Resource actions", () => {
     projectId: "",
   });
   const copiedForm = Array.from(data.instances.values()).find(
-    ({ id, component }) => id !== "formId" && component === "Form"
+    ({ id, component }) => id !== "formId" && component === "ResourceForm"
   );
   const copiedSubmission = Array.from(data.props.values()).find(
     ({ instanceId, name }) => instanceId === copiedForm?.id && name === "action"
@@ -170,9 +187,7 @@ test("copying a Form remaps its local Resource actions", () => {
       copiedSubmission.value as { dataSourceId: string }[]
     )[0].dataSourceId;
     expect(destinationId).not.toBe("localResourceVariable");
-    expect(copiedSubmission.value).toEqual([
-      { dataSourceId: destinationId, enabled: false },
-    ]);
+    expect(copiedSubmission.value).toEqual([{ dataSourceId: destinationId }]);
     expect(data.dataSources.get(destinationId)).toMatchObject({
       scopeInstanceId: copiedForm?.id,
       resourceId: expect.not.stringMatching(/^localResource$/),

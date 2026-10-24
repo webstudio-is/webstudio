@@ -32,7 +32,7 @@ Pass normal Playwright Test arguments after `--`. For example:
 
 ```sh
 pnpm e2e:builder -- --grep "Builder can copy, duplicate, and delete a page"
-pnpm e2e:builder -- 'apps/builder/e2e/tests/pages-actions.[shard-5].e2e.ts'
+pnpm e2e:builder -- 'apps/builder/e2e/tests/pages-actions.[shard-3].e2e.ts'
 pnpm e2e:builder -- --debug --grep "Builder can copy"
 ```
 
@@ -93,7 +93,7 @@ four workers, and files are assigned by measured CI duration to keep jobs near
 three to four minutes:
 
 ```txt
-pages-actions.[shard-2].[shard-5].[shard-6].e2e.ts
+pages-actions.[shard-3].e2e.ts
 ```
 
 Every E2E filename must contain at least one unique shard tag. CI derives its

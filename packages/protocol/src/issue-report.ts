@@ -94,10 +94,25 @@ export const issueReportEntityId = z
   .object({ field: issueReportEntityIdField, id: issueReportId })
   .strict();
 
+export const issueReportErrorType = z
+  .string()
+  .regex(/^[A-Za-z][A-Za-z0-9]{0,99}(Error|Exception)$/);
+
+export const issueReportRequestId = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
+
+export const issueReportRecentTargetSchema = z
+  .object({
+    tool: z.string().trim().min(1).max(160),
+    entityIds: z.array(issueReportEntityId).min(1).max(20),
+  })
+  .strict();
+
 export const issueReportRecentFailureSchema = z
   .object({
     tool: z.string().trim().min(1).max(160),
     code: z.string().trim().min(1).max(160),
+    errorType: issueReportErrorType.optional(),
+    requestId: issueReportRequestId.optional(),
     httpStatus: z.number().int().min(100).max(599).optional(),
     elapsedMs: z.number().int().nonnegative().optional(),
     entityIds: z.array(issueReportEntityId).max(20).optional(),
@@ -150,12 +165,13 @@ const issueReportRuntime = z
     bundleVersion: z.string().trim().min(1).max(100).optional(),
     projectId: issueReportId.optional(),
     recentFailure: issueReportRecentFailureSchema.optional(),
+    recentTargets: z.array(issueReportRecentTargetSchema).max(3).optional(),
     session: issueReportSession.optional(),
     preview: issueReportPreview.optional(),
   })
   .strict()
   .describe(
-    "CLI-collected runtime metadata with the project ID and bounded entity IDs from the failed tool input; no raw arguments, URLs, credentials, or customer content."
+    "CLI-collected runtime metadata with the project ID and bounded entity IDs from recent tool inputs; no raw arguments, URLs, credentials, or customer content."
   );
 
 const issueReportContent = z
@@ -192,7 +208,7 @@ export const issueReportInput = z
   })
   .strict()
   .describe(
-    "LLM-authored technical report. The CLI attaches the project ID and recognized IDs from the failed tool input. Generalize all other context; exclude names, URLs, credentials, customer content, and raw tool data."
+    "LLM-authored technical report. The CLI attaches the project ID and recognized IDs from recent tool inputs. Generalize all other context; exclude names, URLs, credentials, customer content, and raw tool data."
   );
 
 export const issueReportResult = z
@@ -208,4 +224,7 @@ export type IssueReportResult = z.infer<typeof issueReportResult>;
 export type IssueReportRuntime = z.infer<typeof issueReportRuntime>;
 export type IssueReportRecentFailure = z.infer<
   typeof issueReportRecentFailureSchema
+>;
+export type IssueReportRecentTarget = z.infer<
+  typeof issueReportRecentTargetSchema
 >;

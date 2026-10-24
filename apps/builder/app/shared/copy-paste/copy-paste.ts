@@ -18,6 +18,15 @@ import { webflow } from "./plugin-webflow/plugin-webflow";
 import { designTokens } from "./plugin-design-tokens";
 import { builderApi } from "../builder-api";
 import { readClipboardText } from "../clipboard";
+import { $selectedInstance } from "../nano-states";
+import { $dataSources, $instances, $resources } from "../sync/data-stores";
+import { serverSyncStore } from "../sync/sync-stores";
+import { findAvailableVariables } from "@webstudio-is/project-build/runtime";
+import { validateDataVariableName } from "~/builder/shared/data-variable-utils";
+import {
+  deserializeVariable,
+  isVariableClipboardData,
+} from "./variable-clipboard";
 
 const isTextEditing = (event: ClipboardEvent) => {
   // Text is edited on the Canvas using the default Canvas text editor settings.
@@ -113,6 +122,70 @@ const reportPasteResult = (result: PasteResult) => {
 };
 
 const textMimeType = "text/plain";
+
+const variableClipboard: Plugin = {
+  name: "variable",
+  mimeType: textMimeType,
+  onPaste: (text) => {
+    if (isVariableClipboardData(text) === false) {
+      return pasteIgnored;
+    }
+    const instance = $selectedInstance.get();
+    if (!instance) {
+      return pasteHandled;
+    }
+    try {
+      const copied = deserializeVariable(
+        text,
+        instance.id,
+        new Map(
+          findAvailableVariables({
+            startingInstanceId: instance.id,
+            instances: $instances.get(),
+            dataSources: $dataSources.get(),
+          }).map((variable) => [variable.id, variable])
+        )
+      );
+      const originalName = copied.variable.name;
+      let suffix = 2;
+      let error = validateDataVariableName(
+        copied.variable.name,
+        undefined,
+        instance.id
+      );
+      while (error?.type === "duplicate") {
+        copied.variable.name = `${originalName} ${suffix++}`;
+        error = validateDataVariableName(
+          copied.variable.name,
+          undefined,
+          instance.id
+        );
+      }
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      if (copied.resource) {
+        copied.resource.name = copied.variable.name;
+      }
+      serverSyncStore.createTransaction(
+        [$dataSources, $resources],
+        (dataSources, resources) => {
+          dataSources.set(copied.variable.id, copied.variable);
+          if (copied.resource) {
+            resources.set(copied.resource.id, copied.resource);
+          }
+        }
+      );
+      return pasteHandled;
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Unable to paste variable",
+      };
+    }
+  },
+};
 
 const readClipboardData = (
   mimeTypes: Array<string>,
@@ -255,6 +328,7 @@ const initPlugins = ({
 export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
   initPlugins({
     plugins: [
+      variableClipboard,
       pageText,
       instanceJson,
       instanceText,

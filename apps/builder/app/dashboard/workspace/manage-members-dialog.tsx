@@ -29,6 +29,7 @@ import { TrashIcon } from "@webstudio-is/icons";
 import { type Workspace, type Role } from "@webstudio-is/project";
 import { nativeClient, trpcClient } from "~/shared/trpc/trpc-client";
 import { RoleSelect } from "./role-select";
+import { parseError } from "~/shared/error/error-parse";
 
 const inviteMembers = async (
   emails: string[],
@@ -47,21 +48,7 @@ const inviteMembers = async (
         failed.push(`${email}: ${result.error}`);
       }
     } catch (error) {
-      const raw = error instanceof Error ? error.message : "Unknown error";
-      // tRPC surfaces Zod input validation failures as a JSON array of issues.
-      // Extract the human-readable message(s) instead of dumping raw JSON.
-      let message = raw;
-      try {
-        const issues = JSON.parse(raw);
-        if (Array.isArray(issues) && issues.length > 0) {
-          message = issues
-            .map((i: { message?: string }) => i.message ?? "Invalid value")
-            .join(", ");
-        }
-      } catch {
-        // not JSON — use raw message as-is
-      }
-      failed.push(`${email}: ${message}`);
+      failed.push(`${email}: ${parseError(error).message}`);
     }
   }
   return failed;

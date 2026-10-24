@@ -69,6 +69,50 @@ const resetBuildStores = () => {
   $selectedPageId.set(undefined);
 };
 
+test("rejects historical Form page clipboard before importing or inserting", async () => {
+  const importAssets = vi.spyOn(builderApiTesting.api, "importAssets");
+  const before = structuredClone($pages.get());
+  const fragment = {
+    children: [],
+    instances: [],
+    assets: [],
+    dataSources: [],
+    resources: [],
+    props: [],
+    breakpoints: [],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+  };
+  const clipboardData = JSON.stringify({
+    "@webstudio/page/v0.1": {
+      type: "page",
+      page: {
+        id: "old-page",
+        name: "Old page",
+        path: "/old-page",
+        title: '"Old page"',
+        meta: {},
+        rootInstanceId: "form",
+      },
+      rootFragment: fragment,
+      bodyFragment: {
+        ...fragment,
+        instances: [
+          { type: "instance", id: "form", component: "Form", children: [] },
+        ],
+      },
+    },
+  });
+
+  expect(await handlePastePage(clipboardData, ROOT_FOLDER_ID)).toMatchObject({
+    success: false,
+    error: expect.stringMatching(/Copy it again/),
+  });
+  expect(importAssets).not.toHaveBeenCalled();
+  expect($pages.get()).toEqual(before);
+});
+
 const setRootLocalStyle = ({
   styleSourceId,
   value,

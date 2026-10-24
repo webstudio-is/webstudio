@@ -5,13 +5,46 @@ import { __testing__ } from "./props-section";
 const {
   shouldShowPropertiesSection,
   shouldRenderPropsSectionContainer,
-  shouldSyncMediaAssetProps,
   findExpressionPropByStandardName,
   shouldWriteBoundValue,
+  getStandaloneInitialProps,
 } = __testing__;
 
+test("keeps a standalone Form redirect when Content mode hides Action", () => {
+  const redirect = {
+    propName: "successRedirect",
+    meta: { type: "string", control: "url", required: false },
+  } as const;
+  const action = {
+    propName: "action",
+    meta: { type: "json", control: "form-action", required: false },
+  } as const;
+
+  expect(
+    getStandaloneInitialProps({
+      component: "ResourceForm",
+      addedProps: [],
+      initialProps: [redirect],
+    })
+  ).toEqual([redirect]);
+  expect(
+    getStandaloneInitialProps({
+      component: "ResourceForm",
+      addedProps: [],
+      initialProps: [action, redirect],
+    })
+  ).toEqual([action]);
+  expect(
+    getStandaloneInitialProps({
+      component: "ResourceForm",
+      addedProps: [action],
+      initialProps: [redirect],
+    })
+  ).toEqual([]);
+});
+
 test("Form and generic components render their property sections", () => {
-  for (const component of ["Form", "Box"]) {
+  for (const component of ["ResourceForm", "Box"]) {
     expect(
       shouldRenderPropsSectionContainer({
         component,
@@ -169,53 +202,6 @@ describe("shouldRenderPropsSectionContainer", () => {
         hasVisibleProps: false,
         isContentMode: true,
         isDesignMode: false,
-      })
-    ).toBe(false);
-  });
-});
-
-describe("shouldSyncMediaAssetProps", () => {
-  test("syncs related media props for image and video source assets", () => {
-    expect(
-      shouldSyncMediaAssetProps({
-        component: "Image",
-        propName: "src",
-        propValue: { type: "asset" },
-      })
-    ).toBe(true);
-    expect(
-      shouldSyncMediaAssetProps({
-        component: "Video",
-        propName: "src",
-        propValue: { type: "asset" },
-      })
-    ).toBe(true);
-  });
-
-  test("ignores non-source and non-asset changes", () => {
-    expect(
-      shouldSyncMediaAssetProps({
-        component: "Image",
-        propName: "alt",
-        propValue: { type: "asset" },
-      })
-    ).toBe(false);
-    expect(
-      shouldSyncMediaAssetProps({
-        component: "Image",
-        propName: "src",
-        propValue: { type: "string" },
-      })
-    ).toBe(false);
-  });
-
-  test("does not copy an Asset into related frontmatter bindings", () => {
-    expect(
-      shouldSyncMediaAssetProps({
-        component: "Image",
-        propName: "src",
-        propValue: { type: "asset" },
-        propType: "expression",
       })
     ).toBe(false);
   });

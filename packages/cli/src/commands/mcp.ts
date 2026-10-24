@@ -30,7 +30,9 @@ import {
   publicApiOperationRequiresServerSupport,
   publicApiOperations,
   issueReportRecentFailureSchema,
+  issueReportRecentTargetSchema,
   type IssueReportRecentFailure,
+  type IssueReportRecentTarget,
 } from "@webstudio-is/protocol";
 import * as httpClient from "@webstudio-is/http-client";
 import packageJson from "../../package.json" with { type: "json" };
@@ -52,7 +54,13 @@ import {
 } from "@webstudio-is/content-engine/mdx";
 import { contentEngineLimits } from "@webstudio-is/content-engine/limits";
 import { assetQueryRequest } from "@webstudio-is/content-engine";
-import { assetType, getFileExtension } from "@webstudio-is/sdk";
+import {
+  assetType,
+  getAllPages,
+  getFileExtension,
+  getPagePath,
+} from "@webstudio-is/sdk";
+import { matchPathnameRoutes } from "@webstudio-is/wsauth";
 import { fontMetaUpdate } from "@webstudio-is/fonts";
 import { resolveApiConnection } from "../api-connection";
 import {
@@ -69,6 +77,7 @@ import {
   createCliProjectRestorePointStorage,
   createCliProjectSession,
   createIssueReportFailureTracker,
+  createIssueReportTargetTracker,
   createIssueReportRuntime,
   getCliProjectRestorePointsFile,
   getCliServerApiContract,
@@ -1858,50 +1867,129 @@ const getIssueReportFailureFile = (projectRoot: string, projectId?: string) =>
 
 const persistIssueReportFailure = async (
   filePath: string,
-  snapshot: { failure: IssueReportRecentFailure; at: number } | undefined
+  snapshot: { failure: IssueReportRecentFailure; at: number } | undefined,
+  targetSnapshot?: { target: IssueReportRecentTarget; at: number }[]
 ) => {
-  if (snapshot === undefined) {
+  if (snapshot === undefined && targetSnapshot === undefined) {
     await rm(filePath, { force: true }).catch(() => undefined);
     return;
   }
   const temporaryPath = `${filePath}.${randomUUID()}.tmp`;
   try {
     await mkdir(path.dirname(filePath), { recursive: true });
-    await writeFile(temporaryPath, JSON.stringify(snapshot), "utf8");
+    await writeFile(
+      temporaryPath,
+      JSON.stringify({
+        ...snapshot,
+        ...(targetSnapshot === undefined ? {} : { targets: targetSnapshot }),
+      }),
+      "utf8"
+    );
     await rename(temporaryPath, filePath);
   } catch {
     await rm(temporaryPath, { force: true }).catch(() => undefined);
   }
 };
 
+const createIssueReportStateWriter = (
+  filePath: string,
+  write = persistIssueReportFailure
+) => {
+  let pending = Promise.resolve();
+  return (
+    snapshot: { failure: IssueReportRecentFailure; at: number } | undefined,
+    targetSnapshot?: { target: IssueReportRecentTarget; at: number }[]
+  ) => {
+    const persist = () => write(filePath, snapshot, targetSnapshot);
+    pending = pending.then(persist, persist);
+    return pending;
+  };
+};
+
 const restoreIssueReportFailure = async (
   filePath: string,
-  failureTracker: ReturnType<typeof createIssueReportFailureTracker>
+  failureTracker: ReturnType<typeof createIssueReportFailureTracker>,
+  targetTracker?: ReturnType<typeof createIssueReportTargetTracker>
 ) => {
   try {
     const value: unknown = JSON.parse(await readFile(filePath, "utf8"));
+    if (!isPlainRecord(value)) {
+      await rm(filePath, { force: true }).catch(() => undefined);
+      return;
+    }
+    const failure = issueReportRecentFailureSchema.safeParse(value.failure);
     if (
-      isPlainRecord(value) &&
+      failure.success &&
       typeof value.at === "number" &&
       Number.isSafeInteger(value.at)
     ) {
-      const failure = issueReportRecentFailureSchema.safeParse(value.failure);
-      if (failure.success) {
-        failureTracker.restore(failure.data, value.at);
+      failureTracker.restore(failure.data, value.at);
+    }
+    if (Array.isArray(value.targets)) {
+      for (const entry of value.targets.slice(0, 3)) {
+        if (!isPlainRecord(entry)) {
+          continue;
+        }
+        const target = issueReportRecentTargetSchema.safeParse(entry.target);
+        if (
+          target.success &&
+          typeof entry.at === "number" &&
+          Number.isSafeInteger(entry.at)
+        ) {
+          targetTracker?.restore(target.data, entry.at);
+        }
       }
-      if (
-        failure.success === false ||
-        failureTracker.snapshot() === undefined
-      ) {
-        await rm(filePath, { force: true }).catch(() => undefined);
-      }
-    } else {
+    }
+    if (
+      failureTracker.snapshot() === undefined &&
+      targetTracker?.snapshot() === undefined
+    ) {
       await rm(filePath, { force: true }).catch(() => undefined);
     }
   } catch {
     // Issue reporting is best effort; absent or malformed local diagnostics
     // must not prevent a project session from starting.
     await rm(filePath, { force: true }).catch(() => undefined);
+  }
+};
+
+const getIssueReportPageId = (
+  tool: string,
+  input: unknown,
+  pages: NonNullable<ProjectSessionSnapshot["state"]["pages"]> | undefined
+) => {
+  if (
+    pages === undefined ||
+    ![
+      "screenshot",
+      "screenshot.responsive",
+      "verify-page-responsive",
+      "get-page-by-path",
+    ].includes(tool) ||
+    !isPlainRecord(input) ||
+    ((tool === "screenshot" || tool === "screenshot.responsive") &&
+      (input.url !== undefined || input.baseUrl !== undefined)) ||
+    typeof input.path !== "string" ||
+    !input.path.startsWith("/") ||
+    input.path.startsWith("//")
+  ) {
+    return;
+  }
+  try {
+    const pathUrl = new URL(input.path, "https://webstudio.invalid");
+    if (pathUrl.origin !== "https://webstudio.invalid") {
+      return;
+    }
+    return matchPathnameRoutes(
+      getAllPages(pages).map((page) => ({
+        pattern: getPagePath(page.id, pages),
+        value: page.id,
+      })),
+      pathUrl.pathname
+    )?.value;
+  } catch {
+    // Report context is best effort and must not turn a tool call into an error.
+    return;
   }
 };
 
@@ -1936,11 +2024,19 @@ const createCliMcpHost = async ({
   const apiContract = await getCliServerApiContract(apiConnection);
   const operations = getSupportedPublicApiOperations(apiContract);
   const failureTracker = createIssueReportFailureTracker();
+  const targetTracker = createIssueReportTargetTracker();
   const issueReportFailureFile = getIssueReportFailureFile(
     projectRoot,
     connection.projectId
   );
-  await restoreIssueReportFailure(issueReportFailureFile, failureTracker);
+  const persistIssueReportState = createIssueReportStateWriter(
+    issueReportFailureFile
+  );
+  await restoreIssueReportFailure(
+    issueReportFailureFile,
+    failureTracker,
+    targetTracker
+  );
   const session = createCliProjectSession({
     connection: apiConnection,
     projectRoot,
@@ -1956,6 +2052,7 @@ const createCliMcpHost = async ({
               getBuilderStateNamespacesByStatus(snapshot.freshness, status);
       return createIssueReportRuntime(failureTracker.get(), {
         projectId: connection.projectId,
+        recentTargets: targetTracker.getAll(),
         ...(namespacesByStatus === undefined
           ? {}
           : {
@@ -2284,16 +2381,42 @@ const createCliMcpHost = async ({
     ) {
       if (canonicalTool !== "report-issue") {
         failureTracker.record(canonicalTool, error, elapsedMs, input);
-        await persistIssueReportFailure(
-          issueReportFailureFile,
-          failureTracker.snapshot()
+        targetTracker.record(
+          canonicalTool,
+          input,
+          getIssueReportPageId(
+            canonicalTool,
+            input,
+            session.snapshot?.state.pages
+          )
+        );
+        await persistIssueReportState(
+          failureTracker.snapshot(),
+          targetTracker.snapshot()
         );
       }
     },
-    async recordToolSuccess(canonicalTool: string) {
+    async recordToolSuccess(canonicalTool: string, input: unknown) {
       failureTracker.succeed(canonicalTool);
       if (canonicalTool === "report-issue") {
-        await persistIssueReportFailure(issueReportFailureFile, undefined);
+        targetTracker.clear();
+        await persistIssueReportState(undefined);
+      } else {
+        const hasTarget = targetTracker.record(
+          canonicalTool,
+          input,
+          getIssueReportPageId(
+            canonicalTool,
+            input,
+            session.snapshot?.state.pages
+          )
+        );
+        if (hasTarget) {
+          await persistIssueReportState(
+            failureTracker.snapshot(),
+            targetTracker.snapshot()
+          );
+        }
       }
     },
     reportLog(message: string) {
@@ -2495,7 +2618,7 @@ export const mcpSingleOpCall = async (options: McpSingleOpCallOptions) => {
           printJson(result.structuredContent);
           throw new HandledCliError();
         }
-        await recordToolSuccess(tool);
+        await recordToolSuccess(tool, input);
         if (
           tool === "checkpoint.ack" &&
           persistedCheckpoint?.nextCommand !== undefined &&
@@ -2631,7 +2754,7 @@ const runMcpProjectsBatch = async ({
               throw error;
             }
             await callSucceeded(index + 1);
-            await recordToolSuccess(call.tool);
+            await recordToolSuccess(call.tool, call.input);
             const nextTool = project.calls[index + 1]?.tool;
             if (
               checkpoint !== undefined &&
@@ -2722,7 +2845,9 @@ export const mcpRun = async (options: McpRunOptions) => {
         input: unknown
       ) => Promise<void>)
     | undefined;
-  let recordToolSuccess: ((tool: string) => Promise<void>) | undefined;
+  let recordToolSuccess:
+    | ((tool: string, input: unknown) => Promise<void>)
+    | undefined;
   let disposeHost: () => Promise<void> = async () => undefined;
   try {
     const mcpHost = await createCliMcpHost({
@@ -2772,7 +2897,7 @@ export const mcpRun = async (options: McpRunOptions) => {
           scope,
         });
         const session = result.structuredContent.meta.session;
-        await recordToolSuccess?.(call.tool);
+        await recordToolSuccess?.(call.tool, call.input);
         const committed =
           session === undefined ? "" : `; committed=${session.committed}`;
         stderr.write(
@@ -2980,6 +3105,8 @@ export const mcp = async (
 };
 
 export const __testing__ = {
+  createIssueReportStateWriter,
+  getIssueReportPageId,
   getMcpDownloadAsset,
   getIssueReportFailureFile,
   persistIssueReportFailure,

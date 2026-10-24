@@ -72,3 +72,7 @@ packages/prisma-client/src/__generated__
 
 # copilot instructions
 .github/instructions
+
+# local agent instructions
+AGENTS.md
+agents.md

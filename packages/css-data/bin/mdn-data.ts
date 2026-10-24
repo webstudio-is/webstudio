@@ -35,8 +35,11 @@ const autoValue = {
   value: "auto",
 } as const;
 
+// MDN data includes article URLs for these properties before the articles exist.
+const undocumentedProperties = new Set(["scroll-axis-lock", "window-drag"]);
+
 const getMdnUrl = (property: string, config: Value): string =>
-  "mdn_url" in config
+  "mdn_url" in config && undocumentedProperties.has(property) === false
     ? config.mdn_url
     : `https://developer.mozilla.org/en-US/search?q=${encodeURIComponent(property)}`;
 

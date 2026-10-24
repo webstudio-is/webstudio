@@ -51,6 +51,7 @@ import {
   getInstanceKey,
 } from "~/shared/nano-states";
 import { renderControl } from "../controls/combined";
+import { FormActionControl } from "../controls/form-action";
 import { usePropsLogic, type PropAndMeta } from "./use-props-logic";
 import { AnimationSection } from "./animation/animation-section";
 import { $matchingBreakpoints } from "../../style-panel/shared/model";
@@ -143,22 +144,6 @@ const shouldRenderPropsSectionContainer = ({
   return propsMetasSize > 0 || (isContentMode && hasVisibleProps);
 };
 
-const shouldSyncMediaAssetProps = ({
-  component,
-  propName,
-  propValue,
-  propType,
-}: {
-  component: Instance["component"];
-  propName: string;
-  propValue: { type: string };
-  propType?: Prop["type"];
-}) =>
-  (component === "Image" || component === "Video") &&
-  propName === "src" &&
-  propValue.type === "asset" &&
-  propType !== "expression";
-
 const findExpressionPropByStandardName = ({
   props,
   instanceId,
@@ -185,6 +170,26 @@ const shouldWriteBoundValue = (
 ): update is Exclude<PropValue, { type: "expression" }> =>
   isContentMode && update.type !== "expression";
 
+const getStandaloneInitialProps = ({
+  component,
+  addedProps,
+  initialProps,
+}: {
+  component: Instance["component"];
+  addedProps: PropAndMeta[];
+  initialProps: PropAndMeta[];
+}) => {
+  const hasVisibleFormActionControl =
+    component === "ResourceForm" &&
+    [...addedProps, ...initialProps].some(
+      (item) => item.meta.control === "form-action"
+    );
+  return initialProps.filter(
+    (item) =>
+      item.propName !== "successRedirect" || !hasVisibleFormActionControl
+  );
+};
+
 const renderProperty = (
   {
     propsLogic: logic,
@@ -199,11 +204,12 @@ const renderProperty = (
   const { prop, propName, meta } = item;
   if (component === blockComponent && propName === contentBlockSourceProp) {
     return (
-      <ContentBlockSourceSection
-        key={propName}
-        blockInstanceId={instanceId}
-        renderScope={selectedInstanceKey}
-      />
+      <Box key={propName} css={{ paddingInline: theme.panel.paddingInline }}>
+        <ContentBlockSourceSection
+          blockInstanceId={instanceId}
+          renderScope={selectedInstanceKey}
+        />
+      </Box>
     );
   }
   const targetInstanceId = item.instanceId ?? instanceId;
@@ -214,7 +220,39 @@ const renderProperty = (
           getInstanceKey(item.instanceSelector)
         ) ?? propValues);
 
-  return renderControl({
+  if (component === "ResourceForm" && meta.control === "form-action") {
+    const redirect = logic.initialProps.find(
+      (item) => item.propName === "successRedirect"
+    );
+    return (
+      <FormActionControl
+        key={propName}
+        instanceId={targetInstanceId}
+        meta={meta}
+        prop={prop}
+        propName={propName}
+        computedValue={targetPropValues.get(propName) ?? meta.defaultValue}
+        onChange={(value) => logic.handleChange({ prop, propName }, value)}
+        successRedirect={
+          redirect?.meta.control === "url"
+            ? {
+                instanceId: targetInstanceId,
+                meta: redirect.meta,
+                prop: redirect.prop,
+                propName: redirect.propName,
+                computedValue:
+                  targetPropValues.get(redirect.propName) ??
+                  redirect.meta.defaultValue,
+                onChange: (value) =>
+                  logic.handleChangeByPropName(redirect.propName, value),
+              }
+            : undefined
+        }
+      />
+    );
+  }
+
+  const control = renderControl({
     key: propName,
     instanceId: targetInstanceId,
     meta,
@@ -228,21 +266,13 @@ const renderProperty = (
     propName,
     onChange: (propValue) => {
       logic.handleChange({ prop, propName }, propValue);
-
-      if (
-        shouldSyncMediaAssetProps({
-          component,
-          propName,
-          propValue,
-          propType: prop?.type,
-        })
-      ) {
-        logic.handleChangeByPropName("width", propValue);
-        logic.handleChangeByPropName("height", propValue);
-        logic.handleChangeByPropName("alt", propValue);
-      }
     },
   });
+  return control === undefined ? undefined : (
+    <Box key={propName} css={{ paddingInline: theme.panel.paddingInline }}>
+      {control}
+    </Box>
+  );
 };
 
 const forbiddenProperties = new Set(["style"]);
@@ -417,34 +447,34 @@ export const PropsSection = (props: PropsSectionProps) => {
           paddingBottom: theme.panel.paddingBlock,
         }}
       >
-        {logic.systemProps.map((item) => (
-          <Box
-            key={item.propName}
-            css={{ paddingInline: theme.panel.paddingInline }}
-          >
-            {renderProperty(props, item)}
-          </Box>
-        ))}
+        {logic.systemProps.map((item) => renderProperty(props, item))}
       </Grid>
 
       <Separator />
       {showPropertiesSection && (
         <CollapsibleSectionWithAddButton
           label="Properties & attributes"
+          fullWidth
           onAdd={isDesignMode ? () => setAddingProp(true) : undefined}
           hasItems={hasItems}
         >
           <Flex gap="1" direction="column">
             {isDesignMode && addingProp && (
-              <AddPropertyOrAttribute
-                onPropSelected={(propName) => {
-                  setAddingProp(false);
-                  logic.handleAdd(propName);
-                }}
-              />
+              <Box css={{ paddingInline: theme.panel.paddingInline }}>
+                <AddPropertyOrAttribute
+                  onPropSelected={(propName) => {
+                    setAddingProp(false);
+                    logic.handleAdd(propName);
+                  }}
+                />
+              </Box>
             )}
             {addedProps.map((item) => renderProperty(props, item))}
-            {initialProps.map((item) => renderProperty(props, item))}
+            {getStandaloneInitialProps({
+              component: props.component,
+              addedProps,
+              initialProps,
+            }).map((item) => renderProperty(props, item))}
           </Flex>
         </CollapsibleSectionWithAddButton>
       )}
@@ -455,9 +485,9 @@ export const PropsSection = (props: PropsSectionProps) => {
 export const __testing__ = {
   shouldShowPropertiesSection,
   shouldRenderPropsSectionContainer,
-  shouldSyncMediaAssetProps,
   findExpressionPropByStandardName,
   shouldWriteBoundValue,
+  getStandaloneInitialProps,
 };
 
 const $propValues = computed(

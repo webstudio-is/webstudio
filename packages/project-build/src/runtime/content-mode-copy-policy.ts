@@ -1,7 +1,7 @@
 import {
   getContentModeCapabilities,
   isContentModeCopyableProp,
-} from "./content-mode-permissions";
+} from "./content-mode-capabilities";
 import type {
   Instance,
   Prop,

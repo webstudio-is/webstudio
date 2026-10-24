@@ -4906,7 +4906,11 @@ const normalizeMcpOperationInput = async (name: string, input: unknown) => {
   return input;
 };
 
-const assertNoLegacyWebhookFormInsertion = (name: string, input: unknown) => {
+/** @deprecated Guard only for the deprecated Webhook Form component. */
+const assertNoDeprecatedWebhookFormInsertion = (
+  name: string,
+  input: unknown
+) => {
   if (isRecord(input) === false) {
     return;
   }
@@ -4935,7 +4939,7 @@ const assertNoLegacyWebhookFormInsertion = (name: string, input: unknown) => {
       ))
   ) {
     throw new Error(
-      'Webhook Form is deprecated and cannot be inserted through MCP. Use component "Form".'
+      'Webhook Form is deprecated and cannot be inserted through MCP. Use component "ResourceForm".'
     );
   }
   if (
@@ -4944,42 +4948,46 @@ const assertNoLegacyWebhookFormInsertion = (name: string, input: unknown) => {
     input.transactions.some(
       (transaction) =>
         isRecord(transaction) &&
-        hasLegacyWebhookFormInstancePatch(transaction.payload)
+        hasDeprecatedWebhookFormInstancePatch(transaction.payload)
     )
   ) {
     throw new Error(
-      'Webhook Form is deprecated and cannot be created through MCP patches. Use component "Form".'
+      'Webhook Form is deprecated and cannot be created through MCP patches. Use component "ResourceForm".'
     );
   }
 };
 
-const legacyWebhookFormCopyCommands = new Set([
+/** @deprecated Copy operations inspected only for saved Webhook Forms. */
+const deprecatedWebhookFormCopyCommands = new Set([
   "insert-mdx-text",
   "duplicate-page",
   "duplicate-page-template",
-  "create-page-from-template",
   "duplicate-folder",
   "copy-page",
   "insert-page-transfer-item",
 ]);
 
-const containsLegacyWebhookFormInstance = (value: unknown): boolean => {
+/** @deprecated Detects only saved Webhook Form instances. */
+const containsDeprecatedWebhookFormInstance = (value: unknown): boolean => {
   if (value instanceof Map) {
-    return Array.from(value.values()).some(containsLegacyWebhookFormInstance);
+    return Array.from(value.values()).some(
+      containsDeprecatedWebhookFormInstance
+    );
   }
   if (Array.isArray(value)) {
-    return value.some(containsLegacyWebhookFormInstance);
+    return value.some(containsDeprecatedWebhookFormInstance);
   }
   if (isRecord(value)) {
     return (
       value.component === "WebhookForm" ||
-      Object.values(value).some(containsLegacyWebhookFormInstance)
+      Object.values(value).some(containsDeprecatedWebhookFormInstance)
     );
   }
   return false;
 };
 
-const hasLegacyWebhookFormInstancePatch = (payload: unknown) =>
+/** @deprecated Detects only patches that create Webhook Form instances. */
+const hasDeprecatedWebhookFormInstancePatch = (payload: unknown) =>
   Array.isArray(payload) &&
   payload.some(
     (change) =>
@@ -4993,17 +5001,20 @@ const hasLegacyWebhookFormInstancePatch = (payload: unknown) =>
           ((Array.isArray(patch.path) &&
             patch.path.at(-1) === "component" &&
             patch.value === "WebhookForm") ||
-            containsLegacyWebhookFormInstance(patch.value))
+            containsDeprecatedWebhookFormInstance(patch.value))
       )
   );
 
-const assertNoLegacyWebhookFormCopy = (envelope: ProjectSessionEnvelope) => {
+/** @deprecated Copy guard only for saved Webhook Forms. */
+const assertNoDeprecatedWebhookFormCopy = (
+  envelope: ProjectSessionEnvelope
+) => {
   if (envelope.transaction === undefined) {
     throw new Error("MCP could not inspect the planned copy transaction.");
   }
-  if (hasLegacyWebhookFormInstancePatch(envelope.transaction.payload)) {
+  if (hasDeprecatedWebhookFormInstancePatch(envelope.transaction.payload)) {
     throw new Error(
-      'Webhook Form is deprecated and cannot be copied through MCP. Use component "Form".'
+      'Webhook Form is deprecated and cannot be copied through MCP. Use component "ResourceForm".'
     );
   }
 };
@@ -5640,6 +5651,7 @@ const isComponentAvailableInMcpCatalog = (
   component: string,
   meta: WsComponentMeta
 ) =>
+  // The explicit check hides the deprecated Webhook Form even with older metadata.
   component !== "WebhookForm" &&
   isComponentMetaUnavailableInCatalog(meta) === false;
 
@@ -5734,6 +5746,7 @@ const getComponentSummaryEntry = ({
       )
     );
   if (
+    // Keep the deprecated Webhook Form out of component search and templates.
     component === "WebhookForm" ||
     (hiddenRequiredPart === false &&
       (isComponentMetaUnavailableInCatalog(meta) ||
@@ -5894,6 +5907,7 @@ const getComponentSummary = (input: unknown) => {
   };
 };
 
+// The final filter hides the deprecated Webhook Form from registry discovery.
 const getComponentRegistryItems = () =>
   listComponentRegistryItems({
     metas: componentMetas,
@@ -9490,7 +9504,10 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           insertionOperation,
           await getInsertFragmentInput(transportInput.input)
         );
-        assertNoLegacyWebhookFormInsertion("insert-fragment", insertionInput);
+        assertNoDeprecatedWebhookFormInsertion(
+          "insert-fragment",
+          insertionInput
+        );
         const verificationInput = getNormalizedOperationInput(
           verificationOperation,
           { pagePath: transportInput.input.pagePath, limit: 200 }
@@ -9602,8 +9619,9 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
       const toolInput = transportInput.input;
       dryRun = dryRun || transportInput.dryRun;
       const normalizedInput = await normalizeMcpOperationInput(name, toolInput);
-      assertNoLegacyWebhookFormInsertion(name, normalizedInput);
+      assertNoDeprecatedWebhookFormInsertion(name, normalizedInput);
       if (
+        // Block duplication of a saved, deprecated Webhook Form.
         (name === "clone-instance" || name === "duplicate-instance") &&
         isRecord(normalizedInput) &&
         typeof normalizedInput.sourceInstanceId === "string"
@@ -9619,7 +9637,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           source.result.instances.length > 0
         ) {
           throw new Error(
-            'Webhook Form is deprecated and cannot be duplicated through MCP. Use component "Form".'
+            'Webhook Form is deprecated and cannot be duplicated through MCP. Use component "ResourceForm".'
           );
         }
       }
@@ -9725,7 +9743,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
             )
           : normalizedInput
       );
-      const plannedCopy = legacyWebhookFormCopyCommands.has(name)
+      const plannedCopy = deprecatedWebhookFormCopyCommands.has(name)
         ? await executeOperation({
             command: name as Command,
             input: operationInput,
@@ -9733,7 +9751,7 @@ export const createProjectSessionMcpCore = <Command extends string = string>({
           })
         : undefined;
       if (plannedCopy !== undefined) {
-        assertNoLegacyWebhookFormCopy(plannedCopy);
+        assertNoDeprecatedWebhookFormCopy(plannedCopy);
       }
       const [envelope, response] = operation.requiresConfirm
         ? await executeDestructiveMcpOperation({
@@ -9959,7 +9977,10 @@ export const createProjectSessionMcpServer = async <
     elapsedMs: number,
     input: unknown
   ) => void | Promise<void>;
-  onToolSuccess?: (canonicalTool: string) => void | Promise<void>;
+  onToolSuccess?: (
+    canonicalTool: string,
+    input: unknown
+  ) => void | Promise<void>;
 }) => {
   const server = new Server(
     { name: "webstudio", version: "0.0.0" },
@@ -10113,8 +10134,18 @@ export const createProjectSessionMcpServer = async <
         signal: extra.signal,
       });
       const elapsedMs = Date.now() - startedAt;
-      await onToolSuccess?.(canonicalName ?? "unknown");
-      sendLog("info", `tool ${name} succeeded in ${elapsedMs}ms`);
+      if (result.structuredContent.ok === false) {
+        await onToolFailure?.(
+          canonicalName ?? "unknown",
+          result.structuredContent.error,
+          elapsedMs,
+          input
+        );
+        sendLog("error", `tool ${name} failed in ${elapsedMs}ms`);
+      } else {
+        await onToolSuccess?.(canonicalName ?? "unknown", input);
+        sendLog("info", `tool ${name} succeeded in ${elapsedMs}ms`);
+      }
       return result;
     } catch (error) {
       const elapsedMs = Date.now() - startedAt;

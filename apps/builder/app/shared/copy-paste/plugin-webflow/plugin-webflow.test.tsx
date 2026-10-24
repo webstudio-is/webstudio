@@ -1641,7 +1641,7 @@ test("RichText", async () => {
   `);
 });
 
-test("Form", async () => {
+test("ResourceForm", async () => {
   const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {

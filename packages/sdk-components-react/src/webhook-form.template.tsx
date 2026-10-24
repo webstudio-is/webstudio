@@ -13,10 +13,13 @@ import { WebhookForm } from "./components";
 
 const formState = new Variable("formState", "initial");
 
+/** @deprecated Use the Form component for new forms. */
 export const meta: TemplateMeta = {
   category: "data",
   order: 1,
-  description: "Collect user data and send it to any webhook.",
+  label: "Webhook Form (Deprecated)",
+  description:
+    "Deprecated. Existing Webhook Forms remain supported through the next release. Use the new Form component in the Forms section instead.",
   template: (
     <WebhookForm
       state={expression`${formState}`}

@@ -289,6 +289,7 @@ export const generateJsxElement = ({
     if (
       instance.component !== collectionComponent &&
       meta?.props?.[prop.name]?.type === "string" &&
+      meta?.props?.[prop.name]?.control !== "json-code" &&
       (prop.type === "expression" || prop.type === "parameter")
     ) {
       propValue = `${propValue} == null ? ${propValue} : String(${propValue})`;
@@ -434,13 +435,17 @@ export const generateJsxElement = ({
       after = "}";
     }
     conditionalElement += `${before}(${conditionValue}) &&\n`;
-    // wrap collection with fragment when rendered inside condition
+    // Transparent components can generate multiple JSX children.
     // {dataSourceVariable &&
     //  <>
     //    {[].map(...)}
     //  </>
     // }
-    if (instance.component === collectionComponent) {
+    if (
+      instance.component === collectionComponent ||
+      instance.component === blockComponent ||
+      instance.component === blockBodyComponent
+    ) {
       conditionalElement += "<>\n";
       conditionalElement += generatedElement;
       conditionalElement += "</>\n";

@@ -404,9 +404,12 @@ export const isComponentDeprecatedInCatalog = (
 
 export const isComponentMetaUnavailableInCatalog = (
   meta: ComponentCatalogMeta,
-  { showInternal = false }: { showInternal?: boolean } = {}
+  {
+    showInternal = false,
+    includeDeprecated = false,
+  }: { showInternal?: boolean; includeDeprecated?: boolean } = {}
 ) => {
-  if (isComponentDeprecatedInCatalog(meta)) {
+  if (isComponentDeprecatedInCatalog(meta) && !includeDeprecated) {
     return true;
   }
   if (meta.category !== undefined) {
@@ -716,6 +719,7 @@ export const listBuilderComponentPanelItems = ({
   templates,
   documentType = "html",
   showInternal = false,
+  showDeprecatedSection = false,
   getFallbackLabel = (component) => component,
   getMetaLabel = (component) => getFallbackLabel(component),
   getTemplateIcon = (_component, template) => template.icon,
@@ -724,6 +728,7 @@ export const listBuilderComponentPanelItems = ({
   templates: ReadonlyMap<string, ComponentCatalogTemplate>;
   documentType?: ComponentCatalogDocumentType;
   showInternal?: boolean;
+  showDeprecatedSection?: boolean;
   getFallbackLabel?: (component: string) => string;
   getMetaLabel?: (component: string, meta: ComponentCatalogMeta) => string;
   getTemplateIcon?: (
@@ -734,12 +739,25 @@ export const listBuilderComponentPanelItems = ({
 }) => {
   const items: BuilderComponentPanelItem[] = [];
   for (const [name, meta] of metas) {
-    if (isComponentDeprecatedInCatalog(meta)) {
+    const deprecated = isComponentDeprecatedInCatalog(meta);
+    if (deprecated && !showDeprecatedSection) {
+      continue;
+    }
+    if (
+      deprecated &&
+      (meta.category === "hidden" ||
+        meta.category === "xml" ||
+        (meta.category === "internal" && !showInternal) ||
+        meta.contentModel?.category === "none")
+    ) {
+      continue;
+    }
+    if (deprecated && templates.has(name)) {
       continue;
     }
     items.push({
       name,
-      category: meta.category ?? "hidden",
+      category: deprecated ? "deprecated" : (meta.category ?? "hidden"),
       order: meta.order,
       label: getMetaLabel(name, meta),
       description: meta.description,
@@ -748,12 +766,32 @@ export const listBuilderComponentPanelItems = ({
   }
   for (const [name, template] of templates) {
     const meta = metas.get(name);
-    if (meta !== undefined && isComponentMetaUnavailableInCatalog(meta)) {
+    const deprecated = isComponentDeprecatedInCatalog(meta);
+    if (deprecated && !showDeprecatedSection) {
+      continue;
+    }
+    if (
+      deprecated &&
+      (template.category === "hidden" ||
+        template.category === "xml" ||
+        (template.category === "internal" && !showInternal) ||
+        meta?.category === "xml" ||
+        meta?.contentModel?.category === "none")
+    ) {
+      continue;
+    }
+    if (
+      meta !== undefined &&
+      isComponentMetaUnavailableInCatalog(meta, {
+        includeDeprecated: deprecated,
+        showInternal: deprecated && showInternal,
+      })
+    ) {
       continue;
     }
     items.push({
       name,
-      category: template.category ?? "hidden",
+      category: deprecated ? "deprecated" : (template.category ?? "hidden"),
       order: template.order,
       label: template.label ?? meta?.label ?? getFallbackLabel(name),
       description: template.description,
@@ -797,6 +835,14 @@ export const listBuilderComponentPanelItems = ({
       );
     });
     itemsByCategory.set(category, categoryItems);
+  }
+  if (showDeprecatedSection && documentType === "html") {
+    const deprecatedItems = items.filter(
+      (item) => item.category === "deprecated"
+    );
+    if (deprecatedItems.length > 0) {
+      itemsByCategory.set("deprecated", deprecatedItems);
+    }
   }
   return itemsByCategory;
 };

@@ -425,10 +425,10 @@ Webstudio validates and formats the current content before converting it.
 
 ## 3. Query the articles for the overview
 
-Create a static page with the path `/blog`, then add an Assets resource to its
-page-level **Dynamic data**:
+Create a static page with the path `/blog`, then select its Body and add an
+Assets resource in **Settings > Variables**:
 
-1. Create a **System Resource** and choose **Assets**.
+1. In the **New variable** dialog, choose **Assets resource**.
 2. Name it `posts`.
 3. Under **Output**, choose **Selected fields**, turn off **File metadata**, and
    include only the fields the overview renders, such as `properties.title`,
@@ -475,9 +475,10 @@ Create one page with the path `/blog/:slug`. This page is the template for all
 articles. In the visual editor's address bar, enter `hello-world` as the
 preview value for `:slug`.
 
-Add another Assets resource to the page-level **Dynamic data**:
+On the article page, select Body and add another Assets resource in
+**Settings > Variables**:
 
-1. Create a **System Resource** and choose **Assets**.
+1. In the **New variable** dialog, choose **Assets resource**.
 2. Name it `post`.
 3. Under **Output**, choose **Selected fields**, turn off **File metadata**, and
    include the fields this page renders, such as `properties.title`,
@@ -682,6 +683,6 @@ reference cycles fail instead of returning partial data.
 - [Content Engine reference](content-engine-reference.md) – Check query fields, modes, diagnostics, references, and limits
 - [Assets](assets.md) – Create, edit, organize, and reference project files
 - [Content Block](../core-components/content-block.md) – Design and visually edit MDX articles
-- [Data variables](variables.md) – Define resources and understand their scope
+- [Variables](variables.md) – Define resources and understand their scope
 - [Collection](../core-components/collection.md) – Render article lists
 - [Markdown Embed](../core-components/markdown-embed.md) – Render and style an article body

@@ -1,6 +1,10 @@
 import { webstudioFragment } from "@webstudio-is/sdk";
 import { z } from "zod";
 import { parseDataEnvelope } from "./data-envelope";
+import {
+  ambiguousFormClipboardMessage,
+  hasAmbiguousFormInstance,
+} from "../fragment-identity";
 
 export const instanceTransferDataVersion = "@webstudio/instance/v0.1";
 export const instancesTransferDataVersion = "@webstudio/instances/v0.1";
@@ -31,6 +35,17 @@ export const parseInstanceTransferData = (serializedData: string) => {
   });
   if (transferData.valid === false) {
     return transferData;
+  }
+  const fragment =
+    transferData.version === instanceTransferDataVersion
+      ? transferData.data
+      : transferData.data.fragment;
+  if (hasAmbiguousFormInstance(fragment)) {
+    return {
+      owned: true,
+      valid: false,
+      error: ambiguousFormClipboardMessage,
+    } as const;
   }
   if (transferData.version === instanceTransferDataVersion) {
     return { ...transferData, type: "single-root" } as const;

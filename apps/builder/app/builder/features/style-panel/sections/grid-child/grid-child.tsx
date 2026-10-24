@@ -238,16 +238,22 @@ export const Section = () => {
         )
       }
     >
-      <GridChildGuides />
-      <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
-        <GridChildPositionMode
-          value={positionMode}
-          onChange={handleModeChange}
-        />
-        {positionMode === "auto" && <GridChildPositionAuto />}
-        {positionMode === "area" && <GridChildPositionArea />}
-        {positionMode === "manual" && <GridChildPositionManual />}
-        <GridChildAlign />
+      <Flex
+        direction="column"
+        gap="2"
+        css={{ paddingInline: theme.panel.paddingInline }}
+      >
+        <GridChildGuides />
+        <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
+          <GridChildPositionMode
+            value={positionMode}
+            onChange={handleModeChange}
+          />
+          {positionMode === "auto" && <GridChildPositionAuto />}
+          {positionMode === "area" && <GridChildPositionArea />}
+          {positionMode === "manual" && <GridChildPositionManual />}
+          <GridChildAlign />
+        </Flex>
       </Flex>
     </StyleSection>
   );

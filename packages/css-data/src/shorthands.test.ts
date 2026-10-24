@@ -116,6 +116,42 @@ test("expand border edges", () => {
   ]);
 });
 
+test("expand border with color-mix containing a variable", () => {
+  expect(
+    expandShorthands([
+      [
+        "border-top",
+        "1px solid color-mix(in srgb, var(--accent) 50%, transparent)",
+      ],
+    ])
+  ).toEqual([
+    ["border-top-width", "1px"],
+    ["border-top-style", "solid"],
+    ["border-top-color", "color-mix(in srgb,var(--accent) 50%,transparent)"],
+  ]);
+  expect(
+    expandShorthands([
+      [
+        "border-top",
+        "solid color-mix(in srgb, var(--accent) 50%, transparent)",
+      ],
+    ])
+  ).toEqual([
+    ["border-top-width", "medium"],
+    ["border-top-style", "solid"],
+    ["border-top-color", "color-mix(in srgb,var(--accent) 50%,transparent)"],
+  ]);
+  expect(
+    expandShorthands([
+      ["border-top", "color-mix(in srgb, var(--accent) 50%, transparent)"],
+    ])
+  ).toEqual([
+    ["border-top-width", "medium"],
+    ["border-top-style", "none"],
+    ["border-top-color", "color-mix(in srgb,var(--accent) 50%,transparent)"],
+  ]);
+});
+
 test("expand border types", () => {
   expect(expandShorthands([["border-width", "1px"]])).toEqual([
     ["border-top-width", "1px"],
@@ -524,6 +560,20 @@ test("expand font with css-wide keywords", () => {
   ]);
 });
 
+test("expand font with variable family and fallback", () => {
+  expect(
+    expandShorthands([["font", "600 16px/1.5 var(--font-body, sans-serif)"]])
+  ).toEqual([
+    ["font-style", "initial"],
+    ["font-variant-caps", "initial"],
+    ["font-weight", "600"],
+    ["font-stretch", "initial"],
+    ["font-size", "16px"],
+    ["line-height", "1.5"],
+    ["font-family", "var(--font-body, sans-serif)"],
+  ]);
+});
+
 test("expand font-synthesis", () => {
   expect(expandShorthands([["font-synthesis", `none`]])).toEqual([
     ["font-synthesis-weight", "none"],
@@ -660,6 +710,39 @@ test("expand flex", () => {
     ["flex-basis", "0"],
   ]);
 });
+
+test.each([
+  ["calc((100% - var(--space-lg)) / 2)", "calc((100% - var(--space-lg))/2)"],
+  ["min(50%, var(--wide))", "min(50%,var(--wide))"],
+  ["max(20rem, var(--wide))", "max(20rem,var(--wide))"],
+  ["clamp(20rem, var(--basis), 50%)", "clamp(20rem,var(--basis),50%)"],
+  ["round(var(--basis), 1px)", "round(var(--basis),1px)"],
+  ["calc-size(auto, size + 2rem)", "calc-size(auto,size + 2rem)"],
+  ["var(--basis)", "var(--basis)"],
+])("expand flex with %s as its basis", (basis, expected) => {
+  expect(expandShorthands([["flex", `0 1 ${basis}`]])).toEqual([
+    ["flex-grow", "0"],
+    ["flex-shrink", "1"],
+    ["flex-basis", expected],
+  ]);
+});
+
+test.each([
+  ["", "", "1", "1"],
+  ["2 ", "", "2", "1"],
+  ["", " 2", "2", "1"],
+  ["", " 2 3", "2", "3"],
+])(
+  "expand flex function basis between %s and %s",
+  (before, after, grow, shrink) => {
+    const basis = "calc((100% - var(--gap)) / 2)";
+    expect(expandShorthands([["flex", `${before}${basis}${after}`]])).toEqual([
+      ["flex-grow", grow],
+      ["flex-shrink", shrink],
+      ["flex-basis", "calc((100% - var(--gap))/2)"],
+    ]);
+  }
+);
 
 test("expand flex with css-wide keywords", () => {
   expect(expandShorthands([["flex", "inherit"]])).toEqual([

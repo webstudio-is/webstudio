@@ -14,14 +14,14 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
       contents: `
         import { createElement } from "react";
         import { createRoot } from "react-dom/client";
-        import { Form } from "./resource-form";
+        import { ResourceForm } from "./resource-form";
 
         window.formStates = [];
         window.formResults = [];
         createRoot(document.getElementById("root")).render(
-          createElement(Form, {
+          createElement(ResourceForm, {
             "data-ws-managed-form-id": "form-one",
-            action: [{ dataSourceId: "destination", enabled: true }],
+            action: [{ dataSourceId: "destination" }],
             onStateChange: (state) => window.formStates.push(state),
             onResultChange: (result) => window.formResults.push(result),
           },

@@ -71,7 +71,6 @@ export const createRuntimeFixtureBuildSnapshot = ({
     folders: pages.folders,
     homePageId: pages.homePageId,
     rootFolderId: pages.rootFolderId,
-    formComponentIdentityVersion: pages.formComponentIdentityVersion,
     redirects: pages.redirects,
     variables: dataSources,
   };

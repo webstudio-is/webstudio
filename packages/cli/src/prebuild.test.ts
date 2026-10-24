@@ -86,6 +86,23 @@ const rootFolderId = "root";
 const elementComponent = "ws:element";
 const slowPrebuildTestTimeout = 15_000;
 
+const loadGeneratedIndexAction = async () => {
+  await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+  await build({
+    stdin: {
+      contents: 'export { action } from "./app/routes/_index"',
+      resolveDir: tempDir,
+    },
+    outfile: join(tempDir, "action.mjs"),
+    bundle: true,
+    platform: "node",
+    format: "esm",
+    packages: "external",
+    loader: { ".css": "text" },
+  });
+  return import(pathToFileURL(join(tempDir, "action.mjs")).href);
+};
+
 const runGeneratedCommand = async (
   command: "react-router" | "remix" | "tsc" | "vite" | "vike",
   args: string[]
@@ -2157,6 +2174,9 @@ describe("prebuild", () => {
     await expect(
       readFile("app/__generated__/$resources.sitemap.xml.ts", "utf8")
     ).resolves.not.toContain('"path": "/draft"');
+    await expect(
+      readFile("app/routes/[sitemap.xml]._index.tsx", "utf8")
+    ).resolves.toContain("sitemap.map");
   });
 
   test(
@@ -2503,12 +2523,27 @@ sitemap.map((page) => page.path);`
     );
     expect(loadedConfig?.config.resolve?.conditions).toContain("import");
     expect(loadedConfig?.config.ssr?.resolve?.conditions).toContain("import");
+    expect(loadedConfig?.config.optimizeDeps?.entries).toEqual([
+      "app/root.tsx",
+      "app/routes/**/*.{ts,tsx}",
+    ]);
     await runGeneratedCommand("react-router", ["build"]);
 
     await expect(
       getFilePaths(join(tempDir, "build", "server"))
     ).resolves.not.toHaveLength(0);
   }, 30_000);
+
+  test.each(["react-router-netlify", "react-router-cloudflare"])(
+    "pre-scans generated routes with the %s template overlay",
+    async (overlay) => {
+      await prebuild({ assets: false, template: ["react-router", overlay] });
+      const config = await readFile("vite.config.ts", "utf8");
+      expect(config).toContain(
+        'entries: ["app/root.tsx", "app/routes/**/*.{ts,tsx}"]'
+      );
+    }
+  );
 
   test("preserves an authored catch-all page when redirects are configured", async () => {
     await writeSiteData(
@@ -3176,7 +3211,7 @@ sitemap.map((page) => page.path);`
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "destination", enabled: true }],
+              value: [{ dataSourceId: "destination" }],
             },
           ],
         ],
@@ -3311,7 +3346,7 @@ sitemap.map((page) => page.path);`
   );
 
   test.each(["defaults", "react-router"])(
-    "uses route params and query values in a legacy Form Resource (%s)",
+    "uses route params and query values in a deprecated Webhook Form Resource (%s)",
     async (template) => {
       const system = encodeDataSourceVariable(SYSTEM_VARIABLE_ID);
       const siteData = createSiteData({
@@ -3359,6 +3394,13 @@ sitemap.map((page) => page.path);`
       ] as never;
       await writeSiteData(siteData);
       await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => Object.assign(globalThis.__deprecatedWebhookFormRouteFetch, { validateDestination: () => undefined });\n"
+      );
       await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
       await build({
         stdin: {
@@ -3366,7 +3408,7 @@ sitemap.map((page) => page.path);`
             'export { action } from "./app/routes/[products].$slug._index"',
           resolveDir: tempDir,
         },
-        outfile: join(tempDir, "legacy-action.mjs"),
+        outfile: join(tempDir, "deprecated-webhook-form-action.mjs"),
         bundle: true,
         platform: "node",
         format: "esm",
@@ -3374,7 +3416,7 @@ sitemap.map((page) => page.path);`
         loader: { ".css": "text" },
       });
       const { action } = await import(
-        pathToFileURL(join(tempDir, "legacy-action.mjs")).href
+        pathToFileURL(join(tempDir, "deprecated-webhook-form-action.mjs")).href
       );
       const received: Array<{
         url: string;
@@ -3382,7 +3424,7 @@ sitemap.map((page) => page.path);`
         body: unknown;
       }> = [];
       vi.stubGlobal(
-        "fetch",
+        "__deprecatedWebhookFormRouteFetch",
         vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
           const request = new Request(input, init);
           received.push({
@@ -3530,7 +3572,246 @@ sitemap.map((page) => page.path);`
   );
 
   test.each(["defaults", "react-router"])(
-    "submits identical forms twice while caching dependencies (%s)",
+    "keeps a saved Webhook Form URL method and rejects its own host (%s)",
+    async (template) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "WebhookForm", children: [] }],
+        ],
+        props: [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "string",
+              value: "https://receiver.example/hook",
+            },
+          ],
+          [
+            "method",
+            {
+              id: "method",
+              instanceId: "root",
+              name: "method",
+              type: "string",
+              value: "put",
+            },
+          ],
+        ],
+      });
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        `import { createProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch";
+export const createManagedFormEmailSender = () => undefined;
+export const validateManagedFormEmail = () => undefined;
+export const createManagedFormResourceFetch = ({ request }) => createProtectedResourceFetch({
+  deniedHostnames: [new URL(request.url).hostname],
+  transport: async ({ url, method, headers, body }) => ({
+    response: await globalThis.__testManagedFormFetch(url, { method, headers, body }),
+  }),
+});
+`
+      );
+      const { action } = await loadGeneratedIndexAction();
+      const received: Array<{ method: string; body: unknown }> = [];
+      vi.stubGlobal(
+        "__testManagedFormFetch",
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          received.push({ method: request.method, body: await request.json() });
+          return Response.json({ accepted: true });
+        }
+      );
+      const submit = (host: string) => {
+        const form = new FormData();
+        form.set(formIdFieldName, "action");
+        form.set(formBotFieldName, "brave");
+        form.set("message", "Hello");
+        return action({
+          request: new Request(`https://${host}/`, {
+            method: "POST",
+            headers: { host },
+            body: form,
+          }),
+          context: {},
+        });
+      };
+      await expect(submit("example.com")).resolves.toEqual({ success: true });
+      expect(received).toEqual([{ method: "PUT", body: { message: "Hello" } }]);
+      const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        await expect(submit("receiver.example")).resolves.toEqual({
+          success: false,
+          errors: ["Resource destination is not allowed"],
+        });
+      } finally {
+        errorLog.mockRestore();
+      }
+      expect(received).toHaveLength(1);
+    }
+  );
+
+  test.each(
+    ["defaults", "react-router"].flatMap((template) =>
+      [0, 1, 6].map((recipients) => [template, recipients] as const)
+    )
+  )(
+    "sends and preflights deprecated Webhook Form emails through the Form sender (%s, %i configured recipients)",
+    async (template, recipientCount) => {
+      const siteData = createSiteData({
+        instances: [
+          ["root", { id: "root", component: "WebhookForm", children: [] }],
+        ],
+        pageMeta: { contactEmail: "owner@example.com" },
+      });
+      if (recipientCount > 0) {
+        siteData.build.props = [
+          [
+            "action",
+            {
+              id: "action",
+              instanceId: "root",
+              name: "action",
+              type: "resource",
+              value: "email",
+            },
+          ],
+        ];
+        siteData.build.resources = [
+          [
+            "email",
+            {
+              id: "email",
+              name: "Email",
+              control: "email",
+              method: "post",
+              url: '""',
+              headers: [],
+              email: {
+                recipientMode: "custom",
+                recipients: Array.from(
+                  { length: recipientCount },
+                  (_, index) => `person${index}@example.com`
+                ).join(", "),
+                subject: '"Saved subject"',
+                body: '"Saved message"',
+              },
+            },
+          ],
+        ];
+      }
+      await writeSiteData(siteData);
+      await prebuild({ assets: false, template: [template] });
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => globalThis.__testSendEmail;\nexport const validateManagedFormEmail = (...args) => globalThis.__testValidateEmail(...args);\nexport const createManagedFormResourceFetch = () => Object.assign(fetch, { validateDestination: () => undefined });\n"
+      );
+      const { action } = await loadGeneratedIndexAction();
+      const validateEmail = vi.fn();
+      vi.stubGlobal("__testValidateEmail", validateEmail);
+      const messages: ResourceRequest[] = [];
+      vi.stubGlobal("__testSendEmail", async (resource: ResourceRequest) => {
+        messages.push(resource);
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          data: { id: "sent" },
+        };
+      });
+      const form = new FormData();
+      form.set(formBotFieldName, "brave");
+      if (recipientCount > 0) {
+        form.set(formIdFieldName, "action");
+      }
+      form.set("message", "Hello");
+      if (recipientCount > 5) {
+        const errorLog = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
+        try {
+          await expect(
+            action({
+              request: new Request("https://example.com/", {
+                method: "POST",
+                headers: { host: "example.com" },
+                body: form,
+              }),
+              context: {},
+            })
+          ).resolves.toEqual({
+            success: false,
+            errors: [
+              "Select no more than 5 team email recipients per Form submission",
+            ],
+          });
+        } finally {
+          errorLog.mockRestore();
+        }
+        expect(messages).toHaveLength(0);
+        return;
+      }
+      await expect(
+        action({
+          request: new Request("https://example.com/", {
+            method: "POST",
+            headers: { host: "example.com" },
+            body: form,
+          }),
+          context: {},
+        })
+      ).resolves.toEqual({ success: true });
+      expect(messages).toHaveLength(1);
+      expect(messages[0]?.control).toBe("email");
+      expect(messages[0]?.email?.recipients).toEqual([
+        {
+          address:
+            recipientCount > 0 ? "person0@example.com" : "owner@example.com",
+        },
+      ]);
+      expect(messages[0]?.email?.headers?.["X-Message-ID"]).toEqual(
+        expect.any(String)
+      );
+      expect(validateEmail).toHaveBeenCalledOnce();
+      vi.stubGlobal("__testSendEmail", async () => ({
+        ok: false,
+        status: 503,
+        statusText: "Email service is unavailable",
+        data: {
+          error: {
+            code: "EMAIL_SERVICE_UNAVAILABLE",
+            message: "Email service is unavailable",
+          },
+        },
+      }));
+      await expect(
+        action({
+          request: new Request("https://example.com/", {
+            method: "POST",
+            headers: { host: "example.com" },
+            body: form,
+          }),
+          context: {},
+        })
+      ).resolves.toEqual({
+        success: false,
+        errors: ["Email service is unavailable"],
+      });
+    }
+  );
+
+  test.each(["defaults", "react-router"])(
+    "submits identical deprecated Webhook Forms twice while caching dependencies (%s)",
     async (template) => {
       const siteData = createSiteData({
         instances: [["root", { id: "root", component: "Form", children: [] }]],
@@ -3566,7 +3847,7 @@ sitemap.map((page) => page.path);`
             id: "author",
             name: "Author",
             method: "post",
-            url: '"https://example.com/author"',
+            url: '"https://receiver.example/author"',
             body: '{ query: "author" }',
             headers: [{ name: "Cache-Control", value: '"public, max-age=60"' }],
           },
@@ -3577,7 +3858,7 @@ sitemap.map((page) => page.path);`
             id: "submit",
             name: "Submit",
             method: "post",
-            url: `"https://example.com/submit/" + ${encodeDataSourceVariable(
+            url: `"https://receiver.example/submit/" + ${encodeDataSourceVariable(
               "author"
             )}.data.id`,
             headers: [{ name: "Cache-Control", value: '"public, max-age=60"' }],
@@ -3586,22 +3867,14 @@ sitemap.map((page) => page.path);`
       ];
       await writeSiteData(siteData);
       await prebuild({ assets: false, template: [template] });
-      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
-      await build({
-        stdin: {
-          contents: 'export { action } from "./app/routes/_index"',
-          resolveDir: tempDir,
-        },
-        outfile: join(tempDir, "action.mjs"),
-        bundle: true,
-        platform: "node",
-        format: "esm",
-        packages: "external",
-        loader: { ".css": "text" },
-      });
-      const { action } = await import(
-        pathToFileURL(join(tempDir, "action.mjs")).href
+      await writeFile(
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+        "export const createManagedFormEmailSender = () => undefined;\nexport const validateManagedFormEmail = () => undefined;\nexport const createManagedFormResourceFetch = () => Object.assign(fetch, { validateDestination: () => undefined });\n"
       );
+      const { action } = await loadGeneratedIndexAction();
       const cached = new Map<string, Response>();
       vi.stubGlobal("caches", {
         open: async () => ({
@@ -3666,13 +3939,13 @@ sitemap.map((page) => page.path);`
         ).resolves.toEqual({ success: true });
       }
       expect(received).toEqual([
-        { url: "https://example.com/author", body: { query: "author" } },
+        { url: "https://receiver.example/author", body: { query: "author" } },
         {
-          url: "https://example.com/submit/author-123",
+          url: "https://receiver.example/submit/author-123",
           body: { message: "Hello" },
         },
         {
-          url: "https://example.com/submit/author-123",
+          url: "https://receiver.example/submit/author-123",
           body: { message: "Hello" },
         },
       ]);
@@ -3688,19 +3961,16 @@ sitemap.map((page) => page.path);`
           "too-many",
           Array(11)
             .fill("destination")
-            .map((dataSourceId) => ({ dataSourceId, enabled: true })),
+            .map((dataSourceId) => ({ dataSourceId })),
         ],
         [
           "duplicate",
-          [
-            { dataSourceId: "destination", enabled: true },
-            { dataSourceId: "destination", enabled: true },
-          ],
+          [{ dataSourceId: "destination" }, { dataSourceId: "destination" }],
         ],
-        ["missing", [{ dataSourceId: "missing", enabled: true }]],
+        ["missing", [{ dataSourceId: "missing" }]],
         ["malformed", { destinations: "destination" }],
         ["native", { mode: "native", destinations: ["destination"] }],
-        ["valid", [{ dataSourceId: "destination", enabled: true }]],
+        ["valid", [{ dataSourceId: "destination" }]],
       ] as const;
       const siteData = createSiteData({
         instances: [
@@ -3810,7 +4080,7 @@ sitemap.map((page) => page.path);`
 
       for (const [id, error] of [
         ["unknown", "Form submission settings not found"],
-        ["empty", "Enable at least one action"],
+        ["empty", "Select at least one Resource action"],
         ["too-many", "Select no more than 10 Resource actions"],
         ["duplicate", "Select each Resource only once"],
         ["missing", "Resource destination not found"],
@@ -4015,7 +4285,7 @@ sitemap.map((page) => page.path);`
         expect(result.status).toBe(400);
         expect(result.contentType).toContain("application/json");
         expect(result.body).toEqual(
-          getManagedFormFailure("Enable at least one action")
+          getManagedFormFailure("Select at least one Resource action")
         );
       }
     },
@@ -4100,7 +4370,7 @@ sitemap.map((page) => page.path);`
                 instanceId: "root",
                 name: "action",
                 type: "json",
-                value: [{ dataSourceId: "destination", enabled: true }],
+                value: [{ dataSourceId: "destination" }],
               },
             ],
           ],
@@ -4365,9 +4635,9 @@ sitemap.map((page) => page.path);`
               name: "action",
               type: "json",
               value: [
-                { dataSourceId: "http-source", enabled: true },
-                { dataSourceId: "project-source", enabled: true },
-                { dataSourceId: "custom-source", enabled: true },
+                { dataSourceId: "http-source" },
+                { dataSourceId: "project-source" },
+                { dataSourceId: "custom-source" },
               ],
             },
           ],
@@ -4513,7 +4783,7 @@ sitemap.map((page) => page.path);`
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "http-source", enabled: true }],
+              value: [{ dataSourceId: "http-source" }],
             },
           ],
         ],
@@ -4622,7 +4892,7 @@ sitemap.map((page) => page.path);`
             instanceId: "root",
             name: "action",
             type: "json",
-            value: [{ dataSourceId: "destination", enabled: true }],
+            value: [{ dataSourceId: "destination" }],
           },
         ],
       ],
@@ -4713,7 +4983,7 @@ sitemap.map((page) => page.path);`
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "emailDestination", enabled: true }],
+              value: [{ dataSourceId: "emailDestination" }],
             },
           ],
         ],
@@ -5002,7 +5272,7 @@ sitemap.map((page) => page.path);`
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "visitor-source", enabled: true }],
+              value: [{ dataSourceId: "visitor-source" }],
             },
           ],
           [
@@ -5136,7 +5406,7 @@ export const createManagedFormResourceFetch = () => globalThis.__testManagedForm
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "destination", enabled: true }],
+              value: [{ dataSourceId: "destination" }],
             },
           ],
         ],
@@ -5244,8 +5514,8 @@ export const createManagedFormResourceFetch = () => {
               name: "action",
               type: "json",
               value: [
-                { dataSourceId: "sibling-source", enabled: true },
-                { dataSourceId: "failed-source", enabled: true },
+                { dataSourceId: "sibling-source" },
+                { dataSourceId: "failed-source" },
               ],
             },
           ],
@@ -5525,8 +5795,8 @@ export const createManagedFormResourceFetch = () => {
               name: "action",
               type: "json",
               value: [
-                { dataSourceId: "valid-source", enabled: true },
-                { dataSourceId: "denied-source", enabled: true },
+                { dataSourceId: "valid-source" },
+                { dataSourceId: "denied-source" },
               ],
             },
           ],
@@ -5648,8 +5918,8 @@ export const createManagedFormResourceFetch = () => {
               name: "action",
               type: "json",
               value: [
-                { dataSourceId: "independent-source", enabled: true },
-                { dataSourceId: "dependent-source", enabled: true },
+                { dataSourceId: "independent-source" },
+                { dataSourceId: "dependent-source" },
               ],
             },
           ],
@@ -5824,8 +6094,8 @@ export const createManagedFormResourceFetch = () => {
               name: "action",
               type: "json",
               value: [
-                { dataSourceId: "form-destination", enabled: true },
-                { dataSourceId: "browser-destination", enabled: true },
+                { dataSourceId: "form-destination" },
+                { dataSourceId: "browser-destination" },
               ],
             },
           ],
@@ -6065,7 +6335,7 @@ export const createManagedFormResourceFetch = () => {
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "destination", enabled: true }],
+              value: [{ dataSourceId: "destination" }],
             },
           ],
         ],
@@ -6207,7 +6477,7 @@ export const createManagedFormResourceFetch = () => {
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "destination", enabled: true }],
+              value: [{ dataSourceId: "destination" }],
             },
           ],
         ],
@@ -6334,7 +6604,7 @@ export const createManagedFormResourceFetch = () => {
               instanceId: "root",
               name: "action",
               type: "json",
-              value: [{ dataSourceId: "destination", enabled: true }],
+              value: [{ dataSourceId: "destination" }],
             },
           ],
         ],
@@ -7368,11 +7638,29 @@ export const createManagedFormResourceFetch = () => {
     ];
     await writeSiteData(siteData);
 
-    await prebuild({ assets: false, template: ["react-router"] });
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      preserveRouteTemplates: true,
+    });
 
     await expect(
       readFile("app/__generated__/[sitemap.xml]._index.server.tsx", "utf8")
     ).resolves.toContain('rootIds: [\n      "sitemap-resource"');
+    await expect(
+      readFile("app/routes/[sitemap.xml]._index.tsx", "utf8")
+    ).resolves.toContain("../__generated__/[sitemap.xml]._index");
+
+    siteData.build.version += 1;
+    await writeSiteData(siteData);
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      incremental: true,
+    });
+    await expect(
+      readFile("app/routes/[sitemap.xml]._index.tsx", "utf8")
+    ).resolves.toContain("../__generated__/[sitemap.xml]._index");
   });
 
   test("emits static text pages at their configured paths", async () => {

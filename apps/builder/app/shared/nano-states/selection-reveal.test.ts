@@ -279,8 +279,8 @@ test("an item outside the nearest owner cannot provide its value", () => {
 test("hidden selected path uses occurrence keys and invalid paths clear atomically", () => {
   const instances: Instances = new Map([
     ["page", instance("page", "Body", "left", "right")],
-    ["left", instance("left", "Form", "feedback")],
-    ["right", instance("right", "Form", "feedback")],
+    ["left", instance("left", "ResourceForm", "feedback")],
+    ["right", instance("right", "ResourceForm", "feedback")],
     ["feedback", instance("feedback", "Box")],
   ]);
   const props = values([
@@ -299,7 +299,7 @@ test("hidden selected path uses occurrence keys and invalid paths clear atomical
   expect(
     resolve(instances, ["feedback", "left", "other-page"], props).size
   ).toBe(0);
-  instances.set("left", instance("left", "Form"));
+  instances.set("left", instance("left", "ResourceForm"));
   expect(resolve(instances, ["feedback", "left", "page"], props).size).toBe(0);
 });
 
@@ -475,7 +475,7 @@ test.each([
 test("resolved hidden feedback changes with selection without editing saved props", () => {
   const instances: Instances = new Map([
     ["page", instance("page", "Body", "form")],
-    ["form", instance("form", "Form", "success", "error")],
+    ["form", instance("form", "ResourceForm", "success", "error")],
     ["success", instance("success", "Box")],
     ["error", instance("error", "Box")],
   ]);

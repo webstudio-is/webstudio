@@ -4,6 +4,10 @@ description: Connect Webstudio forms to Zapier for workflow automation.
 
 # How to integrate Webhook Form with Zapier
 
+{% hint style="info" %}
+**Deprecated:** This guide uses the [Webhook Form](../core-components/webhook-form.md). Use [Form](../core-components/form.md) for new forms.
+{% endhint %}
+
 {% embed url="https://youtu.be/FDm4mz5FBD8" %}
 How to integrate Webstudio with Zapier
 {% endembed %}

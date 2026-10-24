@@ -21374,6 +21374,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     cases: [
       {
         id: "pattern-2-slot-1",
+        positions: ["scroll-axis-lock:branch:1:keyword:none"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "none",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "scroll-axis-lock",
+    syntax: "auto | none",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
         positions: ["scroll-behavior:branch:1:keyword:smooth"],
         value: "var(--slot-1)",
         variables: {
@@ -25842,6 +25857,21 @@ export const propertyVarTestFixtures: PropertyVarFixture[] = [
     kind: "longhand",
     property: "will-change",
     syntax: "auto | <animateable-feature>#",
+  },
+  {
+    cases: [
+      {
+        id: "pattern-2-slot-1",
+        positions: ["window-drag:branch:1:keyword:move"],
+        value: "var(--slot-1)",
+        variables: {
+          "--slot-1": "move",
+        },
+      },
+    ],
+    kind: "longhand",
+    property: "window-drag",
+    syntax: "none | move",
   },
   {
     cases: [

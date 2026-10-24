@@ -38,7 +38,7 @@ import { evaluateHighImpactOutcome } from "./validate";
 const execFileAsync = promisify(execFile);
 
 describe("high-impact fixture API", () => {
-  test("preserves current Form identity metadata through CLI initialization", async () => {
+  test("omits the historical Form identity marker after CLI initialization", async () => {
     const api = await startHighImpactFixtureApi(managedFormAuthoringFixture);
     const directory = await mkdtemp(
       join(tmpdir(), "managed-form-identity-fixture-")
@@ -69,7 +69,9 @@ describe("high-impact fixture API", () => {
           "utf8"
         )
       );
-      expect(snapshot.state.pages.formComponentIdentityVersion).toBe(1);
+      expect(snapshot.state.pages).not.toHaveProperty(
+        "formComponentIdentityVersion"
+      );
     } finally {
       await api.close();
       await rm(directory, { recursive: true, force: true });
