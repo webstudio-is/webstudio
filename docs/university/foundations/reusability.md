@@ -29,7 +29,7 @@ To create a shared layout, build the header (or any repeating section) on one pa
 
 ## Design tokens & CSS variables — reusable styles
 
-<figure><img src="../../.gitbook/assets/h1-token.png" alt="A design token applied to a Heading instance in the Style Sources input"><figcaption><p>A token applied to an instance — styles update everywhere this token is used</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/h1-token-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/h1-token-light.png" alt="heading-1 design token applied in Style sources" width="240"></picture><figcaption><p>A token applied to an instance — styles update everywhere this token is used</p></figcaption></figure>
 
 CSS variables and design tokens work together as two layers of reusability.
 
