@@ -312,25 +312,25 @@ Once the Form works as expected, publish it to update the site. Later Builder ch
 
 ### Files and message sizes
 
-These limits apply to the whole request or message, not to each file separately.
+Limits count the whole request or message, not each file separately.
 
-| Limit                                            | What it includes                                                                              |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| **25 MiB per Form submission**                   | All fields, files, and request encoding.                                                      |
-| **25 MiB per outbound HTTP Resource body**       | The body sent to the API. The receiving API may have a lower limit.                           |
-| **32 attachments per email**                     | All files attached to that email.                                                             |
-| **7 MiB per email-service request**              | Email text, encoded attachments, and request data.                                            |
-| **5 MiB per complete email for most recipients** | The final email and attachments. Cloudflare allows 25 MiB for verified destination addresses. |
+| Limit | What it includes |
+| ----- | ---------------- |
+| **25 MiB per published Form submission** | The complete incoming multipart request: fields, files, and multipart encoding. |
+| **Builder Preview: smaller request limit** | On Webstudio Cloud, Preview runs through a Vercel Function with a [4.5 MB request-body limit](https://vercel.com/docs/functions/limitations#request-body-size). A Form request can be rejected before Webstudio's 25 MiB check. |
+| **25 MiB per outbound HTTP Resource body** | Webstudio's body-size check for a Form action. The destination or its network path may allow less. |
+| **32 attachments per email** | All files attached to that email. |
+| **7 MiB per email-service request** | The complete JSON request, including email text, attachment data encoded as Base64, and other fields. |
 
-Encoding increases file size. A file below the limit on disk can still exceed it once encoded and combined with the rest of the message.
+Multipart encoding adds bytes around each uploaded file and field. Base64 encoding makes attachments larger in the email-service request. Leave room for both when choosing file sizes.
 
-See [Cloudflare’s email limits](https://developers.cloudflare.com/email-service/platform/limits/).
+[Cloudflare's email limits](https://developers.cloudflare.com/email-service/platform/limits/) list 5 MiB for a complete email, or 25 MiB for verified destination addresses. Those are provider limits, not guaranteed Form allowances: Webstudio's 7 MiB JSON limit and the incoming Form limit can stop a submission first. The final email includes its own encoding and headers.
 
 ### Sending limits
 
 Webstudio Cloud allows up to **five team-recipient deliveries per submission**, plus one visitor confirmation Resource. Duplicate addresses count as separate deliveries.
 
-An approximate limit of **50 recipient deliveries per project, per Cloudflare location, per minute** also applies. Preview and published sites have separate limits. Provider account limits may apply too.
+An approximate limit of **50 recipient deliveries per project, per Cloudflare location, per minute** also applies. This is not a guaranteed cutoff. Preview and published sites have separate limits. Provider account limits may apply too.
 
 If an email fails, check its response for the reported reason. See [Cloudflare’s email error reference](https://developers.cloudflare.com/email-service/api/send-emails/workers-api/#error-codes).
 
