@@ -12,6 +12,7 @@ import { inspectGeneratedBuildMetrics } from "../generated-build-metrics";
 import { createExclusiveAsyncRunner, withTimeout } from "../async-utils";
 import { getStableErrorCode } from "../error-codes";
 import {
+  BrowserStartupError,
   defaultScreenshotTimeout,
   isBrowserSessionClosedError,
   type BrowserFormValue,
@@ -676,11 +677,21 @@ export const createMcpPreviewHandlers = ({
               `[E2E submit diagnostic] ${JSON.stringify({
                 stage: "CLI catch",
                 kind:
-                  error instanceof Error && error.name === "TimeoutError"
-                    ? "timeout"
-                    : error instanceof Error
-                      ? "error"
-                      : "other",
+                  error instanceof BrowserStartupError
+                    ? "browser_startup"
+                    : error instanceof Error && error.name === "TimeoutError"
+                      ? "timeout"
+                      : error instanceof Error
+                        ? "error"
+                        : "other",
+                startupReason:
+                  error instanceof BrowserStartupError
+                    ? error.diagnostic?.reason
+                    : undefined,
+                browserExitCode:
+                  error instanceof BrowserStartupError
+                    ? error.processExit?.code
+                    : undefined,
               })}`
             );
           }
