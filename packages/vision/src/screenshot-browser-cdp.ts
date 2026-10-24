@@ -2711,14 +2711,39 @@ const submitFormWithBrowserRuntime = async (
         }
       }
     }
+    const status =
+      ((didNavigate || navigationObserved) && !lastBusy) ||
+      ((completedRequestIds.size > 0 || sawPending || terminalTransition) &&
+        !lastBusy &&
+        (formState === "success" || formState === "error"))
+        ? "submitted"
+        : "unknown";
+    if (
+      status === "unknown" &&
+      process.env.WEBSTUDIO_E2E_SUBMIT_DIAGNOSTIC === "1"
+    ) {
+      console.error(
+        `[E2E submit diagnostic] ${JSON.stringify({
+          stage: "vision observation",
+          formState: [
+            "initial",
+            "submitting",
+            "success",
+            "error",
+            "invalid",
+            "unknown",
+          ].includes(formState)
+            ? formState
+            : "other",
+          sawPending,
+          requestCount: submissionRequestIds.size,
+          completedCount: completedRequestIds.size,
+          exchangeCount: exchanges.length,
+        })}`
+      );
+    }
     return {
-      status:
-        ((didNavigate || navigationObserved) && !lastBusy) ||
-        ((completedRequestIds.size > 0 || sawPending || terminalTransition) &&
-          !lastBusy &&
-          (formState === "success" || formState === "error"))
-          ? "submitted"
-          : "unknown",
+      status,
       formState,
       results,
       errors,
@@ -2728,6 +2753,22 @@ const submitFormWithBrowserRuntime = async (
       correlationId,
     };
   } catch (error) {
+    if (process.env.WEBSTUDIO_E2E_SUBMIT_DIAGNOSTIC === "1") {
+      console.error(
+        `[E2E submit diagnostic] ${JSON.stringify({
+          stage: "vision catch",
+          dispatchStarted,
+          kind:
+            error instanceof BrowserSessionClosedError
+              ? "browser_closed"
+              : error instanceof Error && error.name === "TimeoutError"
+                ? "timeout"
+                : error instanceof Error
+                  ? "error"
+                  : "other",
+        })}`
+      );
+    }
     if (dispatchStarted) {
       return unknown();
     }

@@ -670,7 +670,20 @@ export const createMcpPreviewHandlers = ({
             timeout: input.timeout ?? defaultScreenshotTimeout,
             browser: "auto",
           });
-        } catch {
+        } catch (error) {
+          if (process.env.WEBSTUDIO_E2E_SUBMIT_DIAGNOSTIC === "1") {
+            console.error(
+              `[E2E submit diagnostic] ${JSON.stringify({
+                stage: "CLI catch",
+                kind:
+                  error instanceof Error && error.name === "TimeoutError"
+                    ? "timeout"
+                    : error instanceof Error
+                      ? "error"
+                      : "other",
+              })}`
+            );
+          }
           // The request may already have reached a service. Never replay it.
           await closeCaptureSession().catch(() => undefined);
           return {
