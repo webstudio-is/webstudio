@@ -36,8 +36,8 @@ Add fields inside the Form from **Components > Forms**. Each field needs a **Nam
 
 <figure>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-components-dark.jpg">
-    <img src="../../.gitbook/assets/form-components-light.jpg" alt="Forms section in the Components panel, with Form (Beta), Button, Input Label, Text Input, File Input, Text Area, Select, Radio, and Checkbox.">
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-components-dark.png">
+    <img src="../../.gitbook/assets/form-components-light.png" alt="Forms section in the Components panel, with Form (Beta), Button, Input Label, Text Input, File Input, Text Area, Select, Radio, and Checkbox." width="224">
   </picture>
 </figure>
 
@@ -70,8 +70,8 @@ Select the Form and open **Settings > Properties & attributes > Action**:
 
 <figure>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-actions-dark.jpg">
-    <img src="../../.gitbook/assets/form-actions-light.jpg" alt="Form Action settings with the plus button, Email to owner and Email to visitor actions, and the Success redirect control below them.">
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-actions-dark.png">
+    <img src="../../.gitbook/assets/form-actions-light.png" alt="Form Action settings with the plus button, Email to owner and Email to visitor actions, and the Success redirect control below them." width="238">
   </picture>
 </figure>
 
@@ -118,8 +118,8 @@ Email Resources can notify your team, confirm receipt to a visitor, or send diff
 
 <figure>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-email-dark.jpg">
-    <img src="../../.gitbook/assets/form-email-light.jpg" alt="Email to owner Resource configuration with project recipients, an empty Reply to field, bound Subject and Body fields, and Attach submitted files selected.">
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-email-dark.png">
+    <img src="../../.gitbook/assets/form-email-light.png" alt="Email to owner Resource configuration with project recipients, an empty Reply to field, bound Subject and Body fields, and Attach submitted files selected." width="320">
   </picture>
 </figure>
 
@@ -137,8 +137,8 @@ For a visitor confirmation, create the Email Resource on the Form. Its email inp
 
 <figure>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-visitor-dark.jpg">
-    <img src="../../.gitbook/assets/form-visitor-light.jpg" alt="Email to visitor Resource with Visitor email field selected, the email input chosen, a confirmation message, and Do not attach files selected.">
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-visitor-dark.png">
+    <img src="../../.gitbook/assets/form-visitor-light.png" alt="Email to visitor Resource with Visitor email field selected, the email input chosen, a confirmation message, and Do not attach files selected." width="320">
   </picture>
 </figure>
 
@@ -267,8 +267,8 @@ The default Form provides these Variables on the Form and its children:
 
 <figure>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-variables-dark.jpg">
-    <img src="../../.gitbook/assets/form-variables-light.jpg" alt="Form Variables list showing formData, browserInfo, Email to owner, Email to visitor, formState, results, errors, and system, with dynamic and static badges.">
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-variables-dark.png">
+    <img src="../../.gitbook/assets/form-variables-light.png" alt="Form Variables list showing formData, browserInfo, Email to owner, Email to visitor, formState, results, errors, and system, with dynamic and static badges." width="238">
   </picture>
 </figure>
 
