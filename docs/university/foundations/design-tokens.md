@@ -77,7 +77,10 @@ You can style your site using Local or Tokens like this:
 
 2. To create a Token, select the Style sources field, enter a name, and press Enter.
 
-   <img src="../../.gitbook/assets/new-token.png" alt="Style sources field with a new Token name ready to be added" data-size="original">
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/new-token-dark.png">
+     <img src="../../.gitbook/assets/new-token-light.png" alt="Style sources field with panel-demo typed and a New token option" width="240">
+   </picture>
 
 3. Select the source you want to edit. The active source is highlighted, and new styles are written to that source.
 
