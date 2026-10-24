@@ -317,7 +317,7 @@ Limits count the whole request or message, not each file separately.
 | Limit | What it includes |
 | ----- | ---------------- |
 | **25 MiB per published Form submission** | The complete incoming multipart request: fields, files, and multipart encoding. |
-| **Builder Preview: smaller request limit** | On Webstudio Cloud, Preview runs through a Vercel Function with a [4.5 MB request-body limit](https://vercel.com/docs/functions/limitations#request-body-size). Fields, files, and multipart encoding must all fit within it, so the usable file size is lower. A Form request can be rejected before Webstudio's 25 MiB check. |
+| **4.5 MB per Preview Form submission** | The complete request: fields, files, and multipart encoding. Leave room for fields and encoding when choosing file sizes. |
 | **25 MiB per outbound HTTP Resource body** | Webstudio's body-size check for a Form action. The destination or its network path may allow less. |
 | **32 attachments per email** | All files attached to that email. |
 | **7 MiB per email-service request** | The complete JSON request, including email text, attachment data encoded as Base64, and other fields. |
