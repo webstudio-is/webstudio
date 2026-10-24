@@ -50,7 +50,7 @@ A Webhook Form consists of three nested instances:
 2. **Success message** – Displayed upon successful submission.
 3. **Error message** – Shown when an error occurs.
 
-You can [add new inputs](form.md#inputs-and-responses) to further expand and modify your form.
+You can [add new inputs](form.md#collect-the-information-you-need) to further expand and modify your form.
 
 ### Form states
 
@@ -81,7 +81,7 @@ Ensure every form input has a value for the `name` field to be included in submi
 
 <figure><img src="../../.gitbook/assets/form-name.png" alt="Form input name"><figcaption></figcaption></figure>
 
-For a full list of input types, including checkboxes and radio buttons, refer to [Form inputs](form.md#inputs-and-responses).
+For a full list of input types, including checkboxes and radio buttons, refer to [Form inputs](form.md#collect-the-information-you-need).
 
 ### Input properties
 
