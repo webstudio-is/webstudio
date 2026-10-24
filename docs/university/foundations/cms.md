@@ -141,7 +141,7 @@ cmsData.data[0].id ? 200 : 404;
 
 This example looks for the ID of a record. If it's there, output `200` (found!) otherwise `404` (not found).
 
-<figure><img src="../../.gitbook/assets/cms-dynamic-404-status-code.png" alt="Status code field in Page settings with an expression bound"><figcaption><p>Binding an expression to the status code</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/cms-dynamic-404-status-code-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/cms-dynamic-404-status-code-light.png" alt="Page status code bound to the demo post ID: 200 when found, 404 otherwise" width="690"></picture><figcaption><p>Binding an expression to the status code</p></figcaption></figure>
 
 
 {% hint style="info" %}
@@ -158,7 +158,7 @@ Add a component (e.g. a Box) to the page that contains your 404 message. Set its
 
 When this evaluates to `true`, the 404 content is shown.
 
-<figure><img src="../../.gitbook/assets/cms-dynamic-404-show-404-content.png" alt="Box component with a Show condition for missing CMS data"><figcaption><p>Setting the Show condition on the 404 content</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/cms-dynamic-404-show-404-content-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/cms-dynamic-404-show-404-content-light.png" alt="404 content Show condition bound to the absence of the demo post ID" width="295"></picture><figcaption><p>Setting the Show condition on the 404 content</p></figcaption></figure>
 
 
 {% hint style="info" %}
@@ -175,7 +175,7 @@ cmsData.data[0].id;
 
 This hides the regular content when there is no data, avoiding an empty-looking page.
 
-<figure><img src="../../.gitbook/assets/cms-dynamic-404-show-regular-content.png" alt="Box component with a Show condition for available CMS data"><figcaption><p>Setting the Show condition on regular content</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/cms-dynamic-404-show-regular-content-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/cms-dynamic-404-show-regular-content-light.png" alt="Regular content Show condition bound to the demo post ID" width="295"></picture><figcaption><p>Setting the Show condition on regular content</p></figcaption></figure>
 
 
 ## Alternative: redirect instead of showing 404 content
