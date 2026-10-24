@@ -74,7 +74,7 @@ Once the variable is defined, you can use it on the instance it was defined on a
 
 The variables are available in the autocomplete, so you can access variables by typing them in.
 
-<figure><img src="../../.gitbook/assets/css-var-usage.png" alt="Using a CSS variable" width="318"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/css-var-usage-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/css-var-usage-light.png" alt="Color input autocomplete suggesting CSS variables including --gray-5" width="240"></picture><figcaption></figcaption></figure>
 
 The autocomplete search algorithm is very flexible, letting you search by any of the following:
 
