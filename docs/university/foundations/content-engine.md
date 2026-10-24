@@ -36,7 +36,7 @@ structured collection entries:
 
 {% embed url="https://youtu.be/Sn-fhVajpgU" %}
 
-<figure><img src="../../.gitbook/assets/content-engine-assets-structure.png" alt="Assets panel showing Markdown articles and their assets folder"><figcaption><p>Markdown articles stored alongside their assets</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/content-engine-assets-structure-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/content-engine-assets-structure-light.png" alt="Assets panel showing two MDX articles and their assets folder" width="280"></picture><figcaption><p>Markdown articles stored alongside their assets</p></figcaption></figure>
 
 ## Choose Markdown or MDX
 
