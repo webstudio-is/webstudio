@@ -29,7 +29,7 @@ You can find the Vimeo Component in the Components Panel in the Media Section. H
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/components-panel-dark.png">
-  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with Vimeo in the expanded Media group">
+  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with Vimeo in the expanded Media group" width="224">
 </picture>
 
 

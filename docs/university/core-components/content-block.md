@@ -119,7 +119,7 @@ When a file is connected, the Navigator labels its Body outlet **MDX content** a
 <figure>
   <picture>
     <source srcset="../../.gitbook/assets/connect-content-block-mdx-dark.png" media="(prefers-color-scheme: dark)">
-    <img src="../../.gitbook/assets/connect-content-block-mdx-light.png" alt="Content Block settings with Connect .mdx file under the Source property">
+    <img src="../../.gitbook/assets/connect-content-block-mdx-light.png" alt="Content Block settings with Connect .mdx file under the Source property" width="238">
   </picture>
   <figcaption><p>Connect the file from the Content Block's Source property.</p></figcaption>
 </figure>
@@ -316,7 +316,7 @@ On the left-hand side, there is the navigator showing you the various Content Bl
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/content-blocks-navigator-dark.png">
-  <img src="../../.gitbook/assets/content-blocks-navigator-light.png" alt="Navigator with an expanded Content Block showing Templates and Content Block Body with paragraph and list children">
+  <img src="../../.gitbook/assets/content-blocks-navigator-light.png" alt="Navigator with an expanded Content Block showing Templates and Content Block Body with paragraph, list, and heading children" width="224">
 </picture>
 
 

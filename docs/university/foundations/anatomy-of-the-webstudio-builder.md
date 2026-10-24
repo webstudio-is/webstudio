@@ -77,7 +77,7 @@ Components are grouped into sections like General, Text, Media, Forms, and [Radi
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/components-panel-dark.png">
-  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with a search field and expanded General, Typography, and Media groups">
+  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with a search field and expanded General, Typography, and Media groups" width="224">
 </picture>
 
 ## Assets panel
