@@ -105,7 +105,7 @@ Next, configure the variable:
 
 The variable should be configured as shown in the screenshot below:
 
-<figure><img src="../../.gitbook/assets/flotiq-data-variable.png" alt="Configure a data variable"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/flotiq-data-variable-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/flotiq-data-variable-light.png" alt="GraphQL variable with Flotiq query, dynamic slug, and example API key placeholder" width="322"></picture></figure>
 
 Test the variable - if it is configured correctly, the fetched Flotiq content will appear in the **Inspect Tool**.
 

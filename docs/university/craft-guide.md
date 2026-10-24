@@ -69,7 +69,7 @@ Templates must avoid unexplained hardcoded design values. They must consume
 documented Craft variables or documented extensions so that a section adapts
 when inserted into another conforming project.
 
-<figure><img src="../.gitbook/assets/craft-library.png" alt="Craft Library in the Webstudio Marketplace"><figcaption><p>Craft Library in the Marketplace</p></figcaption></figure>
+<figure><picture><source srcset="../.gitbook/assets/craft-library-dark.png" media="(prefers-color-scheme: dark)"><img src="../.gitbook/assets/craft-library-light.png" alt="Craft Library section card in the Webstudio Marketplace" width="232"></picture><figcaption><p>Craft Library in the Marketplace</p></figcaption></figure>
 
 {% embed url="https://x.com/getwebstudio/status/1895213059251011768" %}
 
