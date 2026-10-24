@@ -133,7 +133,7 @@ The general pattern looks like this:
 
 4. In Advanced section or any style inputs, refer to the variables with `var(--brand-color)`.
 
-   <figure><img src="../../.gitbook/assets/use-variable.png" alt="Use CSS variable in style input" width="400"><figcaption>Step 5: reference the variable in any style value input.</figcaption></figure>
+   <figure><picture><source srcset="../../.gitbook/assets/use-variable-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/use-variable-light.png" alt="Size Width field containing var(--test)" width="240"></picture><figcaption>Step 5: reference the variable in any style value input.</figcaption></figure>
 
 This technique is powerful for theming, A/B testing, or applying dynamic values such as colors or dimensions fetched from an API and managed by an external CMS.
 
