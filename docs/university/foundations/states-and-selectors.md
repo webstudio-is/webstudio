@@ -60,9 +60,15 @@ Pseudo-elements target virtual parts of an element, such as inserting content be
 3. Type `::before`, `::after`, or another pseudo-element — autocomplete will suggest matches.
 4. The pseudo-element appears as a tag. While selected, styles apply to that virtual element.
 
-<!-- Screenshot 3: pseudo-element-autocomplete.png — Typing "::before" in the Style Sources dropdown, showing autocomplete suggestions. -->
+<!-- Screenshot 3: typing "::b" in the Style Sources dropdown filters pseudo-element suggestions. -->
 
-<figure><img src="../../.gitbook/assets/pseudo-element-autocomplete.png" alt="Pseudo-element autocomplete" width="375"><figcaption><p>Type :: to see available pseudo-elements</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/pseudo-element-autocomplete-dark.png">
+    <img src="../../.gitbook/assets/pseudo-element-autocomplete-light.png" alt="Pseudo-element suggestions filtered by typing ::b, including ::before" width="240">
+  </picture>
+  <figcaption><p>Type :: to see available pseudo-elements</p></figcaption>
+</figure>
 
 ### Common pseudo-elements
 
