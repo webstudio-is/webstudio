@@ -30,7 +30,10 @@ Here is the process for creating and reusing Slot instances:
 
 ### Creating a Slot instance
 
-![Slot component and its source content on the canvas](../../.gitbook/assets/slot-component-overview.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/slot-component-overview-dark.png">
+  <img src="../../.gitbook/assets/slot-component-overview-light.png" alt="Slot component in the Components panel with its help tooltip" width="280">
+</picture>
 
 
 1. You can find the Slots component in the “Components Panel.”

@@ -30,7 +30,7 @@ In the bottom half of the navigator, you will find the CSS Preview section, whic
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/navigator-panel-dark.png">
-  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator panel showing Global root, Body, and a nested Content Block instance">
+  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator panel with Global root, Body, and expanded Form (Beta) showing Form content, Success message, and Error message" width="241">
 </picture>
 
 ### Global root
@@ -43,7 +43,7 @@ Global Root uses the`:root` [CSS selector](https://developer.mozilla.org/en-US/d
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/navigator-panel-dark.png">
-  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator with Global root above Body and the page instance tree">
+  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator panel with Global root, Body, and expanded Form (Beta) showing Form content, Success message, and Error message" width="241">
 </picture>
 
 ## Breakpoints
@@ -60,7 +60,7 @@ Adding too many breakpoints or mixing and matching `min-width` and `max-width` w
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/breakpoints-dark.png">
-  <img src="../../.gitbook/assets/breakpoints-light.png" alt="Breakpoint menu listing desktop, tablet, and mobile breakpoint conditions">
+  <img src="../../.gitbook/assets/breakpoints-light.png" alt="Breakpoint menu listing desktop, tablet, and mobile breakpoint conditions" width="244">
 </picture>
 
 By defining how components should behave at different screen sizes, you can ensure your website looks great on various devices, including desktops, tablets, and smartphones.
@@ -77,7 +77,7 @@ Components are grouped into sections like General, Text, Media, Forms, and [Radi
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/components-panel-dark.png">
-  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with a search field and expanded General, Typography, and Media groups">
+  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with a search field and expanded General, Typography, and Media groups" width="224">
 </picture>
 
 ## Assets panel
@@ -86,7 +86,7 @@ The Assets Panel is the second panel to the left of your canvas, and this is whe
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/assets-panel-dark.png">
-  <img src="../../.gitbook/assets/assets-panel-light.png" alt="Assets panel with search, filter and sort controls above folders and files">
+  <img src="../../.gitbook/assets/assets-panel-light.png" alt="Assets panel filtered to screenshot-demo.mdx, with search, type filter, and date sort controls" width="240">
 </picture>
 
 ### Asset types
@@ -153,7 +153,7 @@ The Style Panel is located to the right of the canvas, and you can use it to cus
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/style-panel-dark.png">
-  <img src="../../.gitbook/assets/style-panel-light.png" alt="Style panel showing style sources, layout, grid child, spacing, and size controls">
+  <img src="../../.gitbook/assets/style-panel-light.png" alt="Style panel showing style sources, layout, grid child, and spacing controls" width="240">
 </picture>
 
 There are three methods for adding styles:
@@ -190,7 +190,7 @@ The Settings Panel is on the right side of your canvas. You can use this panel t
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/builder-modes-dark.png">
-  <img src="../../.gitbook/assets/builder-modes-light.png" alt="Mode menu with Design and Content options and their keyboard shortcuts">
+  <img src="../../.gitbook/assets/builder-modes-light.png" alt="Mode menu with Design and Content options and their keyboard shortcuts" width="189">
 </picture>
 
 ## Interface theme
@@ -214,7 +214,7 @@ You can enable Hide UI from **Menu > View > Hide UI** or with `⌘ + \` on Mac a
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/builder-hide-ui-menu-dark.png">
-  <img src="../../.gitbook/assets/builder-hide-ui-menu-light.png" alt="Builder menu with the View submenu open and Hide UI available with its keyboard shortcut">
+  <img src="../../.gitbook/assets/builder-hide-ui-menu-light.png" alt="Builder menu with the View submenu open and Hide UI available with its keyboard shortcut" width="435">
 </picture>
 
 ## Share dialog

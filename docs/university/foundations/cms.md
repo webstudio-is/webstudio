@@ -52,9 +52,9 @@ The value of the parameter comes from whatever is in the URL. If the path is `/p
 
 The Address Bar enables previewing Dynamic Pages in the editor by entering parameter value(s).
 
-For the Dynamic Path `/post/:slug`, you would enter a slug value that exists in the CMS, such as `hello-world`.
+For the Dynamic Path `/post/:slug`, you would enter a slug value that exists in the CMS, such as `hello-world`. The screenshot uses a separate demo path and the same slug value.
 
-<figure><img src="../../.gitbook/assets/address-bar.png" alt="Address bar with hello-world entered as the dynamic slug preview value"><figcaption><p>Entering hello-world as a test value</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/address-bar-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/address-bar-light.png" alt="Address bar previewing the dynamic hello-world slug on a demo page" width="550"></picture><figcaption><p>Entering hello-world as a test value on a demo page</p></figcaption></figure>
 
 
 {% hint style="danger" %}

@@ -13,7 +13,13 @@ They live in the **Style Sources** dropdown alongside your [Tokens](design-token
 
 <!-- Screenshot 1: states-dropdown.png — The Style Sources dropdown open on a Button, showing the list of available states (:hover, :focus-visible, etc.) at the bottom. -->
 
-<figure><img src="../../.gitbook/assets/states-dropdown.png" alt="States in the Style Sources dropdown" width="375"><figcaption><p>Available states appear at the bottom of the Style Sources dropdown</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/states-dropdown-dark.png">
+    <img src="../../.gitbook/assets/states-dropdown-light.png" alt="Style Sources dropdown listing hover, focus, and active states" width="240">
+  </picture>
+  <figcaption><p>Available states appear at the bottom of the Style Sources dropdown</p></figcaption>
+</figure>
 
 ## States (pseudo-classes)
 
@@ -27,9 +33,15 @@ States are CSS pseudo-classes that apply styles when a condition is true, such a
 4. The state appears as a tag in the style sources area. While it's active, every style you set applies only to that state.
 5. Click the state tag again to deselect it and return to the base (default) styles.
 
-<!-- Screenshot 2: state-active.png — A Button with :hover state selected, showing the state tag highlighted in the Style Sources area and different styles applied. -->
+<!-- Screenshot 2: the :hover state selected in Style Sources. -->
 
-<figure><img src="../../.gitbook/assets/state-active.png" alt="Active hover state on a Button" width="375"><figcaption><p>The :hover state is selected — styles set now only apply on hover</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/state-active-dark.png">
+    <img src="../../.gitbook/assets/state-active-light.png" alt="Style sources field with the hover state selected" width="240">
+  </picture>
+  <figcaption><p>The :hover state is selected — styles set now only apply on hover</p></figcaption>
+</figure>
 
 ### Custom states
 
@@ -54,9 +66,15 @@ Pseudo-elements target virtual parts of an element, such as inserting content be
 3. Type `::before`, `::after`, or another pseudo-element — autocomplete will suggest matches.
 4. The pseudo-element appears as a tag. While selected, styles apply to that virtual element.
 
-<!-- Screenshot 3: pseudo-element-autocomplete.png — Typing "::before" in the Style Sources dropdown, showing autocomplete suggestions. -->
+<!-- Screenshot 3: typing "::b" in the Style Sources dropdown filters pseudo-element suggestions. -->
 
-<figure><img src="../../.gitbook/assets/pseudo-element-autocomplete.png" alt="Pseudo-element autocomplete" width="375"><figcaption><p>Type :: to see available pseudo-elements</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/pseudo-element-autocomplete-dark.png">
+    <img src="../../.gitbook/assets/pseudo-element-autocomplete-light.png" alt="Pseudo-element suggestions filtered by typing ::b, including ::before" width="240">
+  </picture>
+  <figcaption><p>Type :: to see available pseudo-elements</p></figcaption>
+</figure>
 
 ### Common pseudo-elements
 

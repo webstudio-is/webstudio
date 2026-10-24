@@ -54,7 +54,7 @@ Editors don’t have access to the Style Panel, so be sure to provide fully desi
 
 Reusable top-level templates appear in Content mode like this. Structural and inline templates supplied for MDX styling, such as table cells and emphasis, do not appear as standalone insertion choices.
 
-<div><figure><img src="../../.gitbook/assets/templates-design-mode.png" alt="Templates in Design mode"><figcaption><p>Templates in Design mode</p></figcaption></figure> <figure><img src="../../.gitbook/assets/templates-content-mode.png" alt="Template in Content mode"><figcaption><p>Template in Content mode</p></figcaption></figure></div>
+<div><figure><picture><source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/templates-design-mode-dark.png"><img src="../../.gitbook/assets/templates-design-mode-light.png" alt="Feature and Coming Soon Feature templates in the Design mode Navigator" width="240"></picture><figcaption><p>Templates in Design mode</p></figcaption></figure> <figure><picture><source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/templates-content-mode-dark.png"><img src="../../.gitbook/assets/templates-content-mode-light.png" alt="Content mode insert menu with standard blocks and Feature templates" width="220"></picture><figcaption><p>Templates in Content mode</p></figcaption></figure></div>
 
 
 Each time they insert a template, its copy appears alongside the existing content: directly inside an unconnected Content Block, or inside **MDX content** when a file is connected. The Templates container remains protected source material.
@@ -111,7 +111,7 @@ When a file is connected, the Navigator labels its Body outlet **MDX content** a
 <figure>
   <picture>
     <source srcset="../../.gitbook/assets/create-mdx-file-dark.png" media="(prefers-color-scheme: dark)">
-    <img src="../../.gitbook/assets/create-mdx-file-light.png" alt="New text file dialog with article.mdx entered in the filename field">
+    <img src="../../.gitbook/assets/create-mdx-file-light.png" alt="New text file dialog with article.mdx entered in the filename field" width="360">
   </picture>
   <figcaption><p>Change the default filename so that it ends in <code>.mdx</code>.</p></figcaption>
 </figure>
@@ -119,7 +119,7 @@ When a file is connected, the Navigator labels its Body outlet **MDX content** a
 <figure>
   <picture>
     <source srcset="../../.gitbook/assets/connect-content-block-mdx-dark.png" media="(prefers-color-scheme: dark)">
-    <img src="../../.gitbook/assets/connect-content-block-mdx-light.png" alt="Content Block settings with Connect .mdx file under the Source property">
+    <img src="../../.gitbook/assets/connect-content-block-mdx-light.png" alt="Content Block settings with Connect .mdx file under the Source property" width="238">
   </picture>
   <figcaption><p>Connect the file from the Content Block's Source property.</p></figcaption>
 </figure>
@@ -316,7 +316,7 @@ On the left-hand side, there is the navigator showing you the various Content Bl
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/content-blocks-navigator-dark.png">
-  <img src="../../.gitbook/assets/content-blocks-navigator-light.png" alt="Navigator with an expanded Content Block showing Templates and Content Block Body with paragraph and list children">
+  <img src="../../.gitbook/assets/content-blocks-navigator-light.png" alt="Navigator with an expanded Content Block showing Templates and Content Block Body with paragraph, list, and heading children" width="224">
 </picture>
 
 
@@ -328,7 +328,13 @@ Each Content Block can have a unique set of templates you can choose from.
 
 On the canvas, hover where you want to insert, and the blue + button will appear. Click that, and you’ll see a list of templates provided by the designer.
 
-<figure><img src="../../.gitbook/assets/templates-content-mode.png" alt="Template picker in Content mode"><figcaption><p>Templates the designer provided</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/templates-content-mode-dark.png">
+    <img src="../../.gitbook/assets/templates-content-mode-light.png" alt="Content mode insert menu with Feature and Coming Soon Feature templates" width="220">
+  </picture>
+  <figcaption><p>Templates the designer provided</p></figcaption>
+</figure>
 
 
 Select the one you want, and it’ll insert an instance/copy of that template.

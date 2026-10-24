@@ -39,7 +39,7 @@ You can add an attribution or citation by using the “Cite” property in your 
 
 ### Using the Cite property
 
-<figure><img src="../../.gitbook/assets/blockquote-cite-property.avif" alt="Blockquote Cite property in the Settings panel"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/blockquote-cite-property-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/blockquote-cite-property-light.png" alt="Blockquote settings with the Cite property" width="240"></picture></figure>
 
 
 If you want to include a URL link as a citation:

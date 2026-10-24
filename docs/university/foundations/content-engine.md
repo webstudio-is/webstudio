@@ -338,7 +338,13 @@ author: Ada Lovelace
 Write the article here.
 ```
 
-<figure><img src="../../.gitbook/assets/content-engine-markdown-editor.png" alt="Markdown editor showing article frontmatter and body"><figcaption><p>An article's metadata and body in the Markdown editor</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/content-engine-markdown-editor-dark.png">
+    <img src="../../.gitbook/assets/content-engine-markdown-editor-light.png" alt="MDX editor showing title and description frontmatter above a Product update article" width="640">
+  </picture>
+  <figcaption><p>An article's metadata and body in the Markdown editor</p></figcaption>
+</figure>
 
 ### Frontmatter
 

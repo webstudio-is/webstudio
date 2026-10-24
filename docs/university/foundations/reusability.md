@@ -4,7 +4,13 @@ Webstudio provides several tools that let you build sites that are easy to updat
 
 ## Slots — shared structure across pages
 
-<figure><img src="../../.gitbook/assets/slot-component-overview.png" alt="Slot component in the Navigator showing shared structure"><figcaption><p>A Slot references another page's content — edit the source once, all slots update</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/slot-component-overview-dark.png">
+    <img src="../../.gitbook/assets/slot-component-overview-light.png" alt="Slot component in the Components panel with its help tooltip" width="280">
+  </picture>
+  <figcaption><p>A Slot shares its content across its instances</p></figcaption>
+</figure>
 
 A [Slot](../core-components/slot.md) is a component that references the content of another page. Any instance that uses that slot always renders the same content, so editing the source page updates every slot automatically.
 

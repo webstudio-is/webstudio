@@ -8,7 +8,7 @@ The Assets panel is located on the left side of the builder. It stores all stati
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/assets-panel-dark.png">
-  <img src="../../.gitbook/assets/assets-panel-light.png" alt="Assets panel with search, filter and sort controls above folders and files">
+  <img src="../../.gitbook/assets/assets-panel-light.png" alt="Assets panel filtered to screenshot-demo.mdx, with search, type filter, and date sort controls" width="240">
 </picture>
 
 
@@ -62,7 +62,7 @@ renaming it; invalid MDX remains editable and reports source-located errors.
 <figure>
   <picture>
     <source srcset="../../.gitbook/assets/mdx-editor-preview-dark.png" media="(prefers-color-scheme: dark)">
-    <img src="../../.gitbook/assets/mdx-editor-preview-light.png" alt="MDX editor showing frontmatter and Markdown source beside the rendered preview">
+    <img src="../../.gitbook/assets/mdx-editor-preview-light.png" alt="MDX editor showing frontmatter and Markdown source beside the rendered preview" width="1280">
   </picture>
   <figcaption><p>Edit MDX source and review its rendered preview side by side.</p></figcaption>
 </figure>
@@ -163,7 +163,7 @@ Hover any asset and click the gear icon to open its detail panel:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/assets-detail-dark.png">
-  <img src="../../.gitbook/assets/assets-detail-light.png" alt="Asset settings showing file size, type, dimensions, usage count, dates, name, folder, description, and ID">
+  <img src="../../.gitbook/assets/assets-detail-light.png" alt="Asset settings for screenshot-demo.mdx showing file size, type, use count, dates, name, folder, description, and ID" width="245">
 </picture>
 
 

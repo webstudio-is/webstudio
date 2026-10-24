@@ -28,7 +28,12 @@ You can integrate your Webstudio form with Airtable in 3 simple steps:
 
 To configure your form for the integration, you will need to define the input name for each field. Select your form input field in the navigator, and head over to “Settings” on the right to fill in the name property. Repeat this for every input field on your form as this is what Airtable will use to identify your website form submissions.
 
-<figure><img src="../../.gitbook/assets/airtable-input-settings.avif" alt="Input name configured in Webstudio Settings"><figcaption></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/airtable-input-settings-dark.png">
+    <img src="../../.gitbook/assets/airtable-input-settings-light.png" alt="Input Settings panel with the Name property set to name" width="240">
+  </picture>
+</figure>
 
 
 ## Step 2: Set up webhooks in Airtable and Webstudio

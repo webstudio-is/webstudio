@@ -77,7 +77,10 @@ You can style your site using Local or Tokens like this:
 
 2. To create a Token, select the Style sources field, enter a name, and press Enter.
 
-   <img src="../../.gitbook/assets/new-token.png" alt="Style sources field with a new Token name ready to be added" data-size="original">
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/new-token-dark.png">
+     <img src="../../.gitbook/assets/new-token-light.png" alt="Style sources field with panel-demo typed and a New token option" width="240">
+   </picture>
 
 3. Select the source you want to edit. The active source is highlighted, and new styles are written to that source.
 
@@ -85,7 +88,10 @@ You can style your site using Local or Tokens like this:
 
 Use the Local source for styles that apply only to the selected instance. You can convert Local styles into a reusable Token later.
 
-<img src="../../.gitbook/assets/convert-to-token.png" alt="Local style source menu with the action to convert its styles to a Token" data-size="original">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/convert-to-token-dark.png">
+  <img src="../../.gitbook/assets/convert-to-token-light.png" alt="Local style source menu with the Convert to token action" width="240">
+</picture>
 
 Hover a property label to see which breakpoint and style source provides its current value. See [Label colors](anatomy-of-the-webstudio-builder.md#label-colors) for the full reference.
 

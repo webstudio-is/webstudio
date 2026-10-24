@@ -19,7 +19,7 @@ Additionally, you can open any project in [Safe Mode](modes.md#safe-mode), which
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/builder-modes-dark.png">
-  <img src="../../.gitbook/assets/builder-modes-light.png" alt="Mode menu with Design and Content options and their keyboard shortcuts">
+  <img src="../../.gitbook/assets/builder-modes-light.png" alt="Mode menu with Design and Content options and their keyboard shortcuts" width="189">
 </picture>
 
 ## Design

@@ -8,7 +8,7 @@ Project settings are located in the top left by clicking the Webstudio logo > Pr
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/project-settings-menu-dark.png">
-  <img src="../../.gitbook/assets/project-settings-menu-light.png" alt="Builder menu with Project settings near the top">
+  <img src="../../.gitbook/assets/project-settings-menu-light.png" alt="Builder menu with Project settings near the top" width="177">
 </picture>
 
 ## General
@@ -38,7 +38,7 @@ Email resources inherit project recipients and Reply to unless overridden. Repub
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/atomic-css-setting-dark.png">
-  <img src="../../.gitbook/assets/atomic-css-setting-light.png" alt="Project settings Publishing section with Generate atomic CSS when publishing enabled">
+  <img src="../../.gitbook/assets/atomic-css-setting-light.png" alt="Project settings Publishing section with Generate atomic CSS when publishing enabled" width="438">
 </picture>
 
 When enabled, the class and CSS structure under the hood contains one style per class. This algorithm allows classes to be reused, significantly reducing the amount of CSS, ultimately leading to a faster-loading website.
@@ -135,7 +135,7 @@ Routes use the shared [path pattern syntax](path-patterns.md). The guide explain
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/project-settings-authentication-dark.png">
-  <img src="../../.gitbook/assets/project-settings-authentication-light.png" alt="Project settings Authentication section with route, login, password, and Add controls">
+  <img src="../../.gitbook/assets/project-settings-authentication-light.png" alt="Project settings Authentication section with route, login, password, and Add controls" width="624">
 </picture>
 
 Login and password rules:

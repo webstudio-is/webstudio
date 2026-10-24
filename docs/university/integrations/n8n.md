@@ -54,7 +54,7 @@ You can learn more about the [Webhook node and its parameters](https://docs.n8n.
 
 ### Connect the webhook to your Webstudio Form
 
-<figure><img src="../../.gitbook/assets/n8n-webhook-form-settings.avif" alt="Webhook URL and POST method configured on a Webstudio Form"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/n8n-webhook-form-settings-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/n8n-webhook-form-settings-light.png" alt="Webhook Form settings with an example Action URL and POST method" width="240"></picture></figure>
 
 
 1. Open the Webstudio builder, select your form instance, go to Settings and add two properties— _Action_ and _Method_.
