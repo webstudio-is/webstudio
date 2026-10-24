@@ -38,7 +38,13 @@ Click the **grid preview button** at the top of the Layout section to open the G
 
 Hover over the interactive cell grid (up to 12 columns × 8 rows) and click to set the number of columns and rows. All tracks are set to `1fr`.
 
-<figure><img src="../../.gitbook/assets/grid-generator.png" alt="Grid Generator with size selector"><figcaption><p>Grid Generator size selector</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/grid-generator-dark.png">
+    <img src="../../.gitbook/assets/grid-generator-light.png" alt="Grid generator with a two-column, two-row selection in the cell grid" width="240">
+  </picture>
+  <figcaption><p>Grid Generator size selector</p></figcaption>
+</figure>
 
 ### Presets
 
@@ -53,7 +59,13 @@ Six built-in layout presets with visual thumbnails:
 | **Feature section**  | Auto-wrapping feature blocks with wider minimum size                              |
 | **Footer columns**   | Auto-wrapping narrow columns for footer links                                     |
 
-<figure><img src="../../.gitbook/assets/grid-presets.png" alt="Grid preset thumbnails"><figcaption><p>Built-in grid presets</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/grid-presets-dark.png">
+    <img src="../../.gitbook/assets/grid-presets-light.png" alt="Six grid layout presets: Fluid sidebar, Page stack, Holy grail, Responsive cards, Feature section, and Footer columns" width="216">
+  </picture>
+  <figcaption><p>Built-in grid presets</p></figcaption>
+</figure>
 
 ### Fill grid
 

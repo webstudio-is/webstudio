@@ -111,7 +111,7 @@ When a file is connected, the Navigator labels its Body outlet **MDX content** a
 <figure>
   <picture>
     <source srcset="../../.gitbook/assets/create-mdx-file-dark.png" media="(prefers-color-scheme: dark)">
-    <img src="../../.gitbook/assets/create-mdx-file-light.png" alt="New text file dialog with article.mdx entered in the filename field">
+    <img src="../../.gitbook/assets/create-mdx-file-light.png" alt="New text file dialog with article.mdx entered in the filename field" width="360">
   </picture>
   <figcaption><p>Change the default filename so that it ends in <code>.mdx</code>.</p></figcaption>
 </figure>

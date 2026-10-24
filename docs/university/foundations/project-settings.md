@@ -38,7 +38,7 @@ Email resources inherit project recipients and Reply to unless overridden. Repub
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/atomic-css-setting-dark.png">
-  <img src="../../.gitbook/assets/atomic-css-setting-light.png" alt="Project settings Publishing section with Generate atomic CSS when publishing enabled">
+  <img src="../../.gitbook/assets/atomic-css-setting-light.png" alt="Project settings Publishing section with Generate atomic CSS when publishing enabled" width="438">
 </picture>
 
 When enabled, the class and CSS structure under the hood contains one style per class. This algorithm allows classes to be reused, significantly reducing the amount of CSS, ultimately leading to a faster-loading website.
