@@ -37,7 +37,7 @@ Add fields inside the Form from **Components > Forms**. Each field needs a **Nam
 <figure>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-components-dark.png">
-    <img src="../../.gitbook/assets/form-components-light.png" alt="Forms section in the Components panel, with Form (Beta), Button, Input Label, Text Input, File Input, Text Area, Select, Radio, and Checkbox." width="224">
+    <img src="../../.gitbook/assets/form-components-light.png" alt="Forms section in the Components panel, with Form (Beta), Button, Input Label, Text Input, File Input, Text Area, Select, Radio, and Checkbox." width="238">
   </picture>
 </figure>
 
