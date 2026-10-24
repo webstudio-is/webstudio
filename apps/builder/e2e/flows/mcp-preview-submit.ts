@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { chromium } from "@playwright/test";
 import type {
   ProjectSessionPreviewSubmitFormInput,
   ProjectSessionPreviewSubmitFormResult,
@@ -36,7 +37,11 @@ export const submitPreviewFormViaMcp = async ({
     ],
     {
       stdio: ["pipe", "pipe", "pipe"],
-      env: { ...process.env, TSX_TSCONFIG_PATH: cliTsconfigPath },
+      env: {
+        ...process.env,
+        TSX_TSCONFIG_PATH: cliTsconfigPath,
+        WEBSTUDIO_BROWSER_PATH: chromium.executablePath(),
+      },
     }
   );
   let stdout = "";
