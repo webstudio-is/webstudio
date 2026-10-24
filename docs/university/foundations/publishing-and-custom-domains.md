@@ -271,7 +271,7 @@ To publish to a subdomain:
 
 You may see "Worker not Found" message when opening the site, like this:
 
-<figure><img src="../../.gitbook/assets/worker-not-found.png" alt="Published site showing a Worker not found error"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/worker-not-found-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/worker-not-found-light.png" alt="Published site showing a Worker not found error" width="768"></picture></figure>
 
 
 Worker not found is due to one of the following reasons:
