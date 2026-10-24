@@ -12,7 +12,7 @@ Webstudio 101 Playlist
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/builder-overview-dark.png">
-  <img src="../../.gitbook/assets/builder-overview-light.png" alt="Webstudio Builder with the Navigator on the left, canvas in the center, and Style panel on the right">
+  <img src="../../.gitbook/assets/builder-overview-light.png" alt="Webstudio Builder with the Navigator on the left, canvas in the center, and Style panel on the right" width="756">
 </picture>
 
 ## Canvas
