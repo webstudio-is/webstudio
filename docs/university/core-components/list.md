@@ -19,15 +19,15 @@ The outer container — renders as `<ul>` (unordered) or `<ol>` (ordered) depend
 
 ### List Item
 
-The individual item inside a List — renders as `<li>`. Existing List instances start with three List Item instances. Duplicate an existing one with **Cmd+D** / **Ctrl+D** to add more.
+The individual item inside a List — renders as `<li>`. Add List Item children to a legacy List as needed. Duplicate an existing item with **Cmd+D** / **Ctrl+D** to add more.
 
 List Items can contain any component — text, images, links, buttons — making them suitable for rich, interactive lists beyond simple bullet points.
 
 ### How to use the List Component
 
-The legacy List component is hidden from the default Components picker. For a new list, use the **Ordered List** or **Unordered List** template. Existing List instances can still be edited and contain three List Item instances by default.
+The legacy List component is hidden from the default Components picker. For a new list, use the **Ordered List** or **Unordered List** template. Existing List instances can still be edited.
 
-To add more items to a legacy List, duplicate an existing List Item.
+To add more items to a legacy List, add List Item children or duplicate an existing one.
 
 #### Duplicating List Items
 

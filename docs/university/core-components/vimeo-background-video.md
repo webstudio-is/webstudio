@@ -22,8 +22,9 @@ And done! Now you have a background video on this section of your site.
 
 1. Enable the “Muted” and “Loop” properties for your Vimeo instance to have the background video play in a loop without any sound. \
    ![Vimeo background image optimization step 1](../../.gitbook/assets/vimeo-bg-video-step-6.avif)
-2. You can also hide or remove the Spinner on your output video for a more polished result. To hide it, select the Spinner instance from your Vimeo instance, head over to the Settings section and toggle off the “Show” option: \
-   ![Vimeo background image optimization step 2](../../.gitbook/assets/vimeo-bg-video-step-7.avif)
+2. You can also hide or remove the Spinner on your output video for a more polished result. To hide it, select the Spinner instance from your Vimeo instance, head over to the Settings section and toggle off the “Show” option:
+
+   <figure><picture><source srcset="../../.gitbook/assets/vimeo-bg-video-step-7-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/vimeo-bg-video-step-7-light.png" alt="Spinner settings with the Show toggle ready to turn off" width="240"></picture></figure>
 
 ## Related
 

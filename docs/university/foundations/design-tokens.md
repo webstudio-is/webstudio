@@ -73,7 +73,7 @@ You can style your site using Local or Tokens like this:
 
 1. Select an instance. The **Style sources** field at the top of the Style panel shows its Local styles and Tokens.
 
-   <img src="../../.gitbook/assets/style-sources.png" alt="Style sources field showing the Local source and applied Tokens" data-size="original">
+   <picture><source srcset="../../.gitbook/assets/style-sources-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/style-sources-light.png" alt="Style sources strip showing demo and accent Tokens beside the Local source" width="240"></picture>
 
 2. To create a Token, select the Style sources field, enter a name, and press Enter.
 
@@ -84,7 +84,7 @@ You can style your site using Local or Tokens like this:
 
 3. Select the source you want to edit. The active source is highlighted, and new styles are written to that source.
 
-   <img src="../../.gitbook/assets/tokens-added.png" alt="Style sources field with several Tokens and one active Token" data-size="original">
+   <picture><source srcset="../../.gitbook/assets/tokens-added-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/tokens-added-light.png" alt="Style sources strip with accent Token selected for editing" width="240"></picture>
 
 Use the Local source for styles that apply only to the selected instance. You can convert Local styles into a reusable Token later.
 
@@ -95,11 +95,11 @@ Use the Local source for styles that apply only to the selected instance. You ca
 
 Hover a property label to see which breakpoint and style source provides its current value. See [Label colors](anatomy-of-the-webstudio-builder.md#label-colors) for the full reference.
 
-<img src="../../.gitbook/assets/property-label-tooltip.png" alt="Style property tooltip identifying the breakpoint, Token, and instance that provide the value" data-size="original">
+<picture><source srcset="../../.gitbook/assets/property-label-tooltip-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/property-label-tooltip-light.png" alt="Style property tooltip identifying the Base breakpoint, demo Token, and div instance" width="300"></picture>
 
 An empty circle means the source has no styles. A dot appears in the Local source after you add a style.
 
-<img src="../../.gitbook/assets/empty-circle.png" alt="Empty circle indicator beside a style source with no styles" data-size="original">
+<picture><source srcset="../../.gitbook/assets/empty-circle-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/empty-circle-light.png" alt="Empty circle beside accent Token showing that it has no styles" width="240"></picture>
 
 ## Exporting human-readable classes
 
