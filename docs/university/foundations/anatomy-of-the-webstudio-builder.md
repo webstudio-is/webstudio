@@ -60,7 +60,7 @@ Adding too many breakpoints or mixing and matching `min-width` and `max-width` w
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/breakpoints-dark.png">
-  <img src="../../.gitbook/assets/breakpoints-light.png" alt="Breakpoint menu listing desktop, tablet, and mobile breakpoint conditions">
+  <img src="../../.gitbook/assets/breakpoints-light.png" alt="Breakpoint menu listing desktop, tablet, and mobile breakpoint conditions" width="244">
 </picture>
 
 By defining how components should behave at different screen sizes, you can ensure your website looks great on various devices, including desktops, tablets, and smartphones.
@@ -153,7 +153,7 @@ The Style Panel is located to the right of the canvas, and you can use it to cus
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/style-panel-dark.png">
-  <img src="../../.gitbook/assets/style-panel-light.png" alt="Style panel showing style sources, layout, grid child, spacing, and size controls">
+  <img src="../../.gitbook/assets/style-panel-light.png" alt="Style panel showing style sources, layout, grid child, spacing, and size controls" width="240">
 </picture>
 
 There are three methods for adding styles:
@@ -214,7 +214,7 @@ You can enable Hide UI from **Menu > View > Hide UI** or with `⌘ + \` on Mac a
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/builder-hide-ui-menu-dark.png">
-  <img src="../../.gitbook/assets/builder-hide-ui-menu-light.png" alt="Builder menu with the View submenu open and Hide UI available with its keyboard shortcut">
+  <img src="../../.gitbook/assets/builder-hide-ui-menu-light.png" alt="Builder menu with the View submenu open and Hide UI available with its keyboard shortcut" width="435">
 </picture>
 
 ## Share dialog

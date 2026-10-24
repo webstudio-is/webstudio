@@ -62,7 +62,7 @@ renaming it; invalid MDX remains editable and reports source-located errors.
 <figure>
   <picture>
     <source srcset="../../.gitbook/assets/mdx-editor-preview-dark.png" media="(prefers-color-scheme: dark)">
-    <img src="../../.gitbook/assets/mdx-editor-preview-light.png" alt="MDX editor showing frontmatter and Markdown source beside the rendered preview">
+    <img src="../../.gitbook/assets/mdx-editor-preview-light.png" alt="MDX editor showing frontmatter and Markdown source beside the rendered preview" width="1280">
   </picture>
   <figcaption><p>Edit MDX source and review its rendered preview side by side.</p></figcaption>
 </figure>

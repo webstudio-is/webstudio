@@ -51,7 +51,12 @@ Populate your content type with a few example blog posts to test your integratio
 
 To create a page with a dynamic path, go to **Pages > Add New Page**. In the **Dynamic Path** field, use a parameter to represent the dynamic part of the URL, such as the slug of your blog posts.
 
-<figure><img src="../../.gitbook/assets/flotiq-dynamic-page.jpeg" alt="Create a Page with a Dynamic Path"><figcaption></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/flotiq-dynamic-page-dark.png">
+    <img src="../../.gitbook/assets/flotiq-dynamic-page-light.png" alt="New page settings with a dynamic path of /docs-screenshot-post/:slug" width="750">
+  </picture>
+</figure>
 
 In the [Address Bar](../foundations/cms.md#address-bar), provide a test value.
 
