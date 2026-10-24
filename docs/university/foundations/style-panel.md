@@ -8,7 +8,7 @@ The Style Panel is on the right side of the builder. It exposes every CSS proper
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/style-panel-dark.png">
-  <img src="../../.gitbook/assets/style-panel-light.png" alt="Style panel showing style sources, layout, grid child, spacing, and size controls" width="240">
+  <img src="../../.gitbook/assets/style-panel-light.png" alt="Style panel showing style sources, layout, grid child, and spacing controls" width="240">
 </picture>
 
 ## Style sources
