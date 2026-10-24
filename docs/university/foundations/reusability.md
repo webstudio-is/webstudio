@@ -35,7 +35,7 @@ CSS variables and design tokens work together as two layers of reusability.
 
 **[CSS variables](css-variables.md)** are the bottom layer — individual named values like colors, sizes, and spacing. Define `--color-brand` once, and use it in any style input across the entire site. When the brand color changes, update the variable in one place and every element referencing it updates.
 
-<figure><img src="../../.gitbook/assets/css-var-example.png" alt="CSS variable defined in the Advanced section with a name and value" width="319"><figcaption><p>Define a CSS variable once, use it anywhere</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/css-var-example-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/css-var-example-light.png" alt="--gray-5 CSS variable defined in Advanced with a color value" width="240"></picture><figcaption><p>Define a CSS variable once, use it anywhere</p></figcaption></figure>
 
 **[Design tokens](design-tokens.md)** are the next layer — named collections of styles that can be applied to any element, similar to CSS classes but without their common problems like combo classes, breakpoint conflicts, and accidental style inheritance. A `card` token might define padding, background, and border-radius. The values inside a token can reference CSS variables, giving you another level of reuse.
 

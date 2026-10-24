@@ -66,7 +66,7 @@ This syntax is not unique to Webstudio. It’s the official [CSS variable](https
 
 Then, the variable's value can be anything such as a color, gradient, duration, size, or number.
 
-<figure><img src="../../.gitbook/assets/css-var-example.png" alt="CSS variable" width="319"><figcaption><p>Creating a variable and assigning a value</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/css-var-example-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/css-var-example-light.png" alt="--gray-5 CSS variable defined in Advanced with a color value" width="240"></picture><figcaption><p>Creating a variable and assigning a value</p></figcaption></figure>
 
 ## Using variables
 
