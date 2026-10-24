@@ -8,7 +8,7 @@ Project settings are located in the top left by clicking the Webstudio logo > Pr
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/project-settings-menu-dark.png">
-  <img src="../../.gitbook/assets/project-settings-menu-light.png" alt="Builder menu with Project settings near the top">
+  <img src="../../.gitbook/assets/project-settings-menu-light.png" alt="Builder menu with Project settings near the top" width="177">
 </picture>
 
 ## General
@@ -135,7 +135,7 @@ Routes use the shared [path pattern syntax](path-patterns.md). The guide explain
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/project-settings-authentication-dark.png">
-  <img src="../../.gitbook/assets/project-settings-authentication-light.png" alt="Project settings Authentication section with route, login, password, and Add controls">
+  <img src="../../.gitbook/assets/project-settings-authentication-light.png" alt="Project settings Authentication section with route, login, password, and Add controls" width="624">
 </picture>
 
 Login and password rules:

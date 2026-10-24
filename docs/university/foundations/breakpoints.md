@@ -45,7 +45,7 @@ Each breakpoint can override styles inherited from the previous one in the casca
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/breakpoints-edit-dark.png">
-  <img src="../../.gitbook/assets/breakpoints-edit-light.png" alt="Breakpoints dialog showing names, minimum or maximum widths, and custom conditions">
+  <img src="../../.gitbook/assets/breakpoints-edit-light.png" alt="Breakpoints dialog showing names, minimum or maximum widths, and custom conditions" width="212">
 </picture>
 
 ## Editing and deleting breakpoints

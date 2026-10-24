@@ -8,7 +8,7 @@ Page settings control how an individual page behaves — its URL, SEO metadata, 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-dialog-dark.png">
-  <img src="../../.gitbook/assets/page-settings-dialog-light.png" alt="Page settings for the Home page with general and authentication fields above a search preview showing the Webstudio W favicon">
+  <img src="../../.gitbook/assets/page-settings-dialog-light.png" alt="Page settings for the Home page showing general and authentication fields above the search result preview" width="447">
 </picture>
 
 ## Page name
