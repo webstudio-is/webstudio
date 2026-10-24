@@ -37,7 +37,7 @@ You can find the Vimeo Component in the Components Panel in the Media Section. H
 2. Add the component by dragging and dropping it to the canvas or with a click to put it inside the selected instance.
 3. Once you have the component on your canvas, you can head to Settings on the right to add your video URL and make other changes.
 
-![Vimeo component properties in Settings](../../.gitbook/assets/vimeo-component-properties.avif)
+<figure><picture><source srcset="../../.gitbook/assets/vimeo-component-properties-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/vimeo-component-properties-light.png" alt="Vimeo settings with URL, title, and quality fields" width="240"></picture></figure>
 
 ## Sub-components
 
