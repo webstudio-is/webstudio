@@ -95,7 +95,7 @@ Here’s what you need to know:
 
 - The designer must include [Content Blocks](../core-components/content-block.md#content-block-in-content-mode) for content you need to change. These are the regions where you can edit content and add templates the designer provided. See [Content Block](../core-components/content-block.md) for more information.
 
-  <figure><img src="../../.gitbook/assets/add-content.png" alt="Adding a template"><figcaption></figcaption></figure>
+  <figure><picture><source srcset="../../.gitbook/assets/add-content-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/add-content-light.png" alt="Template picker in Content mode with standard blocks and designer templates" width="187"></picture><figcaption><p>Choose content or a designer template to add</p></figcaption></figure>
 
 - In a [content collection](content-engine.md#make-the-folder-a-content-collection), choose **New entry** to create an article with the form provided by the designer. Use **Entry settings** to edit its fields, **Edit file** to edit its source, or **Open on canvas** to edit the complete article on its configured dynamic page.
 
