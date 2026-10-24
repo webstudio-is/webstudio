@@ -152,7 +152,7 @@ SEO settings that control how the page appears in search engine results.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-seo-dark.png">
-  <img src="../../.gitbook/assets/page-settings-seo-light.png" alt="Page settings Search section with the Webstudio W favicon in the result preview, the Blog title and description, search visibility, and en-US language fields">
+  <img src="../../.gitbook/assets/page-settings-seo-light.png" alt="Page settings Search section with the Home result preview, Title, empty Description, search exclusion selected, and en-US Language" width="447">
 </picture>
 
 ### Title
