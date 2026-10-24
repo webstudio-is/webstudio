@@ -190,7 +190,13 @@ The child flows into the next available cell. Set **Column span** and **Row span
 
 Select a **named area** from the dropdown to place the child into that region. All four placement properties are set to the area name automatically.
 
-<figure><img src="../../.gitbook/assets/grid-child-area.png" alt="Grid Child in Area mode with area dropdown"><figcaption><p>Grid Child — Area mode with named area dropdown</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/grid-child-area-dark.png">
+    <img src="../../.gitbook/assets/grid-child-area-light.png" alt="Grid child Area mode with header selected and named areas in the dropdown" width="240">
+  </picture>
+  <figcaption><p>Grid Child — Area mode with named area dropdown</p></figcaption>
+</figure>
 
 {% hint style="warning" %}
 The Area dropdown only lists areas defined in the parent's Grid Settings. If no areas are defined, a message explains how to add them.

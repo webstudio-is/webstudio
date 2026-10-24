@@ -8,7 +8,13 @@ description: "The XML Node\_is used to create\_an XML document, such as a sitema
 Webstudio automatically generates a sitemap for static pages such as Home and About. If you are integrating with a CMS, you can use this component to create a sitemap for CMS data.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/xml-component.png" alt="XML Node component available for an XML page"><figcaption><p>The component appears when Document type is XML</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/xml-component-dark.png">
+    <img src="../../.gitbook/assets/xml-component-light.png" alt="Xml group in the Components panel with Xml Node and Xml Time" width="240">
+  </picture>
+  <figcaption><p>The component appears when Document type is XML</p></figcaption>
+</figure>
 
 
 ## How to use the XML Node component

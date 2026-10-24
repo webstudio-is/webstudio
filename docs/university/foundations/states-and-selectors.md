@@ -33,9 +33,15 @@ States are CSS pseudo-classes that apply styles when a condition is true, such a
 4. The state appears as a tag in the style sources area. While it's active, every style you set applies only to that state.
 5. Click the state tag again to deselect it and return to the base (default) styles.
 
-<!-- Screenshot 2: state-active.png — A Button with :hover state selected, showing the state tag highlighted in the Style Sources area and different styles applied. -->
+<!-- Screenshot 2: the :hover state selected in Style Sources. -->
 
-<figure><img src="../../.gitbook/assets/state-active.png" alt="Active hover state on a Button" width="375"><figcaption><p>The :hover state is selected — styles set now only apply on hover</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/state-active-dark.png">
+    <img src="../../.gitbook/assets/state-active-light.png" alt="Style sources field with the hover state selected" width="240">
+  </picture>
+  <figcaption><p>The :hover state is selected — styles set now only apply on hover</p></figcaption>
+</figure>
 
 ### Custom states
 
