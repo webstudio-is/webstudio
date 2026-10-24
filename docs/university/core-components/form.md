@@ -34,10 +34,12 @@ Open Preview and submit with an email address you control to try it. These defau
 
 Add fields inside the Form from **Components > Forms**. Each field needs a **Name**, which identifies its value when the form is submitted.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-components-dark.jpg">
-  <img src="../../.gitbook/assets/form-components-light.jpg" alt="Forms section in the Components panel, with Form (Beta), Button, Input Label, Text Input, File Input, Text Area, Select, Radio, and Checkbox." width="232">
-</picture>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-components-dark.jpg">
+    <img src="../../.gitbook/assets/form-components-light.jpg" alt="Forms section in the Components panel, with Form (Beta), Button, Input Label, Text Input, File Input, Text Area, Select, Radio, and Checkbox.">
+  </picture>
+</figure>
 
 For example, a field named `subject` becomes available in bindings as `formData.subject`. Its visible label can be different.
 
@@ -66,10 +68,12 @@ Select the Form and open **Settings > Properties & attributes > Action**:
 - Drag actions to change their order.
 - Remove an action to stop using it on this Form. The Resource itself remains available.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-actions-dark.jpg">
-  <img src="../../.gitbook/assets/form-actions-light.jpg" alt="Form Action settings with the plus button, Email to owner and Email to visitor actions, and the Success redirect control below them." width="238">
-</picture>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-actions-dark.jpg">
+    <img src="../../.gitbook/assets/form-actions-light.jpg" alt="Form Action settings with the plus button, Email to owner and Email to visitor actions, and the Success redirect control below them.">
+  </picture>
+</figure>
 
 If the list is empty, create a Resource in **Variables** first. You can select each Resource once.
 
@@ -112,10 +116,12 @@ See [Variables](../foundations/variables.md) for more about Resource settings an
 
 Email Resources can notify your team, confirm receipt to a visitor, or send different messages to different recipients. The default Form includes two emails, but you can edit or remove either one.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-email-dark.jpg">
-  <img src="../../.gitbook/assets/form-email-light.jpg" alt="Email to owner Resource configuration with project recipients, an empty Reply to field, bound Subject and Body fields, and Attach submitted files selected." width="320">
-</picture>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-email-dark.jpg">
+    <img src="../../.gitbook/assets/form-email-light.jpg" alt="Email to owner Resource configuration with project recipients, an empty Reply to field, bound Subject and Body fields, and Attach submitted files selected.">
+  </picture>
+</figure>
 
 ### Choose recipients
 
@@ -129,10 +135,12 @@ Use `Name <address>` to include a recipient’s name, such as `John <john@exampl
 
 For a visitor confirmation, create the Email Resource on the Form. Its email input must have a fixed **Name** and a **Type** of `email` to appear in the field selector. The submitted value must contain one valid email address.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-visitor-dark.jpg">
-  <img src="../../.gitbook/assets/form-visitor-light.jpg" alt="Email to visitor Resource with Visitor email field selected, the email input chosen, a confirmation message, and Do not attach files selected." width="320">
-</picture>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-visitor-dark.jpg">
+    <img src="../../.gitbook/assets/form-visitor-light.jpg" alt="Email to visitor Resource with Visitor email field selected, the email input chosen, a confirmation message, and Do not attach files selected.">
+  </picture>
+</figure>
 
 ### Set Reply to
 
@@ -257,10 +265,12 @@ Emails are not automatically resent when delivery is uncertain, to avoid duplica
 
 The default Form provides these Variables on the Form and its children:
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-variables-dark.jpg">
-  <img src="../../.gitbook/assets/form-variables-light.jpg" alt="Form Variables list showing formData, browserInfo, Email to owner, Email to visitor, formState, results, errors, and system, with dynamic and static badges." width="238">
-</picture>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/form-variables-dark.jpg">
+    <img src="../../.gitbook/assets/form-variables-light.jpg" alt="Form Variables list showing formData, browserInfo, Email to owner, Email to visitor, formState, results, errors, and system, with dynamic and static badges.">
+  </picture>
+</figure>
 
 | Variable      | What it contains                                                                                 |
 | ------------- | ------------------------------------------------------------------------------------------------ |
