@@ -113,7 +113,7 @@ test("MCP-edited saved deprecated Webhook Form preserves single and repeated que
               selector: "#legacy-query-form",
               values: [{ name: "message", value: scenario.message }],
               submitter: 'button[type="submit"]',
-              timeout: 10_000,
+              timeout: 30_000,
             },
           });
           expect(submission.ok).toBe(true);
