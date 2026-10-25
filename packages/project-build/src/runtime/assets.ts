@@ -324,11 +324,11 @@ export const calculateUsagesByAssetId = ({
     usagesByAsset.set(assetId, usages);
   };
 
-  const fontFamilyToAssetIds = new Map<string, Set<Asset["id"]>>();
+  const fontFamilyToAssetIds = new Map<string, Asset["id"][]>();
   for (const asset of assets.values()) {
     if (asset.type === "font") {
-      const assetIds = fontFamilyToAssetIds.get(asset.meta.family) ?? new Set();
-      assetIds.add(asset.id);
+      const assetIds = fontFamilyToAssetIds.get(asset.meta.family) ?? [];
+      assetIds.push(asset.id);
       fontFamilyToAssetIds.set(asset.meta.family, assetIds);
     }
   }
@@ -375,7 +375,6 @@ export const calculateUsagesByAssetId = ({
   const styleDeclKeys = new Map(
     Array.from(styles, ([styleDeclKey, styleDecl]) => [styleDecl, styleDeclKey])
   );
-  const countedFontsByStyle = new Map<string, Set<string>>();
   collectFontFamiliesFromStyleDecls(
     styles.values(),
     (fontFamily, styleDecl) => {
@@ -383,15 +382,9 @@ export const calculateUsagesByAssetId = ({
       if (styleDeclKey === undefined) {
         return;
       }
-      const countedFonts = countedFontsByStyle.get(styleDeclKey) ?? new Set();
       for (const assetId of fontFamilyToAssetIds.get(fontFamily) ?? []) {
-        if (countedFonts.has(assetId)) {
-          continue;
-        }
-        countedFonts.add(assetId);
         addUsage(assetId, { type: "style", styleDeclKey });
       }
-      countedFontsByStyle.set(styleDeclKey, countedFonts);
     }
   );
   return usagesByAsset;

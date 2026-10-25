@@ -115,12 +115,6 @@ export const collectFontFamiliesFromStyleDecls = <
   const customProperties = new Map<string, StyleValue[]>();
   const declarations = Array.from(styles);
   for (const styleDecl of declarations) {
-    for (const fontFamily of collectFontFamiliesFromStyleValue(
-      styleDecl.value
-    )) {
-      fontFamilies.add(fontFamily);
-      onFamily?.(fontFamily, styleDecl, false);
-    }
     if (styleDecl.property?.startsWith("--")) {
       const values = customProperties.get(styleDecl.property) ?? [];
       values.push(styleDecl.value);
@@ -128,41 +122,50 @@ export const collectFontFamiliesFromStyleDecls = <
     }
   }
 
-  const visitedVariables = new Set<string>();
-  const collectFromVariable = (
-    value: StyleValue,
-    styleDecl: Declaration,
-    fromVariable: boolean
-  ) => {
-    traverseStyleValue(value, (item) => {
-      if (item.type === "fontFamily") {
-        for (const family of item.value) {
-          fontFamilies.add(family);
-          onFamily?.(family, styleDecl, fromVariable);
-        }
-      }
-      if (item.type === "unparsed") {
-        const parsed = parseCssValue("font-family", item.value);
-        if (parsed.type !== "unparsed") {
-          collectFromVariable(parsed, styleDecl, fromVariable);
-        }
-      }
-      if (item.type === "var") {
-        const name = `--${item.value}`;
-        if (visitedVariables.has(name)) {
-          return;
-        }
-        visitedVariables.add(name);
-        for (const definition of customProperties.get(name) ?? []) {
-          collectFromVariable(definition, styleDecl, true);
-        }
-      }
-    });
-  };
   for (const styleDecl of declarations) {
+    const families = new Map<string, boolean>();
+    const addFamily = (family: string, fromVariable: boolean) => {
+      families.set(family, fromVariable || families.get(family) === true);
+    };
     if (styleDecl.property === "fontFamily") {
-      visitedVariables.clear();
-      collectFromVariable(styleDecl.value, styleDecl, false);
+      const visitedVariables = new Set<string>();
+      const collectFromVariable = (
+        value: StyleValue,
+        fromVariable: boolean
+      ) => {
+        traverseStyleValue(value, (item) => {
+          if (item.type === "fontFamily") {
+            for (const family of item.value) {
+              addFamily(family, fromVariable);
+            }
+          }
+          if (item.type === "unparsed") {
+            const parsed = parseCssValue("font-family", item.value);
+            if (parsed.type !== "unparsed") {
+              collectFromVariable(parsed, fromVariable);
+            }
+          }
+          if (item.type === "var") {
+            const name = `--${item.value}`;
+            if (visitedVariables.has(name)) {
+              return;
+            }
+            visitedVariables.add(name);
+            for (const definition of customProperties.get(name) ?? []) {
+              collectFromVariable(definition, true);
+            }
+          }
+        });
+      };
+      collectFromVariable(styleDecl.value, false);
+    } else {
+      for (const family of collectFontFamiliesFromStyleValue(styleDecl.value)) {
+        addFamily(family, false);
+      }
+    }
+    for (const [family, fromVariable] of families) {
+      fontFamilies.add(family);
+      onFamily?.(family, styleDecl, fromVariable);
     }
   }
   return fontFamilies;
