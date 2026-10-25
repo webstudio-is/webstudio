@@ -789,13 +789,14 @@ test("installs generated dependencies through the available windows pnpm launche
   );
 });
 
-test("reports an actionable error when generated dependencies cannot install", async () => {
+test("reports an actionable, stable error when generated dependencies cannot install", async () => {
   const access = vi.fn(async () => {
     throw Object.assign(new Error("missing"), { code: "ENOENT" });
   });
 
-  await expect(
-    ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
+  const failedInstall = ensurePreviewDependencies(
+    "/tmp/project/.webstudio/preview",
+    {
       access,
       execFile: vi.fn(async () => {
         throw new Error("npm failed");
@@ -806,10 +807,14 @@ test("reports an actionable error when generated dependencies cannot install", a
       readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
       symlink: vi.fn(async () => undefined),
       platform: "linux",
-    })
-  ).rejects.toThrow(
+    }
+  );
+  await expect(failedInstall).rejects.toThrow(
     "PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies"
   );
+  await expect(failedInstall).rejects.toMatchObject({
+    code: "PREVIEW_DEPENDENCY_INSTALL_FAILED",
+  });
 });
 
 test("reports sanitized package-manager diagnostics for preview install failures", async () => {

@@ -218,6 +218,10 @@ const getPreviewInstallFailureDiagnostics = (error: unknown) => {
   return `${codeDiagnostics}${diagnostics}`;
 };
 
+class PreviewDependencyInstallError extends Error {
+  readonly code = "PREVIEW_DEPENDENCY_INSTALL_FAILED";
+}
+
 export const getPreviewProjectDir = (projectDir = cwd()) =>
   join(projectDir, ".webstudio", "preview");
 
@@ -410,7 +414,7 @@ export const ensurePreviewDependencies = async (
       timeout: previewDependencyInstallTimeout,
     });
   } catch (error) {
-    throw new Error(
+    throw new PreviewDependencyInstallError(
       `PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies with ${packageManager.name} at ${packageManagerPath}. For npm cache permission errors, unset npm_config_cache to use the preview-local cache, then retry. Check the package-manager/network configuration, then reinstall or update webstudio if the problem persists.\n\nPackage-manager diagnostics:\n${getPreviewInstallFailureDiagnostics(error)}`,
       { cause: error }
     );
