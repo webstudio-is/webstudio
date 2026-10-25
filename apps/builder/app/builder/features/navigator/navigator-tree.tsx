@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   InfoTooltip,
+  PanelBanner,
   cssVar,
   keyframes,
   ScrollArea,
@@ -855,6 +856,7 @@ const commitNavigatorDrop = ({
 
 export const NavigatorTree = () => {
   const isContentMode = useStore($isContentMode);
+  const selectedPage = useStore($selectedPage);
   const flatTree = useStore($flatTree);
   const externalContentRoots = useStore($externalContentRoots);
   const selectedInstanceSelectors = useStore($allSelectedInstanceSelectors);
@@ -1108,6 +1110,17 @@ export const NavigatorTree = () => {
     >
       <TreeRoot>
         <Box data-navigator-tree>
+          {isContentMode &&
+            selectedPage !== undefined &&
+            flatTree.length === 0 && (
+              <PanelBanner variant="warning" role="status">
+                <Text>
+                  This page has no editable content. To make areas editable in
+                  content mode, wrap them in a Content block component in design
+                  mode.
+                </Text>
+              </PanelBanner>
+            )}
           {rootMeta && isContentMode === false && (
             <TreeNode
               level={0}
