@@ -475,15 +475,17 @@ const decorateAssetQuerySchema = ({
     {
       operators: AssetQueryOperator[];
       fields: AssetOpenApiField[];
+      types: readonly AssetObservedFieldType[];
       reference: string;
     }
   >();
   for (const field of fields) {
     const operators = getAssetQueryOperatorsForFieldTypes(field.types);
-    const key = operators.join(",");
+    const key = `${operators.join(",")}:${field.types.join(",")}`;
     const group = fieldGroups.get(key) ?? {
       operators,
       fields: [],
+      types: field.types,
       reference: definitionReference(`AssetQueryField${fieldGroups.size}`),
     };
     group.fields.push(field);
@@ -512,28 +514,31 @@ const decorateAssetQuerySchema = ({
         ],
       },
     ],
-    ...[...fieldGroups.values()].map(({ fields: groupFields }, index) => [
-      `AssetQueryField${index}`,
-      {
-        type: "array",
-        minItems: 1,
-        maxItems: assetResourceLimits.fieldPathDepth,
-        items: { type: "string", minLength: 1 },
-        oneOf: [
-          ...groupFields.flatMap((field) =>
-            field.label === undefined
-              ? []
-              : [{ const: field.path, title: field.label }]
-          ),
-          ...(() => {
-            const paths = groupFields.flatMap((field) =>
-              field.label === undefined ? [field.path] : []
-            );
-            return paths.length === 0 ? [] : [{ enum: paths }];
-          })(),
-        ],
-      },
-    ]),
+    ...[...fieldGroups.values()].map(
+      ({ fields: groupFields, types }, index) => [
+        `AssetQueryField${index}`,
+        {
+          type: "array",
+          "x-webstudio-field-types": types,
+          minItems: 1,
+          maxItems: assetResourceLimits.fieldPathDepth,
+          items: { type: "string", minLength: 1 },
+          oneOf: [
+            ...groupFields.flatMap((field) =>
+              field.label === undefined
+                ? []
+                : [{ const: field.path, title: field.label }]
+            ),
+            ...(() => {
+              const paths = groupFields.flatMap((field) =>
+                field.label === undefined ? [field.path] : []
+              );
+              return paths.length === 0 ? [] : [{ enum: paths }];
+            })(),
+          ],
+        },
+      ]
+    ),
   ]);
 
   const visit = (value: unknown, property?: string): unknown => {

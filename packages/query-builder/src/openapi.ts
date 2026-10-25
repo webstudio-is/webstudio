@@ -119,9 +119,18 @@ const getChoices = (document: JsonObject, schema: JsonObject) => {
 
 const getFieldChoices = (
   document: JsonObject,
-  schema: JsonObject
-): Array<{ path: string[]; label: string }> => {
+  schema: JsonObject,
+  inheritedTypes?: string[]
+): Array<{ path: string[]; label: string; types?: string[] }> => {
   const resolved = resolveSchema(document, schema);
+  const types =
+    Array.isArray(resolved["x-webstudio-field-types"]) &&
+    resolved["x-webstudio-field-types"].length > 0 &&
+    resolved["x-webstudio-field-types"].every(
+      (type) => typeof type === "string" && type.length > 0
+    )
+      ? (resolved["x-webstudio-field-types"] as string[])
+      : inheritedTypes;
   if (
     Array.isArray(resolved.const) &&
     resolved.const.every((segment) => typeof segment === "string")
@@ -129,6 +138,7 @@ const getFieldChoices = (
     return [
       {
         path: resolved.const,
+        types,
         label:
           typeof resolved.title === "string"
             ? resolved.title
@@ -147,6 +157,7 @@ const getFieldChoices = (
     return resolved.enum.map((value) => ({
       path: value as string[],
       label: (value as string[]).join(" / "),
+      types,
     }));
   }
   const choices = Array.isArray(resolved.oneOf)
@@ -157,7 +168,7 @@ const getFieldChoices = (
   return choices === undefined
     ? []
     : choices.flatMap((choice) =>
-        isObject(choice) ? getFieldChoices(document, choice) : []
+        isObject(choice) ? getFieldChoices(document, choice, types) : []
       );
 };
 
@@ -622,7 +633,7 @@ const createDefinition = ({
           fields.set(fieldKey, {
             path: choice.path,
             label: choice.label,
-            types: ["string"],
+            types: choice.types ?? existing?.types ?? ["string"],
             operators: [
               ...new Set([
                 ...(existing?.operators ?? []),
@@ -697,7 +708,7 @@ const createDefinition = ({
             fields.set(fieldKey, {
               path: choice.path,
               label: choice.label,
-              types: ["string"],
+              types: choice.types ?? ["string"],
             });
           }
         }
