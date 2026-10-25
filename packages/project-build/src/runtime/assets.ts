@@ -49,7 +49,7 @@ import { createRuntimeMutation } from "./mutation";
 import { createCopyName } from "./copy-name";
 import type { BuilderRuntimeContext } from "./context";
 import {
-  collectFontFamiliesFromStyleValue,
+  collectFontFamiliesFromStyleDecls,
   traverseStyleValue,
 } from "./style-utils";
 
@@ -324,10 +324,12 @@ export const calculateUsagesByAssetId = ({
     usagesByAsset.set(assetId, usages);
   };
 
-  const fontFamilyToAssetId = new Map<string, Asset["id"]>();
+  const fontFamilyToAssetIds = new Map<string, Asset["id"][]>();
   for (const asset of assets.values()) {
     if (asset.type === "font") {
-      fontFamilyToAssetId.set(asset.meta.family, asset.id);
+      const assetIds = fontFamilyToAssetIds.get(asset.meta.family) ?? [];
+      assetIds.push(asset.id);
+      fontFamilyToAssetIds.set(asset.meta.family, assetIds);
     }
   }
 
@@ -369,18 +371,22 @@ export const calculateUsagesByAssetId = ({
         });
       }
     });
-    for (const fontFamily of collectFontFamiliesFromStyleValue(
-      styleDecl.value
-    )) {
-      const assetId = fontFamilyToAssetId.get(fontFamily);
-      if (assetId !== undefined) {
-        addUsage(assetId, {
-          type: "style",
-          styleDeclKey,
-        });
+  }
+  const styleDeclKeys = new Map(
+    Array.from(styles, ([styleDeclKey, styleDecl]) => [styleDecl, styleDeclKey])
+  );
+  collectFontFamiliesFromStyleDecls(
+    styles.values(),
+    (fontFamily, styleDecl) => {
+      const styleDeclKey = styleDeclKeys.get(styleDecl);
+      if (styleDeclKey === undefined) {
+        return;
+      }
+      for (const assetId of fontFamilyToAssetIds.get(fontFamily) ?? []) {
+        addUsage(assetId, { type: "style", styleDeclKey });
       }
     }
-  }
+  );
   return usagesByAsset;
 };
 
@@ -1112,6 +1118,17 @@ export const replaceAsset = (
     return throwBuilderRuntimeError("NOT_FOUND", "Asset not found");
   }
   const build = getRequiredAssetReferenceBuild(state);
+  let hasFontVariableUsage = false;
+  if (fromAsset.type === "font") {
+    collectFontFamiliesFromStyleDecls(
+      build.styles,
+      (family, _styleDecl, fromVariable) => {
+        if (fromVariable && family === fromAsset.meta.family) {
+          hasFontVariableUsage = true;
+        }
+      }
+    );
+  }
   const unrewritableUsages = createAssetUsageList({
     asset: fromAsset,
     assets,
@@ -1120,7 +1137,7 @@ export const replaceAsset = (
     (usage) =>
       usage.namespace === "resources" || usage.namespace === "dataSources"
   );
-  if (unrewritableUsages.length > 0) {
+  if (unrewritableUsages.length > 0 || hasFontVariableUsage) {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "Asset is referenced in resources or variables. Update those references before replacing the asset."

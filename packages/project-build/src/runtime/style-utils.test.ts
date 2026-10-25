@@ -305,6 +305,41 @@ test("collects font families from style declarations", () => {
   ).toEqual(new Set(["Inter"]));
 });
 
+test("collects font families through nested variables and cyclic definitions", () => {
+  expect(
+    collectFontFamiliesFromStyleDecls([
+      {
+        property: "--font-name",
+        value: { type: "unparsed", value: "'Playfair Display', serif" },
+      },
+      {
+        property: "--font-heading",
+        value: { type: "var", value: "font-name" },
+      },
+      {
+        property: "--font-cycle-a",
+        value: { type: "var", value: "font-cycle-b" },
+      },
+      {
+        property: "--font-cycle-b",
+        value: { type: "var", value: "font-cycle-a" },
+      },
+      {
+        property: "fontFamily",
+        value: { type: "var", value: "font-heading" },
+      },
+      {
+        property: "fontFamily",
+        value: {
+          type: "var",
+          value: "font-cycle-a",
+          fallback: { type: "unparsed", value: "Inter, sans-serif" },
+        },
+      },
+    ])
+  ).toEqual(new Set(["Playfair Display", "serif", "Inter", "sans-serif"]));
+});
+
 const createGridStyleDecl = (
   styleSourceId: string,
   breakpointId: string,

@@ -117,6 +117,69 @@ test("keeps font assets referenced from nested style values", () => {
   expect(bundle.assets).toEqual([fontAsset]);
 });
 
+test.each([
+  ["double", '"Playfair Display", serif'],
+  ["single", "'Playfair Display', serif"],
+])(
+  "keeps fonts referenced through CSS variables with %s quotes",
+  (_quote, headingValue) => {
+    const build = createBundleBuild({
+      styles: [
+        {
+          styleSourceId: "root",
+          breakpointId: "base",
+          property: "--font-body",
+          value: { type: "unparsed", value: "Inter, system-ui, sans-serif" },
+        },
+        {
+          styleSourceId: "root",
+          breakpointId: "base",
+          property: "--font-heading",
+          value: { type: "unparsed", value: headingValue },
+        },
+        {
+          styleSourceId: "root",
+          breakpointId: "base",
+          property: "--font-unused",
+          value: { type: "unparsed", value: '"Unused Font", serif' },
+        },
+        {
+          styleSourceId: "body",
+          breakpointId: "base",
+          property: "fontFamily",
+          value: { type: "var", value: "font-body" },
+        },
+        {
+          styleSourceId: "heading-token",
+          breakpointId: "base",
+          property: "fontFamily",
+          value: { type: "var", value: "font-heading" },
+        },
+      ],
+    });
+    const fontAsset = (id: string, family: string): Asset => ({
+      id,
+      projectId: build.projectId,
+      name: `${id}.woff2`,
+      type: "font",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      format: "woff2",
+      size: 100,
+      meta: { family, style: "normal", weight: 400 },
+    });
+    const inter = fontAsset("inter", "Inter");
+    const playfair = fontAsset("playfair", "Playfair Display");
+    const unused = fontAsset("unused", "Unused Font");
+
+    const bundle = serializeProjectBundle({
+      build,
+      assets: [inter, playfair, unused],
+    });
+
+    expect(bundle.assets).toEqual([inter, playfair]);
+  }
+);
+
 test("validates collections when publication does not need a content index", async () => {
   const build = createBundleBuild({
     styles: [
