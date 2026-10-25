@@ -8,7 +8,7 @@ Page settings control how an individual page behaves — its URL, SEO metadata, 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-dialog-dark.png">
-  <img src="../../.gitbook/assets/page-settings-dialog-light.png" alt="Page settings for the Home page with general and authentication fields above a search preview showing the Webstudio W favicon">
+  <img src="../../.gitbook/assets/page-settings-dialog-light.png" alt="Page settings for the Home page showing general and authentication fields above the search result preview" width="447">
 </picture>
 
 ## Page name
@@ -108,7 +108,13 @@ To create a plain text page:
 5. Enter the plain text, or bind the field to an expression
 6. Publish the site
 
-<figure><img src="../../.gitbook/assets/page-settings-plain-text-page.png" alt="Page Settings showing Document type set to TEXT and the Content section with a plain text field"><figcaption><p>Plain text page settings</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-plain-text-page-dark.png">
+    <img src="../../.gitbook/assets/page-settings-plain-text-page-light.png" alt="Page settings with TEXT selected as the document type and a plain text Content field" width="448">
+  </picture>
+  <figcaption><p>Plain text page settings</p></figcaption>
+</figure>
 
 Plain text pages can still use Page Settings fields such as Status code, Redirect, Authentication, and Dynamic data. SEO, social image, and custom metadata fields apply only to HTML pages, so they are hidden when the document type is TEXT.
 
@@ -126,7 +132,13 @@ Use Authentication to require HTTP Basic Auth credentials before visitors can lo
 
 Page authentication is useful for private previews, client-only pages, internal pages, or temporary gated content.
 
-<figure><img src="../../.gitbook/assets/page-settings-authentication-enabled.png" alt="Page Settings Authentication section enabled with Login and Password fields"><figcaption><p>Page authentication</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-authentication-enabled-dark.png">
+    <img src="../../.gitbook/assets/page-settings-authentication-enabled-light.png" alt="Authentication enabled with empty Login and Password fields" width="448">
+  </picture>
+  <figcaption><p>Page authentication</p></figcaption>
+</figure>
 
 {% hint style="info" %}
 Authentication applies to protected pages on custom domains. Staging domains have their own built-in password protection, described in [Publishing & custom domains](publishing-and-custom-domains.md#staging-password-protection).
@@ -152,7 +164,7 @@ SEO settings that control how the page appears in search engine results.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-seo-dark.png">
-  <img src="../../.gitbook/assets/page-settings-seo-light.png" alt="Page settings Search section with the Webstudio W favicon in the result preview, the Blog title and description, search visibility, and en-US language fields">
+  <img src="../../.gitbook/assets/page-settings-seo-light.png" alt="Page settings Search section with the Home result preview, Title, empty Description, search exclusion selected, and en-US Language" width="447">
 </picture>
 
 ### Title
@@ -173,7 +185,7 @@ The Open Graph image displayed when the page is shared on social media (Facebook
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-social-dark.png">
-  <img src="../../.gitbook/assets/page-settings-social-light.png" alt="Page settings Social image section with a selected blue and purple glass wave image and its social sharing preview">
+  <img src="../../.gitbook/assets/page-settings-social-light.png" alt="Page settings Social image section with an empty image field and default social sharing preview" width="447">
 </picture>
 
 ## Custom metadata
@@ -182,7 +194,7 @@ Add arbitrary `<meta>` tags to the page's `<head>`. Each entry has a **property*
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/page-settings-custom-metadata-dark.png">
-  <img src="../../.gitbook/assets/page-settings-custom-metadata-light.png" alt="Page settings with a blue and purple wave image in the Social sharing preview above empty Custom metadata fields">
+  <img src="../../.gitbook/assets/page-settings-custom-metadata-light.png" alt="Page settings Custom metadata section with empty Property and Content fields and Add another metadata pair button" width="447">
 </picture>
 
 Use this for meta tags not covered by the fields above, such as `og:type`, `twitter:card`, or any custom meta needed by third-party integrations.

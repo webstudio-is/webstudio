@@ -4,7 +4,13 @@ Webstudio provides several tools that let you build sites that are easy to updat
 
 ## Slots — shared structure across pages
 
-<figure><img src="../../.gitbook/assets/slot-component-overview.png" alt="Slot component in the Navigator showing shared structure"><figcaption><p>A Slot references another page's content — edit the source once, all slots update</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/slot-component-overview-dark.png">
+    <img src="../../.gitbook/assets/slot-component-overview-light.png" alt="Slot component in the Components panel with its help tooltip" width="280">
+  </picture>
+  <figcaption><p>A Slot shares its content across its instances</p></figcaption>
+</figure>
 
 A [Slot](../core-components/slot.md) is a component that references the content of another page. Any instance that uses that slot always renders the same content, so editing the source page updates every slot automatically.
 
@@ -23,13 +29,13 @@ To create a shared layout, build the header (or any repeating section) on one pa
 
 ## Design tokens & CSS variables — reusable styles
 
-<figure><img src="../../.gitbook/assets/h1-token.png" alt="A design token applied to a Heading instance in the Style Sources input"><figcaption><p>A token applied to an instance — styles update everywhere this token is used</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/h1-token-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/h1-token-light.png" alt="heading-1 design token applied in Style sources" width="240"></picture><figcaption><p>A token applied to an instance — styles update everywhere this token is used</p></figcaption></figure>
 
 CSS variables and design tokens work together as two layers of reusability.
 
 **[CSS variables](css-variables.md)** are the bottom layer — individual named values like colors, sizes, and spacing. Define `--color-brand` once, and use it in any style input across the entire site. When the brand color changes, update the variable in one place and every element referencing it updates.
 
-<figure><img src="../../.gitbook/assets/css-var-example.png" alt="CSS variable defined in the Advanced section with a name and value" width="319"><figcaption><p>Define a CSS variable once, use it anywhere</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/css-var-example-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/css-var-example-light.png" alt="--gray-5 CSS variable defined in Advanced with a color value" width="240"></picture><figcaption><p>Define a CSS variable once, use it anywhere</p></figcaption></figure>
 
 **[Design tokens](design-tokens.md)** are the next layer — named collections of styles that can be applied to any element, similar to CSS classes but without their common problems like combo classes, breakpoint conflicts, and accidental style inheritance. A `card` token might define padding, background, and border-radius. The values inside a token can reference CSS variables, giving you another level of reuse.
 

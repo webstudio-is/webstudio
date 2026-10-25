@@ -75,7 +75,10 @@ When uploading custom fonts, these formats are supported:
 
 ---
 
-![upload-font](../../.gitbook/assets/upload-font.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/upload-font-dark.png">
+  <img src="../../.gitbook/assets/upload-font-light.png" alt="Fonts picker beside the Typography Family control, with the Upload button in its header" width="480">
+</picture>
 
 ## Related
 

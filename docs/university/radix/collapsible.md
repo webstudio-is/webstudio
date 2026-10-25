@@ -14,7 +14,13 @@ description: >-
 
 The Collapsible Component is in the "Components Panel" under the "Radix" section. Click on it or drag it onto the canvas. The Collapsible will populate a template that's easy to adjust for your needs.
 
-<figure><img src="../../.gitbook/assets/radix-collapsible.png" alt="Components panel with the Radix Collapsible component and its parts" width="308"><figcaption><p>Radix UI Collapsible component within Webstudio</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/radix-collapsible-dark.png">
+    <img src="../../.gitbook/assets/radix-collapsible-light.png" alt="Components panel Radix group with the Collapsible card highlighted" width="240">
+  </picture>
+  <figcaption><p>Radix UI Collapsible component within Webstudio</p></figcaption>
+</figure>
 
 The Collapsible component consists of three main parts:
 

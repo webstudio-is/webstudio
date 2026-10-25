@@ -29,7 +29,7 @@ You can find the Vimeo Component in the Components Panel in the Media Section. H
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/components-panel-dark.png">
-  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with Vimeo in the expanded Media group">
+  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with Vimeo in the expanded Media group" width="224">
 </picture>
 
 
@@ -37,7 +37,7 @@ You can find the Vimeo Component in the Components Panel in the Media Section. H
 2. Add the component by dragging and dropping it to the canvas or with a click to put it inside the selected instance.
 3. Once you have the component on your canvas, you can head to Settings on the right to add your video URL and make other changes.
 
-![Vimeo component properties in Settings](../../.gitbook/assets/vimeo-component-properties.avif)
+<figure><picture><source srcset="../../.gitbook/assets/vimeo-component-properties-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/vimeo-component-properties-light.png" alt="Vimeo settings with URL, title, and quality fields" width="240"></picture></figure>
 
 ## Sub-components
 
@@ -61,7 +61,7 @@ The Vimeo component comes with several properties that you can use to customize 
 
 Here’s how you can use the following properties:&#x20;
 
-![Vimeo properties in the Settings panel](../../.gitbook/assets/vimeo-instance-properties.avif)
+<figure><picture><source srcset="../../.gitbook/assets/vimeo-instance-properties-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/vimeo-instance-properties-light.png" alt="Vimeo settings with Background Mode, Loop, and Muted enabled" width="240"></picture></figure>
 
 
 - **Show Preview**\

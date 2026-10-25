@@ -12,7 +12,7 @@ Define variables on an instance in the Navigator, such as Global root, Body, or 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/variables-settings-panel-dark.png">
-  <img src="../../.gitbook/assets/variables-settings-panel-light.png" alt="Settings panel with instance properties and a Variables section listing static and dynamic variables">
+  <img src="../../.gitbook/assets/variables-settings-panel-light.png" alt="Form settings panel showing properties, action resources, and static and dynamic variables" width="240">
 </picture>
 
 

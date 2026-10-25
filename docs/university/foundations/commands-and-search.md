@@ -14,7 +14,7 @@ Commands & search speeds up the building process and introduces new shortcuts.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/commands-search-dark.png">
-  <img src="../../.gitbook/assets/commands-search-light.png" alt="Commands and search dialog listing Builder commands and their keyboard shortcuts">
+  <img src="../../.gitbook/assets/commands-search-light.png" alt="Commands and search dialog listing Builder commands and their keyboard shortcuts" width="502">
 </picture>
 
 {% embed url="https://youtu.be/ofUP0Uc_ttY" %}

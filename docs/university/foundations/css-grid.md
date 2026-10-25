@@ -38,7 +38,13 @@ Click the **grid preview button** at the top of the Layout section to open the G
 
 Hover over the interactive cell grid (up to 12 columns × 8 rows) and click to set the number of columns and rows. All tracks are set to `1fr`.
 
-<figure><img src="../../.gitbook/assets/grid-generator.png" alt="Grid Generator with size selector"><figcaption><p>Grid Generator size selector</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/grid-generator-dark.png">
+    <img src="../../.gitbook/assets/grid-generator-light.png" alt="Grid generator with a two-column, two-row selection in the cell grid" width="240">
+  </picture>
+  <figcaption><p>Grid Generator size selector</p></figcaption>
+</figure>
 
 ### Presets
 
@@ -53,7 +59,13 @@ Six built-in layout presets with visual thumbnails:
 | **Feature section**  | Auto-wrapping feature blocks with wider minimum size                              |
 | **Footer columns**   | Auto-wrapping narrow columns for footer links                                     |
 
-<figure><img src="../../.gitbook/assets/grid-presets.png" alt="Grid preset thumbnails"><figcaption><p>Built-in grid presets</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/grid-presets-dark.png">
+    <img src="../../.gitbook/assets/grid-presets-light.png" alt="Six grid layout presets: Fluid sidebar, Page stack, Holy grail, Responsive cards, Feature section, and Footer columns" width="216">
+  </picture>
+  <figcaption><p>Built-in grid presets</p></figcaption>
+</figure>
 
 ### Fill grid
 
@@ -65,7 +77,13 @@ Click **Fill grid** to automatically insert child div elements into every empty 
 
 Click **Configure grid** to open the detailed track editor. It contains four collapsible sections:
 
-<figure><img src="../../.gitbook/assets/grid-settings.png" alt="Grid Settings panel with column and row tracks"><figcaption><p>Grid Settings — column and row track editors</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/grid-settings-dark.png">
+    <img src="../../.gitbook/assets/grid-settings-light.png" alt="Grid Settings panel showing columns, rows, and named areas" width="240">
+  </picture>
+  <figcaption><p>Grid Settings — column and row track editors</p></figcaption>
+</figure>
 
 ### Columns
 
@@ -95,9 +113,21 @@ Manage named grid areas (sets `grid-template-areas` on the container):
 - Occupied areas appear in red; the selected area appears in blue
 - Hover over an area to highlight it on the canvas
 
-<figure><img src="../../.gitbook/assets/grid-areas.png" alt="Named grid areas list"><figcaption><p>Named grid areas</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/grid-areas-dark.png">
+    <img src="../../.gitbook/assets/grid-areas-light.png" alt="Named grid areas list with header, sidebar, main, aside, and footer" width="240">
+  </picture>
+  <figcaption><p>Named grid areas</p></figcaption>
+</figure>
 
-<figure><img src="../../.gitbook/assets/grid-area-picker.png" alt="Visual area picker with selected and occupied areas"><figcaption><p>Visual area picker — blue is the selected area, red indicates occupied cells</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/grid-area-picker-dark.png">
+    <img src="../../.gitbook/assets/grid-area-picker-light.png" alt="Edit area dialog with the header cells selected in blue and occupied cells in red" width="240">
+  </picture>
+  <figcaption><p>Visual area picker — blue is the selected area, red indicates occupied cells</p></figcaption>
+</figure>
 
 {% hint style="info" %}
 Named areas make it easy to position children by name instead of line numbers. Use the **Holy grail** preset to see named areas in action.
@@ -140,7 +170,13 @@ Click the **link icon** between them to keep both values in sync.
 
 When you select an element whose parent is a grid container, the **Grid child** section appears in the Style Panel. It controls how the child is positioned within the grid.
 
-<figure><img src="../../.gitbook/assets/grid-child.png" alt="Grid Child section with position modes"><figcaption><p>Grid Child section</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/grid-child-dark.png">
+    <img src="../../.gitbook/assets/grid-child-light.png" alt="Grid child section with Auto, Area, and Manual position modes" width="240">
+  </picture>
+  <figcaption><p>Grid Child section</p></figcaption>
+</figure>
 
 ### Position modes
 
@@ -154,7 +190,13 @@ The child flows into the next available cell. Set **Column span** and **Row span
 
 Select a **named area** from the dropdown to place the child into that region. All four placement properties are set to the area name automatically.
 
-<figure><img src="../../.gitbook/assets/grid-child-area.png" alt="Grid Child in Area mode with area dropdown"><figcaption><p>Grid Child — Area mode with named area dropdown</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/grid-child-area-dark.png">
+    <img src="../../.gitbook/assets/grid-child-area-light.png" alt="Grid child Area mode with header selected and named areas in the dropdown" width="240">
+  </picture>
+  <figcaption><p>Grid Child — Area mode with named area dropdown</p></figcaption>
+</figure>
 
 {% hint style="warning" %}
 The Area dropdown only lists areas defined in the parent's Grid Settings. If no areas are defined, a message explains how to add them.
@@ -185,7 +227,13 @@ When working with Grid, Webstudio displays an overlay on the canvas showing:
 - Named area labels in the top-left cell of each area
 - Highlighted tracks when hovering over items in Grid Settings
 
-<figure><img src="../../.gitbook/assets/grid-guides.png" alt="Canvas with grid guide overlay"><figcaption><p>Canvas grid guides showing track lines, sizes, and area names</p></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/grid-guides-dark.png">
+    <img src="../../.gitbook/assets/grid-guides-light.png" alt="Canvas grid guides outlining tracks and labeling header, sidebar, main, aside, and footer areas" width="758">
+  </picture>
+  <figcaption><p>Canvas grid guides showing track lines and area names</p></figcaption>
+</figure>
 
 ---
 
