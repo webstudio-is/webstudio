@@ -1,4 +1,5 @@
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import { parseCssValue } from "@webstudio-is/css-data";
 import type {
   Instance,
   Styles,
@@ -100,14 +101,55 @@ export const collectFontFamiliesFromStyleValue = (value: StyleValue) => {
 };
 
 export const collectFontFamiliesFromStyleDecls = (
-  styles: Iterable<Pick<StyleDecl, "value">>
+  styles: Iterable<
+    Pick<StyleDecl, "value"> & Partial<Pick<StyleDecl, "property">>
+  >
 ) => {
   const fontFamilies = new Set<string>();
-  for (const styleDecl of styles) {
+  const customProperties = new Map<string, StyleValue[]>();
+  const declarations = Array.from(styles);
+  for (const styleDecl of declarations) {
     for (const fontFamily of collectFontFamiliesFromStyleValue(
       styleDecl.value
     )) {
       fontFamilies.add(fontFamily);
+    }
+    if (styleDecl.property?.startsWith("--")) {
+      const values = customProperties.get(styleDecl.property) ?? [];
+      values.push(styleDecl.value);
+      customProperties.set(styleDecl.property, values);
+    }
+  }
+
+  const visitedVariables = new Set<string>();
+  const collectFromVariable = (value: StyleValue) => {
+    traverseStyleValue(value, (item) => {
+      if (item.type === "fontFamily") {
+        for (const family of item.value) {
+          fontFamilies.add(family);
+        }
+      }
+      if (item.type === "unparsed") {
+        const parsed = parseCssValue("font-family", item.value);
+        if (parsed.type !== "unparsed") {
+          collectFromVariable(parsed);
+        }
+      }
+      if (item.type === "var") {
+        const name = `--${item.value}`;
+        if (visitedVariables.has(name)) {
+          return;
+        }
+        visitedVariables.add(name);
+        for (const definition of customProperties.get(name) ?? []) {
+          collectFromVariable(definition);
+        }
+      }
+    });
+  };
+  for (const styleDecl of declarations) {
+    if (styleDecl.property === "fontFamily") {
+      collectFromVariable(styleDecl.value);
     }
   }
   return fontFamilies;
