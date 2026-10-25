@@ -100,10 +100,16 @@ export const collectFontFamiliesFromStyleValue = (value: StyleValue) => {
   return fontFamilies;
 };
 
-export const collectFontFamiliesFromStyleDecls = (
-  styles: Iterable<
-    Pick<StyleDecl, "value"> & Partial<Pick<StyleDecl, "property">>
-  >
+export const collectFontFamiliesFromStyleDecls = <
+  Declaration extends Pick<StyleDecl, "value"> &
+    Partial<Pick<StyleDecl, "property">>,
+>(
+  styles: Iterable<Declaration>,
+  onFamily?: (
+    family: string,
+    styleDecl: Declaration,
+    fromVariable: boolean
+  ) => void
 ) => {
   const fontFamilies = new Set<string>();
   const customProperties = new Map<string, StyleValue[]>();
@@ -113,6 +119,7 @@ export const collectFontFamiliesFromStyleDecls = (
       styleDecl.value
     )) {
       fontFamilies.add(fontFamily);
+      onFamily?.(fontFamily, styleDecl, false);
     }
     if (styleDecl.property?.startsWith("--")) {
       const values = customProperties.get(styleDecl.property) ?? [];
@@ -122,17 +129,22 @@ export const collectFontFamiliesFromStyleDecls = (
   }
 
   const visitedVariables = new Set<string>();
-  const collectFromVariable = (value: StyleValue) => {
+  const collectFromVariable = (
+    value: StyleValue,
+    styleDecl: Declaration,
+    fromVariable: boolean
+  ) => {
     traverseStyleValue(value, (item) => {
       if (item.type === "fontFamily") {
         for (const family of item.value) {
           fontFamilies.add(family);
+          onFamily?.(family, styleDecl, fromVariable);
         }
       }
       if (item.type === "unparsed") {
         const parsed = parseCssValue("font-family", item.value);
         if (parsed.type !== "unparsed") {
-          collectFromVariable(parsed);
+          collectFromVariable(parsed, styleDecl, fromVariable);
         }
       }
       if (item.type === "var") {
@@ -142,14 +154,15 @@ export const collectFontFamiliesFromStyleDecls = (
         }
         visitedVariables.add(name);
         for (const definition of customProperties.get(name) ?? []) {
-          collectFromVariable(definition);
+          collectFromVariable(definition, styleDecl, true);
         }
       }
     });
   };
   for (const styleDecl of declarations) {
     if (styleDecl.property === "fontFamily") {
-      collectFromVariable(styleDecl.value);
+      visitedVariables.clear();
+      collectFromVariable(styleDecl.value, styleDecl, false);
     }
   }
   return fontFamilies;
