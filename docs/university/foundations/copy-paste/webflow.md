@@ -75,7 +75,7 @@ If the pasted Webflow content references images, including background images, We
 
 ❌ User-defined styles on **global tag selectors** as they are not available in the Webflow copy. For example, global styling on an H1 does not transfer, but a Token of h1 is created and available for applying the styles.
 
-![Global tag styling in webflow](../../../.gitbook/assets/global-tags.png)    ![h1 token in webstudio](../../../.gitbook/assets/h1-token.png)
+<div align="center"><img src="../../../.gitbook/assets/global-tags.png" alt="Global tag styling in Webflow" width="361"> <picture><source srcset="../../../.gitbook/assets/h1-token-dark.png" media="(prefers-color-scheme: dark)"><img src="../../../.gitbook/assets/h1-token-light.png" alt="heading-1 token in Webstudio" width="240"></picture></div>
 
 ### Classes
 

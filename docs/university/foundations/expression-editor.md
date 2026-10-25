@@ -6,7 +6,7 @@ description: >-
 
 # ➕ Expression editor
 
-<figure><img src="../../.gitbook/assets/webstudio-expression-editor.png" alt="Binding popover with variables and an expression that reads a CMS title"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/webstudio-expression-editor-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/webstudio-expression-editor-light.png" alt="Heading Text Content binding to the demo post title" width="490"></picture><figcaption></figcaption></figure>
 
 Expression editor is available on every field when clicking the “+” button.
 

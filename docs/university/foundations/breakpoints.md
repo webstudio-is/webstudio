@@ -45,7 +45,7 @@ Each breakpoint can override styles inherited from the previous one in the casca
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/breakpoints-edit-dark.png">
-  <img src="../../.gitbook/assets/breakpoints-edit-light.png" alt="Breakpoints dialog showing names, minimum or maximum widths, and custom conditions">
+  <img src="../../.gitbook/assets/breakpoints-edit-light.png" alt="Breakpoints dialog showing names, minimum or maximum widths, and custom conditions" width="212">
 </picture>
 
 ## Editing and deleting breakpoints
@@ -86,7 +86,13 @@ Beyond screen width, Webstudio supports any CSS media condition. This lets you s
 
 When a breakpoint is active, style property labels in the Style Panel use color to show where a value comes from.
 
-<figure><img src="../../.gitbook/assets/breakpoints-cascade.png" alt="Style Panel property label in orange indicating a style inherited from a larger breakpoint"><figcaption><p>An orange label means the value is inherited from a larger breakpoint</p></figcaption></figure> See [Label colors](anatomy-of-the-webstudio-builder.md#label-colors) for the full reference. Hover any label to see a tooltip with the exact source.
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/breakpoints-cascade-dark.png">
+    <img src="../../.gitbook/assets/breakpoints-cascade-light.png" alt="Size label and tooltip showing font-size inherited from a Base breakpoint token" width="300">
+  </picture>
+  <figcaption><p>The tooltip identifies the Base style source for the inherited value</p></figcaption>
+</figure> See [Label colors](anatomy-of-the-webstudio-builder.md#label-colors) for the full reference. Hover any label to see a tooltip with the exact source.
 
 {% hint style="warning" %}
 Mixing `min-width` and `max-width` breakpoints in the same project makes style cascading harder to reason about. Stick to one direction for maintainability.

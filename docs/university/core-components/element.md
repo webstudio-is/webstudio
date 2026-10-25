@@ -14,7 +14,7 @@ The Element component can be found in **Components > General**, and you can plac
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/components-panel-dark.png">
-  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with Element listed first in the expanded General group">
+  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with Element listed first in the expanded General group" width="224">
 </picture>
 
 ---
@@ -77,7 +77,7 @@ You can change the HTML tag of the Element by opening the **Settings Panel** loc
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/element-settings-panel-dark.png">
-  <img src="../../.gitbook/assets/element-settings-panel-light.png" alt="Settings panel for a paragraph element with Name, Show, Tag, ID, and Class controls">
+  <img src="../../.gitbook/assets/element-settings-panel-light.png" alt="Settings panel for a paragraph element with Label, Show, Tag, ID, and Class controls" width="238">
 </picture>
 
 The tag dropdown shows all available HTML elements you can use. When you change the tag, the component's properties automatically update to show relevant attributes for that element type.

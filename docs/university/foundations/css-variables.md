@@ -66,7 +66,7 @@ This syntax is not unique to Webstudio. It’s the official [CSS variable](https
 
 Then, the variable's value can be anything such as a color, gradient, duration, size, or number.
 
-<figure><img src="../../.gitbook/assets/css-var-example.png" alt="CSS variable" width="319"><figcaption><p>Creating a variable and assigning a value</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/css-var-example-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/css-var-example-light.png" alt="--gray-5 CSS variable defined in Advanced with a color value" width="240"></picture><figcaption><p>Creating a variable and assigning a value</p></figcaption></figure>
 
 ## Using variables
 
@@ -74,7 +74,7 @@ Once the variable is defined, you can use it on the instance it was defined on a
 
 The variables are available in the autocomplete, so you can access variables by typing them in.
 
-<figure><img src="../../.gitbook/assets/css-var-usage.png" alt="Using a CSS variable" width="318"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/css-var-usage-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/css-var-usage-light.png" alt="Color input autocomplete suggesting CSS variables including --gray-5" width="240"></picture><figcaption></figcaption></figure>
 
 The autocomplete search algorithm is very flexible, letting you search by any of the following:
 
@@ -133,7 +133,7 @@ The general pattern looks like this:
 
 4. In Advanced section or any style inputs, refer to the variables with `var(--brand-color)`.
 
-   <figure><img src="../../.gitbook/assets/use-variable.png" alt="Use CSS variable in style input" width="400"><figcaption>Step 5: reference the variable in any style value input.</figcaption></figure>
+   <figure><picture><source srcset="../../.gitbook/assets/use-variable-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/use-variable-light.png" alt="Size Width field containing var(--test)" width="240"></picture><figcaption>Step 5: reference the variable in any style value input.</figcaption></figure>
 
 This technique is powerful for theming, A/B testing, or applying dynamic values such as colors or dimensions fetched from an API and managed by an external CMS.
 
@@ -145,7 +145,7 @@ CSS variables, by nature, are available in the current instance and any of the c
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/navigator-panel-dark.png">
-  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator with Global root above Body and the page instance tree">
+  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator panel with Global root, Body, and expanded Form (Beta) showing Form content, Success message, and Error message" width="241">
 </picture>
 
 Most variables should be defined on the Global Root, which is the highest level of the page and the same for every page. That way, you can define `--my-color`, and it's available on every instance on every page.

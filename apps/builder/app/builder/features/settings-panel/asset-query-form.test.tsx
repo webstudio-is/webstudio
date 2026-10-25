@@ -258,6 +258,11 @@ test("loads the external query schema declared by OpenAPI", async () => {
           types: ["string"],
           occurrences: 1,
         },
+        draft: {
+          queryPath: ["properties", "draft"],
+          types: ["boolean"],
+          occurrences: 1,
+        },
       },
     },
   });
@@ -276,6 +281,26 @@ test("loads the external query schema declared by OpenAPI", async () => {
   expect(definition.fields).toContainEqual(
     expect.objectContaining({ path: ["properties", "title"] })
   );
+  const configuration =
+    createDefaultStructuredAssetQueryResourceConfiguration();
+  const where = {
+    field: ["properties", "draft"],
+    operator: "ne" as const,
+  };
+  const validate = (value: string) =>
+    getAssetQueryConfigurationValidation({
+      configuration: { ...configuration, where: { ...where, value } },
+      scope: {},
+      definition,
+    });
+  expect((await validate("true")).issues).toEqual([]);
+  expect((await validate('"true"')).issues).toEqual([
+    expect.objectContaining({
+      severity: "warning",
+      code: "INCOMPATIBLE_OBSERVED_VALUE",
+      path: ["query", "where", "value"],
+    }),
+  ]);
   const manyControls = configureAssetQueryDefinition({
     definition,
     paths: [],

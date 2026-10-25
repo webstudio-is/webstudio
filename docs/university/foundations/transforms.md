@@ -15,7 +15,7 @@ CSS Transforms allow you to visually manipulate elements by rotating, scaling, s
 3. Scroll to the **Transforms** section (or search for "transform")
 4. Click the **+** button to add a transform
 
-<figure><img src="../../.gitbook/assets/transforms-section.png" alt="Transforms section in the Style Panel with a rotate transform added"><figcaption><p>The Transforms section in the Style Panel</p></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/transforms-section-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/transforms-section-light.png" alt="Transforms section with Rotate controls open and Z set to 8 degrees" width="500"></picture><figcaption><p>The Transforms section in the Style Panel</p></figcaption></figure>
 
 ## Transform Properties
 

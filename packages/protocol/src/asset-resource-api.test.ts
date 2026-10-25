@@ -39,7 +39,11 @@ const createDocument = () =>
       "https://api.example.com/rest/assets/query-schema.json?projectId=project",
   });
 
-const loadConfiguration = (catalog = defaultCatalog) =>
+const loadConfiguration = (
+  catalog: Parameters<
+    typeof createAssetQueryJsonSchema
+  >[0]["catalog"] = defaultCatalog
+) =>
   loadOpenApiQueryDefinition({
     document: createDocument(),
     documentUrl: "https://api.example.com/rest/assets/openapi.json",
@@ -160,6 +164,47 @@ describe("Assets OpenAPI description", () => {
     for (const item of [...standardFields, ...configuration.operators]) {
       expect(item.label).toBe(item.label.toLowerCase());
     }
+  });
+
+  test("preserves observed field types in the query definition", async () => {
+    const configuration = await loadConfiguration({
+      ...defaultCatalog,
+      fields: {
+        draft: {
+          queryPath: ["properties", "draft"],
+          types: ["boolean"],
+          occurrences: 1,
+        },
+        empty: {
+          queryPath: ["properties", "empty"],
+          types: ["null"],
+          occurrences: 1,
+        },
+        score: {
+          queryPath: ["properties", "score"],
+          types: ["number", "null"],
+          occurrences: 1,
+        },
+      },
+    });
+
+    expect(configuration.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: ["size"], types: ["number"] }),
+        expect.objectContaining({
+          path: ["properties", "draft"],
+          types: ["boolean"],
+        }),
+        expect.objectContaining({
+          path: ["properties", "empty"],
+          types: ["null"],
+        }),
+        expect.objectContaining({
+          path: ["properties", "score"],
+          types: ["number", "null"],
+        }),
+      ])
+    );
   });
 
   test("describes callable REST paths and stable share-token authentication", () => {

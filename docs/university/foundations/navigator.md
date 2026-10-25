@@ -8,7 +8,7 @@ The Navigator is a hierarchical panel on the left side of the builder that shows
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/navigator-panel-dark.png">
-  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator panel showing Global root, Body, and a nested Content Block instance">
+  <img src="../../.gitbook/assets/navigator-panel-light.png" alt="Navigator panel with Global root, Body, and expanded Form (Beta) showing Form content, Success message, and Error message" width="241">
 </picture>
 
 ## Selecting instances

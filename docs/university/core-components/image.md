@@ -18,7 +18,7 @@ The Image component is available under **Components > Media**. Drag it onto the 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/components-panel-dark.png">
-  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with Image in the expanded Media group">
+  <img src="../../.gitbook/assets/components-panel-light.png" alt="Components panel with Image in the expanded Media group" width="224">
 </picture>
 
 ### Responsive images

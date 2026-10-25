@@ -39,7 +39,7 @@ You can add an attribution or citation by using the “Cite” property in your 
 
 ### Using the Cite property
 
-<figure><img src="../../.gitbook/assets/blockquote-cite-property.avif" alt="Blockquote Cite property in the Settings panel"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/blockquote-cite-property-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/blockquote-cite-property-light.png" alt="Blockquote settings with the Cite property" width="240"></picture></figure>
 
 
 If you want to include a URL link as a citation:
@@ -52,13 +52,13 @@ Please note that this value will not be visible to the end-user.
 
 ### Using the Cite tag
 
-<figure><img src="../../.gitbook/assets/blockquote-cite-tag.avif" alt="Cite tag selected for text inside a Blockquote"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/blockquote-cite-tag-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/blockquote-cite-tag-light.png" alt="Element settings with Tag set to cite" width="240"></picture></figure>
 
 
 If you want to include a Name/Title as a citation alongside your Blockquote:
 
-1. Add a Text component to your Blockquote instance by dragging and dropping it or clicking it in the Components panel.
-2. After positioning it correctly, go to Settings and select Tag > Cite.
+1. Add an Element inside your Blockquote.
+2. In the Element settings, set **Tag** to **cite**.
 3. Double-click the "Cite" instance on your canvas to edit it and add your citation.
 
 Please note that this value will appear as italicized text to the end-user.

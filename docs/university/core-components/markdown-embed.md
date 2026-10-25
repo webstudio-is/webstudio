@@ -6,7 +6,12 @@ description: Markdown Embed converts Markdown to HTML and enables styling it.
 
 <div align="left">
 
-<figure><img src="../../.gitbook/assets/markdown-embed.png" alt="Markdown Embed Component" width="519"><figcaption></figcaption></figure>
+<figure>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/markdown-embed-dark.png">
+    <img src="../../.gitbook/assets/markdown-embed-light.png" alt="Markdown Embed card in the Components panel Data group" width="240">
+  </picture>
+</figure>
 
 </div>
 

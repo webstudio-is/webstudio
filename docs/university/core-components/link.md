@@ -26,7 +26,7 @@ You can customize the properties of a Link instance by selecting it and going to
 
 ### Href
 
-<figure><img src="../../.gitbook/assets/link-href-property.avif" alt="Link settings with the Href property available for a destination"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/link-href-property-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/link-href-property-light.png" alt="Link settings with destination type choices and Href field" width="240"></picture></figure>
 
 The "href" property determines what the Link instance will lead to, such as a URL, page, phone, attachment, or email address.
 
@@ -70,7 +70,7 @@ You can add any Webstudio component inside a Link element to make it clickable â
 
 When using links for navigation and wanting to highlight the current page, the link component has a "Local Link" state in every style source.
 
-<figure><img src="../../.gitbook/assets/link-local-link-state.png" alt="Style sources showing the current-page state for a local link"><figcaption></figcaption></figure>
+<figure><picture><source srcset="../../.gitbook/assets/link-local-link-state-dark.png" media="(prefers-color-scheme: dark)"><img src="../../.gitbook/assets/link-local-link-state-light.png" alt="Style sources menu with the local-link state" width="240"></picture></figure>
 
 ## Related
 
