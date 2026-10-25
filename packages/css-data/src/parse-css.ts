@@ -619,6 +619,17 @@ const substituteVarsInShorthand = (
   const { resolved, dropped } = resolution;
   const { usedCssVarsSubstitution } = resolution;
 
+  // An unresolved var() can represent any transition part (or several parts).
+  // Keep the shorthand for the browser instead of guessing its longhands.
+  if (property === "transition" && dropped.length > 0) {
+    return {
+      result: new Map<CssProperty, StyleValue>([
+        [normalizeProperty(property), { type: "unparsed", value }],
+      ]),
+      droppedVars: [],
+    };
+  }
+
   if (resolved === value) {
     // No substitution happened.
     if (dropped.length === 0) {

@@ -164,7 +164,7 @@ describe("issue report contract", () => {
     ).toThrow();
   });
 
-  test("accepts bounded response and browser diagnostics but no raw payloads", () => {
+  test("accepts bounded response, browser, and preview diagnostics but no raw payloads", () => {
     const failure = {
       ...report.runtime.recentFailure,
       errorType: "AssetRevisionConflictError",
@@ -174,6 +174,7 @@ describe("issue report contract", () => {
         exitSignal: "SIGABRT",
         attempts: [{ browser: "chromium", source: "path" }],
       },
+      previewInstall: { processErrorCode: "ETIMEDOUT", terminated: true },
     };
     expect(
       issueReportInput.parse({
@@ -215,6 +216,18 @@ describe("issue report contract", () => {
                 },
               ],
             },
+          },
+        },
+      })
+    ).toThrow();
+    expect(() =>
+      issueReportInput.parse({
+        ...report,
+        runtime: {
+          ...report.runtime,
+          recentFailure: {
+            ...failure,
+            previewInstall: { stderr: "private registry token" },
           },
         },
       })

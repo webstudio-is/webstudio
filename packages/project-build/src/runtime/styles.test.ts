@@ -2341,6 +2341,42 @@ describe("style declaration helpers", () => {
     );
   });
 
+  test("keeps unresolved transition variables together for browser parsing", () => {
+    const declarations = createStyleDeclsFromInput({
+      styleSourceId: "token",
+      property: "transition",
+      value: {
+        type: "unparsed",
+        value: "opacity 300ms var(--ease), transform var(--duration) ease",
+      },
+    });
+    expect(declarations).toEqual([
+      expect.objectContaining({
+        styleSourceId: "token",
+        breakpointId: "base",
+        property: "transition",
+        value: {
+          type: "unparsed",
+          value: "opacity 300ms var(--ease),transform var(--duration) ease",
+        },
+      }),
+    ]);
+
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".box");
+    for (const declaration of declarations) {
+      rule.setDeclaration({
+        breakpoint: declaration.breakpointId,
+        selector: "",
+        property: declaration.property,
+        value: declaration.value,
+      });
+    }
+    expect(rule.toString({ breakpoint: "base" })).toContain(
+      "transition: opacity 300ms var(--ease),transform var(--duration) ease"
+    );
+  });
+
   test("creates style declaration keys from user input with base breakpoint default", () => {
     expect(
       getStyleDeclKeyFromInput({

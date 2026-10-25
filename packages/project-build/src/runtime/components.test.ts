@@ -1711,6 +1711,28 @@ test("inserts font shorthand with separate line-height and variable family", asy
   );
 });
 
+test("inserts transition lists with unresolved variables without corrupting them", async () => {
+  const parent = createParent();
+  const fragment = await parseWebstudioJsxFragment(
+    '<ws.element ws:tag="div" ws:style={css`transition: opacity 300ms var(--ease), transform var(--duration) ease;`} />'
+  );
+  const mutation = insertFragment(
+    createState(parent),
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory(), projectId: "project-id" }
+  );
+
+  expect(getAddedValues<StyleDecl>(mutation, "styles")).toEqual([
+    expect.objectContaining({
+      property: "transition",
+      value: {
+        type: "unparsed",
+        value: "opacity 300ms var(--ease),transform var(--duration) ease",
+      },
+    }),
+  ]);
+});
+
 test("inserts bare template-backed components from webstudio jsx fragments", async () => {
   const parent = createParent();
   const fragment = await parseWebstudioJsxFragment(`<Switch />`);

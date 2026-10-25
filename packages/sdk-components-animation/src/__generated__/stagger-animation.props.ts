@@ -2,13 +2,14 @@ import type { PropMeta } from "@webstudio-is/sdk";
 
 export const props: Record<string, PropMeta> = {
   className: {
+    description: "Classes to which the element belongs",
     required: false,
     control: "text",
     type: "string",
-    description: "Classes to which the element belongs",
   },
   easing: {
-    description: "Easing function applied within the sliding window.",
+    description:
+      "Easing follows each item's progress from hidden to visible; reversing the animation reverses the timing.",
     required: false,
     control: "select",
     type: "string",

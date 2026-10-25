@@ -578,6 +578,24 @@ export const createIssueReportFailure = (
             constraint: issue.constraint,
           }));
   const entityIds = getIssueReportEntityIds(input);
+  const previewProcess =
+    errorCode === "PREVIEW_DEPENDENCY_INSTALL_FAILED"
+      ? records
+          .slice(1)
+          .find(
+            (candidate) =>
+              candidate.code !== undefined || candidate.killed === true
+          )
+      : undefined;
+  const processErrorCode = getStableErrorCode(previewProcess);
+  const previewExitCode =
+    typeof previewProcess?.code === "number" &&
+    Number.isInteger(previewProcess.code) &&
+    previewProcess.code >= 0 &&
+    previewProcess.code <= 255
+      ? previewProcess.code
+      : undefined;
+  const previewTerminated = previewProcess?.killed === true;
   return {
     tool: canonicalTool,
     code: isResponseTransformFailure
@@ -594,6 +612,19 @@ export const createIssueReportFailure = (
     ...(elapsedMs === undefined ? {} : { elapsedMs }),
     ...(entityIds.length === 0 ? {} : { entityIds }),
     ...(issues === undefined || issues.length === 0 ? {} : { issues }),
+    ...(processErrorCode === undefined &&
+    previewExitCode === undefined &&
+    previewTerminated === false
+      ? {}
+      : {
+          previewInstall: {
+            ...(processErrorCode === undefined ? {} : { processErrorCode }),
+            ...(previewExitCode === undefined
+              ? {}
+              : { exitCode: previewExitCode }),
+            ...(previewTerminated ? { terminated: true } : {}),
+          },
+        }),
     ...(response === undefined
       ? {}
       : {
