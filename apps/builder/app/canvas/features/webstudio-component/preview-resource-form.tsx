@@ -10,6 +10,7 @@ import { mergeRefs } from "@react-aria/utils";
 import { selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { ResourceForm } from "@webstudio-is/sdk-components-react/components";
 import type { submitManagedForm } from "@webstudio-is/sdk-components-react";
+import type { UploadProgress } from "@webstudio-is/sdk/form/browser";
 import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
 import { $selectedPageHash } from "~/shared/nano-states/pages";
 import { $currentSystem } from "~/shared/system";
@@ -23,7 +24,8 @@ import { getPreviewCurrentUrl } from "./preview-current-url";
 export const submitManagedFormFromPreview = (
   managedFormId: string,
   values: Parameters<typeof submitManagedForm>[0]["values"],
-  signal: AbortSignal
+  signal: AbortSignal,
+  onUploadProgress?: (progress: UploadProgress) => void
 ) => {
   const currentUrl = getPreviewCurrentUrl(
     $currentSystem.get(),
@@ -35,6 +37,7 @@ export const submitManagedFormFromPreview = (
     managedFormId,
     path: currentUrl.pathname + currentUrl.search,
     signal,
+    onUploadProgress,
   });
 };
 
@@ -47,8 +50,21 @@ export const PreviewResourceForm = forwardRef<
   const formRef = useRef<HTMLFormElement>(null);
   const onStateChangeRef = useRef(props.onStateChange);
   onStateChangeRef.current = props.onStateChange;
+  const onProgressChangeRef = useRef(props.onProgressChange);
+  onProgressChangeRef.current = props.onProgressChange;
   const formSelector = (props as Record<string, unknown>)[selectorIdAttribute];
-  useEffect(() => () => onStateChangeRef.current?.("initial"), []);
+  useEffect(
+    () => () => {
+      onStateChangeRef.current?.("initial");
+      onProgressChangeRef.current?.({
+        status: "idle",
+        loaded: 0,
+        total: 0,
+        files: [],
+      });
+    },
+    []
+  );
   const formId = props["data-ws-managed-form-id"];
   useEffect(() => {
     const form = formRef.current;
@@ -122,9 +138,10 @@ export const getPreviewResourceFormProps = (formId: string) => {
     getRedirectBaseUrl: () => getPreviewUrl().href,
     onManagedSubmit: (
       values: Parameters<typeof submitManagedForm>[0]["values"],
-      signal: AbortSignal
+      signal: AbortSignal,
+      onUploadProgress?: (progress: UploadProgress) => void
     ): Promise<ManagedFormResponse> =>
-      submitManagedFormFromPreview(formId, values, signal),
+      submitManagedFormFromPreview(formId, values, signal, onUploadProgress),
     onSuccessRedirect: (destination: string) =>
       navigatePreviewFormSuccess(
         destination,

@@ -1,10 +1,16 @@
 import { draftPersistence } from "./sync/draft-persistence";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { beforeEach, afterEach, expect, test, vi } from "vitest";
-import { fetch as builderFetch } from "~/shared/fetch.client";
+import type { submitManagedForm } from "@webstudio-is/sdk/form/browser";
 import { submitPreviewForm } from "./preview-form-bridge";
 import { subscribePreviewFormRequests } from "./preview-form-parent";
 import { $livePreviewBrowserInfo } from "./preview-form-values";
+import { updateCsrfToken } from "./csrf.client";
+import { inspectBuilderResponse } from "./fetch.client";
+import {
+  apiClientHeader,
+  apiClientVersionHeader,
+} from "@webstudio-is/trpc-interface/api-compatibility";
 
 const listeners = vi.hoisted(
   () => new Map<string, Set<(payload: unknown) => void>>()
@@ -29,7 +35,7 @@ vi.mock("@webstudio-is/protocol", async (importOriginal) => ({
   parseBuilderUrl: () => ({ projectId: "project" }),
 }));
 
-vi.mock("~/shared/fetch.client", () => ({ fetch: vi.fn() }));
+const submit = vi.fn<typeof submitManagedForm>();
 
 const sendToCanvas = vi.fn(
   ({ type, payload }: { type: string; payload?: unknown }) => {
@@ -40,6 +46,7 @@ const sendToCanvas = vi.fn(
 );
 
 beforeEach(() => {
+  updateCsrfToken("fixture");
   draftPersistence.reset(parseBuilderUrl(window.location.href).projectId);
 });
 
@@ -48,14 +55,22 @@ afterEach(() => {
   $livePreviewBrowserInfo.set(new Map());
   listeners.clear();
   vi.clearAllMocks();
+  submit.mockReset();
   vi.useRealTimers();
 });
 
-test("Preview sends the current FormData with files through the authenticated Builder fetch", async () => {
+test("Preview passes files, request policy, and upload progress through the parent", async () => {
   const response = {
     success: true,
     status: 200,
-    results: [{ resourceId: "email", status: 200, body: { sent: true } }],
+    results: [
+      {
+        resourceId: "email",
+        resourceName: "email",
+        status: 200,
+        body: { sent: true },
+      },
+    ],
     errors: [],
     previewBrowserInfo: {
       ip: "203.0.113.10",
@@ -64,14 +79,20 @@ test("Preview sends the current FormData with files through the authenticated Bu
       referrer: "https://builder.example/project",
     },
   };
-  vi.mocked(builderFetch).mockResolvedValue(Response.json(response));
-  const unsubscribe = subscribePreviewFormRequests(sendToCanvas);
+  submit.mockImplementation(async ({ onUploadProgress }) => {
+    onUploadProgress?.({ loaded: 4, total: 12 });
+    onUploadProgress?.({ loaded: 12, total: 12 });
+    return response;
+  });
+  const unsubscribe = subscribePreviewFormRequests(sendToCanvas, submit);
   const file = new File(["attached"], "note.txt", { type: "text/plain" });
+  const progress: unknown[] = [];
   const result = submitPreviewForm({
     values: { email: "visitor@example.com", attachments: [file] },
     managedFormId: "form-1",
     path: "/contact?source=preview",
     signal: new AbortController().signal,
+    onUploadProgress: (update) => progress.push(update),
   });
 
   await expect(result).resolves.toEqual({
@@ -90,33 +111,38 @@ test("Preview sends the current FormData with files through the authenticated Bu
     (resultEvent?.payload as { response?: Record<string, unknown> } | undefined)
       ?.response
   ).not.toHaveProperty("previewBrowserInfo");
-  expect(builderFetch).toHaveBeenCalledOnce();
-  const [url, init] = vi.mocked(builderFetch).mock.calls[0];
-  expect(new URL(String(url)).pathname).toBe("/rest/preview-form");
-  expect(new URL(String(url)).searchParams.get("path")).toBe(
+  expect(progress).toEqual([
+    { loaded: 4, total: 12 },
+    { loaded: 12, total: 12 },
+  ]);
+  expect(submit).toHaveBeenCalledOnce();
+  const [input] = submit.mock.calls[0];
+  expect(new URL(String(input.endpoint)).pathname).toBe("/rest/preview-form");
+  expect(new URL(String(input.endpoint)).searchParams.get("path")).toBe(
     "/contact?source=preview"
   );
-  expect(init?.credentials).toBe("same-origin");
-  const formData = init?.body as FormData;
-  expect(formData.get("email")).toBe("visitor@example.com");
-  const attachment = formData.get("attachments") as File;
+  expect(new Headers(input.headers).get("X-CSRF-Token")).toBe("fixture");
+  expect(new Headers(input.headers).get(apiClientHeader)).toBe("browser");
+  expect(new Headers(input.headers).get(apiClientVersionHeader)).toBeTruthy();
+  expect(input.onResponse).toBe(inspectBuilderResponse);
+  expect(input.values.email).toBe("visitor@example.com");
+  const attachment = (input.values.attachments as File[])[0];
   expect(attachment.name).toBe("note.txt");
   expect(await attachment.text()).toBe("attached");
-  expect(formData.get("ws--managed-form-id")).toBe("form-1");
-  expect(formData.get("ws--managed-form-array-names")).toBe('["attachments"]');
+  expect(input.managedFormId).toBe("form-1");
   unsubscribe();
   expect($livePreviewBrowserInfo.get()).toEqual(new Map());
 });
 
 test("aborting a Preview submission aborts the parent request and sends no result", async () => {
-  vi.mocked(builderFetch).mockImplementation((_url, init) => {
+  submit.mockImplementation(({ signal }) => {
     return new Promise((_resolve, reject) => {
-      init?.signal?.addEventListener("abort", () => {
+      signal?.addEventListener("abort", () => {
         reject(new DOMException("Aborted", "AbortError"));
       });
     });
   });
-  const unsubscribe = subscribePreviewFormRequests(sendToCanvas);
+  const unsubscribe = subscribePreviewFormRequests(sendToCanvas, submit);
   const controller = new AbortController();
   const result = submitPreviewForm({
     values: { email: "visitor@example.com" },
@@ -124,8 +150,8 @@ test("aborting a Preview submission aborts the parent request and sends no resul
     path: "/contact",
     signal: controller.signal,
   });
-  await vi.waitFor(() => expect(builderFetch).toHaveBeenCalledOnce());
-  const requestSignal = vi.mocked(builderFetch).mock.calls[0][1]?.signal;
+  await vi.waitFor(() => expect(submit).toHaveBeenCalledOnce());
+  const requestSignal = submit.mock.calls[0][0].signal;
 
   controller.abort("cancelled");
   await expect(result).rejects.toBe("cancelled");
@@ -161,7 +187,7 @@ test("times out and cleans up when the Builder does not answer", async () => {
 test("failed persistence returns an error without reaching the Preview endpoint", async () => {
   draftPersistence.begin("project", "failed-edit");
   draftPersistence.complete("project", "failed-edit", false);
-  const unsubscribe = subscribePreviewFormRequests(sendToCanvas);
+  const unsubscribe = subscribePreviewFormRequests(sendToCanvas, submit);
   const result = await submitPreviewForm({
     values: {},
     managedFormId: "form",
@@ -177,14 +203,14 @@ test("failed persistence returns an error without reaching the Preview endpoint"
       },
     ],
   });
-  expect(builderFetch).not.toHaveBeenCalled();
+  expect(submit).not.toHaveBeenCalled();
   unsubscribe();
 });
 
 test("live Preview values update Builder memory without submitting or saving", async () => {
   const { publish } = await import("./pubsub");
   const { $livePreviewFormValues } = await import("./preview-form-values");
-  const cleanup = subscribePreviewFormRequests(publish);
+  const cleanup = subscribePreviewFormRequests(publish, submit);
   try {
     publish({
       type: "previewFormValues",
@@ -231,7 +257,7 @@ test("live Preview values update Builder memory without submitting or saving", a
     expect(
       $livePreviewFormValues.get().get("form,collection[two],root")
     ).toEqual({ text: "another occurrence" });
-    expect(builderFetch).not.toHaveBeenCalled();
+    expect(submit).not.toHaveBeenCalled();
     publish({
       type: "previewFormValues",
       payload: {
@@ -282,11 +308,9 @@ test.each(["network", "draft"])(
       draftPersistence.begin("project", "failed-edit");
       draftPersistence.complete("project", "failed-edit", false);
     } else {
-      vi.mocked(builderFetch).mockRejectedValueOnce(
-        new Error("Fixture network failure")
-      );
+      submit.mockRejectedValueOnce(new Error("Fixture network failure"));
     }
-    const unsubscribe = subscribePreviewFormRequests(sendToCanvas);
+    const unsubscribe = subscribePreviewFormRequests(sendToCanvas, submit);
     try {
       const result = await submitPreviewForm({
         values: {},

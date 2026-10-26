@@ -231,6 +231,69 @@ test("Form error message binds all errors through its authored container", () =>
   );
 });
 
+test("Form Progress shows measured request bytes while the Form is pending", () => {
+  const fragment = renderCoreTemplate(coreTemplates.form);
+  const formProgress = fragment.dataSources?.find(
+    ({ name }) => name === "formProgress"
+  )!;
+  if (formProgress.type !== "variable") {
+    throw new Error("Expected a Form progress variable");
+  }
+  expect(formProgress.value).toEqual({
+    type: "json",
+    value: { status: "idle", loaded: 0, total: 0, files: [] },
+  });
+  const status = fragment.instances.find(({ label }) => label === "Progress")!;
+  const showStatus = fragment.props.find(
+    ({ instanceId, name }) =>
+      instanceId === status.id && name === "data-ws-show"
+  );
+  if (showStatus?.type !== "expression") {
+    throw new Error("Expected a Progress visibility binding");
+  }
+  expect(
+    executeExpression(
+      showStatus.value.replaceAll(
+        encodeDataVariableId(formProgress.id),
+        '{status:"pending",files:[]}'
+      )
+    )
+  ).toBe(true);
+  expect(
+    executeExpression(
+      showStatus.value.replaceAll(
+        encodeDataVariableId(formProgress.id),
+        '{status:"idle",files:[]}'
+      )
+    )
+  ).toBe(false);
+  const spanId = status.children.find(({ type }) => type === "id")?.value;
+  const span = fragment.instances.find(({ id }) => id === spanId)!;
+  const showBytes = fragment.props.find(
+    ({ instanceId, name }) => instanceId === span.id && name === "data-ws-show"
+  );
+  const text = span.children.find(({ type }) => type === "expression");
+  if (showBytes?.type !== "expression" || text?.type !== "expression") {
+    throw new Error("Expected measured-byte bindings");
+  }
+  const evaluate = (value: { loaded?: number; total?: number }) => {
+    const replaceVariable = (code: string) =>
+      code.replaceAll(
+        encodeDataVariableId(formProgress.id),
+        JSON.stringify(value)
+      );
+    return {
+      visible: executeExpression(replaceVariable(showBytes.value)),
+      text: executeExpression(replaceVariable(text.value)),
+    };
+  };
+  expect(evaluate({ loaded: 1_200_000, total: 3_000_000 })).toEqual({
+    visible: true,
+    text: " 1.2 MB / 3 MB",
+  });
+  expect(evaluate({ loaded: 400_000 }).visible).toBe(false);
+});
+
 test("Form success and error feedback render without DOM markers", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
   const feedback = fragment.instances.filter(

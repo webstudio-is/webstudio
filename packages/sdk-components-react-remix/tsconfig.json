@@ -1,6 +1,7 @@
 {
   "extends": "@webstudio-is/tsconfig/base.json",
   "compilerOptions": {
+    "rootDir": "../..",
     "types": ["react/canary", "@types/node"]
   },
   "exclude": ["vitest.config.ts"]

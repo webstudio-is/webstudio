@@ -2,7 +2,7 @@ import { act } from "react-dom/test-utils";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
 import { TooltipProvider } from "@webstudio-is/design-system";
-import { fetch as builderFetch } from "~/shared/fetch.client";
+import { updateCsrfToken } from "~/shared/csrf.client";
 import { $project } from "~/shared/sync/data-stores";
 import { draftPersistence } from "~/shared/sync/draft-persistence";
 import { submitPreviewForm } from "~/shared/preview-form-bridge";
@@ -34,7 +34,29 @@ vi.mock("@webstudio-is/protocol", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@webstudio-is/protocol")>()),
   parseBuilderUrl: () => ({ projectId: "project" }),
 }));
-vi.mock("~/shared/fetch.client", () => ({ fetch: vi.fn() }));
+
+class FormRequest {
+  static requests: FormRequest[] = [];
+  static responseText = "";
+  upload = {};
+  onload?: () => void;
+  status = 200;
+  responseText = FormRequest.responseText;
+
+  constructor() {
+    FormRequest.requests.push(this);
+  }
+
+  open() {}
+  setRequestHeader() {}
+  getResponseHeader() {
+    return "application/json";
+  }
+  send() {
+    queueMicrotask(() => this.onload?.());
+  }
+  abort() {}
+}
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -45,9 +67,13 @@ afterEach(() => {
   $project.set(undefined);
   listeners.clear();
   vi.clearAllMocks();
+  vi.unstubAllGlobals();
+  FormRequest.requests = [];
 });
 
 test("Preview email response survives metadata refresh and editor reopening, but clears on project switch", async () => {
+  updateCsrfToken("fixture");
+  vi.stubGlobal("XMLHttpRequest", FormRequest);
   $project.set({ id: "project", title: "Before" } as never);
   draftPersistence.reset("project");
   const exchange = {
@@ -69,21 +95,20 @@ test("Preview email response survives metadata refresh and editor reopening, but
       truncated: false,
     },
   };
-  vi.mocked(builderFetch).mockResolvedValue(
-    Response.json({
-      success: true,
-      status: 200,
-      results: [
-        {
-          resourceId: "email-resource",
-          status: 200,
-          body: { id: "public-form-result" },
-        },
-      ],
-      errors: [],
-      previewExchanges: [exchange],
-    })
-  );
+  const response = {
+    success: true,
+    status: 200,
+    results: [
+      {
+        resourceId: "email-resource",
+        status: 200,
+        body: { id: "public-form-result" },
+      },
+    ],
+    errors: [],
+    previewExchanges: [exchange],
+  };
+  FormRequest.responseText = JSON.stringify(response);
   const publish = vi.fn(
     ({ type, payload }: { type: string; payload?: unknown }) => {
       for (const listener of listeners.get(type) ?? []) {
@@ -170,7 +195,7 @@ test("Preview email response survives metadata refresh and editor reopening, but
     await expect
       .poll(() => activePanel()?.textContent)
       .toContain("captured-email-service-response");
-    expect(builderFetch).toHaveBeenCalledOnce();
+    expect(FormRequest.requests).toHaveLength(1);
     await act(async () => $project.set({ id: "another-project" } as never));
     expect($previewFormExchanges.get().size).toBe(0);
     expect($resourcePreviewExchanges.get().size).toBe(0);

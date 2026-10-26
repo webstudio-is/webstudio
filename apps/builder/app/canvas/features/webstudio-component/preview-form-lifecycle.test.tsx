@@ -10,6 +10,7 @@ import { encodeDataVariableId, type Instance } from "@webstudio-is/sdk";
 import { $dataSources, $instances, $props } from "~/shared/sync/data-stores";
 import { $variableValuesByInstanceSelector } from "~/shared/nano-states";
 import { WebstudioComponentPreview } from "./webstudio-component";
+import type { FormProgress } from "@webstudio-is/sdk/form/browser";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -79,6 +80,74 @@ test.each([true, false])(
     expect(submit).toHaveBeenCalledTimes(1);
   }
 );
+
+test("Preview clears in-flight Form transfer details on renderer switch", async () => {
+  $builderMode.set("preview");
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  const submit = vi.fn(() => new Promise<never>(() => {}));
+  const Harness = () => {
+    const isPreviewMode = useStore($isPreviewMode);
+    const [progress, setProgress] = useState<FormProgress>({
+      status: "idle",
+      loaded: 0,
+      total: 0,
+      files: [],
+    });
+    return (
+      <>
+        <output data-transfer-files>{progress.files.length}</output>
+        <output data-transfer-status>{progress.status}</output>
+        <output data-transfer-bytes>
+          {progress.loaded}/{progress.total}
+        </output>
+        {isPreviewMode ? (
+          <__testing__.PreviewResourceForm
+            action={[{ dataSourceId: "request" }]}
+            onManagedSubmit={submit}
+            onProgressChange={setProgress}
+          >
+            <input name="attachment" type="file" />
+            <button type="submit">Send</button>
+          </__testing__.PreviewResourceForm>
+        ) : (
+          <div data-renderer="canvas" />
+        )}
+      </>
+    );
+  };
+  await act(async () => root?.render(<Harness />));
+  const input =
+    container.querySelector<HTMLInputElement>('input[type="file"]')!;
+  const files = new DataTransfer();
+  files.items.add(new File(["attached"], "note.txt"));
+  input.files = files.files;
+  await act(async () => container.querySelector("button")?.click());
+  expect(container.querySelector("[data-transfer-files]")?.textContent).toBe(
+    "1"
+  );
+  expect(container.querySelector("[data-transfer-status]")?.textContent).toBe(
+    "pending"
+  );
+  await act(async () => $builderMode.set("design"));
+  expect(container.querySelector("[data-transfer-files]")?.textContent).toBe(
+    "0"
+  );
+  expect(container.querySelector("[data-transfer-status]")?.textContent).toBe(
+    "idle"
+  );
+  expect(container.querySelector("[data-transfer-bytes]")?.textContent).toBe(
+    "0/0"
+  );
+  await act(async () => $builderMode.set("preview"));
+  expect(container.querySelector("[data-transfer-files]")?.textContent).toBe(
+    "0"
+  );
+  expect(container.querySelector("[data-transfer-status]")?.textContent).toBe(
+    "idle"
+  );
+});
 
 test.each([true, false])(
   "uncontrolled managed Form resets after renderer switch from Preview outcome %s",

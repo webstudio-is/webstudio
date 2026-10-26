@@ -156,6 +156,8 @@ const formVariableDescriptions: Record<string, string> = {
   browserInfo:
     "Visitor IP address, browser, language, and referrer available to this Form.",
   formState: "The current Form state: initial, success, or error.",
+  formProgress:
+    "Submission activity, upload byte counts, and selected file details.",
   results:
     "Responses from selected actions, in order. Each includes the resource name, HTTP status code, and response body.",
   errors:

@@ -3,8 +3,22 @@ import type { ManagedFormResponse } from "./shared";
 
 export type FormSubmissionState = "initial" | "success" | "error";
 
+export type FormProgress = {
+  status: "idle" | "pending";
+  loaded?: number;
+  total?: number;
+  files: Array<{
+    id: string;
+    fieldName: string;
+    name: string;
+    size: number;
+    type: string;
+  }>;
+};
+
 export type FormSubmissionCallbacks = {
   onPending: (pending: boolean) => void;
+  onCancel?: () => void;
   onResult: (result: ManagedFormResponse) => void;
   onState: (state: FormSubmissionState) => void;
   onFeedback: () => void;
@@ -36,10 +50,14 @@ export class FormSubmissionController {
   }
 
   cancel() {
+    const wasPending = this.pending;
     this.active?.abort();
     this.active = undefined;
     if (!this.disposed) {
       this.getCallbacks().onPending(false);
+      if (wasPending) {
+        this.getCallbacks().onCancel?.();
+      }
     }
   }
 
@@ -104,6 +122,7 @@ export class FormSubmissionController {
           return;
         }
         const callbacks = this.getCallbacks();
+        callbacks.onPending(false);
         const message =
           error instanceof Error ? error.message : "Form submission failed";
         callbacks.onResult({

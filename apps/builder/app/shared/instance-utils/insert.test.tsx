@@ -935,6 +935,34 @@ describe("insert webstudio component at", () => {
       const formId =
         body?.children[0]?.type === "id" ? body.children[0].value : "";
       expect($instances.get().get(formId)?.component).toBe("ResourceForm");
+      const status = Array.from($instances.get().values()).find(
+        (instance) => instance.label === "Progress"
+      );
+      expect(status).toBeDefined();
+      expect(
+        Array.from($props.get().values()).find(
+          (prop) =>
+            prop.instanceId === status?.id && prop.name === "data-ws-show"
+        )
+      ).toMatchObject({ type: "expression" });
+      const summaryId = status?.children.find(
+        (child) => child.type === "id"
+      )?.value;
+      const summary = $instances.get().get(summaryId ?? "");
+      const summaryText = summary?.children.find(
+        (child) => child.type === "expression"
+      );
+      if (summaryText?.type !== "expression") {
+        throw new Error("Expected a bound Form upload summary");
+      }
+      expect(
+        lintExpression({
+          expression: summaryText.value,
+          availableVariables: new Set(
+            Array.from($dataSources.get().keys(), encodeDataSourceVariable)
+          ),
+        })
+      ).toEqual([]);
       const formProps = Array.from($props.get().values()).filter(
         ({ instanceId }) => instanceId === formId
       );
@@ -1015,6 +1043,9 @@ describe("insert webstudio component at", () => {
       );
       expect(evaluateOwnerBody("")).toBe("Name: Ada");
       expect(formProps.some(({ name }) => name === "onStateChange")).toBe(true);
+      expect(formProps.some(({ name }) => name === "onProgressChange")).toBe(
+        true
+      );
       const resultProp = formProps.find(
         ({ name }) => name === "onResultChange"
       );
@@ -1039,7 +1070,7 @@ describe("insert webstudio component at", () => {
           ]),
         })
       ).toEqual([]);
-      for (const name of ["results", "errors"]) {
+      for (const name of ["formProgress", "results", "errors"]) {
         expect(
           Array.from($dataSources.get().values()).some(
             (dataSource) =>
@@ -1079,6 +1110,18 @@ describe("insert webstudio component at", () => {
         ?.get("onStateChange") as (state: string) => void;
       expect(onStateChange).toBeTypeOf("function");
       onStateChange("error");
+      const onProgressChange = $propValuesByInstanceSelector
+        .get()
+        .get(getInstanceKey([formId, "bodyId"]))
+        ?.get("onProgressChange") as (value: unknown) => void;
+      expect(onProgressChange).toBeTypeOf("function");
+      const progress = {
+        status: "pending",
+        loaded: 4,
+        total: 12,
+        files: [],
+      };
+      onProgressChange(progress);
       const variables = new Map(
         Array.from($dataSources.get().values())
           .filter((dataSource) => dataSource.type === "variable")
@@ -1089,6 +1132,7 @@ describe("insert webstudio component at", () => {
       );
       expect(variables.has("status")).toBe(false);
       expect(variables.get("formState")).toBe("error");
+      expect(variables.get("formProgress")).toBe(progress);
       expect(variables.get("results")).toBe(result.results);
       expect(variables.get("errors")).toBe(result.errors);
       for (const child of $instances.get().get(formId)?.children ?? []) {
@@ -1101,7 +1145,7 @@ describe("insert webstudio component at", () => {
           dataSources: $dataSources.get(),
         }).map(({ name }) => name);
         expect(availableNames).toEqual(
-          expect.arrayContaining(["results", "errors"])
+          expect.arrayContaining(["formProgress", "results", "errors"])
         );
       }
       for (const name of ["formData", "browserInfo"]) {

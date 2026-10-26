@@ -7,6 +7,8 @@ import { ResourceForm } from "./resource-form";
 import { Input } from "./input";
 import { Textarea } from "./textarea";
 import { Select } from "./select";
+import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
+import type { UploadProgress } from "@webstudio-is/sdk/form/browser";
 import {
   managedFormRequestParamName,
   managedFormIdFieldName,
@@ -15,6 +17,48 @@ import {
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
+
+class FakeFormRequest {
+  static requests: FakeFormRequest[] = [];
+  upload: { onload?: (event: ProgressEvent) => void } = {};
+  onload?: () => void;
+  onerror?: () => void;
+  onabort?: () => void;
+  status = 200;
+  responseText = "";
+  url = "";
+  body?: FormData;
+  withCredentials = false;
+
+  constructor() {
+    FakeFormRequest.requests.push(this);
+  }
+
+  open(_method: string, url: string) {
+    this.url = url;
+  }
+
+  setRequestHeader() {}
+
+  getResponseHeader() {
+    return "application/json";
+  }
+
+  send(body: FormData) {
+    this.body = body;
+  }
+
+  respond(body: unknown, status = 200) {
+    this.status = status;
+    this.responseText = JSON.stringify(body);
+    this.upload.onload?.({
+      loaded: 12,
+      total: 12,
+      lengthComputable: true,
+    } as ProgressEvent);
+    this.onload?.();
+  }
+}
 
 test("a StrictMode Form submits after the effect cleanup probe", async () => {
   const container = document.createElement("div");
@@ -134,6 +178,7 @@ test("a StrictMode Form aborts an active request on real unmount", async () => {
   document.body.append(container);
   const root = createRoot(container);
   let signal: AbortSignal | undefined;
+  const onProgressChange = vi.fn();
   try {
     await act(async () => {
       root.render(
@@ -144,6 +189,7 @@ test("a StrictMode Form aborts an active request on real unmount", async () => {
               signal = requestSignal;
               return new Promise(() => {});
             }}
+            onProgressChange={onProgressChange}
           >
             <button type="submit">Send</button>
           </ResourceForm>
@@ -152,11 +198,72 @@ test("a StrictMode Form aborts an active request on real unmount", async () => {
     });
     await act(async () => container.querySelector("button")?.click());
     expect(signal?.aborted).toBe(false);
+    expect(onProgressChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "pending" })
+    );
   } finally {
     await act(async () => root.unmount());
     container.remove();
   }
   expect(signal?.aborted).toBe(true);
+  expect(onProgressChange).toHaveBeenLastCalledWith({
+    status: "idle",
+    loaded: 0,
+    total: 0,
+    files: [],
+  });
+});
+
+test("unmount after a result preserves completed transfer details during refresh", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const onProgressChange = vi.fn();
+  let unmounted = false;
+  try {
+    await act(async () =>
+      root.render(
+        <ResourceForm
+          action={[{ dataSourceId: "resource-one" }]}
+          onManagedSubmit={async () => ({
+            success: true,
+            status: 200,
+            results: [],
+            errors: [],
+          })}
+          onSubmissionSuccess={() => new Promise<void>(() => {})}
+          onProgressChange={onProgressChange}
+        >
+          <input name="attachment" type="file" />
+          <button type="submit">Send</button>
+        </ResourceForm>
+      )
+    );
+    const files = new DataTransfer();
+    files.items.add(new File(["photo"], "photo.png", { type: "image/png" }));
+    container.querySelector<HTMLInputElement>('input[type="file"]')!.files =
+      files.files;
+    await act(async () => container.querySelector("button")?.click());
+    await vi.waitFor(() =>
+      expect(onProgressChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          status: "idle",
+          files: [expect.objectContaining({ name: "photo.png" })],
+        })
+      )
+    );
+    const completed = onProgressChange.mock.lastCall?.[0];
+    const completedCallCount = onProgressChange.mock.calls.length;
+    await act(async () => root.unmount());
+    unmounted = true;
+    expect(onProgressChange).toHaveBeenLastCalledWith(completed);
+    expect(onProgressChange).toHaveBeenCalledTimes(completedCallCount);
+  } finally {
+    if (!unmounted) {
+      await act(async () => root.unmount());
+    }
+    container.remove();
+  }
 });
 
 test("an unconfigured Form blocks native navigation", async () => {
@@ -410,7 +517,8 @@ test("a hydrated Form handles submit buttons associated by form id", async () =>
       {
         email: "person@example.com",
       },
-      expect.any(AbortSignal)
+      expect.any(AbortSignal),
+      expect.any(Function)
     );
   } finally {
     await act(async () => root.unmount());
@@ -440,7 +548,8 @@ test("Form passes one structured submission to its dispatcher", async () => {
     });
     expect(onManagedSubmit).toHaveBeenCalledExactlyOnceWith(
       { name: "Ada" },
-      expect.any(AbortSignal)
+      expect.any(AbortSignal),
+      expect.any(Function)
     );
   } finally {
     await act(async () => root.unmount());
@@ -577,7 +686,8 @@ test("file-input settings enforce required uploads and keep optional or multiple
       {
         attachments: [first, second],
       },
-      expect.any(AbortSignal)
+      expect.any(AbortSignal),
+      expect.any(Function)
     );
 
     await render(false);
@@ -596,14 +706,8 @@ test("managed Form submits by HTTP outside a router provider and reports pending
   const root = createRoot(container);
   const states: string[] = [];
   const results: unknown[] = [];
-  let finish!: (response: Response) => void;
-  const request = vi.fn(
-    (_input: RequestInfo | URL, _init?: RequestInit) =>
-      new Promise<Response>((resolve) => {
-        finish = resolve;
-      })
-  );
-  vi.stubGlobal("fetch", request);
+  FakeFormRequest.requests = [];
+  vi.stubGlobal("XMLHttpRequest", FakeFormRequest);
   try {
     await act(async () =>
       root.render(
@@ -625,43 +729,40 @@ test("managed Form submits by HTTP outside a router provider and reports pending
     container.querySelector<HTMLInputElement>('input[type="file"]')!.files =
       files.files;
     await act(async () => container.querySelector("button")?.click());
-    expect(request).toHaveBeenCalledOnce();
+    expect(FakeFormRequest.requests).toHaveLength(1);
     expect(container.querySelector("form")?.getAttribute("aria-busy")).toBe(
       "true"
     );
     expect(container.querySelector('output[role="status"]')?.textContent).toBe(
       "Submitting…"
     );
-    const [url, init] = request.mock.calls[0];
-    const endpoint = new URL(String(url));
+    const request = FakeFormRequest.requests[0];
+    const endpoint = new URL(request.url);
     expect(endpoint.searchParams.get(managedFormRequestParamName)).toBe("1");
     expect(endpoint.pathname).toBe(
       window.location.pathname === "/"
         ? "/__ws-form"
         : `/__ws-form${window.location.pathname}`
     );
-    expect(init?.method).toBe("POST");
-    expect(init?.credentials).toBe("same-origin");
-    const body = init?.body as FormData;
+    expect(request.withCredentials).toBe(false);
+    const body = request.body!;
     expect(body.get(managedFormIdFieldName)).toBe("form-one");
     expect(body.getAll("tag")).toEqual(["a", "b"]);
     expect(await (body.get("upload") as File).text()).toBe("contents");
     await act(async () =>
-      finish(
-        Response.json({
-          success: true,
-          status: 200,
-          results: [
-            {
-              resourceId: "destination",
-              resourceName: "destination",
-              status: 201,
-              body: { id: 1 },
-            },
-          ],
-          errors: [],
-        })
-      )
+      request.respond({
+        success: true,
+        status: 200,
+        results: [
+          {
+            resourceId: "destination",
+            resourceName: "destination",
+            status: 201,
+            body: { id: 1 },
+          },
+        ],
+        errors: [],
+      })
     );
     await vi.waitFor(() => expect(states).toEqual(["initial", "success"]));
     expect(container.querySelector<HTMLInputElement>("[name=tag]")?.value).toBe(
@@ -735,7 +836,8 @@ test("Preview runs the supplied submission and reports its result without the pu
     await vi.waitFor(() => expect(onResultChange).toHaveBeenCalledOnce());
     expect(onManagedSubmit).toHaveBeenCalledWith(
       expect.objectContaining({ email: "ada@example.com" }),
-      expect.any(AbortSignal)
+      expect.any(AbortSignal),
+      expect.any(Function)
     );
     expect(onResultChange).toHaveBeenCalledWith(
       expect.objectContaining({ success: true })
@@ -745,6 +847,200 @@ test("Preview runs the supplied submission and reports its result without the pu
     await act(async () => root.unmount());
     container.remove();
     vi.unstubAllGlobals();
+  }
+});
+
+test("Form progress keeps measured bytes through Action completion and resets on cancellation", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const progress: Array<
+    Parameters<
+      NonNullable<React.ComponentProps<typeof ResourceForm>["onProgressChange"]>
+    >[0]
+  > = [];
+  const states: string[] = [];
+  let reportUpload!: (update: UploadProgress) => void;
+  let finish!: (response: ManagedFormResponse) => void;
+  const onManagedSubmit = vi.fn(
+    (
+      _values: unknown,
+      _signal: AbortSignal,
+      onUploadProgress?: (update: UploadProgress) => void
+    ) => {
+      reportUpload = onUploadProgress!;
+      return new Promise<ManagedFormResponse>((resolve) => {
+        finish = resolve;
+      });
+    }
+  );
+  const render = async (navigationToken: string) =>
+    act(async () =>
+      root.render(
+        <ResourceForm
+          action={[{ dataSourceId: "resource-one" }]}
+          navigationToken={navigationToken}
+          onManagedSubmit={onManagedSubmit}
+          onStateChange={(value) => states.push(value)}
+          onProgressChange={(value) => progress.push(value)}
+        >
+          <input name="attachment" type="file" multiple />
+          <button type="submit">Send</button>
+        </ResourceForm>
+      )
+    );
+  try {
+    await render("first-page");
+    const files = new DataTransfer();
+    files.items.add(new File(["content"], "note.txt"));
+    files.items.add(new File(["more"], "more.txt"));
+    container.querySelector<HTMLInputElement>("input")!.files = files.files;
+    await act(async () => container.querySelector("button")?.click());
+    expect(container.querySelector('output[role="status"]')).toBeNull();
+    expect(states.at(-1)).toBe("initial");
+    expect(progress.at(-1)).toMatchObject({
+      status: "pending",
+      loaded: 0,
+      total: 0,
+      files: [
+        {
+          fieldName: "attachment",
+          name: "note.txt",
+          size: 7,
+          type: "",
+        },
+        {
+          fieldName: "attachment",
+          name: "more.txt",
+          size: 4,
+          type: "",
+        },
+      ],
+    });
+    const [firstFileId, secondFileId] = progress
+      .at(-1)!
+      .files.map(({ id }) => id);
+    expect(firstFileId).not.toBe(secondFileId);
+    await act(async () => reportUpload({ loaded: 4 }));
+    expect(progress.at(-1)).toMatchObject({
+      status: "pending",
+      loaded: 4,
+      total: 0,
+    });
+    await act(async () => reportUpload({ loaded: 4, total: 12 }));
+    expect(progress.at(-1)).toMatchObject({
+      status: "pending",
+      loaded: 4,
+      total: 12,
+      files: [{ id: firstFileId }, { id: secondFileId }],
+    });
+    await act(async () => reportUpload({ loaded: 12, total: 12 }));
+    expect(progress.at(-1)).toMatchObject({
+      status: "pending",
+      loaded: 12,
+      total: 12,
+      files: [{ id: firstFileId }, { id: secondFileId }],
+    });
+    expect(progress.at(-1)?.files[0]).not.toHaveProperty("progress");
+
+    await act(async () =>
+      finish({ success: false, status: 422, results: [], errors: [] })
+    );
+    expect(progress.at(-1)).toMatchObject({
+      status: "idle",
+      loaded: 12,
+      total: 12,
+      files: [{ id: firstFileId }, { id: secondFileId }],
+    });
+
+    const previousUpload = reportUpload;
+    await act(async () => container.querySelector("button")?.click());
+    expect(states.at(-1)).toBe("initial");
+    expect(progress.at(-1)?.status).toBe("pending");
+    await act(async () => previousUpload({ loaded: 200, total: 200 }));
+    expect(progress.at(-1)).toMatchObject({ loaded: 0, total: 0 });
+    const canceledUpload = reportUpload;
+    await render("next-page");
+    expect(progress.at(-1)).toEqual({
+      status: "idle",
+      loaded: 0,
+      total: 0,
+      files: [],
+    });
+    await act(async () => canceledUpload({ loaded: 12, total: 12 }));
+    expect(progress.at(-1)).toEqual({
+      status: "idle",
+      loaded: 0,
+      total: 0,
+      files: [],
+    });
+    container.querySelector<HTMLInputElement>("input")!.value = "";
+    await act(async () => container.querySelector("button")?.click());
+    expect(progress.at(-1)).toEqual({
+      status: "pending",
+      loaded: 0,
+      total: 0,
+      files: [],
+    });
+    await act(async () =>
+      finish({ success: true, status: 200, results: [], errors: [] })
+    );
+    expect(progress.at(-1)).toEqual({
+      status: "idle",
+      loaded: 0,
+      total: 0,
+      files: [],
+    });
+    expect(states).toEqual([
+      "initial",
+      "error",
+      "initial",
+      "initial",
+      "success",
+    ]);
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+  }
+});
+
+test("Form progress returns to idle when a stale URL makes the result inapplicable", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const initialUrl = window.location.href;
+  const progress: string[] = [];
+  const states: string[] = [];
+  let finish!: (response: ManagedFormResponse) => void;
+  try {
+    await act(async () =>
+      root.render(
+        <ResourceForm
+          action={[{ dataSourceId: "resource-one" }]}
+          onManagedSubmit={() =>
+            new Promise<ManagedFormResponse>((resolve) => {
+              finish = resolve;
+            })
+          }
+          onStateChange={(state) => states.push(state)}
+          onProgressChange={(value) => progress.push(value.status)}
+        >
+          <button type="submit">Send</button>
+        </ResourceForm>
+      )
+    );
+    await act(async () => container.querySelector("button")?.click());
+    expect(progress.at(-1)).toBe("pending");
+    window.history.replaceState(null, "", "#details");
+    await act(async () =>
+      finish({ success: true, status: 200, results: [], errors: [] })
+    );
+    await vi.waitFor(() => expect(progress.at(-1)).toBe("idle"));
+    expect(states).toEqual(["initial"]);
+  } finally {
+    window.history.replaceState(null, "", initialUrl);
+    await act(async () => root.unmount());
+    container.remove();
   }
 });
 
@@ -826,36 +1122,29 @@ test("managed Form reports HTTP and network failures without native navigation",
   document.body.append(container);
   const root = createRoot(container);
   const results: unknown[] = [];
-  const request = vi
-    .fn()
-    .mockRejectedValueOnce(new TypeError("offline"))
-    .mockResolvedValueOnce(
-      Response.json(
-        {
-          success: false,
-          status: 502,
-          results: [
-            {
-              resourceId: "destination",
-              resourceName: "destination",
-              status: 422,
-              body: "Rejected",
-            },
-          ],
-          errors: [
-            {
-              resourceId: "destination",
-              resourceName: "destination",
-              status: 422,
-              body: "Rejected",
-              message: "Rejected",
-            },
-          ],
-        },
-        { status: 502 }
-      )
-    );
-  vi.stubGlobal("fetch", request);
+  FakeFormRequest.requests = [];
+  vi.stubGlobal("XMLHttpRequest", FakeFormRequest);
+  const serverFailure = {
+    success: false,
+    status: 502,
+    results: [
+      {
+        resourceId: "destination",
+        resourceName: "destination",
+        status: 422,
+        body: "Rejected",
+      },
+    ],
+    errors: [
+      {
+        resourceId: "destination",
+        resourceName: "destination",
+        status: 422,
+        body: "Rejected",
+        message: "Rejected",
+      },
+    ],
+  };
   const originalUrl = window.location.href;
   try {
     await act(async () =>
@@ -870,6 +1159,7 @@ test("managed Form reports HTTP and network failures without native navigation",
       )
     );
     await act(async () => container.querySelector("button")?.click());
+    await act(async () => FakeFormRequest.requests[0].onerror?.());
     await vi.waitFor(() => expect(results).toHaveLength(1));
     expect(results[0]).toEqual({
       success: false,
@@ -878,6 +1168,9 @@ test("managed Form reports HTTP and network failures without native navigation",
       errors: [{ status: 502, body: null, message: "Form submission failed" }],
     });
     await act(async () => container.querySelector("button")?.click());
+    await act(async () =>
+      FakeFormRequest.requests[1].respond(serverFailure, 502)
+    );
     await vi.waitFor(() => expect(results).toHaveLength(2));
     expect(results[1]).toEqual({
       success: false,
@@ -900,7 +1193,7 @@ test("managed Form reports HTTP and network failures without native navigation",
         },
       ],
     });
-    expect(request).toHaveBeenCalledTimes(2);
+    expect(FakeFormRequest.requests).toHaveLength(2);
     expect(window.location.href).toBe(originalUrl);
   } finally {
     await act(async () => root.unmount());

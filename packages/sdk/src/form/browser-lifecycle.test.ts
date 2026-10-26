@@ -69,6 +69,23 @@ test("refresh failure cannot replace a successful POST result", async () => {
   expect(callbacks.onFeedback).toHaveBeenCalledOnce();
 });
 
+test("rejected submission clears pending before reporting failure", async () => {
+  const callbacks = createCallbacks();
+  const events: string[] = [];
+  callbacks.onPending = (pending) => events.push(pending ? "pending" : "idle");
+  callbacks.onResult = () => events.push("result");
+  callbacks.onState = () => events.push("state");
+  const controller = new FormSubmissionController(() => callbacks);
+  controller.submit(
+    Promise.reject(new Error("network failed")),
+    new AbortController(),
+    undefined,
+    "https://example.com/form"
+  );
+  await settle();
+  expect(events.slice(0, 4)).toEqual(["pending", "idle", "result", "state"]);
+});
+
 test("duplicate submission aborts and observes the rejected promise", async () => {
   const callbacks = createCallbacks();
   const controller = new FormSubmissionController(() => callbacks);
@@ -120,4 +137,36 @@ test("disposed controller aborts and observes the rejected promise", async () =>
   expect(controller.pending).toBe(false);
   expect(callbacks.onResult).not.toHaveBeenCalled();
   expect(callbacks.onState).not.toHaveBeenCalled();
+});
+
+test("cancel resets an active submission and ignores its late result", async () => {
+  const callbacks = createCallbacks();
+  callbacks.onCancel = vi.fn();
+  const controller = new FormSubmissionController(() => callbacks);
+  let resolve!: (response: ManagedFormResponse) => void;
+  const delayed = new Promise<ManagedFormResponse>((done) => {
+    resolve = done;
+  });
+  const abort = new AbortController();
+  expect(
+    controller.submit(delayed, abort, undefined, "https://example.com/form")
+  ).toBe(true);
+
+  controller.cancel();
+  expect(abort.signal.aborted).toBe(true);
+  expect(controller.pending).toBe(false);
+  expect(callbacks.onCancel).toHaveBeenCalledOnce();
+  resolve(success);
+  await settle();
+  expect(callbacks.onResult).not.toHaveBeenCalled();
+  expect(callbacks.onState).not.toHaveBeenCalled();
+
+  controller.submit(
+    Promise.resolve(success),
+    new AbortController(),
+    undefined,
+    "https://example.com/form"
+  );
+  await settle();
+  expect(callbacks.onState).toHaveBeenCalledExactlyOnceWith("success");
 });
