@@ -39,18 +39,14 @@ const postMultipartForm = ({
     for (const [name, value] of new Headers(headers)) {
       xhr.setRequestHeader(name, value);
     }
-    xhr.upload.onprogress = (event) => {
+    const reportUploadProgress = (event: ProgressEvent) => {
       onUploadProgress?.({
         loaded: event.loaded,
         total: event.lengthComputable ? event.total : undefined,
       });
     };
-    xhr.upload.onload = (event) => {
-      onUploadProgress?.({
-        loaded: event.loaded,
-        total: event.lengthComputable ? event.total : undefined,
-      });
-    };
+    xhr.upload.onprogress = reportUploadProgress;
+    xhr.upload.onload = reportUploadProgress;
     xhr.onload = () => {
       cleanup();
       if (xhr.status === 0) {

@@ -122,6 +122,7 @@ export class FormSubmissionController {
           return;
         }
         const callbacks = this.getCallbacks();
+        callbacks.onPending(false);
         const message =
           error instanceof Error ? error.message : "Form submission failed";
         callbacks.onResult({

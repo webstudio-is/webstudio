@@ -10,7 +10,7 @@ import {
 } from "@webstudio-is/sdk/runtime";
 import { ResourceForm } from "./resource-form";
 import { RemixForm } from "./remix-form";
-import { FetchBackedFormRequest } from "./fetch-backed-form-request.test-helper";
+import { FetchBackedFormRequest } from "../../../scripts/fetch-backed-form-request";
 
 beforeEach(() => vi.stubGlobal("XMLHttpRequest", FetchBackedFormRequest));
 

@@ -4,7 +4,7 @@ import { act } from "react-dom/test-utils";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ResourceForm } from "./resource-form";
-import { FetchBackedFormRequest } from "./fetch-backed-form-request.test-helper";
+import { FetchBackedFormRequest } from "../../../scripts/fetch-backed-form-request";
 
 beforeEach(() => vi.stubGlobal("XMLHttpRequest", FetchBackedFormRequest));
 

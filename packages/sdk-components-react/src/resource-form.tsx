@@ -111,12 +111,6 @@ export const ResourceForm = forwardRef<
     const reportState = (nextState: "initial" | "success" | "error") => {
       setInternalState(nextState);
       onStateChange?.(nextState);
-      if (nextState === "success" || nextState === "error") {
-        uploadController.current = undefined;
-        if (progress.current.status === "pending") {
-          reportProgress({ ...progress.current, status: "idle" });
-        }
-      }
     };
     const reportProgress = (nextProgress: FormProgress) => {
       progress.current = nextProgress;
@@ -139,6 +133,7 @@ export const ResourceForm = forwardRef<
       });
     };
     const reportFailure = (message: string, status = 400) => {
+      uploadController.current = undefined;
       reportProgress({ status: "idle", files: [] });
       onResultChange?.({
         success: false,
@@ -264,13 +259,17 @@ export const ResourceForm = forwardRef<
           }))
       );
       reportProgress({ status: "pending", files });
+      const controller = new AbortController();
+      uploadController.current = controller;
+      const onUploadProgress = (update: UploadProgress) =>
+        reportUploadProgress(update, controller);
       if (onManagedSubmit) {
-        const controller = new AbortController();
-        uploadController.current = controller;
         let submission: void | Promise<ManagedFormResponse>;
         try {
-          submission = onManagedSubmit(values, controller.signal, (update) =>
-            reportUploadProgress(update, controller)
+          submission = onManagedSubmit(
+            values,
+            controller.signal,
+            onUploadProgress
           );
         } catch (error) {
           submission = Promise.reject(error);
@@ -282,8 +281,6 @@ export const ResourceForm = forwardRef<
         }
         return handleSubmission(submission, controller);
       }
-      const controller = new AbortController();
-      uploadController.current = controller;
       const submittedNavigationToken = navigationToken;
       const submittedLocation = window.location.href;
       return handleSubmission(
@@ -292,8 +289,7 @@ export const ResourceForm = forwardRef<
           managedFormId: managedFormId!,
           location: submittedLocation,
           signal: controller.signal,
-          onUploadProgress: (update) =>
-            reportUploadProgress(update, controller),
+          onUploadProgress,
         }),
         controller,
         submittedNavigationToken,

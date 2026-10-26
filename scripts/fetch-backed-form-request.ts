@@ -1,4 +1,4 @@
-/** Lets router tests keep their existing fetch-backed endpoint fakes. */
+/** Lets router and Remix tests keep their existing fetch-backed endpoint fakes. */
 export class FetchBackedFormRequest {
   upload: { onload?: (event: ProgressEvent) => void } = {};
   onload?: () => void;

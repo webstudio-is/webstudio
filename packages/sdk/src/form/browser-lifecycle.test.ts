@@ -69,6 +69,23 @@ test("refresh failure cannot replace a successful POST result", async () => {
   expect(callbacks.onFeedback).toHaveBeenCalledOnce();
 });
 
+test("rejected submission clears pending before reporting failure", async () => {
+  const callbacks = createCallbacks();
+  const events: string[] = [];
+  callbacks.onPending = (pending) => events.push(pending ? "pending" : "idle");
+  callbacks.onResult = () => events.push("result");
+  callbacks.onState = () => events.push("state");
+  const controller = new FormSubmissionController(() => callbacks);
+  controller.submit(
+    Promise.reject(new Error("network failed")),
+    new AbortController(),
+    undefined,
+    "https://example.com/form"
+  );
+  await settle();
+  expect(events.slice(0, 4)).toEqual(["pending", "idle", "result", "state"]);
+});
+
 test("duplicate submission aborts and observes the rejected promise", async () => {
   const callbacks = createCallbacks();
   const controller = new FormSubmissionController(() => callbacks);
