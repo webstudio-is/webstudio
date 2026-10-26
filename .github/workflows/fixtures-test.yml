@@ -76,12 +76,16 @@ jobs:
           find . -type f -path "./fixtures/*/.webstudio/data.json" -exec sed -i 's|"origin": ".*"|"origin": "https://main.development.webstudio.is"|g' {} +
 
       - name: Test git diff
-        # This command will fail if there are uncommitted changes, i.e something has broken
-        run: git diff --name-only HEAD --exit-code
+        # Submodule checkout can move the pinned commit to its current branch.
+        run: |
+          git diff --name-only HEAD --exit-code -- . ':(exclude)packages/sdk-components-animation/private-src'
+          git -C packages/sdk-components-animation/private-src diff --name-only HEAD --exit-code
 
       - name: Show changed files and diff
         if: ${{ failure() }}
         run: |
           echo "Changed files are:"
-          git diff --name-only HEAD
-          git diff HEAD | head -n 1000
+          git diff --name-only HEAD -- . ':(exclude)packages/sdk-components-animation/private-src'
+          git -C packages/sdk-components-animation/private-src diff --name-only HEAD
+          git diff HEAD -- . ':(exclude)packages/sdk-components-animation/private-src' | head -n 1000
+          git -C packages/sdk-components-animation/private-src diff HEAD | head -n 1000

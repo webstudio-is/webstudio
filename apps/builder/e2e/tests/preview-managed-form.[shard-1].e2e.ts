@@ -570,30 +570,21 @@ test("Preview Form preserves browser FormData and runs legacy disabled actions i
   });
 
   await page.addInitScript(() => {
-    const originalFetch = window.fetch;
-    window.fetch = async (input, init) => {
-      const formData = init?.body as FormData | undefined;
-      if (
-        new URL(
-          input instanceof Request ? input.url : String(input),
-          window.location.href
-        ).pathname === "/rest/preview-form" &&
-        typeof formData?.getAll === "function"
-      ) {
-        const upload = formData.get("upload") as File | null;
-        const submission = {
-          tags: formData.getAll("tag"),
-          fileName: upload?.name,
-          fileBytes:
-            typeof upload?.arrayBuffer === "function"
-              ? Array.from(new Uint8Array(await upload.arrayBuffer()))
-              : undefined,
-        };
-        (
-          window as Window & { __previewSubmission?: typeof submission }
-        ).__previewSubmission = submission;
+    const originalSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.send = function (body) {
+      if (body instanceof FormData && body.has("upload")) {
+        const upload = body.get("upload");
+        if (upload instanceof File) {
+          (
+            window as Window & { __previewSubmission?: Promise<unknown> }
+          ).__previewSubmission = upload.arrayBuffer().then((bytes) => ({
+            tags: body.getAll("tag"),
+            fileName: upload.name,
+            fileBytes: Array.from(new Uint8Array(bytes)),
+          }));
+        }
       }
-      return originalFetch(input, init);
+      return originalSend.call(this, body);
     };
   });
   const submissions: Request[] = [];
@@ -660,9 +651,10 @@ test("Preview Form preserves browser FormData and runs legacy disabled actions i
       .frames()
       .map((frame) =>
         frame.evaluate(
-          () =>
-            (window as Window & { __previewSubmission?: unknown })
-              .__previewSubmission
+          async () =>
+            await (
+              window as Window & { __previewSubmission?: Promise<unknown> }
+            ).__previewSubmission
         )
       )
   );

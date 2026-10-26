@@ -1,13 +1,123 @@
 import { expect, test } from "vitest";
-import type { DataSource, Instances } from "@webstudio-is/sdk";
+import type { DataSource, Instances, Props } from "@webstudio-is/sdk";
 import { encodeDataVariableId } from "@webstudio-is/sdk";
+import { getCompletionTarget } from "~/builder/shared/expression-editor";
+import { evaluateExpressionWithinScope } from "~/builder/shared/binding-popover";
 import { getResourceScopeForInstance } from "./resource-scope";
 import {
   getFormDataPreview,
   getBrowserInfoPreview,
   getFormParameterName,
   resolveFormParameterPreview,
+  getFormProgressCompletionScope,
 } from "./form-context-preview";
+
+test("Form file metadata is suggested only for its bound output variable", async () => {
+  const instances: Instances = new Map([
+    [
+      "form",
+      { id: "form", type: "instance", component: "ResourceForm", children: [] },
+    ],
+    [
+      "child",
+      { id: "child", type: "instance", component: "Text", children: [] },
+    ],
+  ]);
+  const output: DataSource = {
+    id: "progress-id",
+    type: "variable",
+    name: "renamedProgress",
+    scopeInstanceId: "form",
+    value: {
+      type: "json",
+      value: { status: "idle", loaded: 0, total: 0, files: [] },
+    },
+  };
+  const unrelated: DataSource = {
+    ...output,
+    id: "unrelated-id",
+    name: "formProgress",
+  };
+  const props: Props = new Map([
+    [
+      "callback",
+      {
+        id: "callback",
+        instanceId: "form",
+        name: "onProgressChange",
+        type: "action",
+        value: [
+          {
+            type: "execute",
+            args: ["value"],
+            code: `${encodeDataVariableId(output.id)} = value`,
+          },
+        ],
+      },
+    ],
+  ]);
+  const key = encodeDataVariableId(output.id);
+  const otherKey = encodeDataVariableId(unrelated.id);
+  const actual = { status: "idle", loaded: 0, total: 0, files: [] };
+  const scope = { [key]: actual, [otherKey]: actual };
+  const args = {
+    instances,
+    props,
+    dataSources: new Map([
+      [output.id, output],
+      [unrelated.id, unrelated],
+    ]),
+    scope,
+  };
+  const completionScope = getFormProgressCompletionScope(args)!;
+  expect(
+    getCompletionTarget({
+      scope: completionScope,
+      path: [key, "files", "0"],
+      name: "",
+    })
+  ).toEqual({
+    id: "example-file",
+    fieldName: "attachment",
+    name: "example.txt",
+    size: 0,
+    type: "text/plain",
+  });
+  expect(
+    getCompletionTarget({
+      scope: completionScope,
+      path: [otherKey, "files", "0"],
+      name: "",
+    })
+  ).toBeUndefined();
+  expect(scope[key].files).toEqual([]);
+  expect(
+    await evaluateExpressionWithinScope(`${key}.files.length`, scope)
+  ).toBe(0);
+  expect(completionScope[key]).not.toBe(scope[key]);
+  expect(
+    getFormProgressCompletionScope({ ...args, scope: { [otherKey]: actual } })
+  ).toBeUndefined();
+
+  const selected = {
+    ...actual,
+    files: [
+      {
+        id: "real",
+        fieldName: "photo",
+        name: "photo.png",
+        size: 12,
+        type: "image/png",
+      },
+    ],
+  };
+  expect(
+    getFormProgressCompletionScope({
+      ...args,
+      scope: { ...scope, [key]: selected },
+    })
+  ).toBeUndefined();
+});
 
 test("form context uses mounted browser controls and excludes unchecked controls", () => {
   const form = document.createElement("form");

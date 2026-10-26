@@ -789,13 +789,14 @@ test("installs generated dependencies through the available windows pnpm launche
   );
 });
 
-test("reports an actionable error when generated dependencies cannot install", async () => {
+test("reports an actionable, stable error when generated dependencies cannot install", async () => {
   const access = vi.fn(async () => {
     throw Object.assign(new Error("missing"), { code: "ENOENT" });
   });
 
-  await expect(
-    ensurePreviewDependencies("/tmp/project/.webstudio/preview", {
+  const failedInstall = ensurePreviewDependencies(
+    "/tmp/project/.webstudio/preview",
+    {
       access,
       execFile: vi.fn(async () => {
         throw new Error("npm failed");
@@ -806,10 +807,14 @@ test("reports an actionable error when generated dependencies cannot install", a
       readFile: vi.fn(async () => '{"dependencies":{"vite":"1.0.0"}}'),
       symlink: vi.fn(async () => undefined),
       platform: "linux",
-    })
-  ).rejects.toThrow(
+    }
+  );
+  await expect(failedInstall).rejects.toThrow(
     "PREVIEW_DEPENDENCY_INSTALL_FAILED: Could not install the generated preview dependencies"
   );
+  await expect(failedInstall).rejects.toMatchObject({
+    code: "PREVIEW_DEPENDENCY_INSTALL_FAILED",
+  });
 });
 
 test("reports sanitized package-manager diagnostics for preview install failures", async () => {
@@ -975,24 +980,40 @@ test("refreshes an iterative generated project without replacing its directory",
   expect(prebuildProject).toHaveBeenCalledOnce();
 });
 
-test("uses current project directory when generation is disabled", async () => {
+test("builds the isolated generated project when generation is disabled", async () => {
   const previousDirectory = cwd();
   const projectDir = join(tmpdir(), `webstudio-preview-test-${randomUUID()}`);
+  const previewProjectDir = getPreviewProjectDir(projectDir);
   const prebuildProject = vi.fn(async () => undefined);
 
-  await mkdir(join(projectDir, ".webstudio"), { recursive: true });
+  await mkdir(previewProjectDir, { recursive: true });
   await writeFile(join(projectDir, ".webstudio", "data.json"), "{}");
+  await writeFile(
+    join(previewProjectDir, "package.json"),
+    JSON.stringify({
+      scripts: {
+        build: `node -e "require('node:fs').writeFileSync('built.txt', 'yes')"`,
+      },
+    })
+  );
   chdir(projectDir);
   try {
-    const currentProjectDir = cwd();
     await expect(
-      preparePreviewProject({
-        assets: true,
-        template: [],
-        generate: false,
-        prebuildProject,
-      })
-    ).resolves.toEqual({ cwd: currentProjectDir });
+      readFile(join(projectDir, "package.json"))
+    ).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    const prepared = await preparePreviewProject({
+      assets: true,
+      template: [],
+      generate: false,
+      prebuildProject,
+    });
+    expect(prepared).toEqual({ cwd: getPreviewProjectDir() });
+    await buildPreparedPreview(prepared);
+    await expect(
+      readFile(join(previewProjectDir, "built.txt"), "utf8")
+    ).resolves.toBe("yes");
   } finally {
     chdir(previousDirectory);
     await rm(projectDir, { recursive: true, force: true });

@@ -1,5 +1,6 @@
 import type { ManagedFormResponse } from "@webstudio-is/sdk/runtime";
 import type { submitManagedForm } from "@webstudio-is/sdk-components-react";
+import type { UploadProgress } from "@webstudio-is/sdk/form/browser";
 import { publish, subscribe } from "~/shared/pubsub";
 
 type PreviewFormValues = Parameters<typeof submitManagedForm>[0]["values"];
@@ -22,6 +23,7 @@ declare module "~/shared/pubsub" {
     previewFormSubmit: PreviewFormRequest;
     previewFormCancel: { id: string };
     previewFormResult: PreviewFormResult;
+    previewFormProgress: { id: string; progress: UploadProgress };
   }
 }
 
@@ -31,7 +33,11 @@ export const submitPreviewForm = ({
   managedFormId,
   path,
   signal,
-}: Omit<PreviewFormRequest, "id"> & { signal: AbortSignal }) => {
+  onUploadProgress,
+}: Omit<PreviewFormRequest, "id"> & {
+  signal: AbortSignal;
+  onUploadProgress?: (progress: UploadProgress) => void;
+}) => {
   if (signal.aborted) {
     return Promise.reject(signal.reason);
   }
@@ -41,6 +47,7 @@ export const submitPreviewForm = ({
     const cleanup = () => {
       clearTimeout(timeoutId);
       unsubscribe();
+      unsubscribeProgress();
       signal.removeEventListener("abort", onAbort);
     };
     const onAbort = () => {
@@ -54,6 +61,11 @@ export const submitPreviewForm = ({
       }
       cleanup();
       resolve(result.response);
+    });
+    const unsubscribeProgress = subscribe("previewFormProgress", (event) => {
+      if (event.id === id && !signal.aborted) {
+        onUploadProgress?.(event.progress);
+      }
     });
     const timeoutId = setTimeout(() => {
       cleanup();

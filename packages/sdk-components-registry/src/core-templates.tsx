@@ -47,6 +47,12 @@ const blockDocument = new Parameter(contentBlockDocumentProp);
 const formData = new Parameter(formDataParameterName);
 const browserInfo = new Parameter(browserInfoParameterName);
 const formState = new Variable("formState", "initial");
+const formProgress = new Variable("formProgress", {
+  status: "idle",
+  loaded: 0,
+  total: 0,
+  files: [],
+});
 const formResults = new Variable("results", []);
 const formErrors = new Variable("errors", []);
 const formError = new Parameter("collectionItem");
@@ -261,6 +267,9 @@ export const coreTemplates = {
         onStateChange={
           new ActionValue(["state"], expression`${formState} = state`)
         }
+        onProgressChange={
+          new ActionValue(["value"], expression`${formProgress} = value`)
+        }
         onResultChange={
           new ActionValue(
             ["result"],
@@ -306,6 +315,23 @@ export const coreTemplates = {
               />
             </Label>
             <Button type="submit">{new PlaceholderValue("Submit")}</Button>
+          </div>
+        )}
+        {setInstanceMeta(
+          { label: "Progress" },
+          <div
+            ws:show={expression`${formProgress}.status === 'pending'`}
+            role="status"
+            aria-live="polite"
+          >
+            {new PlaceholderValue("Submitting…")}
+            <span
+              ws:show={expression`${formProgress}.loaded >= 0 && ${formProgress}.total > 0`}
+            >
+              {
+                expression`" " + ((((${formProgress}.loaded / 100000) + 0.5) | 0) / 10) + " MB / " + ((((${formProgress}.total / 100000) + 0.5) | 0) / 10) + " MB"` as unknown as ReactNode
+              }
+            </span>
           </div>
         )}
         {setInstanceMeta(

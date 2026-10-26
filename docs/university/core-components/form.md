@@ -25,6 +25,7 @@ Insert **Form (Beta)** from **Components > Forms**. On Webstudio Cloud, the defa
 - **Email to owner**, which sends the submitted information and page URL to your project recipients.
 - **Email to visitor**, which sends a confirmation to the submitted email address.
 - Editable success and error messages.
+- An editable message while the Form is submitting.
 
 If you haven’t configured project recipients, the owner notification goes to the account holder.
 
@@ -229,15 +230,16 @@ Navigation mode does not use **Success redirect**. Use Resource actions when you
 
 ## Choose what happens after submission
 
-The default Form contains three containers:
+The default Form contains four containers:
 
 - **Form content** holds the fields.
+- **Progress** shows a message while the Form is submitting.
 - **Success message** appears after success.
 - **Error message** appears after failure.
 
-Their **Show** bindings use `formState` to control visibility. By default, success hides the fields and shows the success message. Failure keeps the fields and entered values visible.
+Their **Show** bindings use `formProgress.status` for Progress and `formState` for the other containers. By default, the fields remain visible while submitting and after a failure. Success hides the fields and shows the success message.
 
-Select the message containers in Navigator to edit their text and design.
+Select the message containers in Navigator to edit their text and design. Progress shows “Submitting…” and, when the browser measures the request, a short byte summary such as “1.2 MB / 3 MB”. The message stays visible while actions finish.
 
 ### Keep the fields visible
 
@@ -272,15 +274,26 @@ The default Form provides these Variables on the Form and its children:
   </picture>
 </figure>
 
+The screenshot predates `formProgress`; newly inserted Forms include it as shown below.
+
 | Variable      | What it contains                                                                                 |
 | ------------- | ------------------------------------------------------------------------------------------------ |
 | `formData`    | Submitted values, keyed by field Name.                                                           |
 | `browserInfo` | The page URL and available visitor details, such as browser, language, referrer, and IP address. |
-| `formState`   | `initial`, `success`, or `error`.                                                                |
+| `formState`   | `initial`, `success`, or `error`.                                                                 |
+| `formProgress` | Submission status, measured request bytes, and selected-file details.                         |
 | `results`     | Action responses in order, including Resource name, HTTP status, and response body.              |
 | `errors`      | Failed action details, including available status, response body, and error message.             |
 
-Use `formData` and `browserInfo` to customize messages and requests. Use `results`, `errors`, and `formState` to display feedback after submission.
+Use `formData` and `browserInfo` to customize messages and requests. Use `formProgress.status` to show when a request is pending, `formState` for its outcome, and `results` and `errors` for action feedback.
+
+`formProgress.status` is `pending` while files upload and actions run. It returns to `idle` when the submission finishes or is canceled. `formProgress.loaded` and `formProgress.total` start at `0`. They count bytes sent for the complete request, including fields and multipart encoding, when the browser can measure them. A `total` of `0` means the total is not yet known. Use `formProgress.loaded / formProgress.total` for a percentage only when `total` is greater than zero.
+
+`formProgress.files` lists each selected file with `id`, `fieldName`, `name`, `size` (bytes), and `type` (MIME type). The browser does not provide reliable transferred byte counts for individual files in this request, so only the whole-request measurements appear in `formProgress.loaded` and `formProgress.total`.
+
+When adding a binding inside a Form, autocomplete shows one example file so you can discover these fields. The example is only a suggestion in the editor; the actual `files` value remains empty until a submission includes files.
+
+The default `formProgress` variable is added to newly inserted Forms. Existing Forms keep their current `formState` bindings and submission message. Navigation mode changes the URL without a managed submission, so it leaves `formProgress` idle with no files.
 
 Create action Resources on the Form itself when they need these local bindings.
 

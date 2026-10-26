@@ -295,7 +295,7 @@ test.each(["formData", "browserInfo"])(
   }
 );
 
-test.each(["state", "onStateChange", "onResultChange"])(
+test.each(["state", "onStateChange", "onProgressChange", "onResultChange"])(
   "required Form variables bound to %s cannot be deleted by a mutation",
   (propName) => {
     const data = renderData(

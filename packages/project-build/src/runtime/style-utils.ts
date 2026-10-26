@@ -1,4 +1,5 @@
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import { parseCssValue } from "@webstudio-is/css-data";
 import type {
   Instance,
   Styles,
@@ -99,15 +100,72 @@ export const collectFontFamiliesFromStyleValue = (value: StyleValue) => {
   return fontFamilies;
 };
 
-export const collectFontFamiliesFromStyleDecls = (
-  styles: Iterable<Pick<StyleDecl, "value">>
+export const collectFontFamiliesFromStyleDecls = <
+  Declaration extends Pick<StyleDecl, "value"> &
+    Partial<Pick<StyleDecl, "property">>,
+>(
+  styles: Iterable<Declaration>,
+  onFamily?: (
+    family: string,
+    styleDecl: Declaration,
+    fromVariable: boolean
+  ) => void
 ) => {
   const fontFamilies = new Set<string>();
-  for (const styleDecl of styles) {
-    for (const fontFamily of collectFontFamiliesFromStyleValue(
-      styleDecl.value
-    )) {
-      fontFamilies.add(fontFamily);
+  const customProperties = new Map<string, StyleValue[]>();
+  const declarations = Array.from(styles);
+  for (const styleDecl of declarations) {
+    if (styleDecl.property?.startsWith("--")) {
+      const values = customProperties.get(styleDecl.property) ?? [];
+      values.push(styleDecl.value);
+      customProperties.set(styleDecl.property, values);
+    }
+  }
+
+  for (const styleDecl of declarations) {
+    const families = new Map<string, boolean>();
+    const addFamily = (family: string, fromVariable: boolean) => {
+      families.set(family, fromVariable || families.get(family) === true);
+    };
+    if (styleDecl.property === "fontFamily") {
+      const visitedVariables = new Set<string>();
+      const collectFromVariable = (
+        value: StyleValue,
+        fromVariable: boolean
+      ) => {
+        traverseStyleValue(value, (item) => {
+          if (item.type === "fontFamily") {
+            for (const family of item.value) {
+              addFamily(family, fromVariable);
+            }
+          }
+          if (item.type === "unparsed") {
+            const parsed = parseCssValue("font-family", item.value);
+            if (parsed.type !== "unparsed") {
+              collectFromVariable(parsed, fromVariable);
+            }
+          }
+          if (item.type === "var") {
+            const name = `--${item.value}`;
+            if (visitedVariables.has(name)) {
+              return;
+            }
+            visitedVariables.add(name);
+            for (const definition of customProperties.get(name) ?? []) {
+              collectFromVariable(definition, true);
+            }
+          }
+        });
+      };
+      collectFromVariable(styleDecl.value, false);
+    } else {
+      for (const family of collectFontFamiliesFromStyleValue(styleDecl.value)) {
+        addFamily(family, false);
+      }
+    }
+    for (const [family, fromVariable] of families) {
+      fontFamilies.add(family);
+      onFamily?.(family, styleDecl, fromVariable);
     }
   }
   return fontFamilies;
