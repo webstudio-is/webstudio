@@ -32,6 +32,8 @@ const operationCommands = new Set([
   "create-resource",
   "update-resource",
   "update-props",
+  "bind-props",
+  "update-styles",
   "get-project-settings",
   "update-project-settings",
 ]);
@@ -287,7 +289,6 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
       name: "template:form",
       meta: { component: "form" },
     });
-
     const inserted = await call("insert-component", {
       parentInstanceId: "instance-root",
       component: "form",
@@ -731,6 +732,61 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
     expect(finalForm.data.props).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "action", value: remainingActions }),
+      ])
+    );
+
+    const statusInstances = await call("list-instances", { pagePath: "/" });
+    const status = (
+      statusInstances.data.instances as Array<{
+        id: string;
+        component: string;
+        label?: string;
+      }>
+    ).find(({ label }) => label === "Status");
+    expect(status?.component).toBe("ws:element");
+    const progressReference = encodeDataSourceVariable(progress?.id ?? "");
+    await call("bind-props", {
+      bindings: [
+        {
+          instanceId: status?.id,
+          name: "aria-label",
+          binding: {
+            type: "expression",
+            value: `${progressReference}.loaded + " / " + ${progressReference}.total`,
+          },
+        },
+      ],
+    });
+    await call("update-styles", {
+      updates: [
+        {
+          instanceId: status?.id,
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ],
+    });
+    await call("refresh");
+    const styledStatus = await call("inspect-instance", {
+      instanceId: status?.id,
+      include: ["props", "styles"],
+    });
+    expect(styledStatus.data.props).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "aria-label",
+          type: "expression",
+          value: `${progressReference}.loaded + " / " + ${progressReference}.total`,
+        }),
+      ])
+    );
+    expect(styledStatus.data.styles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          instanceId: status?.id,
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        }),
       ])
     );
   } finally {

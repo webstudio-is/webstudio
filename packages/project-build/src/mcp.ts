@@ -6029,11 +6029,15 @@ const getTemplateDetails = (input: unknown) => {
     };
   }
   const template = templates.get(item.meta.component);
+  const formUsage =
+    item.meta.component === "form"
+      ? " The Form template adds formProgress: status is idle or pending, loaded and total are optional bytes for the whole request, and files contain id, fieldName, name, size, and type without per-file transfer counts. Find its ID with list-variables and read webstudio://project/expressions before binding the editable Status or its children with bind-props; style them with update-styles. Browser submission supplies live progress; forms.simulate-submission and preview.submit-form report only final outcomes."
+      : "";
   return {
     found: true,
     ...item,
     template: template?.template,
-    usage: `Use insert-component with component "${item.meta.insert.component}" when you want Webstudio to insert this registered template automatically. The files entry is the shadcn-compatible registry:file representation of the same template payload.`,
+    usage: `Use insert-component with component "${item.meta.insert.component}" when you want Webstudio to insert this registered template automatically. The files entry is the shadcn-compatible registry:file representation of the same template payload.${formUsage}`,
   };
 };
 
