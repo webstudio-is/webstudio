@@ -649,7 +649,7 @@ export const preparePreviewProject = async ({
 
   const previewProjectDir = getPreviewProjectDir(projectDir);
   if (generate === false) {
-    return { cwd: projectDir };
+    return { cwd: previewProjectDir };
   }
   const prepareDependencies = async () => {
     reportProgress?.(

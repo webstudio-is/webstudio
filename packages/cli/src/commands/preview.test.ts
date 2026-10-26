@@ -980,24 +980,40 @@ test("refreshes an iterative generated project without replacing its directory",
   expect(prebuildProject).toHaveBeenCalledOnce();
 });
 
-test("uses current project directory when generation is disabled", async () => {
+test("builds the isolated generated project when generation is disabled", async () => {
   const previousDirectory = cwd();
   const projectDir = join(tmpdir(), `webstudio-preview-test-${randomUUID()}`);
+  const previewProjectDir = getPreviewProjectDir(projectDir);
   const prebuildProject = vi.fn(async () => undefined);
 
-  await mkdir(join(projectDir, ".webstudio"), { recursive: true });
+  await mkdir(previewProjectDir, { recursive: true });
   await writeFile(join(projectDir, ".webstudio", "data.json"), "{}");
+  await writeFile(
+    join(previewProjectDir, "package.json"),
+    JSON.stringify({
+      scripts: {
+        build: `node -e "require('node:fs').writeFileSync('built.txt', 'yes')"`,
+      },
+    })
+  );
   chdir(projectDir);
   try {
-    const currentProjectDir = cwd();
     await expect(
-      preparePreviewProject({
-        assets: true,
-        template: [],
-        generate: false,
-        prebuildProject,
-      })
-    ).resolves.toEqual({ cwd: currentProjectDir });
+      readFile(join(projectDir, "package.json"))
+    ).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    const prepared = await preparePreviewProject({
+      assets: true,
+      template: [],
+      generate: false,
+      prebuildProject,
+    });
+    expect(prepared).toEqual({ cwd: getPreviewProjectDir() });
+    await buildPreparedPreview(prepared);
+    await expect(
+      readFile(join(previewProjectDir, "built.txt"), "utf8")
+    ).resolves.toBe("yes");
   } finally {
     chdir(previousDirectory);
     await rm(projectDir, { recursive: true, force: true });
