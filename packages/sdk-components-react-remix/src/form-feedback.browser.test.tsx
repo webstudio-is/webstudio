@@ -50,9 +50,9 @@ test("managed Remix Form scrolls partial failure and reveals visible success", a
     });
   vi.stubGlobal("fetch", async () => Response.json(await action()));
   const ResourceFormFixture = () => {
-    const [state, setState] = useState<
-      "initial" | "success" | "error"
-    >("initial");
+    const [state, setState] = useState<"initial" | "success" | "error">(
+      "initial"
+    );
     return (
       <ResourceForm
         data-ws-managed-form-id="saved-managed-form"

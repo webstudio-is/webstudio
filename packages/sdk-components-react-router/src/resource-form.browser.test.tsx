@@ -124,9 +124,9 @@ test("managed Form posts its server identity and shows the action error", async 
     Response.json(await action({ request: new Request(input, init) }))
   );
   const ResourceFormFixture = () => {
-    const [state, setState] = useState<
-      "initial" | "success" | "error"
-    >("initial");
+    const [state, setState] = useState<"initial" | "success" | "error">(
+      "initial"
+    );
     const [errors, setErrors] = useState<Array<{ message: string }>>([]);
     return (
       <ResourceForm

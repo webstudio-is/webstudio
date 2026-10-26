@@ -72,9 +72,9 @@ test("managed Form reveals partial failure and leaves visible success feedback i
     });
   mockManagedHttpAction(action);
   const ResourceFormFixture = () => {
-    const [state, setState] = useState<
-      "initial" | "success" | "error"
-    >("initial");
+    const [state, setState] = useState<"initial" | "success" | "error">(
+      "initial"
+    );
     return (
       <ResourceForm
         data-ws-managed-form-id="saved-managed-form"
@@ -143,9 +143,9 @@ test("managed Form reveals authored Error Message on repeated failures", async (
   }));
   mockManagedHttpAction(action);
   const ResourceFormFixture = () => {
-    const [state, setState] = useState<
-      "initial" | "success" | "error"
-    >("initial");
+    const [state, setState] = useState<"initial" | "success" | "error">(
+      "initial"
+    );
     const [errors, setErrors] = useState<Array<{ message: string }>>([]);
     return (
       <ResourceForm
@@ -198,9 +198,9 @@ test("managed Form reveals authored Error Message on repeated failures", async (
 test("managed Form reveals a persistent configuration error", async () => {
   const action = vi.fn();
   const ResourceFormFixture = () => {
-    const [state, setState] = useState<
-      "initial" | "success" | "error"
-    >("initial");
+    const [state, setState] = useState<"initial" | "success" | "error">(
+      "initial"
+    );
     const [errors, setErrors] = useState<Array<{ message: string }>>([]);
     return (
       <ResourceForm
@@ -256,9 +256,9 @@ test("managed Form follows a valid success redirect without scrolling feedback",
     .mockResolvedValue({ success: true, status: 200, results: [], errors: [] });
   mockManagedHttpAction(action);
   const ResourceFormFixture = () => {
-    const [state, setState] = useState<
-      "initial" | "success" | "error"
-    >("initial");
+    const [state, setState] = useState<"initial" | "success" | "error">(
+      "initial"
+    );
     return (
       <ResourceForm
         data-ws-managed-form-id="saved-managed-form"

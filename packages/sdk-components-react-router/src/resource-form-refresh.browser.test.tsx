@@ -116,9 +116,9 @@ test("success feedback scroll waits until delayed route revalidation settles", a
     bottom: window.innerHeight + 20,
   } as DOMRect);
   const Page = () => {
-    const [state, setState] = useState<
-      "initial" | "success" | "error"
-    >("initial");
+    const [state, setState] = useState<"initial" | "success" | "error">(
+      "initial"
+    );
     const { value } = useLoaderData() as { value: number };
     return (
       <>
@@ -173,9 +173,9 @@ test("success feedback stays visible when restoration follows route idle", async
   vi.stubGlobal("fetch", async () => Response.json(success));
   vi.stubGlobal("matchMedia", () => ({ matches: true }));
   const Page = () => {
-    const [state, setState] = useState<
-      "initial" | "success" | "error"
-    >("initial");
+    const [state, setState] = useState<"initial" | "success" | "error">(
+      "initial"
+    );
     return (
       <>
         <ScrollRestoration />
@@ -417,9 +417,9 @@ test("refresh failure retains the completed success result and does not replay P
     bottom: window.innerHeight + 20,
   } as DOMRect);
   const Page = () => {
-    const [state, setState] = useState<
-      "initial" | "success" | "error"
-    >("initial");
+    const [state, setState] = useState<"initial" | "success" | "error">(
+      "initial"
+    );
     const { value } = useLoaderData() as { value: string };
     return (
       <>
