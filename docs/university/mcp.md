@@ -9,7 +9,7 @@ icon: robot
 
 # Webstudio MCP
 
-**Webstudio MCP v0.307.0**
+**Webstudio MCP v0.308.0**
 
 ## Introduction
 
