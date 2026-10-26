@@ -18,14 +18,17 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
 
         window.formStates = [];
         window.formResults = [];
+        window.formProgress = [];
         createRoot(document.getElementById("root")).render(
           createElement(ResourceForm, {
             "data-ws-managed-form-id": "form-one",
             action: [{ dataSourceId: "destination" }],
             onStateChange: (state) => window.formStates.push(state),
             onResultChange: (result) => window.formResults.push(result),
+            onProgressChange: (progress) => window.formProgress.push(progress),
           },
             createElement("input", { name: "message", defaultValue: "Hello" }),
+            createElement("input", { name: "attachment", type: "file" }),
             createElement("button", { type: "submit" }, "Send")
           )
         );
@@ -127,6 +130,11 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
     const page = await browser.newPage();
     await page.goto(url);
     const form = page.locator("form");
+    await page.locator('input[type="file"]').setInputFiles({
+      name: "note.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("attached"),
+    });
     await page.getByRole("button", { name: "Send" }).click();
     await expect.poll(() => requests.length).toBe(1);
     expect(await form.getAttribute("aria-busy")).toBe("true");
@@ -136,7 +144,33 @@ test("a router-free Form submits to a real JSON endpoint", async () => {
       `/__ws-form?${managedFormRequestParamName}=1`
     );
     expect(requests[0].formData.get("message")).toBe("Hello");
+    expect((requests[0].formData.get("attachment") as File).name).toBe(
+      "note.txt"
+    );
     expect(requests[0].formData.get(managedFormIdFieldName)).toBe("form-one");
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            (
+              window as Window & {
+                formProgress?: Array<{
+                  loaded?: number;
+                  total?: number;
+                  files: Array<{ name: string }>;
+                }>;
+              }
+            ).formProgress?.some(
+              (progress) =>
+                progress.total !== undefined &&
+                progress.total > 0 &&
+                progress.loaded === progress.total &&
+                progress.files[0]?.name === "note.txt"
+            ) ?? false
+        )
+      )
+      .toBe(true);
+    expect(await form.getAttribute("aria-busy")).toBe("true");
     completeFirstRequest?.();
     await page.locator('form[data-state="success"]').waitFor();
     expect(page.url()).toBe(`${url}/`);

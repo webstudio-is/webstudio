@@ -20,6 +20,8 @@ import {
   getFormDataValue,
   submitManagedForm,
   type FormSubmissionCallbacks,
+  type FormProgress,
+  type UploadProgress,
 } from "@webstudio-is/sdk/form/browser";
 import { useFormFeedbackScroll } from "./form-feedback-scroll";
 
@@ -34,9 +36,11 @@ export const ResourceForm = forwardRef<
     state?: "initial" | "success" | "error";
     onStateChange?: (state: "initial" | "success" | "error") => void;
     onResultChange?: (result: ManagedFormResponse) => void;
+    onProgressChange?: (progress: FormProgress) => void;
     onManagedSubmit?: (
       formData: ReturnType<typeof getFormDataValue>,
-      signal: AbortSignal
+      signal: AbortSignal,
+      onUploadProgress?: (progress: UploadProgress) => void
     ) => void | Promise<ManagedFormResponse>;
     onQueryNavigate?: (url: string) => void;
     getRedirectBaseUrl?: () => string;
@@ -57,6 +61,7 @@ export const ResourceForm = forwardRef<
       state,
       onStateChange,
       onResultChange,
+      onProgressChange,
       onManagedSubmit,
       onQueryNavigate,
       getRedirectBaseUrl,
@@ -76,6 +81,8 @@ export const ResourceForm = forwardRef<
       "initial" | "success" | "error"
     >("initial");
     const callbacks = useRef<FormSubmissionCallbacks>();
+    const progress = useRef<FormProgress>({ status: "idle", files: [] });
+    const uploadController = useRef<AbortController>();
     const submissionController = useRef<FormSubmissionController>();
     submissionController.current ??= new FormSubmissionController(
       () => callbacks.current!
@@ -104,8 +111,35 @@ export const ResourceForm = forwardRef<
     const reportState = (nextState: "initial" | "success" | "error") => {
       setInternalState(nextState);
       onStateChange?.(nextState);
+      if (nextState === "success" || nextState === "error") {
+        uploadController.current = undefined;
+        if (progress.current.status === "pending") {
+          reportProgress({ ...progress.current, status: "idle" });
+        }
+      }
+    };
+    const reportProgress = (nextProgress: FormProgress) => {
+      progress.current = nextProgress;
+      onProgressChange?.(nextProgress);
+    };
+    const reportUploadProgress = (
+      update: UploadProgress,
+      controller: AbortController
+    ) => {
+      if (
+        controller.signal.aborted ||
+        uploadController.current !== controller
+      ) {
+        return;
+      }
+      reportProgress({
+        ...progress.current,
+        loaded: update.loaded,
+        total: update.total,
+      });
     };
     const reportFailure = (message: string, status = 400) => {
+      reportProgress({ status: "idle", files: [] });
       onResultChange?.({
         success: false,
         status,
@@ -116,7 +150,17 @@ export const ResourceForm = forwardRef<
       revealFeedback();
     };
     callbacks.current = {
-      onPending: setPending,
+      onPending: (isPending) => {
+        setPending(isPending);
+        if (!isPending && progress.current.status === "pending") {
+          uploadController.current = undefined;
+          reportProgress({ ...progress.current, status: "idle" });
+        }
+      },
+      onCancel: () => {
+        uploadController.current = undefined;
+        reportProgress({ status: "idle", files: [] });
+      },
       onResult: (result) => onResultChange?.(result),
       onState: reportState,
       onFeedback: revealFeedback,
@@ -204,20 +248,42 @@ export const ResourceForm = forwardRef<
         event.currentTarget,
         submitter instanceof HTMLElement ? submitter : undefined
       );
+      let fileIndex = 0;
+      const files = Object.entries(values).flatMap(([fieldName, value]) =>
+        (Array.isArray(value) ? value : [value])
+          .filter(
+            (entry): entry is File =>
+              entry instanceof File && !(entry.name === "" && entry.size === 0)
+          )
+          .map((file) => ({
+            id: String(fileIndex++),
+            fieldName,
+            name: file.name,
+            size: file.size,
+            type: file.type,
+          }))
+      );
+      reportProgress({ status: "pending", files });
       if (onManagedSubmit) {
         const controller = new AbortController();
+        uploadController.current = controller;
         let submission: void | Promise<ManagedFormResponse>;
         try {
-          submission = onManagedSubmit(values, controller.signal);
+          submission = onManagedSubmit(values, controller.signal, (update) =>
+            reportUploadProgress(update, controller)
+          );
         } catch (error) {
           submission = Promise.reject(error);
         }
         if (submission === undefined) {
+          uploadController.current = undefined;
+          reportProgress({ status: "idle", files: [] });
           return;
         }
         return handleSubmission(submission, controller);
       }
       const controller = new AbortController();
+      uploadController.current = controller;
       const submittedNavigationToken = navigationToken;
       const submittedLocation = window.location.href;
       return handleSubmission(
@@ -226,6 +292,8 @@ export const ResourceForm = forwardRef<
           managedFormId: managedFormId!,
           location: submittedLocation,
           signal: controller.signal,
+          onUploadProgress: (update) =>
+            reportUploadProgress(update, controller),
         }),
         controller,
         submittedNavigationToken,
@@ -264,9 +332,11 @@ export const ResourceForm = forwardRef<
         <fieldset disabled={!hydrated} style={{ display: "contents" }}>
           <div style={{ display: "contents" }}>{children}</div>
         </fieldset>
-        <output role="status" aria-live="polite">
-          {pending ? "Submitting…" : ""}
-        </output>
+        {onProgressChange === undefined && (
+          <output role="status" aria-live="polite">
+            {pending ? "Submitting…" : ""}
+          </output>
+        )}
       </form>
     );
   }

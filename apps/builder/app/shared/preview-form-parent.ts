@@ -14,7 +14,10 @@ import {
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import type { Publish } from "~/shared/pubsub";
 import { subscribe } from "~/shared/pubsub";
-import { fetch as builderFetch } from "~/shared/fetch.client";
+import {
+  getBuilderRequestHeaders,
+  inspectBuilderResponse,
+} from "~/shared/fetch.client";
 import { submitManagedForm } from "@webstudio-is/sdk-components-react";
 import type { PreviewFormRequest } from "./preview-form-bridge";
 
@@ -39,7 +42,10 @@ const getPreviewFormErrorMessage = (error: unknown) => {
 };
 
 /** Keep authenticated Preview requests in the Builder, outside the Canvas. */
-export const subscribePreviewFormRequests = (publish: Publish) => {
+export const subscribePreviewFormRequests = (
+  publish: Publish,
+  submit: typeof submitManagedForm = submitManagedForm
+) => {
   const requests = new Map<string, AbortController>();
   const unsubscribeValues = subscribe(
     "previewFormValues",
@@ -70,13 +76,22 @@ export const subscribePreviewFormRequests = (publish: Publish) => {
         await draftPersistence.wait(projectId, { signal: controller.signal });
         const endpoint = new URL("/rest/preview-form", window.location.href);
         endpoint.searchParams.set("path", path);
-        const response = await submitManagedForm({
+        const response = await submit({
           values,
           managedFormId,
           location: window.location.href,
           endpoint: endpoint.href,
-          fetch: builderFetch,
+          headers: getBuilderRequestHeaders(),
+          onResponse: inspectBuilderResponse,
           signal: controller.signal,
+          onUploadProgress: (progress) => {
+            if (!controller.signal.aborted) {
+              publish({
+                type: "previewFormProgress",
+                payload: { id, progress },
+              });
+            }
+          },
         });
         if (!controller.signal.aborted) {
           const { previewExchanges, previewBrowserInfo, ...publicResponse } =

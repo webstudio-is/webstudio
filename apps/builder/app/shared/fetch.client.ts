@@ -13,20 +13,14 @@ import { publicStaticEnv } from "~/env/env.static";
  */
 const _fetch = globalThis.fetch;
 
-/**
- * To avoid fetch interception from the canvas, i.e., `globalThis.fetch = () => console.log('INTERCEPTED');`,
- * To add csrf token to the headers.
- */
-export const fetch: typeof globalThis.fetch = async (
-  requestInfo,
-  requestInit
-) => {
+/** Apply the Builder request headers to both fetch and Form uploads. */
+export const getBuilderRequestHeaders = (initial?: HeadersInit) => {
   if (csrfToken === undefined) {
     toast.error("CSRF token is not set.");
     throw new Error("CSRF token is not set.");
   }
 
-  const headers = new Headers(requestInit?.headers);
+  const headers = new Headers(initial);
 
   headers.set("X-CSRF-Token", csrfToken);
   headers.set(apiClientHeader, "browser");
@@ -40,13 +34,10 @@ export const fetch: typeof globalThis.fetch = async (
     headers.set("x-auth-token", authToken);
   }
 
-  const modifiedInit: RequestInit = {
-    ...requestInit,
-    cache: requestInit?.cache ?? "no-store",
-    headers,
-  };
+  return headers;
+};
 
-  const response = await _fetch(requestInfo, modifiedInit);
+export const inspectBuilderResponse = async (response: Response) => {
   if (response.ok === false) {
     const contentType = response.headers.get("Content-Type") ?? "";
     if (contentType.includes("application/json")) {
@@ -64,6 +55,22 @@ export const fetch: typeof globalThis.fetch = async (
       }
     }
   }
+};
+
+export const fetch: typeof globalThis.fetch = async (
+  requestInfo,
+  requestInit
+) => {
+  const headers = getBuilderRequestHeaders(requestInit?.headers);
+
+  const modifiedInit: RequestInit = {
+    ...requestInit,
+    cache: requestInit?.cache ?? "no-store",
+    headers,
+  };
+
+  const response = await _fetch(requestInfo, modifiedInit);
+  await inspectBuilderResponse(response);
 
   return response;
 };

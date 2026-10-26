@@ -121,3 +121,35 @@ test("disposed controller aborts and observes the rejected promise", async () =>
   expect(callbacks.onResult).not.toHaveBeenCalled();
   expect(callbacks.onState).not.toHaveBeenCalled();
 });
+
+test("cancel resets an active submission and ignores its late result", async () => {
+  const callbacks = createCallbacks();
+  callbacks.onCancel = vi.fn();
+  const controller = new FormSubmissionController(() => callbacks);
+  let resolve!: (response: ManagedFormResponse) => void;
+  const delayed = new Promise<ManagedFormResponse>((done) => {
+    resolve = done;
+  });
+  const abort = new AbortController();
+  expect(
+    controller.submit(delayed, abort, undefined, "https://example.com/form")
+  ).toBe(true);
+
+  controller.cancel();
+  expect(abort.signal.aborted).toBe(true);
+  expect(controller.pending).toBe(false);
+  expect(callbacks.onCancel).toHaveBeenCalledOnce();
+  resolve(success);
+  await settle();
+  expect(callbacks.onResult).not.toHaveBeenCalled();
+  expect(callbacks.onState).not.toHaveBeenCalled();
+
+  controller.submit(
+    Promise.resolve(success),
+    new AbortController(),
+    undefined,
+    "https://example.com/form"
+  );
+  await settle();
+  expect(callbacks.onState).toHaveBeenCalledExactlyOnceWith("success");
+});

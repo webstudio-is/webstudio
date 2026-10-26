@@ -2,8 +2,11 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ResourceForm } from "./resource-form";
+import { FetchBackedFormRequest } from "./fetch-backed-form-request.test-helper";
+
+beforeEach(() => vi.stubGlobal("XMLHttpRequest", FetchBackedFormRequest));
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -47,9 +50,9 @@ test("managed Remix Form scrolls partial failure and reveals visible success", a
     });
   vi.stubGlobal("fetch", async () => Response.json(await action()));
   const ResourceFormFixture = () => {
-    const [state, setState] = useState<"initial" | "success" | "error">(
-      "initial"
-    );
+    const [state, setState] = useState<
+      "initial" | "success" | "error"
+    >("initial");
     return (
       <ResourceForm
         data-ws-managed-form-id="saved-managed-form"

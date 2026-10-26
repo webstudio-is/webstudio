@@ -1613,6 +1613,7 @@ export const isRequiredManagedFormVariable = (
   const requiredPropNames = new Set([
     "state",
     "onStateChange",
+    "onProgressChange",
     "onResultChange",
   ]);
   const dataSourceReferences = /\$ws\$dataSource\$[\w$]+/g;

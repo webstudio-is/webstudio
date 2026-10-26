@@ -7,8 +7,11 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from "react-router";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ResourceForm } from "./resource-form";
+import { FetchBackedFormRequest } from "./fetch-backed-form-request.test-helper";
+
+beforeEach(() => vi.stubGlobal("XMLHttpRequest", FetchBackedFormRequest));
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -113,9 +116,9 @@ test("success feedback scroll waits until delayed route revalidation settles", a
     bottom: window.innerHeight + 20,
   } as DOMRect);
   const Page = () => {
-    const [state, setState] = useState<"initial" | "success" | "error">(
-      "initial"
-    );
+    const [state, setState] = useState<
+      "initial" | "success" | "error"
+    >("initial");
     const { value } = useLoaderData() as { value: number };
     return (
       <>
@@ -170,9 +173,9 @@ test("success feedback stays visible when restoration follows route idle", async
   vi.stubGlobal("fetch", async () => Response.json(success));
   vi.stubGlobal("matchMedia", () => ({ matches: true }));
   const Page = () => {
-    const [state, setState] = useState<"initial" | "success" | "error">(
-      "initial"
-    );
+    const [state, setState] = useState<
+      "initial" | "success" | "error"
+    >("initial");
     return (
       <>
         <ScrollRestoration />
@@ -280,6 +283,11 @@ test("failed submissions skip refresh and a later successful submission refreshe
     await vi.waitFor(() => expect(loader).toHaveBeenCalledTimes(1));
     await act(async () => container.querySelector("button")?.click());
     await vi.waitFor(() => expect(posts).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() =>
+      expect(container.querySelector("form")?.hasAttribute("aria-busy")).toBe(
+        false
+      )
+    );
     expect(loader).toHaveBeenCalledTimes(1);
     await act(async () => container.querySelector("button")?.click());
     await vi.waitFor(() =>
@@ -409,9 +417,9 @@ test("refresh failure retains the completed success result and does not replay P
     bottom: window.innerHeight + 20,
   } as DOMRect);
   const Page = () => {
-    const [state, setState] = useState<"initial" | "success" | "error">(
-      "initial"
-    );
+    const [state, setState] = useState<
+      "initial" | "success" | "error"
+    >("initial");
     const { value } = useLoaderData() as { value: string };
     return (
       <>

@@ -340,9 +340,11 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
       scopeInstanceId: string;
     }>;
     const formState = formVariables.find(({ name }) => name === "formState");
+    const progress = formVariables.find(({ name }) => name === "formProgress");
     const results = formVariables.find(({ name }) => name === "results");
     const errors = formVariables.find(({ name }) => name === "errors");
-    expect([formState, results, errors]).toEqual([
+    expect([formState, progress, results, errors]).toEqual([
+      expect.objectContaining({ scopeInstanceId: form?.id }),
       expect.objectContaining({ scopeInstanceId: form?.id }),
       expect.objectContaining({ scopeInstanceId: form?.id }),
       expect.objectContaining({ scopeInstanceId: form?.id }),
@@ -357,6 +359,17 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
               type: "execute",
               args: ["state"],
               code: `${encodeDataSourceVariable(formState?.id ?? "")} = state`,
+            }),
+          ],
+        }),
+        expect.objectContaining({
+          name: "onProgressChange",
+          type: "action",
+          value: [
+            expect.objectContaining({
+              type: "execute",
+              args: ["value"],
+              code: `${encodeDataSourceVariable(progress?.id ?? "")} = value`,
             }),
           ],
         }),
