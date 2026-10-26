@@ -274,6 +274,8 @@ The default Form provides these Variables on the Form and its children:
   </picture>
 </figure>
 
+The screenshot predates `formProgress`; newly inserted Forms include it as shown below.
+
 | Variable      | What it contains                                                                                 |
 | ------------- | ------------------------------------------------------------------------------------------------ |
 | `formData`    | Submitted values, keyed by field Name.                                                           |
