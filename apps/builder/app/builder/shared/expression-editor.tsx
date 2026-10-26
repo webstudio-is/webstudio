@@ -1,4 +1,10 @@
-import { useEffect, useMemo, type RefObject } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  type RefObject,
+} from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
 import { Facet, RangeSetBuilder } from "@codemirror/state";
@@ -100,10 +106,16 @@ export const formatValuePreview = (value: unknown) => {
 
 type Scope = Record<string, unknown>;
 
+/** Allows an editor owner to supply examples without changing actual values. */
+export const ExpressionCompletionScopeContext = createContext<
+  ((scope: Scope) => Scope | undefined) | undefined
+>(undefined);
+
 type Aliases = Map<string, string>;
 
 const VariablesData = Facet.define<{
   scope: Scope;
+  completionScope: Scope;
   aliases: Aliases;
 }>();
 
@@ -379,12 +391,12 @@ export const getCompletionReplacement = ({
 // object (for example `globalThis`). Will enter properties
 // of the object when completing properties on a directly-named path.
 const scopeCompletionSource: CompletionSource = (context) => {
-  const [{ scope }] = context.state.facet(VariablesData);
+  const [{ completionScope }] = context.state.facet(VariablesData);
   const path = completionPath(context);
   if (path === undefined) {
     return null;
   }
-  const target = getCompletionTarget({ ...path, scope });
+  const target = getCompletionTarget({ ...path, scope: completionScope });
   if (target === undefined) {
     return null;
   }
@@ -594,6 +606,11 @@ export const ExpressionEditor = ({
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
 }) => {
+  const resolveCompletionScope = useContext(ExpressionCompletionScopeContext);
+  const completionScope = useMemo(
+    () => resolveCompletionScope?.(scope),
+    [resolveCompletionScope, scope]
+  );
   const normalizedValue = normalizeEditorValue(value);
   const { nameById, idByName } = useMemo(() => {
     const nameById = new Map();
@@ -623,6 +640,19 @@ export const ExpressionEditor = ({
     }
     return newScope;
   }, [scope, aliases]);
+  const completionScopeWithUnsetVariables = useMemo(() => {
+    if (completionScope === undefined) {
+      return scopeWithUnsetVariables;
+    }
+    const newScope: Scope = {};
+    for (const [identifier, value] of Object.entries(completionScope)) {
+      const name = aliases.get(identifier);
+      if (name) {
+        newScope[encodeDataVariableName(name)] = value;
+      }
+    }
+    return newScope;
+  }, [completionScope, scopeWithUnsetVariables, aliases]);
   const aliasesWithUnsetVariables = useMemo(() => {
     const newAliases: typeof aliases = new Map();
     for (const [_identifier, name] of aliases) {
@@ -638,6 +668,7 @@ export const ExpressionEditor = ({
       javascript({}),
       VariablesData.of({
         scope: scopeWithUnsetVariables,
+        completionScope: completionScopeWithUnsetVariables,
         aliases: aliasesWithUnsetVariables,
       }),
       // render autocomplete in body
@@ -654,7 +685,13 @@ export const ExpressionEditor = ({
       ...(showLineNumbers ? [lineNumbers()] : []),
       ...(size === "full" ? [fullSizeEditorTheme] : []),
     ],
-    [scopeWithUnsetVariables, aliasesWithUnsetVariables, size, showLineNumbers]
+    [
+      scopeWithUnsetVariables,
+      completionScopeWithUnsetVariables,
+      aliasesWithUnsetVariables,
+      size,
+      showLineNumbers,
+    ]
   );
   const dialogExtensions = useMemo(
     () => [

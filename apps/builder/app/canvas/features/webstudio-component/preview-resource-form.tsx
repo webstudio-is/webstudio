@@ -56,7 +56,12 @@ export const PreviewResourceForm = forwardRef<
   useEffect(
     () => () => {
       onStateChangeRef.current?.("initial");
-      onProgressChangeRef.current?.({ status: "idle", files: [] });
+      onProgressChangeRef.current?.({
+        status: "idle",
+        loaded: 0,
+        total: 0,
+        files: [],
+      });
     },
     []
   );

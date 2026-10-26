@@ -91,12 +91,17 @@ test("Preview clears in-flight Form transfer details on renderer switch", async 
     const isPreviewMode = useStore($isPreviewMode);
     const [progress, setProgress] = useState<FormProgress>({
       status: "idle",
+      loaded: 0,
+      total: 0,
       files: [],
     });
     return (
       <>
         <output data-transfer-files>{progress.files.length}</output>
         <output data-transfer-status>{progress.status}</output>
+        <output data-transfer-bytes>
+          {progress.loaded}/{progress.total}
+        </output>
         {isPreviewMode ? (
           <__testing__.PreviewResourceForm
             action={[{ dataSourceId: "request" }]}
@@ -131,6 +136,9 @@ test("Preview clears in-flight Form transfer details on renderer switch", async 
   );
   expect(container.querySelector("[data-transfer-status]")?.textContent).toBe(
     "idle"
+  );
+  expect(container.querySelector("[data-transfer-bytes]")?.textContent).toBe(
+    "0/0"
   );
   await act(async () => $builderMode.set("preview"));
   expect(container.querySelector("[data-transfer-files]")?.textContent).toBe(

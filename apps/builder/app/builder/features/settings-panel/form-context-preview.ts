@@ -1,4 +1,14 @@
-import type { DataSource, Instances } from "@webstudio-is/sdk";
+import type {
+  DataSource,
+  DataSources,
+  Instances,
+  Props,
+} from "@webstudio-is/sdk";
+import {
+  decodeDataSourceVariable,
+  encodeDataSourceVariable,
+} from "@webstudio-is/sdk";
+import { transpileExpression } from "@webstudio-is/expression";
 import {
   browserInfoParameterName,
   formDataParameterName,
@@ -85,4 +95,81 @@ export const resolveFormParameterPreview = (
         getFormDataPreview(formId))
       : getBrowserInfoPreview(liveBrowserInfo.get(formId));
   return { name, value: toPublicPreviewValue(value) };
+};
+
+/** Add an example file only to autocomplete for a visible Form output variable. */
+export const getFormProgressCompletionScope = ({
+  instances,
+  props,
+  dataSources,
+  scope,
+}: {
+  instances: Instances;
+  props: Props;
+  dataSources: DataSources;
+  scope: Record<string, unknown>;
+}) => {
+  let completionScope: Record<string, unknown> | undefined;
+  for (const callback of props.values()) {
+    if (
+      callback.name !== "onProgressChange" ||
+      callback.type !== "action" ||
+      instances.get(callback.instanceId)?.component !== "ResourceForm"
+    ) {
+      continue;
+    }
+    const assigned = new Set<string>();
+    for (const action of callback.value) {
+      try {
+        transpileExpression({
+          expression: action.code,
+          replaceVariable: (identifier, assignee) => {
+            if (assignee) {
+              assigned.add(identifier);
+            }
+          },
+        });
+      } catch {
+        assigned.clear();
+        break;
+      }
+    }
+    if (assigned.size !== 1) {
+      continue;
+    }
+    const sourceId = decodeDataSourceVariable(assigned.values().next().value!);
+    const source =
+      sourceId === undefined ? undefined : dataSources.get(sourceId);
+    if (
+      source?.type !== "variable" ||
+      source.scopeInstanceId !== callback.instanceId
+    ) {
+      continue;
+    }
+    const key = encodeDataSourceVariable(source.id);
+    const value = scope[key];
+    if (
+      typeof value !== "object" ||
+      value === null ||
+      !("files" in value) ||
+      !Array.isArray(value.files) ||
+      value.files.length !== 0
+    ) {
+      continue;
+    }
+    completionScope ??= { ...scope };
+    completionScope[key] = {
+      ...value,
+      files: [
+        {
+          id: "example-file",
+          fieldName: "attachment",
+          name: "example.txt",
+          size: 0,
+          type: "text/plain",
+        },
+      ],
+    };
+  }
+  return completionScope;
 };

@@ -236,6 +236,13 @@ test("Form Progress shows measured request bytes while the Form is pending", () 
   const formProgress = fragment.dataSources?.find(
     ({ name }) => name === "formProgress"
   )!;
+  if (formProgress.type !== "variable") {
+    throw new Error("Expected a Form progress variable");
+  }
+  expect(formProgress.value).toEqual({
+    type: "json",
+    value: { status: "idle", loaded: 0, total: 0, files: [] },
+  });
   const status = fragment.instances.find(({ label }) => label === "Progress")!;
   const showStatus = fragment.props.find(
     ({ instanceId, name }) =>

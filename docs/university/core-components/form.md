@@ -285,9 +285,11 @@ The default Form provides these Variables on the Form and its children:
 
 Use `formData` and `browserInfo` to customize messages and requests. Use `formProgress.status` to show when a request is pending, `formState` for its outcome, and `results` and `errors` for action feedback.
 
-`formProgress.status` is `pending` while files upload and actions run. It returns to `idle` when the submission finishes or is canceled. `formProgress.loaded` and `formProgress.total` are the bytes sent for the complete request, including fields and multipart encoding. These numbers appear only when the browser can measure them; `total` may be unavailable. Use `formProgress.loaded / formProgress.total` for a percentage only when `total` is available and greater than zero.
+`formProgress.status` is `pending` while files upload and actions run. It returns to `idle` when the submission finishes or is canceled. `formProgress.loaded` and `formProgress.total` start at `0`. They count bytes sent for the complete request, including fields and multipart encoding, when the browser can measure them. A `total` of `0` means the total is not yet known. Use `formProgress.loaded / formProgress.total` for a percentage only when `total` is greater than zero.
 
 `formProgress.files` lists each selected file with `id`, `fieldName`, `name`, `size` (bytes), and `type` (MIME type). The browser does not provide reliable transferred byte counts for individual files in this request, so only the whole-request measurements appear in `formProgress.loaded` and `formProgress.total`.
+
+When adding a binding inside a Form, autocomplete shows one example file so you can discover these fields. The example is only a suggestion in the editor; the actual `files` value remains empty until a submission includes files.
 
 The default `formProgress` variable is added to newly inserted Forms. Existing Forms keep their current `formState` bindings and submission message. Navigation mode changes the URL without a managed submission, so it leaves `formProgress` idle with no files.
 

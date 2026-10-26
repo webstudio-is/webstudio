@@ -178,6 +178,7 @@ test("a StrictMode Form aborts an active request on real unmount", async () => {
   document.body.append(container);
   const root = createRoot(container);
   let signal: AbortSignal | undefined;
+  const onProgressChange = vi.fn();
   try {
     await act(async () => {
       root.render(
@@ -188,6 +189,7 @@ test("a StrictMode Form aborts an active request on real unmount", async () => {
               signal = requestSignal;
               return new Promise(() => {});
             }}
+            onProgressChange={onProgressChange}
           >
             <button type="submit">Send</button>
           </ResourceForm>
@@ -196,11 +198,72 @@ test("a StrictMode Form aborts an active request on real unmount", async () => {
     });
     await act(async () => container.querySelector("button")?.click());
     expect(signal?.aborted).toBe(false);
+    expect(onProgressChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "pending" })
+    );
   } finally {
     await act(async () => root.unmount());
     container.remove();
   }
   expect(signal?.aborted).toBe(true);
+  expect(onProgressChange).toHaveBeenLastCalledWith({
+    status: "idle",
+    loaded: 0,
+    total: 0,
+    files: [],
+  });
+});
+
+test("unmount after a result preserves completed transfer details during refresh", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const onProgressChange = vi.fn();
+  let unmounted = false;
+  try {
+    await act(async () =>
+      root.render(
+        <ResourceForm
+          action={[{ dataSourceId: "resource-one" }]}
+          onManagedSubmit={async () => ({
+            success: true,
+            status: 200,
+            results: [],
+            errors: [],
+          })}
+          onSubmissionSuccess={() => new Promise<void>(() => {})}
+          onProgressChange={onProgressChange}
+        >
+          <input name="attachment" type="file" />
+          <button type="submit">Send</button>
+        </ResourceForm>
+      )
+    );
+    const files = new DataTransfer();
+    files.items.add(new File(["photo"], "photo.png", { type: "image/png" }));
+    container.querySelector<HTMLInputElement>('input[type="file"]')!.files =
+      files.files;
+    await act(async () => container.querySelector("button")?.click());
+    await vi.waitFor(() =>
+      expect(onProgressChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          status: "idle",
+          files: [expect.objectContaining({ name: "photo.png" })],
+        })
+      )
+    );
+    const completed = onProgressChange.mock.lastCall?.[0];
+    const completedCallCount = onProgressChange.mock.calls.length;
+    await act(async () => root.unmount());
+    unmounted = true;
+    expect(onProgressChange).toHaveBeenLastCalledWith(completed);
+    expect(onProgressChange).toHaveBeenCalledTimes(completedCallCount);
+  } finally {
+    if (!unmounted) {
+      await act(async () => root.unmount());
+    }
+    container.remove();
+  }
 });
 
 test("an unconfigured Form blocks native navigation", async () => {
@@ -837,6 +900,8 @@ test("Form progress keeps measured bytes through Action completion and resets on
     expect(states.at(-1)).toBe("initial");
     expect(progress.at(-1)).toMatchObject({
       status: "pending",
+      loaded: 0,
+      total: 0,
       files: [
         {
           fieldName: "attachment",
@@ -856,6 +921,12 @@ test("Form progress keeps measured bytes through Action completion and resets on
       .at(-1)!
       .files.map(({ id }) => id);
     expect(firstFileId).not.toBe(secondFileId);
+    await act(async () => reportUpload({ loaded: 4 }));
+    expect(progress.at(-1)).toMatchObject({
+      status: "pending",
+      loaded: 4,
+      total: 0,
+    });
     await act(async () => reportUpload({ loaded: 4, total: 12 }));
     expect(progress.at(-1)).toMatchObject({
       status: "pending",
@@ -887,19 +958,39 @@ test("Form progress keeps measured bytes through Action completion and resets on
     expect(states.at(-1)).toBe("initial");
     expect(progress.at(-1)?.status).toBe("pending");
     await act(async () => previousUpload({ loaded: 200, total: 200 }));
-    expect(progress.at(-1)).not.toHaveProperty("loaded");
+    expect(progress.at(-1)).toMatchObject({ loaded: 0, total: 0 });
     const canceledUpload = reportUpload;
     await render("next-page");
-    expect(progress.at(-1)).toEqual({ status: "idle", files: [] });
+    expect(progress.at(-1)).toEqual({
+      status: "idle",
+      loaded: 0,
+      total: 0,
+      files: [],
+    });
     await act(async () => canceledUpload({ loaded: 12, total: 12 }));
-    expect(progress.at(-1)).toEqual({ status: "idle", files: [] });
+    expect(progress.at(-1)).toEqual({
+      status: "idle",
+      loaded: 0,
+      total: 0,
+      files: [],
+    });
     container.querySelector<HTMLInputElement>("input")!.value = "";
     await act(async () => container.querySelector("button")?.click());
-    expect(progress.at(-1)).toEqual({ status: "pending", files: [] });
+    expect(progress.at(-1)).toEqual({
+      status: "pending",
+      loaded: 0,
+      total: 0,
+      files: [],
+    });
     await act(async () =>
       finish({ success: true, status: 200, results: [], errors: [] })
     );
-    expect(progress.at(-1)).toEqual({ status: "idle", files: [] });
+    expect(progress.at(-1)).toEqual({
+      status: "idle",
+      loaded: 0,
+      total: 0,
+      files: [],
+    });
     expect(states).toEqual([
       "initial",
       "error",

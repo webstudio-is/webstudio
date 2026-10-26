@@ -6031,7 +6031,7 @@ const getTemplateDetails = (input: unknown) => {
   const template = templates.get(item.meta.component);
   const formUsage =
     item.meta.component === "form"
-      ? " The Form template adds formProgress: status is idle or pending, loaded and total are optional bytes for the whole request, and files contain id, fieldName, name, size, and type without per-file transfer counts. Find its ID with list-variables and read webstudio://project/expressions before binding the editable Progress container or its children with bind-props; style them with update-styles. Browser submission supplies live progress; forms.simulate-submission and preview.submit-form report only final outcomes."
+      ? " The Form template adds formProgress: status is idle or pending, loaded and total start at 0 and measure bytes for the whole request; total 0 means unknown. Files contain id, fieldName, name, size, and type without per-file transfer counts. Find its ID with list-variables and read webstudio://project/expressions before binding the editable Progress container or its children with bind-props; style them with update-styles. Browser submission supplies live progress; forms.simulate-submission and preview.submit-form report only final outcomes."
       : "";
   return {
     found: true,

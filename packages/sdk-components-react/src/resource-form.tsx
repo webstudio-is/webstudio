@@ -27,6 +27,13 @@ import { useFormFeedbackScroll } from "./form-feedback-scroll";
 
 export const defaultTag = "form";
 
+const createIdleProgress = (): FormProgress => ({
+  status: "idle",
+  loaded: 0,
+  total: 0,
+  files: [],
+});
+
 export const ResourceForm = forwardRef<
   ElementRef<typeof defaultTag>,
   Omit<ComponentProps<typeof defaultTag>, "action"> & {
@@ -81,7 +88,7 @@ export const ResourceForm = forwardRef<
       "initial" | "success" | "error"
     >("initial");
     const callbacks = useRef<FormSubmissionCallbacks>();
-    const progress = useRef<FormProgress>({ status: "idle", files: [] });
+    const progress = useRef<FormProgress>(createIdleProgress());
     const uploadController = useRef<AbortController>();
     const submissionController = useRef<FormSubmissionController>();
     submissionController.current ??= new FormSubmissionController(
@@ -97,7 +104,13 @@ export const ResourceForm = forwardRef<
           () => callbacks.current!
         );
       }
-      return () => submissionController.current?.dispose();
+      return () => {
+        const wasPending = progress.current.status === "pending";
+        submissionController.current?.dispose();
+        if (wasPending) {
+          callbacks.current?.onCancel?.();
+        }
+      };
     }, []);
     const previousNavigationToken = useRef(navigationToken);
     const currentNavigationToken = useRef(navigationToken);
@@ -128,13 +141,13 @@ export const ResourceForm = forwardRef<
       }
       reportProgress({
         ...progress.current,
-        loaded: update.loaded,
-        total: update.total,
+        loaded: update.loaded ?? 0,
+        total: update.total ?? 0,
       });
     };
     const reportFailure = (message: string, status = 400) => {
       uploadController.current = undefined;
-      reportProgress({ status: "idle", files: [] });
+      reportProgress(createIdleProgress());
       onResultChange?.({
         success: false,
         status,
@@ -154,7 +167,7 @@ export const ResourceForm = forwardRef<
       },
       onCancel: () => {
         uploadController.current = undefined;
-        reportProgress({ status: "idle", files: [] });
+        reportProgress(createIdleProgress());
       },
       onResult: (result) => onResultChange?.(result),
       onState: reportState,
@@ -258,7 +271,7 @@ export const ResourceForm = forwardRef<
             type: file.type,
           }))
       );
-      reportProgress({ status: "pending", files });
+      reportProgress({ status: "pending", loaded: 0, total: 0, files });
       const controller = new AbortController();
       uploadController.current = controller;
       const onUploadProgress = (update: UploadProgress) =>
@@ -276,7 +289,7 @@ export const ResourceForm = forwardRef<
         }
         if (submission === undefined) {
           uploadController.current = undefined;
-          reportProgress({ status: "idle", files: [] });
+          reportProgress(createIdleProgress());
           return;
         }
         return handleSubmission(submission, controller);

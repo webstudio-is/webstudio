@@ -49,6 +49,8 @@ const browserInfo = new Parameter(browserInfoParameterName);
 const formState = new Variable("formState", "initial");
 const formProgress = new Variable("formProgress", {
   status: "idle",
+  loaded: 0,
+  total: 0,
   files: [],
 });
 const formResults = new Variable("results", []);
