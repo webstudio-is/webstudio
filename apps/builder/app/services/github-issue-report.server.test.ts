@@ -147,11 +147,19 @@ describe("GitHub issue reports", () => {
       exitSignal: "SIGABRT",
       attempts: [{ browser: "chromium", source: "path" }],
     };
+    responseReport.runtime.recentFailure.previewInstall = {
+      processErrorCode: "ETIMEDOUT",
+      terminated: true,
+    };
 
     const body = formatIssueReport(responseReport);
     expect(body).toContain("Response: json; envelope=result; batch size=1");
     expect(body).toContain("Browser exit: SIGABRT");
     expect(body).toContain("Browser attempts: chromium (path)");
+    expect(body).toContain("Preview install: ETIMEDOUT; process terminated");
+
+    responseReport.runtime.recentFailure.previewInstall = {};
+    expect(formatIssueReport(responseReport)).not.toContain("Preview install:");
   });
 
   test("discovers the repository installation before creating its token", async () => {

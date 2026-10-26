@@ -56,6 +56,36 @@ test("adds anonymous local runtime metadata only to issue reports", () => {
   expect(addIssueReportRuntime("audit", report, () => runtime)).toBe(report);
 });
 
+test("captures safe preview install failure details without npm output", () => {
+  const error = Object.assign(new Error("private npm output"), {
+    code: "PREVIEW_DEPENDENCY_INSTALL_FAILED",
+    cause: Object.assign(new Error("private local path"), {
+      code: "ETIMEDOUT",
+      killed: true,
+      stderr: "private registry token",
+    }),
+  });
+
+  expect(createIssueReportFailure("preview.start", error)).toEqual({
+    tool: "preview.start",
+    code: "PREVIEW_DEPENDENCY_INSTALL_FAILED",
+    previewInstall: { processErrorCode: "ETIMEDOUT", terminated: true },
+  });
+
+  const npmExit = Object.assign(new Error("private npm output"), {
+    code: "PREVIEW_DEPENDENCY_INSTALL_FAILED",
+    cause: Object.assign(new Error("private registry token"), {
+      code: 1,
+      stderr: "private registry token",
+    }),
+  });
+  expect(createIssueReportFailure("preview.start", npmExit)).toEqual({
+    tool: "preview.start",
+    code: "PREVIEW_DEPENDENCY_INSTALL_FAILED",
+    previewInstall: { exitCode: 1 },
+  });
+});
+
 test("keeps only anonymous structured fields from the latest tool failure", () => {
   const error = Object.assign(new Error("Asset customer-logo.png is invalid"), {
     code: "PROJECT_BUNDLE_INVALID",

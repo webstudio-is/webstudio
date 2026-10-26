@@ -444,6 +444,25 @@ export const serverOnlyRouterOperationMetadata = {
                   additionalProperties: false,
                   required: [],
                 },
+                previewInstall: {
+                  type: "object",
+                  properties: {
+                    processErrorCode: {
+                      type: "string",
+                      pattern: "^[A-Z][A-Z0-9_]{0,159}$",
+                    },
+                    exitCode: {
+                      type: "integer",
+                      minimum: 0,
+                      maximum: 255,
+                    },
+                    terminated: {
+                      type: "boolean",
+                    },
+                  },
+                  additionalProperties: false,
+                  required: [],
+                },
               },
               required: ["tool", "code"],
               additionalProperties: false,

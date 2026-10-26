@@ -908,6 +908,79 @@ describe("asset-info", () => {
       ]);
     });
 
+    test.each(['"Rajdhani", sans-serif', "'Rajdhani', sans-serif"])(
+      "protects fonts used through a CSS variable: %s",
+      (fontStack) => {
+        const styles: Styles = new Map([
+          [
+            "root:base:--font-heading",
+            {
+              breakpointId: "base",
+              styleSourceId: "root",
+              property: "--font-heading",
+              value: { type: "unparsed", value: fontStack },
+            },
+          ],
+          [
+            "heading:base:fontFamily",
+            {
+              breakpointId: "base",
+              styleSourceId: "heading",
+              property: "fontFamily",
+              value: { type: "var", value: "font-heading" },
+            },
+          ],
+          [
+            "heading-2:base:fontFamily",
+            {
+              breakpointId: "base",
+              styleSourceId: "heading-2",
+              property: "fontFamily",
+              value: { type: "var", value: "font-heading" },
+            },
+          ],
+        ]);
+        const assets = new Map([
+          ["font", fontAsset("font")],
+          ["font-bold", fontAsset("font-bold")],
+        ]);
+        const fontState = { ...state, styles, assets };
+
+        expect(calculateUsagesByAssetId(fontState).get("font")).toEqual([
+          { type: "style", styleDeclKey: "heading:base:fontFamily" },
+          { type: "style", styleDeclKey: "heading-2:base:fontFamily" },
+        ]);
+        expect(calculateUsagesByAssetId(fontState).get("font-bold")).toEqual([
+          { type: "style", styleDeclKey: "heading:base:fontFamily" },
+          { type: "style", styleDeclKey: "heading-2:base:fontFamily" },
+        ]);
+        expect(() => deleteAssets(fontState, { assetIds: ["font"] })).toThrow(
+          "Assets are still referenced: font"
+        );
+        expect(() =>
+          deleteAssets(fontState, { assetIds: ["font-bold"] })
+        ).toThrow("Assets are still referenced: font-bold");
+        const replacementFont = {
+          ...fontAsset("replacement"),
+          meta: { family: "Replacement", style: "normal", weight: 600 },
+        } as Asset;
+        expect(() =>
+          replaceAsset(
+            {
+              ...fontState,
+              assets: new Map<Asset["id"], Asset>([
+                ...fontState.assets,
+                ["replacement", replacementFont],
+              ]),
+            },
+            { fromAssetId: "font", toAssetId: "replacement" }
+          )
+        ).toThrow(
+          "Asset is referenced in resources or variables. Update those references before replacing the asset."
+        );
+      }
+    );
+
     test("tracks font asset usage in nested style values", () => {
       const pages = createPages();
       const props: Props = new Map();

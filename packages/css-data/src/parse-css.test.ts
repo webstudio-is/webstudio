@@ -2003,6 +2003,23 @@ test("shorthand: var() in transition is substituted and expanded", () => {
   );
 });
 
+test("transition with unresolved vars keeps the authored shorthand", () => {
+  const result = parseCss(
+    ".box { transition: opacity 300ms var(--ease), transform var(--duration) ease; }",
+    new Map()
+  );
+
+  expect(result.styles).toEqual([
+    expect.objectContaining({
+      property: "transition",
+      value: {
+        type: "unparsed",
+        value: "opacity 300ms var(--ease),transform var(--duration) ease",
+      },
+    }),
+  ]);
+});
+
 // ─── Comprehensive var() substitution in shorthands ───────────────────────────
 
 const u = (value: number, unit: string) =>

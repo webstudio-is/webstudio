@@ -67,6 +67,16 @@ const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
     return "";
   }
   const issues = failure.issues ?? [];
+  const previewInstall = failure.previewInstall;
+  const previewInstallDetails = [
+    previewInstall?.processErrorCode,
+    previewInstall?.exitCode === undefined
+      ? undefined
+      : `exit code ${previewInstall.exitCode}`,
+    previewInstall?.terminated ? "process terminated" : undefined,
+  ]
+    .filter(Boolean)
+    .join("; ");
   return [
     "## Captured failure diagnostics",
     "",
@@ -106,6 +116,9 @@ const formatFailureDiagnostics = (runtime: IssueReportInput["runtime"]) => {
                 `- Browser attempts: ${failure.browser.attempts.map((attempt) => `${attempt.browser} (${attempt.source})`).join(", ")}`,
               ]),
         ]),
+    ...(previewInstallDetails === ""
+      ? []
+      : [`- Preview install: ${previewInstallDetails}`]),
     ...(issues.length === 0
       ? []
       : [

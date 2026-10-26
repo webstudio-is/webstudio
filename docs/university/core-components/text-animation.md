@@ -50,6 +50,8 @@ Controls how many text parts animate concurrently. The default is `5`.
 
 Controls the easing within the sliding window. The default is `linear`. Supported values are `linear`, `easeIn`, `easeInCubic`, `easeInQuart`, `easeOut`, `easeOutCubic`, `easeOutQuart`, `ease`, `easeInOutCubic`, and `easeInOutQuart`.
 
+Easing follows each item from hidden to visible. If the parent animation runs backward, the timing runs backward too.
+
 ## Structure
 
 The Text Animation component must be the direct child of Animation Group. The text-containing element goes inside Text Animation. Configure word or character splitting on Text Animation, then define the actual opacity, translate, scale, or other animated styles on the parent Animation Group.

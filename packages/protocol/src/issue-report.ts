@@ -133,6 +133,17 @@ export const issueReportRecentFailureSchema = z
       })
       .strict()
       .optional(),
+    previewInstall: z
+      .object({
+        processErrorCode: z
+          .string()
+          .regex(/^[A-Z][A-Z0-9_]{0,159}$/)
+          .optional(),
+        exitCode: z.number().int().min(0).max(255).optional(),
+        terminated: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

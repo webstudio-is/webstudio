@@ -27,6 +27,8 @@ Controls how many child elements animate concurrently during the stagger effect.
 
 Controls the easing within the sliding window. The default is `linear`. Supported values are `linear`, `easeIn`, `easeInCubic`, `easeInQuart`, `easeOut`, `easeOutCubic`, `easeOutQuart`, `ease`, `easeInOutCubic`, and `easeInOutQuart`.
 
+Easing follows each item from hidden to visible. If the parent animation runs backward, the timing runs backward too.
+
 ## Structure
 
 The Stagger Animation component must be the direct child of Animation Group. Put the repeated cards, list items, or rows directly inside Stagger Animation. Start with the default `slidingWindow` and `easing`; add overrides only when you intentionally want a different rhythm.
