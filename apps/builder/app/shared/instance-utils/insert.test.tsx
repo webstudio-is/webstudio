@@ -936,7 +936,7 @@ describe("insert webstudio component at", () => {
         body?.children[0]?.type === "id" ? body.children[0].value : "";
       expect($instances.get().get(formId)?.component).toBe("ResourceForm");
       const status = Array.from($instances.get().values()).find(
-        (instance) => instance.label === "Status"
+        (instance) => instance.label === "Progress"
       );
       expect(status).toBeDefined();
       expect(

@@ -316,7 +316,7 @@ export const coreTemplates = {
           </div>
         )}
         {setInstanceMeta(
-          { label: "Status" },
+          { label: "Progress" },
           <div
             ws:show={expression`${formProgress}.status === 'pending'`}
             role="status"

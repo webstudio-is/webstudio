@@ -742,7 +742,7 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
         component: string;
         label?: string;
       }>
-    ).find(({ label }) => label === "Status");
+    ).find(({ label }) => label === "Progress");
     expect(status?.component).toBe("ws:element");
     const progressReference = encodeDataSourceVariable(progress?.id ?? "");
     await call("bind-props", {

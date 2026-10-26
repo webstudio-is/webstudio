@@ -231,18 +231,18 @@ test("Form error message binds all errors through its authored container", () =>
   );
 });
 
-test("Form Status shows measured request bytes while the Form is pending", () => {
+test("Form Progress shows measured request bytes while the Form is pending", () => {
   const fragment = renderCoreTemplate(coreTemplates.form);
   const formProgress = fragment.dataSources?.find(
     ({ name }) => name === "formProgress"
   )!;
-  const status = fragment.instances.find(({ label }) => label === "Status")!;
+  const status = fragment.instances.find(({ label }) => label === "Progress")!;
   const showStatus = fragment.props.find(
     ({ instanceId, name }) =>
       instanceId === status.id && name === "data-ws-show"
   );
   if (showStatus?.type !== "expression") {
-    throw new Error("Expected a Status visibility binding");
+    throw new Error("Expected a Progress visibility binding");
   }
   expect(
     executeExpression(
