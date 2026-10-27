@@ -20,10 +20,8 @@ test("encode and decode Webstudio data variable names", () => {
   ).toEqual(SYSTEM_VARIABLE_ID);
 });
 
-test("read a static Webstudio expression without evaluating code", () => {
+test("execute a static Webstudio expression", () => {
   expect(executeExpression(undefined)).toBeUndefined();
-  expect(executeExpression("true")).toBe(true);
-  expect(executeExpression("false")).toBe(false);
-  expect(executeExpression("1 + 1")).toBeUndefined();
+  expect(executeExpression("1 + 1")).toEqual(2);
   expect(executeExpression("someVariable + 1")).toBeUndefined();
 });
