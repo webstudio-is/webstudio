@@ -1,4 +1,7 @@
-import { transpileExpression } from "@webstudio-is/expression";
+import {
+  parseJsonExpression,
+  transpileExpression,
+} from "@webstudio-is/expression";
 import type { DataSource, DataSources } from "./schema/data-sources";
 import type { Scope } from "./scope";
 import { ROOT_INSTANCE_ID } from "./instances-utils";
@@ -65,12 +68,7 @@ export const generateExpression = ({
     },
   });
 
-/** Execute a static expression generated and controlled by Webstudio. */
+/** Read a static JSON-compatible expression without running JavaScript. */
 export const executeExpression = (expression: undefined | string) => {
-  try {
-    const fn = new Function(`return (${expression})`);
-    return fn();
-  } catch {
-    // Invalid and non-static expressions have no value here.
-  }
+  return parseJsonExpression(expression);
 };
