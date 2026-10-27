@@ -13,6 +13,7 @@
     "src/protected-resource-fetch.ts",
     "src/protected-resource-fetch-node.ts",
     "src/link-utils.ts",
+    "src/expression-guard.ts",
     "src/schema.ts",
     "src/__generated__/normalize.css.ts"
   ],

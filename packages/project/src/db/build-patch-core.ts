@@ -30,8 +30,14 @@ import {
   type StyleSource,
   type Styles,
   styles,
+  getAllPages,
   getHomePage,
 } from "@webstudio-is/sdk";
+import {
+  findViolations,
+  getTagProps,
+  getViolationKey,
+} from "@webstudio-is/sdk/expression-guard";
 import {
   type MarketplaceProduct,
   type ProjectSettings,
@@ -559,6 +565,48 @@ export const createBuildPatchUpdate = async ({
     update.projectSettings = serializeConfig<ProjectSettings>(
       buildData.projectSettings
     );
+  }
+
+  const editedInstances = buildData.instances
+    ? getTouchedMap(buildData.instances, touchedInstances)
+    : undefined;
+  const editedProps = new Map<string, Prop>(
+    buildData.props ? getTouchedMap(buildData.props, touchedProps) : []
+  );
+  if (editedInstances !== undefined && editedInstances.size > 0) {
+    const allProps = buildData.props ?? parseData<Prop>(build.props);
+    for (const prop of getTagProps(allProps.values(), editedInstances)) {
+      editedProps.set(prop.id, prop);
+    }
+  }
+  const violations = findViolations({
+    instances: editedInstances,
+    props: editedProps,
+    resources: buildData.resources
+      ? getTouchedMap(buildData.resources, touchedResources)
+      : undefined,
+    pages: buildData.pages ? getAllPages(buildData.pages) : undefined,
+    getInstance: (id) =>
+      (buildData.instances ?? parseInstanceData(build.instances)).get(id),
+  });
+  const storedPageViolations = new Set(
+    buildData.pages
+      ? findViolations({ pages: getAllPages(parsePages(build.pages)) }).map(
+          getViolationKey
+        )
+      : []
+  );
+  if (
+    violations.some(
+      (violation) =>
+        violation.pageId === undefined ||
+        storedPageViolations.has(getViolationKey(violation)) === false
+    )
+  ) {
+    return {
+      status: "error",
+      errors: "Project data contains an invalid expression.",
+    };
   }
 
   return {

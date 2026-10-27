@@ -8022,6 +8022,43 @@ export const createManagedFormResourceFetch = () => {
     );
   });
 
+  test("refuses an unsafe stored expression before generating files", async () => {
+    const data = createSiteData();
+    data.build.pages.pages[0].meta.description = `(globalThis.__webstudioGuardMarker = true)`;
+    await writeFile(".webstudio/data.json", JSON.stringify(data));
+
+    await expect(
+      prebuild({ assets: false, template: ["defaults"] })
+    ).rejects.toThrow();
+    await expect(stat("app")).rejects.toThrow();
+  });
+
+  test("refuses an unsafe stored Email binding", async () => {
+    const data = createSiteData();
+    data.build.resources = [
+      [
+        "email",
+        {
+          id: "email",
+          name: "Email",
+          control: "email",
+          method: "post",
+          url: '""',
+          headers: [],
+          email: {
+            subject: `true); globalThis.__webstudioGuardMarker = true; (false`,
+          },
+        },
+      ],
+    ];
+    await writeFile(".webstudio/data.json", JSON.stringify(data));
+
+    await expect(
+      prebuild({ assets: false, template: ["defaults"] })
+    ).rejects.toThrow();
+    await expect(stat("app")).rejects.toThrow();
+  });
+
   test("exposes anonymous structured diagnostics for invalid asset fields", async () => {
     const data = structuredClone(createSiteData()) as unknown as {
       assets: Array<Record<string, unknown>>;
