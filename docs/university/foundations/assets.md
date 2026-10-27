@@ -21,7 +21,7 @@ The Assets panel is located on the left side of the builder. It stores all stati
 | **Video** | MP4, MOV, AVI, WebM |
 | **Audio** | MP3, WAV, OGG, M4A |
 | **Documents** | PDF, DOC, DOCX, XLS, XLSX, CSV, PPT, PPTX |
-| **Code & text** | TXT, MD, MDX, JS, CSS, JSON, HTML, XML |
+| **Code & text** | TXT, MD, MDX, JS, MJS, CSS, JSON, HTML, XML |
 | **Archives** | ZIP, RAR |
 
 {% hint style="info" %}
@@ -49,7 +49,7 @@ Webstudio creates the file in the current folder and opens it in the code
 editor. New JSON files start with an empty object so the Content Engine can
 index them immediately.
 
-You can open uploaded `txt`, `csv`, `md`, `mdx`, `js`, `css`, `json`, `html`, `xml`,
+You can open uploaded `txt`, `csv`, `md`, `mdx`, `js`, `mjs`, `css`, `json`, `html`, `xml`,
 and `svg` assets in the same editor. Syntax highlighting follows the file type;
 unsupported text types use plain text. Markdown and MDX files also provide
 formatting controls and a preview.

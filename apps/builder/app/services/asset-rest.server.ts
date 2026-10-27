@@ -19,6 +19,7 @@ import {
 } from "@webstudio-is/asset-uploader/server";
 import type { ProjectPermit } from "@webstudio-is/trpc-interface/index.server";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
+import { InvalidAssetFileNameError } from "@webstudio-is/sdk";
 import { parseBuilderUrl } from "@webstudio-is/protocol";
 import { assetDescriptionEncoding } from "@webstudio-is/protocol/asset-resource-api";
 import { ZodError } from "zod";
@@ -245,7 +246,11 @@ const getAssetRestErrorStatus = (error: unknown) => {
   ) {
     return 413;
   }
-  if (error instanceof AssetRestRequestError || error instanceof ZodError) {
+  if (
+    error instanceof AssetRestRequestError ||
+    error instanceof InvalidAssetFileNameError ||
+    error instanceof ZodError
+  ) {
     return 400;
   }
   return 500;
