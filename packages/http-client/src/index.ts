@@ -452,10 +452,17 @@ export const getErrorStatus = (error: unknown) => {
   }
 };
 
-const retryOnce = async <Result>(task: () => Promise<Result>, delayMs = 0) => {
+const retryOnce = async <Result>(
+  task: () => Promise<Result>,
+  delayMs = 0,
+  shouldRetry?: (error: unknown) => boolean
+) => {
   try {
     return await task();
-  } catch {
+  } catch (error) {
+    if (shouldRetry?.(error) === false) {
+      throw error;
+    }
     if (delayMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
@@ -627,7 +634,9 @@ const uploadAssetsSettled = async (
             });
           };
           const uploadedAssets =
-            force === true ? await upload() : await retryOnce(upload, 100);
+            force === true
+              ? await upload()
+              : await retryOnce(upload, 100, isRetryableAssetUploadError);
           results[index] = { status: "fulfilled", uploadedAssets };
         } catch (cause) {
           const error =

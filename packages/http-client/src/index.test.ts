@@ -1528,6 +1528,23 @@ test("preserves a single asset upload permission error", async () => {
   });
 });
 
+test("does not retry an unsupported asset upload", async () => {
+  const fetch = vi.fn(async () =>
+    Response.json({ errors: "Unsupported file type" }, { status: 400 })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    uploadProjectAsset({
+      ...apiParams,
+      asset: { name: "library.exe", type: "file", format: "exe", meta: {} },
+      readAssetData: async () => new Blob(["content"]),
+    })
+  ).rejects.toMatchObject({ cause: expect.objectContaining({ status: 400 }) });
+
+  expect(fetch).toHaveBeenCalledOnce();
+});
+
 test("keeps uploaded assets in input order", async () => {
   const first = createImageAssetFixture({ id: "first", name: "first.png" });
   const second = createImageAssetFixture({ id: "second", name: "second.png" });
