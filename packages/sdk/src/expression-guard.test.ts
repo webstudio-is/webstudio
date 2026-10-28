@@ -27,7 +27,7 @@ describe("saved expression guard", () => {
     `1, 2`,
     `$ws$dataSource$id++`,
   ])("refuses unsafe expression %s", (expression) => {
-    expect(checkExpression(expression).ok).toBe(false);
+    expect(checkExpression(expression)).toBe(false);
   });
 
   test.each([
@@ -37,35 +37,34 @@ describe("saved expression guard", () => {
     `"A".toLowerCase()`,
     `Missing$32$variable`,
   ])("keeps builder expressions %s", (expression) => {
-    expect(checkExpression(expression)).toEqual({ ok: true });
+    expect(checkExpression(expression)).toBe(true);
   });
 
   test("checks action code and names inserted into generated source", () => {
     expect(
-      checkActionCode(`$ws$dataSource$id = event.target.value`, ["event"]).ok
+      checkActionCode(`$ws$dataSource$id = event.target.value`, ["event"])
     ).toBe(true);
     expect(
-      checkActionCode(`$ws$dataSource$id = result.errors`, ["result"]).ok
+      checkActionCode(`$ws$dataSource$id = result.errors`, ["result"])
     ).toBe(true);
     expect(
       checkActionCode(
         `$ws$dataSource$history = $ws$dataSource$history + "|" + state`,
         ["state"]
-      ).ok
+      )
     ).toBe(true);
     expect(
       checkActionCode(`$ws$dataSource$id = (state + "").constructor`, ["state"])
-        .ok
     ).toBe(false);
     expect(
       checkActionCode(
         `({ results: $ws$dataSource$results = result.results, errors: $ws$dataSource$errors = result.errors })`,
         ["result"]
-      ).ok
+      )
     ).toBe(true);
-    expect(checkActionCode(`process.env.SECRET`, []).ok).toBe(false);
-    expect(checkActionArg(`event); console.log(1); (`).ok).toBe(false);
-    expect(checkTag(`script`).ok).toBe(false);
+    expect(checkActionCode(`process.env.SECRET`, [])).toBe(false);
+    expect(checkActionArg(`event); console.log(1); (`)).toBe(false);
+    expect(checkTag(`script`)).toBe(false);
   });
 
   test("finds unsafe page values but leaves ordinary settings alone", () => {
