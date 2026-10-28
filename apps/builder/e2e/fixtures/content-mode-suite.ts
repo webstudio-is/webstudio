@@ -1,6 +1,7 @@
 import type { BrowserContext } from "@playwright/test";
 import { loginAndCreateBlankProject } from "../flows/dashboard";
 import { measure } from "../perf";
+import { e2ePaidPlanName } from "../plans";
 import { prepareExistingContentModeProject } from "./content-mode-project";
 
 type ContentModeProjectOptions = {
@@ -18,7 +19,7 @@ export const createContentModeProject = async ({
   context,
   email = "content-mode-e2e@webstudio.test",
   title = "Content Mode E2E",
-  devPlan,
+  devPlan = e2ePaidPlanName,
   assetNamePrefix,
   editorToken,
   editorCanUseApi,
