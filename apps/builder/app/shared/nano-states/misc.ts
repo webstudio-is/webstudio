@@ -436,8 +436,12 @@ export const setBuilderMode = (mode: BuilderMode | null) => {
   if (mode === "design" && !$isDesignModeAllowed.get()) {
     toast.info("Design mode is not available for content edit links.");
 
-    $builderMode.set("content");
-    lastEditableBuilderMode = "content";
+    if ($isContentModeAllowed.get()) {
+      $builderMode.set("content");
+      lastEditableBuilderMode = "content";
+    } else {
+      $builderMode.set("preview");
+    }
     return;
   }
 
