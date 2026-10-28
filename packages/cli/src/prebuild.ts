@@ -71,7 +71,6 @@ import {
   migratePages,
   migrateResourceFormInstancesMutable,
 } from "@webstudio-is/project-migrations";
-import { findViolations } from "./expression-guard";
 import { hasHistoricalFormComponentIdentityVersion } from "@webstudio-is/project-migrations/pages";
 import {
   collectFontFamiliesFromStyleDecls,
@@ -992,15 +991,6 @@ export const prebuild = async (options: {
   }
   const siteData = parsedSiteData.data;
   const pages = migratePages(siteData.build.pages);
-  const expressionViolations = findViolations({
-    instances: new Map(siteData.build.instances),
-    props: new Map(siteData.build.props),
-    resources: new Map(siteData.build.resources),
-    pages: getAllPages(pages),
-  });
-  if (expressionViolations.length > 0) {
-    throw new Error("Project data contains an invalid expression.");
-  }
   const migratedInstances = new Map(siteData.build.instances);
   // Saved Form identities may still need the deprecated Webhook Form migration.
   migrateResourceFormInstancesMutable(
