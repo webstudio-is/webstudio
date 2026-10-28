@@ -2585,12 +2585,6 @@ importers:
       '@webstudio-is/wsauth':
         specifier: workspace:*
         version: link:../wsauth
-      acorn:
-        specifier: ^8.14.1
-        version: 8.17.0
-      acorn-walk:
-        specifier: ^8.3.4
-        version: 8.3.5
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
@@ -18168,7 +18162,7 @@ snapshots:
 
   acorn-walk@8.3.4:
     dependencies:
-      acorn: 8.17.0
+      acorn: 8.14.1
 
   acorn-walk@8.3.5:
     dependencies:

@@ -3,7 +3,10 @@ import type { DataSources } from "./schema/data-sources";
 import type { Page } from "./schema/pages";
 import { type Scope, createScope } from "./scope";
 import { generateExpression, SYSTEM_VARIABLE_ID } from "./expression";
-import { normalizeStringExpression } from "./page-meta-expression";
+import {
+  isValidExpression,
+  parseStaticMemberPath,
+} from "@webstudio-is/expression";
 
 export type PageMeta = {
   title: string;
@@ -16,6 +19,24 @@ export type PageMeta = {
   redirect?: string;
   content?: string;
   custom: Array<{ property: string; content: string }>;
+};
+
+const normalizeStringExpression = (expression: string) => {
+  const trimmedExpression = expression.trim();
+  if (isValidExpression(trimmedExpression)) {
+    if (
+      parseStaticMemberPath(trimmedExpression)?.length === 1 &&
+      trimmedExpression !== "undefined" &&
+      trimmedExpression.includes("$ws$") === false
+    ) {
+      return JSON.stringify(expression);
+    }
+    return expression;
+  }
+  if (trimmedExpression.includes("$ws$")) {
+    return expression;
+  }
+  return JSON.stringify(expression);
 };
 
 export const generatePageMeta = ({

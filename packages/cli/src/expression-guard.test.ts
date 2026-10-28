@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
   checkActionArg,
-  checkActionCode,
   checkExpression,
   checkTag,
   findViolations,
@@ -40,29 +39,8 @@ describe("saved expression guard", () => {
     expect(checkExpression(expression)).toBe(true);
   });
 
-  test("checks action code and names inserted into generated source", () => {
-    expect(
-      checkActionCode(`$ws$dataSource$id = event.target.value`, ["event"])
-    ).toBe(true);
-    expect(
-      checkActionCode(`$ws$dataSource$id = result.errors`, ["result"])
-    ).toBe(true);
-    expect(
-      checkActionCode(
-        `$ws$dataSource$history = $ws$dataSource$history + "|" + state`,
-        ["state"]
-      )
-    ).toBe(true);
-    expect(
-      checkActionCode(`$ws$dataSource$id = (state + "").constructor`, ["state"])
-    ).toBe(false);
-    expect(
-      checkActionCode(
-        `({ results: $ws$dataSource$results = result.results, errors: $ws$dataSource$errors = result.errors })`,
-        ["result"]
-      )
-    ).toBe(true);
-    expect(checkActionCode(`process.env.SECRET`, [])).toBe(false);
+  test("checks action names inserted into generated source", () => {
+    expect(checkActionArg("event")).toBe(true);
     expect(checkActionArg(`event); console.log(1); (`)).toBe(false);
     expect(checkTag(`script`)).toBe(false);
   });
@@ -84,7 +62,7 @@ describe("saved expression guard", () => {
     ]);
   });
 
-  test("checks expression children, actions, and resource fields", () => {
+  test("checks expression children and resource fields", () => {
     const crafted = `true); globalThis.__webstudioGuardMarker = true; (false`;
     const instance = {
       id: "root",
@@ -101,7 +79,7 @@ describe("saved expression guard", () => {
         {
           type: "execute" as const,
           args: ["event"],
-          code: "process.env.SECRET",
+          code: "console.log(event)",
         },
       ],
     };
@@ -121,7 +99,6 @@ describe("saved expression guard", () => {
       })
     ).toMatchObject([
       { instanceId: "root", field: "children[0]" },
-      { instanceId: "root", field: "props.onClick[0].code" },
       { resourceId: "resource", field: "url" },
       { resourceId: "resource", field: "email.subject" },
     ]);

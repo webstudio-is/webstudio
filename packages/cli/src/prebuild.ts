@@ -71,7 +71,7 @@ import {
   migratePages,
   migrateResourceFormInstancesMutable,
 } from "@webstudio-is/project-migrations";
-import { findViolations } from "@webstudio-is/sdk/expression-guard";
+import { findViolations } from "./expression-guard";
 import { hasHistoricalFormComponentIdentityVersion } from "@webstudio-is/project-migrations/pages";
 import {
   collectFontFamiliesFromStyleDecls,

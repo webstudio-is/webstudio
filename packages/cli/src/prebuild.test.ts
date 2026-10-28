@@ -8022,15 +8022,43 @@ export const createManagedFormResourceFetch = () => {
     );
   });
 
-  test("refuses an unsafe stored expression before generating files", async () => {
-    const data = createSiteData();
-    data.build.pages.pages[0].meta.description = `(globalThis.__webstudioGuardMarker = true)`;
-    await writeFile(".webstudio/data.json", JSON.stringify(data));
+  test.each([
+    `(globalThis.__webstudioGuardMarker = true)`,
+    `({}).constructor.constructor("globalThis.__webstudioGuardMarker = true")()`,
+  ])(
+    "refuses an unsafe page setting before generating files: %s",
+    async (description) => {
+      const data = createSiteData();
+      data.build.pages.pages[0].meta.description = description;
+      await writeFile(".webstudio/data.json", JSON.stringify(data));
 
+      await expect(
+        prebuild({ assets: false, template: ["defaults"] })
+      ).rejects.toThrow();
+      await expect(stat("app")).rejects.toThrow();
+    }
+  );
+
+  test("accepts a documented browser action", async () => {
+    const data = createSiteData();
+    data.build.props = [
+      [
+        "click",
+        {
+          id: "click",
+          instanceId: "root",
+          name: "onClick",
+          type: "action",
+          value: [
+            { type: "execute", args: ["event"], code: "console.log(event)" },
+          ],
+        },
+      ],
+    ];
+    await writeSiteData(data);
     await expect(
       prebuild({ assets: false, template: ["defaults"] })
-    ).rejects.toThrow();
-    await expect(stat("app")).rejects.toThrow();
+    ).resolves.toBeUndefined();
   });
 
   test("refuses an unsafe stored Email binding", async () => {

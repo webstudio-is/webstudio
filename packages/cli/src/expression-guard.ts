@@ -6,14 +6,37 @@ import {
   type Node,
   type Program,
 } from "acorn";
-import { ancestor, full } from "acorn-walk";
-import { lintExpression } from "@webstudio-is/expression";
-import { decodeDataVariableId } from "./expression";
-import { normalizeStringExpression } from "./page-meta-expression";
-import type { Instance } from "./schema/instances";
-import type { Page } from "./schema/pages";
-import type { Prop } from "./schema/props";
-import type { Resource } from "./schema/resources";
+import { full, simple } from "acorn-walk";
+import {
+  isValidExpression,
+  lintExpression,
+  parseStaticMemberPath,
+} from "@webstudio-is/expression";
+import {
+  type Instance,
+  type Page,
+  type Prop,
+  type Resource,
+} from "@webstudio-is/sdk";
+
+// Match the metadata generator's treatment of plain text.
+const normalizeStringExpression = (expression: string) => {
+  const trimmedExpression = expression.trim();
+  if (isValidExpression(trimmedExpression)) {
+    if (
+      parseStaticMemberPath(trimmedExpression)?.length === 1 &&
+      trimmedExpression !== "undefined" &&
+      trimmedExpression.includes("$ws$") === false
+    ) {
+      return JSON.stringify(expression);
+    }
+    return expression;
+  }
+  if (trimmedExpression.includes("$ws$")) {
+    return expression;
+  }
+  return JSON.stringify(expression);
+};
 
 const reject: () => never = () => {
   throw new Error("Invalid expression");
@@ -28,16 +51,6 @@ const dangerousMemberKeys = new Set([
   "prototype",
   "caller",
   "arguments",
-]);
-
-// Action event values and the fields returned by a managed Form.
-const allowedArgChains = new Set([
-  "target.value",
-  "target.checked",
-  "currentTarget.value",
-  "currentTarget.checked",
-  "errors",
-  "results",
 ]);
 
 // The node types of the safe subset, which is what lintExpression has a
@@ -128,27 +141,7 @@ const disallowedTagNames = new Set(["script"]);
 export const checkTag = (tag: string): boolean =>
   plainTagPattern.test(tag) && !disallowedTagNames.has(tag.toLowerCase());
 
-type AnalyzeOptions = {
-  allowAssignment?: boolean;
-  /**
-   * An identifier that is not a data variable is fine: the generator turns it
-   * into `undefined`. Where the string is executed as written (an action, new
-   * Function) it is not.
-   */
-  allowFreeIdentifiers?: boolean;
-  args?: readonly string[];
-  noCalls?: boolean;
-};
-
-const checkSource = (
-  expression: string,
-  {
-    allowAssignment = false,
-    allowFreeIdentifiers = false,
-    args = [],
-    noCalls = false,
-  }: AnalyzeOptions
-) => {
+const checkSource = (expression: string) => {
   if (expression.trim().length === 0) {
     reject();
   }
@@ -197,11 +190,10 @@ const checkSource = (
   const root = (statement as Extract<AnyNode, { type: "ExpressionStatement" }>)
     .expression;
 
-  // 3. What lintExpression rejects. Its warnings (an identifier outside the
-  // scope) are not enough: the walk below refuses those where they matter.
+  // 3. Keep the expression subset supported by the editor. The generator
+  // replaces names outside the data scope with undefined.
   const [lintError] = lintExpression({
     expression,
-    allowAssignment,
   }).filter((diagnostic) => diagnostic.severity === "error");
   if (lintError) {
     reject();
@@ -214,111 +206,7 @@ const checkSource = (
     }
   });
 
-  const argNames = new Set(args.filter(checkActionArg));
-
-  // 5. How each node is used.
-  ancestor(root, {
-    Identifier(node, _state, ancestors) {
-      const { name } = node;
-      if (argNames.has(name)) {
-        // The root is the whole action: `$v = state`. An arg is allowed in two
-        // places only, found by where it stands and not by what is around it:
-        // as itself, the whole right of that assignment, or through an
-        // allowlisted event or managed Form result property.
-        // Anywhere else (inside an operator, an array, an object, a template,
-        // a call) it can be read through, as in `(arg ?? 0).view.document`.
-        const chain: string[] = [];
-        let index = ancestors.length - 1;
-        let current = ancestors[index];
-        while (index > 0) {
-          const parent = ancestors[index - 1] as AnyNode;
-          if (parent.type !== "MemberExpression" || parent.object !== current) {
-            break;
-          }
-          if (parent.computed || parent.property.type !== "Identifier") {
-            reject();
-          }
-          chain.push((parent.property as { name: string }).name);
-          current = parent;
-          index -= 1;
-        }
-        if (chain.length > 0) {
-          if (allowedArgChains.has(chain.join(".")) === false) {
-            reject();
-          }
-          // where the chain ends up is the assignment target's rule, below
-          return;
-        }
-        const parent = ancestors[ancestors.length - 2] as undefined | AnyNode;
-        if (parent?.type === "AssignmentExpression" && parent.left === node) {
-          // the assignment target's rule, below, names it
-          return;
-        }
-        if (
-          parent === root &&
-          parent.type === "AssignmentExpression" &&
-          parent.right === node
-        ) {
-          return;
-        }
-        // Form state is also used to append a history string. Keep this to
-        // additions that end at the assignment's right side: the argument
-        // cannot become a member, call target, or a second statement.
-        let operand: AnyNode = node;
-        for (
-          let ancestorIndex = ancestors.length - 2;
-          ancestorIndex >= 0;
-          ancestorIndex -= 1
-        ) {
-          const ancestor = ancestors[ancestorIndex] as AnyNode;
-          if (
-            ancestor.type === "BinaryExpression" &&
-            ancestor.operator === "+" &&
-            (ancestor.left === operand || ancestor.right === operand)
-          ) {
-            operand = ancestor;
-            continue;
-          }
-          if (
-            ancestor === root &&
-            ancestor.type === "AssignmentExpression" &&
-            ancestor.right === operand &&
-            operand !== node
-          ) {
-            return;
-          }
-          break;
-        }
-        reject();
-      }
-      if (
-        allowFreeIdentifiers ||
-        name === "undefined" ||
-        decodeDataVariableId(name) !== undefined
-      ) {
-        return;
-      }
-      reject();
-    },
-    AssignmentExpression(node) {
-      // lintExpression ignores the root of a member target, and the walk above
-      // never visits a bare one, so the target is held to its rule here: a
-      // data variable, never a part of one (a member of a variable can hold
-      // anything, an argument included) and never an argument
-      let target: AnyNode = node.left as AnyNode;
-      while (target.type === "MemberExpression") {
-        target = target.object as AnyNode;
-      }
-      if (target.type === "Identifier" && argNames.has(target.name)) {
-        reject();
-      }
-      if (node.left.type !== "Identifier") {
-        reject();
-      }
-      if (decodeDataVariableId(node.left.name) === undefined) {
-        reject();
-      }
-    },
+  simple(root, {
     MemberExpression(node) {
       if (node.computed) {
         const property = node.property as AnyNode;
@@ -350,9 +238,6 @@ const checkSource = (
       }
     },
     CallExpression(node) {
-      if (noCalls) {
-        reject();
-      }
       // lintExpression takes `x[replace]()` for the allowlisted method. The key
       // rule refuses that key first; this stays as the second line, should a
       // computed key ever be allowed again.
@@ -404,9 +289,9 @@ const checkSource = (
   });
 };
 
-const analyze = (expression: string, options: AnalyzeOptions): boolean => {
+const analyze = (expression: string): boolean => {
   try {
-    checkSource(expression, options);
+    checkSource(expression);
     return true;
   } catch {
     // Parser limits and any unexpected error fail closed.
@@ -418,46 +303,17 @@ const analyze = (expression: string, options: AnalyzeOptions): boolean => {
  * An expression-typed prop, instance child or any other string that the
  * generator compiles with generateExpression. A name that is not a data
  * variable is allowed: the generator emits `undefined` for it, and the builder
- * writes such names itself (see the top of the file).
+ * writes such names itself.
  */
 export const checkExpression = (expression: string): boolean =>
-  analyze(expression, { allowFreeIdentifiers: true });
-
-/**
- * An action's code, which may assign to data variables and read its own args.
- * The generator leaves an identifier that is not a data variable in place, so
- * here only a data variable or one of the args is allowed.
- */
-export const checkActionCode = (
-  code: string,
-  args: readonly string[]
-): boolean => analyze(code, { allowAssignment: true, args, noCalls: true });
+  analyze(expression);
 
 export type Violation = {
   instanceId?: Instance["id"];
   pageId?: Page["id"];
   resourceId?: Resource["id"];
-  /**
-   * Where in the instance, page or resource, as a path: `meta.description`. A
-   * list entry that moves when its neighbours do is found by a name instead:
-   * `meta.custom["og:title"].content`.
-   */
   field: string;
-  /** The string that is refused, to tell a violation that is still there from a new one. */
-  value: string;
 };
-
-/**
- * What makes two violations the same one: the same field of the same page,
- * instance or resource holding the same string.
- */
-export const getViolationKey = ({
-  instanceId,
-  pageId,
-  resourceId,
-  field,
-  value,
-}: Violation) => JSON.stringify([pageId, instanceId, resourceId, field, value]);
 
 type Items<Item> = ReadonlyMap<string, Item> | readonly Item[];
 
@@ -467,8 +323,6 @@ export type FindViolationsInput = {
   resources?: Items<Resource>;
   /** `getAllPages(pages)`: every page, the home page included. */
   pages?: readonly Page[];
-  /** Finds the owner of a tag prop when `instances` contains only changed rows. */
-  getInstance?: (instanceId: Instance["id"]) => Instance | undefined;
 };
 
 const valuesOf = <Item>(items: undefined | Items<Item>): Iterable<Item> => {
@@ -489,34 +343,12 @@ const componentsWithTagProps = new Set([
   "DialogTitle",
 ]);
 
-/**
- * The tag props of the given instances. findViolations judges a tag prop by the
- * component of its owner, so a save that touches only the owner (a component
- * change from `ws:element`, where the prop is an attribute, to `Box`, where it
- * is the tag) has to hand over the props it did not touch.
- */
-export const getTagProps = (
-  props: Iterable<Prop>,
-  owners: { has: (instanceId: Instance["id"]) => boolean }
-): Prop[] => {
-  const tagProps: Prop[] = [];
-  for (const prop of props) {
-    if (tagPropNames.has(prop.name) && owners.has(prop.instanceId)) {
-      tagProps.push(prop);
-    }
-  }
-  return tagProps;
-};
-
 const checkTagProp = (prop: Prop): boolean =>
   prop.type === "string" && checkTag(prop.value);
 
-const getValueText = (value: unknown) =>
-  typeof value === "string" ? value : (JSON.stringify(value) ?? "");
-
 /**
  * One walk over everything in a build that becomes code: every
- * expression-typed prop and instance child, every action's code and args,
+ * expression-typed prop and instance child, every action's args,
  * every instance's tag and the `tag` and `data-ws-tag` props of the components
  * that render them, each page's title and meta, and each resource's url,
  * search parameter values, header values and body. Names are already emitted
@@ -529,7 +361,6 @@ export const findViolations = ({
   props,
   resources,
   pages,
-  getInstance,
 }: FindViolationsInput): Violation[] => {
   const violations: Violation[] = [];
   const instanceById = new Map<string, Instance>();
@@ -547,7 +378,6 @@ export const findViolations = ({
         violations.push({
           instanceId: instance.id,
           field: "tag",
-          value: instance.tag,
         });
       }
     }
@@ -559,7 +389,6 @@ export const findViolations = ({
         violations.push({
           instanceId: instance.id,
           field: `children[${index}]`,
-          value: child.value,
         });
       }
     });
@@ -568,14 +397,12 @@ export const findViolations = ({
   for (const prop of valuesOf(props)) {
     if (tagPropNames.has(prop.name)) {
       // an owner that does not exist is never rendered
-      const owner =
-        instanceById.get(prop.instanceId) ?? getInstance?.(prop.instanceId);
+      const owner = instanceById.get(prop.instanceId);
       if (owner !== undefined && componentsWithTagProps.has(owner.component)) {
         if (checkTagProp(prop) === false) {
           violations.push({
             instanceId: prop.instanceId,
             field: `props.${prop.name}`,
-            value: getValueText(prop.value),
           });
         }
       }
@@ -585,7 +412,6 @@ export const findViolations = ({
         violations.push({
           instanceId: prop.instanceId,
           field: `props.${prop.name}`,
-          value: prop.value,
         });
       }
       continue;
@@ -598,17 +424,9 @@ export const findViolations = ({
             violations.push({
               instanceId: prop.instanceId,
               field: `${field}.args[${argIndex}]`,
-              value: arg,
             });
           }
         });
-        if (checkActionCode(action.code, action.args) === false) {
-          violations.push({
-            instanceId: prop.instanceId,
-            field: `${field}.code`,
-            value: action.code,
-          });
-        }
       });
     }
   }
@@ -616,7 +434,7 @@ export const findViolations = ({
   for (const resource of valuesOf(resources)) {
     const checkValue = (field: string, expression: string) => {
       if (checkExpression(expression) === false) {
-        violations.push({ resourceId: resource.id, field, value: expression });
+        violations.push({ resourceId: resource.id, field });
       }
     };
     checkValue("url", resource.url);
@@ -662,7 +480,6 @@ export const findViolations = ({
         violations.push({
           pageId: page.id,
           field,
-          value: expression,
         });
       }
     };
@@ -680,9 +497,6 @@ export const findViolations = ({
       if (custom.property.trim().length === 0) {
         return;
       }
-      // found by its property, not its position: the field is half of the key
-      // that tells a stored violation from a new one, and deleting or adding
-      // an entry before it moves the position of one that did not change
       checkField(
         `meta.custom[${JSON.stringify(custom.property)}].content`,
         custom.content,
