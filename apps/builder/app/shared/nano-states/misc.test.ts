@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, test } from "vitest";
+import { defaultPlanFeatures } from "@webstudio-is/plans";
 import {
   $authPermit,
   $builderMode,
   $canOpenPageTemplates,
+  $planFeatures,
   $propsIndex,
+  setBuilderMode,
+  toggleBuilderMode,
   type BuilderMode,
 } from "./misc";
 import { $props } from "../sync/data-stores";
@@ -11,8 +15,26 @@ import { $props } from "../sync/data-stores";
 afterEach(() => {
   $builderMode.set("design");
   $authPermit.set("view");
+  $planFeatures.set(defaultPlanFeatures);
   $props.set(new Map());
 });
+
+test.each(["link", "shortcut"] as const)(
+  "keeps a Free Content-only %s in Preview when Design is requested",
+  (entry) => {
+    $authPermit.set("edit");
+    $planFeatures.set(defaultPlanFeatures);
+    $builderMode.set("preview");
+
+    if (entry === "link") {
+      setBuilderMode("design");
+    } else {
+      toggleBuilderMode("design");
+    }
+
+    expect($builderMode.get()).toBe("preview");
+  }
+);
 
 test("keeps the public tag index limited to static string values", () => {
   $props.set(

@@ -267,7 +267,14 @@ test("Form Progress shows measured request bytes while the Form is pending", () 
       )
     )
   ).toBe(false);
-  const spanId = status.children.find(({ type }) => type === "id")?.value;
+  expect(status.children).toHaveLength(2);
+  const messageId = status.children[0]?.value;
+  const message = fragment.instances.find(({ id }) => id === messageId);
+  expect(message?.tag).toBe("span");
+  expect(message?.children).toEqual([
+    { type: "text", value: "Submitting…", placeholder: true },
+  ]);
+  const spanId = status.children[1]?.value;
   const span = fragment.instances.find(({ id }) => id === spanId)!;
   const showBytes = fragment.props.find(
     ({ instanceId, name }) => instanceId === span.id && name === "data-ws-show"

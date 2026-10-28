@@ -30,6 +30,7 @@ import { createEmptyWebstudioFragment } from "./component-template";
 import { insertCollectionInput } from "./collection";
 import { isLikelyWebstudioJsxFragment, parseWebstudioJsxFragment } from "./jsx";
 import { inspectWebstudioJsxFragmentSyntax } from "./jsx/syntax";
+import { applyBuilderPatchTransactions } from "../state/patch";
 
 const createPages = (
   rootInstanceId: Instance["id"],
@@ -304,6 +305,196 @@ test("replaces only the child at an explicit insert index", async () => {
       .flatMap(({ patches }) => patches)
       .some(({ op, path }) => op === "remove" && path.includes("second"))
   ).toBe(false);
+});
+
+test("keeps existing text editable when inserting an element beside it", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "parent",
+    component: elementComponent,
+    tag: "div",
+    children: [{ type: "text", value: "test" }],
+  };
+  const state = createState(parent);
+  const fragment = await parseWebstudioJsxFragment("<span>bytes</span>");
+  const mutation = insertFragment(
+    state,
+    { parentInstanceId: parent.id, fragment },
+    { createId: createIdFactory() }
+  );
+  const next = applyBuilderPatchTransactions(state, [
+    { id: "insert", payload: mutation.payload },
+  ]).state;
+  const [textChild, insertedChild] =
+    next.instances?.get(parent.id)?.children ?? [];
+  expect(textChild?.type).toBe("id");
+  expect(insertedChild).toEqual({
+    type: "id",
+    value: mutation.result.rootInstanceIds[0],
+  });
+  expect(next.instances?.get(textChild?.value ?? "")).toMatchObject({
+    tag: "span",
+    children: [{ type: "text", value: "test" }],
+  });
+  expect(mutation.result.instanceIds).toContain(textChild?.value);
+  expect(mutation.result.rootInstanceIds).toEqual([insertedChild?.value]);
+});
+
+test("wraps existing text when prepending an element", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "parent",
+    component: elementComponent,
+    tag: "div",
+    children: [{ type: "text", value: "test" }],
+  };
+  const state = createState(parent);
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment: await parseWebstudioJsxFragment("<span>first</span>"),
+      mode: "prepend",
+    },
+    { createId: createIdFactory() }
+  );
+  const next = applyBuilderPatchTransactions(state, [
+    { id: "prepend", payload: mutation.payload },
+  ]).state;
+  const [insertedChild, wrappedText] =
+    next.instances?.get(parent.id)?.children ?? [];
+  expect(insertedChild?.value).toBe(mutation.result.rootInstanceIds[0]);
+  expect(next.instances?.get(wrappedText?.value ?? "")?.children).toEqual([
+    { type: "text", value: "test" },
+  ]);
+});
+
+test("rejects wrapper ID collisions without changing the original tree", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "parent",
+    component: elementComponent,
+    tag: "div",
+    children: [{ type: "text", value: "test" }],
+  };
+  const state = createState(parent);
+  state.instances.set("generated-1", {
+    type: "instance",
+    id: "generated-1",
+    component: elementComponent,
+    tag: "span",
+    children: [],
+  });
+  const fragment = await parseWebstudioJsxFragment("<span>new</span>");
+  expect(() =>
+    insertFragment(
+      state,
+      { parentInstanceId: parent.id, fragment },
+      { createId: createIdFactory() }
+    )
+  ).toThrow("Generated record ID already exists in instances.");
+  expect(state.instances.get(parent.id)?.children).toEqual([
+    { type: "text", value: "test" },
+  ]);
+  expect(state.instances.size).toBe(2);
+});
+
+test("keeps the raw child position when replacing inside rich text", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "parent",
+    component: elementComponent,
+    tag: "div",
+    children: [
+      { type: "text", value: "before" },
+      { type: "id", value: "old" },
+      { type: "text", value: "after" },
+    ],
+  };
+  const state = createState(parent);
+  state.instances.set("old", {
+    type: "instance",
+    id: "old",
+    component: elementComponent,
+    tag: "span",
+    children: [{ type: "text", value: "old" }],
+  });
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment: await parseWebstudioJsxFragment("<span>new</span>"),
+      mode: "replace",
+      insertIndex: 1,
+    },
+    { createId: createIdFactory() }
+  );
+  const next = applyBuilderPatchTransactions(state, [
+    { id: "replace", payload: mutation.payload },
+  ]).state;
+  const children = next.instances?.get(parent.id)?.children ?? [];
+  expect(children).toHaveLength(3);
+  expect(children[1]).toEqual({
+    type: "id",
+    value: mutation.result.rootInstanceIds[0],
+  });
+  expect(next.instances?.get(children[0]?.value ?? "")?.children).toEqual([
+    { type: "text", value: "before" },
+  ]);
+  expect(next.instances?.get(children[2]?.value ?? "")?.children).toEqual([
+    { type: "text", value: "after" },
+  ]);
+  expect(next.instances?.has("old")).toBe(false);
+});
+
+test("does not keep wrapper spans when replacing all rich text", async () => {
+  const parent: Instance = {
+    type: "instance",
+    id: "parent",
+    component: elementComponent,
+    tag: "div",
+    children: [{ type: "text", value: "old" }],
+  };
+  const state = createState(parent);
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: parent.id,
+      fragment: await parseWebstudioJsxFragment("<span>new</span>"),
+      mode: "replace",
+    },
+    { createId: createIdFactory() }
+  );
+  const next = applyBuilderPatchTransactions(state, [
+    { id: "replace", payload: mutation.payload },
+  ]).state;
+  expect(next.instances?.get(parent.id)?.children).toEqual([
+    { type: "id", value: mutation.result.rootInstanceIds[0] },
+  ]);
+  expect(mutation.result.instanceIds).toEqual(mutation.result.rootInstanceIds);
+});
+
+test("preserves intentionally mixed text inside an inserted fragment", async () => {
+  const state = createState(createParent());
+  const mutation = insertFragment(
+    state,
+    {
+      parentInstanceId: "parent",
+      fragment: await parseWebstudioJsxFragment(
+        "<div>intro <span>emphasis</span></div>"
+      ),
+    },
+    { createId: createIdFactory() }
+  );
+  const next = applyBuilderPatchTransactions(state, [
+    { id: "insert", payload: mutation.payload },
+  ]).state;
+  expect(
+    next.instances?.get(mutation.result.rootInstanceIds[0] ?? "")?.children
+  ).toEqual([
+    { type: "text", value: "intro " },
+    { type: "id", value: expect.any(String) },
+  ]);
 });
 
 test("uses the public collision-safe component identifier as the template name", async () => {

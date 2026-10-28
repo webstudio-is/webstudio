@@ -25,6 +25,7 @@ import {
 
 const operationCommands = new Set([
   "insert-component",
+  "insert-fragment",
   "list-instances",
   "inspect-instance",
   "list-resources",
@@ -744,6 +745,14 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
       }>
     ).find(({ label }) => label === "Progress");
     expect(status?.component).toBe("ws:element");
+    const progressInspection = await call("inspect-instance", {
+      instanceId: status?.id,
+      include: ["children"],
+    });
+    expect(progressInspection.data.children).toEqual([
+      expect.objectContaining({ tag: "span", indexWithinParent: 0 }),
+      expect.objectContaining({ tag: "span", indexWithinParent: 1 }),
+    ]);
     const progressReference = encodeDataSourceVariable(progress?.id ?? "");
     await call("bind-props", {
       bindings: [
@@ -788,6 +797,26 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
           value: { type: "keyword", value: "red" },
         }),
       ])
+    );
+
+    const textContainer = await call("insert-fragment", {
+      parentInstanceId: "instance-root",
+      fragment: "<div>test</div>",
+    });
+    const textContainerId = (textContainer.data.rootInstanceIds as string[])[0];
+    await call("insert-fragment", {
+      parentInstanceId: textContainerId,
+      fragment: "<span>bytes</span>",
+    });
+    const [wrappedText, insertedSpan] =
+      remote.state.instances?.get(textContainerId)?.children ?? [];
+    expect(wrappedText?.type).toBe("id");
+    expect(insertedSpan?.type).toBe("id");
+    expect(remote.state.instances?.get(wrappedText?.value ?? "")).toMatchObject(
+      {
+        tag: "span",
+        children: [{ type: "text", value: "test" }],
+      }
     );
   } finally {
     await client.close();

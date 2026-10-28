@@ -35,6 +35,7 @@ import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
 import { test, withBrowserContext } from "../test";
 import { measure } from "../perf";
+import { e2ePaidPlanName } from "../plans";
 import { loadDevBuild } from "../db";
 
 const getElementTagWithTextCount = async ({
@@ -154,7 +155,7 @@ let fixture: SeededContentModeProject;
 
 test.beforeAll(async ({ browser }) => {
   fixture = await withBrowserContext(browser, (context) =>
-    createContentModeProject({ context })
+    createContentModeProject({ context, devPlan: e2ePaidPlanName })
   );
 });
 test("Editor can delete direct children but not protected containers", async ({

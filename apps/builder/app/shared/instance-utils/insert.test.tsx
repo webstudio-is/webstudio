@@ -52,9 +52,10 @@ import {
   $styles,
   $resources,
 } from "~/shared/sync/data-stores";
-import { registerContainers } from "../sync/sync-stores";
+import { registerContainers, serverSyncStore } from "../sync/sync-stores";
 import {
   findAvailableVariables,
+  getEditableTextTarget,
   getInstancePath,
 } from "@webstudio-is/project-build/runtime";
 import { getInstanceKey, selectPage } from "../nano-states";
@@ -143,6 +144,47 @@ describe("insert webstudio element at", () => {
         </Body>
       ).instances
     );
+  });
+
+  test("keeps existing text editable when adding an element beside it", async () => {
+    serverSyncStore.transactionManager.currentStack = [];
+    serverSyncStore.transactionManager.undoneStack = [];
+    serverSyncStore.popAll();
+    $instances.set(
+      renderData(
+        <Body ws:id="bodyId">
+          <ws.element ws:id="divId" ws:tag="div">
+            test
+          </ws.element>
+        </Body>
+      ).instances
+    );
+    await insertWebstudioElementAt({
+      parentSelector: ["divId", "bodyId"],
+      position: "end",
+    });
+    const instances = $instances.get();
+    const [messageChild, insertedChild] =
+      instances.get("divId")?.children ?? [];
+    const wrapperId = messageChild?.value ?? "";
+    expect(instances.get(messageChild?.value ?? "")).toMatchObject({
+      tag: "span",
+      children: [{ type: "text", value: "test" }],
+    });
+    expect(instances.get(insertedChild?.value ?? "")?.tag).toBe("div");
+
+    serverSyncStore.undo();
+    expect($instances.get().get("divId")?.children).toEqual([
+      { type: "text", value: "test" },
+    ]);
+    expect($instances.get().has(wrapperId)).toBe(false);
+
+    serverSyncStore.redo();
+    expect($instances.get().get("divId")?.children).toEqual([
+      messageChild,
+      insertedChild,
+    ]);
+    expect($instances.get().has(wrapperId)).toBe(true);
   });
 
   test("insert element with li tag into ul", async () => {
@@ -939,15 +981,21 @@ describe("insert webstudio component at", () => {
         (instance) => instance.label === "Progress"
       );
       expect(status).toBeDefined();
+      expect(status?.children).toHaveLength(2);
+      const messageId = status?.children[0]?.value;
+      const message = $instances.get().get(messageId ?? "");
+      expect(message?.tag).toBe("span");
+      expect(message && getEditableTextTarget(message)?.child).toMatchObject({
+        type: "text",
+        value: "Submitting…",
+      });
       expect(
         Array.from($props.get().values()).find(
           (prop) =>
             prop.instanceId === status?.id && prop.name === "data-ws-show"
         )
       ).toMatchObject({ type: "expression" });
-      const summaryId = status?.children.find(
-        (child) => child.type === "id"
-      )?.value;
+      const summaryId = status?.children[1]?.value;
       const summary = $instances.get().get(summaryId ?? "");
       const summaryText = summary?.children.find(
         (child) => child.type === "expression"

@@ -21,12 +21,13 @@ import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
 import { newIsolatedPage, test, withBrowserContext } from "../test";
 import { measure } from "../perf";
+import { e2ePaidPlanName } from "../plans";
 
 let fixture: SeededContentModeProject;
 
 test.beforeAll(async ({ browser }) => {
   fixture = await withBrowserContext(browser, (context) =>
-    createContentModeProject({ context })
+    createContentModeProject({ context, devPlan: e2ePaidPlanName })
   );
 });
 test("Editor can create styled page from template in content mode", async ({

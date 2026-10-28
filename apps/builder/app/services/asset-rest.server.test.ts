@@ -5,7 +5,7 @@ import {
   AssetRepositoryNotFoundError,
   AssetUploadCountLimitError,
 } from "@webstudio-is/asset-uploader/server";
-import { assetFolders } from "@webstudio-is/sdk";
+import { assetFolders, validateFileName } from "@webstudio-is/sdk";
 import { assetResourceLimits } from "@webstudio-is/sdk/asset-resource-limits";
 import { assetResourceApiOperations } from "@webstudio-is/protocol/asset-resource-api";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
@@ -46,6 +46,15 @@ describe("Assets REST responses", () => {
     const response = assetRestErrorResponse(error);
     expect(response.status).toBe(status);
     expect(await response.json()).toEqual({ errors: error.message });
+  });
+
+  test("does not report an unsupported file extension as a server failure", () => {
+    expect.assertions(1);
+    try {
+      validateFileName("library.exe");
+    } catch (error) {
+      expect(assetRestErrorResponse(error).status).toBe(400);
+    }
   });
 
   test("maps duplicate sibling folders to conflict", () => {
