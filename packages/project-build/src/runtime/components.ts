@@ -79,6 +79,7 @@ import {
 import { z } from "zod";
 import { getBlockTemplateNameConfirmation } from "./block";
 import { hasMdxComponentAdapter } from "./mdx-component-adapters";
+import { wrapEditableChildrenAroundInsertIndexMutable } from "./tree";
 
 export const insertComponentInput = z.object({
   parentInstanceId: z.string(),
@@ -527,6 +528,15 @@ const createFragmentInsertPayload = ({
         after: after.instances,
         skip: new Set([parent.id]),
       }),
+      ...(equal(after.instances.get(parent.id)?.children, parent.children)
+        ? []
+        : [
+            {
+              op: "replace" as const,
+              path: [parent.id, "children"],
+              value: after.instances.get(parent.id)?.children,
+            },
+          ]),
       ...(shouldSetChildrenArray
         ? [
             {
@@ -894,6 +904,33 @@ const createInsertFragmentMutation = <
       return child;
     }
   );
+  const insertionParent = nextData.instances.get(parent.id);
+  if (insertionParent === undefined) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
+  }
+  const originalChildren = insertionParent.children;
+  if (mode === "replace" && explicitInsertIndex !== undefined) {
+    insertionParent.children = [
+      ...originalChildren.slice(0, insertIndex),
+      ...originalChildren.slice(insertIndex + 1),
+    ];
+  }
+  const wrapped =
+    insertedChildren.some((child) => child.type === "id") &&
+    !(mode === "replace" && explicitInsertIndex === undefined)
+      ? wrapEditableChildrenAroundInsertIndexMutable({
+          instances: nextData.instances,
+          props: nextData.props,
+          metas: componentMetas,
+          parentId: parent.id,
+          position: insertIndex,
+          createId: context.createId,
+        })
+      : undefined;
+  if (wrapped === undefined) {
+    insertionParent.children = originalChildren;
+  }
+  const effectiveInsertIndex = wrapped ?? insertIndex;
   assignUniqueBlockTemplateNamesMutable({
     instanceIds: insertedChildren.flatMap((child) =>
       child.type === "id" ? [child.value] : []
@@ -939,19 +976,25 @@ const createInsertFragmentMutation = <
     const validationParent: Instance = {
       ...parent,
       children:
-        mode === "replace"
-          ? explicitInsertIndex === undefined
-            ? insertedChildren
+        wrapped !== undefined
+          ? [
+              ...insertionParent.children.slice(0, effectiveInsertIndex),
+              ...insertedChildren,
+              ...insertionParent.children.slice(effectiveInsertIndex),
+            ]
+          : mode === "replace"
+            ? explicitInsertIndex === undefined
+              ? insertedChildren
+              : [
+                  ...parentChildren.slice(0, insertIndex),
+                  ...insertedChildren,
+                  ...parentChildren.slice(insertIndex + 1),
+                ]
             : [
                 ...parentChildren.slice(0, insertIndex),
                 ...insertedChildren,
-                ...parentChildren.slice(insertIndex + 1),
-              ]
-          : [
-              ...parentChildren.slice(0, insertIndex),
-              ...insertedChildren,
-              ...parentChildren.slice(insertIndex),
-            ],
+                ...parentChildren.slice(insertIndex),
+              ],
     };
     validationInstances.set(parent.id, validationParent);
     const { instanceSelector: parentSelector } =
@@ -994,9 +1037,10 @@ const createInsertFragmentMutation = <
     removedInstanceIds: string[]
   ): ComponentInsertResult & Details =>
     ({
-      instanceIds: Array.from(newInstanceIds.values()).filter(
+      instanceIds: Array.from(nextData.instances.keys()).filter(
         (instanceId) =>
           instanceId !== ROOT_INSTANCE_ID &&
+          instanceId !== normalizedSlotDropTarget?.parentSelector[0] &&
           mutationState.instances.has(instanceId) === false
       ),
       rootInstanceIds: insertedChildren.flatMap((child) =>
@@ -1021,7 +1065,7 @@ const createInsertFragmentMutation = <
     if (mode === "prepend") {
       parent.children.splice(0, 0, ...insertedChildren);
     } else {
-      parent.children.splice(insertIndex, 0, ...insertedChildren);
+      parent.children.splice(effectiveInsertIndex, 0, ...insertedChildren);
     }
     const insertPayload = createFragmentPayload({
       before: mutationState,
@@ -1059,7 +1103,7 @@ const createInsertFragmentMutation = <
     before: mutationState,
     after: nextData,
     parent,
-    insertIndex,
+    insertIndex: effectiveInsertIndex,
     insertedChildren,
   });
   return createRuntimeMutation({

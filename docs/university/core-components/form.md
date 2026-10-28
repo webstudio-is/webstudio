@@ -239,7 +239,7 @@ The default Form contains four containers:
 
 Their **Show** bindings use `formProgress.status` for Progress and `formState` for the other containers. By default, the fields remain visible while submitting and after a failure. Success hides the fields and shows the success message.
 
-Select the message containers in Navigator to edit their text and design. Progress shows “Submitting…” and, when the browser measures the request, a short byte summary such as “1.2 MB / 3 MB”. The message stays visible while actions finish.
+Select the message containers in Navigator to design them. To edit the Progress text, select its first Span child. Progress shows “Submitting…” and, when the browser measures the request, a short byte summary such as “1.2 MB / 3 MB”. The message stays visible while actions finish.
 
 ### Keep the fields visible
 

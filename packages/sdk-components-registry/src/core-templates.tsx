@@ -324,7 +324,7 @@ export const coreTemplates = {
             role="status"
             aria-live="polite"
           >
-            {new PlaceholderValue("Submitting…")}
+            <span>{new PlaceholderValue("Submitting…")}</span>
             <span
               ws:show={expression`${formProgress}.loaded >= 0 && ${formProgress}.total > 0`}
             >
