@@ -55,6 +55,7 @@ import {
 import { registerContainers } from "../sync/sync-stores";
 import {
   findAvailableVariables,
+  getEditableTextTarget,
   getInstancePath,
 } from "@webstudio-is/project-build/runtime";
 import { getInstanceKey, selectPage } from "../nano-states";
@@ -939,15 +940,21 @@ describe("insert webstudio component at", () => {
         (instance) => instance.label === "Progress"
       );
       expect(status).toBeDefined();
+      expect(status?.children).toHaveLength(2);
+      const messageId = status?.children[0]?.value;
+      const message = $instances.get().get(messageId ?? "");
+      expect(message?.tag).toBe("span");
+      expect(message && getEditableTextTarget(message)?.child).toMatchObject({
+        type: "text",
+        value: "Submitting…",
+      });
       expect(
         Array.from($props.get().values()).find(
           (prop) =>
             prop.instanceId === status?.id && prop.name === "data-ws-show"
         )
       ).toMatchObject({ type: "expression" });
-      const summaryId = status?.children.find(
-        (child) => child.type === "id"
-      )?.value;
+      const summaryId = status?.children[1]?.value;
       const summary = $instances.get().get(summaryId ?? "");
       const summaryText = summary?.children.find(
         (child) => child.type === "expression"

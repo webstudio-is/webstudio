@@ -744,6 +744,14 @@ test("discovers, commits, and reads back the new Form through MCP", async () => 
       }>
     ).find(({ label }) => label === "Progress");
     expect(status?.component).toBe("ws:element");
+    const progressInspection = await call("inspect-instance", {
+      instanceId: status?.id,
+      include: ["children"],
+    });
+    expect(progressInspection.data.children).toEqual([
+      expect.objectContaining({ tag: "span", indexWithinParent: 0 }),
+      expect.objectContaining({ tag: "span", indexWithinParent: 1 }),
+    ]);
     const progressReference = encodeDataSourceVariable(progress?.id ?? "");
     await call("bind-props", {
       bindings: [
