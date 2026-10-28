@@ -287,6 +287,34 @@ const checkSource = (
         ) {
           return;
         }
+        // Form state is also used to append a history string. Keep this to
+        // additions that end at the assignment's right side: the argument
+        // cannot become a member, call target, or a second statement.
+        let operand: AnyNode = node;
+        for (
+          let ancestorIndex = ancestors.length - 2;
+          ancestorIndex >= 0;
+          ancestorIndex -= 1
+        ) {
+          const ancestor = ancestors[ancestorIndex] as AnyNode;
+          if (
+            ancestor.type === "BinaryExpression" &&
+            ancestor.operator === "+" &&
+            (ancestor.left === operand || ancestor.right === operand)
+          ) {
+            operand = ancestor;
+            continue;
+          }
+          if (
+            ancestor === root &&
+            ancestor.type === "AssignmentExpression" &&
+            ancestor.right === operand &&
+            operand !== node
+          ) {
+            return;
+          }
+          break;
+        }
         reject(
           `${quote(name)} can only be assigned to a variable or read through an allowed property`
         );

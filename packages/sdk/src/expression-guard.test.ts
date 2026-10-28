@@ -49,6 +49,16 @@ describe("saved expression guard", () => {
     ).toBe(true);
     expect(
       checkActionCode(
+        `$ws$dataSource$history = $ws$dataSource$history + "|" + state`,
+        ["state"]
+      ).ok
+    ).toBe(true);
+    expect(
+      checkActionCode(`$ws$dataSource$id = (state + "").constructor`, ["state"])
+        .ok
+    ).toBe(false);
+    expect(
+      checkActionCode(
         `({ results: $ws$dataSource$results = result.results, errors: $ws$dataSource$errors = result.errors })`,
         ["result"]
       ).ok
