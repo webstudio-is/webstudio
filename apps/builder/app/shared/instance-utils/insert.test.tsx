@@ -52,7 +52,7 @@ import {
   $styles,
   $resources,
 } from "~/shared/sync/data-stores";
-import { registerContainers } from "../sync/sync-stores";
+import { registerContainers, serverSyncStore } from "../sync/sync-stores";
 import {
   findAvailableVariables,
   getEditableTextTarget,
@@ -144,6 +144,47 @@ describe("insert webstudio element at", () => {
         </Body>
       ).instances
     );
+  });
+
+  test("keeps existing text editable when adding an element beside it", async () => {
+    serverSyncStore.transactionManager.currentStack = [];
+    serverSyncStore.transactionManager.undoneStack = [];
+    serverSyncStore.popAll();
+    $instances.set(
+      renderData(
+        <Body ws:id="bodyId">
+          <ws.element ws:id="divId" ws:tag="div">
+            test
+          </ws.element>
+        </Body>
+      ).instances
+    );
+    await insertWebstudioElementAt({
+      parentSelector: ["divId", "bodyId"],
+      position: "end",
+    });
+    const instances = $instances.get();
+    const [messageChild, insertedChild] =
+      instances.get("divId")?.children ?? [];
+    const wrapperId = messageChild?.value ?? "";
+    expect(instances.get(messageChild?.value ?? "")).toMatchObject({
+      tag: "span",
+      children: [{ type: "text", value: "test" }],
+    });
+    expect(instances.get(insertedChild?.value ?? "")?.tag).toBe("div");
+
+    serverSyncStore.undo();
+    expect($instances.get().get("divId")?.children).toEqual([
+      { type: "text", value: "test" },
+    ]);
+    expect($instances.get().has(wrapperId)).toBe(false);
+
+    serverSyncStore.redo();
+    expect($instances.get().get("divId")?.children).toEqual([
+      messageChild,
+      insertedChild,
+    ]);
+    expect($instances.get().has(wrapperId)).toBe(true);
   });
 
   test("insert element with li tag into ul", async () => {
