@@ -34,13 +34,14 @@ import { createContentModeProject } from "../fixtures/content-mode-suite";
 import type { SeededContentModeProject } from "../fixtures/content-mode-project";
 import { test, withBrowserContext } from "../test";
 import { measure } from "../perf";
+import { e2ePaidPlanName } from "../plans";
 import { loadDevBuild } from "../db";
 
 let fixture: SeededContentModeProject;
 
 test.beforeAll(async ({ browser }) => {
   fixture = await withBrowserContext(browser, (context) =>
-    createContentModeProject({ context })
+    createContentModeProject({ context, devPlan: e2ePaidPlanName })
   );
 });
 test("Editor can insert content templates with assets and styles", async ({
@@ -419,6 +420,7 @@ test("Builder copy/paste preserves image asset references after reload", async (
 }) => {
   const fixture = await createContentModeProject({
     context: context,
+    devPlan: e2ePaidPlanName,
     email: "asset-copy-e2e@webstudio.test",
     title: "Asset Copy E2E",
     assetNamePrefix: "asset-copy-",

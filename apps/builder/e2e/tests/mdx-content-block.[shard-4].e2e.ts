@@ -37,6 +37,7 @@ import { selectNavigatorItem } from "../flows/navigator";
 import { selectCanvasTextInstanceForProps } from "../flows/canvas-selection";
 import { fillSelectedStringProperty } from "../flows/props-panel";
 import { getProjectBuilderUrl, test } from "../test";
+import { e2ePaidPlanName } from "../plans";
 
 test.describe.configure({ mode: "parallel" });
 
@@ -188,6 +189,7 @@ test("Content Block MDX source lifecycle persists edits and resets to empty", as
   test.setTimeout(180_000);
   const fixture = await createContentModeProject({
     context: context,
+    devPlan: e2ePaidPlanName,
     email: "mdx-content-source-e2e@webstudio.test",
     title: "MDX Content Source E2E",
   });
@@ -468,6 +470,7 @@ test("Empty MDX content supports slash menu keyboard and mouse insertion", async
   });
   const fixture = await createContentModeProject({
     context: context,
+    devPlan: e2ePaidPlanName,
     email: "empty-mdx-content-source-e2e@webstudio.test",
     title: "Empty MDX Content Source E2E",
   });
@@ -677,6 +680,7 @@ test("Content Block requires a Builder reload after a stale file revision", asyn
 }) => {
   const fixture = await createContentModeProject({
     context: context,
+    devPlan: e2ePaidPlanName,
     email: "mdx-content-conflict-e2e@webstudio.test",
     title: "MDX Content Conflict E2E",
   });
@@ -898,6 +902,7 @@ test("Dynamic detail source follows the selected route parameter", async ({
 }) => {
   const fixture = await createContentModeProject({
     context: context,
+    devPlan: e2ePaidPlanName,
     email: "mdx-content-detail-e2e@webstudio.test",
     title: "MDX Content Detail E2E",
   });
@@ -956,6 +961,7 @@ test("Repeated Content Block scopes edit distinct MDX files without leakage", as
 }) => {
   const fixture = await createContentModeProject({
     context: context,
+    devPlan: e2ePaidPlanName,
     email: "mdx-content-repeated-e2e@webstudio.test",
     title: "MDX Content Repeated E2E",
   });
