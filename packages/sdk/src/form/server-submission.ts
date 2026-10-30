@@ -1,3 +1,4 @@
+import { readLimitedBytes } from "../resource-response";
 import { getReachableResources } from "./resource-graph";
 import { formBotFieldName, managedFormArrayNamesFieldName } from "./fields";
 import {
@@ -165,31 +166,11 @@ export const readFormDataWithLimit = async (
   if (request.body === null) {
     return new FormData();
   }
-  const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let totalBytes = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      totalBytes += value.byteLength;
-      if (totalBytes > maximumBytes) {
-        await reader.cancel();
-        throw formRequestTooLarge(maximumBytes);
-      }
-      chunks.push(value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  const body = new Uint8Array(totalBytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
+  const body = await readLimitedBytes(
+    request.body,
+    maximumBytes,
+    formRequestTooLarge(maximumBytes)
+  );
   const headers = new Headers(request.headers);
   headers.delete("content-length");
   return new Request(request.url, {

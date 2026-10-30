@@ -3,6 +3,7 @@ import {
   createCloudflareProtectedResourceFetch,
   createProtectedResourceFetch,
   getDeniedResourceHostnames,
+  isProtectedResourceReentry,
 } from "./protected-resource-fetch";
 
 describe("protected Resource fetch", () => {
@@ -30,19 +31,86 @@ describe("protected Resource fetch", () => {
     expect(transport).not.toHaveBeenCalled();
   });
 
-  test("requires an explicit Worker zone and blocks its own origin", async () => {
+  test("requires a site hostname and blocks requests back to the site", async () => {
     expect(() =>
-      createCloudflareProtectedResourceFetch({ ownZoneHostnames: [""] })
+      createCloudflareProtectedResourceFetch({
+        projectId: "project-a",
+        ownZoneHostnames: [""],
+      })
     ).toThrow("Worker zones must be specified");
 
     const workerFetch = vi.fn<typeof fetch>();
     const protectedFetch = createCloudflareProtectedResourceFetch({
-      ownZoneHostnames: ["example.com"],
+      projectId: "project-a",
+      ownZoneHostnames: ["site.example.com", "alias.example.net"],
+      publicRouting: true,
       workerFetch,
     });
+    for (const hostname of ["site.example.com", "alias.example.net"]) {
+      await expect(
+        protectedFetch(`https://${hostname}/submit`, { method: "POST" })
+      ).rejects.toThrow("not allowed");
+    }
+    expect(workerFetch).not.toHaveBeenCalled();
+  });
+
+  test("allows a sibling API hostname on a public-routed Worker", async () => {
+    const workerFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response("ok"));
+    const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
+      ownZoneHostnames: ["site.example.com"],
+      publicRouting: true,
+      workerFetch,
+    });
+
     await expect(
-      protectedFetch("https://private.example.com/submit", { method: "POST" })
-    ).rejects.toThrow("not allowed");
+      protectedFetch("https://api.site.example.com/submit", { method: "POST" })
+    ).resolves.toBeInstanceOf(Response);
+    expect(workerFetch).toHaveBeenCalledOnce();
+  });
+
+  test("marks Cloudflare Resource requests so another site alias can reject reentry", async () => {
+    const workerFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response("ok"));
+    const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
+      ownZoneHostnames: ["site.example.com"],
+      publicRouting: true,
+      workerFetch,
+    });
+
+    await protectedFetch("https://same-site.pages.dev/data");
+    const [, init] = workerFetch.mock.calls[0];
+    expect(
+      isProtectedResourceReentry(
+        new Request("https://same-site.pages.dev/data", init),
+        "project-a"
+      )
+    ).toBe(true);
+    expect(
+      isProtectedResourceReentry(
+        new Request("https://same-site.pages.dev/data"),
+        "project-a"
+      )
+    ).toBe(false);
+  });
+
+  test("keeps the zone-wide block without public routing", async () => {
+    const workerFetch = vi.fn<typeof fetch>();
+    const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
+      ownZoneHostnames: ["site.example.com"],
+      workerFetch,
+    });
+
+    expect(() =>
+      protectedFetch.validateDestination(
+        new URL("https://api.site.example.com/submit")
+      )
+    ).toThrow("not allowed");
     expect(workerFetch).not.toHaveBeenCalled();
   });
 
@@ -82,6 +150,7 @@ describe("protected Resource fetch", () => {
       )
       .mockResolvedValueOnce(new Response("ok"));
     const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
       ownZoneHostnames: ["own.example"],
       workerFetch,
     });
@@ -114,6 +183,7 @@ describe("protected Resource fetch", () => {
       })
     );
     const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
       ownZoneHostnames: ["own.example"],
       workerFetch,
     });
@@ -138,6 +208,7 @@ describe("protected Resource fetch", () => {
       )
       .mockResolvedValueOnce(new Response("ok"));
     const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
       ownZoneHostnames: ["own.example"],
       workerFetch,
     });
@@ -160,7 +231,9 @@ describe("protected Resource fetch", () => {
     expect(new Headers(first?.headers).get("authorization")).toBe(
       "Bearer secret"
     );
-    expect([...new Headers(second?.headers)]).toEqual([]);
+    expect([...new Headers(second?.headers)]).toEqual([
+      ["x-webstudio-protected-resource", "project-a"],
+    ]);
     expect(second?.body).toBeUndefined();
     expect(second?.redirect).toBe("manual");
   });
@@ -173,6 +246,7 @@ describe("protected Resource fetch", () => {
       })
     );
     const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
       ownZoneHostnames: ["own.example"],
       workerFetch,
     });
@@ -200,11 +274,33 @@ describe("protected Resource fetch", () => {
     const large = createProtectedResourceFetch({
       deniedHostnames: [],
       transport: async () => ({
-        response: new Response(new Uint8Array(2 * 1024 * 1024 + 1)),
+        response: new Response(new Uint8Array(1024 * 1024 + 1)),
       }),
     });
-    await expect(large("https://api.example/data")).rejects.toThrow(
-      "too large"
-    );
+    await expect(large("https://api.example/data")).rejects.toMatchObject({
+      code: "RESPONSE_TOO_LARGE",
+    });
   });
+});
+
+test("allows another project but rejects the originating project through any alias", async () => {
+  const resourceFetch = createCloudflareProtectedResourceFetch({
+    projectId: "project-a",
+    ownZoneHostnames: ["site-a.example"],
+    publicRouting: true,
+    workerFetch: async (input, init) => {
+      const request = new Request(input, init);
+      const projectId =
+        new URL(request.url).hostname === "site-b.example"
+          ? "project-b"
+          : "project-a";
+      return new Response(null, {
+        status: isProtectedResourceReentry(request, projectId) ? 508 : 200,
+      });
+    },
+  });
+  expect((await resourceFetch("https://site-b.example/data")).status).toBe(200);
+  expect((await resourceFetch("https://alias-a.example/data")).status).toBe(
+    508
+  );
 });

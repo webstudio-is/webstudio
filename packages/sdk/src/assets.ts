@@ -161,6 +161,7 @@ const assetFileTypes = {
   md: textFile("text/markdown", "markdown"),
   mdx: textFile("text/mdx", "markdown"),
   js: textFile("text/javascript", "javascript"),
+  mjs: textFile("text/javascript", "javascript"),
   css: textFile("text/css", "css"),
   json: textFile("application/json", "json"),
   html: textFile("text/html", "html"),
@@ -485,9 +486,11 @@ export const doesAssetMatchMimePatterns = (
   return false;
 };
 
+export class InvalidAssetFileNameError extends Error {}
+
 /**
  * Validate a filename and return its extension and MIME type
- * @throws Error if file extension is not allowed
+ * @throws InvalidAssetFileNameError if file extension is not allowed
  */
 export const validateFileName = (
   fileName: string
@@ -495,11 +498,11 @@ export const validateFileName = (
   const extension = getFileExtension(fileName)?.toLowerCase();
 
   if (!extension) {
-    throw new Error("File must have an extension");
+    throw new InvalidAssetFileNameError("File must have an extension");
   }
 
   if (!isAllowedExtension(extension)) {
-    throw new Error(
+    throw new InvalidAssetFileNameError(
       `File type "${extension}" is not allowed. Allowed types: ${Array.from(
         ALLOWED_FILE_EXTENSIONS
       ).join(", ")}`
@@ -508,7 +511,7 @@ export const validateFileName = (
 
   const mimeType = getMimeTypeByExtension(extension);
   if (!mimeType) {
-    throw new Error(
+    throw new InvalidAssetFileNameError(
       `Could not determine MIME type for extension: ${extension}`
     );
   }

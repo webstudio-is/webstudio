@@ -8,6 +8,7 @@ import {
 } from "@webstudio-is/icons";
 import {
   Box,
+  Chip,
   DropdownMenuItemRightSlot,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -107,11 +108,12 @@ export const BuilderModeDropDown = () => {
             }}
           >
             {Object.entries(menuItems)
-              .filter(([_, { enabled }]) => enabled)
-              .map(([mode, { icon, title, shortcut }]) => (
+              .filter(([mode, { enabled }]) => mode === "content" || enabled)
+              .map(([mode, { icon, title, shortcut, enabled }]) => (
                 <DropdownMenuRadioItem
                   key={mode}
                   value={mode}
+                  disabled={!enabled}
                   onFocus={handleFocus(mode as keyof typeof menuItems)}
                   onBlur={handleBlur}
                   icon={<MenuCheckedIcon />}
@@ -121,7 +123,7 @@ export const BuilderModeDropDown = () => {
                     <Box>{title}</Box>
                   </Flex>
                   <DropdownMenuItemRightSlot>
-                    <Kbd value={shortcut} />
+                    {enabled ? <Kbd value={shortcut} /> : <Chip>Pro</Chip>}
                   </DropdownMenuItemRightSlot>
                   &nbsp;
                 </DropdownMenuRadioItem>

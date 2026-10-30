@@ -6,6 +6,18 @@ import { applyAssetDataOverride, getAssetData } from "./get-asset-data";
 const require = createRequire(import.meta.url);
 
 describe("asset data overrides", () => {
+  test("accepts an ECMAScript module as a file asset", async () => {
+    const data = new TextEncoder().encode("export default 1;");
+    await expect(
+      getAssetData({
+        type: "file",
+        name: "library.mjs",
+        size: data.byteLength,
+        data,
+      })
+    ).resolves.toEqual({ size: data.byteLength, format: "mjs", meta: {} });
+  });
+
   test("parses font extensions as fonts even when declared as generic files", async () => {
     const data = readFileSync(
       require.resolve("@fontsource-variable/inter/files/inter-latin-wght-normal.woff2")

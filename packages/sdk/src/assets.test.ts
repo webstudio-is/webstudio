@@ -3,6 +3,7 @@ import { fontMeta } from "@webstudio-is/fonts";
 import { asset, assetType } from "./schema/assets";
 import {
   ALLOWED_FILE_TYPES,
+  InvalidAssetFileNameError,
   getMimeTypeByExtension,
   getMimeTypeByFilename,
   isAllowedExtension,
@@ -157,6 +158,7 @@ describe("allowed-file-types", () => {
       ["md", "markdown"],
       ["mdx", "markdown"],
       ["js", "javascript"],
+      ["mjs", "javascript"],
       ["css", "css"],
       ["json", "json"],
       ["html", "html"],
@@ -201,6 +203,7 @@ describe("allowed-file-types", () => {
       expect(getMimeTypeByFilename("image.jpg")).toBe("image/jpeg");
       expect(getMimeTypeByFilename("document.pdf")).toBe("application/pdf");
       expect(getMimeTypeByFilename("video.mp4")).toBe("video/mp4");
+      expect(getMimeTypeByFilename("module.mjs")).toBe("text/javascript");
     });
 
     test("handles files with multiple dots", () => {
@@ -284,6 +287,10 @@ describe("allowed-file-types", () => {
         extension: "pdf",
         mimeType: "application/pdf",
       });
+      expect(validateFileName("module.mjs")).toEqual({
+        extension: "mjs",
+        mimeType: "text/javascript",
+      });
     });
 
     test("is case-insensitive", () => {
@@ -311,6 +318,9 @@ describe("allowed-file-types", () => {
     });
 
     test("throws error for disallowed extensions", () => {
+      expect(() => validateFileName("malware.exe")).toThrow(
+        InvalidAssetFileNameError
+      );
       expect(() => validateFileName("malware.exe")).toThrow(
         'File type "exe" is not allowed'
       );

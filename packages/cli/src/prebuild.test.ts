@@ -24,6 +24,7 @@ import {
 import { build } from "esbuild";
 import { loadConfigFromFile } from "vite";
 import { bundleVersion } from "@webstudio-is/protocol";
+import { isProtectedResourceReentry } from "@webstudio-is/sdk/protected-resource-fetch";
 import type { Asset, DataSource, Instance, Prop } from "@webstudio-is/sdk";
 import {
   createDocumentGraph,
@@ -1021,6 +1022,114 @@ describe("prebuild", () => {
     );
     expect(nodeAdapter).not.toContain("EMAIL_SERVICE");
   });
+
+  test.each(["saas", undefined] as const)(
+    "allows sibling API hosts but blocks published site aliases on Cloudflare (%s)",
+    async (destination) => {
+      const siteData = createSiteData();
+      siteData.projectDomain = "project.wstd.io";
+      await writeFile(
+        ".webstudio/data.json",
+        JSON.stringify({
+          ...siteData,
+          build: {
+            ...siteData.build,
+            deployment: {
+              destination,
+              domains: ["site.example.com", "alias.example.net"],
+            },
+          },
+        })
+      );
+      await prebuild({
+        assets: false,
+        template: ["react-router", "react-router-cloudflare"],
+      });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      const bundle = await build({
+        entryPoints: [
+          join(
+            tempDir,
+            "app/__generated__/$resources.managed-form-fetch.server.ts"
+          ),
+        ],
+        bundle: true,
+        format: "esm",
+        platform: "node",
+        conditions: ["webstudio"],
+        write: false,
+      });
+      const adapter = (await import(
+        /* @vite-ignore */
+        `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`
+      )) as {
+        createManagedFormResourceFetch: (input: {
+          request: Request;
+          context: unknown;
+          projectDomain: string;
+        }) => typeof fetch & { validateDestination: (url: URL) => void };
+      };
+      const metadataBundle = await build({
+        stdin: {
+          contents: 'export { projectId } from "./app/__generated__/_index";',
+          resolveDir: tempDir,
+        },
+        platform: "node",
+        conditions: ["webstudio"],
+        bundle: true,
+        format: "esm",
+        write: false,
+      });
+      const { projectId } = await import(
+        /* @vite-ignore */
+        `data:text/javascript;base64,${Buffer.from(metadataBundle.outputFiles[0].text).toString("base64")}`
+      );
+      expect(projectId).toBe(siteData.build.projectId);
+      vi.stubGlobal(
+        "fetch",
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const request = new Request(input, init);
+          const receivingProjectId =
+            new URL(request.url).hostname === "api.example.com"
+              ? "other-project"
+              : projectId;
+          return new Response(null, {
+            status: isProtectedResourceReentry(request, receivingProjectId)
+              ? 508
+              : 200,
+          });
+        }
+      );
+      const protectedFetch = adapter.createManagedFormResourceFetch({
+        request: new Request("https://site.example.com"),
+        context: {},
+        projectDomain: siteData.projectDomain,
+      });
+
+      try {
+        expect((await protectedFetch("https://api.example.com")).status).toBe(
+          200
+        );
+        expect(
+          (await protectedFetch("https://unknown-alias.example.com")).status
+        ).toBe(508);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+      expect(() =>
+        protectedFetch.validateDestination(new URL("https://api.example.com"))
+      ).not.toThrow();
+      for (const hostname of [
+        "site.example.com",
+        "alias.example.net",
+        "project.wstd.io",
+      ]) {
+        expect(() =>
+          protectedFetch.validateDestination(new URL(`https://${hostname}`))
+        ).toThrow();
+      }
+    }
+  );
 
   test("publishes configured file-input attributes", async () => {
     await writeSiteData(

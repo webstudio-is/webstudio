@@ -239,7 +239,7 @@ The default Form contains four containers:
 
 Their **Show** bindings use `formProgress.status` for Progress and `formState` for the other containers. By default, the fields remain visible while submitting and after a failure. Success hides the fields and shows the success message.
 
-Select the message containers in Navigator to edit their text and design. Progress shows “Submitting…” and, when the browser measures the request, a short byte summary such as “1.2 MB / 3 MB”. The message stays visible while actions finish.
+Select the message containers in Navigator to design them. To edit the Progress text, select its first Span child. Progress shows “Submitting…” and, when the browser measures the request, a short byte summary such as “1.2 MB / 3 MB”. The message stays visible while actions finish.
 
 ### Keep the fields visible
 
@@ -332,6 +332,7 @@ Limits count the whole request or message, not each file separately.
 | **25 MiB per published Form submission** | The complete incoming multipart request: fields, files, and multipart encoding. |
 | **4.5 MB per Preview Form submission** | The complete request: fields, files, and multipart encoding. Leave room for fields and encoding when choosing file sizes. |
 | **25 MiB per outbound HTTP Resource body** | Webstudio's body-size check for a Form action. The destination or its network path may allow less. |
+| **1 MiB per HTTP Resource response** | The complete response after decompression, for actions and their HTTP dependencies. Request fewer fields or use pagination if it exceeds the limit. |
 | **32 attachments per email** | All files attached to that email. |
 | **7 MiB per email-service request** | The complete JSON request, including email text, attachment data encoded as Base64, and other fields. |
 
