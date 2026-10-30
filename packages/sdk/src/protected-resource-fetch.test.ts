@@ -33,11 +33,15 @@ describe("protected Resource fetch", () => {
 
   test("requires a site hostname and blocks requests back to the site", async () => {
     expect(() =>
-      createCloudflareProtectedResourceFetch({ ownZoneHostnames: [""] })
+      createCloudflareProtectedResourceFetch({
+        projectId: "project-a",
+        ownZoneHostnames: [""],
+      })
     ).toThrow("Worker zones must be specified");
 
     const workerFetch = vi.fn<typeof fetch>();
     const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
       ownZoneHostnames: ["site.example.com", "alias.example.net"],
       publicRouting: true,
       workerFetch,
@@ -55,6 +59,7 @@ describe("protected Resource fetch", () => {
       .fn<typeof fetch>()
       .mockResolvedValue(new Response("ok"));
     const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
       ownZoneHostnames: ["site.example.com"],
       publicRouting: true,
       workerFetch,
@@ -71,6 +76,7 @@ describe("protected Resource fetch", () => {
       .fn<typeof fetch>()
       .mockResolvedValue(new Response("ok"));
     const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
       ownZoneHostnames: ["site.example.com"],
       publicRouting: true,
       workerFetch,
@@ -80,12 +86,14 @@ describe("protected Resource fetch", () => {
     const [, init] = workerFetch.mock.calls[0];
     expect(
       isProtectedResourceReentry(
-        new Request("https://same-site.pages.dev/data", init)
+        new Request("https://same-site.pages.dev/data", init),
+        "project-a"
       )
     ).toBe(true);
     expect(
       isProtectedResourceReentry(
-        new Request("https://same-site.pages.dev/data")
+        new Request("https://same-site.pages.dev/data"),
+        "project-a"
       )
     ).toBe(false);
   });
@@ -93,6 +101,7 @@ describe("protected Resource fetch", () => {
   test("keeps the zone-wide block without public routing", async () => {
     const workerFetch = vi.fn<typeof fetch>();
     const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
       ownZoneHostnames: ["site.example.com"],
       workerFetch,
     });
@@ -141,6 +150,7 @@ describe("protected Resource fetch", () => {
       )
       .mockResolvedValueOnce(new Response("ok"));
     const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
       ownZoneHostnames: ["own.example"],
       workerFetch,
     });
@@ -173,6 +183,7 @@ describe("protected Resource fetch", () => {
       })
     );
     const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
       ownZoneHostnames: ["own.example"],
       workerFetch,
     });
@@ -197,6 +208,7 @@ describe("protected Resource fetch", () => {
       )
       .mockResolvedValueOnce(new Response("ok"));
     const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
       ownZoneHostnames: ["own.example"],
       workerFetch,
     });
@@ -220,7 +232,7 @@ describe("protected Resource fetch", () => {
       "Bearer secret"
     );
     expect([...new Headers(second?.headers)]).toEqual([
-      ["x-webstudio-protected-resource", "1"],
+      ["x-webstudio-protected-resource", "project-a"],
     ]);
     expect(second?.body).toBeUndefined();
     expect(second?.redirect).toBe("manual");
@@ -234,6 +246,7 @@ describe("protected Resource fetch", () => {
       })
     );
     const protectedFetch = createCloudflareProtectedResourceFetch({
+      projectId: "project-a",
       ownZoneHostnames: ["own.example"],
       workerFetch,
     });
@@ -268,4 +281,26 @@ describe("protected Resource fetch", () => {
       code: "RESPONSE_TOO_LARGE",
     });
   });
+});
+
+test("allows another project but rejects the originating project through any alias", async () => {
+  const resourceFetch = createCloudflareProtectedResourceFetch({
+    projectId: "project-a",
+    ownZoneHostnames: ["site-a.example"],
+    publicRouting: true,
+    workerFetch: async (input, init) => {
+      const request = new Request(input, init);
+      const projectId =
+        new URL(request.url).hostname === "site-b.example"
+          ? "project-b"
+          : "project-a";
+      return new Response(null, {
+        status: isProtectedResourceReentry(request, projectId) ? 508 : 200,
+      });
+    },
+  });
+  expect((await resourceFetch("https://site-b.example/data")).status).toBe(200);
+  expect((await resourceFetch("https://alias-a.example/data")).status).toBe(
+    508
+  );
 });

@@ -17,6 +17,7 @@ export const createManagedFormEmailSender = ({ context, formData, projectId }: {
 export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
   void context;
   return createCloudflareProtectedResourceFetch({
+    projectId: "d845c167-ea07-4875-b08d-83e97c09dcce",
     // The generated Cloudflare templates and hosted Worker use public fetch routing.
     publicRouting: true,
     ownZoneHostnames: [

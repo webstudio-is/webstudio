@@ -24,9 +24,15 @@ const maxRequestBytes = 25 * 1024 * 1024;
 
 const protectedResourceRequestHeader = "x-webstudio-protected-resource";
 
-/** Reject a Resource subrequest when it reaches this app through any hostname. */
-export const isProtectedResourceReentry = (request: Request) =>
-  request.headers.get(protectedResourceRequestHeader) === "1";
+/** Project identity survives aliases while allowing calls to other projects.
+ * This cooperative marker is not a sandbox for untrusted code or proxies that strip it.
+ */
+export const isProtectedResourceReentry = (
+  request: Request,
+  projectId: string
+) =>
+  projectId !== "" &&
+  request.headers.get(protectedResourceRequestHeader) === projectId;
 
 /** Preserve the domain-wide policy for Node and Workers without public routing. */
 export const getDeniedResourceHostnames = (
@@ -154,10 +160,12 @@ export const createProtectedResourceFetch = ({
 
 /** Cloudflare's outbound proxy checks the destination at each fetch hop. */
 export const createCloudflareProtectedResourceFetch = ({
+  projectId,
   ownZoneHostnames,
   publicRouting = false,
   workerFetch = fetch,
 }: {
+  projectId: string;
   // With global_fetch_strictly_public, supply every site hostname to prevent
   // recursive requests. Without that flag, supply each zone to block origin access.
   ownZoneHostnames: readonly [string, ...string[]];
@@ -180,7 +188,7 @@ export const createCloudflareProtectedResourceFetch = ({
       const outgoingHeaders = new Headers(headers);
       // The hostname list cannot include every self-hosted alias. Mark each hop
       // so a request routed back to this app is rejected before it runs.
-      outgoingHeaders.set(protectedResourceRequestHeader, "1");
+      outgoingHeaders.set(protectedResourceRequestHeader, projectId);
       return {
         response: await workerFetch(url, {
           method,
