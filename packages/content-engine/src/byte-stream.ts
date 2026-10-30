@@ -127,11 +127,12 @@ export const readBytePrefix = async (
 
 export const readBoundedBytes = async (
   source: ByteSource,
-  maximumBytes: number
+  maximumBytes: number,
+  limitError = new ByteLimitExceededError()
 ) => {
   const bytes = await readBytePrefix(source, maximumBytes + 1);
   if (bytes.byteLength > maximumBytes) {
-    throw new ByteLimitExceededError();
+    throw limitError;
   }
   return bytes;
 };

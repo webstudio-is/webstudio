@@ -145,18 +145,9 @@ export const createProtectedResourceFetch = ({
           redirects += 1;
           continue;
         }
-        const bytes = await readResourceResponseBytes(response);
         return new Response(
-          response.status === 204 ||
-            response.status === 205 ||
-            response.status === 304
-            ? null
-            : bytes,
-          {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers,
-          }
+          await readResourceResponseBytes(response),
+          response
         );
       } finally {
         await release?.();

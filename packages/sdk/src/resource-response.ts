@@ -1,3 +1,8 @@
+import {
+  readBoundedBytes,
+  readableStreamToAsyncIterable,
+} from "@webstudio-is/content-engine/byte-stream";
+
 // Limits decoded body bytes, not Content-Length (which may describe compressed bytes).
 const maxResourceResponseBytes = 1024 * 1024;
 
@@ -10,7 +15,7 @@ export class ResourceResponseTooLargeError extends Error {
   }
 }
 
-export const readLimitedBytes = async (
+export const readLimitedBytes = (
   stream: ReadableStream<Uint8Array> | null,
   maximum: number,
   error = new Error("Resource request or response is too large")
@@ -18,32 +23,11 @@ export const readLimitedBytes = async (
   if (stream === null) {
     return;
   }
-  const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
-  let length = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      length += value.byteLength;
-      if (length > maximum) {
-        await reader.cancel().catch(() => {});
-        throw error;
-      }
-      chunks.push(value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  const bytes = new Uint8Array(length);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return bytes;
+  return readBoundedBytes(
+    readableStreamToAsyncIterable(stream),
+    maximum,
+    error
+  );
 };
 
 export const readResourceResponseBytes = (response: Response) =>
