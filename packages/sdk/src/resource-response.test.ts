@@ -223,3 +223,28 @@ test("classifies a size error by code across bundles, independently of its wordi
     "Resource response exceeds 1 MiB. Request fewer fields or use pagination."
   );
 });
+
+test("protected responses describe the decoded body and release the transport", async () => {
+  const release = vi.fn(async () => {});
+  const resourceFetch = createProtectedResourceFetch({
+    deniedHostnames: [],
+    transport: async () => ({
+      response: new Response("decoded body", {
+        status: 201,
+        headers: {
+          "content-encoding": "gzip",
+          "content-length": "30",
+          "content-type": "text/plain",
+        },
+      }),
+      release,
+    }),
+  });
+  const response = await resourceFetch(request.url);
+  expect(response.status).toBe(201);
+  expect(await response.text()).toBe("decoded body");
+  expect(release).toHaveBeenCalledOnce();
+  expect(response.headers.get("content-type")).toBe("text/plain");
+  expect(response.headers.has("content-encoding")).toBe(false);
+  expect(response.headers.has("content-length")).toBe(false);
+});

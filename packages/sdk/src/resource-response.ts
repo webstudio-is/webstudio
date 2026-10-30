@@ -30,9 +30,15 @@ export const readLimitedBytes = (
   );
 };
 
-export const readResourceResponseBytes = (response: Response) =>
-  readLimitedBytes(
+/** Buffer before cloning or caching, with headers describing the decoded body. */
+export const readResourceResponse = async (response: Response) => {
+  const body = await readLimitedBytes(
     response.body,
     maxResourceResponseBytes,
     new ResourceResponseTooLargeError()
   );
+  const result = new Response(body, response);
+  result.headers.delete("content-length");
+  result.headers.delete("content-encoding");
+  return result;
+};

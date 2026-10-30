@@ -1,8 +1,5 @@
 import { getDomain } from "tldts";
-import {
-  readLimitedBytes,
-  readResourceResponseBytes,
-} from "./resource-response";
+import { readLimitedBytes, readResourceResponse } from "./resource-response";
 
 /** Transport for visitor-triggered Resource requests. */
 export type ProtectedResourceHop = {
@@ -145,10 +142,7 @@ export const createProtectedResourceFetch = ({
           redirects += 1;
           continue;
         }
-        return new Response(
-          await readResourceResponseBytes(response),
-          response
-        );
+        return await readResourceResponse(response);
       } finally {
         await release?.();
       }

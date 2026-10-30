@@ -1,6 +1,6 @@
 import hash from "@emotion/hash";
 import {
-  readResourceResponseBytes,
+  readResourceResponse,
   ResourceResponseTooLargeError,
 } from "./resource-response";
 import {
@@ -559,11 +559,12 @@ export const loadResource = async (
 
     // System Resources have their own limits. HTTP Resources share this limit
     // across Builder, published sites, Form actions, and cached responses.
-    let data = isLocalResource(href)
-      ? await awaitWithSignal(response.text(), signal)
-      : new TextDecoder().decode(
-          await awaitWithSignal(readResourceResponseBytes(response), signal)
-        );
+    let data = await awaitWithSignal(
+      isLocalResource(href)
+        ? response.text()
+        : readResourceResponse(response).then((response) => response.text()),
+      signal
+    );
 
     try {
       // If it looks like JSON and quacks like JSON, then it probably is JSON.
@@ -780,12 +781,7 @@ export const cachedFetch = async (
     // response.clone() does not remove read-only constraint from headers
     // Bound the body before cloning: cache.put consumes its branch of the
     // stream and would otherwise buffer an unlimited response before loading.
-    response = new Response(
-      await readResourceResponseBytes(response),
-      response
-    );
-    response.headers.delete("content-length");
-    response.headers.delete("content-encoding");
+    response = await readResourceResponse(response);
     response.headers.set("Cache-Control", requestCacheControl);
     // avoid mutating cached response
     await cache.put(cacheKey, response.clone());
