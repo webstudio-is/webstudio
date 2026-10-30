@@ -1,4 +1,5 @@
 import { getDomain } from "tldts";
+import { readLimitedBytes, readResourceResponse } from "./resource-response";
 
 /** Transport for visitor-triggered Resource requests. */
 export type ProtectedResourceHop = {
@@ -20,9 +21,20 @@ export type ProtectedResourceFetch = typeof fetch & {
 const redirectStatuses = new Set([301, 302, 303, 307, 308]);
 const defaultMaxRedirects = 3;
 const maxRequestBytes = 25 * 1024 * 1024;
-const maxResponseBytes = 2 * 1024 * 1024;
 
-/** Include each site's registrable domain to block sibling hosts in its zone. */
+const protectedResourceRequestHeader = "x-webstudio-protected-resource";
+
+/** Project identity survives aliases while allowing calls to other projects.
+ * This cooperative marker is not a sandbox for untrusted code or proxies that strip it.
+ */
+export const isProtectedResourceReentry = (
+  request: Request,
+  projectId: string
+) =>
+  projectId !== "" &&
+  request.headers.get(protectedResourceRequestHeader) === projectId;
+
+/** Preserve the domain-wide policy for Node and Workers without public routing. */
 export const getDeniedResourceHostnames = (
   hostnames: readonly (string | undefined)[]
 ) =>
@@ -36,45 +48,11 @@ export const getDeniedResourceHostnames = (
     ])
   );
 
-const readLimitedBytes = async (
-  stream: ReadableStream<Uint8Array> | null,
-  maximum: number
-) => {
-  if (stream === null) {
-    return;
-  }
-  const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
-  let length = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      length += value.byteLength;
-      if (length > maximum) {
-        await reader.cancel();
-        throw new Error("Resource request or response is too large");
-      }
-      chunks.push(value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  const bytes = new Uint8Array(length);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return bytes;
-};
-
 /** Deterministic destination policy; connection and redirect checks stay in the transport. */
 export const validateProtectedResourceDestination = (
   url: URL,
-  deniedHostnames: readonly string[]
+  deniedHostnames: readonly string[],
+  matchSubdomains = true
 ) => {
   if (
     (url.protocol !== "http:" && url.protocol !== "https:") ||
@@ -90,7 +68,8 @@ export const validateProtectedResourceDestination = (
     const domain = denied.toLowerCase().replace(/\.$/, "");
     if (
       domain !== "" &&
-      (hostname === domain || hostname.endsWith(`.${domain}`))
+      (hostname === domain ||
+        (matchSubdomains && hostname.endsWith(`.${domain}`)))
     ) {
       throw new Error("Resource destination is not allowed");
     }
@@ -104,12 +83,16 @@ export const validateProtectedResourceDestination = (
 export const createProtectedResourceFetch = ({
   transport,
   deniedHostnames,
+  matchSubdomains = true,
   maxRedirects = defaultMaxRedirects,
 }: {
   transport: ProtectedResourceTransport;
   deniedHostnames: readonly string[];
+  matchSubdomains?: boolean;
   maxRedirects?: number;
 }): ProtectedResourceFetch => {
+  const validateDestination = (url: URL) =>
+    validateProtectedResourceDestination(url, deniedHostnames, matchSubdomains);
   const protectedFetch: typeof fetch = async (input, init) => {
     const original = new Request(input, init);
     const body = await readLimitedBytes(original.body, maxRequestBytes);
@@ -121,7 +104,7 @@ export const createProtectedResourceFetch = ({
     let redirects = 0;
 
     while (true) {
-      validateProtectedResourceDestination(url, deniedHostnames);
+      validateDestination(url);
       const { response, release } = await transport({
         url,
         method: original.method,
@@ -132,7 +115,8 @@ export const createProtectedResourceFetch = ({
       try {
         const location = response.headers.get("location");
         if (redirectStatuses.has(response.status) && location !== null) {
-          await response.body?.cancel();
+          // A cloned response may have an unread peer; do not wait for it.
+          response.body?.cancel().catch(() => {});
           if (redirects >= maxRedirects) {
             throw new Error("Resource destination redirected too many times");
           }
@@ -147,7 +131,7 @@ export const createProtectedResourceFetch = ({
             );
           }
           const next = new URL(location, url);
-          validateProtectedResourceDestination(next, deniedHostnames);
+          validateDestination(next);
           if (next.origin !== url.origin) {
             if (
               (original.method !== "GET" && original.method !== "HEAD") ||
@@ -165,38 +149,28 @@ export const createProtectedResourceFetch = ({
           redirects += 1;
           continue;
         }
-        const bytes = await readLimitedBytes(response.body, maxResponseBytes);
-        return new Response(
-          response.status === 204 ||
-            response.status === 205 ||
-            response.status === 304
-            ? null
-            : bytes,
-          {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers,
-          }
-        );
+        return await readResourceResponse(response);
       } finally {
         await release?.();
       }
     }
   };
-  return Object.assign(protectedFetch, {
-    validateDestination: (url: URL) =>
-      validateProtectedResourceDestination(url, deniedHostnames),
-  });
+  return Object.assign(protectedFetch, { validateDestination });
 };
 
 /** Cloudflare's outbound proxy checks the destination at each fetch hop. */
 export const createCloudflareProtectedResourceFetch = ({
+  projectId,
   ownZoneHostnames,
+  publicRouting = false,
   workerFetch = fetch,
 }: {
-  // Cloudflare permits requests to the Worker's own origin, including private
-  // origins. The caller must supply every zone hosted by this Worker.
+  projectId: string;
+  // With global_fetch_strictly_public, supply every site hostname to prevent
+  // recursive requests. Without that flag, supply each zone to block origin access.
   ownZoneHostnames: readonly [string, ...string[]];
+  // Set true only when the Worker is deployed with global_fetch_strictly_public.
+  publicRouting?: boolean;
   workerFetch?: typeof fetch;
 }): ProtectedResourceFetch => {
   if (
@@ -209,14 +183,21 @@ export const createCloudflareProtectedResourceFetch = ({
   }
   return createProtectedResourceFetch({
     deniedHostnames: ownZoneHostnames,
-    transport: async ({ url, method, headers, body, signal }) => ({
-      response: await workerFetch(url, {
-        method,
-        headers,
-        body: body?.slice().buffer as ArrayBuffer | undefined,
-        signal,
-        redirect: "manual",
-      }),
-    }),
+    matchSubdomains: !publicRouting,
+    transport: async ({ url, method, headers, body, signal }) => {
+      const outgoingHeaders = new Headers(headers);
+      // The hostname list cannot include every self-hosted alias. Mark each hop
+      // so a request routed back to this app is rejected before it runs.
+      outgoingHeaders.set(protectedResourceRequestHeader, projectId);
+      return {
+        response: await workerFetch(url, {
+          method,
+          headers: outgoingHeaders,
+          body: body?.slice().buffer as ArrayBuffer | undefined,
+          signal,
+          redirect: "manual",
+        }),
+      };
+    },
   });
 };

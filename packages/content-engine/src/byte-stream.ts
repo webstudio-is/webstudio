@@ -93,11 +93,9 @@ export const readableStreamToAsyncIterable = (
       }
     } finally {
       if (completed === false) {
-        try {
-          await reader.cancel();
-        } catch {
-          // Preserve the consumer error that stopped the stream.
-        }
+        // Cancelling a tee waits for its other branch. Start cleanup without
+        // delaying the consumer or replacing its error if cancellation fails.
+        reader.cancel().catch(() => {});
       }
       reader.releaseLock();
     }
@@ -127,11 +125,12 @@ export const readBytePrefix = async (
 
 export const readBoundedBytes = async (
   source: ByteSource,
-  maximumBytes: number
+  maximumBytes: number,
+  limitError = new ByteLimitExceededError()
 ) => {
   const bytes = await readBytePrefix(source, maximumBytes + 1);
   if (bytes.byteLength > maximumBytes) {
-    throw new ByteLimitExceededError();
+    throw limitError;
   }
   return bytes;
 };
