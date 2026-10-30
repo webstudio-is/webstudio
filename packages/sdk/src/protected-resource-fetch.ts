@@ -1,4 +1,8 @@
 import { getDomain } from "tldts";
+import {
+  readLimitedBytes,
+  readResourceResponseBytes,
+} from "./resource-response";
 
 /** Transport for visitor-triggered Resource requests. */
 export type ProtectedResourceHop = {
@@ -20,7 +24,6 @@ export type ProtectedResourceFetch = typeof fetch & {
 const redirectStatuses = new Set([301, 302, 303, 307, 308]);
 const defaultMaxRedirects = 3;
 const maxRequestBytes = 25 * 1024 * 1024;
-const maxResponseBytes = 2 * 1024 * 1024;
 
 const protectedResourceRequestHeader = "x-webstudio-protected-resource";
 
@@ -41,41 +44,6 @@ export const getDeniedResourceHostnames = (
         .flatMap((hostname) => [hostname, getDomain(hostname) ?? hostname]),
     ])
   );
-
-const readLimitedBytes = async (
-  stream: ReadableStream<Uint8Array> | null,
-  maximum: number
-) => {
-  if (stream === null) {
-    return;
-  }
-  const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
-  let length = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      length += value.byteLength;
-      if (length > maximum) {
-        await reader.cancel();
-        throw new Error("Resource request or response is too large");
-      }
-      chunks.push(value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  const bytes = new Uint8Array(length);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return bytes;
-};
 
 /** Deterministic destination policy; connection and redirect checks stay in the transport. */
 export const validateProtectedResourceDestination = (
@@ -177,7 +145,7 @@ export const createProtectedResourceFetch = ({
           redirects += 1;
           continue;
         }
-        const bytes = await readLimitedBytes(response.body, maxResponseBytes);
+        const bytes = await readResourceResponseBytes(response);
         return new Response(
           response.status === 204 ||
             response.status === 205 ||

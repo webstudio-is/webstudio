@@ -1,5 +1,9 @@
 import hash from "@emotion/hash";
 import {
+  readResourceResponseBytes,
+  ResourceResponseTooLargeError,
+} from "./resource-response";
+import {
   awaitWithSignal,
   resolveResources as resolveResourceGraph,
   type Resource,
@@ -394,7 +398,11 @@ const transportFailure = ({
   retryable,
   status,
 }: {
-  code: "REQUEST_CANCELLED" | "REQUEST_TIMEOUT" | "NETWORK_ERROR";
+  code:
+    | "REQUEST_CANCELLED"
+    | "REQUEST_TIMEOUT"
+    | "NETWORK_ERROR"
+    | "RESPONSE_TOO_LARGE";
   message: string;
   retryable: boolean;
   status: number;
@@ -549,7 +557,13 @@ export const loadResource = async (
       signal
     );
 
-    let data = await awaitWithSignal(response.text(), signal);
+    // System Resources have their own limits. HTTP Resources share this limit
+    // across Builder, published sites, Form actions, and cached responses.
+    let data = isLocalResource(href)
+      ? await awaitWithSignal(response.text(), signal)
+      : new TextDecoder().decode(
+          await awaitWithSignal(readResourceResponseBytes(response), signal)
+        );
 
     try {
       // If it looks like JSON and quacks like JSON, then it probably is JSON.
@@ -600,12 +614,23 @@ export const loadResource = async (
             retryable: false,
             status: 499,
           })
-        : transportFailure({
-            code: "NETWORK_ERROR",
-            message: "Resource request failed",
-            retryable: true,
-            status: 502,
-          });
+        : // SDK entry points are bundled separately, so compare the stable code
+          // rather than relying on class identity across those bundles.
+          error instanceof Error &&
+            "code" in error &&
+            error.code === "RESPONSE_TOO_LARGE"
+          ? transportFailure({
+              code: "RESPONSE_TOO_LARGE",
+              message: new ResourceResponseTooLargeError().message,
+              retryable: false,
+              status: 502,
+            })
+          : transportFailure({
+              code: "NETWORK_ERROR",
+              message: "Resource request failed",
+              retryable: true,
+              status: 502,
+            });
     if (!didTimeout && !options.signal?.aborted) {
       console.error("Resource request failed");
     }
@@ -674,6 +699,11 @@ export const loadResources = async (
       return load().then((result) =>
         rootIds.has(resource.id) &&
         result.ok === false &&
+        !(
+          isRecord(result.data) &&
+          isRecord(result.data.error) &&
+          result.data.error.retryable === false
+        ) &&
         shouldRetryFailedRoot?.(resource.id, resolvedRequest, result) ===
           true &&
         !signal?.aborted &&
@@ -748,7 +778,14 @@ export const cachedFetch = async (
     // put Cache-Control from request into response
     // https://developers.cloudflare.com/workers/reference/how-the-cache-works/#cache-api
     // response.clone() does not remove read-only constraint from headers
-    response = new Response(response.body, response);
+    // Bound the body before cloning: cache.put consumes its branch of the
+    // stream and would otherwise buffer an unlimited response before loading.
+    response = new Response(
+      await readResourceResponseBytes(response),
+      response
+    );
+    response.headers.delete("content-length");
+    response.headers.delete("content-encoding");
     response.headers.set("Cache-Control", requestCacheControl);
     // avoid mutating cached response
     await cache.put(cacheKey, response.clone());

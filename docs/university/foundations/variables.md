@@ -114,6 +114,10 @@ For a Form-scoped HTTP resource, leave the body unset to forward every named For
 
 Once the Resource fetches data, you'll use the [Expression editor](expression-editor.md) to bind data from the response to your website. See [Binding](expression-editor.md#binding) for more information.
 
+HTTP Resource responses are limited to **1 MiB (1,048,576 bytes) after decompression**. This applies to REST and GraphQL Resources in the Builder and published sites, including Form actions, dependencies, and cached responses. Responses over the limit fail; Webstudio does not truncate them. Request fewer fields or use the API's pagination options to reduce each response.
+
+This is a response limit, separate from Form upload limits. It does not limit images or other files loaded directly by the browser, and it does not replace the separate limits for Assets and Email Resources.
+
 #### Dependent resources
 
 Bind a Resource request field to another Resource variable when one request needs data from an earlier response. For example, bind an author ID from one Resource into the URL or search parameters of a second Resource that loads the author's posts.

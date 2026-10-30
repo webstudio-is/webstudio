@@ -261,11 +261,11 @@ describe("protected Resource fetch", () => {
     const large = createProtectedResourceFetch({
       deniedHostnames: [],
       transport: async () => ({
-        response: new Response(new Uint8Array(2 * 1024 * 1024 + 1)),
+        response: new Response(new Uint8Array(1024 * 1024 + 1)),
       }),
     });
-    await expect(large("https://api.example/data")).rejects.toThrow(
-      "too large"
-    );
+    await expect(large("https://api.example/data")).rejects.toMatchObject({
+      code: "RESPONSE_TOO_LARGE",
+    });
   });
 });
