@@ -3,6 +3,7 @@ import {
   createCloudflareProtectedResourceFetch,
   createProtectedResourceFetch,
   getDeniedResourceHostnames,
+  isProtectedResourceReentry,
 } from "./protected-resource-fetch";
 
 describe("protected Resource fetch", () => {
@@ -63,6 +64,30 @@ describe("protected Resource fetch", () => {
       protectedFetch("https://api.site.example.com/submit", { method: "POST" })
     ).resolves.toBeInstanceOf(Response);
     expect(workerFetch).toHaveBeenCalledOnce();
+  });
+
+  test("marks Cloudflare Resource requests so another site alias can reject reentry", async () => {
+    const workerFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response("ok"));
+    const protectedFetch = createCloudflareProtectedResourceFetch({
+      ownZoneHostnames: ["site.example.com"],
+      publicRouting: true,
+      workerFetch,
+    });
+
+    await protectedFetch("https://same-site.pages.dev/data");
+    const [, init] = workerFetch.mock.calls[0];
+    expect(
+      isProtectedResourceReentry(
+        new Request("https://same-site.pages.dev/data", init)
+      )
+    ).toBe(true);
+    expect(
+      isProtectedResourceReentry(
+        new Request("https://same-site.pages.dev/data")
+      )
+    ).toBe(false);
   });
 
   test("keeps the zone-wide block without public routing", async () => {
@@ -194,7 +219,9 @@ describe("protected Resource fetch", () => {
     expect(new Headers(first?.headers).get("authorization")).toBe(
       "Bearer secret"
     );
-    expect([...new Headers(second?.headers)]).toEqual([]);
+    expect([...new Headers(second?.headers)]).toEqual([
+      ["x-webstudio-protected-resource", "1"],
+    ]);
     expect(second?.body).toBeUndefined();
     expect(second?.redirect).toBe("manual");
   });

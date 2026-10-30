@@ -1,4 +1,5 @@
 import { createRequestHandler } from "react-router";
+import { isProtectedResourceReentry } from "@webstudio-is/sdk/protected-resource-fetch";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -17,6 +18,9 @@ const requestHandler = createRequestHandler(
 
 export default {
   async fetch(request, env, ctx) {
+    if (isProtectedResourceReentry(request)) {
+      return new Response(null, { status: 508 });
+    }
     return requestHandler(request, {
       EXCLUDE_FROM_SEARCH: false,
       cloudflare: { env, ctx },

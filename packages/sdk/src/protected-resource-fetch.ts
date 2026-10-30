@@ -22,6 +22,12 @@ const defaultMaxRedirects = 3;
 const maxRequestBytes = 25 * 1024 * 1024;
 const maxResponseBytes = 2 * 1024 * 1024;
 
+const protectedResourceRequestHeader = "x-webstudio-protected-resource";
+
+/** Reject a Resource subrequest when it reaches this app through any hostname. */
+export const isProtectedResourceReentry = (request: Request) =>
+  request.headers.get(protectedResourceRequestHeader) === "1";
+
 /** Preserve the domain-wide policy for Node and Workers without public routing. */
 export const getDeniedResourceHostnames = (
   hostnames: readonly (string | undefined)[]
@@ -216,14 +222,20 @@ export const createCloudflareProtectedResourceFetch = ({
   return createProtectedResourceFetch({
     deniedHostnames: ownZoneHostnames,
     matchSubdomains: !publicRouting,
-    transport: async ({ url, method, headers, body, signal }) => ({
-      response: await workerFetch(url, {
-        method,
-        headers,
-        body: body?.slice().buffer as ArrayBuffer | undefined,
-        signal,
-        redirect: "manual",
-      }),
-    }),
+    transport: async ({ url, method, headers, body, signal }) => {
+      const outgoingHeaders = new Headers(headers);
+      // The hostname list cannot include every self-hosted alias. Mark each hop
+      // so a request routed back to this app is rejected before it runs.
+      outgoingHeaders.set(protectedResourceRequestHeader, "1");
+      return {
+        response: await workerFetch(url, {
+          method,
+          headers: outgoingHeaders,
+          body: body?.slice().buffer as ArrayBuffer | undefined,
+          signal,
+          redirect: "manual",
+        }),
+      };
+    },
   });
 };
