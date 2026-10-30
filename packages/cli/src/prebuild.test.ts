@@ -1022,6 +1022,73 @@ describe("prebuild", () => {
     expect(nodeAdapter).not.toContain("EMAIL_SERVICE");
   });
 
+  test.each(["saas", undefined] as const)(
+    "allows sibling API hosts but blocks published site aliases on Cloudflare (%s)",
+    async (destination) => {
+      const siteData = createSiteData();
+      siteData.projectDomain = "project.wstd.io";
+      await writeFile(
+        ".webstudio/data.json",
+        JSON.stringify({
+          ...siteData,
+          build: {
+            ...siteData.build,
+            deployment: {
+              destination,
+              domains: ["site.example.com", "alias.example.net"],
+            },
+          },
+        })
+      );
+      await prebuild({
+        assets: false,
+        template: ["react-router", "react-router-cloudflare"],
+      });
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      const bundle = await build({
+        entryPoints: [
+          join(
+            tempDir,
+            "app/__generated__/$resources.managed-form-fetch.server.ts"
+          ),
+        ],
+        bundle: true,
+        format: "esm",
+        platform: "node",
+        conditions: ["webstudio"],
+        write: false,
+      });
+      const adapter = (await import(
+        /* @vite-ignore */
+        `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`
+      )) as {
+        createManagedFormResourceFetch: (input: {
+          request: Request;
+          context: unknown;
+          projectDomain: string;
+        }) => { validateDestination: (url: URL) => void };
+      };
+      const protectedFetch = adapter.createManagedFormResourceFetch({
+        request: new Request("https://site.example.com"),
+        context: {},
+        projectDomain: siteData.projectDomain,
+      });
+
+      expect(() =>
+        protectedFetch.validateDestination(new URL("https://api.example.com"))
+      ).not.toThrow();
+      for (const hostname of [
+        "site.example.com",
+        "alias.example.net",
+        "project.wstd.io",
+      ]) {
+        expect(() =>
+          protectedFetch.validateDestination(new URL(`https://${hostname}`))
+        ).toThrow();
+      }
+    }
+  );
+
   test("publishes configured file-input attributes", async () => {
     await writeSiteData(
       createSiteData({

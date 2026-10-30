@@ -1,6 +1,5 @@
 import {
   createCloudflareProtectedResourceFetch,
-  getDeniedResourceHostnames,
 } from "@webstudio-is/sdk/protected-resource-fetch";
 import { createCloudflareManagedFormEmailSender, createCloudflareManagedFormEmailSenderWithUrl, validateCloudflareManagedFormEmail } from "@webstudio-is/sdk/form/server";
 export const validateManagedFormEmail = validateCloudflareManagedFormEmail;
@@ -18,9 +17,12 @@ export const createManagedFormEmailSender = ({ context, formData, projectId }: {
 export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
   void context;
   return createCloudflareProtectedResourceFetch({
-    ownZoneHostnames: getDeniedResourceHostnames([
+    // The generated Cloudflare templates and hosted Worker use public fetch routing.
+    publicRouting: true,
+    ownZoneHostnames: [
       new URL(request.url).hostname,
       projectDomain,
-    ]) as [string, ...string[]],
+      ...[],
+    ].filter((hostname): hostname is string => hostname !== undefined) as [string, ...string[]],
   });
 };

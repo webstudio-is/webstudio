@@ -22,7 +22,7 @@ const defaultMaxRedirects = 3;
 const maxRequestBytes = 25 * 1024 * 1024;
 const maxResponseBytes = 2 * 1024 * 1024;
 
-/** Include each site's registrable domain to block sibling hosts in its zone. */
+/** Preserve the domain-wide policy for Node and Workers without public routing. */
 export const getDeniedResourceHostnames = (
   hostnames: readonly (string | undefined)[]
 ) =>
@@ -74,7 +74,8 @@ const readLimitedBytes = async (
 /** Deterministic destination policy; connection and redirect checks stay in the transport. */
 export const validateProtectedResourceDestination = (
   url: URL,
-  deniedHostnames: readonly string[]
+  deniedHostnames: readonly string[],
+  matchSubdomains = true
 ) => {
   if (
     (url.protocol !== "http:" && url.protocol !== "https:") ||
@@ -90,7 +91,8 @@ export const validateProtectedResourceDestination = (
     const domain = denied.toLowerCase().replace(/\.$/, "");
     if (
       domain !== "" &&
-      (hostname === domain || hostname.endsWith(`.${domain}`))
+      (hostname === domain ||
+        (matchSubdomains && hostname.endsWith(`.${domain}`)))
     ) {
       throw new Error("Resource destination is not allowed");
     }
@@ -104,12 +106,16 @@ export const validateProtectedResourceDestination = (
 export const createProtectedResourceFetch = ({
   transport,
   deniedHostnames,
+  matchSubdomains = true,
   maxRedirects = defaultMaxRedirects,
 }: {
   transport: ProtectedResourceTransport;
   deniedHostnames: readonly string[];
+  matchSubdomains?: boolean;
   maxRedirects?: number;
 }): ProtectedResourceFetch => {
+  const validateDestination = (url: URL) =>
+    validateProtectedResourceDestination(url, deniedHostnames, matchSubdomains);
   const protectedFetch: typeof fetch = async (input, init) => {
     const original = new Request(input, init);
     const body = await readLimitedBytes(original.body, maxRequestBytes);
@@ -121,7 +127,7 @@ export const createProtectedResourceFetch = ({
     let redirects = 0;
 
     while (true) {
-      validateProtectedResourceDestination(url, deniedHostnames);
+      validateDestination(url);
       const { response, release } = await transport({
         url,
         method: original.method,
@@ -147,7 +153,7 @@ export const createProtectedResourceFetch = ({
             );
           }
           const next = new URL(location, url);
-          validateProtectedResourceDestination(next, deniedHostnames);
+          validateDestination(next);
           if (next.origin !== url.origin) {
             if (
               (original.method !== "GET" && original.method !== "HEAD") ||
@@ -183,20 +189,20 @@ export const createProtectedResourceFetch = ({
       }
     }
   };
-  return Object.assign(protectedFetch, {
-    validateDestination: (url: URL) =>
-      validateProtectedResourceDestination(url, deniedHostnames),
-  });
+  return Object.assign(protectedFetch, { validateDestination });
 };
 
 /** Cloudflare's outbound proxy checks the destination at each fetch hop. */
 export const createCloudflareProtectedResourceFetch = ({
   ownZoneHostnames,
+  publicRouting = false,
   workerFetch = fetch,
 }: {
-  // Cloudflare permits requests to the Worker's own origin, including private
-  // origins. The caller must supply every zone hosted by this Worker.
+  // With global_fetch_strictly_public, supply every site hostname to prevent
+  // recursive requests. Without that flag, supply each zone to block origin access.
   ownZoneHostnames: readonly [string, ...string[]];
+  // Set true only when the Worker is deployed with global_fetch_strictly_public.
+  publicRouting?: boolean;
   workerFetch?: typeof fetch;
 }): ProtectedResourceFetch => {
   if (
@@ -209,6 +215,7 @@ export const createCloudflareProtectedResourceFetch = ({
   }
   return createProtectedResourceFetch({
     deniedHostnames: ownZoneHostnames,
+    matchSubdomains: !publicRouting,
     transport: async ({ url, method, headers, body, signal }) => ({
       response: await workerFetch(url, {
         method,

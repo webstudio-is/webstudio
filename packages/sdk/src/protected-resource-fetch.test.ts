@@ -30,19 +30,53 @@ describe("protected Resource fetch", () => {
     expect(transport).not.toHaveBeenCalled();
   });
 
-  test("requires an explicit Worker zone and blocks its own origin", async () => {
+  test("requires a site hostname and blocks requests back to the site", async () => {
     expect(() =>
       createCloudflareProtectedResourceFetch({ ownZoneHostnames: [""] })
     ).toThrow("Worker zones must be specified");
 
     const workerFetch = vi.fn<typeof fetch>();
     const protectedFetch = createCloudflareProtectedResourceFetch({
-      ownZoneHostnames: ["example.com"],
+      ownZoneHostnames: ["site.example.com", "alias.example.net"],
+      publicRouting: true,
       workerFetch,
     });
+    for (const hostname of ["site.example.com", "alias.example.net"]) {
+      await expect(
+        protectedFetch(`https://${hostname}/submit`, { method: "POST" })
+      ).rejects.toThrow("not allowed");
+    }
+    expect(workerFetch).not.toHaveBeenCalled();
+  });
+
+  test("allows a sibling API hostname on a public-routed Worker", async () => {
+    const workerFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response("ok"));
+    const protectedFetch = createCloudflareProtectedResourceFetch({
+      ownZoneHostnames: ["site.example.com"],
+      publicRouting: true,
+      workerFetch,
+    });
+
     await expect(
-      protectedFetch("https://private.example.com/submit", { method: "POST" })
-    ).rejects.toThrow("not allowed");
+      protectedFetch("https://api.site.example.com/submit", { method: "POST" })
+    ).resolves.toBeInstanceOf(Response);
+    expect(workerFetch).toHaveBeenCalledOnce();
+  });
+
+  test("keeps the zone-wide block without public routing", async () => {
+    const workerFetch = vi.fn<typeof fetch>();
+    const protectedFetch = createCloudflareProtectedResourceFetch({
+      ownZoneHostnames: ["site.example.com"],
+      workerFetch,
+    });
+
+    expect(() =>
+      protectedFetch.validateDestination(
+        new URL("https://api.site.example.com/submit")
+      )
+    ).toThrow("not allowed");
     expect(workerFetch).not.toHaveBeenCalled();
   });
 
