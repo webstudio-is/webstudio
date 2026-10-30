@@ -109,7 +109,8 @@ export const createProtectedResourceFetch = ({
       try {
         const location = response.headers.get("location");
         if (redirectStatuses.has(response.status) && location !== null) {
-          await response.body?.cancel();
+          // A cloned response may have an unread peer; do not wait for it.
+          response.body?.cancel().catch(() => {});
           if (redirects >= maxRedirects) {
             throw new Error("Resource destination redirected too many times");
           }

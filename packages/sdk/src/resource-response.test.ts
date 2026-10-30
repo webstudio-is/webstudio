@@ -248,3 +248,43 @@ test("protected responses describe the decoded body and release the transport", 
   expect(response.headers.has("content-encoding")).toBe(false);
   expect(response.headers.has("content-length")).toBe(false);
 });
+
+test.each(["overflow", "redirect"])(
+  "handles %s without waiting for an unread response clone",
+  async (scenario) => {
+    const original =
+      scenario === "overflow"
+        ? new Response("x".repeat(limit + 1))
+        : new Response("redirect", {
+            status: 302,
+            headers: { location: "/next" },
+          });
+    const clone = original.clone();
+    const resourceFetch = createProtectedResourceFetch({
+      deniedHostnames: [],
+      transport: async ({ url }) => ({
+        response: url.pathname === "/next" ? new Response("ok") : clone,
+      }),
+    });
+    const result = loadResource(resourceFetch, request);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      // Cancelling one tee branch waits for the other; loading must not.
+      expect(
+        await Promise.race([
+          result,
+          new Promise((resolve) => {
+            timer = setTimeout(() => resolve("blocked by unread clone"), 1000);
+          }),
+        ])
+      ).toMatchObject(
+        scenario === "overflow" ? failure : { ok: true, data: "ok" }
+      );
+      expect(clone.body?.locked).toBe(false);
+    } finally {
+      clearTimeout(timer);
+      await original.body?.cancel();
+      await result;
+    }
+  }
+);

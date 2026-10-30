@@ -93,11 +93,9 @@ export const readableStreamToAsyncIterable = (
       }
     } finally {
       if (completed === false) {
-        try {
-          await reader.cancel();
-        } catch {
-          // Preserve the consumer error that stopped the stream.
-        }
+        // Cancelling a tee waits for its other branch. Start cleanup without
+        // delaying the consumer or replacing its error if cancellation fails.
+        reader.cancel().catch(() => {});
       }
       reader.releaseLock();
     }
