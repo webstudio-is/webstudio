@@ -319,7 +319,7 @@ type EditorContentProps = {
   chromeless?: boolean;
   value?: string;
   onChange: (value: string) => void;
-  onChangeComplete: (value: string) => void;
+  onChangeComplete: (value: string, event?: FocusEvent) => void;
 };
 
 export const EditorContent = ({
@@ -449,8 +449,8 @@ export const EditorContent = ({
           }
         }),
         EditorView.domEventHandlers({
-          blur() {
-            onChangeCompleteRef.current(view.state.doc.toString());
+          blur(event) {
+            onChangeCompleteRef.current(view.state.doc.toString(), event);
           },
           cut(event) {
             // prevent catching cut by global copy paste

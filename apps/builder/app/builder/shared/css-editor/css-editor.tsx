@@ -5,6 +5,7 @@ import {
   memo,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -731,8 +732,7 @@ export const CssEditor = ({
   const [draftValue, setDraftValue] = useState("");
   const [draftMultiline, setDraftMultiline] = useState(false);
   const [invalidDraft, setInvalidDraft] = useState(false);
-  const [searchProperties, setSearchProperties] =
-    useState<Array<CssProperty>>();
+  const [searchTerm, setSearchTerm] = useState<string>();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const effectiveShowAddStyleInput = readonly ? false : showAddStyleInput;
@@ -784,6 +784,18 @@ export const CssEditor = ({
   );
 
   const advancedProperties = declarations.map(({ property }) => property);
+  const searchProperties = useMemo(() => {
+    if (searchTerm === undefined) {
+      return undefined;
+    }
+    const styles = declarations.map(({ property, cascadedValue }) => ({
+      key: `${property.replaceAll("-", " ")} ${toValue(cascadedValue)}`,
+      property,
+    }));
+    return matchSorter(styles, searchTerm, { keys: ["key"] }).map(
+      ({ property }) => property
+    );
+  }, [declarations, searchTerm]);
 
   const currentProperties =
     searchProperties ??
@@ -903,7 +915,7 @@ export const CssEditor = ({
     if (containerRef.current) {
       containerRef.current.style.minHeight = "auto";
     }
-    setSearchProperties(undefined);
+    setSearchTerm(undefined);
   };
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
@@ -926,18 +938,7 @@ export const CssEditor = ({
       });
     }
 
-    const styles = declarations.map(({ property, cascadedValue }) => {
-      return {
-        key: `${property.replaceAll("-", " ")} ${toValue(cascadedValue)}`,
-        property,
-      };
-    });
-
-    const matched = matchSorter(styles, search, {
-      keys: ["key"],
-    }).map(({ property }) => property);
-
-    setSearchProperties(matched);
+    setSearchTerm(search);
   };
 
   const afterChangingStyles = (focusValue = true) => {
@@ -1039,20 +1040,12 @@ export const CssEditor = ({
     if (newEntryAfter === property) {
       setNewEntryAfter(undefined);
     }
-    setSearchProperties(
-      searchProperties?.filter((searchProperty) => searchProperty !== property)
-    );
   };
 
   const handleDeleteAllDeclarations = (styleMap: CssStyleMap) => {
     if (readonly) {
       return;
     }
-    setSearchProperties(
-      searchProperties?.filter(
-        (searchProperty) => styleMap.has(searchProperty) === false
-      )
-    );
     onDeleteAllDeclarations(styleMap);
   };
 
@@ -1105,7 +1098,10 @@ export const CssEditor = ({
           align="center"
           wrap="wrap"
           onBlur={(event) => {
-            if (draftMultiline || switchingDraftRef.current) {
+            if (
+              switchingDraftRef.current ||
+              (draftMultiline && event.target !== draftPropertyInputRef.current)
+            ) {
               return;
             }
             if (
@@ -1141,7 +1137,11 @@ export const CssEditor = ({
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 event.preventDefault();
-                draftValueInputRef.current?.focus();
+                if (draftMultiline) {
+                  draftEditorRef.current?.focus();
+                } else {
+                  draftValueInputRef.current?.focus();
+                }
               }
               if (event.key === "Escape") {
                 afterChangingStyles();
@@ -1181,9 +1181,15 @@ export const CssEditor = ({
                     });
                   }
                 }}
-                onChangeComplete={(value) => {
+                onChangeComplete={(value, event) => {
                   if (closingDraftRef.current) {
                     closingDraftRef.current = false;
+                    return;
+                  }
+                  if (
+                    event?.relatedTarget instanceof Node &&
+                    draftRowRef.current?.contains(event.relatedTarget)
+                  ) {
                     return;
                   }
                   closingDraftRef.current = completeDraft(
