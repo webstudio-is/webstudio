@@ -1,12 +1,15 @@
 import { mergeRefs } from "@react-aria/utils";
+import { EditorView } from "@codemirror/view";
 import { color } from "@webstudio-is/css-engine";
 import {
   memo,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ChangeEvent,
   type ComponentProps,
+  type ReactNode,
   type RefObject,
 } from "react";
 import { matchSorter } from "match-sorter";
@@ -580,6 +583,28 @@ const AdvancedDeclarationLonghand = memo(
   }
 );
 
+const DraftRow = ({
+  children,
+  css,
+  rowRef,
+  onUnmount,
+}: {
+  children: ReactNode;
+  css: ComponentProps<typeof Box>["css"];
+  rowRef: RefObject<HTMLDivElement>;
+  onUnmount: (row: HTMLDivElement | null) => void;
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const onUnmountRef = useRef(onUnmount);
+  onUnmountRef.current = onUnmount;
+  useLayoutEffect(() => () => onUnmountRef.current(ref.current), []);
+  return (
+    <Box ref={mergeRefs(ref, rowRef)} css={css}>
+      {children}
+    </Box>
+  );
+};
+
 export const CssEditor = ({
   onDeleteProperty,
   onSetProperty,
@@ -617,9 +642,14 @@ export const CssEditor = ({
 }) => {
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
   const hasAddStyleDraftRef = useRef(false);
+  const draftRowRef = useRef<HTMLDivElement>(null);
   const draftPropertyInputRef = useRef<HTMLInputElement>(null);
   const draftValueInputRef = useRef<HTMLInputElement>(null);
   const draftEditorRef = useRef<EditorApi>();
+  const relocatedDraftFocusRef = useRef<
+    | { field: "property" | "value"; start: number; end: number }
+    | { field: "editor"; selection: { anchor: number; head: number } }
+  >();
   const draftSelectionRef = useRef(0);
   const closingDraftRef = useRef(false);
   const draftKeyboardSubmitRef = useRef(false);
@@ -695,6 +725,87 @@ export const CssEditor = ({
 
   const showRecentProperties =
     recentProperties.length > 0 && searchProperties === undefined;
+  const draftAnchor =
+    newEntryAfter !== undefined &&
+    declarationsMap.has(newEntryAfter) &&
+    (currentProperties.includes(newEntryAfter) ||
+      (showRecentProperties && recentProperties.includes(newEntryAfter)))
+      ? newEntryAfter
+      : undefined;
+
+  useLayoutEffect(() => {
+    const focused = relocatedDraftFocusRef.current;
+    if (focused === undefined || focused.field === "editor") {
+      return;
+    }
+    relocatedDraftFocusRef.current = undefined;
+    if (
+      draftPropertyName === undefined ||
+      document.activeElement !== document.body
+    ) {
+      return;
+    }
+    const input =
+      focused.field === "property"
+        ? draftPropertyInputRef.current
+        : draftValueInputRef.current;
+    input?.focus();
+    input?.setSelectionRange(focused.start, focused.end);
+  }, [draftAnchor, draftPropertyName]);
+
+  useEffect(() => {
+    const focused = relocatedDraftFocusRef.current;
+    if (focused?.field !== "editor") {
+      return;
+    }
+    relocatedDraftFocusRef.current = undefined;
+    if (
+      draftPropertyName === undefined ||
+      document.activeElement !== document.body
+    ) {
+      return;
+    }
+    const content =
+      draftRowRef.current?.querySelector<HTMLElement>(".cm-content");
+    const view = content && EditorView.findFromDOM(content);
+    if (view) {
+      const { anchor, head } = focused.selection;
+      view.dispatch({
+        selection: {
+          anchor: Math.min(anchor, view.state.doc.length),
+          head: Math.min(head, view.state.doc.length),
+        },
+      });
+      view.focus();
+    }
+  }, [draftAnchor, draftPropertyName]);
+
+  const captureDraftFocus = (row: HTMLDivElement | null) => {
+    const active = document.activeElement;
+    if (row === null || !row.contains(active)) {
+      return;
+    }
+    if (
+      active instanceof HTMLInputElement &&
+      (active === draftPropertyInputRef.current ||
+        active === draftValueInputRef.current)
+    ) {
+      relocatedDraftFocusRef.current = {
+        field: active === draftPropertyInputRef.current ? "property" : "value",
+        start: active.selectionStart ?? active.value.length,
+        end: active.selectionEnd ?? active.value.length,
+      };
+    } else if (
+      active instanceof HTMLElement &&
+      active.classList.contains("cm-content")
+    ) {
+      const selection = EditorView.findFromDOM(active)?.state.selection.main;
+      relocatedDraftFocusRef.current = {
+        field: "editor",
+        selection: selection ?? { anchor: 0, head: 0 },
+      };
+    }
+  };
 
   const handleInsertStyles = (cssText: string, requireAllValid = false) => {
     if (readonly) {
@@ -791,11 +902,18 @@ export const CssEditor = ({
     if (readonly || oldProperty === newProperty) {
       return;
     }
+    if (newEntryAfter === oldProperty) {
+      setNewEntryAfter(newProperty);
+    }
     onRenameProperty(oldProperty, newProperty, value);
   };
 
   const startNewEntry = (property: CssProperty) => {
-    if (newEntryAfter !== undefined || hasAddStyleDraftRef.current) {
+    if (
+      draftAnchor !== undefined ||
+      draftPropertyName !== undefined ||
+      hasAddStyleDraftRef.current
+    ) {
       if (draftPropertyName !== undefined) {
         if (draftMultiline) {
           draftEditorRef.current?.focus();
@@ -850,6 +968,9 @@ export const CssEditor = ({
     if (options.isEphemeral === true) {
       return;
     }
+    if (newEntryAfter === property) {
+      setNewEntryAfter(undefined);
+    }
     setSearchProperties(
       searchProperties?.filter((searchProperty) => searchProperty !== property)
     );
@@ -868,10 +989,12 @@ export const CssEditor = ({
   };
 
   const addStyleInput = (
-    <Box
+    <DraftRow
+      rowRef={draftRowRef}
+      onUnmount={captureDraftFocus}
       css={
         effectiveShowAddStyleInput
-          ? newEntryAfter === undefined
+          ? draftAnchor === undefined && draftPropertyName === undefined
             ? { paddingTop: theme.spacing[3] }
             : { paddingLeft: initialIndentation }
           : { overflow: "hidden", height: 0 }
@@ -879,10 +1002,10 @@ export const CssEditor = ({
     >
       {draftPropertyName === undefined ? (
         <AddStyleInput
-          inline={newEntryAfter !== undefined}
+          inline={draftAnchor !== undefined}
           onSubmit={(cssText: string) => {
             const property =
-              newEntryAfter === undefined
+              draftAnchor === undefined
                 ? undefined
                 : parsePropertyName(cssText, $cssVarsMap.get());
             if (property !== undefined) {
@@ -973,7 +1096,6 @@ export const CssEditor = ({
               <CssFragmentEditorContent
                 ariaLabel={draftPropertyName || "Add styles"}
                 editorApiRef={draftEditorRef}
-                autoFocus
                 invalid={invalidDraft}
                 value={draftValue}
                 onChange={(value) => {
@@ -1059,7 +1181,7 @@ export const CssEditor = ({
           )}
         </Flex>
       )}
-    </Box>
+    </DraftRow>
   );
 
   const recentPropertiesAndAddStyleInput = (
@@ -1090,11 +1212,11 @@ export const CssEditor = ({
                 onDeleteProperty={handleDeleteProperty}
                 onSetProperty={guardedSetProperty}
               />
-              {newEntryAfter === property && addStyleInput}
+              {draftAnchor === property && addStyleInput}
             </Box>
           );
         })}
-      {newEntryAfter === undefined && addStyleInput}
+      {draftAnchor === undefined && addStyleInput}
     </Flex>
   );
 
@@ -1163,7 +1285,7 @@ export const CssEditor = ({
                     onSetProperty={guardedSetProperty}
                     valueInputRef={lastRegularValueInputRef}
                   />
-                  {newEntryAfter === property && addStyleInput}
+                  {draftAnchor === property && addStyleInput}
                 </Box>
               );
               // When using it in keyframes with layout where delcarations are on top of add input button,
