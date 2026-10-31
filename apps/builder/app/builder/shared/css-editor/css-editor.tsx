@@ -432,6 +432,9 @@ const AdvancedPropertyValue = ({
         const input = event.currentTarget;
         const start = input.selectionStart ?? input.value.length;
         const end = input.selectionEnd ?? start;
+        const isCollapsedVariable =
+          styleDecl.cascadedValue.type === "var" &&
+          input.value === `--${styleDecl.cascadedValue.value}`;
         const unit =
           styleDecl.cascadedValue.type === "unit" &&
           styleDecl.cascadedValue.unit !== "number" &&
@@ -439,16 +442,30 @@ const AdvancedPropertyValue = ({
           Number.isFinite(Number(input.value))
             ? styleDecl.cascadedValue.unit
             : "";
-        const value = `${input.value}${unit}`;
-        const insertionPoint =
-          start === input.value.length && end === start
-            ? start + unit.length
-            : start;
+        const value = isCollapsedVariable
+          ? toValue(styleDecl.cascadedValue)
+          : `${input.value}${unit}`;
+        let insertionPoint = start;
+        let replacementEnd = end;
+        if (isCollapsedVariable) {
+          if (start === 0 && end === input.value.length) {
+            replacementEnd = value.length;
+          } else if (start === end && end === input.value.length) {
+            insertionPoint = value.length;
+            replacementEnd = value.length;
+          } else {
+            insertionPoint += 4;
+            replacementEnd += 4;
+          }
+        } else if (start === input.value.length && end === start) {
+          insertionPoint += unit.length;
+          replacementEnd = insertionPoint;
+        }
         selectionRef.current = insertionPoint + 1;
         closingRef.current = false;
         keyboardSubmitRef.current = false;
         setMultilineValue(
-          `${value.slice(0, insertionPoint)}\n${value.slice(end === start ? insertionPoint : end)}`
+          `${value.slice(0, insertionPoint)}\n${value.slice(replacementEnd)}`
         );
       }}
       onEnter={() => {
