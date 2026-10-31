@@ -111,9 +111,10 @@ const contentFitsAtPosition = (
 type FloatingPanelProps = {
   title?: ReactNode;
   content: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   titleSuffix?: ReactNode;
   maximizable?: boolean;
+  defaultMaximized?: boolean;
   resize?: ComponentProps<typeof Dialog>["resize"];
   width?: number;
   height?: number;
@@ -126,6 +127,7 @@ type FloatingPanelProps = {
   offset?: OffsetOptions;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  onEscapeKeyDown?: ComponentProps<typeof DialogContent>["onEscapeKeyDown"];
   /** When false, the panel won't close when clicking outside it. */
   closeOnInteractOutside?: boolean;
 };
@@ -139,6 +141,7 @@ export const FloatingPanel = ({
   titleSuffix,
   resize,
   maximizable,
+  defaultMaximized,
   width,
   height,
   placement = "left-start",
@@ -146,6 +149,7 @@ export const FloatingPanel = ({
   offset: offsetProp = defaultOffset,
   open: openProp,
   onOpenChange,
+  onEscapeKeyDown,
   closeOnInteractOutside = true,
 }: FloatingPanelProps) => {
   // Support both controlled and uncontrolled modes
@@ -300,13 +304,16 @@ export const FloatingPanel = ({
     <Dialog
       draggable
       resize={resize}
+      defaultMaximized={defaultMaximized}
       open={open}
       modal={false}
       onOpenChange={handleOpenChange}
     >
-      <DialogTrigger asChild ref={triggerRef}>
-        {children}
-      </DialogTrigger>
+      {children !== undefined && (
+        <DialogTrigger asChild ref={triggerRef}>
+          {children}
+        </DialogTrigger>
+      )}
       <DialogContent
         css={{ width: theme.sizes.sidebarWidth, overflow: "auto" }}
         width={width}
@@ -326,6 +333,10 @@ export const FloatingPanel = ({
           }
         }}
         onEscapeKeyDown={(event) => {
+          onEscapeKeyDown?.(event);
+          if (event.defaultPrevented) {
+            return;
+          }
           if (event.target instanceof HTMLInputElement) {
             event.preventDefault();
 

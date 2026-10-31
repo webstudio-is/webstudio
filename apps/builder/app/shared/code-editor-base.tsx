@@ -317,6 +317,7 @@ type EditorContentProps = {
   extensions?: Extension[];
   readOnly?: boolean;
   autoFocus?: boolean;
+  initialSelection?: number;
   invalid?: boolean;
   showShortcuts?: boolean;
   chromeless?: boolean;
@@ -331,6 +332,7 @@ export const EditorContent = ({
   extensions = [],
   readOnly = false,
   autoFocus = false,
+  initialSelection,
   invalid = false,
   showShortcuts = false,
   chromeless = false,
@@ -486,6 +488,19 @@ export const EditorContent = ({
     });
   }, [value]);
 
+  useEffect(() => {
+    if (initialSelection !== undefined) {
+      const view = viewRef.current;
+      if (view !== undefined) {
+        view.dispatch({
+          selection: {
+            anchor: Math.min(initialSelection, view.state.doc.length),
+          },
+        });
+      }
+    }
+  }, [initialSelection]);
+
   useImperativeHandle(editorApiRef, () => ({
     replaceSelection: (string) => {
       const view = viewRef.current;
@@ -558,6 +573,17 @@ export const EditorDialogControl = ({ children }: { children: ReactNode }) => {
   return <div className={editorDialogControlStyle()}>{children}</div>;
 };
 
+export const isEditorDialogInternalBlur = (event?: FocusEvent) => {
+  if (
+    !(event?.target instanceof Element) ||
+    !(event.relatedTarget instanceof Element)
+  ) {
+    return false;
+  }
+  const dialog = event.target.closest('[role="dialog"]');
+  return dialog !== null && dialog.contains(event.relatedTarget);
+};
+
 export const EditorDialogButton = forwardRef<
   HTMLButtonElement,
   Partial<ComponentProps<typeof SmallIconButton>>
@@ -590,7 +616,8 @@ export const EditorDialog = ({
 }: {
   title: ReactNode;
   content: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
+  defaultMaximized?: boolean;
   width?: number;
   height?: number;
   contentPadding?: boolean;
@@ -598,6 +625,7 @@ export const EditorDialog = ({
   resize?: ComponentProps<typeof FloatingPanel>["resize"];
   open?: boolean;
   onOpenChange?: (newOpen: boolean) => void;
+  onEscapeKeyDown?: ComponentProps<typeof FloatingPanel>["onEscapeKeyDown"];
 }) => {
   return (
     <FloatingPanel

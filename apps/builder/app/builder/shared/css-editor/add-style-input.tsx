@@ -9,7 +9,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { css } from "@codemirror/lang-css";
-import { EditorView, keymap } from "@codemirror/view";
+import { keymap } from "@codemirror/view";
 import { matchSorter } from "match-sorter";
 import {
   Box,
@@ -55,7 +55,8 @@ import { validateCssVariableName } from "~/builder/shared/css-variable-utils";
 import { toast } from "@webstudio-is/design-system";
 import {
   EditorContent,
-  getCodeEditorCssVars,
+  EditorDialog,
+  isEditorDialogInternalBlur,
   type EditorApi,
 } from "~/shared/code-editor-base";
 import {
@@ -221,7 +222,6 @@ export const AddStyleInput = forwardRef<
   const editorRef = useRef<EditorApi>();
   const selectionRef = useRef(0);
   const closingRef = useRef(false);
-  const keyboardSubmitRef = useRef(false);
   const switchingRef = useRef(false);
   const blurringRef = useRef(false);
   const [invalidCode, setInvalidCode] = useState(false);
@@ -230,31 +230,10 @@ export const AddStyleInput = forwardRef<
     onDraftChange?.(multiline || item.property.trim() !== "");
   }, [item.property, multiline, onDraftChange]);
 
-  useEffect(() => {
-    if (multiline) {
-      editorRef.current?.setSelection(selectionRef.current);
-      switchingRef.current = false;
-    }
-  }, [multiline]);
-
   const codeExtensions = useMemo(
     () => [
       css(),
       keymap.of([
-        {
-          key: "Mod-Enter",
-          run() {
-            keyboardSubmitRef.current = true;
-            return false;
-          },
-        },
-        {
-          key: "Mod-s",
-          run() {
-            keyboardSubmitRef.current = true;
-            return false;
-          },
-        },
         {
           key: "Enter",
           run(view) {
@@ -294,18 +273,8 @@ export const AddStyleInput = forwardRef<
           },
         },
       ]),
-      EditorView.domEventHandlers({
-        keydown(event) {
-          if (event.key === "Escape") {
-            event.preventDefault();
-            closingRef.current = true;
-            clear();
-            onClose();
-          }
-        },
-      }),
     ],
-    [onClose]
+    []
   );
 
   const openMultiline = (value: string, selection: number) => {
@@ -375,6 +344,7 @@ export const AddStyleInput = forwardRef<
 
   const clear = () => {
     blurringRef.current = false;
+    switchingRef.current = false;
     setItem({ property: "", label: "", key: "" });
     setCode("");
     setMultiline(false);
@@ -472,108 +442,138 @@ export const AddStyleInput = forwardRef<
     }
   };
 
-  if (multiline) {
-    return (
-      <Box css={getCodeEditorCssVars({ minHeight: "4lh", maxHeight: "10lh" })}>
-        <EditorContent
-          ariaLabel="Add styles"
-          editorApiRef={editorRef}
-          autoFocus
-          invalid={invalidCode}
-          extensions={codeExtensions}
-          value={code}
-          onChange={(value) => {
-            if (!value.includes("\n")) {
-              closingRef.current = true;
-              selectionRef.current = value.length;
-              setItem({ property: value, label: value, key: value });
-              setMultiline(false);
-              requestAnimationFrame(() => {
-                const input =
-                  forwardedRef && typeof forwardedRef !== "function"
-                    ? forwardedRef.current
-                    : undefined;
-                input?.focus();
-                input?.setSelectionRange(
-                  selectionRef.current,
-                  selectionRef.current
-                );
-              });
-              return;
-            }
-            setCode(value);
-            setInvalidCode(false);
-          }}
-          onChangeComplete={(value) => {
-            if (closingRef.current) {
-              closingRef.current = false;
-              return;
-            }
-            const focusValue = keyboardSubmitRef.current;
-            keyboardSubmitRef.current = false;
-            if (value.trim() !== "") {
-              if (onSubmit(value, focusValue)) {
-                clear();
-              } else {
-                setInvalidCode(true);
-              }
-            } else {
-              clear();
-              onBlur(false);
-            }
-          }}
-        />
-      </Box>
-    );
-  }
+  const completeMultiline = (value: string, focusValue: boolean) => {
+    if (closingRef.current) {
+      return;
+    }
+    if (value.trim() !== "") {
+      if (onSubmit(value, focusValue)) {
+        closingRef.current = true;
+        clear();
+      } else {
+        setInvalidCode(true);
+      }
+    } else {
+      closingRef.current = true;
+      clear();
+      if (focusValue) {
+        onClose();
+      } else {
+        onBlur(false);
+      }
+    }
+  };
 
   return (
-    <ComboboxRoot open={combobox.isOpen}>
-      <div {...combobox.getComboboxProps()}>
-        <ComboboxAnchor>
-          <InputField
-            {...inputProps}
-            variant={inline ? "chromeless" : undefined}
-            text={inline ? "mono" : undefined}
-            fieldSizing={inline ? "content" : undefined}
-            aria-label="Add styles"
-            onFocus={() => {
-              blurringRef.current = false;
-              onFocus();
+    <>
+      <EditorDialog
+        title="Add styles"
+        defaultMaximized
+        open={multiline}
+        onEscapeKeyDown={(event) => {
+          event.preventDefault();
+          closingRef.current = true;
+          clear();
+          onClose();
+        }}
+        onOpenChange={(open) => {
+          if (!open) {
+            completeMultiline(code, true);
+          }
+        }}
+        content={
+          <EditorContent
+            ariaLabel="Add styles"
+            editorApiRef={editorRef}
+            autoFocus
+            initialSelection={selectionRef.current}
+            invalid={invalidCode}
+            extensions={codeExtensions}
+            value={code}
+            onChange={(value) => {
+              if (!value.includes("\n")) {
+                closingRef.current = true;
+                selectionRef.current = value.length;
+                setItem({ property: value, label: value, key: value });
+                setMultiline(false);
+                requestAnimationFrame(() => {
+                  const input =
+                    forwardedRef && typeof forwardedRef !== "function"
+                      ? forwardedRef.current
+                      : undefined;
+                  input?.focus();
+                  input?.setSelectionRange(
+                    selectionRef.current,
+                    selectionRef.current
+                  );
+                });
+                return;
+              }
+              setCode(value);
+              setInvalidCode(false);
             }}
-            onBlur={handleBlur}
-            inputRef={forwardedRef}
-            onKeyDown={handleInputKeyDown}
-            onPaste={handlePaste}
-            placeholder="Add styles"
-            suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
+            onChangeComplete={(value, event) => {
+              if (!isEditorDialogInternalBlur(event)) {
+                completeMultiline(value, event === undefined);
+              }
+            }}
           />
-        </ComboboxAnchor>
-        <ComboboxContent>
-          <ComboboxListbox {...combobox.getMenuProps()}>
-            <ComboboxScrollArea>
-              {combobox.items.map((item, index) => (
-                <ComboboxListboxItem
-                  {...combobox.getItemProps({ item, index })}
-                  key={index}
-                >
-                  <Flex align="center" gap="1">
-                    <Text variant="labels" truncate css={{ maxWidth: "25ch" }}>
-                      {item.label}
-                    </Text>
-                    <PropertyStatusIcon property={item.property} />
-                  </Flex>
-                </ComboboxListboxItem>
-              ))}
-            </ComboboxScrollArea>
-            {description && (
-              <ComboboxItemDescription descriptions={descriptions}>
-                {description}
-              </ComboboxItemDescription>
-            )}
-          </ComboboxListbox>
-        </ComboboxContent>
-      </div>
-    </ComboboxRoot>
+        }
+      />
+      <ComboboxRoot open={combobox.isOpen}>
+        <div {...combobox.getComboboxProps()}>
+          <ComboboxAnchor>
+            <InputField
+              {...inputProps}
+              variant={inline ? "chromeless" : undefined}
+              text={inline ? "mono" : undefined}
+              fieldSizing={inline ? "content" : undefined}
+              aria-label="Add styles"
+              onFocus={() => {
+                blurringRef.current = false;
+                switchingRef.current = false;
+                onFocus();
+              }}
+              onBlur={handleBlur}
+              inputRef={forwardedRef}
+              onKeyDown={handleInputKeyDown}
+              onPaste={handlePaste}
+              placeholder="Add styles"
+              suffix={
+                <NestedInputButton {...combobox.getToggleButtonProps()} />
+              }
+            />
+          </ComboboxAnchor>
+          <ComboboxContent>
+            <ComboboxListbox {...combobox.getMenuProps()}>
+              <ComboboxScrollArea>
+                {combobox.items.map((item, index) => (
+                  <ComboboxListboxItem
+                    {...combobox.getItemProps({ item, index })}
+                    key={index}
+                  >
+                    <Flex align="center" gap="1">
+                      <Text
+                        variant="labels"
+                        truncate
+                        css={{ maxWidth: "25ch" }}
+                      >
+                        {item.label}
+                      </Text>
+                      <PropertyStatusIcon property={item.property} />
+                    </Flex>
+                  </ComboboxListboxItem>
+                ))}
+              </ComboboxScrollArea>
+              {description && (
+                <ComboboxItemDescription descriptions={descriptions}>
+                  {description}
+                </ComboboxItemDescription>
+              )}
+            </ComboboxListbox>
+          </ComboboxContent>
+        </div>
+      </ComboboxRoot>
+    </>
   );
 });

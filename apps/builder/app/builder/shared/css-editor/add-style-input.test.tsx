@@ -44,11 +44,13 @@ test("Shift+Enter opens the code editor with a newline and caret on the next lin
   await userEvent.keyboard("{Shift>}{Enter}{/Shift}");
 
   await vi.waitFor(() => {
-    expect(container.querySelector(".cm-content")?.textContent).toContain(
+    expect(document.body.querySelector(".cm-content")?.textContent).toContain(
       "color: red;"
     );
-    expect(container.querySelectorAll(".cm-line")).toHaveLength(2);
-    expect(document.activeElement).toBe(container.querySelector(".cm-content"));
+    expect(document.body.querySelectorAll(".cm-line")).toHaveLength(2);
+    expect(document.activeElement).toBe(
+      document.body.querySelector(".cm-content")
+    );
   });
 });
 
@@ -66,12 +68,14 @@ test("pasting multiple declarations opens the code editor and Enter starts anoth
   });
 
   await vi.waitFor(() => {
-    expect(container.querySelectorAll(".cm-line")).toHaveLength(2);
-    expect(document.activeElement).toBe(container.querySelector(".cm-content"));
+    expect(document.body.querySelectorAll(".cm-line")).toHaveLength(2);
+    expect(document.activeElement).toBe(
+      document.body.querySelector(".cm-content")
+    );
   });
   await userEvent.keyboard("{Enter}");
-  expect(container.querySelectorAll(".cm-line")).toHaveLength(3);
-  expect(container.querySelectorAll(".cm-line")[1].textContent).toBe(
+  expect(document.body.querySelectorAll(".cm-line")).toHaveLength(3);
+  expect(document.body.querySelectorAll(".cm-line")[1].textContent).toBe(
     "background: blue;"
   );
 });
@@ -85,11 +89,11 @@ test("removing the newline restores the property autocomplete input", async () =
   await userEvent.type(input, "color");
   await userEvent.keyboard("{Shift>}{Enter}{/Shift}");
   await vi.waitFor(() =>
-    expect(container.querySelector(".cm-content")).not.toBeNull()
+    expect(document.body.querySelector(".cm-content")).not.toBeNull()
   );
   await userEvent.keyboard("{Backspace}");
   await vi.waitFor(() => {
-    expect(container.querySelector(".cm-content")).toBeNull();
+    expect(document.body.querySelector(".cm-content")).toBeNull();
     expect(
       container.querySelector<HTMLInputElement>(
         'input[aria-label="Add styles"]'
@@ -99,7 +103,7 @@ test("removing the newline restores the property autocomplete input", async () =
   expect(onSubmit).not.toHaveBeenCalled();
 });
 
-test("leaving the code editor submits all entered declarations", async () => {
+test("closing the code editor submits all entered declarations", async () => {
   const { container, onSubmit } = renderInput();
   const input = container.querySelector<HTMLInputElement>(
     'input[aria-label="Add styles"]'
@@ -112,13 +116,17 @@ test("leaving the code editor submits all entered declarations", async () => {
     );
   });
   await vi.waitFor(() => {
-    expect(document.activeElement).toBe(container.querySelector(".cm-content"));
+    expect(document.activeElement).toBe(
+      document.body.querySelector(".cm-content")
+    );
   });
-  const outside = document.createElement("button");
-  document.body.appendChild(outside);
-  await userEvent.click(outside);
-  expect(onSubmit).toHaveBeenCalledWith(
-    "color: red;\nbackground: blue;",
-    false
+  await userEvent.click(
+    document.body.querySelector('[role="dialog"] button[aria-label="Close"]')!
+  );
+  await vi.waitFor(() =>
+    expect(onSubmit).toHaveBeenCalledWith(
+      "color: red;\nbackground: blue;",
+      true
+    )
   );
 });
