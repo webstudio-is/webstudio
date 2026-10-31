@@ -260,6 +260,37 @@ const AdvancedPropertyLabel = ({
   );
 };
 
+const cannotEditAsCssText = (value: StyleValue): boolean => {
+  if (value.hidden === true) {
+    return true;
+  }
+  if (value.type === "image") {
+    return value.value.type === "asset";
+  }
+  if (value.type === "layers" || value.type === "tuple") {
+    return value.value.some(cannotEditAsCssText);
+  }
+  if (value.type === "function") {
+    return cannotEditAsCssText(value.args);
+  }
+  if (value.type === "var") {
+    return value.fallback !== undefined && cannotEditAsCssText(value.fallback);
+  }
+  if (value.type === "color") {
+    return typeof value.alpha !== "number" && cannotEditAsCssText(value.alpha);
+  }
+  if (value.type === "shadow") {
+    return [
+      value.offsetX,
+      value.offsetY,
+      value.blur,
+      value.spread,
+      value.color,
+    ].some((part) => part !== undefined && cannotEditAsCssText(part));
+  }
+  return false;
+};
+
 const AdvancedPropertyValue = ({
   styleDecl,
   readonly = false,
@@ -395,6 +426,9 @@ const AdvancedPropertyValue = ({
       ]}
       value={styleDecl.cascadedValue}
       onShiftEnter={(event) => {
+        if (cannotEditAsCssText(styleDecl.cascadedValue)) {
+          return;
+        }
         const input = event.currentTarget;
         const start = input.selectionStart ?? input.value.length;
         const end = input.selectionEnd ?? start;
