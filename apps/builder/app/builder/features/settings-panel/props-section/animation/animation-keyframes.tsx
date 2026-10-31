@@ -133,22 +133,26 @@ const Keyframe = ({
   onDelete: () => void;
 }) => {
   const offsetId = useId();
+  const existingDeclarations = useMemo(
+    () =>
+      (Object.keys(value.styles) as CssProperty[]).map((property) => {
+        const styleValue = value.styles[property];
+        return {
+          property,
+          source: { name: "local" },
+          cascadedValue: styleValue,
+          computedValue: styleValue,
+          usedValue: styleValue,
+        } satisfies ComputedStyleDecl;
+      }),
+    [value.styles]
+  );
   const declarations = useMemo(
     () =>
-      (Object.keys(value.styles) as CssProperty[])
-        // avoid duplicating transform properties in css editor
-        .filter((property) => !transformProperties.includes(property))
-        .map((property) => {
-          const styleValue = value.styles[property];
-          return {
-            property,
-            source: { name: "local" },
-            cascadedValue: styleValue,
-            computedValue: styleValue,
-            usedValue: styleValue,
-          } satisfies ComputedStyleDecl;
-        }),
-    [value.styles]
+      existingDeclarations.filter(
+        ({ property }) => !transformProperties.includes(property)
+      ),
+    [existingDeclarations]
   );
 
   return (
@@ -197,6 +201,7 @@ const Keyframe = ({
             propertiesPosition="top"
             virtualize={false}
             declarations={declarations}
+            existingDeclarations={existingDeclarations}
             onAddDeclarations={(addedStyleMap) => {
               const styles = { ...value.styles };
               for (const [property, value] of addedStyleMap) {
