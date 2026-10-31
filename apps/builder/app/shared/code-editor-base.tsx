@@ -284,6 +284,7 @@ export type EditorApi = {
     placeholder: string;
   }) => void;
   focus: () => void;
+  setSelection: (position: number) => void;
 };
 
 export const getTemplateInsertion = ({
@@ -516,6 +517,16 @@ export const EditorContent = ({
     },
     focus() {
       viewRef.current?.focus();
+    },
+    setSelection(position) {
+      const view = viewRef.current;
+      if (view === undefined) {
+        return;
+      }
+      view.dispatch({
+        selection: { anchor: Math.min(position, view.state.doc.length) },
+      });
+      view.focus();
     },
   }));
 

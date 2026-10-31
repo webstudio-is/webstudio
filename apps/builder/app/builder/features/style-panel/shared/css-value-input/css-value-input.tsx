@@ -334,6 +334,8 @@ type CssValueInputProps = Pick<
   >;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: ChangeCompleteEvent) => void;
+  onEnter?: (event: KeyboardEvent<HTMLInputElement>) => boolean;
+  onShiftEnter?: (event: KeyboardEvent<HTMLInputElement>) => void;
   onHighlight: (value: StyleValue | undefined) => void;
   // Does not reset intermediate changes.
   onAbort: () => void;
@@ -939,7 +941,33 @@ export const CssValueInput = ({
             }}
             autoFocus={autoFocus}
             onBlur={handleOnBlur}
-            onKeyDown={inputPropsHandleKeyDown}
+            onKeyDown={(event) => {
+              if (
+                event.key === "Enter" &&
+                event.shiftKey &&
+                props.onShiftEnter
+              ) {
+                event.preventDefault();
+                props.onShiftEnter(event);
+                return;
+              }
+              if (
+                event.key === "Enter" &&
+                !isUnitsOpen &&
+                !(isOpen && !menuProps.empty) &&
+                props.onEnter?.(event)
+              ) {
+                event.preventDefault();
+                onChangeComplete({
+                  type: "enter",
+                  value,
+                  altKey: event.altKey,
+                  shiftKey: event.shiftKey,
+                });
+                return;
+              }
+              inputPropsHandleKeyDown(event);
+            }}
             inputRef={mergeRefs(
               inputRef,
               props.inputRef,

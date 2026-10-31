@@ -1,5 +1,18 @@
 import { describe, test, expect } from "vitest";
-import { parseStyleInput } from "./parse-style-input";
+import { parsePropertyName, parseStyleInput } from "./parse-style-input";
+
+describe("parsePropertyName", () => {
+  test("accepts a single longhand or custom property name", () => {
+    expect(parsePropertyName(" color ", new Map())).toBe("color");
+    expect(parsePropertyName("--brand", new Map())).toBe("--brand");
+  });
+
+  test("rejects a declaration, shorthand, or malformed name", () => {
+    expect(parsePropertyName("color: red", new Map())).toBeUndefined();
+    expect(parsePropertyName("margin", new Map())).toBeUndefined();
+    expect(parsePropertyName("bad name", new Map())).toBeUndefined();
+  });
+});
 
 describe("parseStyleInput", () => {
   test("parses custom property", () => {

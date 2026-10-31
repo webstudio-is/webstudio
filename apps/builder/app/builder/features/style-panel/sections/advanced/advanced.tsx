@@ -6,7 +6,11 @@ import {
   SectionTitleButton,
   SectionTitleLabel,
 } from "@webstudio-is/design-system";
-import { type CssProperty, type CssStyleMap } from "@webstudio-is/css-engine";
+import {
+  type CssProperty,
+  type CssStyleMap,
+  type StyleValue,
+} from "@webstudio-is/css-engine";
 import {
   CollapsibleSectionRoot,
   useOpenState,
@@ -17,7 +21,10 @@ import {
   setProperty,
   type DeleteProperty,
 } from "../../shared/use-style-data";
-import { useComputedStyles } from "../../shared/model";
+import {
+  $computedStyleDeclarations,
+  useComputedStyles,
+} from "../../shared/model";
 import { getDots } from "../../shared/style-section";
 import { CssEditor } from "../../../../shared/css-editor";
 import { $advancedStyleDeclarations } from "./stores";
@@ -67,6 +74,7 @@ const AdvancedStyleSection = (props: {
 
 export const Section = () => {
   const advancedStyleDeclarations = useStore($advancedStyleDeclarations);
+  const computedStyleDeclarations = useStore($computedStyleDeclarations);
   const readonly = useReadonly();
   const properties = advancedStyleDeclarations.map(
     (styleDecl) => styleDecl.property
@@ -117,6 +125,22 @@ export const Section = () => {
     );
   };
 
+  const handleRenameProperty = (
+    oldProperty: CssProperty,
+    newProperty: CssProperty,
+    value: StyleValue
+  ) => {
+    const batch = createBatchUpdate();
+    batch.setProperty(newProperty)(value);
+    batch.deleteProperty(oldProperty);
+    batch.publish({ listed: true });
+    updateRecentProperties(
+      recentProperties.map((property) =>
+        property === oldProperty ? newProperty : property
+      )
+    );
+  };
+
   const handleDeleteAllDeclarations = (styleMap: CssStyleMap) => {
     const batch = createBatchUpdate();
     for (const [property] of styleMap) {
@@ -142,8 +166,10 @@ export const Section = () => {
       <CssEditor
         readonly={readonly}
         declarations={advancedStyleDeclarations}
+        existingDeclarations={computedStyleDeclarations}
         onDeleteProperty={handleDeleteProperty}
         onSetProperty={setProperty}
+        onRenameProperty={handleRenameProperty}
         onAddDeclarations={handleAddDeclarations}
         onDeleteAllDeclarations={handleDeleteAllDeclarations}
         recentProperties={recentProperties}

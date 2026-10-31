@@ -218,6 +218,12 @@ const Keyframe = ({
                 onChange({ ...value, styles }, options?.isEphemeral ?? false);
               };
             }}
+            onRenameProperty={(oldProperty, newProperty, styleValue) => {
+              const styles = { ...value.styles };
+              delete styles[oldProperty];
+              styles[newProperty] = styleValue;
+              onChange({ ...value, styles }, false);
+            }}
             onDeleteAllDeclarations={() => {
               onChange({ ...value, styles: {} }, false);
             }}

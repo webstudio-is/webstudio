@@ -4,7 +4,7 @@ import {
   shorthandProperties,
 } from "@webstudio-is/css-data";
 import { type CssProperty, type CssStyleMap } from "@webstudio-is/css-engine";
-import { lexer } from "css-tree";
+import { lexer, parse } from "css-tree";
 
 // When user provides only a property name, we need to make it `property:;` to be able to parse it.
 const ensureValue = (css: string) => {
@@ -44,6 +44,7 @@ const ensureValue = (css: string) => {
 export type ParseStyleInputResult = {
   styleMap: CssStyleMap;
   errors: string[];
+  hasSyntaxErrors: boolean;
 };
 
 export const parseStyleInput = (
@@ -51,6 +52,17 @@ export const parseStyleInput = (
   cssVars: Map<string, string>
 ): ParseStyleInputResult => {
   css = ensureValue(css);
+  let hasSyntaxErrors = false;
+  try {
+    parse(css, {
+      context: "declarationList",
+      onParseError: () => {
+        hasSyntaxErrors = true;
+      },
+    });
+  } catch {
+    hasSyntaxErrors = true;
+  }
   const { styles, errors } = parseCss(`selector{${css}}`, cssVars);
   const styleMap: CssStyleMap = new Map();
   for (const { property, value } of styles) {
@@ -72,5 +84,23 @@ export const parseStyleInput = (
     // @todo This should be returning { type: "guaranteedInvalid" }
     styleMap.set(property, value);
   }
-  return { styleMap, errors };
+  return { styleMap, errors, hasSyntaxErrors };
+};
+
+export const parsePropertyName = (
+  name: string,
+  cssVars: Map<string, string>
+): CssProperty | undefined => {
+  const trimmedName = name.trim();
+  if (trimmedName.includes(":")) {
+    return;
+  }
+  const { styleMap, errors, hasSyntaxErrors } = parseStyleInput(
+    trimmedName,
+    cssVars
+  );
+  if (errors.length > 0 || hasSyntaxErrors || styleMap.size !== 1) {
+    return;
+  }
+  return styleMap.keys().next().value;
 };
