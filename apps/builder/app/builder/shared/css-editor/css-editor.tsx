@@ -372,7 +372,9 @@ const AdvancedPropertyValue = ({
             const parsed = parseIntermediateOrInvalidValue(
               styleDecl.property,
               { type: "intermediate", value },
-              undefined,
+              styleDecl.cascadedValue.type === "unit"
+                ? styleDecl.cascadedValue.unit
+                : undefined,
               value
             );
             if (parsed.type === "invalid") {
@@ -1069,7 +1071,7 @@ export const CssEditor = ({
       {draftPropertyName === undefined ? (
         <AddStyleInput
           inline={draftAnchor !== undefined}
-          onSubmit={(cssText: string) => {
+          onSubmit={(cssText: string, focusValue = true) => {
             const property =
               draftAnchor === undefined
                 ? undefined
@@ -1080,7 +1082,7 @@ export const CssEditor = ({
             }
             const styles = handleInsertStyles(cssText, true);
             if (styles.size > 0) {
-              afterChangingStyles();
+              afterChangingStyles(focusValue);
             }
             return styles.size > 0;
           }}

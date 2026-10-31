@@ -195,7 +195,7 @@ export const AddStyleInput = forwardRef<
   HTMLInputElement,
   {
     onClose: () => void;
-    onSubmit: (css: string) => boolean;
+    onSubmit: (css: string, focusValue?: boolean) => boolean;
     onFocus: () => void;
     onBlur: (hasDraft: boolean) => void;
     onDraftChange?: (hasDraft: boolean) => void;
@@ -221,6 +221,7 @@ export const AddStyleInput = forwardRef<
   const editorRef = useRef<EditorApi>();
   const selectionRef = useRef(0);
   const closingRef = useRef(false);
+  const keyboardSubmitRef = useRef(false);
   const switchingRef = useRef(false);
   const blurringRef = useRef(false);
   const [invalidCode, setInvalidCode] = useState(false);
@@ -240,6 +241,20 @@ export const AddStyleInput = forwardRef<
     () => [
       css(),
       keymap.of([
+        {
+          key: "Mod-Enter",
+          run() {
+            keyboardSubmitRef.current = true;
+            return false;
+          },
+        },
+        {
+          key: "Mod-s",
+          run() {
+            keyboardSubmitRef.current = true;
+            return false;
+          },
+        },
         {
           key: "Enter",
           run(view) {
@@ -494,8 +509,10 @@ export const AddStyleInput = forwardRef<
               closingRef.current = false;
               return;
             }
+            const focusValue = keyboardSubmitRef.current;
+            keyboardSubmitRef.current = false;
             if (value.trim() !== "") {
-              if (onSubmit(value)) {
+              if (onSubmit(value, focusValue)) {
                 clear();
               } else {
                 setInvalidCode(true);
