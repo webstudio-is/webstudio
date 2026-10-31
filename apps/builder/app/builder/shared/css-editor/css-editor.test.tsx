@@ -138,7 +138,7 @@ test("Enter at the end of a value focuses a new property input", async () => {
   expect(onToggleAddStyleInput).toHaveBeenCalledWith(true);
   await vi.waitFor(() => {
     expect(document.activeElement).toBe(
-      container.querySelector('input[aria-label="Add styles"]')
+      container.querySelector('input[aria-label="Property name: "]')
     );
   });
 });

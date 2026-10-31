@@ -617,6 +617,7 @@ export const CssEditor = ({
 }) => {
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
   const hasAddStyleDraftRef = useRef(false);
+  const draftPropertyInputRef = useRef<HTMLInputElement>(null);
   const draftValueInputRef = useRef<HTMLInputElement>(null);
   const draftEditorRef = useRef<EditorApi>();
   const draftSelectionRef = useRef(0);
@@ -659,7 +660,11 @@ export const CssEditor = ({
   useEffect(() => {
     const isDraftPropertySet = draftPropertyName !== undefined;
     if (isDraftPropertySet && !wasDraftPropertySetRef.current) {
-      draftValueInputRef.current?.focus();
+      if (draftPropertyName === "") {
+        draftPropertyInputRef.current?.focus();
+      } else {
+        draftValueInputRef.current?.focus();
+      }
     }
     wasDraftPropertySetRef.current = isDraftPropertySet;
   }, [draftPropertyName]);
@@ -794,6 +799,8 @@ export const CssEditor = ({
       if (draftPropertyName !== undefined) {
         if (draftMultiline) {
           draftEditorRef.current?.focus();
+        } else if (draftPropertyName === "") {
+          draftPropertyInputRef.current?.focus();
         } else {
           draftValueInputRef.current?.focus();
         }
@@ -805,7 +812,7 @@ export const CssEditor = ({
     closingDraftRef.current = false;
     draftKeyboardSubmitRef.current = false;
     switchingDraftRef.current = false;
-    setDraftPropertyName(undefined);
+    setDraftPropertyName("");
     setDraftValue("");
     setDraftMultiline(false);
     setInvalidDraft(false);
@@ -816,6 +823,10 @@ export const CssEditor = ({
   const completeDraft = (value = draftValue, focusValue = true) => {
     if (draftPropertyName === undefined) {
       return false;
+    }
+    if (draftPropertyName.trim() === "" && value.trim() === "") {
+      afterChangingStyles(focusValue);
+      return true;
     }
     const property = parsePropertyName(draftPropertyName, $cssVarsMap.get());
     if (property === undefined) {
@@ -917,11 +928,21 @@ export const CssEditor = ({
         >
           <InputField
             aria-label={`Property name: ${draftPropertyName}`}
+            inputRef={draftPropertyInputRef}
             variant="chromeless"
             text="mono"
             fieldSizing="content"
             color={invalidDraft ? "error" : undefined}
             value={draftPropertyName}
+            css={{
+              backgroundColor: "transparent",
+              marginLeft: `-${initialIndentation}`,
+              "& input": {
+                marginLeft: 0,
+                paddingLeft: theme.spacing[2],
+                minWidth: "10ch",
+              },
+            }}
             onChange={(event) => {
               setDraftPropertyName(event.target.value);
               setInvalidDraft(false);
@@ -936,7 +957,10 @@ export const CssEditor = ({
               }
             }}
           />
-          <Text variant="mono" css={{ fontWeight: "bold" }}>
+          <Text
+            variant="mono"
+            css={{ textIndent: "-0.5ch", fontWeight: "bold" }}
+          >
             :
           </Text>
           {draftMultiline ? (
@@ -947,7 +971,7 @@ export const CssEditor = ({
               }}
             >
               <CssFragmentEditorContent
-                ariaLabel={draftPropertyName}
+                ariaLabel={draftPropertyName || "Add styles"}
                 editorApiRef={draftEditorRef}
                 autoFocus
                 invalid={invalidDraft}
@@ -995,13 +1019,14 @@ export const CssEditor = ({
             </Box>
           ) : (
             <InputField
-              aria-label={draftPropertyName}
+              aria-label={draftPropertyName || "Add styles"}
               variant="chromeless"
               text="mono"
               fieldSizing="content"
               color={invalidDraft ? "error" : undefined}
               value={draftValue}
               inputRef={draftValueInputRef}
+              css={{ "& input": { minWidth: "5ch" } }}
               onChange={(event) => {
                 setDraftValue(event.target.value);
                 setInvalidDraft(false);
