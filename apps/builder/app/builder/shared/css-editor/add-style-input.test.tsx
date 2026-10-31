@@ -117,5 +117,8 @@ test("leaving the code editor submits all entered declarations", async () => {
   const outside = document.createElement("button");
   document.body.appendChild(outside);
   await userEvent.click(outside);
-  expect(onSubmit).toHaveBeenCalledWith("color: red;\nbackground: blue;");
+  expect(onSubmit).toHaveBeenCalledWith(
+    "color: red;\nbackground: blue;",
+    false
+  );
 });
