@@ -113,6 +113,7 @@ const AdvancedPropertyLabel = ({
     if (
       nextProperty === undefined ||
       existingProperties.has(nextProperty) ||
+      cannotRoundTripAsCssText(styleDecl.cascadedValue, true) ||
       (styleDecl.source.name !== "local" &&
         styleDecl.source.name !== "overwritten")
     ) {
@@ -260,24 +261,35 @@ const AdvancedPropertyLabel = ({
   );
 };
 
-const cannotEditAsCssText = (value: StyleValue): boolean => {
+const cannotRoundTripAsCssText = (
+  value: StyleValue,
+  allowAssets = false
+): boolean => {
   if (value.hidden === true) {
     return true;
   }
   if (value.type === "image") {
-    return value.value.type === "asset";
+    return !allowAssets && value.value.type === "asset";
   }
   if (value.type === "layers" || value.type === "tuple") {
-    return value.value.some(cannotEditAsCssText);
+    return value.value.some((part) =>
+      cannotRoundTripAsCssText(part, allowAssets)
+    );
   }
   if (value.type === "function") {
-    return cannotEditAsCssText(value.args);
+    return cannotRoundTripAsCssText(value.args, allowAssets);
   }
   if (value.type === "var") {
-    return value.fallback !== undefined && cannotEditAsCssText(value.fallback);
+    return (
+      value.fallback !== undefined &&
+      cannotRoundTripAsCssText(value.fallback, allowAssets)
+    );
   }
   if (value.type === "color") {
-    return typeof value.alpha !== "number" && cannotEditAsCssText(value.alpha);
+    return (
+      typeof value.alpha !== "number" &&
+      cannotRoundTripAsCssText(value.alpha, allowAssets)
+    );
   }
   if (value.type === "shadow") {
     return [
@@ -286,7 +298,10 @@ const cannotEditAsCssText = (value: StyleValue): boolean => {
       value.blur,
       value.spread,
       value.color,
-    ].some((part) => part !== undefined && cannotEditAsCssText(part));
+    ].some(
+      (part) =>
+        part !== undefined && cannotRoundTripAsCssText(part, allowAssets)
+    );
   }
   return false;
 };
@@ -426,7 +441,7 @@ const AdvancedPropertyValue = ({
       ]}
       value={styleDecl.cascadedValue}
       onShiftEnter={(event) => {
-        if (cannotEditAsCssText(styleDecl.cascadedValue)) {
+        if (cannotRoundTripAsCssText(styleDecl.cascadedValue)) {
           return;
         }
         const input = event.currentTarget;
