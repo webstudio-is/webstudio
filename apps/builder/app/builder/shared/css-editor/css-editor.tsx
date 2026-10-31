@@ -34,6 +34,7 @@ import {
   toValue,
   type CssProperty,
   type CssStyleMap,
+  type ImageValue,
   type StyleValue,
 } from "@webstudio-is/css-engine";
 // @todo all style panel stuff needs to be moved to shared and/or decoupled from style panel
@@ -87,6 +88,7 @@ const AdvancedPropertyLabel = ({
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState<string>(styleDecl.property);
   const nameRef = useRef(name);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     nameRef.current = styleDecl.property;
@@ -114,8 +116,19 @@ const AdvancedPropertyLabel = ({
       resetName();
       return;
     }
+    const assetImages = new Map<string, ImageValue>();
+    const value = toValue(styleDecl.cascadedValue, (styleValue) => {
+      if (styleValue.type === "image" && styleValue.value.type === "asset") {
+        const placeholder = `webstudio-asset-${assetImages.size}`;
+        assetImages.set(placeholder, styleValue);
+        return {
+          ...styleValue,
+          value: { type: "url", url: placeholder },
+        };
+      }
+    });
     const { styleMap } = parseStyleInput(
-      `${nextProperty}: ${toValue(styleDecl.cascadedValue)}`,
+      `${nextProperty}: ${value}`,
       $cssVarsMap.get()
     );
     const nextValue = styleMap.get(nextProperty);
@@ -123,7 +136,33 @@ const AdvancedPropertyLabel = ({
       resetName();
       return;
     }
-    onRenameProperty(styleDecl.property, nextProperty, nextValue);
+    let restoredAssets = 0;
+    const restoreImage = (image: ImageValue) => {
+      const asset =
+        image.value.type === "url"
+          ? assetImages.get(image.value.url)
+          : undefined;
+      if (asset !== undefined) {
+        restoredAssets += 1;
+      }
+      return asset ?? image;
+    };
+    const renamedValue =
+      nextValue.type === "image"
+        ? restoreImage(nextValue)
+        : nextValue.type === "layers"
+          ? {
+              ...nextValue,
+              value: nextValue.value.map((layer) =>
+                layer.type === "image" ? restoreImage(layer) : layer
+              ),
+            }
+          : nextValue;
+    if (restoredAssets !== assetImages.size) {
+      resetName();
+      return;
+    }
+    onRenameProperty(styleDecl.property, nextProperty, renamedValue);
   };
 
   const description =
@@ -138,18 +177,23 @@ const AdvancedPropertyLabel = ({
   return (
     <Tooltip
       open={isOpen}
-      onOpenChange={setIsOpen}
+      onOpenChange={(open) => {
+        if (open && document.activeElement === nameInputRef.current) {
+          return;
+        }
+        setIsOpen(open);
+      }}
       // prevent closing tooltip on content click
       onPointerDown={(event) => event.preventDefault()}
       triggerProps={{
         onClick: (event) => {
+          setIsOpen(false);
           if (event.altKey) {
             event.preventDefault();
             onDeleteProperty(styleDecl.property);
             onReset?.();
             return;
           }
-          setIsOpen(true);
         },
       }}
       content={
@@ -173,6 +217,8 @@ const AdvancedPropertyLabel = ({
     >
       <InputField
         aria-label={`Property name: ${styleDecl.property}`}
+        inputRef={nameInputRef}
+        onFocus={() => setIsOpen(false)}
         variant="chromeless"
         text="mono"
         fieldSizing="content"
@@ -349,11 +395,23 @@ const AdvancedPropertyValue = ({
         const input = event.currentTarget;
         const start = input.selectionStart ?? input.value.length;
         const end = input.selectionEnd ?? start;
-        selectionRef.current = start + 1;
+        const unit =
+          styleDecl.cascadedValue.type === "unit" &&
+          styleDecl.cascadedValue.unit !== "number" &&
+          input.value.trim() !== "" &&
+          Number.isFinite(Number(input.value))
+            ? styleDecl.cascadedValue.unit
+            : "";
+        const value = `${input.value}${unit}`;
+        const insertionPoint =
+          start === input.value.length && end === start
+            ? start + unit.length
+            : start;
+        selectionRef.current = insertionPoint + 1;
         closingRef.current = false;
         keyboardSubmitRef.current = false;
         setMultilineValue(
-          `${input.value.slice(0, start)}\n${input.value.slice(end)}`
+          `${value.slice(0, insertionPoint)}\n${value.slice(end === start ? insertionPoint : end)}`
         );
       }}
       onEnter={() => {
