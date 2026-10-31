@@ -197,6 +197,8 @@ Move, rotate, scale, or skew the instance without affecting layout.
 
 A free-form CSS property editor for anything not covered by the sections above. Type any valid CSS property name — autocomplete shows the full list — and enter its value.
 
+To add several declarations, press Shift+Enter in **Add styles** or paste CSS with line breaks. This opens a code editor. Press Enter at the end of a declaration to start the next one. Click an existing property name to edit it inline. Press Shift+Enter in a value to edit it across lines, or press Enter at its end to start another declaration below it.
+
 Autocomplete includes standard, experimental, nonstandard, and obsolete CSS
 properties. A yellow warning marks any property that is not standard. Open the
 warning to review its status and browser-support risk, then select **Learn more
