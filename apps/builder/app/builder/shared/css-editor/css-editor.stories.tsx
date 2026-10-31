@@ -30,6 +30,7 @@ export const CSSEditor = () => {
         declarations={declarations}
         onDeleteProperty={() => undefined}
         onSetProperty={() => () => undefined}
+        onRenameProperty={() => undefined}
         onAddDeclarations={() => undefined}
         onDeleteAllDeclarations={() => undefined}
       />

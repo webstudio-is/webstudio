@@ -1,12 +1,16 @@
 import { mergeRefs } from "@react-aria/utils";
+import { EditorView } from "@codemirror/view";
 import { color } from "@webstudio-is/css-engine";
 import {
   memo,
   useEffect,
+  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
   type ComponentProps,
+  type ReactNode,
   type RefObject,
 } from "react";
 import { matchSorter } from "match-sorter";
@@ -14,7 +18,7 @@ import {
   PanelContent,
   Box,
   Flex,
-  Label,
+  InputField,
   SearchField,
   Separator,
   Text,
@@ -22,6 +26,7 @@ import {
   toast,
   Tooltip,
   cssVar,
+  styleSourceColor,
 } from "@webstudio-is/design-system";
 import {
   camelCaseProperty,
@@ -33,9 +38,13 @@ import {
   toValue,
   type CssProperty,
   type CssStyleMap,
+  type ImageValue,
+  type StyleValue,
 } from "@webstudio-is/css-engine";
 // @todo all style panel stuff needs to be moved to shared and/or decoupled from style panel
 import { CssValueInputContainer } from "../../features/style-panel/shared/css-value-input";
+import { CssFragmentEditorContent } from "../../features/style-panel/shared/css-fragment";
+import { parseIntermediateOrInvalidValue } from "../../features/style-panel/shared/css-value-input/parse-intermediate-or-invalid-value";
 import {
   $availableVariables,
   $cssVarsMap,
@@ -45,13 +54,18 @@ import { ColorPicker } from "@webstudio-is/design-system";
 import { useClientSupports } from "~/shared/client-supports";
 import { CssEditorContextMenu, copyAttribute } from "./css-editor-context-menu";
 import { AddStyleInput } from "./add-style-input";
-import { parseStyleInput } from "./parse-style-input";
+import { parsePropertyName, parseStyleInput } from "./parse-style-input";
 import type {
   DeleteProperty,
   SetProperty,
 } from "../../features/style-panel/shared/use-style-data";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { PropertyStatusIndicator } from "../../features/style-panel/property-status";
+import {
+  EditorDialog,
+  isEditorDialogInternalBlur,
+  type EditorApi,
+} from "~/shared/code-editor-base";
 
 // Used to indent the values when they are on the next line. This way its easier to see
 // where the property ends and value begins, especially in case of presets.
@@ -59,33 +73,133 @@ const initialIndentation = `20px`;
 
 const AdvancedPropertyLabel = ({
   styleDecl,
+  readonly,
+  existingProperties,
+  onRenameProperty,
   onReset,
   onDeleteProperty,
 }: {
   styleDecl: ComputedStyleDecl;
+  readonly: boolean;
+  existingProperties: ReadonlyMap<CssProperty, ComputedStyleDecl>;
+  onRenameProperty: (
+    oldProperty: CssProperty,
+    newProperty: CssProperty,
+    value: StyleValue
+  ) => void;
   onReset?: () => void;
   onDeleteProperty: DeleteProperty;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState<string>(styleDecl.property);
+  const nameRef = useRef(name);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    nameRef.current = styleDecl.property;
+    setName(styleDecl.property);
+  }, [styleDecl.property]);
+
+  const resetName = () => {
+    nameRef.current = styleDecl.property;
+    setName(styleDecl.property);
+  };
+
+  const completeRename = () => {
+    const nextName = nameRef.current.trim();
+    if (nextName === styleDecl.property) {
+      resetName();
+      return;
+    }
+    const nextProperty = parsePropertyName(nextName, $cssVarsMap.get());
+    if (
+      nextProperty === undefined ||
+      existingProperties.has(nextProperty) ||
+      cannotRoundTripAsCssText(styleDecl.cascadedValue, true) ||
+      (styleDecl.source.name !== "local" &&
+        styleDecl.source.name !== "overwritten")
+    ) {
+      resetName();
+      return;
+    }
+    const assetImages = new Map<string, ImageValue>();
+    const value = toValue(styleDecl.cascadedValue, (styleValue) => {
+      if (styleValue.type === "image" && styleValue.value.type === "asset") {
+        const placeholder = `webstudio-asset-${assetImages.size}`;
+        assetImages.set(placeholder, styleValue);
+        return {
+          ...styleValue,
+          value: { type: "url", url: placeholder },
+        };
+      }
+    });
+    const { styleMap } = parseStyleInput(
+      `${nextProperty}: ${value}`,
+      $cssVarsMap.get()
+    );
+    const nextValue = styleMap.get(nextProperty);
+    if (nextValue === undefined || nextValue.type === "invalid") {
+      resetName();
+      return;
+    }
+    let restoredAssets = 0;
+    const restoreImage = (image: ImageValue) => {
+      const asset =
+        image.value.type === "url"
+          ? assetImages.get(image.value.url)
+          : undefined;
+      if (asset !== undefined) {
+        restoredAssets += 1;
+      }
+      return asset ?? image;
+    };
+    const renamedValue =
+      nextValue.type === "image"
+        ? restoreImage(nextValue)
+        : nextValue.type === "layers"
+          ? {
+              ...nextValue,
+              value: nextValue.value.map((layer) =>
+                layer.type === "image" ? restoreImage(layer) : layer
+              ),
+            }
+          : nextValue;
+    if (restoredAssets !== assetImages.size) {
+      resetName();
+      return;
+    }
+    onRenameProperty(styleDecl.property, nextProperty, renamedValue);
+  };
 
   const description =
     propertyDescriptions[camelCaseProperty(styleDecl.property)];
+  const sourceColor =
+    styleDecl.source.name === "local" ||
+    styleDecl.source.name === "remote" ||
+    styleDecl.source.name === "overwritten"
+      ? styleSourceColor[styleDecl.source.name]
+      : undefined;
 
   return (
     <Tooltip
       open={isOpen}
-      onOpenChange={setIsOpen}
+      onOpenChange={(open) => {
+        if (open && document.activeElement === nameInputRef.current) {
+          return;
+        }
+        setIsOpen(open);
+      }}
       // prevent closing tooltip on content click
       onPointerDown={(event) => event.preventDefault()}
       triggerProps={{
         onClick: (event) => {
+          setIsOpen(false);
           if (event.altKey) {
             event.preventDefault();
             onDeleteProperty(styleDecl.property);
             onReset?.();
             return;
           }
-          setIsOpen(true);
         },
       }}
       content={
@@ -107,18 +221,91 @@ const AdvancedPropertyLabel = ({
         />
       }
     >
-      <Label
-        color={styleDecl.source.name}
+      <InputField
+        aria-label={`Property name: ${styleDecl.property}`}
+        inputRef={nameInputRef}
+        onFocus={() => setIsOpen(false)}
+        variant="chromeless"
         text="mono"
+        fieldSizing="content"
+        readOnly={
+          readonly ||
+          (styleDecl.source.name !== "local" &&
+            styleDecl.source.name !== "overwritten")
+        }
+        value={name}
+        onChange={(event) => {
+          nameRef.current = event.target.value;
+          setName(event.target.value);
+        }}
+        onBlur={completeRename}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            event.currentTarget.blur();
+          }
+          if (event.key === "Escape") {
+            resetName();
+          }
+        }}
         css={{
           backgroundColor: "transparent",
           marginLeft: `-${initialIndentation}`,
+          "& input": {
+            marginLeft: 0,
+            paddingLeft: theme.spacing[2],
+            color: sourceColor?.foreground,
+          },
+          "&:hover": { backgroundColor: sourceColor?.background },
         }}
-      >
-        {styleDecl.property}
-      </Label>
+      />
     </Tooltip>
   );
+};
+
+const cannotRoundTripAsCssText = (
+  value: StyleValue,
+  allowAssets = false
+): boolean => {
+  if (value.hidden === true) {
+    return true;
+  }
+  if (value.type === "image") {
+    return !allowAssets && value.value.type === "asset";
+  }
+  if (value.type === "layers" || value.type === "tuple") {
+    return value.value.some((part) =>
+      cannotRoundTripAsCssText(part, allowAssets)
+    );
+  }
+  if (value.type === "function") {
+    return cannotRoundTripAsCssText(value.args, allowAssets);
+  }
+  if (value.type === "var") {
+    return (
+      value.fallback !== undefined &&
+      cannotRoundTripAsCssText(value.fallback, allowAssets)
+    );
+  }
+  if (value.type === "color") {
+    return (
+      typeof value.alpha !== "number" &&
+      cannotRoundTripAsCssText(value.alpha, allowAssets)
+    );
+  }
+  if (value.type === "shadow") {
+    return [
+      value.offsetX,
+      value.offsetY,
+      value.blur,
+      value.spread,
+      value.color,
+    ].some(
+      (part) =>
+        part !== undefined && cannotRoundTripAsCssText(part, allowAssets)
+    );
+  }
+  return false;
 };
 
 const AdvancedPropertyValue = ({
@@ -134,13 +321,18 @@ const AdvancedPropertyValue = ({
   readonly?: boolean;
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
-  onChangeComplete: ComponentProps<
-    typeof CssValueInputContainer
-  >["onChangeComplete"];
+  onChangeComplete?: (event: { type: string }, atEnd: boolean) => void;
   onReset: ComponentProps<typeof CssValueInputContainer>["onReset"];
   inputRef?: RefObject<HTMLInputElement>;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<EditorApi>();
+  const selectionRef = useRef(0);
+  const closingRef = useRef(false);
+  const [multilineValue, setMultilineValue] = useState<string>();
+  const [invalidMultilineValue, setInvalidMultilineValue] = useState(false);
+  const isMultiline = multilineValue !== undefined;
+
   let isColor = false;
   try {
     color.parse(toValue(styleDecl.usedValue));
@@ -149,62 +341,184 @@ const AdvancedPropertyValue = ({
     isColor = false;
   }
 
+  const completeMultilineValue = (value: string, restoreFocus: boolean) => {
+    if (closingRef.current) {
+      return;
+    }
+    const parsed = parseIntermediateOrInvalidValue(
+      styleDecl.property,
+      { type: "intermediate", value },
+      styleDecl.cascadedValue.type === "unit"
+        ? styleDecl.cascadedValue.unit
+        : undefined,
+      value
+    );
+    if (parsed.type === "invalid") {
+      setInvalidMultilineValue(true);
+      return;
+    }
+    closingRef.current = true;
+    onSetProperty(styleDecl.property)(parsed, { listed: true });
+    setMultilineValue(undefined);
+    if (restoreFocus) {
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  };
+
   return (
-    <CssValueInputContainer
-      inputRef={mergeRefs(inputRef, inputRefProp)}
-      variant="chromeless"
-      text="mono"
-      fieldSizing="content"
-      disabled={readonly}
-      prefix={
-        isColor && (
-          <ColorPicker
-            disabled={readonly}
-            value={styleDecl.usedValue}
-            onChange={(styleValue) => {
-              const options = { isEphemeral: true, listed: true };
-              if (styleValue) {
-                onSetProperty(styleDecl.property)(styleValue, options);
-              } else {
-                onDeleteProperty(styleDecl.property, options);
+    <>
+      <CssValueInputContainer
+        inputRef={mergeRefs(inputRef, inputRefProp)}
+        variant="chromeless"
+        text="mono"
+        fieldSizing="content"
+        disabled={readonly}
+        prefix={
+          isColor && (
+            <ColorPicker
+              disabled={readonly}
+              value={styleDecl.usedValue}
+              onChange={(styleValue) => {
+                const options = { isEphemeral: true, listed: true };
+                if (styleValue) {
+                  onSetProperty(styleDecl.property)(styleValue, options);
+                } else {
+                  onDeleteProperty(styleDecl.property, options);
+                }
+              }}
+              onChangeComplete={(styleValue) => {
+                onSetProperty(styleDecl.property)(styleValue, { listed: true });
+              }}
+            />
+          )
+        }
+        property={styleDecl.property}
+        styleSource={styleDecl.source.name}
+        getOptions={() => [
+          ...(keywordValues[styleDecl.property] ?? []).map((value) => ({
+            type: "keyword" as const,
+            value,
+          })),
+          ...$availableVariables.get(),
+        ]}
+        value={styleDecl.cascadedValue}
+        onShiftEnter={(event) => {
+          if (cannotRoundTripAsCssText(styleDecl.cascadedValue)) {
+            return;
+          }
+          const input = event.currentTarget;
+          const start = input.selectionStart ?? input.value.length;
+          const end = input.selectionEnd ?? start;
+          const isCollapsedVariable =
+            styleDecl.cascadedValue.type === "var" &&
+            input.value === `--${styleDecl.cascadedValue.value}`;
+          const unit =
+            styleDecl.cascadedValue.type === "unit" &&
+            styleDecl.cascadedValue.unit !== "number" &&
+            input.value.trim() !== "" &&
+            Number.isFinite(Number(input.value))
+              ? styleDecl.cascadedValue.unit
+              : "";
+          const value = isCollapsedVariable
+            ? toValue(styleDecl.cascadedValue)
+            : `${input.value}${unit}`;
+          let insertionPoint = start;
+          let replacementEnd = end;
+          if (isCollapsedVariable) {
+            if (start === 0 && end === input.value.length) {
+              replacementEnd = value.length;
+            } else if (start === end && end === input.value.length) {
+              insertionPoint = value.length;
+              replacementEnd = value.length;
+            } else {
+              insertionPoint += 4;
+              replacementEnd += 4;
+            }
+          } else if (start === input.value.length && end === start) {
+            insertionPoint += unit.length;
+            replacementEnd = insertionPoint;
+          }
+          selectionRef.current = insertionPoint + 1;
+          closingRef.current = false;
+          setMultilineValue(
+            `${value.slice(0, insertionPoint)}\n${value.slice(replacementEnd)}`
+          );
+        }}
+        onEnter={() => {
+          const input = inputRef.current;
+          return (
+            input !== null &&
+            input.selectionStart === input.value.length &&
+            input.selectionEnd === input.value.length
+          );
+        }}
+        onUpdate={(styleValue, options) => {
+          if (
+            styleValue.type === "keyword" &&
+            styleValue.value.startsWith("--")
+          ) {
+            onSetProperty(styleDecl.property)(
+              { type: "var", value: styleValue.value.slice(2) },
+              { ...options, listed: true }
+            );
+          } else {
+            onSetProperty(styleDecl.property)(styleValue, {
+              ...options,
+              listed: true,
+            });
+          }
+        }}
+        onDelete={(options) => onDeleteProperty(styleDecl.property, options)}
+        onChangeComplete={(event) => {
+          const input = inputRef.current;
+          onChangeComplete?.(
+            event,
+            input !== null &&
+              input.selectionStart === input.value.length &&
+              input.selectionEnd === input.value.length
+          );
+        }}
+        onReset={onReset}
+      />
+      <EditorDialog
+        title="CSS value"
+        defaultMaximized
+        open={isMultiline}
+        onEscapeKeyDown={(event) => {
+          event.preventDefault();
+          closingRef.current = true;
+          setMultilineValue(undefined);
+          requestAnimationFrame(() => inputRef.current?.focus());
+        }}
+        onOpenChange={(open) => {
+          if (!open && multilineValue !== undefined) {
+            completeMultilineValue(multilineValue, true);
+          }
+        }}
+        content={
+          <CssFragmentEditorContent
+            ariaLabel={styleDecl.property}
+            editorApiRef={editorRef}
+            autoFocus
+            initialSelection={selectionRef.current}
+            invalid={invalidMultilineValue}
+            value={multilineValue ?? ""}
+            onChange={(value) => {
+              setMultilineValue(value);
+              setInvalidMultilineValue(false);
+              if (!value.includes("\n")) {
+                completeMultilineValue(value, true);
               }
             }}
-            onChangeComplete={(styleValue) => {
-              onSetProperty(styleDecl.property)(styleValue, { listed: true });
+            onChangeComplete={(value, event) => {
+              if (!isEditorDialogInternalBlur(event)) {
+                completeMultilineValue(value, event === undefined);
+              }
             }}
           />
-        )
-      }
-      property={styleDecl.property}
-      styleSource={styleDecl.source.name}
-      getOptions={() => [
-        ...(keywordValues[styleDecl.property] ?? []).map((value) => ({
-          type: "keyword" as const,
-          value,
-        })),
-        ...$availableVariables.get(),
-      ]}
-      value={styleDecl.cascadedValue}
-      onUpdate={(styleValue, options) => {
-        if (
-          styleValue.type === "keyword" &&
-          styleValue.value.startsWith("--")
-        ) {
-          onSetProperty(styleDecl.property)(
-            { type: "var", value: styleValue.value.slice(2) },
-            { ...options, listed: true }
-          );
-        } else {
-          onSetProperty(styleDecl.property)(styleValue, {
-            ...options,
-            listed: true,
-          });
         }
-      }}
-      onDelete={(options) => onDeleteProperty(styleDecl.property, options)}
-      onChangeComplete={onChangeComplete}
-      onReset={onReset}
-    />
+      />
+    </>
   );
 };
 
@@ -273,6 +587,8 @@ const AdvancedDeclarationLonghand = memo(
     onChangeComplete,
     onDeleteProperty,
     onSetProperty,
+    onRenameProperty,
+    existingProperties,
     onReset,
     valueInputRef,
     indentation = initialIndentation,
@@ -282,10 +598,14 @@ const AdvancedDeclarationLonghand = memo(
     indentation?: string;
     onReset?: () => void;
     onSetProperty: SetProperty;
+    onRenameProperty: (
+      oldProperty: CssProperty,
+      newProperty: CssProperty,
+      value: StyleValue
+    ) => void;
+    existingProperties: ReadonlyMap<CssProperty, ComputedStyleDecl>;
     onDeleteProperty: DeleteProperty;
-    onChangeComplete?: ComponentProps<
-      typeof CssValueInputContainer
-    >["onChangeComplete"];
+    onChangeComplete?: (event: { type: string }, atEnd: boolean) => void;
     valueInputRef?: RefObject<HTMLInputElement>;
   }) => {
     return (
@@ -298,6 +618,9 @@ const AdvancedDeclarationLonghand = memo(
       >
         <AdvancedPropertyLabel
           styleDecl={styleDecl}
+          readonly={readonly}
+          existingProperties={existingProperties}
+          onRenameProperty={onRenameProperty}
           onReset={onReset}
           onDeleteProperty={onDeleteProperty}
         />
@@ -326,12 +649,36 @@ const AdvancedDeclarationLonghand = memo(
   }
 );
 
+const DraftRow = ({
+  children,
+  css,
+  rowRef,
+  onUnmount,
+}: {
+  children: ReactNode;
+  css: ComponentProps<typeof Box>["css"];
+  rowRef: RefObject<HTMLDivElement>;
+  onUnmount: (row: HTMLDivElement | null) => void;
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const onUnmountRef = useRef(onUnmount);
+  onUnmountRef.current = onUnmount;
+  useLayoutEffect(() => () => onUnmountRef.current(ref.current), []);
+  return (
+    <Box ref={mergeRefs(ref, rowRef)} css={css}>
+      {children}
+    </Box>
+  );
+};
+
 export const CssEditor = ({
   onDeleteProperty,
   onSetProperty,
+  onRenameProperty,
   onAddDeclarations,
   onDeleteAllDeclarations,
   declarations,
+  existingDeclarations = declarations,
   readonly = false,
   showSearch = true,
   virtualize = true,
@@ -341,8 +688,14 @@ export const CssEditor = ({
   onToggleAddStyleInput,
 }: {
   declarations: Array<ComputedStyleDecl>;
+  existingDeclarations?: Array<ComputedStyleDecl>;
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
+  onRenameProperty: (
+    oldProperty: CssProperty,
+    newProperty: CssProperty,
+    value: StyleValue
+  ) => void;
   onAddDeclarations: (styleMap: CssStyleMap) => void;
   onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
   readonly?: boolean;
@@ -354,11 +707,28 @@ export const CssEditor = ({
   onToggleAddStyleInput?: (show: boolean) => void;
 }) => {
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
+  const hasAddStyleDraftRef = useRef(false);
+  const draftRowRef = useRef<HTMLDivElement>(null);
+  const draftPropertyInputRef = useRef<HTMLInputElement>(null);
+  const draftValueInputRef = useRef<HTMLInputElement>(null);
+  const draftEditorRef = useRef<EditorApi>();
+  const relocatedDraftFocusRef = useRef<
+    | { field: "property" | "value"; start: number; end: number }
+    | { field: "editor"; selection: { anchor: number; head: number } }
+  >();
+  const draftSelectionRef = useRef(0);
+  const closingDraftRef = useRef(false);
+  const switchingDraftRef = useRef(false);
+  const wasDraftPropertySetRef = useRef(false);
   const lastRecentValueInputRef = useRef<HTMLInputElement>(null);
   const lastRegularValueInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [searchProperties, setSearchProperties] =
-    useState<Array<CssProperty>>();
+  const [newEntryAfter, setNewEntryAfter] = useState<CssProperty>();
+  const [draftPropertyName, setDraftPropertyName] = useState<string>();
+  const [draftValue, setDraftValue] = useState("");
+  const [draftMultiline, setDraftMultiline] = useState(false);
+  const [invalidDraft, setInvalidDraft] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const effectiveShowAddStyleInput = readonly ? false : showAddStyleInput;
@@ -375,11 +745,46 @@ export const CssEditor = ({
     }
   }, [effectiveShowAddStyleInput]);
 
+  useEffect(() => {
+    if (newEntryAfter !== undefined) {
+      addPropertyInputRef.current?.focus();
+    }
+  }, [newEntryAfter]);
+
+  useEffect(() => {
+    const isDraftPropertySet = draftPropertyName !== undefined;
+    if (isDraftPropertySet && !wasDraftPropertySetRef.current) {
+      if (draftPropertyName === "") {
+        draftPropertyInputRef.current?.focus();
+      } else {
+        draftValueInputRef.current?.focus();
+      }
+    }
+    wasDraftPropertySetRef.current = isDraftPropertySet;
+  }, [draftPropertyName]);
+
   const declarationsMap = new Map(
     declarations.map((decl) => [decl.property, decl])
   );
+  const existingDeclarationsMap = new Map(
+    existingDeclarations
+      .filter((decl) => decl.source.name !== "default")
+      .map((decl) => [decl.property, decl])
+  );
 
   const advancedProperties = declarations.map(({ property }) => property);
+  const searchProperties = useMemo(() => {
+    if (searchTerm === undefined) {
+      return undefined;
+    }
+    const styles = declarations.map(({ property, cascadedValue }) => ({
+      key: `${property.replaceAll("-", " ")} ${toValue(cascadedValue)}`,
+      property,
+    }));
+    return matchSorter(styles, searchTerm, { keys: ["key"] }).map(
+      ({ property }) => property
+    );
+  }, [declarations, searchTerm]);
 
   const currentProperties =
     searchProperties ??
@@ -389,16 +794,106 @@ export const CssEditor = ({
 
   const showRecentProperties =
     recentProperties.length > 0 && searchProperties === undefined;
+  const draftAnchor =
+    newEntryAfter !== undefined &&
+    declarationsMap.has(newEntryAfter) &&
+    (currentProperties.includes(newEntryAfter) ||
+      (showRecentProperties && recentProperties.includes(newEntryAfter)))
+      ? newEntryAfter
+      : undefined;
 
-  const handleInsertStyles = (cssText: string) => {
+  useLayoutEffect(() => {
+    const focused = relocatedDraftFocusRef.current;
+    if (focused === undefined || focused.field === "editor") {
+      return;
+    }
+    relocatedDraftFocusRef.current = undefined;
+    if (
+      draftPropertyName === undefined ||
+      document.activeElement !== document.body
+    ) {
+      return;
+    }
+    const input =
+      focused.field === "property"
+        ? draftPropertyInputRef.current
+        : draftValueInputRef.current;
+    input?.focus();
+    input?.setSelectionRange(focused.start, focused.end);
+  }, [draftAnchor, draftPropertyName]);
+
+  useEffect(() => {
+    const focused = relocatedDraftFocusRef.current;
+    if (focused?.field !== "editor") {
+      return;
+    }
+    relocatedDraftFocusRef.current = undefined;
+    if (
+      draftPropertyName === undefined ||
+      document.activeElement !== document.body
+    ) {
+      return;
+    }
+    const content =
+      draftRowRef.current?.querySelector<HTMLElement>(".cm-content");
+    const view = content && EditorView.findFromDOM(content);
+    if (view) {
+      const { anchor, head } = focused.selection;
+      view.dispatch({
+        selection: {
+          anchor: Math.min(anchor, view.state.doc.length),
+          head: Math.min(head, view.state.doc.length),
+        },
+      });
+      view.focus();
+    }
+  }, [draftAnchor, draftPropertyName]);
+
+  const captureDraftFocus = (row: HTMLDivElement | null) => {
+    const active = document.activeElement;
+    if (row === null || !row.contains(active)) {
+      return;
+    }
+    if (
+      active instanceof HTMLInputElement &&
+      (active === draftPropertyInputRef.current ||
+        active === draftValueInputRef.current)
+    ) {
+      relocatedDraftFocusRef.current = {
+        field: active === draftPropertyInputRef.current ? "property" : "value",
+        start: active.selectionStart ?? active.value.length,
+        end: active.selectionEnd ?? active.value.length,
+      };
+    } else if (
+      active instanceof HTMLElement &&
+      active.classList.contains("cm-content")
+    ) {
+      const selection = EditorView.findFromDOM(active)?.state.selection.main;
+      relocatedDraftFocusRef.current = {
+        field: "editor",
+        selection: selection ?? { anchor: 0, head: 0 },
+      };
+    }
+  };
+
+  const handleInsertStyles = (cssText: string, requireAllValid = false) => {
     if (readonly) {
       return new Map();
     }
-    const { styleMap, errors } = parseStyleInput(cssText, $cssVarsMap.get());
+    const { styleMap, errors, hasSyntaxErrors } = parseStyleInput(
+      cssText,
+      $cssVarsMap.get()
+    );
     for (const error of errors) {
       toast.error(error);
     }
-    if (styleMap.size === 0) {
+    if (
+      styleMap.size === 0 ||
+      (requireAllValid &&
+        (errors.length > 0 ||
+          hasSyntaxErrors ||
+          [...styleMap.values()].some((value) => value.type === "invalid")))
+    ) {
       return new Map();
     }
     onAddDeclarations(styleMap);
@@ -409,7 +904,7 @@ export const CssEditor = ({
     if (containerRef.current) {
       containerRef.current.style.minHeight = "auto";
     }
-    setSearchProperties(undefined);
+    setSearchTerm(undefined);
   };
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
@@ -432,22 +927,20 @@ export const CssEditor = ({
       });
     }
 
-    const styles = declarations.map(({ property, cascadedValue }) => {
-      return {
-        key: `${property.replaceAll("-", " ")} ${toValue(cascadedValue)}`,
-        property,
-      };
-    });
-
-    const matched = matchSorter(styles, search, {
-      keys: ["key"],
-    }).map(({ property }) => property);
-
-    setSearchProperties(matched);
+    setSearchTerm(search);
   };
 
-  const afterChangingStyles = () => {
+  const afterChangingStyles = (focusValue = true) => {
+    setNewEntryAfter(undefined);
+    setDraftPropertyName(undefined);
+    setDraftValue("");
+    setDraftMultiline(false);
+    switchingDraftRef.current = false;
+    setInvalidDraft(false);
     guardedToggleAddStyleInput?.(false);
+    if (!focusValue) {
+      return;
+    }
     requestAnimationFrame(() => {
       // We are either focusing the last value input from the recent list if available or the search input.
       const element =
@@ -460,6 +953,78 @@ export const CssEditor = ({
     });
   };
 
+  const handleRenameProperty = (
+    oldProperty: CssProperty,
+    newProperty: CssProperty,
+    value: StyleValue
+  ) => {
+    if (readonly || oldProperty === newProperty) {
+      return;
+    }
+    if (newEntryAfter === oldProperty) {
+      setNewEntryAfter(newProperty);
+    }
+    onRenameProperty(oldProperty, newProperty, value);
+  };
+
+  const startNewEntry = (property: CssProperty) => {
+    if (
+      draftAnchor !== undefined ||
+      draftPropertyName !== undefined ||
+      hasAddStyleDraftRef.current
+    ) {
+      if (draftPropertyName !== undefined) {
+        if (draftMultiline) {
+          draftEditorRef.current?.focus();
+        } else if (draftPropertyName === "") {
+          draftPropertyInputRef.current?.focus();
+        } else {
+          draftValueInputRef.current?.focus();
+        }
+      } else {
+        addPropertyInputRef.current?.focus();
+      }
+      return;
+    }
+    closingDraftRef.current = false;
+    switchingDraftRef.current = false;
+    setDraftPropertyName("");
+    setDraftValue("");
+    setDraftMultiline(false);
+    setInvalidDraft(false);
+    setNewEntryAfter(property);
+    guardedToggleAddStyleInput?.(true);
+  };
+
+  const completeDraft = (value = draftValue, focusValue = true) => {
+    if (draftPropertyName === undefined) {
+      return false;
+    }
+    if (draftPropertyName.trim() === "" && value.trim() === "") {
+      afterChangingStyles(focusValue);
+      return true;
+    }
+    const property = parsePropertyName(draftPropertyName, $cssVarsMap.get());
+    if (property === undefined) {
+      setInvalidDraft(true);
+      return false;
+    }
+    const styles = handleInsertStyles(`${property}: ${value}`, true);
+    if (styles.size === 0) {
+      setInvalidDraft(true);
+      return false;
+    }
+    afterChangingStyles(focusValue);
+    return true;
+  };
+
+  const completeMultilineDraft = (value: string, focusValue: boolean) => {
+    if (closingDraftRef.current) {
+      return;
+    }
+    closingDraftRef.current = completeDraft(value, focusValue);
+  };
+
   const handleDeleteProperty: DeleteProperty = (property, options = {}) => {
     if (readonly) {
       return;
@@ -468,22 +1033,165 @@ export const CssEditor = ({
     if (options.isEphemeral === true) {
       return;
     }
-    setSearchProperties(
-      searchProperties?.filter((searchProperty) => searchProperty !== property)
-    );
+    if (newEntryAfter === property) {
+      setNewEntryAfter(undefined);
+    }
   };
 
   const handleDeleteAllDeclarations = (styleMap: CssStyleMap) => {
     if (readonly) {
       return;
     }
-    setSearchProperties(
-      searchProperties?.filter(
-        (searchProperty) => styleMap.has(searchProperty) === false
-      )
-    );
     onDeleteAllDeclarations(styleMap);
   };
+
+  const addStyleInput = (
+    <DraftRow
+      rowRef={draftRowRef}
+      onUnmount={captureDraftFocus}
+      css={
+        effectiveShowAddStyleInput
+          ? draftAnchor === undefined && draftPropertyName === undefined
+            ? { paddingTop: theme.spacing[3] }
+            : { paddingLeft: initialIndentation }
+          : { overflow: "hidden", height: 0 }
+      }
+    >
+      {draftPropertyName === undefined ? (
+        <AddStyleInput
+          inline={draftAnchor !== undefined}
+          onSubmit={(cssText: string, focusValue = true) => {
+            const property =
+              draftAnchor === undefined
+                ? undefined
+                : parsePropertyName(cssText, $cssVarsMap.get());
+            if (property !== undefined) {
+              setDraftPropertyName(property);
+              return true;
+            }
+            const styles = handleInsertStyles(cssText, true);
+            if (styles.size > 0) {
+              afterChangingStyles(focusValue);
+            }
+            return styles.size > 0;
+          }}
+          onClose={afterChangingStyles}
+          onFocus={() => guardedToggleAddStyleInput?.(true)}
+          onDraftChange={(hasDraft) => {
+            hasAddStyleDraftRef.current = hasDraft;
+          }}
+          onBlur={(hasDraft) => {
+            if (hasDraft) {
+              return;
+            }
+            setNewEntryAfter(undefined);
+            guardedToggleAddStyleInput?.(false);
+          }}
+          ref={addPropertyInputRef}
+        />
+      ) : (
+        <Flex
+          align="center"
+          wrap="wrap"
+          onBlur={(event) => {
+            if (
+              switchingDraftRef.current ||
+              (draftMultiline && event.target !== draftPropertyInputRef.current)
+            ) {
+              return;
+            }
+            if (
+              event.relatedTarget instanceof Node &&
+              event.currentTarget.contains(event.relatedTarget)
+            ) {
+              return;
+            }
+            completeDraft(draftValue, false);
+          }}
+        >
+          <InputField
+            aria-label={`Property name: ${draftPropertyName}`}
+            inputRef={draftPropertyInputRef}
+            variant="chromeless"
+            text="mono"
+            fieldSizing="content"
+            color={invalidDraft ? "error" : undefined}
+            value={draftPropertyName}
+            css={{
+              backgroundColor: "transparent",
+              marginLeft: `-${initialIndentation}`,
+              "& input": {
+                marginLeft: 0,
+                paddingLeft: theme.spacing[2],
+                minWidth: "10ch",
+              },
+            }}
+            onChange={(event) => {
+              setDraftPropertyName(event.target.value);
+              setInvalidDraft(false);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                if (draftMultiline) {
+                  draftEditorRef.current?.focus();
+                } else {
+                  draftValueInputRef.current?.focus();
+                }
+              }
+              if (event.key === "Escape") {
+                afterChangingStyles();
+              }
+            }}
+          />
+          <Text
+            variant="mono"
+            css={{ textIndent: "-0.5ch", fontWeight: "bold" }}
+          >
+            :
+          </Text>
+          <InputField
+            aria-label={draftPropertyName || "Add styles"}
+            variant="chromeless"
+            text="mono"
+            fieldSizing="content"
+            color={invalidDraft ? "error" : undefined}
+            value={
+              draftMultiline ? draftValue.replaceAll("\n", " ") : draftValue
+            }
+            inputRef={draftValueInputRef}
+            css={{ "& input": { minWidth: "5ch" } }}
+            onChange={(event) => {
+              setDraftValue(event.target.value);
+              setInvalidDraft(false);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && event.shiftKey) {
+                event.preventDefault();
+                closingDraftRef.current = false;
+                switchingDraftRef.current = true;
+                const { value, selectionStart, selectionEnd } =
+                  event.currentTarget;
+                const start = selectionStart ?? value.length;
+                const end = selectionEnd ?? start;
+                draftSelectionRef.current = start + 1;
+                setDraftValue(`${value.slice(0, start)}\n${value.slice(end)}`);
+                setDraftMultiline(true);
+                return;
+              }
+              if (event.key === "Enter") {
+                event.preventDefault();
+                completeDraft();
+              }
+              if (event.key === "Escape") {
+                afterChangingStyles();
+              }
+            }}
+          />
+        </Flex>
+      )}
+    </DraftRow>
+  );
 
   const recentPropertiesAndAddStyleInput = (
     <Flex
@@ -497,47 +1205,27 @@ export const CssEditor = ({
             return;
           }
           return (
-            <AdvancedDeclarationLonghand
-              styleDecl={styleDecl}
-              readonly={readonly}
-              key={property}
-              valueInputRef={lastRecentValueInputRef}
-              onChangeComplete={(event) => {
-                if (event.type === "enter") {
-                  guardedToggleAddStyleInput?.(true);
-                }
-              }}
-              onReset={afterChangingStyles}
-              onDeleteProperty={handleDeleteProperty}
-              onSetProperty={guardedSetProperty}
-            />
+            <Box key={property}>
+              <AdvancedDeclarationLonghand
+                styleDecl={styleDecl}
+                readonly={readonly}
+                existingProperties={existingDeclarationsMap}
+                onRenameProperty={handleRenameProperty}
+                valueInputRef={lastRecentValueInputRef}
+                onChangeComplete={(event, atEnd) => {
+                  if (event.type === "enter" && atEnd) {
+                    startNewEntry(property);
+                  }
+                }}
+                onReset={afterChangingStyles}
+                onDeleteProperty={handleDeleteProperty}
+                onSetProperty={guardedSetProperty}
+              />
+              {draftAnchor === property && addStyleInput}
+            </Box>
           );
         })}
-      <Box
-        css={
-          effectiveShowAddStyleInput
-            ? { paddingTop: theme.spacing[3] }
-            : // We hide it visually so you can tab into it to get shown.
-              { overflow: "hidden", height: 0 }
-        }
-      >
-        <AddStyleInput
-          onSubmit={(cssText: string) => {
-            const styles = handleInsertStyles(cssText);
-            if (styles.size > 0) {
-              afterChangingStyles();
-            }
-          }}
-          onClose={afterChangingStyles}
-          onFocus={() => {
-            guardedToggleAddStyleInput?.(true);
-          }}
-          onBlur={() => {
-            guardedToggleAddStyleInput?.(false);
-          }}
-          ref={addPropertyInputRef}
-        />
-      </Box>
+      {draftAnchor === undefined && addStyleInput}
     </Flex>
   );
 
@@ -591,14 +1279,23 @@ export const CssEditor = ({
               }
 
               const declarationElement = (
-                <AdvancedDeclarationLonghand
-                  styleDecl={styleDecl}
-                  readonly={readonly}
-                  onDeleteProperty={handleDeleteProperty}
-                  onSetProperty={guardedSetProperty}
-                  valueInputRef={lastRegularValueInputRef}
-                  key={property}
-                />
+                <Box key={property}>
+                  <AdvancedDeclarationLonghand
+                    styleDecl={styleDecl}
+                    readonly={readonly}
+                    existingProperties={existingDeclarationsMap}
+                    onRenameProperty={handleRenameProperty}
+                    onChangeComplete={(event, atEnd) => {
+                      if (event.type === "enter" && atEnd) {
+                        startNewEntry(property);
+                      }
+                    }}
+                    onDeleteProperty={handleDeleteProperty}
+                    onSetProperty={guardedSetProperty}
+                    valueInputRef={lastRegularValueInputRef}
+                  />
+                  {draftAnchor === property && addStyleInput}
+                </Box>
               );
               // When using it in keyframes with layout where delcarations are on top of add input button,
               // we need to focus last added value, but the logic for waiting for the last rendered event would add up complexity.
@@ -619,6 +1316,58 @@ export const CssEditor = ({
           )}
         </Flex>
       </CssEditorContextMenu>
+      <EditorDialog
+        title="CSS value"
+        defaultMaximized
+        open={draftMultiline}
+        onEscapeKeyDown={(event) => {
+          event.preventDefault();
+          closingDraftRef.current = true;
+          afterChangingStyles();
+        }}
+        onOpenChange={(open) => {
+          if (!open) {
+            completeMultilineDraft(draftValue, true);
+          }
+        }}
+        content={
+          <CssFragmentEditorContent
+            ariaLabel={draftPropertyName || "Add styles"}
+            editorApiRef={draftEditorRef}
+            autoFocus
+            initialSelection={draftSelectionRef.current}
+            invalid={invalidDraft}
+            value={draftValue}
+            onChange={(value) => {
+              setDraftValue(value);
+              setInvalidDraft(false);
+              if (!value.includes("\n")) {
+                closingDraftRef.current = true;
+                switchingDraftRef.current = false;
+                setDraftMultiline(false);
+                requestAnimationFrame(() => {
+                  draftValueInputRef.current?.focus();
+                  draftValueInputRef.current?.setSelectionRange(
+                    value.length,
+                    value.length
+                  );
+                });
+              }
+            }}
+            onChangeComplete={(value, event) => {
+              if (
+                !isEditorDialogInternalBlur(event) &&
+                !(
+                  event?.relatedTarget instanceof Node &&
+                  draftRowRef.current?.contains(event.relatedTarget)
+                )
+              ) {
+                completeMultilineDraft(value, event === undefined);
+              }
+            }}
+          />
+        }
+      />
     </Box>
   );
 };

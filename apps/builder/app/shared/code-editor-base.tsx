@@ -281,6 +281,7 @@ export type EditorApi = {
     placeholder: string;
   }) => void;
   focus: () => void;
+  setSelection: (position: number) => void;
 };
 
 export const getTemplateInsertion = ({
@@ -313,12 +314,13 @@ type EditorContentProps = {
   extensions?: Extension[];
   readOnly?: boolean;
   autoFocus?: boolean;
+  initialSelection?: number;
   invalid?: boolean;
   showShortcuts?: boolean;
   chromeless?: boolean;
   value?: string;
   onChange: (value: string) => void;
-  onChangeComplete: (value: string) => void;
+  onChangeComplete: (value: string, event?: FocusEvent) => void;
 };
 
 export const EditorContent = ({
@@ -327,6 +329,7 @@ export const EditorContent = ({
   extensions = [],
   readOnly = false,
   autoFocus = false,
+  initialSelection,
   invalid = false,
   showShortcuts = false,
   chromeless = false,
@@ -448,8 +451,8 @@ export const EditorContent = ({
           }
         }),
         EditorView.domEventHandlers({
-          blur() {
-            onChangeCompleteRef.current(view.state.doc.toString());
+          blur(event) {
+            onChangeCompleteRef.current(view.state.doc.toString(), event);
           },
           cut(event) {
             // prevent catching cut by global copy paste
@@ -481,6 +484,19 @@ export const EditorContent = ({
       annotations: [ExternalChange.of(true)],
     });
   }, [value]);
+
+  useEffect(() => {
+    if (initialSelection !== undefined) {
+      const view = viewRef.current;
+      if (view !== undefined) {
+        view.dispatch({
+          selection: {
+            anchor: Math.min(initialSelection, view.state.doc.length),
+          },
+        });
+      }
+    }
+  }, [initialSelection]);
 
   useImperativeHandle(editorApiRef, () => ({
     replaceSelection: (string) => {
@@ -514,6 +530,16 @@ export const EditorContent = ({
     focus() {
       viewRef.current?.focus();
     },
+    setSelection(position) {
+      const view = viewRef.current;
+      if (view === undefined) {
+        return;
+      }
+      view.dispatch({
+        selection: { anchor: Math.min(position, view.state.doc.length) },
+      });
+      view.focus();
+    },
   }));
 
   return (
@@ -542,6 +568,17 @@ const editorDialogControlStyle = css({
 
 export const EditorDialogControl = ({ children }: { children: ReactNode }) => {
   return <div className={editorDialogControlStyle()}>{children}</div>;
+};
+
+export const isEditorDialogInternalBlur = (event?: FocusEvent) => {
+  if (
+    !(event?.target instanceof Element) ||
+    !(event.relatedTarget instanceof Element)
+  ) {
+    return false;
+  }
+  const dialog = event.target.closest('[role="dialog"]');
+  return dialog !== null && dialog.contains(event.relatedTarget);
 };
 
 export const EditorDialogButton = forwardRef<
@@ -576,7 +613,8 @@ export const EditorDialog = ({
 }: {
   title: ReactNode;
   content: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
+  defaultMaximized?: boolean;
   width?: number;
   height?: number;
   contentPadding?: boolean;
@@ -584,6 +622,7 @@ export const EditorDialog = ({
   resize?: ComponentProps<typeof FloatingPanel>["resize"];
   open?: boolean;
   onOpenChange?: (newOpen: boolean) => void;
+  onEscapeKeyDown?: ComponentProps<typeof FloatingPanel>["onEscapeKeyDown"];
 }) => {
   return (
     <FloatingPanel
