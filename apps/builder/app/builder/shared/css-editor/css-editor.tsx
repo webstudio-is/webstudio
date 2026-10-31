@@ -199,7 +199,11 @@ const AdvancedPropertyLabel = ({
         css={{
           backgroundColor: "transparent",
           marginLeft: `-${initialIndentation}`,
-          "& input": { color: sourceColor?.foreground },
+          "& input": {
+            marginLeft: 0,
+            paddingLeft: theme.spacing[2],
+            color: sourceColor?.foreground,
+          },
           "&:hover": { backgroundColor: sourceColor?.background },
         }}
       />
