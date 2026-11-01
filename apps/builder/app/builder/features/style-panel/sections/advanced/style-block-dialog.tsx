@@ -1,8 +1,7 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { linter, type Diagnostic } from "@codemirror/lint";
 import { generate, parse } from "css-tree";
-import { SectionTitleButton, theme, Box } from "@webstudio-is/design-system";
-import { MaximizeIcon } from "@webstudio-is/icons";
+import { theme, Box } from "@webstudio-is/design-system";
 import {
   generateStyleMap,
   hyphenateProperty,
@@ -146,9 +145,13 @@ export const StyleBlockDialog = ({
   declarations,
   readonly,
   onApply,
+  open,
+  onOpenChange,
 }: {
   declarations: Declaration[];
   readonly: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onApply: (changes: {
     oldStyles: CssStyleMap;
     initialParsedStyles: CssStyleMap;
@@ -158,8 +161,9 @@ export const StyleBlockDialog = ({
     canDelete: boolean;
   }) => void;
 }) => {
-  const [open, setOpen] = useState(false);
   const [code, setCode] = useState("");
+  const declarationsRef = useRef(declarations);
+  declarationsRef.current = declarations;
   const initialStylesRef = useRef<CssStyleMap>(new Map());
   const initialParsedStylesRef = useRef<CssStyleMap>(new Map());
   const protectedPropertiesRef = useRef<ReadonlySet<CssProperty>>(new Set());
@@ -199,10 +203,10 @@ export const StyleBlockDialog = ({
     []
   );
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) {
+  useEffect(() => {
+    if (open) {
       const oldStyles: CssStyleMap = new Map(
-        declarations.map(({ property, value }) => [
+        declarationsRef.current.map(({ property, value }) => [
           hyphenateProperty(property),
           value,
         ])
@@ -218,7 +222,11 @@ export const StyleBlockDialog = ({
       initialCodeRef.current = value;
       codeRef.current = value;
       setCode(value);
-    } else if (open && codeRef.current !== initialCodeRef.current) {
+    }
+  }, [open]);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && open && codeRef.current !== initialCodeRef.current) {
       const { styleMap, mentionedProperties, canDelete } = parseBlock(
         codeRef.current
       );
@@ -231,7 +239,7 @@ export const StyleBlockDialog = ({
         canDelete,
       });
     }
-    setOpen(nextOpen);
+    onOpenChange(nextOpen);
   };
 
   return (
@@ -266,12 +274,6 @@ export const StyleBlockDialog = ({
           />
         </Box>
       }
-    >
-      <SectionTitleButton
-        aria-label="Style block editor"
-        disabled={readonly}
-        prefix={<MaximizeIcon />}
-      />
-    </EditorDialog>
+    />
   );
 };

@@ -72,6 +72,31 @@ import {
 // where the property ends and value begins, especially in case of presets.
 const initialIndentation = `20px`;
 
+export const insertStyleDeclarations = (
+  cssText: string,
+  onAddDeclarations: (styleMap: CssStyleMap) => void,
+  requireAllValid = false
+) => {
+  const { styleMap, errors, hasSyntaxErrors } = parseStyleInput(
+    cssText,
+    $cssVarsMap.get()
+  );
+  for (const error of errors) {
+    toast.error(error);
+  }
+  if (
+    styleMap.size === 0 ||
+    (requireAllValid &&
+      (errors.length > 0 ||
+        hasSyntaxErrors ||
+        [...styleMap.values()].some((value) => value.type === "invalid")))
+  ) {
+    return new Map();
+  }
+  onAddDeclarations(styleMap);
+  return styleMap;
+};
+
 const AdvancedPropertyLabel = ({
   styleDecl,
   readonly,
@@ -912,24 +937,7 @@ export const CssEditor = ({
     if (readonly) {
       return new Map();
     }
-    const { styleMap, errors, hasSyntaxErrors } = parseStyleInput(
-      cssText,
-      $cssVarsMap.get()
-    );
-    for (const error of errors) {
-      toast.error(error);
-    }
-    if (
-      styleMap.size === 0 ||
-      (requireAllValid &&
-        (errors.length > 0 ||
-          hasSyntaxErrors ||
-          [...styleMap.values()].some((value) => value.type === "invalid")))
-    ) {
-      return new Map();
-    }
-    onAddDeclarations(styleMap);
-    return styleMap;
+    return insertStyleDeclarations(cssText, onAddDeclarations, requireAllValid);
   };
 
   const handleAbortSearch = () => {
