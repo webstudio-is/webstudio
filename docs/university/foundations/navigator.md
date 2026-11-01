@@ -75,10 +75,6 @@ Right-click any item in the Navigator to toggle its visibility on the canvas. Hi
 
 At the top of the Navigator is the **Global Root** — the highest level in the instance tree. Styles set here apply to every page in the project. See [Anatomy of the builder](anatomy-of-the-webstudio-builder.md#global-root) for a full explanation.
 
-## CSS preview
-
-Below the instance tree, the Navigator shows a **CSS Preview** — a read-only view of the computed CSS styles applied to the currently selected instance. It is useful for quickly checking what styles are active without opening the Style Panel.
-
 ## Related
 
 - [Anatomy of the builder](anatomy-of-the-webstudio-builder.md) – Overview of all builder panels
