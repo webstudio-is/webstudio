@@ -202,6 +202,7 @@ const Keyframe = ({
             virtualize={false}
             declarations={declarations}
             existingDeclarations={existingDeclarations}
+            canDeleteAllDeclarations={existingDeclarations.length > 0}
             onAddDeclarations={(addedStyleMap) => {
               const styles = { ...value.styles };
               for (const [property, value] of addedStyleMap) {

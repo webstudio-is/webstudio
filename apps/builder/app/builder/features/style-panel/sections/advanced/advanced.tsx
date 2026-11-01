@@ -11,6 +11,8 @@ import {
   type CssStyleMap,
   type StyleValue,
 } from "@webstudio-is/css-engine";
+import { camelCaseProperty } from "@webstudio-is/css-data";
+import { getStyleDeclKey } from "@webstudio-is/sdk";
 import {
   CollapsibleSectionRoot,
   useOpenState,
@@ -29,7 +31,12 @@ import {
 import { getDots } from "../../shared/style-section";
 import { CssEditor } from "../../../../shared/css-editor";
 import { $advancedStyleDeclarations } from "./stores";
-import { $selectedInstanceKey } from "~/shared/nano-states";
+import {
+  $selectedBreakpoint,
+  $selectedInstanceKey,
+  $selectedOrLastStyleSourceSelector,
+} from "~/shared/nano-states";
+import { $styles } from "~/shared/sync/data-stores";
 import { useReadonly } from "../../shared/readonly";
 
 // Only here to keep the same section module interface
@@ -81,6 +88,26 @@ export const Section = () => {
     (styleDecl) => styleDecl.property
   );
   const selectedInstanceKey = useStore($selectedInstanceKey);
+  const selectedBreakpoint = useStore($selectedBreakpoint);
+  const styleSourceSelector = useStore($selectedOrLastStyleSourceSelector);
+  const styles = useStore($styles);
+  const deletableProperties = new Set<CssProperty>();
+  if (selectedBreakpoint !== undefined && styleSourceSelector !== undefined) {
+    for (const { property } of advancedStyleDeclarations) {
+      if (
+        styles.has(
+          getStyleDeclKey({
+            styleSourceId: styleSourceSelector.styleSourceId,
+            breakpointId: selectedBreakpoint.id,
+            state: styleSourceSelector.state,
+            property: camelCaseProperty(property),
+          })
+        )
+      ) {
+        deletableProperties.add(property);
+      }
+    }
+  }
   // Memorizing recent properties by instance id, so that when user switches between instances and comes back
   // they are still in-place
   const [recentPropertiesMap, setRecentPropertiesMap] = useState<
@@ -191,6 +218,7 @@ export const Section = () => {
         readonly={readonly}
         declarations={advancedStyleDeclarations}
         existingDeclarations={computedStyleDeclarations}
+        deletableProperties={deletableProperties}
         onDeleteProperty={handleDeleteProperty}
         onSetProperty={handleSetProperty}
         onRenameProperty={handleRenameProperty}
