@@ -54,7 +54,9 @@ const addCssDeclaration = async ({
   value: string;
 }) => {
   await page.getByRole("button", { name: "Add styles" }).click();
-  const propertyInput = page.locator('input[aria-label^="Property name:"]');
+  const propertyInput = page.locator(
+    'input[aria-label^="Property name:"]:focus'
+  );
   await propertyInput.fill(property);
   await propertyInput.press("Enter");
   const valueInput = page.locator("input:focus");
