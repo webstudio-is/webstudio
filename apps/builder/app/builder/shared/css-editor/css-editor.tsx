@@ -22,7 +22,7 @@ import {
   InputField,
   SearchField,
   Separator,
-  SmallIconButton,
+  SectionTitleButton,
   Text,
   theme,
   toast,
@@ -1384,9 +1384,11 @@ export const CssEditor = ({
         })}
       {draftAnchor === undefined &&
         (showInlineAddButton && !effectiveShowAddStyleInput ? (
-          <SmallIconButton
+          <SectionTitleButton
             aria-label="Add styles"
-            icon={<PlusIcon />}
+            tabIndex={0}
+            prefix={<PlusIcon />}
+            css={{ alignSelf: "flex-start" }}
             disabled={readonly}
             onClick={() => startNewEntry()}
           />
