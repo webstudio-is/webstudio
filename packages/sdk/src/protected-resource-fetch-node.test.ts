@@ -25,6 +25,7 @@ vi.mock("undici", () => ({
 }));
 
 import { createNodeProtectedResourceFetch } from "./protected-resource-fetch-node";
+import { isProtectedResourceReentry } from "./protected-resource-fetch";
 
 beforeEach(() => {
   mocks.lookup.mockReset();
@@ -101,6 +102,23 @@ test("pins the vetted address in the connector and retains the URL hostname", as
   });
   expect(pinned).toEqual({ address: "8.8.8.8", family: 4 });
   expect(mocks.agents[0].close).toHaveBeenCalledTimes(1);
+});
+
+test("marks Node Resource hops with the originating project", async () => {
+  mocks.lookup.mockResolvedValue([{ address: "8.8.8.8", family: 4 }]);
+  mocks.fetch.mockResolvedValue(new Response("ok"));
+  const resourceFetch = createNodeProtectedResourceFetch({
+    projectId: "project-a",
+    deniedHostnames: ["site.example"],
+    matchSubdomains: false,
+  });
+
+  await resourceFetch("https://api.site.example/data");
+  const [, init] = mocks.fetch.mock.calls[0];
+  const outgoing = new Request("https://api.site.example/data", init);
+  expect(isProtectedResourceReentry(outgoing, "project-a")).toBe(true);
+  expect(isProtectedResourceReentry(outgoing, "project-b")).toBe(false);
+  expect(mocks.agents[0].close).toHaveBeenCalledOnce();
 });
 
 test("resolves and rejects private DNS answers on a cross-origin redirect", async () => {
