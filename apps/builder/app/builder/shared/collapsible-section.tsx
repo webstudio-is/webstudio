@@ -7,6 +7,8 @@ import {
   SectionTitleLabel,
   SectionTitleButton,
   Separator,
+  css,
+  cssVar,
   theme,
 } from "@webstudio-is/design-system";
 import {
@@ -22,6 +24,15 @@ import { PlusIcon } from "@webstudio-is/icons";
 import type { Simplify } from "type-fest";
 
 type Label = string;
+
+const sectionStyle = css({
+  background: cssVar("--background-primary"),
+  variants: {
+    sticky: {
+      true: { position: "sticky", bottom: 0, zIndex: 1 },
+    },
+  },
+});
 
 type State = {
   [label: string]: boolean;
@@ -121,6 +132,7 @@ type CollapsibleSectionBaseProps = {
   label?: string;
   isOpen?: boolean;
   onOpenChange?: (value: boolean) => void;
+  sticky?: boolean;
 };
 
 export const CollapsibleSectionRoot = ({
@@ -131,9 +143,15 @@ export const CollapsibleSectionRoot = ({
   showSeparator = true,
   isOpen,
   onOpenChange,
+  sticky,
 }: CollapsibleSectionBaseProps) => {
   return (
-    <Collapsible.Root defaultOpen open={isOpen} onOpenChange={onOpenChange}>
+    <Collapsible.Root
+      defaultOpen
+      open={isOpen}
+      onOpenChange={onOpenChange}
+      className={sectionStyle({ sticky })}
+    >
       <Collapsible.Trigger asChild>
         {trigger ?? (
           <SectionTitle>
@@ -168,7 +186,7 @@ type CollapsibleSectionProps = Simplify<
 >;
 
 export const CollapsibleSection = (props: CollapsibleSectionProps) => {
-  const { label, trigger, children, fullWidth, showSeparator } = props;
+  const { label, trigger, children, fullWidth, showSeparator, sticky } = props;
   const [isOpen, setIsOpen] = useOpenState(label, props.isOpen);
   return (
     <CollapsibleSectionRoot
@@ -176,6 +194,7 @@ export const CollapsibleSection = (props: CollapsibleSectionProps) => {
       trigger={trigger}
       fullWidth={fullWidth}
       showSeparator={showSeparator}
+      sticky={sticky}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
     >
@@ -211,6 +230,7 @@ export const CollapsibleSectionWithAddButton = ({
       label={label}
       fullWidth={props.fullWidth}
       showSeparator={props.showSeparator}
+      sticky={props.sticky}
       isOpen={isOpenFinal}
       onOpenChange={(nextIsOpen) => {
         setIsOpen(nextIsOpen);
