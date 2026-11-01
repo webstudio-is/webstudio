@@ -183,6 +183,7 @@ export const StylePanel = () => {
         <CollapsibleProvider
           accordion={stylePanelMode === "focus"}
           initialOpen={stylePanelMode === "focus" ? "Layout" : "*"}
+          sectionBackground
         >
           {all}
         </CollapsibleProvider>

@@ -26,8 +26,10 @@ import type { Simplify } from "type-fest";
 type Label = string;
 
 const sectionStyle = css({
-  background: cssVar("--background-primary"),
   variants: {
+    background: {
+      true: { background: cssVar("--background-primary") },
+    },
     sticky: {
       true: { position: "sticky", bottom: 0, zIndex: 1 },
     },
@@ -50,6 +52,7 @@ const CollapsibleSectionContext = createContext<
   | undefined
   | {
       handleOpenState: HandleOpenState;
+      sectionBackground: boolean;
     }
 >(undefined);
 
@@ -57,10 +60,12 @@ export const CollapsibleProvider = ({
   children,
   accordion,
   initialOpen,
+  sectionBackground = false,
 }: {
   children: ReactNode;
   accordion?: boolean;
   initialOpen?: Label;
+  sectionBackground?: boolean;
 }) => {
   const state = useStore($state);
   useEffect(() => {
@@ -109,7 +114,9 @@ export const CollapsibleProvider = ({
   );
 
   return (
-    <CollapsibleSectionContext.Provider value={{ handleOpenState }}>
+    <CollapsibleSectionContext.Provider
+      value={{ handleOpenState, sectionBackground }}
+    >
       {children}
     </CollapsibleSectionContext.Provider>
   );
@@ -145,12 +152,14 @@ export const CollapsibleSectionRoot = ({
   onOpenChange,
   sticky,
 }: CollapsibleSectionBaseProps) => {
+  const sectionBackground =
+    useContext(CollapsibleSectionContext)?.sectionBackground ?? false;
   return (
     <Collapsible.Root
       defaultOpen
       open={isOpen}
       onOpenChange={onOpenChange}
-      className={sectionStyle({ sticky })}
+      className={sectionStyle({ background: sectionBackground, sticky })}
     >
       <Collapsible.Trigger asChild>
         {trigger ?? (
