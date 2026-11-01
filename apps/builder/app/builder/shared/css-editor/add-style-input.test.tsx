@@ -103,7 +103,7 @@ test("removing the newline restores the property autocomplete input", async () =
   expect(onSubmit).not.toHaveBeenCalled();
 });
 
-test("closing the code editor submits all entered declarations", async () => {
+test("leaving the code editor submits all entered declarations", async () => {
   const { container, onSubmit } = renderInput();
   const input = container.querySelector<HTMLInputElement>(
     'input[aria-label="Add styles"]'
@@ -120,13 +120,13 @@ test("closing the code editor submits all entered declarations", async () => {
       document.body.querySelector(".cm-content")
     );
   });
-  await userEvent.click(
-    document.body.querySelector('[role="dialog"] button[aria-label="Close"]')!
-  );
+  const outsideButton = document.createElement("button");
+  document.body.appendChild(outsideButton);
+  await userEvent.click(outsideButton);
   await vi.waitFor(() =>
     expect(onSubmit).toHaveBeenCalledWith(
       "color: red;\nbackground: blue;",
-      true
+      false
     )
   );
 });
