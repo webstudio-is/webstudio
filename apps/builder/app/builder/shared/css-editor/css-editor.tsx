@@ -688,6 +688,8 @@ export const CssEditor = ({
   onDeleteAllDeclarations,
   declarations,
   existingDeclarations = declarations,
+  deletableProperties,
+  canDeleteAllDeclarations,
   readonly = false,
   showSearch = true,
   virtualize = true,
@@ -698,6 +700,8 @@ export const CssEditor = ({
 }: {
   declarations: Array<ComputedStyleDecl>;
   existingDeclarations?: Array<ComputedStyleDecl>;
+  deletableProperties?: ReadonlySet<CssProperty>;
+  canDeleteAllDeclarations?: boolean;
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
   onRenameProperty: (
@@ -1262,6 +1266,9 @@ export const CssEditor = ({
         </PanelContent>
       )}
       <CssEditorContextMenu
+        readonly={readonly}
+        deletableProperties={deletableProperties}
+        canDeleteAllDeclarations={canDeleteAllDeclarations}
         onPaste={handleInsertStyles}
         onDeleteProperty={handleDeleteProperty}
         onDeleteAllDeclarations={handleDeleteAllDeclarations}
