@@ -797,7 +797,7 @@ export const CssEditor = ({
     : onToggleAddStyleInput;
 
   useEffect(() => {
-    if (effectiveShowAddStyleInput) {
+    if (effectiveShowAddStyleInput && !closingDraftRef.current) {
       addPropertyInputRef.current?.focus();
     }
   }, [effectiveShowAddStyleInput]);
@@ -980,6 +980,7 @@ export const CssEditor = ({
   };
 
   const afterChangingStyles = (focusValue = true) => {
+    closingDraftRef.current = true;
     setNewEntryAfter(undefined);
     setDraftPropertyName(undefined);
     setBulkDraft(undefined);
@@ -1153,7 +1154,11 @@ export const CssEditor = ({
             return styles.size > 0;
           }}
           onClose={afterChangingStyles}
-          onFocus={() => guardedToggleAddStyleInput?.(true)}
+          onFocus={() => {
+            if (!closingDraftRef.current) {
+              guardedToggleAddStyleInput?.(true);
+            }
+          }}
           onDraftChange={(hasDraft) => {
             hasAddStyleDraftRef.current = hasDraft;
           }}
