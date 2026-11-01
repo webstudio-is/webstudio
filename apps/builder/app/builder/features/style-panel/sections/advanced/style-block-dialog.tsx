@@ -24,10 +24,11 @@ type Declaration = { property: CssProperty; value: StyleValue };
 
 const parseBlock = (source: string) => {
   const diagnostics: Diagnostic[] = [];
-  const declarations: string[] = [];
+  const declarations: Array<{ text: string; from: number; to: number }> = [];
   const draftCssVars = new Map($cssVarsMap.get());
   const mentionedProperties = new Set<CssProperty>();
   const propertyRanges = new Map<CssProperty, { from: number; to: number }>();
+  const invalidProperties = new Set<CssProperty>();
   let canDelete = true;
   try {
     const ast = parse(source, {
@@ -46,7 +47,11 @@ const parseBlock = (source: string) => {
     ast.children.forEach((node) => {
       if (node.type === "Declaration") {
         const text = generate(node);
-        declarations.push(text);
+        declarations.push({
+          text,
+          from: node.loc?.start.offset ?? 0,
+          to: node.loc?.end.offset ?? source.length,
+        });
         if (node.property.startsWith("--")) {
           draftCssVars.set(node.property, generate(node.value));
         }
@@ -78,8 +83,8 @@ const parseBlock = (source: string) => {
     });
   }
 
-  for (const declaration of declarations) {
-    const parsed = parseStyleInput(declaration, draftCssVars);
+  for (const { text, from, to } of declarations) {
+    const parsed = parseStyleInput(text, draftCssVars);
     if (
       parsed.styleMap.size === 0 ||
       parsed.errors.length > 0 ||
@@ -90,31 +95,42 @@ const parseBlock = (source: string) => {
     ) {
       canDelete = false;
     }
+    for (const message of parsed.errors) {
+      diagnostics.push({ from, to, severity: "error", message });
+    }
+    for (const [property, value] of parsed.styleMap) {
+      if (value.type === "invalid") {
+        invalidProperties.add(property);
+        diagnostics.push({
+          from,
+          to,
+          severity: "error",
+          message: `Invalid value for ${property}.`,
+        });
+      }
+    }
   }
 
   const { styleMap, errors } = parseStyleInput(
-    declarations.join(";\n"),
+    declarations.map(({ text }) => text).join(";\n"),
     $cssVarsMap.get()
   );
-  for (const message of errors) {
+  if (errors.length > 0) {
     canDelete = false;
-    diagnostics.push({
-      from: 0,
-      to: source.length,
-      severity: "error",
-      message,
-    });
   }
   for (const [property, value] of styleMap) {
     if (value.type === "invalid") {
       canDelete = false;
       styleMap.delete(property);
-      diagnostics.push({
-        from: 0,
-        to: source.length,
-        severity: "error",
-        message: `Invalid value for ${property}.`,
-      });
+      if (!invalidProperties.has(property)) {
+        const range = propertyRanges.get(property);
+        diagnostics.push({
+          from: range?.from ?? 0,
+          to: range?.to ?? source.length,
+          severity: "error",
+          message: `Invalid value for ${property}.`,
+        });
+      }
     }
   }
   return {

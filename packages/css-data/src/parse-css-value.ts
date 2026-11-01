@@ -346,9 +346,11 @@ export const isValidDeclaration = (
   if (
     property === "white-space-collapse" ||
     property === "text-wrap-mode" ||
-    property === "text-wrap-style"
+    property === "text-wrap-style" ||
+    property === "-webkit-font-smoothing" ||
+    property === "-moz-osx-font-smoothing"
   ) {
-    return keywordValues[property].includes(value);
+    return keywordValues[property].includes(value.toLowerCase());
   }
 
   // @todo remove after csstree fixes
