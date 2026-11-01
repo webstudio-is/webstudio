@@ -624,6 +624,7 @@ export const EditorDialog = ({
   placement?: ComponentProps<typeof FloatingPanel>["placement"];
   resize?: ComponentProps<typeof FloatingPanel>["resize"];
   open?: boolean;
+  modal?: boolean;
   onOpenChange?: (newOpen: boolean) => void;
   onInteractOutside?: ComponentProps<typeof FloatingPanel>["onInteractOutside"];
   onEscapeKeyDown?: ComponentProps<typeof FloatingPanel>["onEscapeKeyDown"];

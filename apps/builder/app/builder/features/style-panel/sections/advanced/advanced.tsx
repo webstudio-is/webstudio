@@ -5,6 +5,8 @@ import {
   type CssProperty,
   type CssStyleMap,
   type StyleValue,
+  hyphenateProperty,
+  toValue,
 } from "@webstudio-is/css-engine";
 import { camelCaseProperty } from "@webstudio-is/css-data";
 import { getStyleDeclKey } from "@webstudio-is/sdk";
@@ -33,6 +35,7 @@ import {
 } from "~/shared/nano-states";
 import { $styles } from "~/shared/sync/data-stores";
 import { useReadonly } from "../../shared/readonly";
+import { AdvancedCssDialog } from "./advanced-css-dialog";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -41,8 +44,9 @@ const AdvancedStyleSection = (props: {
   label: string;
   properties: Array<CssProperty>;
   children: ReactNode;
+  suffix?: ReactNode;
 }) => {
-  const { label, children, properties } = props;
+  const { label, children, properties, suffix } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
   const styles = useComputedStyles(properties);
   return (
@@ -51,7 +55,7 @@ const AdvancedStyleSection = (props: {
       onOpenChange={setIsOpen}
       fullWidth
       trigger={
-        <SectionTitle dots={getDots(styles)}>
+        <SectionTitle dots={getDots(styles)} suffix={suffix}>
           <SectionTitleLabel>{label}</SectionTitleLabel>
         </SectionTitle>
       }
@@ -95,6 +99,21 @@ export const Section = () => {
     Map<string, Array<CssProperty>>
   >(new Map());
   const [addStyleInputFor, setAddStyleInputFor] = useState<string>();
+
+  const blockDeclarations =
+    selectedBreakpoint === undefined || styleSourceSelector === undefined
+      ? []
+      : Array.from(styles.values())
+          .filter(
+            (declaration) =>
+              declaration.styleSourceId === styleSourceSelector.styleSourceId &&
+              declaration.breakpointId === selectedBreakpoint.id &&
+              declaration.state === styleSourceSelector.state
+          )
+          .map(({ property, value }) => ({
+            property: hyphenateProperty(property),
+            value,
+          }));
 
   const isCurrentSelection = () =>
     selectedInstanceKey !== undefined &&
@@ -185,8 +204,84 @@ export const Section = () => {
     }
   };
 
+  const handleApplyBlock = ({
+    oldStyles,
+    initialParsedStyles,
+    protectedProperties,
+    newStyles,
+    mentionedProperties,
+    canDelete,
+  }: {
+    oldStyles: CssStyleMap;
+    initialParsedStyles: CssStyleMap;
+    protectedProperties: ReadonlySet<CssProperty>;
+    newStyles: CssStyleMap;
+    mentionedProperties: ReadonlySet<CssProperty>;
+    canDelete: boolean;
+  }) => {
+    if (
+      !isCurrentSelection() ||
+      $selectedBreakpoint.get()?.id !== selectedBreakpoint?.id ||
+      $selectedOrLastStyleSourceSelector.get()?.styleSourceId !==
+        styleSourceSelector?.styleSourceId ||
+      $selectedOrLastStyleSourceSelector.get()?.state !==
+        styleSourceSelector?.state
+    ) {
+      return;
+    }
+    const batch = createBatchUpdate();
+    for (const [property] of oldStyles) {
+      if (
+        canDelete &&
+        !newStyles.has(property) &&
+        !mentionedProperties.has(property)
+      ) {
+        batch.deleteProperty(property);
+      }
+    }
+    for (const [property, value] of newStyles) {
+      const previous = oldStyles.get(property);
+      const initialParsed = initialParsedStyles.get(property);
+      if (protectedProperties.has(property)) {
+        continue;
+      }
+      if (
+        previous === undefined ||
+        initialParsed === undefined ||
+        toValue(initialParsed) !== toValue(value)
+      ) {
+        batch.setProperty(property)(value);
+      }
+    }
+    batch.publish({ listed: true });
+    updateRecentProperties([
+      ...recentProperties.filter(
+        (property) =>
+          newStyles.has(property) ||
+          mentionedProperties.has(property) ||
+          !canDelete
+      ),
+      ...Array.from(newStyles.keys()).filter(
+        (property) => !oldStyles.has(property)
+      ),
+    ]);
+  };
+
   return (
-    <AdvancedStyleSection label="Advanced" properties={properties}>
+    <AdvancedStyleSection
+      label="Advanced"
+      properties={properties}
+      suffix={
+        selectedInstanceKey !== undefined && (
+          <AdvancedCssDialog
+            key={`${selectedInstanceKey}:${selectedBreakpoint?.id}:${styleSourceSelector?.styleSourceId}:${styleSourceSelector?.state}`}
+            declarations={blockDeclarations}
+            readonly={readonly}
+            onApply={handleApplyBlock}
+          />
+        )
+      }
+    >
       <CssEditor
         key={selectedInstanceKey}
         readonly={readonly}

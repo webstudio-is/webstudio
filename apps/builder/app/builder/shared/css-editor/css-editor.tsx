@@ -266,7 +266,7 @@ const AdvancedPropertyLabel = ({
   );
 };
 
-const cannotRoundTripAsCssText = (
+export const cannotRoundTripAsCssText = (
   value: StyleValue,
   allowAssets = false
 ): boolean => {

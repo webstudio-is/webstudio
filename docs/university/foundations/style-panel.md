@@ -197,6 +197,8 @@ Move, rotate, scale, or skew the instance without affecting layout.
 
 A free-form CSS property editor for anything not covered by the sections above. Type any valid CSS property name — autocomplete shows the full list — and enter its value.
 
+Click the + button on the insertion line to enter a property and value.
+
 To add several declarations, press Shift+Enter in **Add styles** or paste CSS with line breaks. The highlighted editor expands in place. Click an existing property name to edit it inline. Press Shift+Enter in a value to add a line in the expanding editor. Press Tab from a value, or Enter at its end, to start another declaration below it. The maximize button opens the centered editor.
 
 Autocomplete includes standard, experimental, nonstandard, and obsolete CSS
