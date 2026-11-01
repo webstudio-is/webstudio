@@ -176,7 +176,6 @@ const StyleBlockEditor = ({
   const protectedPropertiesRef = useRef<ReadonlySet<CssProperty>>(new Set());
   const initialCodeRef = useRef("");
   const codeRef = useRef("");
-  const savedCodeRef = useRef("");
   const extensions = useMemo(
     () => [
       linter(
@@ -220,7 +219,6 @@ const StyleBlockEditor = ({
         ])
       );
       const value = generateStyleMap(oldStyles);
-      savedCodeRef.current = value;
       initialStylesRef.current = oldStyles;
       protectedPropertiesRef.current = new Set(
         Array.from(oldStyles)
@@ -242,23 +240,21 @@ const StyleBlockEditor = ({
           value,
         ])
       );
-      initialStylesRef.current = oldStyles;
       const savedCode = generateStyleMap(oldStyles);
-      if (
-        savedCode !== savedCodeRef.current &&
-        codeRef.current === initialCodeRef.current
-      ) {
+      if (codeRef.current === initialCodeRef.current) {
+        initialStylesRef.current = oldStyles;
         protectedPropertiesRef.current = new Set(
           Array.from(oldStyles)
             .filter(([, value]) => cannotRoundTripAsCssText(value))
             .map(([property]) => property)
         );
-        initialParsedStylesRef.current = parseBlock(savedCode).styleMap;
-        initialCodeRef.current = savedCode;
-        codeRef.current = savedCode;
-        setCode(savedCode);
+        if (savedCode !== initialCodeRef.current) {
+          initialParsedStylesRef.current = parseBlock(savedCode).styleMap;
+          initialCodeRef.current = savedCode;
+          codeRef.current = savedCode;
+          setCode(savedCode);
+        }
       }
-      savedCodeRef.current = savedCode;
     }
   }, [inline, declarations]);
 

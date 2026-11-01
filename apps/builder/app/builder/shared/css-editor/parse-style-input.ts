@@ -2,9 +2,12 @@ import {
   propertiesData,
   parseCss,
   shorthandProperties,
+  isValidDeclaration,
 } from "@webstudio-is/css-data";
 import { type CssProperty, type CssStyleMap } from "@webstudio-is/css-engine";
-import { lexer, parse } from "css-tree";
+import { generate, lexer, parse } from "css-tree";
+
+const shorthandSet = new Set<string>(shorthandProperties);
 
 // When user provides only a property name, we need to make it `property:;` to be able to parse it.
 const ensureValue = (css: string) => {
@@ -53,17 +56,41 @@ export const parseStyleInput = (
 ): ParseStyleInputResult => {
   css = ensureValue(css);
   let hasSyntaxErrors = false;
+  const shorthandErrors: string[] = [];
+  let validCss = css;
   try {
-    parse(css, {
+    const ast = parse(css, {
       context: "declarationList",
       onParseError: () => {
         hasSyntaxErrors = true;
       },
     });
+    const invalidNodes = new Set<object>();
+    ast.children.forEach((node) => {
+      if (node.type === "Declaration" && shorthandSet.has(node.property)) {
+        const value = generate(node.value);
+        if (
+          value !== "" &&
+          !isValidDeclaration(node.property as CssProperty, value)
+        ) {
+          shorthandErrors.push(`Invalid value for ${node.property}.`);
+          invalidNodes.add(node);
+        }
+      }
+    });
+    if (invalidNodes.size > 0) {
+      const validNodes: string[] = [];
+      ast.children.forEach((node) => {
+        if (!invalidNodes.has(node)) {
+          validNodes.push(generate(node));
+        }
+      });
+      validCss = validNodes.join(";\n");
+    }
   } catch {
     hasSyntaxErrors = true;
   }
-  const { styles, errors } = parseCss(`selector{${css}}`, cssVars);
+  const { styles, errors } = parseCss(`selector{${validCss}}`, cssVars);
   const styleMap: CssStyleMap = new Map();
   for (const { property, value } of styles) {
     if (property.startsWith("--")) {
@@ -84,16 +111,25 @@ export const parseStyleInput = (
     // @todo This should be returning { type: "guaranteedInvalid" }
     styleMap.set(property, value);
   }
-  return { styleMap, errors, hasSyntaxErrors };
+  return { styleMap, errors: [...shorthandErrors, ...errors], hasSyntaxErrors };
 };
 
 export const parsePropertyName = (
   name: string,
-  cssVars: Map<string, string>
+  cssVars: Map<string, string>,
+  allowShorthand = false
 ): CssProperty | undefined => {
   const trimmedName = name.trim();
   if (trimmedName.includes(":")) {
     return;
+  }
+  if (
+    allowShorthand &&
+    shorthandProperties.includes(
+      trimmedName as (typeof shorthandProperties)[number]
+    )
+  ) {
+    return trimmedName as CssProperty;
   }
   const { styleMap, errors, hasSyntaxErrors } = parseStyleInput(
     trimmedName,

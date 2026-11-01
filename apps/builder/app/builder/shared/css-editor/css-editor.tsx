@@ -766,7 +766,7 @@ export const CssEditor = ({
   const draftValueInputRef = useRef<HTMLInputElement>(null);
   const draftEditorRef = useRef<EditorApi>();
   const relocatedDraftFocusRef = useRef<
-    | { field: "property" | "value"; start: number; end: number }
+    | { field: "add" | "property" | "value"; start: number; end: number }
     | { field: "editor"; selection: { anchor: number; head: number } }
   >();
   const draftSelectionRef = useRef(0);
@@ -866,7 +866,7 @@ export const CssEditor = ({
     }
     relocatedDraftFocusRef.current = undefined;
     if (
-      draftPropertyName === undefined ||
+      (draftPropertyName === undefined && focused.field !== "add") ||
       document.activeElement !== document.body
     ) {
       return;
@@ -874,7 +874,9 @@ export const CssEditor = ({
     const input =
       focused.field === "property"
         ? draftPropertyInputRef.current
-        : draftValueInputRef.current;
+        : focused.field === "value"
+          ? draftValueInputRef.current
+          : addPropertyInputRef.current;
     input?.focus();
     input?.setSelectionRange(focused.start, focused.end);
   }, [draftAnchor, draftPropertyName]);
@@ -885,14 +887,15 @@ export const CssEditor = ({
       return;
     }
     relocatedDraftFocusRef.current = undefined;
+    const content =
+      draftRowRef.current?.querySelector<HTMLElement>(".cm-content");
     if (
-      draftPropertyName === undefined ||
-      document.activeElement !== document.body
+      (draftPropertyName === undefined && bulkDraft === undefined) ||
+      (document.activeElement !== document.body &&
+        document.activeElement !== content)
     ) {
       return;
     }
-    const content =
-      draftRowRef.current?.querySelector<HTMLElement>(".cm-content");
     const view = content && EditorView.findFromDOM(content);
     if (view) {
       const { anchor, head } = focused.selection;
@@ -904,7 +907,7 @@ export const CssEditor = ({
       });
       view.focus();
     }
-  }, [draftAnchor, draftPropertyName]);
+  }, [draftAnchor, draftPropertyName, bulkDraft]);
 
   const captureDraftFocus = (row: HTMLDivElement | null) => {
     const active = document.activeElement;
@@ -914,10 +917,16 @@ export const CssEditor = ({
     if (
       active instanceof HTMLInputElement &&
       (active === draftPropertyInputRef.current ||
-        active === draftValueInputRef.current)
+        active === draftValueInputRef.current ||
+        active === addPropertyInputRef.current)
     ) {
       relocatedDraftFocusRef.current = {
-        field: active === draftPropertyInputRef.current ? "property" : "value",
+        field:
+          active === draftPropertyInputRef.current
+            ? "property"
+            : active === draftValueInputRef.current
+              ? "value"
+              : "add",
         start: active.selectionStart ?? active.value.length,
         end: active.selectionEnd ?? active.value.length,
       };
@@ -1048,7 +1057,11 @@ export const CssEditor = ({
       afterChangingStyles(focusValue);
       return true;
     }
-    const property = parsePropertyName(draftPropertyName, $cssVarsMap.get());
+    const property = parsePropertyName(
+      draftPropertyName,
+      $cssVarsMap.get(),
+      true
+    );
     if (property === undefined) {
       setInvalidDraft(true);
       return false;
@@ -1121,12 +1134,12 @@ export const CssEditor = ({
       {draftPropertyName === undefined ? (
         <AddStyleInput
           inline={draftAnchor !== undefined}
-          initialMultiline={bulkDraft}
+          initialDraft={bulkDraft}
           onSubmit={(cssText: string, focusValue = true) => {
             const property =
               draftAnchor === undefined
                 ? undefined
-                : parsePropertyName(cssText, $cssVarsMap.get());
+                : parsePropertyName(cssText, $cssVarsMap.get(), true);
             if (property !== undefined) {
               closingDraftRef.current = false;
               setBulkDraft(undefined);
@@ -1144,6 +1157,7 @@ export const CssEditor = ({
           onDraftChange={(hasDraft) => {
             hasAddStyleDraftRef.current = hasDraft;
           }}
+          onDraftSnapshot={bulkDraft === undefined ? undefined : setBulkDraft}
           onBlur={(hasDraft) => {
             if (hasDraft) {
               return;

@@ -656,12 +656,3 @@ export const EditorDialog = ({
     </FloatingPanel>
   );
 };
-
-export const EditorPopover = (props: ComponentProps<typeof EditorDialog>) => (
-  <EditorDialog
-    {...props}
-    placement="bottom-within"
-    height={200}
-    width={Number.parseFloat(rawTheme.sizes.sidebarWidth)}
-  />
-);

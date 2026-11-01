@@ -200,8 +200,9 @@ export const AddStyleInput = forwardRef<
     onFocus: () => void;
     onBlur: (hasDraft: boolean) => void;
     onDraftChange?: (hasDraft: boolean) => void;
+    onDraftSnapshot?: (draft?: { code: string; selection: number }) => void;
     inline?: boolean;
-    initialMultiline?: { code: string; selection: number };
+    initialDraft?: { code: string; selection: number };
   }
 >((props, forwardedRef) => {
   const {
@@ -210,20 +211,26 @@ export const AddStyleInput = forwardRef<
     onFocus,
     onBlur,
     onDraftChange,
+    onDraftSnapshot,
     inline = false,
-    initialMultiline,
+    initialDraft,
   } = props;
+  const initialInput = initialDraft?.code.includes("\n")
+    ? ""
+    : (initialDraft?.code ?? "");
   const [item, setItem] = useState<SearchItem>({
-    property: "",
-    label: "",
-    key: "",
+    property: initialInput,
+    label: initialInput,
+    key: initialInput,
   });
   const highlightedItemRef = useRef<SearchItem>();
-  const [multiline, setMultiline] = useState(initialMultiline !== undefined);
-  const [code, setCode] = useState(initialMultiline?.code ?? "");
+  const [multiline, setMultiline] = useState(
+    initialDraft?.code.includes("\n") ?? false
+  );
+  const [code, setCode] = useState(initialDraft?.code ?? "");
   const editorRef = useRef<EditorApi>();
   const inputRef = useRef<HTMLInputElement>(null);
-  const selectionRef = useRef(initialMultiline?.selection ?? 0);
+  const selectionRef = useRef(initialDraft?.selection ?? 0);
   const closingRef = useRef(false);
   const switchingRef = useRef(false);
   const blurringRef = useRef(false);
@@ -303,6 +310,7 @@ export const AddStyleInput = forwardRef<
   const openMultiline = (value: string, selection: number) => {
     clearHighlightedPreview();
     combobox.closeMenu();
+    onDraftSnapshot?.({ code: value, selection });
     closingRef.current = false;
     switchingRef.current = true;
     selectionRef.current = selection;
@@ -324,6 +332,9 @@ export const AddStyleInput = forwardRef<
         return;
       }
       blurringRef.current = false;
+      if (onDraftSnapshot) {
+        onDraftSnapshot({ code: input ?? "", selection: input?.length ?? 0 });
+      }
       return setItem({
         property: input ?? "",
         label: input ?? "",
@@ -368,6 +379,7 @@ export const AddStyleInput = forwardRef<
   const inputProps = combobox.getInputProps();
 
   const clear = () => {
+    onDraftSnapshot?.();
     blurringRef.current = false;
     switchingRef.current = false;
     setItem({ property: "", label: "", key: "" });
@@ -513,6 +525,7 @@ export const AddStyleInput = forwardRef<
             extensions={codeExtensions}
             value={code}
             onChange={(value) => {
+              onDraftSnapshot?.({ code: value, selection: value.length });
               if (!value.includes("\n")) {
                 closingRef.current = true;
                 selectionRef.current = value.length;
