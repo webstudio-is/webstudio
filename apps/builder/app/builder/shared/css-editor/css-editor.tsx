@@ -76,6 +76,7 @@ const AdvancedPropertyLabel = ({
   styleDecl,
   readonly,
   existingProperties,
+  deletableProperties,
   onRenameProperty,
   onReset,
   onDeleteProperty,
@@ -83,6 +84,7 @@ const AdvancedPropertyLabel = ({
   styleDecl: ComputedStyleDecl;
   readonly: boolean;
   existingProperties: ReadonlyMap<CssProperty, ComputedStyleDecl>;
+  deletableProperties?: ReadonlySet<CssProperty>;
   onRenameProperty: (
     oldProperty: CssProperty,
     newProperty: CssProperty,
@@ -95,6 +97,11 @@ const AdvancedPropertyLabel = ({
   const [name, setName] = useState<string>(styleDecl.property);
   const nameRef = useRef(name);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const canDelete =
+    !readonly &&
+    (deletableProperties?.has(styleDecl.property) ??
+      (styleDecl.source.name === "local" ||
+        styleDecl.source.name === "overwritten"));
 
   useEffect(() => {
     nameRef.current = styleDecl.property;
@@ -243,6 +250,12 @@ const AdvancedPropertyLabel = ({
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             event.preventDefault();
+            if (nameRef.current.trim() === "" && canDelete) {
+              resetName();
+              onDeleteProperty(styleDecl.property);
+              onReset?.();
+              return;
+            }
             event.currentTarget.blur();
           }
           if (event.key === "Escape") {
@@ -595,6 +608,7 @@ const AdvancedDeclarationLonghand = memo(
     onSetProperty,
     onRenameProperty,
     existingProperties,
+    deletableProperties,
     onReset,
     valueInputRef,
     indentation = initialIndentation,
@@ -610,6 +624,7 @@ const AdvancedDeclarationLonghand = memo(
       value: StyleValue
     ) => void;
     existingProperties: ReadonlyMap<CssProperty, ComputedStyleDecl>;
+    deletableProperties?: ReadonlySet<CssProperty>;
     onDeleteProperty: DeleteProperty;
     onChangeComplete?: (event: { type: string }, atEnd: boolean) => void;
     valueInputRef?: RefObject<HTMLInputElement>;
@@ -626,6 +641,7 @@ const AdvancedDeclarationLonghand = memo(
           styleDecl={styleDecl}
           readonly={readonly}
           existingProperties={existingProperties}
+          deletableProperties={deletableProperties}
           onRenameProperty={onRenameProperty}
           onReset={onReset}
           onDeleteProperty={onDeleteProperty}
@@ -1193,6 +1209,11 @@ export const CssEditor = ({
               }
               if (event.key === "Enter") {
                 event.preventDefault();
+                if (draftPropertyName.trim() === "") {
+                  closingDraftRef.current = true;
+                  afterChangingStyles();
+                  return;
+                }
                 if (draftMultiline) {
                   draftEditorRef.current?.focus();
                 } else {
@@ -1364,6 +1385,7 @@ export const CssEditor = ({
                 styleDecl={styleDecl}
                 readonly={readonly}
                 existingProperties={existingDeclarationsMap}
+                deletableProperties={deletableProperties}
                 onRenameProperty={handleRenameProperty}
                 valueInputRef={lastRecentValueInputRef}
                 onChangeComplete={(event, atEnd) => {
@@ -1456,6 +1478,7 @@ export const CssEditor = ({
                     styleDecl={styleDecl}
                     readonly={readonly}
                     existingProperties={existingDeclarationsMap}
+                    deletableProperties={deletableProperties}
                     onRenameProperty={handleRenameProperty}
                     onChangeComplete={(event, atEnd) => {
                       if (
