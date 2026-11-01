@@ -489,7 +489,7 @@ export const CssValueInput = ({
       // variables fallback is used for preview value while autocompleting
       // removed fallback when select variable to not pollute values
       let newValue = value;
-      if (value.type === "var") {
+      if (value.type === "var" && event.type === "keyword-select") {
         newValue = { ...value };
         delete newValue.fallback;
       }

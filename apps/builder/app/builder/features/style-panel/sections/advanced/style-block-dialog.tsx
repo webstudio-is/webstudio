@@ -175,6 +175,7 @@ const StyleBlockEditor = ({
   const initialParsedStylesRef = useRef<CssStyleMap>(new Map());
   const protectedPropertiesRef = useRef<ReadonlySet<CssProperty>>(new Set());
   const initialCodeRef = useRef("");
+  const appliedCodeRef = useRef("");
   const codeRef = useRef("");
   const extensions = useMemo(
     () => [
@@ -227,6 +228,7 @@ const StyleBlockEditor = ({
       );
       initialParsedStylesRef.current = parseBlock(value).styleMap;
       initialCodeRef.current = value;
+      appliedCodeRef.current = value;
       codeRef.current = value;
       setCode(value);
     }
@@ -251,6 +253,7 @@ const StyleBlockEditor = ({
         if (savedCode !== initialCodeRef.current) {
           initialParsedStylesRef.current = parseBlock(savedCode).styleMap;
           initialCodeRef.current = savedCode;
+          appliedCodeRef.current = savedCode;
           codeRef.current = savedCode;
           setCode(savedCode);
         }
@@ -266,7 +269,10 @@ const StyleBlockEditor = ({
   };
 
   const applyChanges = () => {
-    if (codeRef.current !== initialCodeRef.current) {
+    if (
+      codeRef.current !==
+      (inline ? appliedCodeRef.current : initialCodeRef.current)
+    ) {
       const { styleMap, mentionedProperties, canDelete } = parseBlock(
         codeRef.current
       );
@@ -279,8 +285,11 @@ const StyleBlockEditor = ({
         canDelete,
       });
       if (inline) {
-        initialCodeRef.current = codeRef.current;
+        appliedCodeRef.current = codeRef.current;
         initialParsedStylesRef.current = styleMap;
+        if (canDelete) {
+          initialCodeRef.current = codeRef.current;
+        }
       }
     }
   };
