@@ -126,7 +126,7 @@ const parseBlock = (source: string) => {
   };
 };
 
-export const AdvancedCssDialog = ({
+export const StyleBlockDialog = ({
   declarations,
   readonly,
   onApply,
@@ -220,7 +220,7 @@ export const AdvancedCssDialog = ({
 
   return (
     <EditorDialog
-      title="CSS block editor"
+      title="Style block editor"
       modal
       open={open}
       onOpenChange={handleOpenChange}
@@ -233,7 +233,7 @@ export const AdvancedCssDialog = ({
           }}
         >
           <CssFragmentEditorContent
-            ariaLabel="CSS block editor"
+            ariaLabel="Style block editor"
             autoFocus
             readOnly={readonly}
             extensions={extensions}
@@ -252,7 +252,7 @@ export const AdvancedCssDialog = ({
       }
     >
       <SectionTitleButton
-        aria-label="CSS block editor"
+        aria-label="Style block editor"
         disabled={readonly}
         prefix={<MaximizeIcon />}
       />

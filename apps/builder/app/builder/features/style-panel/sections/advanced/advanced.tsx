@@ -35,7 +35,7 @@ import {
 } from "~/shared/nano-states";
 import { $styles } from "~/shared/sync/data-stores";
 import { useReadonly } from "../../shared/readonly";
-import { AdvancedCssDialog } from "./advanced-css-dialog";
+import { StyleBlockDialog } from "./style-block-dialog";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -273,7 +273,7 @@ export const Section = () => {
       properties={properties}
       suffix={
         selectedInstanceKey !== undefined && (
-          <AdvancedCssDialog
+          <StyleBlockDialog
             key={`${selectedInstanceKey}:${selectedBreakpoint?.id}:${styleSourceSelector?.styleSourceId}:${styleSourceSelector?.state}`}
             declarations={blockDeclarations}
             readonly={readonly}
