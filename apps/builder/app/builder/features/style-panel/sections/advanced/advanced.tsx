@@ -352,6 +352,7 @@ export const Section = () => {
                 }}
               >
                 <DropdownMenuItem
+                  withIndicator
                   disabled={readonly}
                   onSelect={() => setEditorOpenFor(selectionKey)}
                 >
@@ -374,15 +375,21 @@ export const Section = () => {
                   Sticky
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuItem
+                  withIndicator
                   disabled={!actions.canCopyAll}
                   onSelect={actions.copyAll}
                 >
                   Copy declarations
                 </DropdownMenuItem>
-                <DropdownMenuItem disabled={readonly} onSelect={actions.paste}>
+                <DropdownMenuItem
+                  withIndicator
+                  disabled={readonly}
+                  onSelect={actions.paste}
+                >
                   Paste declarations
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                  withIndicator
                   destructive
                   disabled={!actions.canDeleteAll}
                   onSelect={actions.deleteAll}
