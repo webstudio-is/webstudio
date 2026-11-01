@@ -301,6 +301,7 @@ const StyleBlockEditor = ({
           ? {
               padding: theme.spacing[2],
               ...getCodeEditorCssVars({ minHeight: "8lh", maxHeight: "50vh" }),
+              "& > div": { background: "transparent" },
             }
           : {
               height: "100%",
