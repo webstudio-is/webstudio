@@ -127,6 +127,7 @@ type FloatingPanelProps = {
   anchor?: "container" | "trigger";
   offset?: OffsetOptions;
   open?: boolean;
+  modal?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
   onInteractOutside?: ComponentProps<typeof DialogContent>["onInteractOutside"];
   onEscapeKeyDown?: ComponentProps<typeof DialogContent>["onEscapeKeyDown"];
@@ -150,6 +151,7 @@ export const FloatingPanel = ({
   anchor = "container",
   offset: offsetProp = defaultOffset,
   open: openProp,
+  modal = false,
   onOpenChange,
   onInteractOutside,
   onEscapeKeyDown,
@@ -304,7 +306,7 @@ export const FloatingPanel = ({
       draggable
       resize={resize}
       open={open}
-      modal={false}
+      modal={modal}
       onOpenChange={handleOpenChange}
     >
       {children !== undefined && (

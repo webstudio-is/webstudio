@@ -1,6 +1,7 @@
 import { useMemo, useRef, type ComponentProps, type ReactNode } from "react";
 import { matchSorter, type RankingInfo } from "match-sorter";
 import { EditorView, keymap, tooltips } from "@codemirror/view";
+import type { Extension } from "@codemirror/state";
 import { css } from "@codemirror/lang-css";
 import {
   autocompletion,
@@ -95,9 +96,11 @@ const wrapperStyle = style({
   position: "relative",
   ...getCodeEditorCssVars({ minHeight: "3lh", maxHeight: "6lh" }),
 });
+const emptyExtensions: Extension[] = [];
 
 export const CssFragmentEditorContent = ({
   onKeyDown,
+  extensions: extraExtensions = emptyExtensions,
   ...props
 }: ComponentProps<typeof EditorContent> & {
   onKeyDown?: (event: KeyboardEvent) => void;
@@ -120,8 +123,9 @@ export const CssFragmentEditorContent = ({
           onKeyDownRef.current?.(event);
         },
       }),
+      ...extraExtensions,
     ];
-  }, []);
+  }, [extraExtensions]);
   return <EditorContent extensions={extensions} {...props} />;
 };
 
