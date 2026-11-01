@@ -5,6 +5,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
   SectionTitle,
   SectionTitleButton,
@@ -143,7 +144,12 @@ export const Section = () => {
 
   const isCurrentSelection = () =>
     selectedInstanceKey !== undefined &&
-    $selectedInstanceKey.get() === selectedInstanceKey;
+    $selectedInstanceKey.get() === selectedInstanceKey &&
+    $selectedBreakpoint.get()?.id === selectedBreakpoint?.id &&
+    $selectedOrLastStyleSourceSelector.get()?.styleSourceId ===
+      styleSourceSelector?.styleSourceId &&
+    $selectedOrLastStyleSourceSelector.get()?.state ===
+      styleSourceSelector?.state;
 
   const recentProperties = selectedInstanceKey
     ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
@@ -245,14 +251,7 @@ export const Section = () => {
     mentionedProperties: ReadonlySet<CssProperty>;
     canDelete: boolean;
   }) => {
-    if (
-      !isCurrentSelection() ||
-      $selectedBreakpoint.get()?.id !== selectedBreakpoint?.id ||
-      $selectedOrLastStyleSourceSelector.get()?.styleSourceId !==
-        styleSourceSelector?.styleSourceId ||
-      $selectedOrLastStyleSourceSelector.get()?.state !==
-        styleSourceSelector?.state
-    ) {
+    if (!isCurrentSelection()) {
       return;
     }
     const batch = createBatchUpdate();
@@ -364,7 +363,7 @@ export const Section = () => {
                     setSetting("codeEditingMode", checked === true)
                   }
                 >
-                  Code editing mode
+                  Code mode
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={stickyAdvancedSection}
@@ -374,6 +373,7 @@ export const Section = () => {
                 >
                   Sticky
                 </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   withIndicator
                   disabled={!actions.canCopyAll}
@@ -412,7 +412,7 @@ export const Section = () => {
           )
         ) : (
           <CssEditor
-            key={selectedInstanceKey}
+            key={selectionKey}
             readonly={readonly}
             showInlineAddButton={selectedInstanceKey !== undefined}
             declarations={advancedStyleDeclarations}
