@@ -2,6 +2,7 @@ import type { BrowserContext, Page } from "@playwright/test";
 import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { waitForCanvasTextStyle } from "../flows/canvas-style";
+import { addCssDeclaration } from "../flows/css-declaration";
 import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
@@ -24,21 +25,6 @@ const createStylePanelRuntimeProject = async (
     editorToken: `style-panel-runtime-${name}-editor-token`,
     builderToken: `style-panel-runtime-${name}-builder-token`,
   });
-};
-
-const addCssDeclaration = async ({
-  page,
-  css,
-}: {
-  page: Page;
-  css: string;
-}) => {
-  const input = page.getByLabel("Add styles", { exact: true }).first();
-  await input.fill(css);
-  const save = waitForChangeToBeSaved({ page });
-  await input.press("Enter");
-  await save;
-  await waitForSyncStatus({ page, status: "idle" });
 };
 
 const readBuildStylesText = async (fixture: SeededContentModeProject) => {
@@ -132,11 +118,13 @@ test("Builder CSS variables persist across create, bind, rename, delete, and rel
     async () => {
       await addCssDeclaration({
         page,
-        css: `${variableName}: #126bca`,
+        property: variableName,
+        value: "#126bca",
       });
       await addCssDeclaration({
         page,
-        css: `color: var(${variableName})`,
+        property: "color",
+        value: `var(${variableName})`,
       });
     }
   );
