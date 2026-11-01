@@ -455,6 +455,7 @@ const AdvancedPropertyValue = ({
             input.selectionEnd === input.value.length
           );
         }}
+        onTab={() => true}
         onUpdate={(styleValue, options) => {
           if (
             styleValue.type === "keyword" &&
@@ -1222,7 +1223,10 @@ export const CssEditor = ({
                 onRenameProperty={handleRenameProperty}
                 valueInputRef={lastRecentValueInputRef}
                 onChangeComplete={(event, atEnd) => {
-                  if (event.type === "enter" && atEnd) {
+                  if (
+                    event.type === "tab" ||
+                    (event.type === "enter" && atEnd)
+                  ) {
                     startNewEntry(property);
                   }
                 }}
@@ -1295,7 +1299,10 @@ export const CssEditor = ({
                     existingProperties={existingDeclarationsMap}
                     onRenameProperty={handleRenameProperty}
                     onChangeComplete={(event, atEnd) => {
-                      if (event.type === "enter" && atEnd) {
+                      if (
+                        event.type === "tab" ||
+                        (event.type === "enter" && atEnd)
+                      ) {
                         startNewEntry(property);
                       }
                     }}

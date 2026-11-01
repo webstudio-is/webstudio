@@ -300,6 +300,7 @@ type Modifiers = {
 type ChangeCompleteEvent = {
   type:
     | "enter"
+    | "tab"
     | "blur"
     | "scrub-end"
     | "unit-select"
@@ -335,6 +336,7 @@ type CssValueInputProps = Pick<
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: ChangeCompleteEvent) => void;
   onEnter?: (event: KeyboardEvent<HTMLInputElement>) => boolean;
+  onTab?: (event: KeyboardEvent<HTMLInputElement>) => boolean;
   onShiftEnter?: (event: KeyboardEvent<HTMLInputElement>) => void;
   onHighlight: (value: StyleValue | undefined) => void;
   // Does not reset intermediate changes.
@@ -494,7 +496,7 @@ export const CssValueInput = ({
       // The value might be valid but not selected from the combo menu. Close the menu.
       closeMenu();
       props.onChangeComplete({ ...defaultProps, ...event, value: newValue });
-      return;
+      return true;
     }
 
     const parsedValue = parseIntermediateOrInvalidValue(
@@ -505,7 +507,7 @@ export const CssValueInput = ({
 
     if (parsedValue.type === "invalid") {
       props.onChange(parsedValue);
-      return;
+      return false;
     }
 
     // The value might be valid but not selected from the combo menu. Close the menu.
@@ -515,6 +517,7 @@ export const CssValueInput = ({
       ...event,
       value: parsedValue,
     });
+    return true;
   };
 
   const {
@@ -964,6 +967,18 @@ export const CssValueInput = ({
                   altKey: event.altKey,
                   shiftKey: event.shiftKey,
                 });
+                return;
+              }
+              if (
+                event.key === "Tab" &&
+                !event.shiftKey &&
+                !isUnitsOpen &&
+                !(isOpen && !menuProps.empty) &&
+                props.onTab?.(event)
+              ) {
+                if (onChangeComplete({ type: "tab", value })) {
+                  event.preventDefault();
+                }
                 return;
               }
               inputPropsHandleKeyDown(event);
