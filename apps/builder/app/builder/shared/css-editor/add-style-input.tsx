@@ -201,6 +201,7 @@ export const AddStyleInput = forwardRef<
     onBlur: (hasDraft: boolean) => void;
     onDraftChange?: (hasDraft: boolean) => void;
     inline?: boolean;
+    initialMultiline?: { code: string; selection: number };
   }
 >((props, forwardedRef) => {
   const {
@@ -210,6 +211,7 @@ export const AddStyleInput = forwardRef<
     onBlur,
     onDraftChange,
     inline = false,
+    initialMultiline,
   } = props;
   const [item, setItem] = useState<SearchItem>({
     property: "",
@@ -217,11 +219,11 @@ export const AddStyleInput = forwardRef<
     key: "",
   });
   const highlightedItemRef = useRef<SearchItem>();
-  const [multiline, setMultiline] = useState(false);
-  const [code, setCode] = useState("");
+  const [multiline, setMultiline] = useState(initialMultiline !== undefined);
+  const [code, setCode] = useState(initialMultiline?.code ?? "");
   const editorRef = useRef<EditorApi>();
   const inputRef = useRef<HTMLInputElement>(null);
-  const selectionRef = useRef(0);
+  const selectionRef = useRef(initialMultiline?.selection ?? 0);
   const closingRef = useRef(false);
   const switchingRef = useRef(false);
   const blurringRef = useRef(false);

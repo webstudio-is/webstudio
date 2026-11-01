@@ -1,6 +1,7 @@
 import { mergeRefs } from "@react-aria/utils";
 import { EditorView } from "@codemirror/view";
 import { color } from "@webstudio-is/css-engine";
+import { PlusIcon } from "@webstudio-is/icons";
 import {
   memo,
   useEffect,
@@ -21,6 +22,7 @@ import {
   InputField,
   SearchField,
   Separator,
+  SmallIconButton,
   Text,
   theme,
   toast,
@@ -691,6 +693,7 @@ export const CssEditor = ({
   propertiesPosition = "bottom",
   recentProperties = [],
   showAddStyleInput,
+  showInlineAddButton = false,
   onToggleAddStyleInput,
 }: {
   declarations: Array<ComputedStyleDecl>;
@@ -712,6 +715,7 @@ export const CssEditor = ({
   virtualize?: boolean;
   recentProperties?: Array<CssProperty>;
   showAddStyleInput?: boolean;
+  showInlineAddButton?: boolean;
   onToggleAddStyleInput?: (show: boolean) => void;
 }) => {
   const addPropertyInputRef = useRef<HTMLInputElement>(null);
@@ -733,6 +737,10 @@ export const CssEditor = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [newEntryAfter, setNewEntryAfter] = useState<CssProperty>();
   const [draftPropertyName, setDraftPropertyName] = useState<string>();
+  const [bulkDraft, setBulkDraft] = useState<{
+    code: string;
+    selection: number;
+  }>();
   const [draftValue, setDraftValue] = useState("");
   const [draftMultiline, setDraftMultiline] = useState(false);
   const [invalidDraft, setInvalidDraft] = useState(false);
@@ -941,8 +949,10 @@ export const CssEditor = ({
   const afterChangingStyles = (focusValue = true) => {
     setNewEntryAfter(undefined);
     setDraftPropertyName(undefined);
+    setBulkDraft(undefined);
     setDraftValue("");
     setDraftMultiline(false);
+    hasAddStyleDraftRef.current = false;
     switchingDraftRef.current = false;
     setInvalidDraft(false);
     guardedToggleAddStyleInput?.(false);
@@ -975,11 +985,11 @@ export const CssEditor = ({
     onRenameProperty(oldProperty, newProperty, value);
   };
 
-  const startNewEntry = (property: CssProperty) => {
+  const startNewEntry = (property?: CssProperty) => {
     if (
       draftAnchor !== undefined ||
       draftPropertyName !== undefined ||
-      hasAddStyleDraftRef.current
+      (effectiveShowAddStyleInput && hasAddStyleDraftRef.current)
     ) {
       if (draftPropertyName !== undefined) {
         if (draftMultiline) {
@@ -997,6 +1007,7 @@ export const CssEditor = ({
     closingDraftRef.current = false;
     switchingDraftRef.current = false;
     setDraftPropertyName("");
+    setBulkDraft(undefined);
     setDraftValue("");
     setDraftMultiline(false);
     setInvalidDraft(false);
@@ -1028,6 +1039,27 @@ export const CssEditor = ({
     return true;
   };
 
+  const openBulkDraft = (code: string, selection: number) => {
+    switchingDraftRef.current = true;
+    setBulkDraft({ code, selection });
+    setDraftPropertyName(undefined);
+    setDraftValue("");
+    setDraftMultiline(false);
+    requestAnimationFrame(() => {
+      switchingDraftRef.current = false;
+    });
+  };
+
+  const openValueDraft = (value: string, selection: number) => {
+    switchingDraftRef.current = true;
+    draftSelectionRef.current = selection;
+    setDraftValue(value);
+    setDraftMultiline(true);
+    requestAnimationFrame(() => {
+      switchingDraftRef.current = false;
+    });
+  };
+
   const handleDeleteProperty: DeleteProperty = (property, options = {}) => {
     if (readonly) {
       return;
@@ -1054,7 +1086,9 @@ export const CssEditor = ({
       onUnmount={captureDraftFocus}
       css={
         effectiveShowAddStyleInput
-          ? draftAnchor === undefined && draftPropertyName === undefined
+          ? draftAnchor === undefined &&
+            draftPropertyName === undefined &&
+            bulkDraft === undefined
             ? { paddingTop: theme.spacing[3] }
             : { paddingLeft: initialIndentation }
           : { overflow: "hidden", height: 0 }
@@ -1063,6 +1097,7 @@ export const CssEditor = ({
       {draftPropertyName === undefined ? (
         <AddStyleInput
           inline={draftAnchor !== undefined}
+          initialMultiline={bulkDraft}
           onSubmit={(cssText: string, focusValue = true) => {
             const property =
               draftAnchor === undefined
@@ -1070,6 +1105,7 @@ export const CssEditor = ({
                 : parsePropertyName(cssText, $cssVarsMap.get());
             if (property !== undefined) {
               closingDraftRef.current = false;
+              setBulkDraft(undefined);
               setDraftPropertyName(property);
               return true;
             }
@@ -1135,6 +1171,26 @@ export const CssEditor = ({
               setInvalidDraft(false);
             }}
             onKeyDown={(event) => {
+              if (event.key === "Enter" && event.shiftKey) {
+                event.preventDefault();
+                const { value, selectionStart, selectionEnd } =
+                  event.currentTarget;
+                const start = selectionStart ?? value.length;
+                const end = selectionEnd ?? start;
+                if (draftValue !== "") {
+                  const delimiter = draftValue.trimEnd().endsWith(";")
+                    ? ""
+                    : ";";
+                  const code = `${value}: ${draftValue}${delimiter}\n`;
+                  openBulkDraft(code, code.length);
+                  return;
+                }
+                openBulkDraft(
+                  `${value.slice(0, start)}\n${value.slice(end)}`,
+                  start + 1
+                );
+                return;
+              }
               if (event.key === "Enter") {
                 event.preventDefault();
                 if (draftMultiline) {
@@ -1147,6 +1203,29 @@ export const CssEditor = ({
                 closingDraftRef.current = true;
                 afterChangingStyles();
               }
+            }}
+            onPaste={(event) => {
+              const text = event.clipboardData
+                .getData("text/plain")
+                .replaceAll("\r\n", "\n")
+                .replaceAll("\r", "\n");
+              if (!text.includes("\n")) {
+                return;
+              }
+              event.preventDefault();
+              const input = event.currentTarget;
+              const start = input.selectionStart ?? input.value.length;
+              const end = input.selectionEnd ?? start;
+              if (draftValue !== "") {
+                const delimiter = draftValue.trimEnd().endsWith(";") ? "" : ";";
+                const code = `${input.value}: ${draftValue}${delimiter}\n${text}`;
+                openBulkDraft(code, code.length);
+                return;
+              }
+              openBulkDraft(
+                `${input.value.slice(0, start)}${text}${input.value.slice(end)}`,
+                start + text.length
+              );
             }}
           />
           <Text
@@ -1225,19 +1304,14 @@ export const CssEditor = ({
               onKeyDown={(event) => {
                 if (event.key === "Enter" && event.shiftKey) {
                   event.preventDefault();
-                  switchingDraftRef.current = true;
                   const { value, selectionStart, selectionEnd } =
                     event.currentTarget;
                   const start = selectionStart ?? value.length;
                   const end = selectionEnd ?? start;
-                  draftSelectionRef.current = start + 1;
-                  setDraftValue(
-                    `${value.slice(0, start)}\n${value.slice(end)}`
+                  openValueDraft(
+                    `${value.slice(0, start)}\n${value.slice(end)}`,
+                    start + 1
                   );
-                  setDraftMultiline(true);
-                  requestAnimationFrame(() => {
-                    switchingDraftRef.current = false;
-                  });
                   return;
                 }
                 if (event.key === "Enter") {
@@ -1248,6 +1322,23 @@ export const CssEditor = ({
                   closingDraftRef.current = true;
                   afterChangingStyles();
                 }
+              }}
+              onPaste={(event) => {
+                const text = event.clipboardData
+                  .getData("text/plain")
+                  .replaceAll("\r\n", "\n")
+                  .replaceAll("\r", "\n");
+                if (!text.includes("\n")) {
+                  return;
+                }
+                event.preventDefault();
+                const input = event.currentTarget;
+                const start = input.selectionStart ?? input.value.length;
+                const end = input.selectionEnd ?? start;
+                openValueDraft(
+                  `${input.value.slice(0, start)}${text}${input.value.slice(end)}`,
+                  start + text.length
+                );
               }}
             />
           )}
@@ -1291,7 +1382,17 @@ export const CssEditor = ({
             </Box>
           );
         })}
-      {draftAnchor === undefined && addStyleInput}
+      {draftAnchor === undefined &&
+        (showInlineAddButton && !effectiveShowAddStyleInput ? (
+          <SmallIconButton
+            aria-label="Add styles"
+            icon={<PlusIcon />}
+            disabled={readonly}
+            onClick={() => startNewEntry()}
+          />
+        ) : (
+          addStyleInput
+        ))}
     </Flex>
   );
 

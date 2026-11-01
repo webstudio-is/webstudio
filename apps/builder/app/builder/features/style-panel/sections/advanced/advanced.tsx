@@ -1,11 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import { PlusIcon } from "@webstudio-is/icons";
-import {
-  SectionTitle,
-  SectionTitleButton,
-  SectionTitleLabel,
-} from "@webstudio-is/design-system";
+import { SectionTitle, SectionTitleLabel } from "@webstudio-is/design-system";
 import {
   type CssProperty,
   type CssStyleMap,
@@ -44,12 +39,10 @@ export const properties = [];
 
 const AdvancedStyleSection = (props: {
   label: string;
-  readonly: boolean;
   properties: Array<CssProperty>;
-  onAdd: () => void;
   children: ReactNode;
 }) => {
-  const { label, readonly, children, properties, onAdd } = props;
+  const { label, children, properties } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
   const styles = useComputedStyles(properties);
   return (
@@ -58,19 +51,7 @@ const AdvancedStyleSection = (props: {
       onOpenChange={setIsOpen}
       fullWidth
       trigger={
-        <SectionTitle
-          dots={getDots(styles)}
-          suffix={
-            <SectionTitleButton
-              disabled={readonly}
-              prefix={<PlusIcon />}
-              onClick={() => {
-                setIsOpen(true);
-                onAdd();
-              }}
-            />
-          }
-        >
+        <SectionTitle dots={getDots(styles)}>
           <SectionTitleLabel>{label}</SectionTitleLabel>
         </SectionTitle>
       }
@@ -205,17 +186,11 @@ export const Section = () => {
   };
 
   return (
-    <AdvancedStyleSection
-      label="Advanced"
-      readonly={readonly}
-      properties={properties}
-      onAdd={() => {
-        setAddStyleInputFor(selectedInstanceKey);
-      }}
-    >
+    <AdvancedStyleSection label="Advanced" properties={properties}>
       <CssEditor
         key={selectedInstanceKey}
         readonly={readonly}
+        showInlineAddButton={selectedInstanceKey !== undefined}
         declarations={advancedStyleDeclarations}
         existingDeclarations={computedStyleDeclarations}
         deletableProperties={deletableProperties}
