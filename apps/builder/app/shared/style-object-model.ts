@@ -47,11 +47,6 @@ import {
  * invalidate model
  * lazily recompute all properties
  *
- * 3. CSS preview
- *
- * all properties are collected from instance selector
- * property are iterated with own model and computed
- *
  */
 
 type InstanceSelector = string[];

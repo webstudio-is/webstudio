@@ -1,6 +1,5 @@
 import { HighlightStyle } from "@codemirror/language";
-import { highlightCode, tags } from "@lezer/highlight";
-import { parser } from "@lezer/css";
+import { tags } from "@lezer/highlight";
 import { cssVar } from "@webstudio-is/design-system";
 
 // Syntax categories are a visualization layer. Compose them from the shared
@@ -78,25 +77,3 @@ export const codeHighlightStyle = HighlightStyle.define([
     color: syntaxGreen,
   },
 ]);
-
-export const highlightCss = (code: string) => {
-  const styles = codeHighlightStyle.module?.getRules();
-  // generated classes are scoped to parent
-  let highlightedCode = `<style>@scope {${styles}}</style>`;
-  highlightCode(
-    code,
-    parser.parse(code),
-    codeHighlightStyle,
-    (text, classes) => {
-      if (classes) {
-        highlightedCode += `<span class="${classes}">${text}</span>`;
-      } else {
-        highlightedCode += text;
-      }
-    },
-    () => {
-      highlightedCode += "\n";
-    }
-  );
-  return highlightedCode;
-};
