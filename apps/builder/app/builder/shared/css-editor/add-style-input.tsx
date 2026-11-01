@@ -9,6 +9,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { css } from "@codemirror/lang-css";
+import { mergeRefs } from "@react-aria/utils";
 import { keymap } from "@codemirror/view";
 import { matchSorter } from "match-sorter";
 import {
@@ -55,7 +56,7 @@ import { validateCssVariableName } from "~/builder/shared/css-variable-utils";
 import { toast } from "@webstudio-is/design-system";
 import {
   EditorContent,
-  EditorDialog,
+  EditorPopover,
   isEditorDialogInternalBlur,
   type EditorApi,
 } from "~/shared/code-editor-base";
@@ -220,8 +221,10 @@ export const AddStyleInput = forwardRef<
   const [multiline, setMultiline] = useState(false);
   const [code, setCode] = useState("");
   const editorRef = useRef<EditorApi>();
+  const inputRef = useRef<HTMLInputElement>(null);
   const selectionRef = useRef(0);
   const closingRef = useRef(false);
+  const outsideCloseRef = useRef(false);
   const switchingRef = useRef(false);
   const blurringRef = useRef(false);
   const [invalidCode, setInvalidCode] = useState(false);
@@ -466,10 +469,13 @@ export const AddStyleInput = forwardRef<
 
   return (
     <>
-      <EditorDialog
+      <EditorPopover
         title="Add styles"
-        defaultMaximized
+        anchorRef={inputRef}
         open={multiline}
+        onInteractOutside={(event) => {
+          outsideCloseRef.current = !event.defaultPrevented;
+        }}
         onEscapeKeyDown={(event) => {
           event.preventDefault();
           closingRef.current = true;
@@ -478,7 +484,9 @@ export const AddStyleInput = forwardRef<
         }}
         onOpenChange={(open) => {
           if (!open) {
-            completeMultiline(code, true);
+            const restoreFocus = !outsideCloseRef.current;
+            outsideCloseRef.current = false;
+            completeMultiline(code, restoreFocus);
           }
         }}
         content={
@@ -497,10 +505,7 @@ export const AddStyleInput = forwardRef<
                 setItem({ property: value, label: value, key: value });
                 setMultiline(false);
                 requestAnimationFrame(() => {
-                  const input =
-                    forwardedRef && typeof forwardedRef !== "function"
-                      ? forwardedRef.current
-                      : undefined;
+                  const input = inputRef.current;
                   input?.focus();
                   input?.setSelectionRange(
                     selectionRef.current,
@@ -535,7 +540,7 @@ export const AddStyleInput = forwardRef<
                 onFocus();
               }}
               onBlur={handleBlur}
-              inputRef={forwardedRef}
+              inputRef={mergeRefs(inputRef, forwardedRef)}
               onKeyDown={handleInputKeyDown}
               onPaste={handlePaste}
               placeholder="Add styles"

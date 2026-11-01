@@ -73,15 +73,13 @@ const DialogContext = createContext<{
 export const Dialog = ({
   resize,
   draggable,
-  defaultMaximized = false,
   onOpenChange,
   ...props
 }: ComponentProps<typeof Primitive.Dialog> & {
   resize?: "both" | "none";
   draggable?: boolean;
-  defaultMaximized?: boolean;
 }) => {
-  const [isMaximized, setIsMaximized] = useState(defaultMaximized);
+  const [isMaximized, setIsMaximized] = useState(false);
   return (
     <DialogContext.Provider
       value={{ isMaximized, setIsMaximized, resize, draggable }}

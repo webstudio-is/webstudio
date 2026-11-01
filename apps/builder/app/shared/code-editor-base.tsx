@@ -617,7 +617,7 @@ export const EditorDialog = ({
   title: ReactNode;
   content: ReactNode;
   children?: ReactNode;
-  defaultMaximized?: boolean;
+  anchorRef?: ComponentProps<typeof FloatingPanel>["anchorRef"];
   width?: number;
   height?: number;
   contentPadding?: boolean;
@@ -625,6 +625,7 @@ export const EditorDialog = ({
   resize?: ComponentProps<typeof FloatingPanel>["resize"];
   open?: boolean;
   onOpenChange?: (newOpen: boolean) => void;
+  onInteractOutside?: ComponentProps<typeof FloatingPanel>["onInteractOutside"];
   onEscapeKeyDown?: ComponentProps<typeof FloatingPanel>["onEscapeKeyDown"];
 }) => {
   return (
@@ -654,3 +655,12 @@ export const EditorDialog = ({
     </FloatingPanel>
   );
 };
+
+export const EditorPopover = (props: ComponentProps<typeof EditorDialog>) => (
+  <EditorDialog
+    {...props}
+    placement="bottom-within"
+    height={200}
+    width={Number.parseFloat(rawTheme.sizes.sidebarWidth)}
+  />
+);
