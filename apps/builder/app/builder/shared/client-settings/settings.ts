@@ -10,6 +10,7 @@ import {
 const userSettings = z.object({
   navigatorLayout: z.enum(["docked", "undocked"]).default("undocked"),
   stylePanelMode: z.enum(["default", "focus", "advanced"]).default("default"),
+  codeEditingMode: z.boolean().default(false),
   sidebarPanelWidths: z
     .partialRecord(z.enum(sidebarPanelNames), z.number())
     .default({}),

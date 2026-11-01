@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
@@ -47,7 +48,9 @@ import {
 } from "~/shared/nano-states";
 import { $styles } from "~/shared/sync/data-stores";
 import { useReadonly } from "../../shared/readonly";
-import { StyleBlockDialog } from "./style-block-dialog";
+import { InlineStyleBlockEditor, StyleBlockDialog } from "./style-block-dialog";
+import { $settings, setSetting } from "~/builder/shared/client-settings";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -86,6 +89,7 @@ export const Section = () => {
   const advancedStyleDeclarations = useStore($advancedStyleDeclarations);
   const computedStyleDeclarations = useStore($computedStyleDeclarations);
   const readonly = useReadonly();
+  const { codeEditingMode } = useStore($settings);
   const properties = advancedStyleDeclarations.map(
     (styleDecl) => styleDecl.property
   );
@@ -286,10 +290,26 @@ export const Section = () => {
     ]);
   };
 
+  const menuDeclarations = codeEditingMode
+    ? blockDeclarations.map(
+        ({ property, value }) =>
+          ({
+            property,
+            source: { name: "local" },
+            cascadedValue: value,
+            computedValue: value,
+            usedValue: value,
+          }) satisfies ComputedStyleDecl
+      )
+    : advancedStyleDeclarations;
   const actions = createDeclarationActions({
-    declarations: advancedStyleDeclarations,
-    visibleProperties: new Set(properties),
-    deletableProperties,
+    declarations: menuDeclarations,
+    visibleProperties: new Set(
+      menuDeclarations.map(({ property }) => property)
+    ),
+    deletableProperties: codeEditingMode
+      ? new Set(blockDeclarations.map(({ property }) => property))
+      : deletableProperties,
     readonly,
     onPaste: (cssText) => {
       if (!readonly) {
@@ -303,7 +323,11 @@ export const Section = () => {
     <>
       <AdvancedStyleSection
         label="Advanced"
-        properties={properties}
+        properties={
+          codeEditingMode
+            ? blockDeclarations.map(({ property }) => property)
+            : properties
+        }
         suffixPlaceholder={<SectionTitleButton prefix={<EllipsesIcon />} />}
         suffix={
           selectedInstanceKey !== undefined && (
@@ -329,6 +353,14 @@ export const Section = () => {
                 >
                   Open editor
                 </DropdownMenuItem>
+                <DropdownMenuCheckboxItem
+                  checked={codeEditingMode}
+                  onCheckedChange={(checked) =>
+                    setSetting("codeEditingMode", checked === true)
+                  }
+                >
+                  Code editing mode
+                </DropdownMenuCheckboxItem>
                 <DropdownMenuItem
                   disabled={!actions.canCopyAll}
                   onSelect={actions.copyAll}
@@ -350,29 +382,40 @@ export const Section = () => {
           )
         }
       >
-        <CssEditor
-          key={selectedInstanceKey}
-          readonly={readonly}
-          showInlineAddButton={selectedInstanceKey !== undefined}
-          declarations={advancedStyleDeclarations}
-          existingDeclarations={computedStyleDeclarations}
-          deletableProperties={deletableProperties}
-          onDeleteProperty={handleDeleteProperty}
-          onSetProperty={handleSetProperty}
-          onRenameProperty={handleRenameProperty}
-          onAddDeclarations={handleAddDeclarations}
-          onDeleteAllDeclarations={handleDeleteAllDeclarations}
-          recentProperties={recentProperties}
-          showAddStyleInput={
-            selectedInstanceKey !== undefined &&
-            addStyleInputFor === selectedInstanceKey
-          }
-          onToggleAddStyleInput={(show) => {
-            if (isCurrentSelection()) {
-              setAddStyleInputFor(show ? selectedInstanceKey : undefined);
+        {codeEditingMode ? (
+          selectedInstanceKey !== undefined && (
+            <InlineStyleBlockEditor
+              key={selectionKey}
+              declarations={blockDeclarations}
+              readonly={readonly}
+              onApply={handleApplyBlock}
+            />
+          )
+        ) : (
+          <CssEditor
+            key={selectedInstanceKey}
+            readonly={readonly}
+            showInlineAddButton={selectedInstanceKey !== undefined}
+            declarations={advancedStyleDeclarations}
+            existingDeclarations={computedStyleDeclarations}
+            deletableProperties={deletableProperties}
+            onDeleteProperty={handleDeleteProperty}
+            onSetProperty={handleSetProperty}
+            onRenameProperty={handleRenameProperty}
+            onAddDeclarations={handleAddDeclarations}
+            onDeleteAllDeclarations={handleDeleteAllDeclarations}
+            recentProperties={recentProperties}
+            showAddStyleInput={
+              selectedInstanceKey !== undefined &&
+              addStyleInputFor === selectedInstanceKey
             }
-          }}
-        />
+            onToggleAddStyleInput={(show) => {
+              if (isCurrentSelection()) {
+                setAddStyleInputFor(show ? selectedInstanceKey : undefined);
+              }
+            }}
+          />
+        )}
       </AdvancedStyleSection>
       {selectedInstanceKey !== undefined && (
         <StyleBlockDialog

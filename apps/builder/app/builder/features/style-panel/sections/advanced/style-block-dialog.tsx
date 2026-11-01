@@ -12,7 +12,11 @@ import {
 } from "@webstudio-is/css-engine";
 import { $cssVarsMap } from "../../shared/model";
 import { CssFragmentEditorContent } from "../../shared/css-fragment";
-import { EditorDialog, linterTooltipTheme } from "~/shared/code-editor-base";
+import {
+  EditorDialog,
+  getCodeEditorCssVars,
+  linterTooltipTheme,
+} from "~/shared/code-editor-base";
 import {
   parsePropertyName,
   parseStyleInput,
@@ -20,6 +24,14 @@ import {
 import { cannotRoundTripAsCssText } from "~/builder/shared/css-editor/css-editor";
 
 type Declaration = { property: CssProperty; value: StyleValue };
+type ApplyChanges = {
+  oldStyles: CssStyleMap;
+  initialParsedStyles: CssStyleMap;
+  protectedProperties: ReadonlySet<CssProperty>;
+  newStyles: CssStyleMap;
+  mentionedProperties: ReadonlySet<CssProperty>;
+  canDelete: boolean;
+};
 
 const parseBlock = (source: string) => {
   const diagnostics: Diagnostic[] = [];
@@ -141,25 +153,20 @@ const parseBlock = (source: string) => {
   };
 };
 
-export const StyleBlockDialog = ({
+const StyleBlockEditor = ({
   declarations,
   readonly,
   onApply,
   open,
   onOpenChange,
+  inline = false,
 }: {
   declarations: Declaration[];
   readonly: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onApply: (changes: {
-    oldStyles: CssStyleMap;
-    initialParsedStyles: CssStyleMap;
-    protectedProperties: ReadonlySet<CssProperty>;
-    newStyles: CssStyleMap;
-    mentionedProperties: ReadonlySet<CssProperty>;
-    canDelete: boolean;
-  }) => void;
+  onApply: (changes: ApplyChanges) => void;
+  inline?: boolean;
 }) => {
   const [code, setCode] = useState("");
   const declarationsRef = useRef(declarations);
@@ -169,6 +176,7 @@ export const StyleBlockDialog = ({
   const protectedPropertiesRef = useRef<ReadonlySet<CssProperty>>(new Set());
   const initialCodeRef = useRef("");
   const codeRef = useRef("");
+  const savedCodeRef = useRef("");
   const extensions = useMemo(
     () => [
       linter(
@@ -212,6 +220,7 @@ export const StyleBlockDialog = ({
         ])
       );
       const value = generateStyleMap(oldStyles);
+      savedCodeRef.current = value;
       initialStylesRef.current = oldStyles;
       protectedPropertiesRef.current = new Set(
         Array.from(oldStyles)
@@ -225,8 +234,43 @@ export const StyleBlockDialog = ({
     }
   }, [open]);
 
+  useEffect(() => {
+    if (inline) {
+      const oldStyles: CssStyleMap = new Map(
+        declarations.map(({ property, value }) => [
+          hyphenateProperty(property),
+          value,
+        ])
+      );
+      initialStylesRef.current = oldStyles;
+      const savedCode = generateStyleMap(oldStyles);
+      if (
+        savedCode !== savedCodeRef.current &&
+        codeRef.current === initialCodeRef.current
+      ) {
+        protectedPropertiesRef.current = new Set(
+          Array.from(oldStyles)
+            .filter(([, value]) => cannotRoundTripAsCssText(value))
+            .map(([property]) => property)
+        );
+        initialParsedStylesRef.current = parseBlock(savedCode).styleMap;
+        initialCodeRef.current = savedCode;
+        codeRef.current = savedCode;
+        setCode(savedCode);
+      }
+      savedCodeRef.current = savedCode;
+    }
+  }, [inline, declarations]);
+
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen && open && codeRef.current !== initialCodeRef.current) {
+      applyChanges();
+    }
+    onOpenChange(nextOpen);
+  };
+
+  const applyChanges = () => {
+    if (codeRef.current !== initialCodeRef.current) {
       const { styleMap, mentionedProperties, canDelete } = parseBlock(
         codeRef.current
       );
@@ -238,42 +282,70 @@ export const StyleBlockDialog = ({
         mentionedProperties,
         canDelete,
       });
+      if (inline) {
+        initialCodeRef.current = codeRef.current;
+        initialParsedStylesRef.current = styleMap;
+      }
     }
-    onOpenChange(nextOpen);
   };
 
+  const content = (
+    <Box
+      css={
+        inline
+          ? {
+              padding: theme.spacing[2],
+              ...getCodeEditorCssVars({ minHeight: "8lh", maxHeight: "50vh" }),
+            }
+          : {
+              height: "100%",
+              padding: theme.spacing[2],
+              "& > div, & .cm-editor, & .cm-scroller": { height: "100%" },
+            }
+      }
+    >
+      <CssFragmentEditorContent
+        ariaLabel="Style block editor"
+        autoFocus={!inline}
+        readOnly={readonly}
+        extensions={extensions}
+        value={code}
+        onChange={(value) => {
+          codeRef.current = value;
+          setCode(value);
+        }}
+        onChangeComplete={(_value, event) => {
+          if (inline) {
+            applyChanges();
+          } else if (event === undefined) {
+            handleOpenChange(false);
+          }
+        }}
+      />
+    </Box>
+  );
+
+  if (inline) {
+    return content;
+  }
   return (
     <EditorDialog
       title="Style block editor"
       modal
       open={open}
       onOpenChange={handleOpenChange}
-      content={
-        <Box
-          css={{
-            height: "100%",
-            padding: theme.spacing[2],
-            "& > div, & .cm-editor, & .cm-scroller": { height: "100%" },
-          }}
-        >
-          <CssFragmentEditorContent
-            ariaLabel="Style block editor"
-            autoFocus
-            readOnly={readonly}
-            extensions={extensions}
-            value={code}
-            onChange={(value) => {
-              codeRef.current = value;
-              setCode(value);
-            }}
-            onChangeComplete={(_value, event) => {
-              if (event === undefined) {
-                handleOpenChange(false);
-              }
-            }}
-          />
-        </Box>
-      }
+      content={content}
     />
   );
 };
+
+export const StyleBlockDialog = (
+  props: Omit<Parameters<typeof StyleBlockEditor>[0], "inline">
+) => <StyleBlockEditor {...props} />;
+
+export const InlineStyleBlockEditor = (
+  props: Omit<
+    Parameters<typeof StyleBlockEditor>[0],
+    "open" | "onOpenChange" | "inline"
+  >
+) => <StyleBlockEditor {...props} inline open onOpenChange={() => {}} />;
