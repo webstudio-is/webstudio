@@ -10,7 +10,7 @@ import type {
   InvalidValue,
   StyleValue,
 } from "@webstudio-is/css-engine";
-import { EditorPopover } from "~/shared/code-editor-base";
+import { EditorDialog } from "~/shared/code-editor-base";
 import { CssFragmentEditorContent } from "../css-fragment";
 import type {
   CssValueInputValue,
@@ -90,7 +90,7 @@ export const ValueEditorDialog = ({
   };
 
   return (
-    <EditorPopover
+    <EditorDialog
       title="CSS value"
       content={
         <CssFragmentEditorContent
@@ -115,6 +115,6 @@ export const ValueEditorDialog = ({
       >
         <MaximizeIcon size={12} />
       </NestedInputButton>
-    </EditorPopover>
+    </EditorDialog>
   );
 };
