@@ -61,8 +61,10 @@ const AdvancedStyleSection = (props: {
   children: ReactNode;
   suffix?: ReactNode;
   suffixPlaceholder?: ReactNode;
+  sticky?: boolean;
 }) => {
-  const { label, children, properties, suffix, suffixPlaceholder } = props;
+  const { label, children, properties, suffix, suffixPlaceholder, sticky } =
+    props;
   const [isOpen, setIsOpen] = useOpenState(label);
   const styles = useComputedStyles(properties);
   return (
@@ -70,6 +72,7 @@ const AdvancedStyleSection = (props: {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       fullWidth
+      sticky={sticky}
       trigger={
         <SectionTitle
           dots={getDots(styles)}
@@ -89,7 +92,7 @@ export const Section = () => {
   const advancedStyleDeclarations = useStore($advancedStyleDeclarations);
   const computedStyleDeclarations = useStore($computedStyleDeclarations);
   const readonly = useReadonly();
-  const { codeEditingMode } = useStore($settings);
+  const { codeEditingMode, stickyAdvancedSection } = useStore($settings);
   const properties = advancedStyleDeclarations.map(
     (styleDecl) => styleDecl.property
   );
@@ -323,6 +326,7 @@ export const Section = () => {
     <>
       <AdvancedStyleSection
         label="Advanced"
+        sticky={stickyAdvancedSection}
         properties={
           codeEditingMode
             ? blockDeclarations.map(({ property }) => property)
@@ -360,6 +364,14 @@ export const Section = () => {
                   }
                 >
                   Code editing mode
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={stickyAdvancedSection}
+                  onCheckedChange={(checked) =>
+                    setSetting("stickyAdvancedSection", checked === true)
+                  }
+                >
+                  Sticky
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuItem
                   disabled={!actions.canCopyAll}
