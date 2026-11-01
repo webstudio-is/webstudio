@@ -256,7 +256,9 @@ const AdvancedPropertyLabel = ({
             paddingLeft: theme.spacing[2],
             color: sourceColor?.foreground,
           },
-          "&:hover": { backgroundColor: sourceColor?.background },
+          "&:hover:not([data-input-field-input])": {
+            backgroundColor: sourceColor?.background,
+          },
         }}
       />
     </Tooltip>
