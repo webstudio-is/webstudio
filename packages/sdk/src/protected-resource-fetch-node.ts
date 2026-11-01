@@ -4,6 +4,7 @@ import ipaddr from "ipaddr.js";
 import { Agent, fetch as undiciFetch } from "undici";
 import {
   createProtectedResourceFetch,
+  protectedResourceRequestHeader,
   type ProtectedResourceFetch,
 } from "./protected-resource-fetch";
 
@@ -60,12 +61,21 @@ const resolvePublicAddress = async (hostname: string) => {
  */
 export const createNodeProtectedResourceFetch = ({
   deniedHostnames = [],
+  matchSubdomains = true,
+  projectId,
 }: {
   deniedHostnames?: readonly string[];
+  matchSubdomains?: boolean;
+  projectId?: string;
 } = {}): ProtectedResourceFetch =>
   createProtectedResourceFetch({
     deniedHostnames,
+    matchSubdomains,
     transport: async ({ url, method, headers, body, signal }) => {
+      if (projectId !== undefined) {
+        // The generated route checks this ID before loading Resources again.
+        headers.set(protectedResourceRequestHeader, projectId);
+      }
       const resolved = await resolvePublicAddress(url.hostname);
       const agent = new Agent({
         connect: {

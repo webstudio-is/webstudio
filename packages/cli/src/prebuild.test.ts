@@ -1131,6 +1131,68 @@ describe("prebuild", () => {
     }
   );
 
+  test("allows a sibling API host but blocks the site's hosts in a Node export", async () => {
+    const siteData = createSiteData();
+    siteData.projectDomain = "project.wstd.io";
+    await writeFile(
+      ".webstudio/data.json",
+      JSON.stringify({
+        ...siteData,
+        build: {
+          ...siteData.build,
+          deployment: {
+            destination: undefined,
+            domains: ["webstudio-demo-john.stauferth.de"],
+          },
+        },
+      })
+    );
+    await prebuild({ assets: false, template: ["react-router"] });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    const bundle = await build({
+      entryPoints: [
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+      ],
+      bundle: true,
+      format: "esm",
+      platform: "node",
+      conditions: ["webstudio"],
+      banner: {
+        js: `import { createRequire } from "node:module"; const require = createRequire(${JSON.stringify(pathToFileURL(join(originalCwd, "package.json")).href)});`,
+      },
+      write: false,
+    });
+    const adapter = (await import(
+      /* @vite-ignore */
+      `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`
+    )) as {
+      createManagedFormResourceFetch: (input: {
+        request: Request;
+        context: unknown;
+        projectDomain: string;
+      }) => typeof fetch & { validateDestination: (url: URL) => void };
+    };
+    const resourceFetch = adapter.createManagedFormResourceFetch({
+      request: new Request("https://webstudio-demo-john.stauferth.de"),
+      context: {},
+      projectDomain: siteData.projectDomain,
+    });
+    expect(() =>
+      resourceFetch.validateDestination(new URL("https://cms.stauferth.de"))
+    ).not.toThrow();
+    for (const hostname of [
+      "webstudio-demo-john.stauferth.de",
+      "project.wstd.io",
+    ]) {
+      expect(() =>
+        resourceFetch.validateDestination(new URL(`https://${hostname}`))
+      ).toThrow();
+    }
+  });
+
   test("publishes configured file-input attributes", async () => {
     await writeSiteData(
       createSiteData({

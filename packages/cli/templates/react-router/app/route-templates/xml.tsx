@@ -1,3 +1,4 @@
+import { isProtectedResourceReentry } from "@webstudio-is/sdk/protected-resource-fetch";
 import { renderToString } from "react-dom/server";
 import { type LoaderFunctionArgs, redirect } from "react-router";
 import { isLocalResource, loadResources, getSystemSearch } from "@webstudio-is/sdk/runtime";
@@ -6,7 +7,7 @@ import {
   ReactSdkContext,
   xmlNodeTagSuffix,
 } from "@webstudio-is/react-sdk/runtime";
-import { Page, breakpoints, projectDomain } from "__CLIENT__";
+import { Page, breakpoints, projectId, projectDomain } from "__CLIENT__";
 import { getPageMeta, getRemixParams, getResources } from "__SERVER__";
 import { assetBaseUrl, imageLoader } from "__CONSTANTS__";
 import { sitemap } from "__SITEMAP__";
@@ -47,6 +48,10 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
+  if (isProtectedResourceReentry(arg.request, projectId)) {
+    throw new Response(null, { status: 508 });
+  }
+
   const authRoute = authenticateProjectRequest(
     arg.request,
     authRoutes,

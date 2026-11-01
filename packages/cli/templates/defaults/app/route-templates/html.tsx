@@ -1,3 +1,4 @@
+import { isProtectedResourceReentry } from "@webstudio-is/sdk/protected-resource-fetch";
 import { type ComponentProps, memo, useMemo } from "react";
 import {
   type ServerRuntimeMetaFunction as MetaFunction,
@@ -117,6 +118,11 @@ const customFetch: typeof fetch = (input, init) => {
 };
 
 export const loader = async (arg: LoaderFunctionArgs) => {
+  // Node exports have no Worker entrypoint guard; stop requests through aliases here.
+  if (isProtectedResourceReentry(arg.request, projectId)) {
+    throw new Response(null, { status: 508 });
+  }
+
   const authRoute = authenticateProductionRequest(arg.request);
 
   const url = new URL(arg.request.url);
@@ -278,6 +284,10 @@ export const action = async ({
 }: ActionFunctionArgs): Promise<
   { success: true } | { success: false; errors: string[] } | ManagedFormResponse
 > => {
+  if (isProtectedResourceReentry(request, projectId)) {
+    throw new Response(null, { status: 508 });
+  }
+
   authenticateProductionRequest(request);
 
   let isManagedFormRequest = false;
