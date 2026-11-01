@@ -18,6 +18,73 @@ import { readClipboardText } from "~/shared/clipboard";
 
 export const copyAttribute = "data-declaration";
 
+export const createDeclarationActions = ({
+  declarations,
+  visibleProperties,
+  deletableProperties,
+  readonly,
+  onPaste,
+  onDeleteAllDeclarations,
+  canDeleteAllDeclarations,
+}: {
+  declarations: Array<ComputedStyleDecl>;
+  visibleProperties: ReadonlySet<CssProperty>;
+  deletableProperties?: ReadonlySet<CssProperty>;
+  readonly: boolean;
+  onPaste: (cssText: string) => void;
+  onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
+  canDeleteAllDeclarations?: boolean;
+}) => {
+  const isDeletable = (styleDecl: ComputedStyleDecl) =>
+    deletableProperties?.has(styleDecl.property) ??
+    (styleDecl.source.name === "local" ||
+      styleDecl.source.name === "overwritten");
+  const canCopyAll = declarations.some(
+    ({ property, cascadedValue }) =>
+      visibleProperties.has(property) && toValue(cascadedValue) !== ""
+  );
+  const canDeleteAll =
+    !readonly &&
+    (canDeleteAllDeclarations ??
+      declarations.some(
+        (styleDecl) =>
+          visibleProperties.has(styleDecl.property) && isDeletable(styleDecl)
+      ));
+
+  const getAllDeclarations = (deletableOnly = false) => {
+    const styleMap: CssStyleMap = new Map();
+    for (const styleDecl of declarations) {
+      if (
+        !visibleProperties.has(styleDecl.property) ||
+        (deletableOnly
+          ? !isDeletable(styleDecl)
+          : toValue(styleDecl.cascadedValue) === "")
+      ) {
+        continue;
+      }
+      styleMap.set(styleDecl.property, styleDecl.cascadedValue);
+    }
+    return styleMap;
+  };
+
+  return {
+    isDeletable,
+    canCopyAll,
+    canDeleteAll,
+    copyAll: () => {
+      const css = generateStyleMap(mergeStyles(getAllDeclarations()));
+      navigator.clipboard.writeText(css);
+    },
+    paste: async () => {
+      const text = await readClipboardText();
+      if (text !== undefined) {
+        onPaste(text);
+      }
+    },
+    deleteAll: () => onDeleteAllDeclarations(getAllDeclarations(true)),
+  };
+};
+
 export const CssEditorContextMenu = ({
   children,
   foundProperties,
@@ -44,60 +111,19 @@ export const CssEditorContextMenu = ({
     ({ property }) => property === clickedProperty
   );
   const visibleProperties = new Set(foundProperties);
-  const isDeletable = (styleDecl: ComputedStyleDecl) =>
-    deletableProperties?.has(styleDecl.property) ??
-    (styleDecl.source.name === "local" ||
-      styleDecl.source.name === "overwritten");
+  const actions = createDeclarationActions({
+    declarations,
+    visibleProperties,
+    deletableProperties,
+    readonly,
+    onPaste,
+    onDeleteAllDeclarations,
+    canDeleteAllDeclarations,
+  });
   const canDelete =
     !readonly &&
     selectedDeclaration !== undefined &&
-    isDeletable(selectedDeclaration);
-  const canCopyAll = declarations.some(
-    ({ property, cascadedValue }) =>
-      visibleProperties.has(property) && toValue(cascadedValue) !== ""
-  );
-  const canDeleteAll =
-    !readonly &&
-    (canDeleteAllDeclarations ??
-      declarations.some(
-        (styleDecl) =>
-          visibleProperties.has(styleDecl.property) && isDeletable(styleDecl)
-      ));
-
-  const handlePaste = async () => {
-    const text = await readClipboardText();
-    if (text !== undefined) {
-      onPaste(text);
-    }
-  };
-
-  // Gets all currently visible declarations based on what's in the search or filters.
-  const getAllDeclarations = (deletableOnly = false) => {
-    // We want to only copy properties that are currently in front of the user.
-    // That includes search or any future filters.
-    const currentStyleMap: CssStyleMap = new Map();
-
-    for (const styleDecl of declarations) {
-      if (!visibleProperties.has(styleDecl.property)) {
-        continue;
-      }
-      if (
-        deletableOnly
-          ? !isDeletable(styleDecl)
-          : toValue(styleDecl.cascadedValue) === ""
-      ) {
-        continue;
-      }
-      currentStyleMap.set(styleDecl.property, styleDecl.cascadedValue);
-    }
-    return currentStyleMap;
-  };
-
-  const handleCopyAll = () => {
-    const styleMap = getAllDeclarations();
-    const css = generateStyleMap(mergeStyles(styleMap));
-    navigator.clipboard.writeText(css);
-  };
+    actions.isDeletable(selectedDeclaration);
 
   const handleCopy = () => {
     if (selectedDeclaration === undefined) {
@@ -117,11 +143,6 @@ export const CssEditorContextMenu = ({
       return;
     }
     onDeleteProperty(selectedDeclaration.property);
-  };
-
-  const handleDeleteAllDeclarations = () => {
-    const styleMap = getAllDeclarations(true);
-    onDeleteAllDeclarations(styleMap);
   };
 
   const updateClickedProperty = (target: EventTarget) => {
@@ -150,10 +171,13 @@ export const CssEditorContextMenu = ({
         >
           Copy declaration
         </ContextMenuItem>
-        <ContextMenuItem disabled={!canCopyAll} onSelect={handleCopyAll}>
+        <ContextMenuItem
+          disabled={!actions.canCopyAll}
+          onSelect={actions.copyAll}
+        >
           Copy all declarations
         </ContextMenuItem>
-        <ContextMenuItem disabled={readonly} onSelect={handlePaste}>
+        <ContextMenuItem disabled={readonly} onSelect={actions.paste}>
           Paste declarations
         </ContextMenuItem>
         <ContextMenuItem
@@ -165,8 +189,8 @@ export const CssEditorContextMenu = ({
         </ContextMenuItem>
         <ContextMenuItem
           destructive
-          disabled={!canDeleteAll}
-          onSelect={handleDeleteAllDeclarations}
+          disabled={!actions.canDeleteAll}
+          onSelect={actions.deleteAll}
         >
           Delete all declarations
         </ContextMenuItem>

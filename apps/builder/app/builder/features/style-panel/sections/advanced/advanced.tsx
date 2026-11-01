@@ -1,6 +1,16 @@
 import { useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import { SectionTitle, SectionTitleLabel } from "@webstudio-is/design-system";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  SectionTitle,
+  SectionTitleButton,
+  SectionTitleLabel,
+  theme,
+} from "@webstudio-is/design-system";
+import { EllipsesIcon } from "@webstudio-is/icons";
 import {
   type CssProperty,
   type CssStyleMap,
@@ -27,6 +37,8 @@ import {
 } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
 import { CssEditor } from "../../../../shared/css-editor";
+import { insertStyleDeclarations } from "../../../../shared/css-editor/css-editor";
+import { createDeclarationActions } from "../../../../shared/css-editor/css-editor-context-menu";
 import { $advancedStyleDeclarations } from "./stores";
 import {
   $selectedBreakpoint,
@@ -45,8 +57,9 @@ const AdvancedStyleSection = (props: {
   properties: Array<CssProperty>;
   children: ReactNode;
   suffix?: ReactNode;
+  suffixPlaceholder?: ReactNode;
 }) => {
-  const { label, children, properties, suffix } = props;
+  const { label, children, properties, suffix, suffixPlaceholder } = props;
   const [isOpen, setIsOpen] = useOpenState(label);
   const styles = useComputedStyles(properties);
   return (
@@ -55,7 +68,11 @@ const AdvancedStyleSection = (props: {
       onOpenChange={setIsOpen}
       fullWidth
       trigger={
-        <SectionTitle dots={getDots(styles)} suffix={suffix}>
+        <SectionTitle
+          dots={getDots(styles)}
+          suffix={suffix}
+          suffixPlaceholder={suffixPlaceholder}
+        >
           <SectionTitleLabel>{label}</SectionTitleLabel>
         </SectionTitle>
       }
@@ -99,6 +116,8 @@ export const Section = () => {
     Map<string, Array<CssProperty>>
   >(new Map());
   const [addStyleInputFor, setAddStyleInputFor] = useState<string>();
+  const [editorOpenFor, setEditorOpenFor] = useState<string>();
+  const selectionKey = `${selectedInstanceKey}:${selectedBreakpoint?.id}:${styleSourceSelector?.styleSourceId}:${styleSourceSelector?.state}`;
 
   const blockDeclarations =
     selectedBreakpoint === undefined || styleSourceSelector === undefined
@@ -267,44 +286,106 @@ export const Section = () => {
     ]);
   };
 
-  return (
-    <AdvancedStyleSection
-      label="Advanced"
-      properties={properties}
-      suffix={
-        selectedInstanceKey !== undefined && (
-          <StyleBlockDialog
-            key={`${selectedInstanceKey}:${selectedBreakpoint?.id}:${styleSourceSelector?.styleSourceId}:${styleSourceSelector?.state}`}
-            declarations={blockDeclarations}
-            readonly={readonly}
-            onApply={handleApplyBlock}
-          />
-        )
+  const actions = createDeclarationActions({
+    declarations: advancedStyleDeclarations,
+    visibleProperties: new Set(properties),
+    deletableProperties,
+    readonly,
+    onPaste: (cssText) => {
+      if (!readonly) {
+        insertStyleDeclarations(cssText, handleAddDeclarations);
       }
-    >
-      <CssEditor
-        key={selectedInstanceKey}
-        readonly={readonly}
-        showInlineAddButton={selectedInstanceKey !== undefined}
-        declarations={advancedStyleDeclarations}
-        existingDeclarations={computedStyleDeclarations}
-        deletableProperties={deletableProperties}
-        onDeleteProperty={handleDeleteProperty}
-        onSetProperty={handleSetProperty}
-        onRenameProperty={handleRenameProperty}
-        onAddDeclarations={handleAddDeclarations}
-        onDeleteAllDeclarations={handleDeleteAllDeclarations}
-        recentProperties={recentProperties}
-        showAddStyleInput={
-          selectedInstanceKey !== undefined &&
-          addStyleInputFor === selectedInstanceKey
+    },
+    onDeleteAllDeclarations: handleDeleteAllDeclarations,
+  });
+
+  return (
+    <>
+      <AdvancedStyleSection
+        label="Advanced"
+        properties={properties}
+        suffixPlaceholder={<SectionTitleButton prefix={<EllipsesIcon />} />}
+        suffix={
+          selectedInstanceKey !== undefined && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SectionTitleButton
+                  aria-label="Advanced"
+                  prefix={<EllipsesIcon />}
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                collisionPadding={16}
+                css={{ width: theme.spacing[25] }}
+                onCloseAutoFocus={(event) => {
+                  if (editorOpenFor === selectionKey) {
+                    event.preventDefault();
+                  }
+                }}
+              >
+                <DropdownMenuItem
+                  disabled={readonly}
+                  onSelect={() => setEditorOpenFor(selectionKey)}
+                >
+                  Open editor
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!actions.canCopyAll}
+                  onSelect={actions.copyAll}
+                >
+                  Copy declarations
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={readonly} onSelect={actions.paste}>
+                  Paste declarations
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  destructive
+                  disabled={!actions.canDeleteAll}
+                  onSelect={actions.deleteAll}
+                >
+                  Delete declarations
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
         }
-        onToggleAddStyleInput={(show) => {
-          if (isCurrentSelection()) {
-            setAddStyleInputFor(show ? selectedInstanceKey : undefined);
+      >
+        <CssEditor
+          key={selectedInstanceKey}
+          readonly={readonly}
+          showInlineAddButton={selectedInstanceKey !== undefined}
+          declarations={advancedStyleDeclarations}
+          existingDeclarations={computedStyleDeclarations}
+          deletableProperties={deletableProperties}
+          onDeleteProperty={handleDeleteProperty}
+          onSetProperty={handleSetProperty}
+          onRenameProperty={handleRenameProperty}
+          onAddDeclarations={handleAddDeclarations}
+          onDeleteAllDeclarations={handleDeleteAllDeclarations}
+          recentProperties={recentProperties}
+          showAddStyleInput={
+            selectedInstanceKey !== undefined &&
+            addStyleInputFor === selectedInstanceKey
           }
-        }}
-      />
-    </AdvancedStyleSection>
+          onToggleAddStyleInput={(show) => {
+            if (isCurrentSelection()) {
+              setAddStyleInputFor(show ? selectedInstanceKey : undefined);
+            }
+          }}
+        />
+      </AdvancedStyleSection>
+      {selectedInstanceKey !== undefined && (
+        <StyleBlockDialog
+          key={selectionKey}
+          declarations={blockDeclarations}
+          readonly={readonly}
+          onApply={handleApplyBlock}
+          open={editorOpenFor === selectionKey}
+          onOpenChange={(open) =>
+            setEditorOpenFor(open ? selectionKey : undefined)
+          }
+        />
+      )}
+    </>
   );
 };
