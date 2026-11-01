@@ -46,15 +46,21 @@ const setCssValue = async ({
 
 const addCssDeclaration = async ({
   page,
-  css,
+  property,
+  value,
 }: {
   page: Page;
-  css: string;
+  property: string;
+  value: string;
 }) => {
-  const input = page.getByLabel("Add styles", { exact: true }).first();
-  await input.fill(css);
+  await page.getByRole("button", { name: "Add styles" }).click();
+  const propertyInput = page.locator('input[aria-label^="Property name:"]');
+  await propertyInput.fill(property);
+  await propertyInput.press("Enter");
+  const valueInput = page.locator("input:focus");
+  await valueInput.fill(value);
   const save = waitForChangeToBeSaved({ page });
-  await input.press("Enter");
+  await valueInput.press("Enter");
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 };
@@ -144,7 +150,7 @@ test("Builder grid generator fills selected grid and persists after reload", asy
   await page.getByRole("tab", { name: "Style" }).click();
 
   await measure("style panel runtime enable body grid", async () => {
-    await addCssDeclaration({ page, css: "display: grid" });
+    await addCssDeclaration({ page, property: "display", value: "grid" });
   });
   await page.getByRole("button", { name: /Grid layout:/ }).waitFor();
 
