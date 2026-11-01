@@ -3,7 +3,6 @@ import {
   cssVar,
   declareCssVar,
   NestedInputButton,
-  rawTheme,
 } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import type {
@@ -11,7 +10,7 @@ import type {
   InvalidValue,
   StyleValue,
 } from "@webstudio-is/css-engine";
-import { EditorDialog } from "~/shared/code-editor-base";
+import { EditorPopover } from "~/shared/code-editor-base";
 import { CssFragmentEditorContent } from "../css-fragment";
 import type {
   CssValueInputValue,
@@ -91,11 +90,8 @@ export const ValueEditorDialog = ({
   };
 
   return (
-    <EditorDialog
+    <EditorPopover
       title="CSS value"
-      placement="bottom-within"
-      height={200}
-      width={Number.parseFloat(rawTheme.sizes.sidebarWidth)}
       content={
         <CssFragmentEditorContent
           autoFocus
@@ -119,6 +115,6 @@ export const ValueEditorDialog = ({
       >
         <MaximizeIcon size={12} />
       </NestedInputButton>
-    </EditorDialog>
+    </EditorPopover>
   );
 };

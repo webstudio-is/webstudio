@@ -62,7 +62,7 @@ import type {
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { PropertyStatusIndicator } from "../../features/style-panel/property-status";
 import {
-  EditorDialog,
+  EditorPopover,
   isEditorDialogInternalBlur,
   type EditorApi,
 } from "~/shared/code-editor-base";
@@ -329,6 +329,7 @@ const AdvancedPropertyValue = ({
   const editorRef = useRef<EditorApi>();
   const selectionRef = useRef(0);
   const closingRef = useRef(false);
+  const outsideCloseRef = useRef(false);
   const [multilineValue, setMultilineValue] = useState<string>();
   const [invalidMultilineValue, setInvalidMultilineValue] = useState(false);
   const isMultiline = multilineValue !== undefined;
@@ -480,10 +481,13 @@ const AdvancedPropertyValue = ({
         }}
         onReset={onReset}
       />
-      <EditorDialog
+      <EditorPopover
         title="CSS value"
-        defaultMaximized
+        anchorRef={inputRef}
         open={isMultiline}
+        onInteractOutside={(event) => {
+          outsideCloseRef.current = !event.defaultPrevented;
+        }}
         onEscapeKeyDown={(event) => {
           event.preventDefault();
           closingRef.current = true;
@@ -492,7 +496,9 @@ const AdvancedPropertyValue = ({
         }}
         onOpenChange={(open) => {
           if (!open && multilineValue !== undefined) {
-            completeMultilineValue(multilineValue, true);
+            const restoreFocus = !outsideCloseRef.current;
+            outsideCloseRef.current = false;
+            completeMultilineValue(multilineValue, restoreFocus);
           }
         }}
         content={
@@ -718,6 +724,7 @@ export const CssEditor = ({
   >();
   const draftSelectionRef = useRef(0);
   const closingDraftRef = useRef(false);
+  const outsideDraftCloseRef = useRef(false);
   const switchingDraftRef = useRef(false);
   const wasDraftPropertySetRef = useRef(false);
   const lastRecentValueInputRef = useRef<HTMLInputElement>(null);
@@ -1316,10 +1323,13 @@ export const CssEditor = ({
           )}
         </Flex>
       </CssEditorContextMenu>
-      <EditorDialog
+      <EditorPopover
         title="CSS value"
-        defaultMaximized
+        anchorRef={draftValueInputRef}
         open={draftMultiline}
+        onInteractOutside={(event) => {
+          outsideDraftCloseRef.current = !event.defaultPrevented;
+        }}
         onEscapeKeyDown={(event) => {
           event.preventDefault();
           closingDraftRef.current = true;
@@ -1327,7 +1337,9 @@ export const CssEditor = ({
         }}
         onOpenChange={(open) => {
           if (!open) {
-            completeMultilineDraft(draftValue, true);
+            const restoreFocus = !outsideDraftCloseRef.current;
+            outsideDraftCloseRef.current = false;
+            completeMultilineDraft(draftValue, restoreFocus);
           }
         }}
         content={
