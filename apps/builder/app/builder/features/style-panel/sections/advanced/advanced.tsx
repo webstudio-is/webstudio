@@ -20,6 +20,7 @@ import {
   deleteProperty,
   setProperty,
   type DeleteProperty,
+  type SetProperty,
 } from "../../shared/use-style-data";
 import {
   $computedStyleDeclarations,
@@ -85,14 +86,18 @@ export const Section = () => {
   const [recentPropertiesMap, setRecentPropertiesMap] = useState<
     Map<string, Array<CssProperty>>
   >(new Map());
-  const [showAddStyleInput, setShowAddStyleInput] = useState<boolean>(false);
+  const [addStyleInputFor, setAddStyleInputFor] = useState<string>();
+
+  const isCurrentSelection = () =>
+    selectedInstanceKey !== undefined &&
+    $selectedInstanceKey.get() === selectedInstanceKey;
 
   const recentProperties = selectedInstanceKey
     ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
     : [];
 
   const updateRecentProperties = (properties: Array<CssProperty>) => {
-    if (selectedInstanceKey === undefined) {
+    if (selectedInstanceKey === undefined || !isCurrentSelection()) {
       return;
     }
     const newRecentPropertiesMap = new Map(recentPropertiesMap);
@@ -104,6 +109,9 @@ export const Section = () => {
   };
 
   const handleAddDeclarations = (styleMap: CssStyleMap) => {
+    if (!isCurrentSelection()) {
+      return;
+    }
     const batch = createBatchUpdate();
     for (const [property, value] of styleMap) {
       batch.setProperty(property)(value);
@@ -115,6 +123,9 @@ export const Section = () => {
   };
 
   const handleDeleteProperty: DeleteProperty = (property, options = {}) => {
+    if (!isCurrentSelection()) {
+      return;
+    }
     deleteProperty(property, options);
 
     if (options.isEphemeral === true) {
@@ -130,6 +141,9 @@ export const Section = () => {
     newProperty: CssProperty,
     value: StyleValue
   ) => {
+    if (!isCurrentSelection()) {
+      return;
+    }
     const batch = createBatchUpdate();
     batch.setProperty(newProperty)(value);
     batch.deleteProperty(oldProperty);
@@ -142,6 +156,9 @@ export const Section = () => {
   };
 
   const handleDeleteAllDeclarations = (styleMap: CssStyleMap) => {
+    if (!isCurrentSelection()) {
+      return;
+    }
     const batch = createBatchUpdate();
     for (const [property] of styleMap) {
       batch.deleteProperty(property);
@@ -154,27 +171,41 @@ export const Section = () => {
     );
   };
 
+  const handleSetProperty: SetProperty = (property) => (value, options) => {
+    if (isCurrentSelection()) {
+      setProperty(property)(value, options);
+    }
+  };
+
   return (
     <AdvancedStyleSection
       label="Advanced"
       readonly={readonly}
       properties={properties}
       onAdd={() => {
-        setShowAddStyleInput(true);
+        setAddStyleInputFor(selectedInstanceKey);
       }}
     >
       <CssEditor
+        key={selectedInstanceKey}
         readonly={readonly}
         declarations={advancedStyleDeclarations}
         existingDeclarations={computedStyleDeclarations}
         onDeleteProperty={handleDeleteProperty}
-        onSetProperty={setProperty}
+        onSetProperty={handleSetProperty}
         onRenameProperty={handleRenameProperty}
         onAddDeclarations={handleAddDeclarations}
         onDeleteAllDeclarations={handleDeleteAllDeclarations}
         recentProperties={recentProperties}
-        showAddStyleInput={showAddStyleInput}
-        onToggleAddStyleInput={setShowAddStyleInput}
+        showAddStyleInput={
+          selectedInstanceKey !== undefined &&
+          addStyleInputFor === selectedInstanceKey
+        }
+        onToggleAddStyleInput={(show) => {
+          if (isCurrentSelection()) {
+            setAddStyleInputFor(show ? selectedInstanceKey : undefined);
+          }
+        }}
       />
     </AdvancedStyleSection>
   );
