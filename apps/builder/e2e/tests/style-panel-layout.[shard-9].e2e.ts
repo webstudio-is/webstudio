@@ -3,6 +3,7 @@ import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { waitForCanvasTextStyle } from "../flows/canvas-style";
 import { openNavigatorPanel } from "../flows/navigator";
+import { addCssDeclaration } from "../flows/css-declaration";
 import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
@@ -40,29 +41,6 @@ const setCssValue = async ({
   await input.fill(value);
   const save = waitForChangeToBeSaved({ page });
   await input.press("Enter");
-  await save;
-  await waitForSyncStatus({ page, status: "idle" });
-};
-
-const addCssDeclaration = async ({
-  page,
-  property,
-  value,
-}: {
-  page: Page;
-  property: string;
-  value: string;
-}) => {
-  await page.getByRole("button", { name: "Add styles" }).click();
-  const propertyInput = page.locator(
-    'input[aria-label^="Property name:"]:focus'
-  );
-  await propertyInput.fill(property);
-  await propertyInput.press("Enter");
-  const valueInput = page.locator("input:focus");
-  await valueInput.fill(value);
-  const save = waitForChangeToBeSaved({ page });
-  await valueInput.press("Enter");
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 };
