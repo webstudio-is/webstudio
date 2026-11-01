@@ -426,11 +426,15 @@ export const Section = () => {
             recentProperties={recentProperties}
             showAddStyleInput={
               selectedInstanceKey !== undefined &&
-              addStyleInputFor === selectedInstanceKey
+              addStyleInputFor === selectionKey
             }
             onToggleAddStyleInput={(show) => {
-              if (isCurrentSelection()) {
-                setAddStyleInputFor(show ? selectedInstanceKey : undefined);
+              if (show && isCurrentSelection()) {
+                setAddStyleInputFor(selectionKey);
+              } else if (!show) {
+                setAddStyleInputFor((current) =>
+                  current === selectionKey ? undefined : current
+                );
               }
             }}
           />
