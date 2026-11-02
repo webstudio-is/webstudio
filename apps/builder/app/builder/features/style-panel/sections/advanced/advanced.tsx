@@ -1,6 +1,20 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import { SectionTitle, SectionTitleLabel } from "@webstudio-is/design-system";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuItemRightSlot,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  Kbd,
+  SectionTitle,
+  SectionTitleButton,
+  SectionTitleLabel,
+  theme,
+} from "@webstudio-is/design-system";
+import { EllipsesIcon } from "@webstudio-is/icons";
 import {
   type CssProperty,
   type CssStyleMap,
@@ -27,10 +41,13 @@ import {
 } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
 import { CssEditor } from "../../../../shared/css-editor";
+import { insertStyleDeclarations } from "../../../../shared/css-editor/css-editor";
+import { createDeclarationActions } from "../../../../shared/css-editor/css-editor-context-menu";
 import { $advancedStyleDeclarations } from "./stores";
 import {
   $styleBlockEditorOpenFor,
   getStyleBlockSelectionKey,
+  openStyleBlockEditor,
 } from "./style-block-editor-state";
 import {
   $selectedBreakpoint,
@@ -41,7 +58,8 @@ import { $styles } from "~/shared/sync/data-stores";
 import { useReadonly } from "../../shared/readonly";
 import { InlineStyleBlockEditor, StyleBlockDialog } from "./style-block-dialog";
 import { InheritedStylesPreview } from "./inherited-styles-preview";
-import { $settings } from "~/builder/shared/client-settings";
+import { $settings, setSetting } from "~/builder/shared/client-settings";
+import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 // Only here to keep the same section module interface
 export const properties = [];
@@ -50,9 +68,12 @@ const AdvancedStyleSection = (props: {
   label: string;
   properties: Array<CssProperty>;
   children: ReactNode;
+  suffix?: ReactNode;
+  suffixPlaceholder?: ReactNode;
   sticky?: boolean;
 }) => {
-  const { label, children, properties, sticky } = props;
+  const { label, children, properties, suffix, suffixPlaceholder, sticky } =
+    props;
   const [isOpen, setIsOpen] = useOpenState(label);
   const styles = useComputedStyles(properties);
   return (
@@ -62,7 +83,11 @@ const AdvancedStyleSection = (props: {
       fullWidth
       sticky={sticky}
       trigger={
-        <SectionTitle dots={getDots(styles)}>
+        <SectionTitle
+          dots={getDots(styles)}
+          suffix={suffix}
+          suffixPlaceholder={suffixPlaceholder}
+        >
           <SectionTitleLabel>{label}</SectionTitleLabel>
         </SectionTitle>
       }
@@ -283,6 +308,35 @@ export const Section = () => {
     ]);
   };
 
+  const menuDeclarations = codeEditingMode
+    ? blockDeclarations.map(
+        ({ property, value }) =>
+          ({
+            property,
+            source: { name: "local" },
+            cascadedValue: value,
+            computedValue: value,
+            usedValue: value,
+          }) satisfies ComputedStyleDecl
+      )
+    : advancedStyleDeclarations;
+  const actions = createDeclarationActions({
+    declarations: menuDeclarations,
+    visibleProperties: new Set(
+      menuDeclarations.map(({ property }) => property)
+    ),
+    deletableProperties: codeEditingMode
+      ? new Set(blockDeclarations.map(({ property }) => property))
+      : deletableProperties,
+    readonly,
+    onPaste: (cssText) => {
+      if (!readonly) {
+        insertStyleDeclarations(cssText, handleAddDeclarations);
+      }
+    },
+    onDeleteAllDeclarations: handleDeleteAllDeclarations,
+  });
+
   return (
     <>
       <AdvancedStyleSection
@@ -292,6 +346,78 @@ export const Section = () => {
           codeEditingMode
             ? blockDeclarations.map(({ property }) => property)
             : properties
+        }
+        suffixPlaceholder={<SectionTitleButton prefix={<EllipsesIcon />} />}
+        suffix={
+          selectedInstanceKey !== undefined && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SectionTitleButton
+                  aria-label="Advanced"
+                  prefix={<EllipsesIcon />}
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                collisionPadding={16}
+                css={{ width: theme.spacing[25] }}
+                onCloseAutoFocus={(event) => {
+                  if ($styleBlockEditorOpenFor.get() === selectionKey) {
+                    event.preventDefault();
+                  }
+                }}
+              >
+                <DropdownMenuItem
+                  withIndicator
+                  disabled={readonly}
+                  onSelect={openStyleBlockEditor}
+                >
+                  Open editor
+                  <DropdownMenuItemRightSlot>
+                    <Kbd value={["alt", "shift", "x"]} />
+                  </DropdownMenuItemRightSlot>
+                </DropdownMenuItem>
+                <DropdownMenuCheckboxItem
+                  checked={codeEditingMode}
+                  onCheckedChange={(checked) =>
+                    setSetting("codeEditingMode", checked === true)
+                  }
+                >
+                  Code view
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={stickyAdvancedSection}
+                  onCheckedChange={(checked) =>
+                    setSetting("stickyAdvancedSection", checked === true)
+                  }
+                >
+                  Pin section
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  withIndicator
+                  disabled={!actions.canCopyAll}
+                  onSelect={actions.copyAll}
+                >
+                  Copy declarations
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  withIndicator
+                  disabled={readonly}
+                  onSelect={actions.paste}
+                >
+                  Paste declarations
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  withIndicator
+                  destructive
+                  disabled={!actions.canDeleteAll}
+                  onSelect={actions.deleteAll}
+                >
+                  Delete declarations
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
         }
       >
         {codeEditingMode ? (
