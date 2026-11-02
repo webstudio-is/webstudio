@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { linter, type Diagnostic } from "@codemirror/lint";
+import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
+import { syntaxTree } from "@codemirror/language";
+import type { CompletionSource } from "@codemirror/autocomplete";
 import { generate, parse } from "css-tree";
 import { theme, Box } from "@webstudio-is/design-system";
+import { keywordValues, propertyDescriptions } from "@webstudio-is/css-data";
 import {
   generateStyleMap,
   hyphenateProperty,
@@ -10,7 +14,7 @@ import {
   type CssStyleMap,
   type StyleValue,
 } from "@webstudio-is/css-engine";
-import { $cssVarsMap } from "../../shared/model";
+import { $availableVariables, $cssVarsMap } from "../../shared/model";
 import { CssFragmentEditorContent } from "../../shared/css-fragment";
 import {
   EditorDialog,
@@ -22,6 +26,10 @@ import {
   parseStyleInput,
 } from "~/builder/shared/css-editor/parse-style-input";
 import { cannotRoundTripAsCssText } from "~/builder/shared/css-editor/css-editor";
+import {
+  getAutocompleteItems,
+  matchOrSuggestToCreate,
+} from "~/builder/shared/css-editor/property-autocomplete";
 
 type Declaration = { property: CssProperty; value: StyleValue };
 type ApplyChanges = {
@@ -31,6 +39,90 @@ type ApplyChanges = {
   newStyles: CssStyleMap;
   mentionedProperties: ReadonlySet<CssProperty>;
   canDelete: boolean;
+};
+
+const cssBlockLanguage = cssLanguage.configure({ top: "Styles" });
+
+const blockCompletionSource: CompletionSource = async (context) => {
+  const completion = await cssCompletionSource(context);
+  const { state, pos } = context;
+  const tree = syntaxTree(state);
+  const node = tree.resolveInner(pos, -1);
+  const firstType = completion?.options[0]?.type;
+  const isVariableProperty =
+    node.name === "VariableName" && node.parent?.name === "Declaration";
+
+  if (!isVariableProperty && firstType === "variable") {
+    return {
+      from: completion?.from ?? pos,
+      options: [
+        ...(completion?.options ?? []),
+        ...$availableVariables.get().map(({ value }) => ({
+          label: `--${value}`,
+          type: "variable",
+        })),
+      ],
+    };
+  }
+
+  let declaration = node;
+  while (declaration.parent !== null && declaration.name !== "Declaration") {
+    declaration = declaration.parent;
+  }
+  if (declaration.name !== "Declaration") {
+    const previous = tree.topNode.childBefore(pos);
+    if (
+      previous?.name === "Declaration" &&
+      state.doc.sliceString(previous.to, pos).trim() === ""
+    ) {
+      declaration = previous;
+    }
+  }
+  const colon = declaration.getChild(":");
+  if (colon !== null && pos >= colon.to) {
+    const propertyNode =
+      declaration.getChild("PropertyName") ??
+      declaration.getChild("VariableName");
+    const property = propertyNode
+      ? state.doc.sliceString(propertyNode.from, propertyNode.to)
+      : "";
+    const keywords = keywordValues[property as CssProperty] ?? [];
+    return {
+      from: firstType === "keyword" ? (completion?.from ?? pos) : pos,
+      to: node.name === "ValueName" ? node.to : undefined,
+      options: [
+        ...keywords.map((value) => ({ label: value, type: "keyword" })),
+        ...$availableVariables.get().map(({ value }) => ({
+          label: `var(--${value})`,
+          displayLabel: `--${value}`,
+          type: "variable",
+        })),
+      ],
+    };
+  }
+
+  if (!isVariableProperty && firstType !== "property") {
+    return null;
+  }
+  const from = isVariableProperty ? node.from : (completion?.from ?? pos);
+  const search = state.doc.sliceString(from, pos);
+  const items = matchOrSuggestToCreate(search, getAutocompleteItems());
+  return {
+    from,
+    to:
+      node.name === "PropertyName" ||
+      node.name === "TagName" ||
+      isVariableProperty
+        ? node.to
+        : undefined,
+    filter: false,
+    options: items.map((item) => ({
+      label: item.label,
+      apply: `${item.property}: ${item.value ?? ""}`,
+      type: "property",
+      info: propertyDescriptions[item.property],
+    })),
+  };
 };
 
 const getProtectedProperties = (styles: CssStyleMap) =>
@@ -312,6 +404,8 @@ const StyleBlockEditor = ({
     >
       <CssFragmentEditorContent
         ariaLabel="Style block editor"
+        language={cssBlockLanguage}
+        completionSource={blockCompletionSource}
         autoFocus={!inline}
         readOnly={readonly}
         extensions={extensions}
