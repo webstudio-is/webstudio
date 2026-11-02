@@ -124,12 +124,14 @@ const Keyframe = ({
   index,
   offsetPlaceholder,
   onChange,
+  onResetPreview,
   onDelete,
 }: {
   value: AnimationKeyframe;
   index: number;
   offsetPlaceholder: number;
   onChange: (value: AnimationKeyframe, isEphemeral: boolean) => void;
+  onResetPreview: () => void;
   onDelete: () => void;
 }) => {
   const offsetId = useId();
@@ -197,7 +199,7 @@ const Keyframe = ({
 
           <CssEditor
             showSearch={false}
-            showAddStyleInput
+            showInlineAddButton
             propertiesPosition="top"
             virtualize={false}
             declarations={declarations}
@@ -211,6 +213,7 @@ const Keyframe = ({
             }}
             onDeleteProperty={(property, options = {}) => {
               if (options.isEphemeral === true) {
+                onResetPreview();
                 return;
               }
               const styles = { ...value.styles };
@@ -334,6 +337,7 @@ export const Keyframes = ({
 
                 onChange(newValues, isEphemeral);
               }}
+              onResetPreview={() => onChange(undefined, true)}
               onDelete={() => {
                 const newValues = [...keyframes];
                 newValues.splice(index, 1);
