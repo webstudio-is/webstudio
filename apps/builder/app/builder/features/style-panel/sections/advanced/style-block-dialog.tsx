@@ -33,6 +33,13 @@ type ApplyChanges = {
   canDelete: boolean;
 };
 
+const getProtectedProperties = (styles: CssStyleMap) =>
+  new Set(
+    Array.from(styles)
+      .filter(([, value]) => cannotRoundTripAsCssText(value))
+      .map(([property]) => property)
+  );
+
 const parseBlock = (source: string) => {
   const diagnostics: Diagnostic[] = [];
   const declarations: Array<{ text: string; from: number; to: number }> = [];
@@ -211,6 +218,16 @@ const StyleBlockEditor = ({
     []
   );
 
+  const setInitialStyles = (oldStyles: CssStyleMap, value: string) => {
+    initialStylesRef.current = oldStyles;
+    protectedPropertiesRef.current = getProtectedProperties(oldStyles);
+    initialParsedStylesRef.current = parseBlock(value).styleMap;
+    initialCodeRef.current = value;
+    appliedCodeRef.current = value;
+    codeRef.current = value;
+    setCode(value);
+  };
+
   useEffect(() => {
     if (open) {
       const oldStyles: CssStyleMap = new Map(
@@ -220,17 +237,7 @@ const StyleBlockEditor = ({
         ])
       );
       const value = generateStyleMap(oldStyles);
-      initialStylesRef.current = oldStyles;
-      protectedPropertiesRef.current = new Set(
-        Array.from(oldStyles)
-          .filter(([, value]) => cannotRoundTripAsCssText(value))
-          .map(([property]) => property)
-      );
-      initialParsedStylesRef.current = parseBlock(value).styleMap;
-      initialCodeRef.current = value;
-      appliedCodeRef.current = value;
-      codeRef.current = value;
-      setCode(value);
+      setInitialStyles(oldStyles, value);
     }
   }, [open]);
 
@@ -244,18 +251,11 @@ const StyleBlockEditor = ({
       );
       const savedCode = generateStyleMap(oldStyles);
       if (codeRef.current === initialCodeRef.current) {
-        initialStylesRef.current = oldStyles;
-        protectedPropertiesRef.current = new Set(
-          Array.from(oldStyles)
-            .filter(([, value]) => cannotRoundTripAsCssText(value))
-            .map(([property]) => property)
-        );
         if (savedCode !== initialCodeRef.current) {
-          initialParsedStylesRef.current = parseBlock(savedCode).styleMap;
-          initialCodeRef.current = savedCode;
-          appliedCodeRef.current = savedCode;
-          codeRef.current = savedCode;
-          setCode(savedCode);
+          setInitialStyles(oldStyles, savedCode);
+        } else {
+          initialStylesRef.current = oldStyles;
+          protectedPropertiesRef.current = getProtectedProperties(oldStyles);
         }
       }
     }

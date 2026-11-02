@@ -281,7 +281,6 @@ export type EditorApi = {
     placeholder: string;
   }) => void;
   focus: () => void;
-  setSelection: (position: number) => void;
 };
 
 export const getTemplateInsertion = ({
@@ -530,16 +529,6 @@ export const EditorContent = ({
     focus() {
       viewRef.current?.focus();
     },
-    setSelection(position) {
-      const view = viewRef.current;
-      if (view === undefined) {
-        return;
-      }
-      view.dispatch({
-        selection: { anchor: Math.min(position, view.state.doc.length) },
-      });
-      view.focus();
-    },
   }));
 
   return (
@@ -568,17 +557,6 @@ const editorDialogControlStyle = css({
 
 export const EditorDialogControl = ({ children }: { children: ReactNode }) => {
   return <div className={editorDialogControlStyle()}>{children}</div>;
-};
-
-export const isEditorDialogInternalBlur = (event?: FocusEvent) => {
-  if (
-    !(event?.target instanceof Element) ||
-    !(event.relatedTarget instanceof Element)
-  ) {
-    return false;
-  }
-  const dialog = event.target.closest('[role="dialog"]');
-  return dialog !== null && dialog.contains(event.relatedTarget);
 };
 
 export const EditorDialogButton = forwardRef<
@@ -614,7 +592,6 @@ export const EditorDialog = ({
   title: ReactNode;
   content: ReactNode;
   children?: ReactNode;
-  anchorRef?: ComponentProps<typeof FloatingPanel>["anchorRef"];
   width?: number;
   height?: number;
   contentPadding?: boolean;
@@ -623,8 +600,6 @@ export const EditorDialog = ({
   open?: boolean;
   modal?: boolean;
   onOpenChange?: (newOpen: boolean) => void;
-  onInteractOutside?: ComponentProps<typeof FloatingPanel>["onInteractOutside"];
-  onEscapeKeyDown?: ComponentProps<typeof FloatingPanel>["onEscapeKeyDown"];
 }) => {
   return (
     <FloatingPanel
