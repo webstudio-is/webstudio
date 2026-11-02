@@ -1394,7 +1394,9 @@ export const CssEditor = ({
                 });
                 return;
               }
-              setBulkDraft({ code, selection: code.length });
+              setBulkDraft((draft) =>
+                draft === undefined ? draft : { ...draft, code }
+              );
             }}
             onChangeComplete={(code, event) => {
               if (switchingDraftRef.current) {
