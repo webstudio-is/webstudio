@@ -49,6 +49,11 @@ const blockCompletionSource: CompletionSource = async (context) => {
   const tree = syntaxTree(state);
   const node = tree.resolveInner(pos, -1);
   const firstType = completion?.options[0]?.type;
+  const line = state.doc.lineAt(pos);
+  const isPropertyLine =
+    state.doc.sliceString(line.from, node.from).trim() === "" &&
+    (node.name === "TagName" ||
+      (node.name === "Styles" && line.text.trim() === ""));
   const isVariableProperty =
     node.name === "VariableName" && node.parent?.name === "Declaration";
 
@@ -69,7 +74,7 @@ const blockCompletionSource: CompletionSource = async (context) => {
   while (declaration.parent !== null && declaration.name !== "Declaration") {
     declaration = declaration.parent;
   }
-  if (declaration.name !== "Declaration") {
+  if (declaration.name !== "Declaration" && !isPropertyLine) {
     const previous = tree.topNode.childBefore(pos);
     if (
       previous?.name === "Declaration" &&
@@ -79,7 +84,7 @@ const blockCompletionSource: CompletionSource = async (context) => {
     }
   }
   const colon = declaration.getChild(":");
-  if (colon !== null && pos >= colon.to) {
+  if (colon !== null && pos >= colon.to && !isPropertyLine) {
     const propertyNode =
       declaration.getChild("PropertyName") ??
       declaration.getChild("VariableName");
@@ -101,10 +106,13 @@ const blockCompletionSource: CompletionSource = async (context) => {
     };
   }
 
-  if (!isVariableProperty && firstType !== "property") {
+  if (!isVariableProperty && firstType !== "property" && !isPropertyLine) {
     return null;
   }
-  const from = isVariableProperty ? node.from : (completion?.from ?? pos);
+  const from =
+    isVariableProperty || (isPropertyLine && node.name === "TagName")
+      ? node.from
+      : (completion?.from ?? pos);
   const search = state.doc.sliceString(from, pos);
   const items = matchOrSuggestToCreate(search, getAutocompleteItems());
   return {
@@ -119,7 +127,7 @@ const blockCompletionSource: CompletionSource = async (context) => {
     options: items.map((item) => ({
       label: item.label,
       apply:
-        colon === null
+        colon === null || isPropertyLine
           ? `${item.property}: ${item.value ?? ""}`
           : item.property,
       type: "property",
