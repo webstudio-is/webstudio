@@ -205,6 +205,7 @@ export const KeyboardShortcutsDialog = () => {
       "focusStyleSources",
       "toggleStylePanelFocusMode",
       "toggleStylePanelAdvancedMode",
+      "openStyleBlockEditor",
     ],
   };
 

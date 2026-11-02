@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -13,6 +12,7 @@ import {
   DropdownMenuTrigger,
   IconButton,
   DropdownMenuContent,
+  DropdownMenuCheckboxItem,
   DropdownMenuRadioItem,
   MenuCheckedIcon,
   DropdownMenuRadioGroup,
@@ -21,6 +21,7 @@ import {
   Flex,
   DropdownMenuSeparator,
   DropdownMenuItem,
+  DropdownMenuItemRightSlot,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { EllipsesIcon } from "@webstudio-is/icons";
@@ -34,13 +35,17 @@ import { $selectedInstance } from "~/shared/nano-states";
 import { CollapsibleProvider } from "~/builder/shared/collapsible-section";
 import {
   $settings,
-  getSetting,
   setSetting,
   type Settings,
 } from "~/builder/shared/client-settings";
 import { sections } from "./sections";
 import { StyleSourcesSection } from "./style-source-section";
 import { $instanceTags, useParentComputedStyleDecl } from "./shared/model";
+import {
+  $styleBlockEditorOpenFor,
+  getStyleBlockSelectionKey,
+  openStyleBlockEditor,
+} from "./sections/advanced/style-block-editor-state";
 
 const $selectedInstanceTag = computed(
   [$selectedInstance, $instanceTags],
@@ -53,8 +58,9 @@ const $selectedInstanceTag = computed(
 );
 
 export const ModeMenu = () => {
-  const value = getSetting("stylePanelMode");
-  const [focusedValue, setFocusedValue] = useState<string>(value);
+  const { stylePanelMode, codeEditingMode, stickyAdvancedSection } =
+    useStore($settings);
+  const readonly = isStyleSourceLocked(useStore($selectedStyleSource));
 
   return (
     <DropdownMenu>
@@ -66,35 +72,32 @@ export const ModeMenu = () => {
       <DropdownMenuContent
         sideOffset={Number.parseFloat(rawTheme.spacing[5])}
         css={{ width: theme.spacing[26] }}
+        onCloseAutoFocus={(event) => {
+          const openFor = $styleBlockEditorOpenFor.get();
+          if (
+            openFor !== undefined &&
+            openFor === getStyleBlockSelectionKey()
+          ) {
+            event.preventDefault();
+          }
+        }}
       >
         <DropdownMenuRadioGroup
-          value={value}
+          value={stylePanelMode}
           onValueChange={(value) => {
             setSetting("stylePanelMode", value as Settings["stylePanelMode"]);
           }}
         >
-          <DropdownMenuRadioItem
-            value="default"
-            icon={<MenuCheckedIcon />}
-            onFocus={() => setFocusedValue("default")}
-          >
-            Default
+          <DropdownMenuRadioItem value="default" icon={<MenuCheckedIcon />}>
+            Default mode
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem
-            value="focus"
-            icon={<MenuCheckedIcon />}
-            onFocus={() => setFocusedValue("focus")}
-          >
+          <DropdownMenuRadioItem value="focus" icon={<MenuCheckedIcon />}>
             <Flex justify="between" grow>
               <Text variant="labels">Focus mode</Text>
               <Kbd value={["alt", "shift", "s"]} />
             </Flex>
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem
-            value="advanced"
-            icon={<MenuCheckedIcon />}
-            onFocus={() => setFocusedValue("advanced")}
-          >
+          <DropdownMenuRadioItem value="advanced" icon={<MenuCheckedIcon />}>
             <Flex justify="between" grow>
               <Text variant="labels">Advanced mode</Text>
               <Kbd value={["alt", "shift", "a"]} />
@@ -103,19 +106,32 @@ export const ModeMenu = () => {
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
 
-        {focusedValue === "default" && (
-          <DropdownMenuItem hint>
-            All sections are open by default.
-          </DropdownMenuItem>
-        )}
-        {focusedValue === "focus" && (
-          <DropdownMenuItem hint>
-            Only one section is open at a time.
-          </DropdownMenuItem>
-        )}
-        {focusedValue === "advanced" && (
-          <DropdownMenuItem hint>Advanced section only.</DropdownMenuItem>
-        )}
+        <DropdownMenuCheckboxItem
+          checked={codeEditingMode}
+          onCheckedChange={(checked) =>
+            setSetting("codeEditingMode", checked === true)
+          }
+        >
+          Code view
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem
+          checked={stickyAdvancedSection}
+          onCheckedChange={(checked) =>
+            setSetting("stickyAdvancedSection", checked === true)
+          }
+        >
+          Sticky advanced section
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuItem
+          withIndicator
+          disabled={readonly || getStyleBlockSelectionKey() === undefined}
+          onSelect={openStyleBlockEditor}
+        >
+          Open editor
+          <DropdownMenuItemRightSlot>
+            <Kbd value={["alt", "shift", "x"]} />
+          </DropdownMenuItemRightSlot>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
