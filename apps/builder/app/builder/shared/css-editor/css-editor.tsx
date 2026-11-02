@@ -366,6 +366,11 @@ const AdvancedPropertyLabel = ({
                 }
               }}
               onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  resetName();
+                  propertyInputProps.onKeyDown?.(event);
+                  return;
+                }
                 if (
                   event.key !== "Enter" ||
                   (nameRef.current.trim() !== "" &&
@@ -385,9 +390,6 @@ const AdvancedPropertyLabel = ({
                     return;
                   }
                   event.currentTarget.blur();
-                }
-                if (event.key === "Escape") {
-                  resetName();
                 }
               }}
               css={{
