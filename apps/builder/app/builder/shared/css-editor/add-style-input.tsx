@@ -64,14 +64,14 @@ import {
   PropertyStatusIcon,
 } from "~/builder/features/style-panel/property-status";
 
-type SearchItem = {
+export type SearchItem = {
   property: string;
   label: string;
   value?: string;
   key: string;
 };
 
-const getNewPropertyDescription = (item: null | SearchItem) => {
+export const getNewPropertyDescription = (item: null | SearchItem) => {
   let description: string | undefined = "Add CSS property.";
   if (item?.property.startsWith("--")) {
     description = "Create CSS variable.";
@@ -89,7 +89,7 @@ const getNewPropertyDescription = (item: null | SearchItem) => {
   );
 };
 
-const getAutocompleteItems = () => {
+export const getAutocompleteItems = () => {
   const autoCompleteItems: SearchItem[] = [];
   for (const varValue of $availableVariables.get()) {
     const property = `--${varValue.value}`;
@@ -142,7 +142,10 @@ const getAutocompleteItems = () => {
   return autoCompleteItems;
 };
 
-const matchOrSuggestToCreate = (search: string, items: Array<SearchItem>) => {
+export const matchOrSuggestToCreate = (
+  search: string,
+  items: Array<SearchItem>
+) => {
   const searchWithSpaces = search.startsWith("--")
     ? search
     : search.replaceAll("-", " ");
