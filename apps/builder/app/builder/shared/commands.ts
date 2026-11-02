@@ -5,6 +5,7 @@ import {
 } from "~/shared/instance-utils/mutation";
 import {
   canMoveInstanceInContentMode,
+  isStyleSourceLocked,
   sortInstancePathsForChildMutation,
 } from "@webstudio-is/project-build/runtime";
 import { toggleInstanceShow } from "~/shared/instance-utils/mutation";
@@ -29,6 +30,7 @@ import {
   $isDesignMode,
   $isPreviewMode,
   $pageIdToDelete,
+  $selectedStyleSource,
   $templateIdToDelete,
   toggleBuilderMode,
 } from "~/shared/nano-states";
@@ -91,6 +93,10 @@ import { openDeleteUnusedDataVariablesDialog } from "~/builder/shared/data-varia
 import { openDeleteUnusedCssVariablesDialog } from "~/builder/shared/css-variable-utils";
 import { openDeleteUnusedAssetsDialog } from "~/builder/shared/asset-manager/delete-unused-assets";
 import { openKeyboardShortcutsDialog } from "~/builder/features/keyboard-shortcuts-dialog";
+import {
+  getStyleBlockSelectionKey,
+  openStyleBlockEditor,
+} from "~/builder/features/style-panel/sections/advanced/style-block-editor-state";
 import {
   copyFolder,
   copyInstance,
@@ -878,6 +884,23 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         );
       },
       disableOnInputLikeControls: true,
+    },
+    {
+      name: "openStyleBlockEditor",
+      description: "Open editor",
+      category: "Style panel",
+      defaultHotkeys: ["alt+shift+x"],
+      handler: () => {
+        if (
+          $isDesignMode.get() === false ||
+          isStyleSourceLocked($selectedStyleSource.get()) ||
+          getStyleBlockSelectionKey() === undefined
+        ) {
+          return;
+        }
+        $activeInspectorPanel.set("style");
+        openStyleBlockEditor();
+      },
     },
     {
       name: "openSettingsPanel",
