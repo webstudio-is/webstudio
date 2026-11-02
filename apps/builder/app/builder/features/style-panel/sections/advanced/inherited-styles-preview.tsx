@@ -1,5 +1,5 @@
 import { css } from "@codemirror/lang-css";
-import { Box, theme } from "@webstudio-is/design-system";
+import { Box, Text, theme } from "@webstudio-is/design-system";
 import {
   generateStyleMap,
   mergeStyles,
@@ -12,47 +12,68 @@ const extensions = [css()];
 
 export const InheritedStylesPreview = ({
   declarations,
+  showCascaded,
+  showPreset,
 }: {
   declarations: ComputedStyleDecl[];
+  showCascaded: boolean;
+  showPreset: boolean;
 }) => {
+  if (!showCascaded && !showPreset) {
+    return null;
+  }
   const cascaded: StyleMap = new Map();
   const preset: StyleMap = new Map();
   for (const declaration of declarations) {
-    if (declaration.source.name === "remote") {
+    if (showCascaded && declaration.source.name === "remote") {
       cascaded.set(declaration.property, declaration.cascadedValue);
-    } else if (declaration.source.name === "preset") {
+    } else if (showPreset && declaration.source.name === "preset") {
       preset.set(declaration.property, declaration.cascadedValue);
     }
   }
 
-  const blocks: string[] = [];
+  const blocks: Array<{ title: string; value: string }> = [];
   if (cascaded.size > 0) {
-    blocks.push(`/* Cascaded */\n${generateStyleMap(mergeStyles(cascaded))}`);
+    blocks.push({
+      title: "Cascaded",
+      value: generateStyleMap(mergeStyles(cascaded)),
+    });
   }
   if (preset.size > 0) {
-    blocks.push(`/* Preset */\n${generateStyleMap(mergeStyles(preset))}`);
+    blocks.push({
+      title: "Preset",
+      value: generateStyleMap(mergeStyles(preset)),
+    });
   }
   if (blocks.length === 0) {
     return null;
   }
 
-  return (
+  return blocks.map(({ title, value }) => (
     <Box
+      key={title}
       css={{
         padding: theme.spacing[2],
-        ...getCodeEditorCssVars({ minHeight: "3lh", maxHeight: "50vh" }),
-        "& > div": { background: "transparent" },
+        ...getCodeEditorCssVars({ minHeight: "3lh", maxHeight: "none" }),
+        "& > div:last-child": { background: "transparent" },
       }}
     >
+      <Text
+        variant="labels"
+        color="subtle"
+        css={{ paddingBottom: theme.spacing[1] }}
+      >
+        {title}
+      </Text>
       <EditorContent
-        ariaLabel="CSS preview"
+        ariaLabel={title}
         extensions={extensions}
         readOnly
         chromeless
-        value={blocks.join("\n\n")}
+        value={value}
         onChange={() => {}}
         onChangeComplete={() => {}}
       />
     </Box>
-  );
+  ));
 };
