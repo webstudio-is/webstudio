@@ -40,6 +40,7 @@ import {
 import { $styles } from "~/shared/sync/data-stores";
 import { useReadonly } from "../../shared/readonly";
 import { InlineStyleBlockEditor, StyleBlockDialog } from "./style-block-dialog";
+import { InheritedStylesPreview } from "./inherited-styles-preview";
 import { $settings } from "~/builder/shared/client-settings";
 
 // Only here to keep the same section module interface
@@ -295,12 +296,17 @@ export const Section = () => {
       >
         {codeEditingMode ? (
           selectedInstanceKey !== undefined && (
-            <InlineStyleBlockEditor
-              key={selectionKey}
-              declarations={blockDeclarations}
-              readonly={readonly}
-              onApply={handleApplyBlock}
-            />
+            <>
+              <InlineStyleBlockEditor
+                key={selectionKey}
+                declarations={blockDeclarations}
+                readonly={readonly}
+                onApply={handleApplyBlock}
+              />
+              <InheritedStylesPreview
+                declarations={computedStyleDeclarations}
+              />
+            </>
           )
         ) : (
           <CssEditor
