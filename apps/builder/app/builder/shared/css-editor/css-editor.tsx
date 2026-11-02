@@ -1,5 +1,5 @@
 import { mergeRefs } from "@react-aria/utils";
-import { EditorView } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
 import { color } from "@webstudio-is/css-engine";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
@@ -67,12 +67,11 @@ import { ColorPicker } from "@webstudio-is/design-system";
 import { useClientSupports } from "~/shared/client-supports";
 import { CssEditorContextMenu, copyAttribute } from "./css-editor-context-menu";
 import {
-  AddStyleInput,
   getAutocompleteItems,
   getNewPropertyDescription,
   matchOrSuggestToCreate,
   type SearchItem,
-} from "./add-style-input";
+} from "./property-autocomplete";
 import {
   parsePropertyName,
   parseStyleInput,
@@ -864,9 +863,7 @@ export const CssEditor = ({
   virtualize = true,
   propertiesPosition = "bottom",
   recentProperties = [],
-  showAddStyleInput,
   showInlineAddButton = false,
-  onToggleAddStyleInput,
 }: {
   declarations: Array<ComputedStyleDecl>;
   existingDeclarations?: Array<ComputedStyleDecl>;
@@ -885,21 +882,18 @@ export const CssEditor = ({
   propertiesPosition?: "top" | "bottom";
   virtualize?: boolean;
   recentProperties?: Array<CssProperty>;
-  showAddStyleInput?: boolean;
   showInlineAddButton?: boolean;
-  onToggleAddStyleInput?: (show: boolean) => void;
 }) => {
-  const addPropertyInputRef = useRef<HTMLInputElement>(null);
-  const hasAddStyleDraftRef = useRef(false);
   const draftRowRef = useRef<HTMLDivElement>(null);
   const draftPropertyInputRef = useRef<HTMLInputElement>(null);
   const draftValueInputRef = useRef<HTMLInputElement>(null);
   const draftEditorRef = useRef<EditorApi>();
+  const bulkEditorRef = useRef<EditorApi>();
   const highlightedDraftItemRef = useRef<SearchItem>();
   const onDeletePropertyRef = useRef(onDeleteProperty);
   onDeletePropertyRef.current = onDeleteProperty;
   const relocatedDraftFocusRef = useRef<
-    | { field: "add" | "property" | "value"; start: number; end: number }
+    | { field: "property" | "value"; start: number; end: number }
     | { field: "editor"; selection: { anchor: number; head: number } }
   >();
   const draftSelectionRef = useRef(0);
@@ -918,10 +912,53 @@ export const CssEditor = ({
   const [draftValue, setDraftValue] = useState("");
   const [draftMultiline, setDraftMultiline] = useState(false);
   const [invalidDraft, setInvalidDraft] = useState(false);
-  const [internalShowAddStyleInput, setInternalShowAddStyleInput] =
-    useState(false);
   const [searchTerm, setSearchTerm] = useState<string>();
   const containerRef = useRef<HTMLDivElement>(null);
+  const bulkCodeExtensions = useMemo(
+    () => [
+      keymap.of([
+        {
+          key: "Enter",
+          run(view) {
+            const { from, to } = view.state.selection.main;
+            if (from !== to || to !== view.state.doc.length) {
+              return false;
+            }
+            const content = view.state.doc.toString();
+            const { styleMap, errors, hasSyntaxErrors } = parseStyleInput(
+              content,
+              $cssVarsMap.get()
+            );
+            if (
+              styleMap.size === 0 ||
+              errors.length > 0 ||
+              hasSyntaxErrors ||
+              [...styleMap.values()].some((value) => value.type === "invalid")
+            ) {
+              return false;
+            }
+            const trimmedLength = content.trimEnd().length;
+            if (content.slice(0, trimmedLength).endsWith(";")) {
+              view.dispatch({
+                changes: { from, insert: "\n" },
+                selection: { anchor: from + 1 },
+              });
+            } else {
+              view.dispatch({
+                changes: [
+                  { from: trimmedLength, insert: ";" },
+                  { from, insert: "\n" },
+                ],
+                selection: { anchor: from + 2 },
+              });
+            }
+            return true;
+          },
+        },
+      ]),
+    ],
+    []
+  );
   const clearHighlightedDraftPreview = useCallback(() => {
     const item = highlightedDraftItemRef.current;
     if (item !== undefined) {
@@ -980,27 +1017,9 @@ export const CssEditor = ({
   });
   const draftPropertyInputProps = draftPropertyCombobox.getInputProps();
 
-  const effectiveShowAddStyleInput = readonly
-    ? false
-    : (showAddStyleInput ?? internalShowAddStyleInput);
   const guardedSetProperty: SetProperty = readonly
     ? () => () => undefined
     : onSetProperty;
-  const guardedToggleAddStyleInput = readonly
-    ? undefined
-    : (onToggleAddStyleInput ?? setInternalShowAddStyleInput);
-
-  useEffect(() => {
-    if (effectiveShowAddStyleInput) {
-      addPropertyInputRef.current?.focus();
-    }
-  }, [effectiveShowAddStyleInput]);
-
-  useEffect(() => {
-    if (newEntryAfter !== undefined) {
-      addPropertyInputRef.current?.focus();
-    }
-  }, [newEntryAfter]);
 
   useEffect(() => {
     const isDraftPropertySet = draftPropertyName !== undefined;
@@ -1060,7 +1079,7 @@ export const CssEditor = ({
     }
     relocatedDraftFocusRef.current = undefined;
     if (
-      (draftPropertyName === undefined && focused.field !== "add") ||
+      draftPropertyName === undefined ||
       document.activeElement !== document.body
     ) {
       return;
@@ -1068,9 +1087,7 @@ export const CssEditor = ({
     const input =
       focused.field === "property"
         ? draftPropertyInputRef.current
-        : focused.field === "value"
-          ? draftValueInputRef.current
-          : addPropertyInputRef.current;
+        : draftValueInputRef.current;
     input?.focus();
     input?.setSelectionRange(focused.start, focused.end);
   }, [draftAnchor, draftPropertyName]);
@@ -1111,16 +1128,10 @@ export const CssEditor = ({
     if (
       active instanceof HTMLInputElement &&
       (active === draftPropertyInputRef.current ||
-        active === draftValueInputRef.current ||
-        active === addPropertyInputRef.current)
+        active === draftValueInputRef.current)
     ) {
       relocatedDraftFocusRef.current = {
-        field:
-          active === draftPropertyInputRef.current
-            ? "property"
-            : active === draftValueInputRef.current
-              ? "value"
-              : "add",
+        field: active === draftPropertyInputRef.current ? "property" : "value",
         start: active.selectionStart ?? active.value.length,
         end: active.selectionEnd ?? active.value.length,
       };
@@ -1180,10 +1191,8 @@ export const CssEditor = ({
     setBulkDraft(undefined);
     setDraftValue("");
     setDraftMultiline(false);
-    hasAddStyleDraftRef.current = false;
     switchingDraftRef.current = false;
     setInvalidDraft(false);
-    guardedToggleAddStyleInput?.(false);
     if (!focusValue) {
       return;
     }
@@ -1217,7 +1226,7 @@ export const CssEditor = ({
     if (
       draftAnchor !== undefined ||
       draftPropertyName !== undefined ||
-      (effectiveShowAddStyleInput && hasAddStyleDraftRef.current)
+      bulkDraft !== undefined
     ) {
       if (draftPropertyName !== undefined) {
         if (draftMultiline) {
@@ -1228,7 +1237,7 @@ export const CssEditor = ({
           draftValueInputRef.current?.focus();
         }
       } else {
-        addPropertyInputRef.current?.focus();
+        bulkEditorRef.current?.focus();
       }
       return;
     }
@@ -1240,7 +1249,6 @@ export const CssEditor = ({
     setDraftMultiline(false);
     setInvalidDraft(false);
     setNewEntryAfter(property);
-    guardedToggleAddStyleInput?.(true);
   };
 
   const completeDraft = (value = draftValue, focusValue = true) => {
@@ -1283,14 +1291,34 @@ export const CssEditor = ({
 
   const openBulkDraft = (code: string, selection: number) => {
     clearHighlightedDraftPreview();
+    closingDraftRef.current = false;
     switchingDraftRef.current = true;
     setBulkDraft({ code, selection });
     setDraftPropertyName(undefined);
     setDraftValue("");
     setDraftMultiline(false);
+    setInvalidDraft(false);
     requestAnimationFrame(() => {
       switchingDraftRef.current = false;
     });
+  };
+
+  const completeBulkDraft = (code: string, focusValue: boolean) => {
+    if (closingDraftRef.current) {
+      return;
+    }
+    if (code.trim() === "") {
+      closingDraftRef.current = true;
+      afterChangingStyles(focusValue);
+      return;
+    }
+    const styles = handleInsertStyles(code, true);
+    if (styles.size === 0) {
+      setInvalidDraft(true);
+      return;
+    }
+    closingDraftRef.current = true;
+    afterChangingStyles(focusValue);
   };
 
   const openValueDraft = (value: string, selection: number) => {
@@ -1323,56 +1351,67 @@ export const CssEditor = ({
     onDeleteAllDeclarations(styleMap);
   };
 
-  const addStyleInput = (
+  const draftRow = (draftPropertyName !== undefined ||
+    bulkDraft !== undefined) && (
     <DraftRow
       rowRef={draftRowRef}
       onUnmount={captureDraftFocus}
-      css={
-        effectiveShowAddStyleInput
-          ? draftAnchor === undefined &&
-            draftPropertyName === undefined &&
-            bulkDraft === undefined
-            ? { paddingTop: theme.spacing[3] }
-            : { paddingLeft: initialIndentation }
-          : { overflow: "hidden", height: 0 }
-      }
+      css={{ paddingLeft: initialIndentation }}
     >
-      {draftPropertyName === undefined ? (
-        <AddStyleInput
-          inline={draftAnchor !== undefined}
-          initialDraft={bulkDraft}
-          onSubmit={(cssText: string, focusValue = true) => {
-            const property =
-              draftAnchor === undefined
-                ? undefined
-                : parsePropertyName(cssText, $cssVarsMap.get(), true);
-            if (property !== undefined) {
-              closingDraftRef.current = false;
-              setBulkDraft(undefined);
-              setDraftPropertyName(property);
-              return true;
-            }
-            const styles = handleInsertStyles(cssText, true);
-            if (styles.size > 0) {
-              afterChangingStyles(focusValue);
-            }
-            return styles.size > 0;
+      {bulkDraft !== undefined ? (
+        <Box
+          css={{
+            width: "100%",
+            ...getCodeEditorCssVars({ minHeight: "2lh", maxHeight: "none" }),
           }}
-          onClose={afterChangingStyles}
-          onFocus={() => guardedToggleAddStyleInput?.(true)}
-          onDraftChange={(hasDraft) => {
-            hasAddStyleDraftRef.current = hasDraft;
-          }}
-          onDraftSnapshot={bulkDraft === undefined ? undefined : setBulkDraft}
-          onBlur={(hasDraft) => {
-            if (hasDraft) {
-              return;
-            }
-            setNewEntryAfter(undefined);
-            guardedToggleAddStyleInput?.(false);
-          }}
-          ref={addPropertyInputRef}
-        />
+        >
+          <CssFragmentEditorContent
+            ariaLabel="Add styles"
+            editorApiRef={bulkEditorRef}
+            autoFocus
+            initialSelection={bulkDraft.selection}
+            invalid={invalidDraft}
+            extensions={bulkCodeExtensions}
+            value={bulkDraft.code}
+            onChange={(code) => {
+              setInvalidDraft(false);
+              if (!code.includes("\n")) {
+                const declaration = splitStyleInputAtColon(code);
+                switchingDraftRef.current = true;
+                setBulkDraft(undefined);
+                setDraftPropertyName(declaration?.property ?? code);
+                setDraftValue(declaration?.value ?? "");
+                requestAnimationFrame(() => {
+                  const input = declaration
+                    ? draftValueInputRef.current
+                    : draftPropertyInputRef.current;
+                  input?.focus();
+                  input?.setSelectionRange(
+                    input.value.length,
+                    input.value.length
+                  );
+                  switchingDraftRef.current = false;
+                });
+                return;
+              }
+              setBulkDraft({ code, selection: code.length });
+            }}
+            onChangeComplete={(code, event) => {
+              if (switchingDraftRef.current) {
+                return;
+              }
+              completeBulkDraft(code, event === undefined);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                event.stopPropagation();
+                closingDraftRef.current = true;
+                afterChangingStyles();
+              }
+            }}
+          />
+        </Box>
       ) : (
         <Flex
           align="center"
@@ -1459,7 +1498,7 @@ export const CssEditor = ({
                     }
                     if (event.key === "Enter") {
                       event.preventDefault();
-                      if (draftPropertyName.trim() === "") {
+                      if (draftPropertyName?.trim() === "") {
                         closingDraftRef.current = true;
                         afterChangingStyles();
                         return;
@@ -1645,7 +1684,7 @@ export const CssEditor = ({
     </DraftRow>
   );
 
-  const recentPropertiesAndAddStyleInput = (
+  const recentPropertiesAndDraft = (
     <Flex
       direction="column"
       css={{ paddingInline: theme.panel.paddingInline, gap: 2 }}
@@ -1677,23 +1716,22 @@ export const CssEditor = ({
                 onDeleteProperty={handleDeleteProperty}
                 onSetProperty={guardedSetProperty}
               />
-              {draftAnchor === property && addStyleInput}
+              {draftAnchor === property && draftRow}
             </Box>
           );
         })}
       {draftAnchor === undefined &&
-        (showInlineAddButton && !effectiveShowAddStyleInput ? (
-          <SectionTitleButton
-            aria-label="Add styles"
-            tabIndex={0}
-            prefix={<PlusIcon />}
-            css={{ alignSelf: "flex-start" }}
-            disabled={readonly}
-            onClick={() => startNewEntry()}
-          />
-        ) : (
-          addStyleInput
-        ))}
+        (draftRow ||
+          (showInlineAddButton ? (
+            <SectionTitleButton
+              aria-label="Add styles"
+              tabIndex={0}
+              prefix={<PlusIcon />}
+              css={{ alignSelf: "flex-start" }}
+              disabled={readonly}
+              onClick={() => startNewEntry()}
+            />
+          ) : null))}
     </Flex>
   );
 
@@ -1730,7 +1768,7 @@ export const CssEditor = ({
         <Flex gap="1" direction="column">
           {propertiesPosition === "bottom" && (
             <>
-              {recentPropertiesAndAddStyleInput}
+              {recentPropertiesAndDraft}
               {showRecentProperties && <Separator />}
             </>
           )}
@@ -1768,7 +1806,7 @@ export const CssEditor = ({
                     onSetProperty={guardedSetProperty}
                     valueInputRef={lastRegularValueInputRef}
                   />
-                  {draftAnchor === property && addStyleInput}
+                  {draftAnchor === property && draftRow}
                 </Box>
               );
               // When using it in keyframes with layout where delcarations are on top of add input button,
@@ -1785,7 +1823,7 @@ export const CssEditor = ({
           {propertiesPosition === "top" && (
             <>
               {showRecentProperties && <Separator />}
-              {recentPropertiesAndAddStyleInput}
+              {recentPropertiesAndDraft}
             </>
           )}
         </Flex>

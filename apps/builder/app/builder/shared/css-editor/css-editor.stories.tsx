@@ -28,6 +28,7 @@ export const CSSEditor = () => {
     <StorySection title="CSS Editor">
       <CssEditorComponent
         declarations={declarations}
+        showInlineAddButton
         onDeleteProperty={() => undefined}
         onSetProperty={() => () => undefined}
         onRenameProperty={() => undefined}

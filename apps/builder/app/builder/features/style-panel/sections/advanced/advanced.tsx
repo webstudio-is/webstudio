@@ -131,7 +131,6 @@ export const Section = () => {
   const [recentPropertiesMap, setRecentPropertiesMap] = useState<
     Map<string, Array<CssProperty>>
   >(new Map());
-  const [addStyleInputFor, setAddStyleInputFor] = useState<string>();
   const editorOpenFor = useStore($styleBlockEditorOpenFor);
   const selectionKey = getStyleBlockSelectionKey();
 
@@ -448,19 +447,6 @@ export const Section = () => {
             onAddDeclarations={handleAddDeclarations}
             onDeleteAllDeclarations={handleDeleteAllDeclarations}
             recentProperties={recentProperties}
-            showAddStyleInput={
-              selectedInstanceKey !== undefined &&
-              addStyleInputFor === selectionKey
-            }
-            onToggleAddStyleInput={(show) => {
-              if (show && isCurrentSelection()) {
-                setAddStyleInputFor(selectionKey);
-              } else if (!show) {
-                setAddStyleInputFor((current) =>
-                  current === selectionKey ? undefined : current
-                );
-              }
-            }}
           />
         )}
       </AdvancedStyleSection>
