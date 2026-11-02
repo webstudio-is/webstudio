@@ -12,6 +12,7 @@ import {
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
+  Text,
   theme,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
@@ -101,7 +102,12 @@ export const Section = () => {
   const advancedStyleDeclarations = useStore($advancedStyleDeclarations);
   const computedStyleDeclarations = useStore($computedStyleDeclarations);
   const readonly = useReadonly();
-  const { codeEditingMode, stickyAdvancedSection } = useStore($settings);
+  const {
+    codeEditingMode,
+    stickyAdvancedSection,
+    showCascadedStyles,
+    showPresetStyles,
+  } = useStore($settings);
   const properties = advancedStyleDeclarations.map(
     (styleDecl) => styleDecl.property
   );
@@ -384,6 +390,22 @@ export const Section = () => {
                   Code view
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
+                  checked={showCascadedStyles}
+                  onCheckedChange={(checked) =>
+                    setSetting("showCascadedStyles", checked === true)
+                  }
+                >
+                  Show cascaded
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={showPresetStyles}
+                  onCheckedChange={(checked) =>
+                    setSetting("showPresetStyles", checked === true)
+                  }
+                >
+                  Show preset
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
                   checked={stickyAdvancedSection}
                   onCheckedChange={(checked) =>
                     setSetting("stickyAdvancedSection", checked === true)
@@ -422,6 +444,16 @@ export const Section = () => {
         {codeEditingMode ? (
           selectedInstanceKey !== undefined && (
             <>
+              <Text
+                variant="labels"
+                color="subtle"
+                css={{
+                  paddingInline: theme.panel.paddingInline,
+                  paddingTop: theme.spacing[2],
+                }}
+              >
+                Local styles
+              </Text>
               <InlineStyleBlockEditor
                 key={selectionKey}
                 declarations={blockDeclarations}
@@ -430,6 +462,8 @@ export const Section = () => {
               />
               <InheritedStylesPreview
                 declarations={computedStyleDeclarations}
+                showCascaded={showCascadedStyles}
+                showPreset={showPresetStyles}
               />
             </>
           )
