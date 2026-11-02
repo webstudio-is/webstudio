@@ -1,7 +1,6 @@
 import {
   type ReactNode,
   type ComponentProps,
-  type RefObject,
   useState,
   useRef,
   useLayoutEffect,
@@ -113,7 +112,6 @@ type FloatingPanelProps = {
   title?: ReactNode;
   content: ReactNode;
   children?: ReactNode;
-  anchorRef?: RefObject<HTMLElement>;
   titleSuffix?: ReactNode;
   maximizable?: boolean;
   resize?: ComponentProps<typeof Dialog>["resize"];
@@ -129,8 +127,6 @@ type FloatingPanelProps = {
   open?: boolean;
   modal?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
-  onInteractOutside?: ComponentProps<typeof DialogContent>["onInteractOutside"];
-  onEscapeKeyDown?: ComponentProps<typeof DialogContent>["onEscapeKeyDown"];
   /** When false, the panel won't close when clicking outside it. */
   closeOnInteractOutside?: boolean;
 };
@@ -141,7 +137,6 @@ export const FloatingPanel = ({
   title,
   content,
   children,
-  anchorRef,
   titleSuffix,
   resize,
   maximizable,
@@ -153,8 +148,6 @@ export const FloatingPanel = ({
   open: openProp,
   modal = false,
   onOpenChange,
-  onInteractOutside,
-  onEscapeKeyDown,
   closeOnInteractOutside = true,
 }: FloatingPanelProps) => {
   // Support both controlled and uncontrolled modes
@@ -190,7 +183,7 @@ export const FloatingPanel = ({
   }, [open]);
 
   useLayoutEffect(() => {
-    const reference = anchorRef?.current ?? triggerRef.current;
+    const reference = triggerRef.current;
     // Find container when trigger is available and panel is opening
     if (reference && open && !containerRef.current) {
       const container = reference.closest(
@@ -292,7 +285,6 @@ export const FloatingPanel = ({
     };
   }, [
     contentElement,
-    anchorRef,
     containerRef,
     placement,
     anchor,
@@ -325,7 +317,6 @@ export const FloatingPanel = ({
         aria-describedby={undefined}
         ref={setContentElement}
         onInteractOutside={(event) => {
-          onInteractOutside?.(event);
           // When a dialog is centered, we don't want to close it when clicking outside
           // This allows having inline and left positioned dialogs open at the same time as a centered dialog,
           // while not allowing having multiple non-center positioned dialogs open at the same time.
@@ -334,10 +325,6 @@ export const FloatingPanel = ({
           }
         }}
         onEscapeKeyDown={(event) => {
-          onEscapeKeyDown?.(event);
-          if (event.defaultPrevented) {
-            return;
-          }
           if (event.target instanceof HTMLInputElement) {
             event.preventDefault();
 
