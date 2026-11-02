@@ -18,6 +18,13 @@ import { matchSorter } from "match-sorter";
 import {
   PanelContent,
   Box,
+  ComboboxAnchor,
+  ComboboxContent,
+  ComboboxItemDescription,
+  ComboboxListbox,
+  ComboboxListboxItem,
+  ComboboxRoot,
+  ComboboxScrollArea,
   Flex,
   InputField,
   SearchField,
@@ -29,6 +36,7 @@ import {
   Tooltip,
   cssVar,
   styleSourceColor,
+  useCombobox,
 } from "@webstudio-is/design-system";
 import {
   camelCaseProperty,
@@ -55,14 +63,23 @@ import { PropertyInfo } from "../../features/style-panel/property-label";
 import { ColorPicker } from "@webstudio-is/design-system";
 import { useClientSupports } from "~/shared/client-supports";
 import { CssEditorContextMenu, copyAttribute } from "./css-editor-context-menu";
-import { AddStyleInput } from "./add-style-input";
+import {
+  AddStyleInput,
+  getAutocompleteItems,
+  getNewPropertyDescription,
+  matchOrSuggestToCreate,
+  type SearchItem,
+} from "./add-style-input";
 import { parsePropertyName, parseStyleInput } from "./parse-style-input";
 import type {
   DeleteProperty,
   SetProperty,
 } from "../../features/style-panel/shared/use-style-data";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { PropertyStatusIndicator } from "../../features/style-panel/property-status";
+import {
+  PropertyStatusIcon,
+  PropertyStatusIndicator,
+} from "../../features/style-panel/property-status";
 import {
   getCodeEditorCssVars,
   type EditorApi,
@@ -787,6 +804,32 @@ export const CssEditor = ({
   const [invalidDraft, setInvalidDraft] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>();
   const containerRef = useRef<HTMLDivElement>(null);
+  const draftPropertyCombobox = useCombobox<SearchItem>({
+    getItems: getAutocompleteItems,
+    itemToString: (item) => item?.label ?? "",
+    value: {
+      property: draftPropertyName ?? "",
+      label: draftPropertyName ?? "",
+      key: draftPropertyName ?? "",
+    },
+    getItemProps: () => ({ text: "sentence" }),
+    match: matchOrSuggestToCreate,
+    onChange: (input) => {
+      if (input !== undefined) {
+        setDraftPropertyName(input);
+        setInvalidDraft(false);
+      }
+    },
+    onItemSelect: (item) => {
+      switchingDraftRef.current = false;
+      setDraftPropertyName(item.property);
+      if (item.value !== undefined) {
+        setDraftValue(item.value);
+      }
+      requestAnimationFrame(() => draftValueInputRef.current?.focus());
+    },
+  });
+  const draftPropertyInputProps = draftPropertyCombobox.getInputProps();
 
   const effectiveShowAddStyleInput = readonly ? false : showAddStyleInput;
   const guardedSetProperty: SetProperty = readonly
@@ -1187,90 +1230,139 @@ export const CssEditor = ({
             completeDraft(draftValue, false);
           }}
         >
-          <InputField
-            aria-label={`Property name: ${draftPropertyName}`}
-            inputRef={draftPropertyInputRef}
-            variant="chromeless"
-            text="mono"
-            fieldSizing="content"
-            color={invalidDraft ? "error" : undefined}
-            value={draftPropertyName}
-            css={{
-              backgroundColor: "transparent",
-              marginLeft: `-${initialIndentation}`,
-              "& input": {
-                marginLeft: 0,
-                paddingLeft: theme.spacing[2],
-                minWidth: "10ch",
-              },
-            }}
-            onChange={(event) => {
-              setDraftPropertyName(event.target.value);
-              setInvalidDraft(false);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && event.shiftKey) {
-                event.preventDefault();
-                const { value, selectionStart, selectionEnd } =
-                  event.currentTarget;
-                const start = selectionStart ?? value.length;
-                const end = selectionEnd ?? start;
-                if (draftValue !== "") {
-                  const delimiter = draftValue.trimEnd().endsWith(";")
-                    ? ""
-                    : ";";
-                  const code = `${value}: ${draftValue}${delimiter}\n`;
-                  openBulkDraft(code, code.length);
-                  return;
-                }
-                openBulkDraft(
-                  `${value.slice(0, start)}\n${value.slice(end)}`,
-                  start + 1
-                );
-                return;
-              }
-              if (event.key === "Enter") {
-                event.preventDefault();
-                if (draftPropertyName.trim() === "") {
-                  closingDraftRef.current = true;
-                  afterChangingStyles();
-                  return;
-                }
-                if (draftMultiline) {
-                  draftEditorRef.current?.focus();
-                } else {
-                  draftValueInputRef.current?.focus();
-                }
-              }
-              if (event.key === "Escape") {
-                closingDraftRef.current = true;
-                afterChangingStyles();
-              }
-            }}
-            onPaste={(event) => {
-              const text = event.clipboardData
-                .getData("text/plain")
-                .replaceAll("\r\n", "\n")
-                .replaceAll("\r", "\n");
-              if (!text.includes("\n")) {
-                return;
-              }
-              event.preventDefault();
-              const input = event.currentTarget;
-              const start = input.selectionStart ?? input.value.length;
-              const end = input.selectionEnd ?? start;
-              if (draftValue !== "") {
-                const delimiter = draftValue.trimEnd().endsWith(";") ? "" : ";";
-                const code = `${input.value}: ${draftValue}${delimiter}\n${text}`;
-                openBulkDraft(code, code.length);
-                return;
-              }
-              openBulkDraft(
-                `${input.value.slice(0, start)}${text}${input.value.slice(end)}`,
-                start + text.length
-              );
-            }}
-          />
+          <ComboboxRoot open={draftPropertyCombobox.isOpen}>
+            <Box
+              {...draftPropertyCombobox.getComboboxProps()}
+              css={{ marginLeft: `-${initialIndentation}` }}
+            >
+              <ComboboxAnchor asChild>
+                <InputField
+                  aria-label={`Property name: ${draftPropertyName}`}
+                  inputRef={draftPropertyInputRef}
+                  variant="chromeless"
+                  text="mono"
+                  fieldSizing="content"
+                  color={invalidDraft ? "error" : undefined}
+                  css={{
+                    backgroundColor: "transparent",
+                    "& input": {
+                      marginLeft: 0,
+                      paddingLeft: theme.spacing[2],
+                      minWidth: "10ch",
+                    },
+                  }}
+                  {...draftPropertyInputProps}
+                  onKeyDown={(event) => {
+                    if (!event.shiftKey) {
+                      draftPropertyInputProps.onKeyDown?.(event);
+                    }
+                    if (event.defaultPrevented) {
+                      return;
+                    }
+                    if (event.key === "Enter" && event.shiftKey) {
+                      event.preventDefault();
+                      const { value, selectionStart, selectionEnd } =
+                        event.currentTarget;
+                      const start = selectionStart ?? value.length;
+                      const end = selectionEnd ?? start;
+                      if (draftValue !== "") {
+                        const delimiter = draftValue.trimEnd().endsWith(";")
+                          ? ""
+                          : ";";
+                        const code = `${value}: ${draftValue}${delimiter}\n`;
+                        openBulkDraft(code, code.length);
+                        return;
+                      }
+                      openBulkDraft(
+                        `${value.slice(0, start)}\n${value.slice(end)}`,
+                        start + 1
+                      );
+                      return;
+                    }
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      if (draftPropertyName.trim() === "") {
+                        closingDraftRef.current = true;
+                        afterChangingStyles();
+                        return;
+                      }
+                      if (draftMultiline) {
+                        draftEditorRef.current?.focus();
+                      } else {
+                        draftValueInputRef.current?.focus();
+                      }
+                    }
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      if (draftPropertyCombobox.isOpen) {
+                        return;
+                      }
+                      closingDraftRef.current = true;
+                      afterChangingStyles();
+                    }
+                  }}
+                  onPaste={(event) => {
+                    const text = event.clipboardData
+                      .getData("text/plain")
+                      .replaceAll("\r\n", "\n")
+                      .replaceAll("\r", "\n");
+                    if (!text.includes("\n")) {
+                      return;
+                    }
+                    event.preventDefault();
+                    const input = event.currentTarget;
+                    const start = input.selectionStart ?? input.value.length;
+                    const end = input.selectionEnd ?? start;
+                    if (draftValue !== "") {
+                      const delimiter = draftValue.trimEnd().endsWith(";")
+                        ? ""
+                        : ";";
+                      const code = `${input.value}: ${draftValue}${delimiter}\n${text}`;
+                      openBulkDraft(code, code.length);
+                      return;
+                    }
+                    openBulkDraft(
+                      `${input.value.slice(0, start)}${text}${input.value.slice(end)}`,
+                      start + text.length
+                    );
+                  }}
+                />
+              </ComboboxAnchor>
+              <ComboboxContent>
+                <ComboboxListbox {...draftPropertyCombobox.getMenuProps()}>
+                  <ComboboxScrollArea>
+                    {draftPropertyCombobox.items.map((item, index) => (
+                      <ComboboxListboxItem
+                        {...draftPropertyCombobox.getItemProps({ item, index })}
+                        onPointerDownCapture={() => {
+                          switchingDraftRef.current = true;
+                        }}
+                        key={index}
+                      >
+                        <Flex align="center" gap="1">
+                          <Text truncate css={{ maxWidth: "25ch" }}>
+                            {item.label}
+                          </Text>
+                          <PropertyStatusIcon property={item.property} />
+                        </Flex>
+                      </ComboboxListboxItem>
+                    ))}
+                  </ComboboxScrollArea>
+                  <ComboboxItemDescription
+                    descriptions={draftPropertyCombobox.items.map(
+                      getNewPropertyDescription
+                    )}
+                  >
+                    {getNewPropertyDescription(
+                      draftPropertyCombobox.items[
+                        draftPropertyCombobox.highlightedIndex
+                      ] ?? null
+                    )}
+                  </ComboboxItemDescription>
+                </ComboboxListbox>
+              </ComboboxContent>
+            </Box>
+          </ComboboxRoot>
           <Text
             variant="mono"
             css={{ textIndent: "-0.5ch", fontWeight: "bold" }}
