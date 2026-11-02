@@ -100,21 +100,25 @@ const emptyExtensions: Extension[] = [];
 
 export const CssFragmentEditorContent = ({
   onKeyDown,
+  language,
+  completionSource,
   extensions: extraExtensions = emptyExtensions,
   ...props
 }: ComponentProps<typeof EditorContent> & {
   onKeyDown?: (event: KeyboardEvent) => void;
+  language?: Extension;
+  completionSource?: CompletionSource;
 }) => {
   const onKeyDownRef = useRef(onKeyDown);
   onKeyDownRef.current = onKeyDown;
   const extensions = useMemo(() => {
     return [
-      css(),
+      language ?? css(),
       // render autocomplete in body
       // to prevent popover scroll overflow
       tooltips({ parent: document.body }),
       autocompletion({
-        override: [scopeCompletionSource],
+        override: [completionSource ?? scopeCompletionSource],
         icons: false,
       }),
       keymap.of([...completionKeymap]),
@@ -125,7 +129,7 @@ export const CssFragmentEditorContent = ({
       }),
       ...extraExtensions,
     ];
-  }, [extraExtensions]);
+  }, [language, completionSource, extraExtensions]);
   return <EditorContent extensions={extensions} {...props} />;
 };
 
