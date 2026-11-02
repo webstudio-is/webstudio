@@ -114,11 +114,48 @@ export const insertStyleDeclarations = (
   return styleMap;
 };
 
+const PropertyComboboxMenu = ({
+  combobox,
+  onSuggestionPointerDown,
+}: {
+  combobox: ReturnType<typeof useCombobox<SearchItem>>;
+  onSuggestionPointerDown?: () => void;
+}) => (
+  <ComboboxContent>
+    <ComboboxListbox {...combobox.getMenuProps()}>
+      <ComboboxScrollArea>
+        {combobox.items.map((item, index) => (
+          <ComboboxListboxItem
+            {...combobox.getItemProps({ item, index })}
+            onPointerDownCapture={onSuggestionPointerDown}
+            key={index}
+          >
+            <Flex align="center" gap="1">
+              <Text truncate css={{ maxWidth: "25ch" }}>
+                {item.label}
+              </Text>
+              <PropertyStatusIcon property={item.property} />
+            </Flex>
+          </ComboboxListboxItem>
+        ))}
+      </ComboboxScrollArea>
+      <ComboboxItemDescription
+        descriptions={combobox.items.map(getNewPropertyDescription)}
+      >
+        {getNewPropertyDescription(
+          combobox.items[combobox.highlightedIndex] ?? null
+        )}
+      </ComboboxItemDescription>
+    </ComboboxListbox>
+  </ComboboxContent>
+);
+
 const AdvancedPropertyLabel = ({
   styleDecl,
   readonly,
   existingProperties,
   deletableProperties,
+  onSetProperty,
   onRenameProperty,
   onReset,
   onDeleteProperty,
@@ -127,6 +164,7 @@ const AdvancedPropertyLabel = ({
   readonly: boolean;
   existingProperties: ReadonlyMap<CssProperty, ComputedStyleDecl>;
   deletableProperties?: ReadonlySet<CssProperty>;
+  onSetProperty: SetProperty;
   onRenameProperty: (
     oldProperty: CssProperty,
     newProperty: CssProperty,
@@ -139,6 +177,11 @@ const AdvancedPropertyLabel = ({
   const [name, setName] = useState<string>(styleDecl.property);
   const nameRef = useRef(name);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const selectingSuggestionRef = useRef(false);
+  const editable =
+    !readonly &&
+    (styleDecl.source.name === "local" ||
+      styleDecl.source.name === "overwritten");
   const canDelete =
     !readonly &&
     (deletableProperties?.has(styleDecl.property) ??
@@ -155,17 +198,19 @@ const AdvancedPropertyLabel = ({
     setName(styleDecl.property);
   };
 
-  const completeRename = () => {
-    const nextName = nameRef.current.trim();
-    if (nextName === styleDecl.property) {
+  const completeRename = (suggestion?: SearchItem) => {
+    const nextName = (suggestion?.property ?? nameRef.current).trim();
+    if (nextName === styleDecl.property && suggestion?.value === undefined) {
       resetName();
       return;
     }
     const nextProperty = parsePropertyName(nextName, $cssVarsMap.get());
     if (
       nextProperty === undefined ||
-      existingProperties.has(nextProperty) ||
-      cannotRoundTripAsCssText(styleDecl.cascadedValue, true) ||
+      (nextProperty !== styleDecl.property &&
+        existingProperties.has(nextProperty)) ||
+      (suggestion?.value === undefined &&
+        cannotRoundTripAsCssText(styleDecl.cascadedValue, true)) ||
       (styleDecl.source.name !== "local" &&
         styleDecl.source.name !== "overwritten")
     ) {
@@ -184,7 +229,7 @@ const AdvancedPropertyLabel = ({
       }
     });
     const { styleMap } = parseStyleInput(
-      `${nextProperty}: ${value}`,
+      `${nextProperty}: ${suggestion?.value ?? value}`,
       $cssVarsMap.get()
     );
     const nextValue = styleMap.get(nextProperty);
@@ -214,12 +259,40 @@ const AdvancedPropertyLabel = ({
               ),
             }
           : nextValue;
-    if (restoredAssets !== assetImages.size) {
+    if (
+      suggestion?.value === undefined &&
+      restoredAssets !== assetImages.size
+    ) {
       resetName();
       return;
     }
-    onRenameProperty(styleDecl.property, nextProperty, renamedValue);
+    if (nextProperty === styleDecl.property) {
+      onSetProperty(nextProperty)(renamedValue, { listed: true });
+    } else {
+      onRenameProperty(styleDecl.property, nextProperty, renamedValue);
+    }
   };
+
+  const propertyCombobox = useCombobox<SearchItem>({
+    getItems: () => (editable ? getAutocompleteItems() : []),
+    itemToString: (item) => item?.label ?? "",
+    value: { property: name, label: name, key: name },
+    getItemProps: () => ({ text: "sentence" }),
+    match: matchOrSuggestToCreate,
+    onChange: (input) => {
+      if (input !== undefined) {
+        nameRef.current = input;
+        setName(input);
+      }
+    },
+    onItemSelect: (item) => {
+      selectingSuggestionRef.current = false;
+      nameRef.current = item.property;
+      setName(item.property);
+      completeRename(item);
+    },
+  });
+  const propertyInputProps = propertyCombobox.getInputProps();
 
   const description =
     propertyDescriptions[camelCaseProperty(styleDecl.property)];
@@ -231,93 +304,115 @@ const AdvancedPropertyLabel = ({
       : undefined;
 
   return (
-    <Tooltip
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (open && document.activeElement === nameInputRef.current) {
-          return;
-        }
-        setIsOpen(open);
-      }}
-      // prevent closing tooltip on content click
-      onPointerDown={(event) => event.preventDefault()}
-      triggerProps={{
-        onClick: (event) => {
-          setIsOpen(false);
-          if (event.altKey) {
-            event.preventDefault();
-            onDeleteProperty(styleDecl.property);
-            onReset?.();
-            return;
-          }
-        },
-      }}
-      content={
-        <PropertyInfo
-          title={
-            styleDecl.property.startsWith("--")
-              ? "CSS variable"
-              : styleDecl.property
-          }
-          description={description}
-          styles={[styleDecl]}
-          onReset={() => {
-            onDeleteProperty(styleDecl.property);
-            setIsOpen(false);
-            onReset?.();
-          }}
-          resetType="delete"
-          link={propertiesData[styleDecl.property]?.mdnUrl}
-        />
-      }
-    >
-      <InputField
-        aria-label={`Property name: ${styleDecl.property}`}
-        inputRef={nameInputRef}
-        onFocus={() => setIsOpen(false)}
-        variant="chromeless"
-        text="mono"
-        fieldSizing="content"
-        readOnly={
-          readonly ||
-          (styleDecl.source.name !== "local" &&
-            styleDecl.source.name !== "overwritten")
-        }
-        value={name}
-        onChange={(event) => {
-          nameRef.current = event.target.value;
-          setName(event.target.value);
-        }}
-        onBlur={completeRename}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            if (nameRef.current.trim() === "" && canDelete) {
-              resetName();
-              onDeleteProperty(styleDecl.property);
-              onReset?.();
+    <ComboboxRoot open={propertyCombobox.isOpen}>
+      <Box {...propertyCombobox.getComboboxProps()}>
+        <Tooltip
+          open={isOpen}
+          onOpenChange={(open) => {
+            if (open && document.activeElement === nameInputRef.current) {
               return;
             }
-            event.currentTarget.blur();
+            setIsOpen(open);
+          }}
+          // prevent closing tooltip on content click
+          onPointerDown={(event) => event.preventDefault()}
+          triggerProps={{
+            onClick: (event) => {
+              setIsOpen(false);
+              if (event.altKey) {
+                event.preventDefault();
+                onDeleteProperty(styleDecl.property);
+                onReset?.();
+                return;
+              }
+            },
+          }}
+          content={
+            <PropertyInfo
+              title={
+                styleDecl.property.startsWith("--")
+                  ? "CSS variable"
+                  : styleDecl.property
+              }
+              description={description}
+              styles={[styleDecl]}
+              onReset={() => {
+                onDeleteProperty(styleDecl.property);
+                setIsOpen(false);
+                onReset?.();
+              }}
+              resetType="delete"
+              link={propertiesData[styleDecl.property]?.mdnUrl}
+            />
           }
-          if (event.key === "Escape") {
-            resetName();
-          }
-        }}
-        css={{
-          backgroundColor: "transparent",
-          marginLeft: `-${initialIndentation}`,
-          "& input": {
-            marginLeft: 0,
-            paddingLeft: theme.spacing[2],
-            color: sourceColor?.foreground,
-          },
-          "&:hover:not([data-input-field-input])": {
-            backgroundColor: sourceColor?.background,
-          },
-        }}
-      />
-    </Tooltip>
+        >
+          <ComboboxAnchor asChild>
+            <InputField
+              aria-label={`Property name: ${styleDecl.property}`}
+              inputRef={nameInputRef}
+              variant="chromeless"
+              text="mono"
+              fieldSizing="content"
+              readOnly={!editable}
+              {...propertyInputProps}
+              onFocus={(event) => {
+                propertyInputProps.onFocus?.(event);
+                setIsOpen(false);
+              }}
+              onBlur={(event) => {
+                propertyInputProps.onBlur?.(event);
+                if (!selectingSuggestionRef.current) {
+                  completeRename();
+                }
+              }}
+              onKeyDown={(event) => {
+                if (
+                  event.key !== "Enter" ||
+                  (nameRef.current.trim() !== "" &&
+                    propertyCombobox.highlightedIndex !== -1)
+                ) {
+                  propertyInputProps.onKeyDown?.(event);
+                }
+                if (event.defaultPrevented) {
+                  return;
+                }
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  if (nameRef.current.trim() === "" && canDelete) {
+                    resetName();
+                    onDeleteProperty(styleDecl.property);
+                    onReset?.();
+                    return;
+                  }
+                  event.currentTarget.blur();
+                }
+                if (event.key === "Escape") {
+                  resetName();
+                }
+              }}
+              css={{
+                backgroundColor: "transparent",
+                marginLeft: `-${initialIndentation}`,
+                "& input": {
+                  marginLeft: 0,
+                  paddingLeft: theme.spacing[2],
+                  color: sourceColor?.foreground,
+                },
+                "&:hover:not([data-input-field-input])": {
+                  backgroundColor: sourceColor?.background,
+                },
+              }}
+            />
+          </ComboboxAnchor>
+        </Tooltip>
+        <PropertyComboboxMenu
+          combobox={propertyCombobox}
+          onSuggestionPointerDown={() => {
+            selectingSuggestionRef.current = true;
+          }}
+        />
+      </Box>
+    </ComboboxRoot>
   );
 };
 
@@ -684,6 +779,7 @@ const AdvancedDeclarationLonghand = memo(
           readonly={readonly}
           existingProperties={existingProperties}
           deletableProperties={deletableProperties}
+          onSetProperty={onSetProperty}
           onRenameProperty={onRenameProperty}
           onReset={onReset}
           onDeleteProperty={onDeleteProperty}
@@ -1328,39 +1424,12 @@ export const CssEditor = ({
                   }}
                 />
               </ComboboxAnchor>
-              <ComboboxContent>
-                <ComboboxListbox {...draftPropertyCombobox.getMenuProps()}>
-                  <ComboboxScrollArea>
-                    {draftPropertyCombobox.items.map((item, index) => (
-                      <ComboboxListboxItem
-                        {...draftPropertyCombobox.getItemProps({ item, index })}
-                        onPointerDownCapture={() => {
-                          switchingDraftRef.current = true;
-                        }}
-                        key={index}
-                      >
-                        <Flex align="center" gap="1">
-                          <Text truncate css={{ maxWidth: "25ch" }}>
-                            {item.label}
-                          </Text>
-                          <PropertyStatusIcon property={item.property} />
-                        </Flex>
-                      </ComboboxListboxItem>
-                    ))}
-                  </ComboboxScrollArea>
-                  <ComboboxItemDescription
-                    descriptions={draftPropertyCombobox.items.map(
-                      getNewPropertyDescription
-                    )}
-                  >
-                    {getNewPropertyDescription(
-                      draftPropertyCombobox.items[
-                        draftPropertyCombobox.highlightedIndex
-                      ] ?? null
-                    )}
-                  </ComboboxItemDescription>
-                </ComboboxListbox>
-              </ComboboxContent>
+              <PropertyComboboxMenu
+                combobox={draftPropertyCombobox}
+                onSuggestionPointerDown={() => {
+                  switchingDraftRef.current = true;
+                }}
+              />
             </Box>
           </ComboboxRoot>
           <Text
