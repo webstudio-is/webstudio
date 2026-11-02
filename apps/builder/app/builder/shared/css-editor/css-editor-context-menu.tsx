@@ -25,7 +25,6 @@ export const createDeclarationActions = ({
   readonly,
   onPaste,
   onDeleteAllDeclarations,
-  canDeleteAllDeclarations,
 }: {
   declarations: Array<ComputedStyleDecl>;
   visibleProperties: ReadonlySet<CssProperty>;
@@ -33,7 +32,6 @@ export const createDeclarationActions = ({
   readonly: boolean;
   onPaste: (cssText: string) => void;
   onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
-  canDeleteAllDeclarations?: boolean;
 }) => {
   const isDeletable = (styleDecl: ComputedStyleDecl) =>
     deletableProperties?.has(styleDecl.property) ??
@@ -45,11 +43,10 @@ export const createDeclarationActions = ({
   );
   const canDeleteAll =
     !readonly &&
-    (canDeleteAllDeclarations ??
-      declarations.some(
-        (styleDecl) =>
-          visibleProperties.has(styleDecl.property) && isDeletable(styleDecl)
-      ));
+    declarations.some(
+      (styleDecl) =>
+        visibleProperties.has(styleDecl.property) && isDeletable(styleDecl)
+    );
 
   const getAllDeclarations = (deletableOnly = false) => {
     const styleMap: CssStyleMap = new Map();
@@ -94,7 +91,6 @@ export const CssEditorContextMenu = ({
   onDeleteAllDeclarations,
   readonly = false,
   deletableProperties,
-  canDeleteAllDeclarations,
 }: {
   children: ReactNode;
   foundProperties: Array<CssProperty>;
@@ -104,7 +100,6 @@ export const CssEditorContextMenu = ({
   onDeleteAllDeclarations: (styleMap: CssStyleMap) => void;
   readonly?: boolean;
   deletableProperties?: ReadonlySet<CssProperty>;
-  canDeleteAllDeclarations?: boolean;
 }) => {
   const [clickedProperty, setClickedProperty] = useState<string>();
   const selectedDeclaration = declarations.find(
@@ -118,7 +113,6 @@ export const CssEditorContextMenu = ({
     readonly,
     onPaste,
     onDeleteAllDeclarations,
-    canDeleteAllDeclarations,
   });
   const canDelete =
     !readonly &&

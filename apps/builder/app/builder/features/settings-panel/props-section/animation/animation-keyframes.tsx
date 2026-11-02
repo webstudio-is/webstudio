@@ -202,7 +202,6 @@ const Keyframe = ({
             virtualize={false}
             declarations={declarations}
             existingDeclarations={existingDeclarations}
-            canDeleteAllDeclarations={existingDeclarations.length > 0}
             onAddDeclarations={(addedStyleMap) => {
               const styles = { ...value.styles };
               for (const [property, value] of addedStyleMap) {
@@ -230,8 +229,12 @@ const Keyframe = ({
               styles[newProperty] = styleValue;
               onChange({ ...value, styles }, false);
             }}
-            onDeleteAllDeclarations={() => {
-              onChange({ ...value, styles: {} }, false);
+            onDeleteAllDeclarations={(styleMap) => {
+              const styles = { ...value.styles };
+              for (const [property] of styleMap) {
+                delete styles[property];
+              }
+              onChange({ ...value, styles }, false);
             }}
           />
         </Grid>
