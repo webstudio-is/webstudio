@@ -118,7 +118,10 @@ const blockCompletionSource: CompletionSource = async (context) => {
     filter: false,
     options: items.map((item) => ({
       label: item.label,
-      apply: `${item.property}: ${item.value ?? ""}`,
+      apply:
+        colon === null
+          ? `${item.property}: ${item.value ?? ""}`
+          : item.property,
       type: "property",
       info: propertyDescriptions[item.property],
     })),
