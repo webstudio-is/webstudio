@@ -43,6 +43,7 @@ import {
   keywordValues,
   propertiesData,
   propertyDescriptions,
+  shorthandProperties,
 } from "@webstudio-is/css-data";
 import {
   toValue,
@@ -88,6 +89,7 @@ import {
 // Used to indent the values when they are on the next line. This way its easier to see
 // where the property ends and value begins, especially in case of presets.
 const initialIndentation = `20px`;
+const shorthandSet = new Set<string>(shorthandProperties);
 
 export const insertStyleDeclarations = (
   cssText: string,
@@ -274,11 +276,19 @@ const AdvancedPropertyLabel = ({
   };
 
   const propertyCombobox = useCombobox<SearchItem>({
-    getItems: () => (editable ? getAutocompleteItems() : []),
+    getItems: () =>
+      editable
+        ? getAutocompleteItems().filter(
+            ({ property }) => !shorthandSet.has(property)
+          )
+        : [],
     itemToString: (item) => item?.label ?? "",
     value: { property: name, label: name, key: name },
     getItemProps: () => ({ text: "sentence" }),
-    match: matchOrSuggestToCreate,
+    match: (search, items) =>
+      matchOrSuggestToCreate(search, items).filter(
+        ({ property }) => !shorthandSet.has(property)
+      ),
     onChange: (input) => {
       if (input !== undefined) {
         nameRef.current = input;
@@ -842,7 +852,6 @@ export const CssEditor = ({
   declarations,
   existingDeclarations = declarations,
   deletableProperties,
-  canDeleteAllDeclarations,
   readonly = false,
   showSearch = true,
   virtualize = true,
@@ -855,7 +864,6 @@ export const CssEditor = ({
   declarations: Array<ComputedStyleDecl>;
   existingDeclarations?: Array<ComputedStyleDecl>;
   deletableProperties?: ReadonlySet<CssProperty>;
-  canDeleteAllDeclarations?: boolean;
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
   onRenameProperty: (
@@ -1627,7 +1635,6 @@ export const CssEditor = ({
       <CssEditorContextMenu
         readonly={readonly}
         deletableProperties={deletableProperties}
-        canDeleteAllDeclarations={canDeleteAllDeclarations}
         onPaste={handleInsertStyles}
         onDeleteProperty={handleDeleteProperty}
         onDeleteAllDeclarations={handleDeleteAllDeclarations}
