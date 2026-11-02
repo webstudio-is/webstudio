@@ -725,7 +725,10 @@ declare module "css-tree" {
   // -------------------------------------------------
   export const tokenTypes: Record<string, number>;
   export const tokenNames: string[];
-  export function tokenize(input: string): IterableIterator<any>;
+  export function tokenize(
+    input: string,
+    onToken: (type: number, start: number, end: number) => void
+  ): void;
 
   // Syntax factory and forking
   export function createSyntax(config: any): any;

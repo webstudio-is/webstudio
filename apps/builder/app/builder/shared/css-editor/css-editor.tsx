@@ -4,6 +4,7 @@ import { color } from "@webstudio-is/css-engine";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
   memo,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -44,6 +45,7 @@ import {
   propertiesData,
   propertyDescriptions,
   shorthandProperties,
+  parseCssValue,
 } from "@webstudio-is/css-data";
 import {
   toValue,
@@ -71,11 +73,16 @@ import {
   matchOrSuggestToCreate,
   type SearchItem,
 } from "./add-style-input";
-import { parsePropertyName, parseStyleInput } from "./parse-style-input";
-import type {
-  DeleteProperty,
-  SetProperty,
+import {
+  parsePropertyName,
+  parseStyleInput,
+  splitStyleInputAtColon,
+} from "./parse-style-input";
+import {
+  type DeleteProperty,
+  type SetProperty,
 } from "../../features/style-panel/shared/use-style-data";
+import { validateCssVariableName } from "~/builder/shared/css-variable-utils";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import {
   PropertyStatusIcon,
@@ -888,6 +895,9 @@ export const CssEditor = ({
   const draftPropertyInputRef = useRef<HTMLInputElement>(null);
   const draftValueInputRef = useRef<HTMLInputElement>(null);
   const draftEditorRef = useRef<EditorApi>();
+  const highlightedDraftItemRef = useRef<SearchItem>();
+  const onDeletePropertyRef = useRef(onDeleteProperty);
+  onDeletePropertyRef.current = onDeleteProperty;
   const relocatedDraftFocusRef = useRef<
     | { field: "add" | "property" | "value"; start: number; end: number }
     | { field: "editor"; selection: { anchor: number; head: number } }
@@ -908,8 +918,20 @@ export const CssEditor = ({
   const [draftValue, setDraftValue] = useState("");
   const [draftMultiline, setDraftMultiline] = useState(false);
   const [invalidDraft, setInvalidDraft] = useState(false);
+  const [internalShowAddStyleInput, setInternalShowAddStyleInput] =
+    useState(false);
   const [searchTerm, setSearchTerm] = useState<string>();
   const containerRef = useRef<HTMLDivElement>(null);
+  const clearHighlightedDraftPreview = useCallback(() => {
+    const item = highlightedDraftItemRef.current;
+    if (item !== undefined) {
+      onDeletePropertyRef.current(item.property as CssProperty, {
+        isEphemeral: true,
+      });
+      highlightedDraftItemRef.current = undefined;
+    }
+  }, []);
+  useEffect(() => clearHighlightedDraftPreview, [clearHighlightedDraftPreview]);
   const draftPropertyCombobox = useCombobox<SearchItem>({
     getItems: getAutocompleteItems,
     itemToString: (item) => item?.label ?? "",
@@ -922,11 +944,13 @@ export const CssEditor = ({
     match: matchOrSuggestToCreate,
     onChange: (input) => {
       if (input !== undefined) {
+        clearHighlightedDraftPreview();
         setDraftPropertyName(input);
         setInvalidDraft(false);
       }
     },
     onItemSelect: (item) => {
+      clearHighlightedDraftPreview();
       switchingDraftRef.current = false;
       setDraftPropertyName(item.property);
       if (item.value !== undefined) {
@@ -934,16 +958,37 @@ export const CssEditor = ({
       }
       requestAnimationFrame(() => draftValueInputRef.current?.focus());
     },
+    onItemHighlight: (item) => {
+      const previousItem = highlightedDraftItemRef.current;
+      if (
+        previousItem?.property === item?.property &&
+        previousItem?.value === item?.value
+      ) {
+        return;
+      }
+      clearHighlightedDraftPreview();
+      if (item?.value !== undefined) {
+        const value = parseCssValue(item.property as CssProperty, item.value);
+        if (value.type !== "invalid") {
+          onSetProperty(item.property as CssProperty)(value, {
+            isEphemeral: true,
+          });
+          highlightedDraftItemRef.current = item;
+        }
+      }
+    },
   });
   const draftPropertyInputProps = draftPropertyCombobox.getInputProps();
 
-  const effectiveShowAddStyleInput = readonly ? false : showAddStyleInput;
+  const effectiveShowAddStyleInput = readonly
+    ? false
+    : (showAddStyleInput ?? internalShowAddStyleInput);
   const guardedSetProperty: SetProperty = readonly
     ? () => () => undefined
     : onSetProperty;
   const guardedToggleAddStyleInput = readonly
     ? undefined
-    : onToggleAddStyleInput;
+    : (onToggleAddStyleInput ?? setInternalShowAddStyleInput);
 
   useEffect(() => {
     if (effectiveShowAddStyleInput) {
@@ -1129,6 +1174,7 @@ export const CssEditor = ({
   };
 
   const afterChangingStyles = (focusValue = true) => {
+    clearHighlightedDraftPreview();
     setNewEntryAfter(undefined);
     setDraftPropertyName(undefined);
     setBulkDraft(undefined);
@@ -1206,14 +1252,24 @@ export const CssEditor = ({
       afterChangingStyles(focusValue);
       return true;
     }
-    const property = parsePropertyName(
-      draftPropertyName,
-      $cssVarsMap.get(),
-      true
-    );
+    const name = draftPropertyName.trim();
+    const variableError = name.startsWith("--")
+      ? validateCssVariableName(name)
+      : undefined;
+    if (variableError !== undefined && variableError.type !== "duplicate") {
+      toast.error(variableError.message);
+      setInvalidDraft(true);
+      return false;
+    }
+    const property = parsePropertyName(name, $cssVarsMap.get(), true);
     if (property === undefined) {
       setInvalidDraft(true);
       return false;
+    }
+    if (variableError?.type === "duplicate") {
+      toast.warn(
+        `CSS variable "${property}" already exists. Its value will be updated.`
+      );
     }
     const styles = handleInsertStyles(`${property}: ${value}`, true);
     if (styles.size === 0) {
@@ -1226,6 +1282,7 @@ export const CssEditor = ({
   };
 
   const openBulkDraft = (code: string, selection: number) => {
+    clearHighlightedDraftPreview();
     switchingDraftRef.current = true;
     setBulkDraft({ code, selection });
     setDraftPropertyName(undefined);
@@ -1358,7 +1415,22 @@ export const CssEditor = ({
                     },
                   }}
                   {...draftPropertyInputProps}
+                  onBlur={(event) => {
+                    draftPropertyInputProps.onBlur?.(event);
+                    clearHighlightedDraftPreview();
+                  }}
                   onKeyDown={(event) => {
+                    if (
+                      event.key === ":" &&
+                      !event.altKey &&
+                      !event.metaKey &&
+                      !event.ctrlKey &&
+                      !event.nativeEvent.isComposing
+                    ) {
+                      event.preventDefault();
+                      draftValueInputRef.current?.focus();
+                      return;
+                    }
                     if (!event.shiftKey) {
                       draftPropertyInputProps.onKeyDown?.(event);
                     }
@@ -1412,13 +1484,25 @@ export const CssEditor = ({
                       .getData("text/plain")
                       .replaceAll("\r\n", "\n")
                       .replaceAll("\r", "\n");
-                    if (!text.includes("\n")) {
-                      return;
-                    }
-                    event.preventDefault();
                     const input = event.currentTarget;
                     const start = input.selectionStart ?? input.value.length;
                     const end = input.selectionEnd ?? start;
+                    if (!text.includes("\n")) {
+                      const declaration = splitStyleInputAtColon(
+                        `${input.value.slice(0, start)}${text}${input.value.slice(end)}`
+                      );
+                      if (declaration === undefined) {
+                        return;
+                      }
+                      event.preventDefault();
+                      setDraftPropertyName(declaration.property);
+                      setDraftValue(declaration.value);
+                      requestAnimationFrame(() =>
+                        draftValueInputRef.current?.focus()
+                      );
+                      return;
+                    }
+                    event.preventDefault();
                     if (draftValue !== "") {
                       const delimiter = draftValue.trimEnd().endsWith(";")
                         ? ""

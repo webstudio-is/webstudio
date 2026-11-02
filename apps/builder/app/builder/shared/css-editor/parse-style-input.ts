@@ -5,9 +5,25 @@ import {
   isValidDeclaration,
 } from "@webstudio-is/css-data";
 import { type CssProperty, type CssStyleMap } from "@webstudio-is/css-engine";
-import { generate, lexer, parse } from "css-tree";
+import { generate, lexer, parse, tokenize, tokenTypes } from "css-tree";
 
 const shorthandSet = new Set<string>(shorthandProperties);
+
+export const splitStyleInputAtColon = (input: string) => {
+  let colonIndex: number | undefined;
+  tokenize(input, (type, start) => {
+    if (colonIndex === undefined && type === tokenTypes.Colon) {
+      colonIndex = start;
+    }
+  });
+  if (colonIndex === undefined) {
+    return;
+  }
+  return {
+    property: input.slice(0, colonIndex).trim(),
+    value: input.slice(colonIndex + 1).trimStart(),
+  };
+};
 
 // When user provides only a property name, we need to make it `property:;` to be able to parse it.
 const ensureValue = (css: string) => {
