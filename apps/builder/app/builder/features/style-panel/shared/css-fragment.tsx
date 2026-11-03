@@ -124,10 +124,11 @@ export const CssFragmentEditorContent = ({
           const roomBelow = space.bottom - list.bottom;
           const roomAbove = list.top - space.top;
           return {
-            style:
+            style: "position: static",
+            class:
               roomBelow >= info.bottom - info.top || roomBelow >= roomAbove
-                ? "top: 100%; left: 0; width: 100%"
-                : "bottom: 100%; left: 0; width: 100%",
+                ? "cm-completionInfo-below"
+                : "cm-completionInfo-above",
           };
         },
       }),
