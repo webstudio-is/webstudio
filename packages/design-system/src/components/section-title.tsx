@@ -12,6 +12,7 @@ import {
   type ComponentProps,
   createContext,
   useContext,
+  useId,
 } from "react";
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import { theme, css, styled, type CSS } from "../stitches.config";
@@ -58,8 +59,18 @@ const labelContainerStyle = css({
   pointerEvents: "none",
 });
 
-const titleButtonStyle = css(titleButtonLayoutStyle, {
-  "&:focus-visible": focusRingStyle(),
+const titleButtonStyle = css({
+  all: "unset",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: theme.panel.paddingInline,
+  height: "100%",
+  boxSizing: "border-box",
+  "&:focus-visible": {
+    ...focusRingStyle(),
+    [chevronOpacity]: 1,
+  },
 });
 
 const suffixSlotStyle = css({
@@ -75,7 +86,6 @@ const invisibleSuffixStyle = css({
 const chevronStyle = css({
   width: theme.spacing[7],
   opacity: cssVar(chevronOpacity, "0"),
-  translate: "-100%",
   transition: "transform 150ms, opacity 200ms",
   color: cssVar("--foreground-secondary"),
   variants: {
@@ -108,6 +118,7 @@ const dotStyle = css({
 const context = createContext<{
   openState: "open" | "closed";
   inactive: boolean;
+  labelId?: string;
 }>({
   openState: "closed",
   inactive: false,
@@ -139,11 +150,12 @@ export const SectionTitle = forwardRef(
     },
     ref: Ref<HTMLButtonElement>
   ) => {
+    const labelId = useId();
     const openState = props["data-state"] ?? "closed";
     const finalDots = openState === "open" ? [] : (dots ?? []);
 
     return (
-      <context.Provider value={{ openState, inactive }}>
+      <context.Provider value={{ openState, inactive, labelId }}>
         <ArrowFocus
           render={({ handleKeyDown }) => (
             <Flex
@@ -160,6 +172,7 @@ export const SectionTitle = forwardRef(
                 <button
                   className={titleButtonStyle()}
                   data-state={openState}
+                  aria-labelledby={labelId}
                   ref={ref}
                   {...props}
                 >
@@ -210,7 +223,7 @@ export const SectionTitleLabel = forwardRef(
     }: Omit<ComponentProps<typeof Label>, "truncate" | "text">,
     ref: Ref<HTMLLabelElement>
   ) => {
-    const { openState, inactive } = useContext(context);
+    const { openState, inactive, labelId } = useContext(context);
 
     const commonCss = { flex: "0 1 auto" };
     const color = inactive
@@ -226,6 +239,7 @@ export const SectionTitleLabel = forwardRef(
         truncate
         text="title"
         {...props}
+        id={props.id ?? labelId}
         color={color}
         css={{
           color:
