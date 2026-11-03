@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { linter, type Diagnostic } from "@codemirror/lint";
 import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
 import { syntaxTree } from "@codemirror/language";
-import { placeholder } from "@codemirror/view";
+import { StateField } from "@codemirror/state";
+import { Decoration, EditorView, placeholder } from "@codemirror/view";
 import type { CompletionSource } from "@codemirror/autocomplete";
 import { generate, parse } from "css-tree";
 import { theme, Box, menuItemCss } from "@webstudio-is/design-system";
@@ -161,10 +162,22 @@ const getProtectedProperties = (styles: CssStyleMap) =>
 
 const parseBlock = (source: string) => {
   const diagnostics: Diagnostic[] = [];
-  const declarations: Array<{ text: string; from: number; to: number }> = [];
+  const declarations: Array<{
+    text: string;
+    property: string;
+    from: number;
+    to: number;
+  }> = [];
   const draftCssVars = new Map($cssVarsMap.get());
   const mentionedProperties = new Set<CssProperty>();
   const propertyRanges = new Map<CssProperty, { from: number; to: number }>();
+  const previousRanges = new Map<string, { from: number; to: number }>();
+  const overriddenRanges: Array<{
+    property: string;
+    from: number;
+    to: number;
+  }> = [];
+  const validLastProperties = new Set<string>();
   const invalidProperties = new Set<CssProperty>();
   let canDelete = true;
   try {
@@ -184,21 +197,28 @@ const parseBlock = (source: string) => {
     ast.children.forEach((node) => {
       if (node.type === "Declaration") {
         const text = generate(node);
-        declarations.push({
-          text,
+        const range = {
           from: node.loc?.start.offset ?? 0,
           to: node.loc?.end.offset ?? source.length,
-        });
+        };
         if (node.property.startsWith("--")) {
           draftCssVars.set(node.property, generate(node.value));
         }
         const property = parsePropertyName(node.property, $cssVarsMap.get());
+        const duplicateKey =
+          property ??
+          (node.property.startsWith("--")
+            ? node.property
+            : node.property.toLowerCase());
+        declarations.push({ text, property: duplicateKey, ...range });
+        const previousRange = previousRanges.get(duplicateKey);
+        if (previousRange !== undefined) {
+          overriddenRanges.push({ property: duplicateKey, ...previousRange });
+        }
+        previousRanges.set(duplicateKey, range);
         if (property !== undefined) {
           mentionedProperties.add(property);
-          propertyRanges.set(property, {
-            from: node.loc?.start.offset ?? 0,
-            to: node.loc?.end.offset ?? source.length,
-          });
+          propertyRanges.set(property, range);
         }
         return;
       }
@@ -220,17 +240,20 @@ const parseBlock = (source: string) => {
     });
   }
 
-  for (const { text, from, to } of declarations) {
+  for (const { text, property: duplicateKey, from, to } of declarations) {
     const parsed = parseStyleInput(text, draftCssVars);
-    if (
+    const isInvalid =
       parsed.styleMap.size === 0 ||
       parsed.errors.length > 0 ||
       parsed.hasSyntaxErrors ||
       Array.from(parsed.styleMap.values()).some(
         (value) => value.type === "invalid"
-      )
-    ) {
+      );
+    if (isInvalid) {
       canDelete = false;
+      validLastProperties.delete(duplicateKey);
+    } else {
+      validLastProperties.add(duplicateKey);
     }
     for (const message of parsed.errors) {
       diagnostics.push({ from, to, severity: "error", message });
@@ -275,9 +298,36 @@ const parseBlock = (source: string) => {
     diagnostics,
     mentionedProperties,
     propertyRanges,
+    overriddenRanges: overriddenRanges.filter(({ property }) =>
+      validLastProperties.has(property)
+    ),
     canDelete,
   };
 };
+
+const blockParseField = StateField.define<ReturnType<typeof parseBlock>>({
+  create: (state) => parseBlock(state.doc.toString()),
+  update: (parsed, transaction) =>
+    transaction.docChanged
+      ? parseBlock(transaction.state.doc.toString())
+      : parsed,
+  provide: (field) =>
+    EditorView.decorations.from(field, ({ overriddenRanges }) =>
+      Decoration.set(
+        overriddenRanges.map(({ from, to }) =>
+          Decoration.mark({ class: "cm-overridden-declaration" }).range(
+            from,
+            to
+          )
+        ),
+        true
+      )
+    ),
+});
+
+const overriddenDeclarationTheme = EditorView.theme({
+  ".cm-overridden-declaration": { textDecoration: "line-through" },
+});
 
 const StyleBlockEditor = ({
   declarations,
@@ -305,11 +355,16 @@ const StyleBlockEditor = ({
   const codeRef = useRef("");
   const extensions = useMemo(
     () => [
+      blockParseField,
+      overriddenDeclarationTheme,
       linter(
         (view) => {
-          const { styleMap, diagnostics, propertyRanges } = parseBlock(
-            view.state.doc.toString()
-          );
+          const {
+            styleMap,
+            propertyRanges,
+            diagnostics: parsedDiagnostics,
+          } = view.state.field(blockParseField);
+          const diagnostics = [...parsedDiagnostics];
           for (const property of protectedPropertiesRef.current) {
             const value = styleMap.get(property);
             if (
