@@ -35,7 +35,7 @@ const sectionStyle = css({
     },
     stickyHeader: {
       true: {
-        "& > :first-child": {
+        "& > [data-focus-scope-start] + [data-state]": {
           position: "sticky",
           top: 0,
           zIndex: 1,
