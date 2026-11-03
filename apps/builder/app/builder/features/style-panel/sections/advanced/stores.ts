@@ -47,12 +47,7 @@ export const $advancedStyleDeclarations = computed(
     }
     for (const styleDecl of visibleDeclarations) {
       const showSource = getAdvancedStyleSource(styleDecl) !== undefined;
-      // ignore predefined styles in advanced mode
-      // @todo will be deleted https://github.com/webstudio-is/webstudio/issues/4871
-      if (
-        styleDecl.source.name === "default" &&
-        settings.stylePanelMode === "advanced"
-      ) {
+      if (styleDecl.source.name === "default") {
         continue;
       }
       const { property, listed } = styleDecl;
