@@ -48,6 +48,13 @@ type ApplyChanges = {
 const readonlyTooltip =
   "These styles are read-only here. Edit their original source, or add a local declaration to override them.";
 
+const dialogTitles: Record<StyleBlockEditorSource, string> = {
+  local: "Local styles",
+  cascaded: "Cascaded styles",
+  preset: "Preset styles",
+  globalVariables: "Global variables",
+};
+
 export const cssBlockLanguage = cssLanguage.configure({ top: "Styles" });
 
 const blockCompletionSource: CompletionSource = async (context) => {
@@ -347,7 +354,7 @@ const StyleBlockEditor = ({
   onApply: (changes: ApplyChanges) => void;
   inline?: boolean;
   source?: StyleBlockEditorSource;
-  sourceBlock?: { title: string; value: string };
+  sourceBlock?: { value: string };
 }) => {
   const [code, setCode] = useState("");
   const declarationsRef = useRef(declarations);
@@ -500,7 +507,7 @@ const StyleBlockEditor = ({
     >
       <CssFragmentEditorContent
         key={source}
-        ariaLabel={sourceBlock?.title ?? "Style block editor"}
+        ariaLabel={inline ? "Style block editor" : dialogTitles[source]}
         language={cssBlockLanguage}
         completionSource={
           source === "local" ? blockCompletionSource : undefined
@@ -536,7 +543,7 @@ const StyleBlockEditor = ({
   }
   return (
     <EditorDialog
-      title={sourceBlock?.title ?? "Style block editor"}
+      title={dialogTitles[source]}
       titleSuffix={
         source !== "local" && (
           <Tooltip content={readonlyTooltip} openOnFocus>
