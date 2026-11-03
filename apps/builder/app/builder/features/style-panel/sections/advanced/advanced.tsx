@@ -16,7 +16,6 @@ import {
   DropdownMenuTrigger,
   Kbd,
   PanelContent,
-  ResettableLabel,
   SearchField,
   SectionTitle,
   SectionTitleButton,
@@ -71,7 +70,11 @@ import {
 import { $styles } from "~/shared/sync/data-stores";
 import { useReadonly } from "../../shared/readonly";
 import { InlineStyleBlockEditor, StyleBlockDialog } from "./style-block-dialog";
-import { InheritedStylesPreview } from "./inherited-styles-preview";
+import {
+  AdvancedStyleSourceHeader,
+  getAdvancedStyleBlocks,
+  InheritedStylesPreview,
+} from "./inherited-styles-preview";
 import { $settings, setSetting } from "~/builder/shared/client-settings";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
@@ -154,12 +157,12 @@ const CodeView = ({
       {(!searching || localDeclarations.length > 0) && (
         <>
           <PanelContent css={{ paddingBlock: theme.spacing[2] }}>
-            <ResettableLabel
-              color="local"
+            <AdvancedStyleSourceHeader
+              source="local"
+              title="Local"
               description="These styles are defined on the selected style source"
-            >
-              Local
-            </ResettableLabel>
+              readonly={readonly}
+            />
           </PanelContent>
           <InlineStyleBlockEditor
             key={searching ? "search" : "edit"}
@@ -222,7 +225,7 @@ export const Section = () => {
 
   useEffect(() => {
     return () => {
-      if ($styleBlockEditorOpenFor.get() === selectionKey) {
+      if ($styleBlockEditorOpenFor.get()?.selectionKey === selectionKey) {
         $styleBlockEditorOpenFor.set(undefined);
       }
     };
@@ -253,7 +256,7 @@ export const Section = () => {
       styleSourceSelector?.state;
 
   const recentProperties = selectedInstanceKey
-    ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
+    ? recentPropertiesMap.get(selectedInstanceKey) ?? []
     : [];
 
   const updateRecentProperties = (properties: Array<CssProperty>) => {
@@ -402,7 +405,7 @@ export const Section = () => {
             cascadedValue: value,
             computedValue: value,
             usedValue: value,
-          }) satisfies ComputedStyleDecl
+          } satisfies ComputedStyleDecl)
       )
     : advancedStyleDeclarations;
   const actions = createDeclarationActions({
@@ -421,6 +424,11 @@ export const Section = () => {
     },
     onDeleteAllDeclarations: handleDeleteAllDeclarations,
   });
+
+  const editorSource = editorOpenFor?.source ?? "local";
+  const editorBlock = getAdvancedStyleBlocks(computedStyleDeclarations).find(
+    (block) => block.source === editorSource
+  );
 
   return (
     <>
@@ -446,7 +454,10 @@ export const Section = () => {
                 collisionPadding={16}
                 css={{ width: theme.spacing[28] }}
                 onCloseAutoFocus={(event) => {
-                  if ($styleBlockEditorOpenFor.get() === selectionKey) {
+                  if (
+                    $styleBlockEditorOpenFor.get()?.selectionKey ===
+                    selectionKey
+                  ) {
                     event.preventDefault();
                   }
                 }}
@@ -454,7 +465,7 @@ export const Section = () => {
                 <DropdownMenuItem
                   withIndicator
                   disabled={readonly}
-                  onSelect={openStyleBlockEditor}
+                  onSelect={() => openStyleBlockEditor()}
                 >
                   Open code editor
                   <DropdownMenuItemRightSlot>
@@ -560,11 +571,17 @@ export const Section = () => {
         <StyleBlockDialog
           key={selectionKey}
           declarations={blockDeclarations}
+          source={editorSource}
+          sourceBlock={editorBlock}
           readonly={readonly}
           onApply={handleApplyBlock}
-          open={editorOpenFor === selectionKey}
+          open={editorOpenFor?.selectionKey === selectionKey}
           onOpenChange={(open) =>
-            $styleBlockEditorOpenFor.set(open ? selectionKey : undefined)
+            $styleBlockEditorOpenFor.set(
+              open && selectionKey !== undefined
+                ? { selectionKey, source: editorSource }
+                : undefined
+            )
           }
         />
       )}

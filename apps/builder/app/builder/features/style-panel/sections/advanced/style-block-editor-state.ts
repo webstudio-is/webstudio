@@ -5,7 +5,15 @@ import {
   $selectedOrLastStyleSourceSelector,
 } from "~/shared/nano-states";
 
-export const $styleBlockEditorOpenFor = atom<string | undefined>(undefined);
+export type StyleBlockEditorSource =
+  | "local"
+  | "cascaded"
+  | "preset"
+  | "globalVariables";
+
+export const $styleBlockEditorOpenFor = atom<
+  { selectionKey: string; source: StyleBlockEditorSource } | undefined
+>(undefined);
 
 export const getStyleBlockSelectionKey = () => {
   const instanceKey = $selectedInstanceKey.get();
@@ -17,9 +25,11 @@ export const getStyleBlockSelectionKey = () => {
   return `${instanceKey}:${breakpoint?.id}:${selector?.styleSourceId}:${selector?.state}`;
 };
 
-export const openStyleBlockEditor = () => {
+export const openStyleBlockEditor = (
+  source: StyleBlockEditorSource = "local"
+) => {
   const selectionKey = getStyleBlockSelectionKey();
   if (selectionKey !== undefined) {
-    $styleBlockEditorOpenFor.set(selectionKey);
+    $styleBlockEditorOpenFor.set({ selectionKey, source });
   }
 };
