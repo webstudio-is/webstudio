@@ -375,7 +375,7 @@ export const Section = () => {
                   disabled={readonly}
                   onSelect={openStyleBlockEditor}
                 >
-                  Open editor
+                  Open code editor
                   <DropdownMenuItemRightSlot>
                     <Kbd value={["alt", "shift", "x"]} />
                   </DropdownMenuItemRightSlot>
@@ -394,7 +394,7 @@ export const Section = () => {
                     setSetting("showCascadedStyles", checked === true)
                   }
                 >
-                  Show cascaded
+                  Show cascaded styles
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={showPresetStyles}
@@ -402,7 +402,7 @@ export const Section = () => {
                     setSetting("showPresetStyles", checked === true)
                   }
                 >
-                  Show preset
+                  Show preset styles
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={stickyAdvancedSection}

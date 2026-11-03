@@ -887,7 +887,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "openStyleBlockEditor",
-      description: "Open editor",
+      description: "Open code editor",
       category: "Style panel",
       defaultHotkeys: ["alt+shift+x"],
       handler: () => {
