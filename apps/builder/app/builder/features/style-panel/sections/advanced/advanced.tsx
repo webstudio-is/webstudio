@@ -8,9 +8,7 @@ import {
   DropdownMenuItemRightSlot,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  Box,
   Kbd,
-  Label,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
@@ -445,14 +443,6 @@ export const Section = () => {
         {codeEditingMode ? (
           selectedInstanceKey !== undefined && (
             <>
-              <Box
-                css={{
-                  paddingInline: theme.panel.paddingInline,
-                  paddingTop: theme.spacing[2],
-                }}
-              >
-                <Label>Local styles</Label>
-              </Box>
               <InlineStyleBlockEditor
                 key={selectionKey}
                 declarations={blockDeclarations}
