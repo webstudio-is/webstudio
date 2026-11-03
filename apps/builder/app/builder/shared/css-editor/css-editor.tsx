@@ -42,7 +42,6 @@ import {
 import {
   camelCaseProperty,
   keywordValues,
-  propertiesData,
   propertyDescriptions,
   shorthandProperties,
   parseCssValue,
@@ -359,6 +358,7 @@ const AdvancedPropertyLabel = ({
                   ? "CSS variable"
                   : styleDecl.property
               }
+              property={styleDecl.property}
               description={description}
               styles={[styleDecl]}
               onReset={() => {
@@ -367,7 +367,6 @@ const AdvancedPropertyLabel = ({
                 onReset?.();
               }}
               resetType="delete"
-              link={propertiesData[styleDecl.property]?.mdnUrl}
             />
           }
         >

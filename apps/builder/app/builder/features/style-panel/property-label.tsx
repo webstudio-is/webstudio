@@ -62,7 +62,7 @@ const renderCss = (styles: ComputedStyleDecl[], isComputed: boolean) => {
 export const PropertyInfo = ({
   title,
   code,
-  link,
+  property,
   description,
   styles,
   onReset,
@@ -70,7 +70,7 @@ export const PropertyInfo = ({
 }: {
   title: string;
   code?: string;
-  link?: string;
+  property: CssProperty;
   description: ReactNode;
   styles: ComputedStyleDecl[];
   onReset?: () => void;
@@ -131,15 +131,16 @@ export const PropertyInfo = ({
     }
   }
 
+  const mdnUrl = propertiesData[property]?.mdnUrl;
   return (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
       <Flex justify="between">
         <Text variant="titles" truncate>
           {title}
         </Text>
-        {link && (
+        {mdnUrl && (
           <IconLink
-            href={link}
+            href={mdnUrl}
             target="_blank"
             rel="noreferrer"
             color="inherit"
@@ -267,9 +268,9 @@ export const PropertyLabel = ({
       content={
         <PropertyInfo
           title={label}
+          property={properties[0]}
           description={description}
           styles={styles}
-          link={propertiesData[properties[0]]?.mdnUrl}
         />
       }
     >
@@ -318,9 +319,9 @@ export const PropertySectionLabel = ({
       content={
         <PropertyInfo
           title={label}
+          property={properties[0]}
           description={description}
           styles={styles}
-          link={propertiesData[properties[0]]?.mdnUrl}
         />
       }
     >
@@ -421,6 +422,7 @@ export const PropertyValueTooltip = ({
       content={
         <PropertyInfo
           title={label}
+          property={properties[0]}
           description={
             <Flex gap="2" direction="column">
               {description}
@@ -437,7 +439,6 @@ export const PropertyValueTooltip = ({
             resetProperty();
             setIsOpen(false);
           }}
-          link={propertiesData[properties[0]]?.mdnUrl}
         />
       }
     >
