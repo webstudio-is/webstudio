@@ -190,8 +190,13 @@ const shortcutStyle = css({
 const autocompletionTooltipTheme = EditorView.theme({
   ".cm-tooltip.cm-tooltip-autocomplete": {
     ...textVariants.mono,
-    border: "none",
-    backgroundColor: "transparent",
+    display: "flex",
+    flexDirection: "column",
+    borderRadius: rawTheme.borderRadius[6],
+    border: `1px solid ${cssVar("--border-default")}`,
+    backgroundColor: cssVar("--background-primary"),
+    boxShadow: rawTheme.shadows.menuDropShadow,
+    padding: `${rawTheme.spacing[3]} 0`,
     // override none set on body by radix popover
     pointerEvents: "auto",
   },
@@ -200,13 +205,9 @@ const autocompletionTooltipTheme = EditorView.theme({
     maxWidth: "260px",
     width: "max-content",
     boxSizing: "border-box",
-    borderRadius: rawTheme.borderRadius[6],
-    backgroundColor: cssVar("--background-primary"),
-    border: `1px solid ${cssVar("--border-default")}`,
-    boxShadow: `${rawTheme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar(
-      "--border-default"
-    )}`,
-    padding: rawTheme.spacing[3],
+    maxHeight: rawTheme.spacing[34],
+    padding: 0,
+    order: 1,
   },
   ".cm-tooltip.cm-tooltip-autocomplete ul li": {
     ...textVariants.labels,
@@ -215,7 +216,9 @@ const autocompletionTooltipTheme = EditorView.theme({
     display: "flex",
     alignItems: "center",
     color: cssVar("--foreground-primary"),
+    marginInline: rawTheme.spacing[3],
     padding: rawTheme.spacing[3],
+    paddingLeft: rawTheme.spacing[11],
     borderRadius: rawTheme.borderRadius[3],
   },
   ".cm-tooltip.cm-tooltip-autocomplete li[aria-selected], .cm-tooltip.cm-tooltip-autocomplete li:hover":
@@ -233,12 +236,22 @@ const autocompletionTooltipTheme = EditorView.theme({
     color: cssVar("--foreground-secondary"),
   },
   ".cm-tooltip.cm-completionInfo": {
-    borderRadius: rawTheme.borderRadius[6],
-    border: `1px solid ${cssVar("--border-default")}`,
-    backgroundColor: cssVar("--background-primary"),
-    boxShadow: rawTheme.shadows.menuDropShadow,
+    position: "static",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    border: "none",
+    borderTop: `1px solid ${cssVar("--border-default")}`,
+    backgroundColor: "transparent",
+    boxShadow: "none",
+    order: 2,
     padding: `${rawTheme.spacing[3]} 0`,
     whiteSpace: "normal",
+  },
+  ".cm-tooltip.cm-completionInfo.cm-completionInfo-above": {
+    borderTop: "none",
+    borderBottom: `1px solid ${cssVar("--border-default")}`,
+    order: 0,
   },
 });
 
