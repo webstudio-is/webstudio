@@ -1,10 +1,14 @@
 import { Fragment } from "react";
 import {
   Box,
+  Kbd,
   ResettableLabel,
   Separator,
+  SmallIconButton,
   theme,
+  Tooltip,
 } from "@webstudio-is/design-system";
+import { MaximizeIcon } from "@webstudio-is/icons";
 import {
   generateStyleMap,
   mergeStyles,
@@ -15,12 +19,63 @@ import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { CssFragmentEditorContent } from "../../shared/css-fragment";
 import { cssBlockLanguage } from "./style-block-dialog";
 import { getAdvancedStyleSource } from "./stores";
+import {
+  openStyleBlockEditor,
+  type StyleBlockEditorSource,
+} from "./style-block-editor-state";
 
-export const InheritedStylesPreview = ({
-  declarations,
+export const AdvancedStyleSourceHeader = ({
+  source,
+  title,
+  description,
+  readonly = false,
 }: {
-  declarations: ComputedStyleDecl[];
+  source: StyleBlockEditorSource;
+  title: string;
+  description: string;
+  readonly?: boolean;
 }) => {
+  const action =
+    source === "globalVariables"
+      ? "Open Global variables"
+      : `Open ${title} styles`;
+  return (
+    <Box
+      css={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
+      <ResettableLabel
+        color={source === "local" ? "local" : "remote"}
+        description={description}
+      >
+        {title}
+      </ResettableLabel>
+      <Tooltip
+        content={
+          source === "local" ? (
+            <>
+              {action} <Kbd value={["alt", "shift", "x"]} />
+            </>
+          ) : (
+            action
+          )
+        }
+      >
+        <SmallIconButton
+          aria-label={action}
+          icon={<MaximizeIcon />}
+          disabled={readonly}
+          onClick={() => openStyleBlockEditor(source)}
+        />
+      </Tooltip>
+    </Box>
+  );
+};
+
+export const getAdvancedStyleBlocks = (declarations: ComputedStyleDecl[]) => {
   const cascaded: StyleMap = new Map();
   const preset: StyleMap = new Map();
   const globalVariables: StyleMap = new Map();
@@ -35,9 +90,15 @@ export const InheritedStylesPreview = ({
     }
   }
 
-  const blocks: Array<{ title: string; value: string; tooltip: string }> = [];
+  const blocks: Array<{
+    source: StyleBlockEditorSource;
+    title: string;
+    value: string;
+    tooltip: string;
+  }> = [];
   if (cascaded.size > 0) {
     blocks.push({
+      source: "cascaded",
       title: "Cascaded",
       value: generateStyleMap(mergeStyles(cascaded)),
       tooltip:
@@ -46,6 +107,7 @@ export const InheritedStylesPreview = ({
   }
   if (preset.size > 0) {
     blocks.push({
+      source: "preset",
       title: "Preset",
       value: generateStyleMap(mergeStyles(preset)),
       tooltip:
@@ -54,17 +116,27 @@ export const InheritedStylesPreview = ({
   }
   if (globalVariables.size > 0) {
     blocks.push({
+      source: "globalVariables",
       title: "Global variables",
       value: generateStyleMap(mergeStyles(globalVariables)),
       tooltip:
         "These variables are defined on the Root instance and inherited by this element. They are read-only here because this editor changes only the selected style block. Edit them on Root, or define the same variable above to override them.",
     });
   }
+  return blocks;
+};
+
+export const InheritedStylesPreview = ({
+  declarations,
+}: {
+  declarations: ComputedStyleDecl[];
+}) => {
+  const blocks = getAdvancedStyleBlocks(declarations);
   if (blocks.length === 0) {
     return null;
   }
 
-  return blocks.map(({ title, value, tooltip }) => (
+  return blocks.map(({ source, title, value, tooltip }) => (
     <Fragment key={title}>
       <Separator />
       <Box
@@ -83,9 +155,11 @@ export const InheritedStylesPreview = ({
           },
         }}
       >
-        <ResettableLabel color="remote" description={tooltip}>
-          {title}
-        </ResettableLabel>
+        <AdvancedStyleSourceHeader
+          source={source}
+          title={title}
+          description={tooltip}
+        />
         <CssFragmentEditorContent
           ariaLabel={title}
           showLineNumbers={false}

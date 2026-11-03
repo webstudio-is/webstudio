@@ -201,6 +201,8 @@ Click the + button on the insertion line to enter a property and value.
 
 To add several declarations, press Shift+Enter in **Add styles** or paste CSS with line breaks. The highlighted editor expands in place. Click an existing property name to edit it inline. Press Shift+Enter in a value to add a line in the expanding editor. Press Tab from a value, or Enter at its end, to start another declaration below it. Open the Advanced section menu and choose **Open code editor**, or press Option+Shift+X, to use the centered editor.
 
+Use the maximize button beside a source label to open that source in the centered editor. Only Local is editable.
+
 Use the Advanced section menu to show cascaded styles, preset styles, or global variables. These sources are hidden by default. In Code view, they appear below the editable local styles.
 
 In Code view, search filters local, cascaded, preset, and global declarations. Local styles become read-only while a search is active; clear the search to edit the full local block.
@@ -212,6 +214,7 @@ on MDN** for compatibility details. Test these properties in the browsers your
 site supports before relying on them.
 
 **Common uses:**
+
 - Properties not exposed elsewhere: `cursor`, `pointer-events`, `will-change`, `content`, `list-style`, `appearance`, `resize`, `clip-path`, etc.
 - Defining [CSS variables](css-variables.md): add a property like `--my-color` with a value, and it becomes available to all child instances
 - Setting properties you know by name without searching the panel

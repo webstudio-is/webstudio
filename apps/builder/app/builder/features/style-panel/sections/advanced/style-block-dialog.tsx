@@ -28,6 +28,7 @@ import {
   parseStyleInput,
 } from "~/builder/shared/css-editor/parse-style-input";
 import { cannotRoundTripAsCssText } from "~/builder/shared/css-editor/css-editor";
+import type { StyleBlockEditorSource } from "./style-block-editor-state";
 import {
   getAutocompleteItems,
   matchOrSuggestToCreate,
@@ -95,7 +96,7 @@ const blockCompletionSource: CompletionSource = async (context) => {
       : "";
     const keywords = keywordValues[property as CssProperty] ?? [];
     return {
-      from: firstType === "keyword" ? (completion?.from ?? pos) : pos,
+      from: firstType === "keyword" ? completion?.from ?? pos : pos,
       to: node.name === "ValueName" ? node.to : undefined,
       options: [
         ...keywords.map((value) => ({ label: value, type: "keyword" })),
@@ -114,7 +115,7 @@ const blockCompletionSource: CompletionSource = async (context) => {
   const from =
     isVariableProperty || (isPropertyLine && node.name === "TagName")
       ? node.from
-      : (completion?.from ?? pos);
+      : completion?.from ?? pos;
   const search = state.doc.sliceString(from, pos);
   const items = matchOrSuggestToCreate(search, getAutocompleteItems());
   return {
@@ -332,6 +333,8 @@ const StyleBlockEditor = ({
   open,
   onOpenChange,
   inline = false,
+  source = "local",
+  sourceBlock,
 }: {
   declarations: Declaration[];
   readonly: boolean;
@@ -339,6 +342,8 @@ const StyleBlockEditor = ({
   onOpenChange: (open: boolean) => void;
   onApply: (changes: ApplyChanges) => void;
   inline?: boolean;
+  source?: StyleBlockEditorSource;
+  sourceBlock?: { title: string; value: string };
 }) => {
   const [code, setCode] = useState("");
   const declarationsRef = useRef(declarations);
@@ -433,7 +438,12 @@ const StyleBlockEditor = ({
   }, [inline, declarations]);
 
   const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen && open && codeRef.current !== initialCodeRef.current) {
+    if (
+      !nextOpen &&
+      open &&
+      source === "local" &&
+      codeRef.current !== initialCodeRef.current
+    ) {
       applyChanges();
     }
     onOpenChange(nextOpen);
@@ -485,20 +495,28 @@ const StyleBlockEditor = ({
       }
     >
       <CssFragmentEditorContent
-        ariaLabel="Style block editor"
+        key={source}
+        ariaLabel={sourceBlock?.title ?? "Style block editor"}
         language={cssBlockLanguage}
-        completionSource={blockCompletionSource}
+        completionSource={
+          source === "local" ? blockCompletionSource : undefined
+        }
         autoFocus={!inline}
         chromeless={inline}
         showLineNumbers={!inline}
-        readOnly={readonly}
-        extensions={extensions}
-        value={code}
+        readOnly={readonly || source !== "local"}
+        extensions={source === "local" ? extensions : undefined}
+        value={source === "local" ? code : sourceBlock?.value ?? ""}
         onChange={(value) => {
-          codeRef.current = value;
-          setCode(value);
+          if (source === "local") {
+            codeRef.current = value;
+            setCode(value);
+          }
         }}
         onChangeComplete={(_value, event) => {
+          if (source !== "local") {
+            return;
+          }
           if (inline) {
             applyChanges();
           } else if (event === undefined) {
@@ -514,7 +532,7 @@ const StyleBlockEditor = ({
   }
   return (
     <EditorDialog
-      title="Style block editor"
+      title={sourceBlock?.title ?? "Style block editor"}
       modal
       open={open}
       onOpenChange={handleOpenChange}
@@ -530,6 +548,6 @@ export const StyleBlockDialog = (
 export const InlineStyleBlockEditor = (
   props: Omit<
     Parameters<typeof StyleBlockEditor>[0],
-    "open" | "onOpenChange" | "inline"
+    "open" | "onOpenChange" | "inline" | "source" | "sourceBlock"
   >
 ) => <StyleBlockEditor {...props} inline open onOpenChange={() => {}} />;
