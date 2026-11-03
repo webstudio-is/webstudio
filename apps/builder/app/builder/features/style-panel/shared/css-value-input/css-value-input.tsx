@@ -1055,7 +1055,16 @@ export const CssValueInput = ({
                       const colorValue = getItemColor(item);
                       const gradientValue = getItemGradient(item);
                       const labelElement = (
-                        <Text truncate css={{ maxWidth: theme.spacing[30] }}>
+                        <Text
+                          truncate={item.type !== "var"}
+                          css={{
+                            maxWidth: theme.spacing[30],
+                            ...(item.type === "var" && {
+                              minWidth: 0,
+                              overflowWrap: "anywhere",
+                            }),
+                          }}
+                        >
                           {label}
                         </Text>
                       );
