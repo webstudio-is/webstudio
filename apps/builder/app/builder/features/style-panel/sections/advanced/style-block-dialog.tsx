@@ -63,7 +63,7 @@ const dialogTitles: Record<StyleBlockEditorSource, string> = {
 
 export const cssBlockLanguage = cssLanguage.configure({ top: "Styles" });
 
-const blockCompletionSource: CompletionSource = async (context) => {
+export const blockCompletionSource: CompletionSource = async (context) => {
   const completion = await cssCompletionSource(context);
   const { state, pos } = context;
   const tree = syntaxTree(state);
@@ -75,11 +75,14 @@ const blockCompletionSource: CompletionSource = async (context) => {
     (node.name === "TagName" ||
       (node.name === "Styles" && line.text.trim() === ""));
   const isVariableProperty =
-    node.name === "VariableName" && node.parent?.name === "Declaration";
+    node.name === "VariableName" &&
+    node.parent?.name === "Declaration" &&
+    (node.parent.getChild(":")?.from ?? Infinity) > node.from;
 
-  if (!isVariableProperty && firstType === "variable") {
+  if (node.name === "VariableName" && node.parent?.name === "ArgList") {
     return {
-      from: completion?.from ?? pos,
+      from: node.from,
+      to: node.to,
       options: [
         ...(completion?.options ?? []),
         ...$availableVariables.get().map(({ value }) => ({
@@ -113,8 +116,16 @@ const blockCompletionSource: CompletionSource = async (context) => {
       : "";
     const keywords = keywordValues[property as CssProperty] ?? [];
     return {
-      from: firstType === "keyword" ? (completion?.from ?? pos) : pos,
-      to: node.name === "ValueName" ? node.to : undefined,
+      from:
+        node.name === "VariableName"
+          ? node.from
+          : firstType === "keyword"
+            ? (completion?.from ?? pos)
+            : pos,
+      to:
+        node.name === "VariableName" || node.name === "ValueName"
+          ? node.to
+          : undefined,
       options: [
         ...keywords.map((value) => ({ label: value, type: "keyword" })),
         ...$availableVariables.get().map(({ value }) => ({

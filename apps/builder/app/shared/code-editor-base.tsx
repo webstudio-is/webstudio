@@ -123,7 +123,7 @@ const editorContentStyle = css({
     borderColor: cssVar("--border-negative"),
     outlineColor: cssVar("--border-negative"),
   },
-  '[role="dialog"] &': {
+  "[data-editor-dialog-content] &": {
     background: "transparent",
     borderWidth: 0,
     padding: 0,
@@ -647,6 +647,7 @@ export const EditorDialog = ({
       resize="both"
       content={
         <PanelContent
+          data-editor-dialog-content
           as={Grid}
           align="stretch"
           css={{

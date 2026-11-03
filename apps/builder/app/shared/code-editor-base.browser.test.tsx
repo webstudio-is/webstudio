@@ -4,12 +4,18 @@ import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { userEvent } from "@vitest/browser/context";
-import { cssVar } from "@webstudio-is/design-system";
+import {
+  cssVar,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@webstudio-is/design-system";
 import "@webstudio-is/design-system/global.css";
 import {
   EditorContent,
   EditorDialogButton,
   EditorDialogControl,
+  EditorDialog,
 } from "./code-editor-base";
 
 (
@@ -170,4 +176,49 @@ test("keeps the editor maximize button background transparent when hovered", asy
   expect(getComputedStyle(maximizeButton).backgroundColor).toBe(
     "rgba(0, 0, 0, 0)"
   );
+});
+
+test("keeps editor chrome in form dialogs but removes it in editor dialogs", () => {
+  act(() => {
+    root.render(
+      <Dialog open>
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle>Settings</DialogTitle>
+          <EditorContent
+            value="settings code"
+            onChange={() => {}}
+            onChangeComplete={() => {}}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  });
+  const formEditor = document.querySelector<HTMLElement>(
+    '[role="dialog"] .cm-editor'
+  )?.parentElement;
+  expect(formEditor).toBeDefined();
+  expect(getComputedStyle(formEditor!).borderLeftWidth).toBe("1px");
+  expect(getComputedStyle(formEditor!).paddingLeft).not.toBe("0px");
+
+  act(() => {
+    root.render(
+      <EditorDialog
+        open
+        title="Code editor"
+        content={
+          <EditorContent
+            value="full editor"
+            onChange={() => {}}
+            onChangeComplete={() => {}}
+          />
+        }
+      />
+    );
+  });
+  const fullEditor = document.querySelector<HTMLElement>(
+    '[role="dialog"] .cm-editor'
+  )?.parentElement;
+  expect(fullEditor).toBeDefined();
+  expect(getComputedStyle(fullEditor!).borderLeftWidth).toBe("0px");
+  expect(getComputedStyle(fullEditor!).paddingLeft).toBe("0px");
 });
