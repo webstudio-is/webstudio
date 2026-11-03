@@ -20,7 +20,6 @@ import {
   propertyDescriptions,
 } from "@webstudio-is/css-data";
 import {
-  generateStyleMap,
   hyphenateProperty,
   toValue,
   type CssProperty,
@@ -36,6 +35,7 @@ import {
 } from "~/builder/shared/css-editor/parse-style-input";
 import { cannotRoundTripAsCssText } from "~/builder/shared/css-editor/css-editor";
 import type { StyleBlockEditorSource } from "./style-block-editor-state";
+import { formatStyleBlock } from "./style-block-format";
 import {
   getAutocompleteItems,
   matchOrSuggestToCreate,
@@ -429,7 +429,7 @@ const StyleBlockEditor = ({
           value,
         ])
       );
-      const value = generateStyleMap(oldStyles);
+      const value = formatStyleBlock(oldStyles, $cssVarsMap.get());
       setInitialStyles(oldStyles, value);
     }
   }, [open]);
@@ -442,7 +442,7 @@ const StyleBlockEditor = ({
           value,
         ])
       );
-      const savedCode = generateStyleMap(oldStyles);
+      const savedCode = formatStyleBlock(oldStyles, $cssVarsMap.get());
       if (codeRef.current === initialCodeRef.current) {
         if (savedCode !== initialCodeRef.current) {
           setInitialStyles(oldStyles, savedCode);
