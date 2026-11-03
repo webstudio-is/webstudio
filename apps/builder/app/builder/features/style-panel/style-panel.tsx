@@ -7,7 +7,7 @@ import {
   Card,
   Text,
   Separator,
-  ScrollArea,
+  ScrollAreaNative,
   DropdownMenu,
   DropdownMenuTrigger,
   IconButton,
@@ -147,7 +147,7 @@ export const StylePanel = () => {
         <StyleSourcesSection />
       </PanelContent>
       <Separator />
-      <ScrollArea>
+      <ScrollAreaNative css={{ flex: 1, minHeight: 0 }}>
         <CollapsibleProvider
           accordion={stylePanelMode === "focus"}
           initialOpen={stylePanelMode === "focus" ? "Layout" : "*"}
@@ -156,7 +156,7 @@ export const StylePanel = () => {
         >
           {all}
         </CollapsibleProvider>
-      </ScrollArea>
+      </ScrollAreaNative>
     </ReadonlyProvider>
   );
 };

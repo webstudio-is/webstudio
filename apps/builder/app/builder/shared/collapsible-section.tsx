@@ -31,14 +31,14 @@ const sectionStyle = css({
       true: { background: cssVar("--background-primary") },
     },
     sticky: {
-      true: { position: "sticky", bottom: 0, zIndex: 1 },
+      true: { position: "sticky", bottom: 0 },
     },
     stickyHeader: {
       true: {
         "& > [data-focus-scope-start] + [data-state]": {
           position: "sticky",
           top: 0,
-          zIndex: 1,
+          isolation: "isolate",
           background: cssVar("--background-primary"),
         },
       },
