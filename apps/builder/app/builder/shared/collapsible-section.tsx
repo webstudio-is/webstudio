@@ -33,6 +33,16 @@ const sectionStyle = css({
     sticky: {
       true: { position: "sticky", bottom: 0, zIndex: 1 },
     },
+    stickyHeader: {
+      true: {
+        "& > :first-child": {
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          background: cssVar("--background-primary"),
+        },
+      },
+    },
   },
 });
 
@@ -53,6 +63,7 @@ const CollapsibleSectionContext = createContext<
   | {
       handleOpenState: HandleOpenState;
       sectionBackground: boolean;
+      stickyHeaders: boolean;
     }
 >(undefined);
 
@@ -61,11 +72,13 @@ export const CollapsibleProvider = ({
   accordion,
   initialOpen,
   sectionBackground = false,
+  stickyHeaders = false,
 }: {
   children: ReactNode;
   accordion?: boolean;
   initialOpen?: Label;
   sectionBackground?: boolean;
+  stickyHeaders?: boolean;
 }) => {
   const state = useStore($state);
   useEffect(() => {
@@ -115,7 +128,7 @@ export const CollapsibleProvider = ({
 
   return (
     <CollapsibleSectionContext.Provider
-      value={{ handleOpenState, sectionBackground }}
+      value={{ handleOpenState, sectionBackground, stickyHeaders }}
     >
       {children}
     </CollapsibleSectionContext.Provider>
@@ -152,14 +165,18 @@ export const CollapsibleSectionRoot = ({
   onOpenChange,
   sticky,
 }: CollapsibleSectionBaseProps) => {
-  const sectionBackground =
-    useContext(CollapsibleSectionContext)?.sectionBackground ?? false;
+  const { sectionBackground = false, stickyHeaders = false } =
+    useContext(CollapsibleSectionContext) ?? {};
   return (
     <Collapsible.Root
       defaultOpen
       open={isOpen}
       onOpenChange={onOpenChange}
-      className={sectionStyle({ background: sectionBackground, sticky })}
+      className={sectionStyle({
+        background: sectionBackground,
+        sticky,
+        stickyHeader: stickyHeaders,
+      })}
     >
       <Collapsible.Trigger asChild>
         {trigger ?? (
