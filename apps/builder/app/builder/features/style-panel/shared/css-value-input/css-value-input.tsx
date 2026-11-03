@@ -919,7 +919,7 @@ export const CssValueInput = ({
   const valueEditorButtonElement = isComplexValue(value) ? (
     <ValueEditorDialog
       property={property}
-      value={inputProps.value}
+      value={value.type === "var" ? toValue(value) : inputProps.value}
       onChangeComplete={(value) => {
         onChangeComplete({
           type: "dialog-change-complete",
