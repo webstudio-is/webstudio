@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
   Kbd,
   PanelContent,
+  ResettableLabel,
   SearchField,
   SectionTitle,
   SectionTitleButton,
@@ -151,12 +152,19 @@ const CodeView = ({
         />
       </PanelContent>
       {(!searching || localDeclarations.length > 0) && (
-        <InlineStyleBlockEditor
-          key={searching ? "search" : "edit"}
-          declarations={localDeclarations}
-          readonly={readonly || searching}
-          onApply={searching ? () => {} : onApply}
-        />
+        <>
+          <PanelContent css={{ paddingBlock: theme.spacing[2] }}>
+            <ResettableLabel description="These styles are defined on the selected style block for the current breakpoint and state. Edit them here, or use the style source selector to edit a different block.">
+              Local
+            </ResettableLabel>
+          </PanelContent>
+          <InlineStyleBlockEditor
+            key={searching ? "search" : "edit"}
+            declarations={localDeclarations}
+            readonly={readonly || searching}
+            onApply={searching ? () => {} : onApply}
+          />
+        </>
       )}
       <InheritedStylesPreview declarations={visibleDeclarations} />
     </>

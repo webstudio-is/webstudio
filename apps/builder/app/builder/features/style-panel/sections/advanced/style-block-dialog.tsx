@@ -22,11 +22,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { $availableVariables, $cssVarsMap } from "../../shared/model";
 import { CssFragmentEditorContent } from "../../shared/css-fragment";
-import {
-  EditorDialog,
-  getCodeEditorCssVars,
-  linterTooltipTheme,
-} from "~/shared/code-editor-base";
+import { EditorDialog, linterTooltipTheme } from "~/shared/code-editor-base";
 import {
   parsePropertyName,
   parseStyleInput,
@@ -476,7 +472,6 @@ const StyleBlockEditor = ({
           ? {
               paddingInline: `calc(${theme.panel.paddingInline} + ${theme.spacing[2]} + 1px)`,
               paddingBlock: theme.spacing[2],
-              ...getCodeEditorCssVars({ minHeight: "8lh", maxHeight: "none" }),
               "& > div": {
                 background: "transparent",
                 borderWidth: 0,
