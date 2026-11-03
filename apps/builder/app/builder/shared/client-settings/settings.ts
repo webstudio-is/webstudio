@@ -14,6 +14,7 @@ const userSettings = z.object({
   stickyAdvancedSection: z.boolean().default(false),
   showCascadedStyles: z.boolean().default(false),
   showPresetStyles: z.boolean().default(false),
+  showGlobalVariables: z.boolean().default(false),
   sidebarPanelWidths: z
     .partialRecord(z.enum(sidebarPanelNames), z.number())
     .default({}),

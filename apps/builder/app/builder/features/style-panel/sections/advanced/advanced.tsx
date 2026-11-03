@@ -43,7 +43,10 @@ import { getDots } from "../../shared/style-section";
 import { CssEditor } from "../../../../shared/css-editor";
 import { insertStyleDeclarations } from "../../../../shared/css-editor/css-editor";
 import { createDeclarationActions } from "../../../../shared/css-editor/css-editor-context-menu";
-import { $advancedStyleDeclarations } from "./stores";
+import {
+  $advancedStyleDeclarations,
+  $visibleAdvancedStyleDeclarations,
+} from "./stores";
 import {
   $styleBlockEditorOpenFor,
   getStyleBlockSelectionKey,
@@ -99,6 +102,9 @@ const AdvancedStyleSection = (props: {
 
 export const Section = () => {
   const advancedStyleDeclarations = useStore($advancedStyleDeclarations);
+  const visibleAdvancedStyleDeclarations = useStore(
+    $visibleAdvancedStyleDeclarations
+  );
   const computedStyleDeclarations = useStore($computedStyleDeclarations);
   const readonly = useReadonly();
   const {
@@ -106,6 +112,7 @@ export const Section = () => {
     stickyAdvancedSection,
     showCascadedStyles,
     showPresetStyles,
+    showGlobalVariables,
   } = useStore($settings);
   const properties = advancedStyleDeclarations.map(
     (styleDecl) => styleDecl.property
@@ -405,6 +412,14 @@ export const Section = () => {
                   Show preset styles
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
+                  checked={showGlobalVariables}
+                  onCheckedChange={(checked) =>
+                    setSetting("showGlobalVariables", checked === true)
+                  }
+                >
+                  Show global variables
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
                   checked={stickyAdvancedSection}
                   onCheckedChange={(checked) =>
                     setSetting("stickyAdvancedSection", checked === true)
@@ -450,9 +465,7 @@ export const Section = () => {
                 onApply={handleApplyBlock}
               />
               <InheritedStylesPreview
-                declarations={computedStyleDeclarations}
-                showCascaded={showCascadedStyles}
-                showPreset={showPresetStyles}
+                declarations={visibleAdvancedStyleDeclarations}
               />
             </>
           )
