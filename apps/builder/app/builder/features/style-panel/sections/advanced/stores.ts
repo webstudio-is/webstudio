@@ -1,15 +1,13 @@
 import { computed } from "nanostores";
 import type { CssProperty } from "@webstudio-is/css-engine";
-import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { $settings } from "~/builder/shared/client-settings";
-import { $selectedInstance } from "~/shared/nano-states";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { $computedStyleDeclarations } from "../../shared/model";
 import { sections } from "../sections";
 
 export const $advancedStyleDeclarations = computed(
-  [$computedStyleDeclarations, $settings, $selectedInstance],
-  (computedStyleDeclarations, settings, selectedInstance) => {
+  [$computedStyleDeclarations, $settings],
+  (computedStyleDeclarations, settings) => {
     const advancedStyles = new Map<
       ComputedStyleDecl["property"],
       ComputedStyleDecl
@@ -22,15 +20,15 @@ export const $advancedStyleDeclarations = computed(
       }
     }
     for (const styleDecl of computedStyleDeclarations) {
-      // We don't want to show the massive amount of root variables on child instances.
-      // @todo add filters to the UI to allow user decide.
-      if (
-        styleDecl.source.name === "remote" &&
-        styleDecl.source.instanceId === ROOT_INSTANCE_ID &&
-        styleDecl.source.instanceId !== selectedInstance?.id
-      ) {
+      if (styleDecl.source.name === "remote" && !settings.showCascadedStyles) {
         continue;
       }
+      if (styleDecl.source.name === "preset" && !settings.showPresetStyles) {
+        continue;
+      }
+      const showSource =
+        styleDecl.source.name === "remote" ||
+        styleDecl.source.name === "preset";
       // ignore predefined styles in advanced mode
       // @todo will be deleted https://github.com/webstudio-is/webstudio/issues/4871
       if (
@@ -45,7 +43,8 @@ export const $advancedStyleDeclarations = computed(
       if (
         visualProperties.has(property) === false ||
         listed ||
-        settings.stylePanelMode === "advanced"
+        settings.stylePanelMode === "advanced" ||
+        showSource
       ) {
         advancedStyles.set(styleDecl.property, styleDecl);
       }
