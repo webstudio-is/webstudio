@@ -130,7 +130,6 @@ export const DialogMaximize = forwardRef(
         color="ghost"
         prefix={isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}
         aria-label="Expand"
-        style={{ background: "transparent" }}
         onClick={() => setIsMaximized(isMaximized ? false : true)}
         {...props}
         ref={ref}

@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { linter, type Diagnostic } from "@codemirror/lint";
 import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
 import { syntaxTree } from "@codemirror/language";
-import { StateField } from "@codemirror/state";
-import { Decoration, EditorView, placeholder } from "@codemirror/view";
+import { EditorState, StateField } from "@codemirror/state";
+import { Decoration, EditorView, keymap, placeholder } from "@codemirror/view";
 import type { CompletionSource } from "@codemirror/autocomplete";
-import { generate, parse } from "css-tree";
+import { generate, parse, tokenize, tokenTypes } from "css-tree";
 import {
   theme,
   Box,
@@ -174,7 +174,44 @@ const getProtectedProperties = (styles: CssStyleMap) =>
       .map(([property]) => property)
   );
 
-const parseBlock = (source: string) => {
+const hasMissingSeparator = (source: string, offset: number) => {
+  let propertyStart: number | undefined;
+  let previousToken: { type: number; start: number } | undefined;
+  tokenize(source, (type, start) => {
+    if (start === offset && type === tokenTypes.Colon) {
+      if (previousToken?.type === tokenTypes.Ident) {
+        propertyStart = previousToken.start;
+      }
+    }
+    if (type !== tokenTypes.WhiteSpace) {
+      previousToken = { type, start };
+    }
+  });
+  if (propertyStart === undefined) {
+    return false;
+  }
+  const isDeclarationList = (text: string) => {
+    let hasError = false;
+    const ast = parse(text, {
+      context: "declarationList",
+      onParseError: () => {
+        hasError = true;
+      },
+    });
+    const last = ast.children.last;
+    return (
+      !hasError &&
+      last?.type === "Declaration" &&
+      generate(last.value).trim() !== ""
+    );
+  };
+  return (
+    isDeclarationList(source.slice(0, propertyStart)) &&
+    isDeclarationList(source.slice(propertyStart))
+  );
+};
+
+export const parseBlock = (source: string) => {
   const diagnostics: Diagnostic[] = [];
   const declarations: Array<{
     text: string;
@@ -204,7 +241,9 @@ const parseBlock = (source: string) => {
           from: error.offset,
           to: Math.min(source.length, error.offset + 1),
           severity: "error",
-          message: error.message,
+          message: hasMissingSeparator(source, error.offset)
+            ? "Add a semicolon after the previous declaration."
+            : error.message,
         });
       },
     });
@@ -375,6 +414,45 @@ const StyleBlockEditor = ({
     () => [
       blockParseField,
       overriddenDeclarationTheme,
+      keymap.of([
+        {
+          key: "Enter",
+          run(view) {
+            const { from, to } = view.state.selection.main;
+            const line = view.state.doc.lineAt(from);
+            if (
+              view.state.facet(EditorState.readOnly) ||
+              from !== to ||
+              from !== line.to ||
+              line.text.trimEnd().endsWith(";")
+            ) {
+              return false;
+            }
+            let hasError = false;
+            const ast = parse(line.text, {
+              context: "declarationList",
+              positions: true,
+              onParseError: () => {
+                hasError = true;
+              },
+            });
+            const last = ast.children.last;
+            if (
+              hasError ||
+              last?.type !== "Declaration" ||
+              last.loc?.end.offset !== line.text.length ||
+              generate(last.value).trim() === ""
+            ) {
+              return false;
+            }
+            view.dispatch({
+              changes: { from, insert: ";\n" },
+              selection: { anchor: from + 2 },
+            });
+            return true;
+          },
+        },
+      ]),
       linter(
         (view) => {
           const {
