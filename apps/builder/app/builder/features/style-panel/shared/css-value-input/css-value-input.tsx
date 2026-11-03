@@ -18,6 +18,7 @@ import {
   Flex,
   styled,
   ColorThumb,
+  cssVar,
 } from "@webstudio-is/design-system";
 import type {
   CssProperty,
@@ -46,6 +47,9 @@ import {
   declarationDescriptions,
   isValidDeclaration,
   parseColor,
+  parseConicGradient,
+  parseLinearGradient,
+  parseRadialGradient,
 } from "@webstudio-is/css-data";
 import { $selectedInstanceSizes } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
@@ -386,6 +390,21 @@ const getItemColor = (item: CssValueInputValue): string | undefined => {
   }
   if (colorString !== undefined && parseColor(colorString) !== undefined) {
     return colorString;
+  }
+};
+
+const getItemGradient = (item: CssValueInputValue): string | undefined => {
+  if (item.type !== "var" || item.fallback === undefined) {
+    return;
+  }
+  const value = toValue(item.fallback);
+  if (
+    value.includes("gradient(") &&
+    (parseLinearGradient(value) ||
+      parseConicGradient(value) ||
+      parseRadialGradient(value))
+  ) {
+    return value;
   }
 };
 
@@ -1018,18 +1037,38 @@ export const CssValueInput = ({
                     {(() => {
                       const label = itemToString(item);
                       const colorValue = getItemColor(item);
+                      const gradientValue = getItemGradient(item);
                       const labelElement = (
                         <Text truncate css={{ maxWidth: theme.spacing[30] }}>
                           {label}
                         </Text>
                       );
-                      if (colorValue === undefined) {
+                      if (
+                        colorValue === undefined &&
+                        gradientValue === undefined
+                      ) {
                         return labelElement;
                       }
                       return (
                         <Flex justify="between" align="center" grow gap={2}>
                           {labelElement}
-                          <ColorThumb color={colorValue} />
+                          {colorValue ? (
+                            <ColorThumb color={colorValue} />
+                          ) : (
+                            <Box
+                              as="span"
+                              aria-hidden
+                              css={{
+                                display: "block",
+                                flexShrink: 0,
+                                width: theme.spacing[9],
+                                height: theme.spacing[9],
+                                borderRadius: theme.borderRadius[2],
+                                border: `1px solid ${cssVar("--border-default")}`,
+                                backgroundImage: gradientValue,
+                              }}
+                            />
+                          )}
                         </Flex>
                       );
                     })()}
