@@ -1,7 +1,7 @@
 import {
   Box,
   Flex,
-  ScrollArea,
+  ScrollAreaNative,
   StorySection,
   Text,
   cssVar,
@@ -72,7 +72,7 @@ export const CollapsibleSections = () => (
 );
 
 export const StickySectionHeaders = () => (
-  <ScrollArea css={{ height: 240, width: theme.sizes.sidebarWidth }}>
+  <ScrollAreaNative css={{ height: 240, width: theme.sizes.sidebarWidth }}>
     <CollapsibleProvider sectionBackground stickyHeaders>
       <CollapsibleSection label="Layout">
         <Box
@@ -85,5 +85,5 @@ export const StickySectionHeaders = () => (
         />
       </CollapsibleSection>
     </CollapsibleProvider>
-  </ScrollArea>
+  </ScrollAreaNative>
 );
