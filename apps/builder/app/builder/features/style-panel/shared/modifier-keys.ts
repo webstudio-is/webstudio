@@ -1,5 +1,19 @@
 import { useState, useEffect } from "react";
 import { shallowEqual } from "shallow-equal";
+import { atom } from "nanostores";
+
+export const $isAltPressed = atom(false);
+if (typeof window !== "undefined") {
+  window.addEventListener("keydown", (event) => {
+    $isAltPressed.set(event.altKey);
+  });
+  window.addEventListener("keyup", (event) => {
+    $isAltPressed.set(event.altKey);
+  });
+  window.addEventListener("blur", () => {
+    $isAltPressed.set(false);
+  });
+}
 
 export type Modifiers = {
   altKey: boolean;

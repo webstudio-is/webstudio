@@ -1,4 +1,3 @@
-import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useState, type ReactNode } from "react";
 import { AlertIcon, ResetIcon } from "@webstudio-is/icons";
@@ -30,20 +29,7 @@ import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
 import { $virtualInstances } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
-
-const $isAltPressed = atom(false);
-if (typeof window !== "undefined") {
-  addEventListener("keydown", (event) => {
-    if (event.key === "Alt") {
-      $isAltPressed.set(true);
-    }
-  });
-  addEventListener("keyup", (event) => {
-    if (event.key === "Alt") {
-      $isAltPressed.set(false);
-    }
-  });
-}
+import { $isAltPressed } from "./shared/modifier-keys";
 
 const renderCss = (styles: ComputedStyleDecl[], isComputed: boolean) => {
   let css = "";
