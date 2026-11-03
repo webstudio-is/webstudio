@@ -152,6 +152,7 @@ export const StylePanel = () => {
           accordion={stylePanelMode === "focus"}
           initialOpen={stylePanelMode === "focus" ? "Layout" : "*"}
           sectionBackground
+          stickyHeaders
         >
           {all}
         </CollapsibleProvider>
