@@ -11,7 +11,9 @@ import type { Extension } from "@codemirror/state";
 import { css } from "@codemirror/lang-css";
 import {
   autocompletion,
+  CompletionContext,
   completionKeymap,
+  selectedCompletion,
   type CompletionSource,
 } from "@codemirror/autocomplete";
 import { parseCss, shorthandProperties } from "@webstudio-is/css-data";
@@ -108,6 +110,7 @@ export const CssFragmentEditorContent = ({
   onKeyDown,
   language,
   completionSource,
+  onCompletionHighlight,
   extensions: extraExtensions = emptyExtensions,
   showLineNumbers = false,
   ...props
@@ -115,9 +118,13 @@ export const CssFragmentEditorContent = ({
   onKeyDown?: (event: KeyboardEvent) => void;
   language?: Extension;
   completionSource?: CompletionSource;
+  onCompletionHighlight?: (value: string | undefined) => void;
 }) => {
   const onKeyDownRef = useRef(onKeyDown);
   onKeyDownRef.current = onKeyDown;
+  const onCompletionHighlightRef = useRef(onCompletionHighlight);
+  onCompletionHighlightRef.current = onCompletionHighlight;
+  const highlightedCompletionRef = useRef<string>();
   const extensions = useMemo(() => {
     return [
       language ?? css(),
@@ -144,6 +151,23 @@ export const CssFragmentEditorContent = ({
         keydown(event) {
           onKeyDownRef.current?.(event);
         },
+      }),
+      EditorView.updateListener.of(({ state }) => {
+        const completion = selectedCompletion(state);
+        const cursor = state.selection.main.head;
+        const word = completion
+          ? new CompletionContext(state, cursor, false).matchBefore(/[-\w()]+/)
+          : undefined;
+        const preview =
+          completion && word
+            ? state.doc.sliceString(0, word.from) +
+              completion.label +
+              state.doc.sliceString(word.to)
+            : undefined;
+        if (preview !== highlightedCompletionRef.current) {
+          highlightedCompletionRef.current = preview;
+          onCompletionHighlightRef.current?.(preview);
+        }
       }),
       ...extraExtensions,
     ];

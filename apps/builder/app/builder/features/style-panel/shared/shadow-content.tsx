@@ -166,6 +166,16 @@ export const ShadowContent = ({
     });
   };
 
+  const handleCompletionHighlight = (preview: string | undefined) => {
+    const { styles } = parseCssFragment(preview ?? propertyValue, [
+      parsedShadowProperty,
+    ]);
+    const value = styles.get(parsedShadowProperty);
+    if (value?.type === "layers" || value?.type === "var") {
+      onEditLayer(index, value, { isEphemeral: true });
+    }
+  };
+
   const handleComplete = () => {
     if (intermediateValue === undefined) {
       return;
@@ -438,6 +448,7 @@ export const ShadowContent = ({
                   autoFocus={disabledControls}
                   value={intermediateValue?.value ?? propertyValue ?? ""}
                   onChange={handleChange}
+                  onCompletionHighlight={handleCompletionHighlight}
                   onChangeComplete={handleComplete}
                 />
               }
