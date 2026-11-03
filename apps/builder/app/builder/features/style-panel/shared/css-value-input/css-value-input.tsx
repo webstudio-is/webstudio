@@ -694,9 +694,7 @@ export const CssValueInput = ({
     if (
       isAltPressed &&
       props.intermediateValue === undefined &&
-      props.value !== undefined &&
-      (props.value.type === "var" ||
-        (props.value.type === "unparsed" && props.value.value.includes("var(")))
+      props.value !== undefined
     ) {
       const declaration = $computedStyleDeclarations
         .get()
@@ -989,12 +987,8 @@ export const CssValueInput = ({
             value={getInputValue()}
             onFocus={(event) => {
               if (event.target instanceof HTMLInputElement) {
-                // We are setting the value on focus because we might have removed the var() from the value,
-                // but once focused, we need to show the full value
-                event.target.value =
-                  value.type === "var"
-                    ? toValue(value as StyleValue)
-                    : itemToString(value);
+                // Keep the Alt preview or the full var() value when focus changes.
+                event.target.value = getInputValue();
               }
             }}
             autoFocus={autoFocus}
