@@ -246,6 +246,13 @@ export const CodeEditor = forwardRef<
       document.removeEventListener("pointerdown", handlePointerDown, options);
     };
   }, []);
+  const inlineContent = (
+    <EditorContent
+      {...editorContentProps}
+      showLineNumbers={editorContentProps.showLineNumbers ?? size === "full"}
+      extensions={extensions}
+    />
+  );
   return (
     <div
       className={wrapperStyle({ size, color })}
@@ -253,16 +260,17 @@ export const CodeEditor = forwardRef<
       aria-invalid={color === "error" || undefined}
     >
       {expandable === false ? (
-        <EditorContent {...editorContentProps} extensions={extensions} />
+        inlineContent
       ) : (
         <EditorDialogControl>
-          <EditorContent {...editorContentProps} extensions={extensions} />
+          {inlineContent}
           <EditorDialog
             title={title}
             content={
               <EditorContent
                 {...editorContentProps}
                 chromeless
+                showLineNumbers={editorContentProps.showLineNumbers ?? true}
                 extensions={dialogExtensions}
               />
             }

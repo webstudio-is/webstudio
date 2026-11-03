@@ -495,6 +495,7 @@ const StyleBlockEditor = ({
         completionSource={blockCompletionSource}
         autoFocus={!inline}
         chromeless={inline}
+        showLineNumbers={!inline}
         readOnly={readonly}
         extensions={extensions}
         value={code}

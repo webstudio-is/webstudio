@@ -348,6 +348,7 @@ type EditorContentProps = {
   initialSelection?: number;
   invalid?: boolean;
   showShortcuts?: boolean;
+  showLineNumbers?: boolean;
   chromeless?: boolean;
   value?: string;
   onChange: (value: string) => void;
@@ -363,6 +364,7 @@ export const EditorContent = ({
   initialSelection,
   invalid = false,
   showShortcuts = false,
+  showLineNumbers = true,
   chromeless = false,
   value,
   onChange,
@@ -435,7 +437,7 @@ export const EditorContent = ({
 
     view.dispatch({
       effects: StateEffect.reconfigure.of([
-        lineNumbers(),
+        ...(showLineNumbers ? [lineNumbers()] : []),
         ...extensions,
         ...(hasDisabledFieldset ? [EditorView.editable.of(false)] : []),
         autocompletionTooltipTheme,
@@ -494,7 +496,7 @@ export const EditorContent = ({
         }),
       ]),
     });
-  }, [ariaLabel, readOnly, extensions]);
+  }, [ariaLabel, readOnly, extensions, showLineNumbers]);
 
   // update editor with react value
   // https://github.com/uiwjs/react-codemirror/blob/5d7a37245ce70e61f215b77dc42a7eaf295c46e7/core/src/useCodeMirror.ts#L158-L169

@@ -81,6 +81,7 @@ export const InheritedStylesPreview = ({
         <ResettableLabel description={tooltip}>{title}</ResettableLabel>
         <EditorContent
           ariaLabel={title}
+          showLineNumbers={false}
           extensions={extensions}
           readOnly
           chromeless
