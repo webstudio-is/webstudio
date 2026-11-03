@@ -9,7 +9,6 @@ import type { Extension } from "@codemirror/state";
 import { styleTags, tags } from "@lezer/highlight";
 import {
   keymap,
-  lineNumbers,
   tooltips,
   highlightSpecialChars,
   highlightActiveLine,
@@ -226,7 +225,7 @@ export const CodeEditor = forwardRef<
   );
 
   const dialogExtensions = useMemo(
-    () => [...extensions, lineNumbers(), foldGutterExtension],
+    () => [...extensions, foldGutterExtension],
     [extensions]
   );
 

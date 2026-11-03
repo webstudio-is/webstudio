@@ -15,7 +15,6 @@ import {
   WidgetType,
   ViewPlugin,
   keymap,
-  lineNumbers,
   EditorView,
   tooltips,
 } from "@codemirror/view";
@@ -582,7 +581,6 @@ export const ExpressionEditor = ({
   chromeless = false,
   autoFocus = false,
   readOnly = false,
-  showLineNumbers = false,
   value,
   onChange,
   onChangeComplete,
@@ -602,7 +600,6 @@ export const ExpressionEditor = ({
   chromeless?: boolean;
   autoFocus?: boolean;
   readOnly?: boolean;
-  showLineNumbers?: boolean;
   value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
@@ -687,7 +684,6 @@ export const ExpressionEditor = ({
       ]),
       expressionLinter,
       linterTooltipTheme,
-      ...(showLineNumbers ? [lineNumbers()] : []),
       ...(size === "full" ? [fullSizeEditorTheme] : []),
     ],
     [
@@ -695,16 +691,11 @@ export const ExpressionEditor = ({
       completionScopeWithUnsetVariables,
       aliasesWithUnsetVariables,
       size,
-      showLineNumbers,
     ]
   );
   const dialogExtensions = useMemo(
-    () => [
-      ...extensions,
-      ...(showLineNumbers ? [] : [lineNumbers()]),
-      foldGutterExtension,
-    ],
-    [extensions, showLineNumbers]
+    () => [...extensions, foldGutterExtension],
+    [extensions]
   );
 
   // prevent clicking on autocomplete options propagating to body
