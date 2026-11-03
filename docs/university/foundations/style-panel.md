@@ -203,6 +203,8 @@ To add several declarations, press Shift+Enter in **Add styles** or paste CSS wi
 
 Use the Advanced section menu to show cascaded styles, preset styles, or global variables. These sources are hidden by default. In Code view, they appear below the editable local styles.
 
+In Code view, search filters the read-only style blocks. The editable local styles stay visible so editing never removes hidden declarations.
+
 Autocomplete includes standard, experimental, nonstandard, and obsolete CSS
 properties. A yellow warning marks any property that is not standard. Open the
 warning to review its status and browser-support risk, then select **Learn more
