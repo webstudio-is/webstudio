@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { linter, type Diagnostic } from "@codemirror/lint";
 import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
 import { syntaxTree } from "@codemirror/language";
+import { placeholder } from "@codemirror/view";
 import type { CompletionSource } from "@codemirror/autocomplete";
 import { generate, parse } from "css-tree";
 import { theme, Box } from "@webstudio-is/design-system";
@@ -317,8 +318,9 @@ const StyleBlockEditor = ({
         { delay: 200 }
       ),
       linterTooltipTheme,
+      ...(inline ? [placeholder("Add local styles")] : []),
     ],
-    []
+    [inline]
   );
 
   const setInitialStyles = (oldStyles: CssStyleMap, value: string) => {
