@@ -349,7 +349,7 @@ type CssValueInputProps = Pick<
   // Does not reset intermediate changes.
   onAbort: () => void;
   // Resets the value to default even if it has intermediate changes.
-  onReset: () => void;
+  onReset: (reason?: ChangeCompleteEvent["type"]) => void;
   icon?: ReactNode;
   showSuffix?: boolean;
   unitOptions?: UnitOption[];
@@ -504,8 +504,8 @@ export const CssValueInput = ({
     // We are resetting by setting the value to an empty string
     if (value.type === "intermediate" && value.value === "") {
       closeMenu();
-      onReset();
-      return;
+      onReset(event.type);
+      return event.type === "tab";
     }
 
     if (value.type !== "intermediate" && value.type !== "invalid") {

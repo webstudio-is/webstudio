@@ -63,10 +63,10 @@ export const CssValueInputContainer = ({
       onAbort={() => {
         onDelete({ isEphemeral: true });
       }}
-      onReset={() => {
+      onReset={(reason) => {
         setIntermediateValue(undefined);
         onDelete();
-        onReset?.();
+        onReset?.(reason);
       }}
     />
   );
