@@ -759,7 +759,6 @@ export const ExpressionEditor = ({
         {content}
         <EditorDialog
           title="Expression editor"
-          contentPadding={false}
           content={
             <EditorContent
               aria-label={ariaLabel}

@@ -122,6 +122,11 @@ const editorContentStyle = css({
     borderColor: cssVar("--border-negative"),
     outlineColor: cssVar("--border-negative"),
   },
+  '[role="dialog"] &': {
+    background: "transparent",
+    borderWidth: 0,
+    padding: 0,
+  },
   "& .cm-focused": {
     outline: "none",
   },

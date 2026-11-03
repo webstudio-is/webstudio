@@ -1012,7 +1012,7 @@ export const TextFileEditor = ({
   return (
     <EditorDialog
       title={title}
-      contentPadding={false}
+      contentPadding={!isMarkdown}
       width={isMarkdown ? 1280 : undefined}
       height={isMarkdown ? 960 : undefined}
       open

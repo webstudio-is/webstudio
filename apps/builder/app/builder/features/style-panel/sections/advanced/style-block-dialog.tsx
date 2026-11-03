@@ -425,7 +425,6 @@ const StyleBlockEditor = ({
             }
           : {
               height: "100%",
-              padding: theme.spacing[2],
               "& > div, & .cm-editor, & .cm-scroller": { height: "100%" },
             }
       }
