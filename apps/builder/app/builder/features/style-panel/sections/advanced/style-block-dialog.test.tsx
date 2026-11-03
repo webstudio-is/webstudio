@@ -2,12 +2,17 @@ import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
 import { userEvent } from "@vitest/browser/context";
+import { EditorState } from "@codemirror/state";
+import { CompletionContext } from "@codemirror/autocomplete";
 import { TooltipProvider } from "@webstudio-is/design-system";
+import { $availableVariables } from "../../shared/model";
 import { parseStyleInput } from "~/builder/shared/css-editor/parse-style-input";
 import {
   InlineStyleBlockEditor,
   StyleBlockDialog,
   parseBlock,
+  cssBlockLanguage,
+  blockCompletionSource,
 } from "./style-block-dialog";
 
 (
@@ -110,4 +115,23 @@ test("Enter adds a separator before a new declaration line", async () => {
   expect(editor?.textContent).toContain("color: red;");
   expect(editor?.textContent).toContain("background: blue");
   expect(parseBlock(editor?.textContent ?? "").diagnostics).toEqual([]);
+});
+
+test.each([
+  ["opacity: --", "var(--active-opacity)"],
+  ["opacity: var(--", "--active-opacity"],
+])("replaces the variable prefix in %s", async (value, label) => {
+  vi.spyOn($availableVariables, "get").mockReturnValue([
+    { type: "var", value: "active-opacity", fallback: undefined },
+  ]);
+  const state = EditorState.create({
+    doc: value,
+    extensions: [cssBlockLanguage],
+  });
+  const result = await blockCompletionSource(
+    new CompletionContext(state, value.length, true)
+  );
+  expect(result?.from).toBe(value.length - 2);
+  expect(result?.options.some((option) => option.label === label)).toBe(true);
+  vi.restoreAllMocks();
 });
