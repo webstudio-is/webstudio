@@ -121,7 +121,7 @@ const Cell = ({
         onClose={onPopoverClose}
       />
       <ValueText
-        value={finalValue.type === "var" ? styleDecl.usedValue : finalValue}
+        value={finalValue}
         source={styleDecl.source.name}
         onMouseEnter={(event) =>
           onHover({ property, element: event.currentTarget })
