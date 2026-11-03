@@ -26,6 +26,7 @@ import type { StyleUpdateOptions } from "../shared/use-style-data";
 import { ShadowContent } from "./shadow-content";
 import { parseCssFragment } from "./css-fragment";
 import { useReadonly } from "./readonly";
+import { $availableUnitVariables } from "./model";
 
 // filters can't be validated directly in the css-engine. Because, these are not properties
 // but functions that proeprties accept. So, we need to validate them manually using fake proeprties
@@ -213,6 +214,7 @@ export const FilterSectionContent = ({
                   : "outline-offset"
               }
               styleSource="local"
+              getOptions={() => $availableUnitVariables.get()}
               value={
                 filterFunctionValue ?? {
                   type: "unit",
