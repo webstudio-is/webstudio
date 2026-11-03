@@ -75,7 +75,7 @@ import {
   parseStyleInput,
   splitStyleInputAtColon,
 } from "./parse-style-input";
-import { getMatchingProperties } from "./property-search";
+import { getMatchingDeclarations } from "./property-search";
 import {
   type DeleteProperty,
   type SetProperty,
@@ -1051,7 +1051,10 @@ export const CssEditor = ({
 
   const advancedProperties = declarations.map(({ property }) => property);
   const searchProperties = useMemo(
-    () => getMatchingProperties(declarations, searchTerm),
+    () =>
+      getMatchingDeclarations(declarations, searchTerm)?.map(
+        ({ property }) => property
+      ),
     [declarations, searchTerm]
   );
 

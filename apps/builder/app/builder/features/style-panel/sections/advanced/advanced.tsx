@@ -51,7 +51,7 @@ import { getDots } from "../../shared/style-section";
 import { CssEditor } from "../../../../shared/css-editor";
 import { insertStyleDeclarations } from "../../../../shared/css-editor/css-editor";
 import { createDeclarationActions } from "../../../../shared/css-editor/css-editor-context-menu";
-import { getMatchingProperties } from "../../../../shared/css-editor/property-search";
+import { getMatchingDeclarations } from "../../../../shared/css-editor/property-search";
 import {
   $advancedStyleDeclarations,
   $visibleAdvancedStyleDeclarations,
@@ -124,27 +124,23 @@ const CodeView = ({
   onApply: ComponentProps<typeof InlineStyleBlockEditor>["onApply"];
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>();
-  const visibleDeclarations = useMemo(() => {
+  const { localDeclarations, visibleDeclarations } = useMemo(() => {
     const inheritedDeclarations = declarations.filter(
       (declaration) => getAdvancedStyleSource(declaration) !== undefined
     );
-    const matches = getMatchingProperties(inheritedDeclarations, searchTerm);
-    if (matches === undefined) {
-      return inheritedDeclarations;
-    }
-    const matchedProperties = new Set(matches);
-    return inheritedDeclarations.filter((declaration) =>
-      matchedProperties.has(declaration.property)
-    );
-  }, [declarations, searchTerm]);
+    return {
+      localDeclarations:
+        getMatchingDeclarations(blockDeclarations, searchTerm) ??
+        blockDeclarations,
+      visibleDeclarations:
+        getMatchingDeclarations(inheritedDeclarations, searchTerm) ??
+        inheritedDeclarations,
+    };
+  }, [blockDeclarations, declarations, searchTerm]);
+  const searching = searchTerm !== undefined;
 
   return (
     <>
-      <InlineStyleBlockEditor
-        declarations={blockDeclarations}
-        readonly={readonly}
-        onApply={onApply}
-      />
       <PanelContent>
         <SearchField
           onChange={(event) => {
@@ -154,6 +150,14 @@ const CodeView = ({
           onAbort={() => setSearchTerm(undefined)}
         />
       </PanelContent>
+      {(!searching || localDeclarations.length > 0) && (
+        <InlineStyleBlockEditor
+          key={searching ? "search" : "edit"}
+          declarations={localDeclarations}
+          readonly={readonly || searching}
+          onApply={searching ? () => {} : onApply}
+        />
+      )}
       <InheritedStylesPreview declarations={visibleDeclarations} />
     </>
   );
