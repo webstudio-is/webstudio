@@ -63,6 +63,9 @@ import {
 } from "./value-editor-dialog";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { scrollByPointer } from "../scroll-by-pointer";
+import { useStore } from "@nanostores/react";
+import { $availableVariables } from "../model";
+import { $isAltPressed } from "../modifier-keys";
 
 // Subjective adjust ment based on how it feels on macbook/trackpad.
 // It won't be ideal for everyone with different input devices and preferences.
@@ -462,6 +465,7 @@ export const CssValueInput = ({
   minWidth = "2ch",
   ...props
 }: CssValueInputProps) => {
+  const isAltPressed = useStore($isAltPressed);
   const value = props.intermediateValue ?? props.value ?? initialValue;
   const valueRef = useRef(value);
   valueRef.current = value;
@@ -687,10 +691,22 @@ export const CssValueInput = ({
 
   const getInputValue = () => {
     const isFocused = document.activeElement === inputRef.current;
-    // When input is not focused, we are removing var() to fit more into the small inputs.
-    return value.type === "var" && isFocused === false
-      ? `--${value.value}`
-      : inputProps.value;
+    if (value.type === "var") {
+      if (isFocused) {
+        return toValue(value);
+      }
+      if (isAltPressed) {
+        const variable = $availableVariables
+          .get()
+          .find((item) => item.value === value.value);
+        if (variable?.fallback) {
+          return toValue(variable.fallback);
+        }
+      }
+      // Remove var() to fit more into the small unfocused inputs.
+      return `--${value.value}`;
+    }
+    return inputProps.value;
   };
   const handleOnBlur: KeyboardEventHandler = (event) => {
     inputProps.onBlur(event);
