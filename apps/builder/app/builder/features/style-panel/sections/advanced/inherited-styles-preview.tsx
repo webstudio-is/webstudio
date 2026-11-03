@@ -1,5 +1,5 @@
 import { css } from "@codemirror/lang-css";
-import { Box, Text, theme } from "@webstudio-is/design-system";
+import { Box, Label, theme } from "@webstudio-is/design-system";
 import {
   generateStyleMap,
   mergeStyles,
@@ -53,18 +53,15 @@ export const InheritedStylesPreview = ({
     <Box
       key={title}
       css={{
+        display: "flex",
+        flexDirection: "column",
+        gap: theme.spacing[1],
         padding: theme.spacing[2],
         ...getCodeEditorCssVars({ minHeight: "3lh", maxHeight: "none" }),
         "& > div:last-child": { background: "transparent" },
       }}
     >
-      <Text
-        variant="labels"
-        color="subtle"
-        css={{ paddingBottom: theme.spacing[1] }}
-      >
-        {title}
-      </Text>
+      <Label>{title}</Label>
       <EditorContent
         ariaLabel={title}
         extensions={extensions}

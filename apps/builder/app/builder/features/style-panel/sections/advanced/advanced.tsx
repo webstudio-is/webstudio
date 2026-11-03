@@ -8,11 +8,12 @@ import {
   DropdownMenuItemRightSlot,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  Box,
   Kbd,
+  Label,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
-  Text,
   theme,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
@@ -444,16 +445,14 @@ export const Section = () => {
         {codeEditingMode ? (
           selectedInstanceKey !== undefined && (
             <>
-              <Text
-                variant="labels"
-                color="subtle"
+              <Box
                 css={{
                   paddingInline: theme.panel.paddingInline,
                   paddingTop: theme.spacing[2],
                 }}
               >
-                Local styles
-              </Text>
+                <Label>Local styles</Label>
+              </Box>
               <InlineStyleBlockEditor
                 key={selectionKey}
                 declarations={blockDeclarations}
