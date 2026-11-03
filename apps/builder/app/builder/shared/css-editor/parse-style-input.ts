@@ -28,6 +28,9 @@ export const splitStyleInputAtColon = (input: string) => {
 // When user provides only a property name, we need to make it `property:;` to be able to parse it.
 const ensureValue = (css: string) => {
   css = css.trim();
+  if (css === "") {
+    return css;
+  }
 
   // Is it a custom property "--foo"?
   if (css.startsWith("--") && lexer.match("<custom-ident>", css).matched) {
