@@ -3,6 +3,7 @@ import { insertWebstudioFragmentAt } from "~/shared/instance-utils/insert";
 import {
   detectPageTokenConflicts,
   extractWebstudioFragment,
+  preserveExistingRootVariables,
 } from "@webstudio-is/project-build/runtime";
 import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { useMemo } from "react";
@@ -101,9 +102,12 @@ const insertPage = async ({
     return;
   }
   const rootStyleTargetData = getWebstudioData();
-  const rootFragment = extractWebstudioFragment(sourceData, ROOT_INSTANCE_ID);
+  const safeSourceData = preserveExistingRootVariables({
+    sourceData,
+    targetData: rootStyleTargetData,
+  });
   const rootStyleConflictResolution = await resolveRootStyleConflicts({
-    fragment: rootFragment,
+    fragment: extractWebstudioFragment(safeSourceData, ROOT_INSTANCE_ID),
     targetData: rootStyleTargetData,
   });
   if (rootStyleConflictResolution === "cancel") {
@@ -116,7 +120,8 @@ const insertPage = async ({
   const result = executeRuntimeMutation({
     id: "pages.copy",
     input: {
-      sourceData,
+      sourceData: safeSourceData,
+      preserveExistingRootVariables: true,
       pageId,
       parentFolderId: ROOT_FOLDER_ID,
       projectId,

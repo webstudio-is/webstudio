@@ -6843,6 +6843,9 @@ export const runtimeOperationContractData = [
           type: "string",
           enum: ["ours", "theirs"],
         },
+        preserveExistingRootVariables: {
+          type: "boolean",
+        },
       },
       required: ["sourceData", "pageId"],
     },
