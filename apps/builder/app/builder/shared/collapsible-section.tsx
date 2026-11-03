@@ -39,7 +39,6 @@ const sectionStyle = css({
           position: "sticky",
           top: 0,
           zIndex: 1,
-          isolation: "isolate",
           background: cssVar("--background-primary"),
         },
       },
