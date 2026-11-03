@@ -260,7 +260,6 @@ export const CodeEditor = forwardRef<
           <EditorContent {...editorContentProps} extensions={extensions} />
           <EditorDialog
             title={title}
-            contentPadding={false}
             content={
               <EditorContent
                 {...editorContentProps}
