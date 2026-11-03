@@ -40,10 +40,6 @@ export const InlineCode = () => (
       readonly={false}
       onApply={() => {}}
     />
-    <InheritedStylesPreview
-      declarations={inheritedDeclarations}
-      showCascaded
-      showPreset
-    />
+    <InheritedStylesPreview declarations={inheritedDeclarations} />
   </Box>
 );

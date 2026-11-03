@@ -13,28 +13,26 @@ import {
 } from "@webstudio-is/css-engine";
 import { EditorContent, getCodeEditorCssVars } from "~/shared/code-editor-base";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { getAdvancedStyleSource } from "./stores";
 
 const extensions = [css()];
 
 export const InheritedStylesPreview = ({
   declarations,
-  showCascaded,
-  showPreset,
 }: {
   declarations: ComputedStyleDecl[];
-  showCascaded: boolean;
-  showPreset: boolean;
 }) => {
-  if (!showCascaded && !showPreset) {
-    return null;
-  }
   const cascaded: StyleMap = new Map();
   const preset: StyleMap = new Map();
+  const globalVariables: StyleMap = new Map();
   for (const declaration of declarations) {
-    if (showCascaded && declaration.source.name === "remote") {
+    const source = getAdvancedStyleSource(declaration);
+    if (source === "cascaded") {
       cascaded.set(declaration.property, declaration.cascadedValue);
-    } else if (showPreset && declaration.source.name === "preset") {
+    } else if (source === "preset") {
       preset.set(declaration.property, declaration.cascadedValue);
+    } else if (source === "globalVariables") {
+      globalVariables.set(declaration.property, declaration.cascadedValue);
     }
   }
 
@@ -53,6 +51,14 @@ export const InheritedStylesPreview = ({
       value: generateStyleMap(mergeStyles(preset)),
       tooltip:
         "These styles come from Webstudio component defaults. They are read-only here because they are not part of the selected style block. Add the same property above to override them.",
+    });
+  }
+  if (globalVariables.size > 0) {
+    blocks.push({
+      title: "Global variables",
+      value: generateStyleMap(mergeStyles(globalVariables)),
+      tooltip:
+        "These variables are defined on the Root instance and inherited by this element. They are read-only here because this editor changes only the selected style block. Edit them on Root, or define the same variable above to override them.",
     });
   }
   if (blocks.length === 0) {

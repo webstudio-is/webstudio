@@ -201,7 +201,7 @@ Click the + button on the insertion line to enter a property and value.
 
 To add several declarations, press Shift+Enter in **Add styles** or paste CSS with line breaks. The highlighted editor expands in place. Click an existing property name to edit it inline. Press Shift+Enter in a value to add a line in the expanding editor. Press Tab from a value, or Enter at its end, to start another declaration below it. Open the Advanced section menu and choose **Open code editor**, or press Option+Shift+X, to use the centered editor.
 
-In Code view, use the Advanced section menu to show cascaded or preset styles below the editable local styles. Both read-only sources are hidden by default.
+Use the Advanced section menu to show cascaded styles, preset styles, or global variables. These sources are hidden by default. In Code view, they appear below the editable local styles.
 
 Autocomplete includes standard, experimental, nonstandard, and obsolete CSS
 properties. A yellow warning marks any property that is not standard. Open the

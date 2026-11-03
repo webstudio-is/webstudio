@@ -1,13 +1,39 @@
 import { computed } from "nanostores";
 import type { CssProperty } from "@webstudio-is/css-engine";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import { $settings } from "~/builder/shared/client-settings";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { $computedStyleDeclarations } from "../../shared/model";
 import { sections } from "../sections";
 
-export const $advancedStyleDeclarations = computed(
+export const getAdvancedStyleSource = (styleDecl: ComputedStyleDecl) => {
+  if (styleDecl.source.name === "preset") {
+    return "preset";
+  }
+  if (styleDecl.source.name === "remote") {
+    return styleDecl.source.instanceId === ROOT_INSTANCE_ID &&
+      styleDecl.property.startsWith("--")
+      ? "globalVariables"
+      : "cascaded";
+  }
+};
+
+export const $visibleAdvancedStyleDeclarations = computed(
   [$computedStyleDeclarations, $settings],
-  (computedStyleDeclarations, settings) => {
+  (declarations, settings) =>
+    declarations.filter((declaration) => {
+      const source = getAdvancedStyleSource(declaration);
+      return (
+        (source !== "cascaded" || settings.showCascadedStyles) &&
+        (source !== "preset" || settings.showPresetStyles) &&
+        (source !== "globalVariables" || settings.showGlobalVariables)
+      );
+    })
+);
+
+export const $advancedStyleDeclarations = computed(
+  [$visibleAdvancedStyleDeclarations, $settings],
+  (visibleDeclarations, settings) => {
     const advancedStyles = new Map<
       ComputedStyleDecl["property"],
       ComputedStyleDecl
@@ -19,16 +45,8 @@ export const $advancedStyleDeclarations = computed(
         visualProperties.add(property);
       }
     }
-    for (const styleDecl of computedStyleDeclarations) {
-      if (styleDecl.source.name === "remote" && !settings.showCascadedStyles) {
-        continue;
-      }
-      if (styleDecl.source.name === "preset" && !settings.showPresetStyles) {
-        continue;
-      }
-      const showSource =
-        styleDecl.source.name === "remote" ||
-        styleDecl.source.name === "preset";
+    for (const styleDecl of visibleDeclarations) {
+      const showSource = getAdvancedStyleSource(styleDecl) !== undefined;
       // ignore predefined styles in advanced mode
       // @todo will be deleted https://github.com/webstudio-is/webstudio/issues/4871
       if (
