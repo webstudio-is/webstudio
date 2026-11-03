@@ -1,6 +1,7 @@
 import { matchSorter } from "match-sorter";
 import { Box, Flex, theme } from "@webstudio-is/design-system";
 import {
+  camelCaseProperty,
   propertiesData,
   shorthandProperties,
   keywordValues,
@@ -11,6 +12,7 @@ import {
   generateStyleMap,
   mergeStyles,
   toValue,
+  type CssProperty,
 } from "@webstudio-is/css-engine";
 import {
   $availableVariables,
@@ -31,8 +33,10 @@ export const getNewPropertyDescription = (item: null | SearchItem) => {
   if (item?.property.startsWith("--")) {
     description = "Create CSS variable.";
   }
-  if (item && propertyDescriptions[item.property]) {
-    description = propertyDescriptions[item.property];
+  if (item) {
+    description =
+      propertyDescriptions[camelCaseProperty(item.property as CssProperty)] ??
+      description;
   }
   return (
     <Box css={{ width: theme.spacing[28] }}>
