@@ -2060,7 +2060,7 @@ test("Resource editor explains caching, keeps add buttons tooltip-free, and remo
   ).toBeNull();
 });
 
-test("HTTP Resource Body editor shows line numbers before maximizing", async () => {
+test("HTTP Resource Body editor hides line numbers before maximizing", async () => {
   const resource: Resource = {
     id: "request",
     name: "Request",
@@ -2091,7 +2091,7 @@ test("HTTP Resource Body editor shows line numbers before maximizing", async () 
   );
 
   expect(container.querySelector(".cm-editor")).not.toBeNull();
-  expect(container.querySelector(".cm-lineNumbers")).not.toBeNull();
+  expect(container.querySelector(".cm-lineNumbers")).toBeNull();
   expect(container.querySelector('[aria-expanded="true"]')).toBeNull();
 });
 
