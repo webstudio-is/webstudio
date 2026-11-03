@@ -120,6 +120,16 @@ export const CssFragmentEditorContent = ({
       autocompletion({
         override: [completionSource ?? scopeCompletionSource],
         icons: false,
+        positionInfo: (_view, list, _option, info, space) => {
+          const roomBelow = space.bottom - list.bottom;
+          const roomAbove = list.top - space.top;
+          return {
+            style:
+              roomBelow >= info.bottom - info.top || roomBelow >= roomAbove
+                ? "top: 100%; left: 0; width: 100%"
+                : "bottom: 100%; left: 0; width: 100%",
+          };
+        },
       }),
       keymap.of([...completionKeymap]),
       EditorView.domEventHandlers({

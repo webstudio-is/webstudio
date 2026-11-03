@@ -5,7 +5,7 @@ import { syntaxTree } from "@codemirror/language";
 import { placeholder } from "@codemirror/view";
 import type { CompletionSource } from "@codemirror/autocomplete";
 import { generate, parse } from "css-tree";
-import { theme, Box } from "@webstudio-is/design-system";
+import { theme, Box, menuItemCss } from "@webstudio-is/design-system";
 import { keywordValues, propertyDescriptions } from "@webstudio-is/css-data";
 import {
   generateStyleMap,
@@ -125,15 +125,25 @@ const blockCompletionSource: CompletionSource = async (context) => {
         ? node.to
         : undefined,
     filter: false,
-    options: items.map((item) => ({
-      label: item.label,
-      apply:
-        colon === null || isPropertyLine
-          ? `${item.property}: ${item.value ?? ""}`
-          : item.property,
-      type: "property",
-      info: propertyDescriptions[item.property],
-    })),
+    options: items.map((item) => {
+      const description = propertyDescriptions[item.property];
+      return {
+        label: item.label,
+        apply:
+          colon === null || isPropertyLine
+            ? `${item.property}: ${item.value ?? ""}`
+            : item.property,
+        type: "property",
+        info: description
+          ? () => {
+              const content = document.createElement("div");
+              content.className = menuItemCss({ hint: true }).className;
+              content.textContent = description;
+              return content;
+            }
+          : undefined,
+      };
+    }),
   };
 };
 

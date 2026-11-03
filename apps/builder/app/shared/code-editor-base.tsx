@@ -235,6 +235,14 @@ const autocompletionTooltipTheme = EditorView.theme({
     fontStyle: "normal",
     color: cssVar("--foreground-secondary"),
   },
+  ".cm-tooltip.cm-completionInfo": {
+    borderRadius: rawTheme.borderRadius[6],
+    border: `1px solid ${cssVar("--border-default")}`,
+    backgroundColor: cssVar("--background-primary"),
+    boxShadow: rawTheme.shadows.menuDropShadow,
+    padding: `${rawTheme.spacing[3]} 0`,
+    whiteSpace: "normal",
+  },
 });
 
 const keyBindings = [
