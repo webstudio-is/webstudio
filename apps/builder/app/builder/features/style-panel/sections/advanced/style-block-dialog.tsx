@@ -6,7 +6,8 @@ import { StateField } from "@codemirror/state";
 import { Decoration, EditorView, placeholder } from "@codemirror/view";
 import type { CompletionSource } from "@codemirror/autocomplete";
 import { generate, parse } from "css-tree";
-import { theme, Box, menuItemCss } from "@webstudio-is/design-system";
+import { theme, Box, menuItemCss, Tooltip } from "@webstudio-is/design-system";
+import { LockIcon } from "@webstudio-is/icons";
 import {
   camelCaseProperty,
   keywordValues,
@@ -43,6 +44,9 @@ type ApplyChanges = {
   mentionedProperties: ReadonlySet<CssProperty>;
   canDelete: boolean;
 };
+
+const readonlyTooltip =
+  "These styles are read-only here. Edit their original source, or add a local declaration to override them.";
 
 export const cssBlockLanguage = cssLanguage.configure({ top: "Styles" });
 
@@ -533,6 +537,21 @@ const StyleBlockEditor = ({
   return (
     <EditorDialog
       title={sourceBlock?.title ?? "Style block editor"}
+      titleSuffix={
+        source !== "local" && (
+          <Tooltip content={readonlyTooltip} openOnFocus>
+            <Box
+              as="span"
+              role="img"
+              aria-label={readonlyTooltip}
+              tabIndex={0}
+              css={{ display: "inline-flex", alignItems: "center" }}
+            >
+              <LockIcon size={12} />
+            </Box>
+          </Tooltip>
+        )
+      }
       modal
       open={open}
       onOpenChange={handleOpenChange}

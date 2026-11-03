@@ -625,6 +625,7 @@ export const EditorDialog = ({
   ...panelProps
 }: {
   title: ReactNode;
+  titleSuffix?: ReactNode;
   content: ReactNode;
   children?: ReactNode;
   width?: number;

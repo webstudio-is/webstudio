@@ -24,6 +24,13 @@ import {
   type StyleBlockEditorSource,
 } from "./style-block-editor-state";
 
+export const sourceMaximizeHoverCss = {
+  "&:hover [data-style-source-maximize], &:focus-within [data-style-source-maximize]":
+    {
+      opacity: 1,
+    },
+};
+
 export const AdvancedStyleSourceHeader = ({
   source,
   title,
@@ -36,9 +43,11 @@ export const AdvancedStyleSourceHeader = ({
   readonly?: boolean;
 }) => {
   const action =
-    source === "globalVariables"
-      ? "Open Global variables"
-      : `Open ${title} styles`;
+    source === "local"
+      ? "Edit local styles"
+      : source === "globalVariables"
+        ? "View global variables"
+        : `View ${title.toLowerCase()} styles`;
   return (
     <Box
       css={{
@@ -65,9 +74,11 @@ export const AdvancedStyleSourceHeader = ({
         }
       >
         <SmallIconButton
+          data-style-source-maximize
           aria-label={action}
-          icon={<MaximizeIcon />}
+          icon={<MaximizeIcon size={12} />}
           disabled={readonly}
+          css={{ opacity: 0 }}
           onClick={() => openStyleBlockEditor(source)}
         />
       </Tooltip>
@@ -147,6 +158,7 @@ export const InheritedStylesPreview = ({
           paddingInline: theme.panel.paddingInline,
           paddingBlock: theme.spacing[2],
           ...getCodeEditorCssVars({ minHeight: "3lh", maxHeight: "none" }),
+          ...sourceMaximizeHoverCss,
           "& > div:last-child": {
             background: "transparent",
             borderWidth: 0,
