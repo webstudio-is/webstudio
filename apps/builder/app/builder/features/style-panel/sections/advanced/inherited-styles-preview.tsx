@@ -1,5 +1,5 @@
 import { css } from "@codemirror/lang-css";
-import { Box, Label, theme, Tooltip } from "@webstudio-is/design-system";
+import { Box, ResettableLabel, theme } from "@webstudio-is/design-system";
 import {
   generateStyleMap,
   mergeStyles,
@@ -71,16 +71,7 @@ export const InheritedStylesPreview = ({
         },
       }}
     >
-      <Tooltip
-        content={tooltip}
-        variant="wrapped"
-        openOnFocus
-        triggerProps={{ type: "button" }}
-      >
-        <Label tag="button" tabIndex={0} css={{ alignSelf: "flex-start" }}>
-          {title}
-        </Label>
-      </Tooltip>
+      <ResettableLabel description={tooltip}>{title}</ResettableLabel>
       <EditorContent
         ariaLabel={title}
         extensions={extensions}
