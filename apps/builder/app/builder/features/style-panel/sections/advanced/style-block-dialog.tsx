@@ -233,13 +233,8 @@ export const parseBlock = (source: string) => {
   const draftCssVars = new Map($cssVarsMap.get());
   const mentionedProperties = new Set<CssProperty>();
   const propertyRanges = new Map<CssProperty, { from: number; to: number }>();
-  const previousRanges = new Map<string, { from: number; to: number }>();
-  const overriddenRanges: Array<{
-    property: string;
-    from: number;
-    to: number;
-  }> = [];
-  const validLastProperties = new Set<string>();
+  const previousValidRanges = new Map<string, { from: number; to: number }>();
+  const overriddenRanges: Array<{ from: number; to: number }> = [];
   const invalidProperties = new Set<CssProperty>();
   let canDelete = true;
   try {
@@ -268,22 +263,7 @@ export const parseBlock = (source: string) => {
         if (node.property.startsWith("--")) {
           draftCssVars.set(node.property, generate(node.value));
         }
-        const property = parsePropertyName(node.property, $cssVarsMap.get());
-        const duplicateKey =
-          property ??
-          (node.property.startsWith("--")
-            ? node.property
-            : node.property.toLowerCase());
-        declarations.push({ text, property: duplicateKey, ...range });
-        const previousRange = previousRanges.get(duplicateKey);
-        if (previousRange !== undefined) {
-          overriddenRanges.push({ property: duplicateKey, ...previousRange });
-        }
-        previousRanges.set(duplicateKey, range);
-        if (property !== undefined) {
-          mentionedProperties.add(property);
-          propertyRanges.set(property, range);
-        }
+        declarations.push({ text, property: node.property, ...range });
         return;
       }
       canDelete = false;
@@ -304,8 +284,22 @@ export const parseBlock = (source: string) => {
     });
   }
 
-  for (const { text, property: duplicateKey, from, to } of declarations) {
+  const validDeclarations: string[] = [];
+  for (const { text, property: rawProperty, from, to } of declarations) {
     const parsed = parseStyleInput(text, draftCssVars);
+    const property =
+      parsed.styleMap.size === 1
+        ? parsed.styleMap.keys().next().value
+        : parsed.styleMap.size === 0
+          ? parsePropertyName(rawProperty, draftCssVars)
+          : undefined;
+    const duplicateKey =
+      property ??
+      (rawProperty.startsWith("--") ? rawProperty : rawProperty.toLowerCase());
+    if (property !== undefined) {
+      mentionedProperties.add(property);
+      propertyRanges.set(property, { from, to });
+    }
     const isInvalid =
       parsed.styleMap.size === 0 ||
       parsed.errors.length > 0 ||
@@ -315,9 +309,13 @@ export const parseBlock = (source: string) => {
       );
     if (isInvalid) {
       canDelete = false;
-      validLastProperties.delete(duplicateKey);
     } else {
-      validLastProperties.add(duplicateKey);
+      validDeclarations.push(text);
+      const previousRange = previousValidRanges.get(duplicateKey);
+      if (previousRange !== undefined) {
+        overriddenRanges.push(previousRange);
+      }
+      previousValidRanges.set(duplicateKey, { from, to });
     }
     for (const message of parsed.errors) {
       diagnostics.push({ from, to, severity: "error", message });
@@ -336,7 +334,7 @@ export const parseBlock = (source: string) => {
   }
 
   const { styleMap, errors } = parseStyleInput(
-    declarations.map(({ text }) => text).join(";\n"),
+    validDeclarations.join(";\n"),
     $cssVarsMap.get()
   );
   if (errors.length > 0) {
@@ -362,9 +360,7 @@ export const parseBlock = (source: string) => {
     diagnostics,
     mentionedProperties,
     propertyRanges,
-    overriddenRanges: overriddenRanges.filter(({ property }) =>
-      validLastProperties.has(property)
-    ),
+    overriddenRanges,
     canDelete,
   };
 };
