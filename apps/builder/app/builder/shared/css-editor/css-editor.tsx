@@ -97,6 +97,15 @@ import {
 const initialIndentation = `20px`;
 const shorthandSet = new Set<string>(shorthandProperties);
 
+const getLineBreakSelection = (input: HTMLInputElement) => {
+  const end = input.selectionEnd ?? input.value.length;
+  const start = input.selectionStart ?? end;
+  return {
+    start: start === 0 && end === input.value.length ? end : start,
+    end,
+  };
+};
+
 export const insertStyleDeclarations = (
   cssText: string,
   onAddDeclarations: (styleMap: CssStyleMap) => void,
@@ -617,8 +626,7 @@ const AdvancedPropertyValue = ({
               return;
             }
             const input = event.currentTarget;
-            const start = input.selectionStart ?? input.value.length;
-            const end = input.selectionEnd ?? start;
+            const { start, end } = getLineBreakSelection(input);
             const isCollapsedVariable =
               styleDecl.cascadedValue.type === "var" &&
               input.value === `--${styleDecl.cascadedValue.value}`;
@@ -1480,10 +1488,9 @@ export const CssEditor = ({
                     }
                     if (event.key === "Enter" && event.shiftKey) {
                       event.preventDefault();
-                      const { value, selectionStart, selectionEnd } =
-                        event.currentTarget;
-                      const start = selectionStart ?? value.length;
-                      const end = selectionEnd ?? start;
+                      const input = event.currentTarget;
+                      const { value } = input;
+                      const { start, end } = getLineBreakSelection(input);
                       if (draftValue !== "") {
                         const delimiter = draftValue.trimEnd().endsWith(";")
                           ? ""
@@ -1643,10 +1650,9 @@ export const CssEditor = ({
               onKeyDown={(event) => {
                 if (event.key === "Enter" && event.shiftKey) {
                   event.preventDefault();
-                  const { value, selectionStart, selectionEnd } =
-                    event.currentTarget;
-                  const start = selectionStart ?? value.length;
-                  const end = selectionEnd ?? start;
+                  const input = event.currentTarget;
+                  const { value } = input;
+                  const { start, end } = getLineBreakSelection(input);
                   openValueDraft(
                     `${value.slice(0, start)}\n${value.slice(end)}`,
                     start + 1
