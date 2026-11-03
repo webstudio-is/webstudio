@@ -306,7 +306,7 @@ test("reopening and saving an Assets Resource with a single-quoted URL keeps its
   expect($resources.get().get(resource.id)?.method).toBe("post");
 });
 
-test("Edit variable JSON value editor shows line numbers", async () => {
+test("Edit variable JSON value editor shows line numbers only when maximized", async () => {
   const container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -320,14 +320,12 @@ test("Edit variable JSON value editor shows line numbers", async () => {
     )
   );
 
-  expect(container.querySelector(".cm-lineNumbers")).not.toBeNull();
+  expect(container.querySelector(".cm-lineNumbers")).toBeNull();
   const maximizeButton = container.querySelector<HTMLButtonElement>("button");
   expect(maximizeButton).not.toBeNull();
   await act(async () => await userEvent.hover(maximizeButton!.parentElement!));
   await act(async () => await userEvent.click(maximizeButton!));
   await act(async () => await new Promise(requestAnimationFrame));
   expect(maximizeButton!.getAttribute("aria-expanded")).toBe("true");
-  expect(document.querySelectorAll(".cm-lineNumbers").length).toBeGreaterThan(
-    1
-  );
+  expect(document.querySelectorAll(".cm-lineNumbers")).toHaveLength(1);
 });
