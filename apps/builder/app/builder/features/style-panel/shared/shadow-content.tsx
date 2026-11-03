@@ -33,7 +33,10 @@ import { humanizeString } from "~/shared/string-utils";
 import { PropertyInlineLabel } from "../property-label";
 import type { IntermediateStyleValue } from "./css-value-input";
 import { CssValueInputContainer } from "./css-value-input";
-import type { StyleUpdateOptions } from "./use-style-data";
+import {
+  resetEphemeralStyles,
+  type StyleUpdateOptions,
+} from "./use-style-data";
 import {
   CssFragmentEditor,
   CssFragmentEditorContent,
@@ -167,12 +170,19 @@ export const ShadowContent = ({
   };
 
   const handleCompletionHighlight = (preview: string | undefined) => {
-    const { styles } = parseCssFragment(preview ?? propertyValue, [
-      parsedShadowProperty,
-    ]);
+    if (preview === undefined && intermediateValue?.value === propertyValue) {
+      resetEphemeralStyles();
+      return;
+    }
+    const { styles } = parseCssFragment(
+      preview ?? intermediateValue?.value ?? propertyValue,
+      [parsedShadowProperty]
+    );
     const value = styles.get(parsedShadowProperty);
     if (value?.type === "layers" || value?.type === "var") {
       onEditLayer(index, value, { isEphemeral: true });
+    } else {
+      resetEphemeralStyles();
     }
   };
 

@@ -692,9 +692,6 @@ export const CssValueInput = ({
   const getInputValue = () => {
     const isFocused = document.activeElement === inputRef.current;
     if (value.type === "var") {
-      if (isFocused) {
-        return toValue(value);
-      }
       if (isAltPressed) {
         const variable = $availableVariables
           .get()
@@ -702,6 +699,9 @@ export const CssValueInput = ({
         if (variable?.fallback) {
           return toValue(variable.fallback);
         }
+      }
+      if (isFocused) {
+        return toValue(value);
       }
       // Remove var() to fit more into the small unfocused inputs.
       return `--${value.value}`;

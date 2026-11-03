@@ -48,57 +48,61 @@ export const getNewPropertyDescription = (item: null | SearchItem) => {
   );
 };
 
-export const getAutocompleteItems = () => {
-  const autoCompleteItems: SearchItem[] = [];
-  for (const varValue of $availableVariables.get()) {
-    const property = `--${varValue.value}`;
-    autoCompleteItems.push({
-      // consider additional properties to be custom properties
-      key: property,
-      property,
-      label: property,
-    });
-  }
-  for (const property in propertiesData) {
-    autoCompleteItems.push({
-      // Allow matching "gr te co" -> "grid-template-columns"
-      key: property.replaceAll("-", " "),
-      property,
-      label: property,
-    });
-  }
+const collator = new Intl.Collator();
+const staticAutocompleteItems: SearchItem[] = [];
+for (const property in propertiesData) {
+  staticAutocompleteItems.push({
+    // Allow matching "gr te co" -> "grid-template-columns"
+    key: property.replaceAll("-", " "),
+    property,
+    label: property,
+  });
+}
 
-  for (const property of shorthandProperties) {
-    autoCompleteItems.push({
-      // Allow matching "gr te co" -> "grid-template-columns"
-      key: property.replaceAll("-", " "),
-      property,
-      label: property,
-    });
-  }
+for (const property of shorthandProperties) {
+  staticAutocompleteItems.push({
+    // Allow matching "gr te co" -> "grid-template-columns"
+    key: property.replaceAll("-", " "),
+    property,
+    label: property,
+  });
+}
 
-  const ignoreValues = new Set([...cssWideKeywords, ...keywordValues.color]);
+const ignoreValues = new Set([...cssWideKeywords, ...keywordValues.color]);
 
-  for (const [property, values] of Object.entries(keywordValues)) {
-    for (const value of values ?? []) {
-      if (ignoreValues.has(value)) {
-        continue;
-      }
-      autoCompleteItems.push({
-        // Allow matching "gr te co" -> "grid-template-columns"
-        key: `${property.replaceAll("-", " ")} ${value}`,
-        property,
-        value,
-        label: `${property}: ${value}`,
-      });
+for (const [property, values] of Object.entries(keywordValues)) {
+  for (const value of values ?? []) {
+    if (ignoreValues.has(value)) {
+      continue;
     }
+    staticAutocompleteItems.push({
+      // Allow matching "gr te co" -> "grid-template-columns"
+      key: `${property.replaceAll("-", " ")} ${value}`,
+      property,
+      value,
+      label: `${property}: ${value}`,
+    });
+  }
+}
+
+let cachedVariables: ReturnType<typeof $availableVariables.get> | undefined;
+let cachedItems: SearchItem[] = [];
+
+export const getAutocompleteItems = () => {
+  const variables = $availableVariables.get();
+  if (variables === cachedVariables) {
+    return cachedItems;
   }
 
-  autoCompleteItems.sort((a, b) =>
-    Intl.Collator().compare(a.property, b.property)
-  );
+  cachedVariables = variables;
+  cachedItems = [...staticAutocompleteItems];
+  for (const varValue of variables) {
+    const property = `--${varValue.value}`;
+    cachedItems.push({ key: property, property, label: property });
+  }
+  cachedItems.sort((a, b) => collator.compare(a.property, b.property));
 
-  return autoCompleteItems;
+  return cachedItems;
 };
 
 export const matchOrSuggestToCreate = (
