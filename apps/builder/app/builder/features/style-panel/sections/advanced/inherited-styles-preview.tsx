@@ -83,7 +83,9 @@ export const InheritedStylesPreview = ({
           },
         }}
       >
-        <ResettableLabel description={tooltip}>{title}</ResettableLabel>
+        <ResettableLabel color="remote" description={tooltip}>
+          {title}
+        </ResettableLabel>
         <CssFragmentEditorContent
           ariaLabel={title}
           showLineNumbers={false}
