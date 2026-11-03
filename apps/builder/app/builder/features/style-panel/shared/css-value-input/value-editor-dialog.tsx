@@ -25,11 +25,7 @@ export const cssValueInputMaximizeButtonDisplay = declareCssVar(
 // Hand-picking values that are considered complex and should get a maximize button for the dialog.
 // Not showing the maximize everywhere because most values don't need that and it takes space.
 export const isComplexValue = (value: CssValueInputValue) => {
-  if (
-    value.type === "unparsed" ||
-    value.type === "function" ||
-    value.type === "var"
-  ) {
+  if (value.type === "unparsed" || value.type === "function") {
     return true;
   }
 
