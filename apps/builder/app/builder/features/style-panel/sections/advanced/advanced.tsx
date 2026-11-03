@@ -362,6 +362,7 @@ export const Section = () => {
       return;
     }
     const batch = createBatchUpdate();
+    const appliedStyles = new Map(oldStyles);
     for (const [property] of oldStyles) {
       if (
         canDelete &&
@@ -369,6 +370,7 @@ export const Section = () => {
         !mentionedProperties.has(property)
       ) {
         batch.deleteProperty(property);
+        appliedStyles.delete(property);
       }
     }
     for (const [property, value] of newStyles) {
@@ -383,6 +385,7 @@ export const Section = () => {
         toValue(initialParsed) !== toValue(value)
       ) {
         batch.setProperty(property)(value);
+        appliedStyles.set(property, value);
       }
     }
     batch.publish({ listed: true });
@@ -397,6 +400,7 @@ export const Section = () => {
         (property) => !oldStyles.has(property)
       ),
     ]);
+    return appliedStyles;
   };
 
   const menuDeclarations = codeEditingMode

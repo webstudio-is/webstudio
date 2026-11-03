@@ -1002,6 +1002,7 @@ export const TextFileEditor = ({
         size="full"
         expandable={false}
         chromeless
+        showLineNumbers={languageExtensions.length > 0}
         readOnly={canEdit === false}
         onChange={onChange}
         onChangeComplete={save}

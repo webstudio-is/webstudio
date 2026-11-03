@@ -1,5 +1,5 @@
 import { mergeRefs } from "@react-aria/utils";
-import { EditorView, keymap } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import { color } from "@webstudio-is/css-engine";
 import { PlusIcon } from "@webstudio-is/icons";
 import {
@@ -76,6 +76,7 @@ import {
   splitStyleInputAtColon,
 } from "./parse-style-input";
 import { getMatchingDeclarations } from "./property-search";
+import { declarationLineBreak } from "./declaration-line-break";
 import {
   type DeleteProperty,
   type SetProperty,
@@ -696,7 +697,13 @@ const AdvancedPropertyValue = ({
                 input.selectionEnd === input.value.length
             );
           }}
-          onReset={onReset}
+          onReset={(reason) => {
+            if (reason === "tab") {
+              onChangeComplete?.({ type: "tab" }, true);
+            } else {
+              onReset?.();
+            }
+          }}
         />
       )}
     </>
@@ -921,51 +928,7 @@ export const CssEditor = ({
   const [invalidDraft, setInvalidDraft] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>();
   const containerRef = useRef<HTMLDivElement>(null);
-  const bulkCodeExtensions = useMemo(
-    () => [
-      keymap.of([
-        {
-          key: "Enter",
-          run(view) {
-            const { from, to } = view.state.selection.main;
-            if (from !== to || to !== view.state.doc.length) {
-              return false;
-            }
-            const content = view.state.doc.toString();
-            const { styleMap, errors, hasSyntaxErrors } = parseStyleInput(
-              content,
-              $cssVarsMap.get()
-            );
-            if (
-              styleMap.size === 0 ||
-              errors.length > 0 ||
-              hasSyntaxErrors ||
-              [...styleMap.values()].some((value) => value.type === "invalid")
-            ) {
-              return false;
-            }
-            const trimmedLength = content.trimEnd().length;
-            if (content.slice(0, trimmedLength).endsWith(";")) {
-              view.dispatch({
-                changes: { from, insert: "\n" },
-                selection: { anchor: from + 1 },
-              });
-            } else {
-              view.dispatch({
-                changes: [
-                  { from: trimmedLength, insert: ";" },
-                  { from, insert: "\n" },
-                ],
-                selection: { anchor: from + 2 },
-              });
-            }
-            return true;
-          },
-        },
-      ]),
-    ],
-    []
-  );
+  const bulkCodeExtensions = useMemo(() => [declarationLineBreak], []);
   const clearHighlightedDraftPreview = useCallback(() => {
     const item = highlightedDraftItemRef.current;
     if (item !== undefined) {
