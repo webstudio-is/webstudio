@@ -14,6 +14,7 @@ import {
   DropdownMenuItemRightSlot,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  Box,
   Kbd,
   PanelContent,
   SearchField,
@@ -74,6 +75,7 @@ import {
   AdvancedStyleSourceHeader,
   getAdvancedStyleBlocks,
   InheritedStylesPreview,
+  sourceMaximizeHoverCss,
 } from "./inherited-styles-preview";
 import { $settings, setSetting } from "~/builder/shared/client-settings";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
@@ -155,7 +157,7 @@ const CodeView = ({
         />
       </PanelContent>
       {(!searching || localDeclarations.length > 0) && (
-        <>
+        <Box css={sourceMaximizeHoverCss}>
           <PanelContent css={{ paddingBlock: theme.spacing[2] }}>
             <AdvancedStyleSourceHeader
               source="local"
@@ -170,7 +172,7 @@ const CodeView = ({
             readonly={readonly || searching}
             onApply={searching ? () => {} : onApply}
           />
-        </>
+        </Box>
       )}
       <InheritedStylesPreview declarations={visibleDeclarations} />
     </>
