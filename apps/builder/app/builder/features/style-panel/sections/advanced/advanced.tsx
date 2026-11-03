@@ -1,4 +1,10 @@
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { useStore } from "@nanostores/react";
 import {
   DropdownMenu,
@@ -9,6 +15,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Kbd,
+  PanelContent,
+  SearchField,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
@@ -43,9 +51,11 @@ import { getDots } from "../../shared/style-section";
 import { CssEditor } from "../../../../shared/css-editor";
 import { insertStyleDeclarations } from "../../../../shared/css-editor/css-editor";
 import { createDeclarationActions } from "../../../../shared/css-editor/css-editor-context-menu";
+import { getMatchingProperties } from "../../../../shared/css-editor/property-search";
 import {
   $advancedStyleDeclarations,
   $visibleAdvancedStyleDeclarations,
+  getAdvancedStyleSource,
 } from "./stores";
 import {
   $styleBlockEditorOpenFor,
@@ -97,6 +107,55 @@ const AdvancedStyleSection = (props: {
     >
       {children}
     </CollapsibleSectionRoot>
+  );
+};
+
+const CodeView = ({
+  declarations,
+  blockDeclarations,
+  readonly,
+  onApply,
+}: {
+  declarations: ComputedStyleDecl[];
+  blockDeclarations: ComponentProps<
+    typeof InlineStyleBlockEditor
+  >["declarations"];
+  readonly: boolean;
+  onApply: ComponentProps<typeof InlineStyleBlockEditor>["onApply"];
+}) => {
+  const [searchTerm, setSearchTerm] = useState<string>();
+  const visibleDeclarations = useMemo(() => {
+    const inheritedDeclarations = declarations.filter(
+      (declaration) => getAdvancedStyleSource(declaration) !== undefined
+    );
+    const matches = getMatchingProperties(inheritedDeclarations, searchTerm);
+    if (matches === undefined) {
+      return inheritedDeclarations;
+    }
+    const matchedProperties = new Set(matches);
+    return inheritedDeclarations.filter((declaration) =>
+      matchedProperties.has(declaration.property)
+    );
+  }, [declarations, searchTerm]);
+
+  return (
+    <>
+      <InlineStyleBlockEditor
+        declarations={blockDeclarations}
+        readonly={readonly}
+        onApply={onApply}
+      />
+      <PanelContent>
+        <SearchField
+          onChange={(event) => {
+            const search = event.target.value.trim().replaceAll("-", " ");
+            setSearchTerm(search || undefined);
+          }}
+          onAbort={() => setSearchTerm(undefined)}
+        />
+      </PanelContent>
+      <InheritedStylesPreview declarations={visibleDeclarations} />
+    </>
   );
 };
 
@@ -457,17 +516,13 @@ export const Section = () => {
       >
         {codeEditingMode ? (
           selectedInstanceKey !== undefined && (
-            <>
-              <InlineStyleBlockEditor
-                key={selectionKey}
-                declarations={blockDeclarations}
-                readonly={readonly}
-                onApply={handleApplyBlock}
-              />
-              <InheritedStylesPreview
-                declarations={visibleAdvancedStyleDeclarations}
-              />
-            </>
+            <CodeView
+              key={selectionKey}
+              declarations={visibleAdvancedStyleDeclarations}
+              blockDeclarations={blockDeclarations}
+              readonly={readonly}
+              onApply={handleApplyBlock}
+            />
           )
         ) : (
           <CssEditor

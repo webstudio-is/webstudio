@@ -15,7 +15,6 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { matchSorter } from "match-sorter";
 import {
   PanelContent,
   Box,
@@ -76,6 +75,7 @@ import {
   parseStyleInput,
   splitStyleInputAtColon,
 } from "./parse-style-input";
+import { getMatchingProperties } from "./property-search";
 import {
   type DeleteProperty,
   type SetProperty,
@@ -1050,18 +1050,10 @@ export const CssEditor = ({
   );
 
   const advancedProperties = declarations.map(({ property }) => property);
-  const searchProperties = useMemo(() => {
-    if (searchTerm === undefined) {
-      return undefined;
-    }
-    const styles = declarations.map(({ property, cascadedValue }) => ({
-      key: `${property.replaceAll("-", " ")} ${toValue(cascadedValue)}`,
-      property,
-    }));
-    return matchSorter(styles, searchTerm, { keys: ["key"] }).map(
-      ({ property }) => property
-    );
-  }, [declarations, searchTerm]);
+  const searchProperties = useMemo(
+    () => getMatchingProperties(declarations, searchTerm),
+    [declarations, searchTerm]
+  );
 
   const currentProperties =
     searchProperties ??
