@@ -1,5 +1,5 @@
 import { css } from "@codemirror/lang-css";
-import { Box, Label, theme } from "@webstudio-is/design-system";
+import { Box, Label, theme, Tooltip } from "@webstudio-is/design-system";
 import {
   generateStyleMap,
   mergeStyles,
@@ -32,24 +32,28 @@ export const InheritedStylesPreview = ({
     }
   }
 
-  const blocks: Array<{ title: string; value: string }> = [];
+  const blocks: Array<{ title: string; value: string; tooltip: string }> = [];
   if (cascaded.size > 0) {
     blocks.push({
       title: "Cascaded",
       value: generateStyleMap(mergeStyles(cascaded)),
+      tooltip:
+        "These styles come from another style source, breakpoint, state, or parent element. They are read-only here because this editor changes only the selected style block. Edit the original source to change them, or add the same property above to override them.",
     });
   }
   if (preset.size > 0) {
     blocks.push({
       title: "Preset",
       value: generateStyleMap(mergeStyles(preset)),
+      tooltip:
+        "These styles come from Webstudio component defaults. They are read-only here because they are not part of the selected style block. Add the same property above to override them.",
     });
   }
   if (blocks.length === 0) {
     return null;
   }
 
-  return blocks.map(({ title, value }) => (
+  return blocks.map(({ title, value, tooltip }) => (
     <Box
       key={title}
       css={{
@@ -67,7 +71,16 @@ export const InheritedStylesPreview = ({
         },
       }}
     >
-      <Label>{title}</Label>
+      <Tooltip
+        content={tooltip}
+        variant="wrapped"
+        openOnFocus
+        triggerProps={{ type: "button" }}
+      >
+        <Label tag="button" tabIndex={0} css={{ alignSelf: "flex-start" }}>
+          {title}
+        </Label>
+      </Tooltip>
       <EditorContent
         ariaLabel={title}
         extensions={extensions}
