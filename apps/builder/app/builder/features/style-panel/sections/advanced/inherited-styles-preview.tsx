@@ -56,9 +56,15 @@ export const InheritedStylesPreview = ({
         display: "flex",
         flexDirection: "column",
         gap: theme.spacing[1],
-        padding: theme.spacing[2],
+        paddingInline: theme.panel.paddingInline,
+        paddingBlock: theme.spacing[2],
         ...getCodeEditorCssVars({ minHeight: "3lh", maxHeight: "none" }),
-        "& > div:last-child": { background: "transparent" },
+        "& > div:last-child": {
+          background: "transparent",
+          borderWidth: 0,
+          marginInlineStart: `calc(${theme.spacing[2]} + 1px)`,
+          padding: 0,
+        },
       }}
     >
       <Label>{title}</Label>

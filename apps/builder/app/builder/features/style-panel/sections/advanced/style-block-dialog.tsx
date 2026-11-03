@@ -402,9 +402,14 @@ const StyleBlockEditor = ({
       css={
         inline
           ? {
-              padding: theme.spacing[2],
+              paddingInline: `calc(${theme.panel.paddingInline} + ${theme.spacing[2]} + 1px)`,
+              paddingBlock: theme.spacing[2],
               ...getCodeEditorCssVars({ minHeight: "8lh", maxHeight: "none" }),
-              "& > div": { background: "transparent" },
+              "& > div": {
+                background: "transparent",
+                borderWidth: 0,
+                padding: 0,
+              },
             }
           : {
               height: "100%",
@@ -418,6 +423,7 @@ const StyleBlockEditor = ({
         language={cssBlockLanguage}
         completionSource={blockCompletionSource}
         autoFocus={!inline}
+        chromeless={inline}
         readOnly={readonly}
         extensions={extensions}
         value={code}
