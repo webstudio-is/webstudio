@@ -252,7 +252,7 @@ const autocompletionTooltipTheme = EditorView.theme({
     backgroundColor: "transparent",
     boxShadow: "none",
     order: 2,
-    padding: `${rawTheme.spacing[3]} 0`,
+    padding: 0,
     whiteSpace: "normal",
   },
   ".cm-tooltip.cm-completionInfo.cm-completionInfo-above": {
@@ -647,8 +647,8 @@ export const EditorDialog = ({
           css={{
             padding: contentPadding ? undefined : 0,
             height: "100%",
-            overflow: "hidden",
-            boxSizing: "content-box",
+            overflow: "auto",
+            boxSizing: "border-box",
           }}
         >
           {content}
