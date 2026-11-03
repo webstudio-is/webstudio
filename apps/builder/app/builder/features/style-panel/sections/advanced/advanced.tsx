@@ -256,7 +256,7 @@ export const Section = () => {
       styleSourceSelector?.state;
 
   const recentProperties = selectedInstanceKey
-    ? recentPropertiesMap.get(selectedInstanceKey) ?? []
+    ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
     : [];
 
   const updateRecentProperties = (properties: Array<CssProperty>) => {
@@ -405,7 +405,7 @@ export const Section = () => {
             cascadedValue: value,
             computedValue: value,
             usedValue: value,
-          } satisfies ComputedStyleDecl)
+          }) satisfies ComputedStyleDecl
       )
     : advancedStyleDeclarations;
   const actions = createDeclarationActions({
