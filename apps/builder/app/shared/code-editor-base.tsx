@@ -18,6 +18,7 @@ import {
   EditorView,
   drawSelection,
   dropCursor,
+  lineNumbers,
   keymap,
 } from "@codemirror/view";
 import {
@@ -434,6 +435,7 @@ export const EditorContent = ({
 
     view.dispatch({
       effects: StateEffect.reconfigure.of([
+        lineNumbers(),
         ...extensions,
         ...(hasDisabledFieldset ? [EditorView.editable.of(false)] : []),
         autocompletionTooltipTheme,
