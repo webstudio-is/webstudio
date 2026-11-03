@@ -1,5 +1,11 @@
 import { css } from "@codemirror/lang-css";
-import { Box, ResettableLabel, theme } from "@webstudio-is/design-system";
+import { Fragment } from "react";
+import {
+  Box,
+  ResettableLabel,
+  Separator,
+  theme,
+} from "@webstudio-is/design-system";
 import {
   generateStyleMap,
   mergeStyles,
@@ -54,33 +60,35 @@ export const InheritedStylesPreview = ({
   }
 
   return blocks.map(({ title, value, tooltip }) => (
-    <Box
-      key={title}
-      css={{
-        display: "flex",
-        flexDirection: "column",
-        gap: theme.spacing[1],
-        paddingInline: theme.panel.paddingInline,
-        paddingBlock: theme.spacing[2],
-        ...getCodeEditorCssVars({ minHeight: "3lh", maxHeight: "none" }),
-        "& > div:last-child": {
-          background: "transparent",
-          borderWidth: 0,
-          marginInlineStart: `calc(${theme.spacing[2]} + 1px)`,
-          padding: 0,
-        },
-      }}
-    >
-      <ResettableLabel description={tooltip}>{title}</ResettableLabel>
-      <EditorContent
-        ariaLabel={title}
-        extensions={extensions}
-        readOnly
-        chromeless
-        value={value}
-        onChange={() => {}}
-        onChangeComplete={() => {}}
-      />
-    </Box>
+    <Fragment key={title}>
+      <Separator />
+      <Box
+        css={{
+          display: "flex",
+          flexDirection: "column",
+          gap: theme.spacing[1],
+          paddingInline: theme.panel.paddingInline,
+          paddingBlock: theme.spacing[2],
+          ...getCodeEditorCssVars({ minHeight: "3lh", maxHeight: "none" }),
+          "& > div:last-child": {
+            background: "transparent",
+            borderWidth: 0,
+            marginInlineStart: `calc(${theme.spacing[2]} + 1px)`,
+            padding: 0,
+          },
+        }}
+      >
+        <ResettableLabel description={tooltip}>{title}</ResettableLabel>
+        <EditorContent
+          ariaLabel={title}
+          extensions={extensions}
+          readOnly
+          chromeless
+          value={value}
+          onChange={() => {}}
+          onChangeComplete={() => {}}
+        />
+      </Box>
+    </Fragment>
   ));
 };
