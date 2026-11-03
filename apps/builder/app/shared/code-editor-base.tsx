@@ -128,6 +128,9 @@ const editorContentStyle = css({
   "& .cm-cursor, & .cm-dropCursor": {
     borderLeftColor: "currentColor",
   },
+  "& .cm-cursor": {
+    marginLeft: 0,
+  },
   "& .cm-activeLine": {
     backgroundColor: cssVar("--overlay-interaction-hover"),
   },
@@ -385,6 +388,12 @@ export const EditorContent = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (autoFocus) {
+      viewRef.current?.focus();
+    }
+  }, [autoFocus]);
+
   // update extensions whenever variables data is changed
 
   useEffect(() => {
@@ -490,12 +499,6 @@ export const EditorContent = ({
       }
     }
   }, [initialSelection]);
-
-  useEffect(() => {
-    if (autoFocus) {
-      viewRef.current?.focus();
-    }
-  }, [autoFocus]);
 
   useImperativeHandle(editorApiRef, () => ({
     replaceSelection: (string) => {
