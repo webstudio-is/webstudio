@@ -1,4 +1,4 @@
-import { Box, Label, cssVar, theme } from "@webstudio-is/design-system";
+import { Box, cssVar, theme } from "@webstudio-is/design-system";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { InheritedStylesPreview } from "./inherited-styles-preview";
 import { InlineStyleBlockEditor } from "./style-block-dialog";
@@ -33,14 +33,6 @@ export const InlineCode = () => (
       background: cssVar("--background-primary"),
     }}
   >
-    <Box
-      css={{
-        paddingInline: theme.panel.paddingInline,
-        paddingTop: theme.spacing[2],
-      }}
-    >
-      <Label>Local styles</Label>
-    </Box>
     <InlineStyleBlockEditor
       declarations={[
         { property: "color", value: { type: "keyword", value: "red" } },
