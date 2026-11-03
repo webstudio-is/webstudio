@@ -35,6 +35,7 @@ import {
   type WebstudioFragment,
   type WebstudioData,
   ROOT_INSTANCE_ID,
+  getStyleDeclKey,
 } from "@webstudio-is/sdk";
 
 import type {
@@ -119,6 +120,32 @@ const sourceWebstudioDataInput = z
     "Required hydrated WebstudioData from the source project. This is a low-level cross-project transfer command; use duplicate-page to copy a page within the configured project."
   );
 
+export const preserveExistingRootVariables = ({
+  sourceData,
+  targetData,
+}: {
+  sourceData: WebstudioData;
+  targetData: WebstudioData;
+}): WebstudioData => {
+  const fragment = extractWebstudioFragment(sourceData, ROOT_INSTANCE_ID);
+  const conflictingVariables = new Set(
+    detectFragmentRootStyleConflicts({ fragment, targetData })
+      .filter(({ incomingStyle }) => incomingStyle.property.startsWith("--"))
+      .map(({ incomingStyle }) => getStyleDeclKey(incomingStyle))
+  );
+  if (conflictingVariables.size === 0) {
+    return sourceData;
+  }
+  return {
+    ...sourceData,
+    styles: new Map(
+      Array.from(sourceData.styles).filter(
+        ([key]) => conflictingVariables.has(key) === false
+      )
+    ),
+  };
+};
+
 export const pageCopyInput = z.object({
   projectId: z.string(),
   sourceData: sourceWebstudioDataInput,
@@ -133,6 +160,7 @@ export const pageCopyInput = z.object({
     .describe(
       'How to resolve conflicting global root-local declarations: "ours" keeps the target project values; "theirs" uses the incoming source values. Required when conflicts exist.'
     ),
+  preserveExistingRootVariables: z.boolean().optional(),
 });
 
 export const folderDuplicateInput = z.object({
@@ -926,19 +954,25 @@ export const copyPage = (
     build: data,
     assets: Array.from(data.assets.values()),
   });
-  const sourcePage = findPageByIdOrPath(input.pageId, input.sourceData.pages);
+  const sourceData = input.preserveExistingRootVariables
+    ? preserveExistingRootVariables({
+        sourceData: input.sourceData,
+        targetData: before,
+      })
+    : input.sourceData;
+  const sourcePage = findPageByIdOrPath(input.pageId, sourceData.pages);
   if (sourcePage === undefined) {
     return throwBuilderRuntimeError("BAD_REQUEST", "Page could not be copied");
   }
   requireRootStyleConflictResolution({
-    rootFragment: extractWebstudioFragment(input.sourceData, ROOT_INSTANCE_ID),
+    rootFragment: extractWebstudioFragment(sourceData, ROOT_INSTANCE_ID),
     targetData: before,
     resolution: input.rootStyleConflictResolution,
   });
   let pageId: Page["id"] | undefined;
   const { payload } = produceWebstudioDataMutation(before, (draft) => {
     pageId = insertPageCopyMutable({
-      source: { data: input.sourceData, pageId: input.pageId },
+      source: { data: sourceData, pageId: input.pageId },
       target: { data: draft, folderId: parentFolderId },
       projectId: input.projectId,
       conflictResolution: input.conflictResolution,
