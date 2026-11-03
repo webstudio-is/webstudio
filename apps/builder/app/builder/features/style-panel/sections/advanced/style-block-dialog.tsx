@@ -96,7 +96,7 @@ const blockCompletionSource: CompletionSource = async (context) => {
       : "";
     const keywords = keywordValues[property as CssProperty] ?? [];
     return {
-      from: firstType === "keyword" ? completion?.from ?? pos : pos,
+      from: firstType === "keyword" ? (completion?.from ?? pos) : pos,
       to: node.name === "ValueName" ? node.to : undefined,
       options: [
         ...keywords.map((value) => ({ label: value, type: "keyword" })),
@@ -115,7 +115,7 @@ const blockCompletionSource: CompletionSource = async (context) => {
   const from =
     isVariableProperty || (isPropertyLine && node.name === "TagName")
       ? node.from
-      : completion?.from ?? pos;
+      : (completion?.from ?? pos);
   const search = state.doc.sliceString(from, pos);
   const items = matchOrSuggestToCreate(search, getAutocompleteItems());
   return {
@@ -506,7 +506,7 @@ const StyleBlockEditor = ({
         showLineNumbers={!inline}
         readOnly={readonly || source !== "local"}
         extensions={source === "local" ? extensions : undefined}
-        value={source === "local" ? code : sourceBlock?.value ?? ""}
+        value={source === "local" ? code : (sourceBlock?.value ?? "")}
         onChange={(value) => {
           if (source === "local") {
             codeRef.current = value;
