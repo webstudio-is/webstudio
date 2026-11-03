@@ -388,12 +388,6 @@ export const EditorContent = ({
     };
   }, []);
 
-  useEffect(() => {
-    if (autoFocus) {
-      viewRef.current?.focus();
-    }
-  }, [autoFocus]);
-
   // update extensions whenever variables data is changed
 
   useEffect(() => {
@@ -499,6 +493,12 @@ export const EditorContent = ({
       }
     }
   }, [initialSelection]);
+
+  useEffect(() => {
+    if (autoFocus) {
+      viewRef.current?.focus();
+    }
+  }, [autoFocus]);
 
   useImperativeHandle(editorApiRef, () => ({
     replaceSelection: (string) => {
