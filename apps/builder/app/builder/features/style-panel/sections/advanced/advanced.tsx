@@ -154,7 +154,7 @@ const CodeView = ({
       {(!searching || localDeclarations.length > 0) && (
         <>
           <PanelContent css={{ paddingBlock: theme.spacing[2] }}>
-            <ResettableLabel description="These styles are defined on the selected style block for the current breakpoint and state. Edit them here, or use the style source selector to edit a different block.">
+            <ResettableLabel description="These styles are defined on the selected style source">
               Local
             </ResettableLabel>
           </PanelContent>
