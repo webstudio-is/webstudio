@@ -64,7 +64,7 @@ import {
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { scrollByPointer } from "../scroll-by-pointer";
 import { useStore } from "@nanostores/react";
-import { $availableVariables } from "../model";
+import { $availableVariables, $computedStyleDeclarations } from "../model";
 import { $isAltPressed } from "../modifier-keys";
 
 // Subjective adjust ment based on how it feels on macbook/trackpad.
@@ -691,13 +691,33 @@ export const CssValueInput = ({
 
   const getInputValue = () => {
     const isFocused = document.activeElement === inputRef.current;
+    if (
+      isAltPressed &&
+      props.intermediateValue === undefined &&
+      props.value !== undefined &&
+      (props.value.type === "var" ||
+        (props.value.type === "unparsed" && props.value.value.includes("var(")))
+    ) {
+      const declaration = $computedStyleDeclarations
+        .get()
+        .find((item) => item.property === property);
+      if (
+        declaration !== undefined &&
+        toValue(declaration.cascadedValue) === toValue(props.value) &&
+        declaration.usedValue.type !== "invalid" &&
+        declaration.usedValue.type !== "guaranteedInvalid"
+      ) {
+        return toValue(declaration.usedValue);
+      }
+    }
     if (value.type === "var") {
       if (isAltPressed) {
         const variable = $availableVariables
           .get()
           .find((item) => item.value === value.value);
-        if (variable?.fallback) {
-          return toValue(variable.fallback);
+        const resolved = variable?.fallback ?? value.fallback;
+        if (resolved !== undefined) {
+          return toValue(resolved);
         }
       }
       if (isFocused) {

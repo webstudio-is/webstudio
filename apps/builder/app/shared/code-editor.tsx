@@ -228,6 +228,11 @@ export const CodeEditor = forwardRef<
     () => [...extensions, foldGutterExtension],
     [extensions]
   );
+  const isCode =
+    (lang !== undefined && lang !== "markdown") ||
+    (languageSupport !== undefined &&
+      (!(languageSupport instanceof LanguageSupport) ||
+        languageSupport.language.name !== "markdown"));
 
   // prevent clicking on autocomplete options propagating to body
   // and closing dialogs and popovers
@@ -249,7 +254,9 @@ export const CodeEditor = forwardRef<
   const inlineContent = (
     <EditorContent
       {...editorContentProps}
-      showLineNumbers={editorContentProps.showLineNumbers ?? size === "full"}
+      showLineNumbers={
+        editorContentProps.showLineNumbers ?? (isCode && size === "full")
+      }
       extensions={extensions}
     />
   );
@@ -270,7 +277,7 @@ export const CodeEditor = forwardRef<
               <EditorContent
                 {...editorContentProps}
                 chromeless
-                showLineNumbers={editorContentProps.showLineNumbers ?? true}
+                showLineNumbers={editorContentProps.showLineNumbers ?? isCode}
                 extensions={dialogExtensions}
               />
             }
