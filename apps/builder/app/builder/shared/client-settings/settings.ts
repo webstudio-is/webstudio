@@ -12,7 +12,7 @@ const userSettings = z.object({
   stylePanelMode: z.enum(["default", "focus", "advanced"]).default("default"),
   codeEditingMode: z.boolean().default(false),
   stickyAdvancedSection: z.boolean().default(false),
-  showCascadedStyles: z.boolean().default(false),
+  showCascadedStyles: z.boolean().default(true),
   showPresetStyles: z.boolean().default(false),
   showGlobalVariables: z.boolean().default(false),
   sidebarPanelWidths: z

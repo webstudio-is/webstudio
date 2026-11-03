@@ -203,7 +203,7 @@ To add several declarations, press Shift+Enter in **Add styles** or paste CSS wi
 
 Use the maximize button beside a source label to open that source in the centered editor. Only Local is editable.
 
-Use the Advanced section menu to show cascaded styles, preset styles, or global variables. These sources are hidden by default. In Code view, they appear below the editable local styles.
+Use the Advanced section menu to show cascaded styles, preset styles, or global variables. Cascaded styles are shown by default; preset styles and global variables are hidden until enabled. In Code view, they appear below the editable local styles.
 
 In Code view, search filters local, cascaded, preset, and global declarations. Local styles become read-only while a search is active; clear the search to edit the full local block.
 
