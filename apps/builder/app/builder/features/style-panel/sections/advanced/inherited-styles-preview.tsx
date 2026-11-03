@@ -46,8 +46,8 @@ export const AdvancedStyleSourceHeader = ({
     source === "local"
       ? "Edit local styles"
       : source === "globalVariables"
-        ? "View global variables"
-        : `View ${title.toLowerCase()} styles`;
+        ? "Open global variables"
+        : `Open ${title.toLowerCase()} styles`;
   return (
     <Box
       css={{
