@@ -33,6 +33,15 @@ const readColor = (color: string) => {
   return Array.from(context.getImageData(0, 0, 1, 1).data);
 };
 
+const readTokenColor = (name: string) => {
+  const sample = document.createElement("span");
+  sample.style.color = `var(${name})`;
+  document.body.append(sample);
+  const color = readColor(getComputedStyle(sample).color);
+  sample.remove();
+  return color;
+};
+
 test("compact form controls use their intended resting treatment", () => {
   const container = document.createElement("div");
   document.body.append(container);
@@ -54,6 +63,22 @@ test("compact form controls use their intended resting treatment", () => {
             "div",
             { "data-switch": true },
             createElement(Switch, { "aria-label": "Switch" })
+          ),
+          createElement(
+            "div",
+            { "data-disabled-switch": true },
+            createElement(Switch, {
+              "aria-label": "Disabled switch",
+              disabled: true,
+            })
+          ),
+          createElement(
+            "div",
+            { "data-checked-switch": true },
+            createElement(Switch, {
+              "aria-label": "Checked switch",
+              checked: true,
+            })
           ),
           createElement(
             "div",
@@ -86,6 +111,23 @@ test("compact form controls use their intended resting treatment", () => {
     expect(
       readColor(getComputedStyle(switchControl, "::before").backgroundColor),
       `${mode} switch resting track`
+    ).toEqual(readTokenColor("--foreground-disabled"));
+    const disabledSwitch = container.querySelector(
+      "[data-disabled-switch] > button"
+    );
+    const checkedSwitch = container.querySelector(
+      "[data-checked-switch] > button"
+    );
+    if (disabledSwitch === null || checkedSwitch === null) {
+      throw new Error("Expected disabled and checked switches");
+    }
+    expect(
+      readColor(getComputedStyle(disabledSwitch, "::before").backgroundColor),
+      `${mode} disabled switch track`
     ).toEqual(readColor(getComputedStyle(neutralControl).backgroundColor));
+    expect(
+      readColor(getComputedStyle(checkedSwitch, "::before").backgroundColor),
+      `${mode} checked switch track`
+    ).toEqual(readTokenColor("--background-accent"));
   }
 });
