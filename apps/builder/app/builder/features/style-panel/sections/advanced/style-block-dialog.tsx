@@ -6,7 +6,13 @@ import { StateField } from "@codemirror/state";
 import { Decoration, EditorView, placeholder } from "@codemirror/view";
 import type { CompletionSource } from "@codemirror/autocomplete";
 import { generate, parse } from "css-tree";
-import { theme, Box, menuItemCss, Tooltip } from "@webstudio-is/design-system";
+import {
+  theme,
+  Box,
+  Button,
+  menuItemCss,
+  Tooltip,
+} from "@webstudio-is/design-system";
 import { LockIcon } from "@webstudio-is/icons";
 import {
   camelCaseProperty,
@@ -546,16 +552,12 @@ const StyleBlockEditor = ({
       title={dialogTitles[source]}
       titleSuffix={
         source !== "local" && (
-          <Tooltip content={readonlyTooltip} openOnFocus>
-            <Box
-              as="span"
-              role="img"
+          <Tooltip content={readonlyTooltip} variant="wrapped" openOnFocus>
+            <Button
+              color="ghost"
+              prefix={<LockIcon />}
               aria-label={readonlyTooltip}
-              tabIndex={0}
-              css={{ display: "inline-flex", alignItems: "center" }}
-            >
-              <LockIcon size={12} />
-            </Box>
+            />
           </Tooltip>
         )
       }

@@ -100,6 +100,7 @@ const AdvancedStyleSection = (props: {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       fullWidth
+      showSeparator={false}
       sticky={sticky}
       trigger={
         <SectionTitle
