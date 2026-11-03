@@ -363,7 +363,7 @@ export const Section = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 collisionPadding={16}
-                css={{ width: theme.spacing[25] }}
+                css={{ width: theme.spacing[28] }}
                 onCloseAutoFocus={(event) => {
                   if ($styleBlockEditorOpenFor.get() === selectionKey) {
                     event.preventDefault();
