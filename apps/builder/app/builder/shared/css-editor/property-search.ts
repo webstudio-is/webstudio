@@ -1,19 +1,33 @@
 import { matchSorter } from "match-sorter";
-import { toValue } from "@webstudio-is/css-engine";
-import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import {
+  toValue,
+  type CssProperty,
+  type StyleValue,
+} from "@webstudio-is/css-engine";
 
-export const getMatchingProperties = (
-  declarations: ComputedStyleDecl[],
+type SearchableDeclaration = { property: CssProperty } & (
+  | { cascadedValue: StyleValue }
+  | { value: StyleValue }
+);
+
+export const getMatchingDeclarations = <
+  Declaration extends SearchableDeclaration,
+>(
+  declarations: Declaration[],
   searchTerm: string | undefined
 ) => {
   if (searchTerm === undefined) {
     return;
   }
-  const styles = declarations.map(({ property, cascadedValue }) => ({
-    key: `${property.replaceAll("-", " ")} ${toValue(cascadedValue)}`,
-    property,
+  const styles = declarations.map((declaration) => ({
+    key: `${declaration.property.replaceAll("-", " ")} ${toValue(
+      "cascadedValue" in declaration
+        ? declaration.cascadedValue
+        : declaration.value
+    )}`,
+    declaration,
   }));
   return matchSorter(styles, searchTerm, { keys: ["key"] }).map(
-    ({ property }) => property
+    ({ declaration }) => declaration
   );
 };

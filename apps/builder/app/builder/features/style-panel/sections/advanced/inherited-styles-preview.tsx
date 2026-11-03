@@ -1,4 +1,3 @@
-import { css } from "@codemirror/lang-css";
 import { Fragment } from "react";
 import {
   Box,
@@ -11,11 +10,11 @@ import {
   mergeStyles,
   type StyleMap,
 } from "@webstudio-is/css-engine";
-import { EditorContent, getCodeEditorCssVars } from "~/shared/code-editor-base";
+import { getCodeEditorCssVars } from "~/shared/code-editor-base";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { CssFragmentEditorContent } from "../../shared/css-fragment";
+import { cssBlockLanguage } from "./style-block-dialog";
 import { getAdvancedStyleSource } from "./stores";
-
-const extensions = [css()];
 
 export const InheritedStylesPreview = ({
   declarations,
@@ -85,10 +84,10 @@ export const InheritedStylesPreview = ({
         }}
       >
         <ResettableLabel description={tooltip}>{title}</ResettableLabel>
-        <EditorContent
+        <CssFragmentEditorContent
           ariaLabel={title}
           showLineNumbers={false}
-          extensions={extensions}
+          language={cssBlockLanguage}
           readOnly
           chromeless
           value={value}

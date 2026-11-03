@@ -47,7 +47,7 @@ type ApplyChanges = {
   canDelete: boolean;
 };
 
-const cssBlockLanguage = cssLanguage.configure({ top: "Styles" });
+export const cssBlockLanguage = cssLanguage.configure({ top: "Styles" });
 
 const blockCompletionSource: CompletionSource = async (context) => {
   const completion = await cssCompletionSource(context);
