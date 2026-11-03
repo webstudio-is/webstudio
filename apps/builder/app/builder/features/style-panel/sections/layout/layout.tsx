@@ -10,7 +10,11 @@ import {
   SmallToggleButton,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { keywordValues, propertyDescriptions } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  keywordValues,
+  propertyDescriptions,
+} from "@webstudio-is/css-data";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
 import {
@@ -98,7 +102,8 @@ const GapTooltip = ({
   children: ReactNode;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const description = propertyDescriptions[styleDecl.property];
+  const description =
+    propertyDescriptions[camelCaseProperty(styleDecl.property)];
   return (
     <Tooltip
       open={isOpen}
@@ -118,6 +123,7 @@ const GapTooltip = ({
       content={
         <PropertyInfo
           title={label}
+          property={styleDecl.property}
           description={description}
           styles={[styleDecl]}
           onReset={() => {

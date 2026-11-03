@@ -10,7 +10,10 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import type { CssProperty, StyleValue } from "@webstudio-is/css-engine";
-import { propertyDescriptions } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  propertyDescriptions,
+} from "@webstudio-is/css-data";
 import {
   CssValueInput,
   type IntermediateStyleValue,
@@ -174,7 +177,7 @@ export const InputPopover = ({
       >
         <PropertyLabel
           label={humanizeString(property)}
-          description={propertyDescriptions[property]}
+          description={propertyDescriptions[camelCaseProperty(property)]}
           properties={[property]}
         />
         <Flex css={{ maxWidth: theme.spacing[30] }}>
