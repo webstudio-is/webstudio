@@ -1,5 +1,6 @@
 import {
   cloneElement,
+  useEffect,
   useMemo,
   useRef,
   type ComponentProps,
@@ -125,6 +126,13 @@ export const CssFragmentEditorContent = ({
   const onCompletionHighlightRef = useRef(onCompletionHighlight);
   onCompletionHighlightRef.current = onCompletionHighlight;
   const highlightedCompletionRef = useRef<string>();
+  useEffect(() => {
+    return () => {
+      if (highlightedCompletionRef.current !== undefined) {
+        onCompletionHighlightRef.current?.(undefined);
+      }
+    };
+  }, []);
   const extensions = useMemo(() => {
     return [
       language ?? css(),
