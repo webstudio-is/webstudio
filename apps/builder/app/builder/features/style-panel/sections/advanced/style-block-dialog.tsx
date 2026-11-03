@@ -6,7 +6,11 @@ import { placeholder } from "@codemirror/view";
 import type { CompletionSource } from "@codemirror/autocomplete";
 import { generate, parse } from "css-tree";
 import { theme, Box, menuItemCss } from "@webstudio-is/design-system";
-import { keywordValues, propertyDescriptions } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  keywordValues,
+  propertyDescriptions,
+} from "@webstudio-is/css-data";
 import {
   generateStyleMap,
   hyphenateProperty,
@@ -126,7 +130,8 @@ const blockCompletionSource: CompletionSource = async (context) => {
         : undefined,
     filter: false,
     options: items.map((item) => {
-      const description = propertyDescriptions[item.property];
+      const description =
+        propertyDescriptions[camelCaseProperty(item.property as CssProperty)];
       return {
         label: item.label,
         apply:
