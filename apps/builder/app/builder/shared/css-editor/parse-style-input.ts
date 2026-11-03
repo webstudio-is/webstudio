@@ -85,7 +85,19 @@ export const parseStyleInput = (
       },
     });
     const invalidNodes = new Set<object>();
+    let normalizedProperty = false;
     ast.children.forEach((node) => {
+      if (
+        node.type === "Declaration" &&
+        !node.property.startsWith("--") &&
+        propertiesData[node.property as CssProperty] === undefined &&
+        !shorthandSet.has(node.property) &&
+        lexer.getProperty(node.property) === null &&
+        lexer.match("<custom-ident>", `--${node.property}`).matched
+      ) {
+        node.property = `--${node.property}`;
+        normalizedProperty = true;
+      }
       if (node.type === "Declaration" && shorthandSet.has(node.property)) {
         const value = generate(node.value);
         if (
@@ -97,7 +109,7 @@ export const parseStyleInput = (
         }
       }
     });
-    if (invalidNodes.size > 0) {
+    if (invalidNodes.size > 0 || normalizedProperty) {
       const validNodes: string[] = [];
       ast.children.forEach((node) => {
         if (!invalidNodes.has(node)) {
@@ -110,26 +122,9 @@ export const parseStyleInput = (
     hasSyntaxErrors = true;
   }
   const { styles, errors } = parseCss(`selector{${validCss}}`, cssVars);
-  const styleMap: CssStyleMap = new Map();
-  for (const { property, value } of styles) {
-    if (property.startsWith("--")) {
-      styleMap.set(property, value);
-      continue;
-    }
-    // somethingunknown: red; -> --somethingunknown: red;
-    // but keep known shorthands like -webkit-text-stroke as-is
-    if (
-      propertiesData[property] === undefined &&
-      shorthandProperties.includes(
-        property as (typeof shorthandProperties)[number]
-      ) === false
-    ) {
-      styleMap.set(`--${property}`, value);
-      continue;
-    }
-    // @todo This should be returning { type: "guaranteedInvalid" }
-    styleMap.set(property, value);
-  }
+  const styleMap: CssStyleMap = new Map(
+    styles.map(({ property, value }) => [property, value])
+  );
   return { styleMap, errors: [...shorthandErrors, ...errors], hasSyntaxErrors };
 };
 

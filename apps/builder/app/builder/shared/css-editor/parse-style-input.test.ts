@@ -100,6 +100,23 @@ describe("parseStyleInput", () => {
     );
   });
 
+  test("converts an unknown property with a value to a custom property", () => {
+    const { styleMap, errors, hasSyntaxErrors } = parseStyleInput(
+      "bla: 123",
+      new Map()
+    );
+    expect(styleMap).toEqual(
+      new Map([["--bla", { type: "unit", unit: "number", value: 123 }]])
+    );
+    expect(errors).toEqual([]);
+    expect(hasSyntaxErrors).toBe(false);
+  });
+
+  test("keeps a known shorthand even when its value is invalid", () => {
+    const { styleMap } = parseStyleInput("overflow: not-a-mode", new Map());
+    expect(styleMap.has("--overflow")).toBe(false);
+  });
+
   test("parses single property-value pair", () => {
     const { styleMap: result } = parseStyleInput("color: red", new Map());
     expect(result).toEqual(
@@ -199,7 +216,7 @@ describe("parseStyleInput", () => {
     );
   });
 
-  test("parses multiple property-value pairs, one is invalid", () => {
+  test("parses multiple property-value pairs, including an unknown property", () => {
     const { styleMap: result } = parseStyleInput(
       "color: red; somethinginvalid: block",
       new Map()
@@ -207,7 +224,7 @@ describe("parseStyleInput", () => {
     expect(result).toEqual(
       new Map([
         ["color", { type: "keyword", value: "red" }],
-        ["--somethinginvalid", { type: "invalid", value: "block" }],
+        ["--somethinginvalid", { type: "unparsed", value: "block" }],
       ])
     );
   });
