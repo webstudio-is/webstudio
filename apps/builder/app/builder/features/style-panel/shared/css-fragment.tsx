@@ -1,4 +1,10 @@
-import { useMemo, useRef, type ComponentProps, type ReactNode } from "react";
+import {
+  cloneElement,
+  useMemo,
+  useRef,
+  type ComponentProps,
+  type ReactElement,
+} from "react";
 import { matchSorter, type RankingInfo } from "match-sorter";
 import { EditorView, keymap, tooltips } from "@codemirror/view";
 import type { Extension } from "@codemirror/state";
@@ -103,6 +109,7 @@ export const CssFragmentEditorContent = ({
   language,
   completionSource,
   extensions: extraExtensions = emptyExtensions,
+  showLineNumbers = false,
   ...props
 }: ComponentProps<typeof EditorContent> & {
   onKeyDown?: (event: KeyboardEvent) => void;
@@ -141,7 +148,13 @@ export const CssFragmentEditorContent = ({
       ...extraExtensions,
     ];
   }, [language, completionSource, extraExtensions]);
-  return <EditorContent extensions={extensions} {...props} />;
+  return (
+    <EditorContent
+      extensions={extensions}
+      showLineNumbers={showLineNumbers}
+      {...props}
+    />
+  );
 };
 
 export const CssFragmentEditor = ({
@@ -149,7 +162,7 @@ export const CssFragmentEditor = ({
   onOpenChange,
   css,
 }: {
-  content: ReactNode;
+  content: ReactElement<ComponentProps<typeof CssFragmentEditorContent>>;
   onOpenChange?: (newOpen: boolean) => void;
   css?: CSS;
 }) => {
@@ -160,7 +173,7 @@ export const CssFragmentEditor = ({
         <EditorDialog
           onOpenChange={onOpenChange}
           title="CSS value"
-          content={content}
+          content={cloneElement(content, { showLineNumbers: true })}
         >
           <EditorDialogButton />
         </EditorDialog>

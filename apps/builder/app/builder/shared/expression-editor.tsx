@@ -579,6 +579,7 @@ export const ExpressionEditor = ({
   color,
   size,
   chromeless = false,
+  showLineNumbers = size === "full",
   autoFocus = false,
   readOnly = false,
   value,
@@ -598,6 +599,7 @@ export const ExpressionEditor = ({
   color?: "error";
   size?: "default" | "full";
   chromeless?: boolean;
+  showLineNumbers?: boolean;
   autoFocus?: boolean;
   readOnly?: boolean;
   value?: string;
@@ -737,6 +739,7 @@ export const ExpressionEditor = ({
       extensions={extensions}
       invalid={color === "error"}
       chromeless={chromeless}
+      showLineNumbers={showLineNumbers}
       readOnly={readOnly}
       autoFocus={autoFocus}
       value={expressionWithUnsetVariables}
@@ -762,6 +765,7 @@ export const ExpressionEditor = ({
               extensions={dialogExtensions}
               invalid={color === "error"}
               chromeless
+              showLineNumbers
               readOnly={readOnly}
               autoFocus={autoFocus}
               value={expressionWithUnsetVariables}

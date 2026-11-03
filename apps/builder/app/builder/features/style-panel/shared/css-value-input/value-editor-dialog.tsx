@@ -95,6 +95,7 @@ export const ValueEditorDialog = ({
       content={
         <CssFragmentEditorContent
           autoFocus
+          showLineNumbers
           value={intermediateValue?.value ?? value ?? ""}
           invalid={intermediateValue?.type === "invalid"}
           showShortcuts
