@@ -70,6 +70,12 @@ test("shows swatches only for color values and mounts one picker on demand", asy
     expect(container.querySelectorAll("color-input")).toHaveLength(1);
   });
 
+  act(() => {
+    container.querySelector("color-input")?.dispatchEvent(new Event("close"));
+  });
+  await vi.waitFor(() => {
+    expect(container.querySelectorAll("color-input")).toHaveLength(0);
+  });
   await act(async () => {
     await userEvent.click(container.querySelectorAll("button[aria-label]")[1]);
   });
