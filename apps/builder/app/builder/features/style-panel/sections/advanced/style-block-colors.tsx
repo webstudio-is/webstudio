@@ -32,6 +32,10 @@ const swatchClass = css({
   verticalAlign: "middle",
   marginRight: theme.spacing[2],
 });
+const swatchSize = {
+  width: theme.spacing[7],
+  height: theme.spacing[7],
+};
 
 type MountedSwatch = {
   root: Root;
@@ -82,6 +86,7 @@ class ColorSwatch extends WidgetType {
         <ColorThumb
           interactive={this.editable && !mounted.view.state.readOnly}
           color={toValue(this.color)}
+          css={swatchSize}
           aria-label={toValue(this.color)}
           onClick={() => {
             if (!this.editable || mounted.view.state.readOnly) {
@@ -113,6 +118,7 @@ class ColorSwatch extends WidgetType {
       <ColorPicker
         open
         value={this.color}
+        css={swatchSize}
         disabled={!this.editable || mounted.view.state.readOnly}
         onOpenChange={(open) => {
           if (!open) {
@@ -190,7 +196,7 @@ export const createColorSwatches = (onComplete: () => void) => {
     const variables = new Map($cssVarsMap.get());
     ast.children.forEach((node) => {
       if (node.type === "Declaration" && node.property.startsWith("--")) {
-        variables.set(node.property, generate(node.value));
+        variables.set(node.property, generate(node.value).trim());
       }
     });
     ast.children.forEach((declaration) => {
