@@ -432,6 +432,9 @@ export const ColorPicker = ({
         .${scopeClass}::part(input) {
           display: none;
         }
+        .${scopeClass}::part(panel) {
+          white-space: normal;
+        }
         .${scopeClass}::part(controls) {
           /* Hack to fix as we can't reach into .control and change grid-template-columns */
           font-size: 16px;
