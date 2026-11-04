@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   Annotation,
+  Compartment,
   EditorSelection,
   EditorState,
   StateEffect,
@@ -354,7 +355,7 @@ type EditorContentProps = {
   showShortcuts?: boolean;
   showLineNumbers?: boolean;
   chromeless?: boolean;
-  addExternalChangesToHistory?: boolean;
+  resetHistoryOnExternalChange?: boolean;
   value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string, event?: FocusEvent) => void;
@@ -371,13 +372,14 @@ export const EditorContent = ({
   showShortcuts = false,
   showLineNumbers = true,
   chromeless = false,
-  addExternalChangesToHistory = true,
+  resetHistoryOnExternalChange = false,
   value,
   onChange,
   onChangeComplete,
 }: EditorContentProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<undefined | EditorView>(undefined);
+  const historyCompartment = useRef(new Compartment());
 
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -447,7 +449,7 @@ export const EditorContent = ({
         ...extensions,
         ...(hasDisabledFieldset ? [EditorView.editable.of(false)] : []),
         autocompletionTooltipTheme,
-        history(),
+        historyCompartment.current.of(history()),
         drawSelection(),
         dropCursor(),
         syntaxHighlighting(codeHighlightStyle, { fallback: true }),
@@ -523,12 +525,19 @@ export const EditorContent = ({
       selection: clampEditorSelection(view.state.selection, nextValue.length),
       annotations: [
         ExternalChange.of(true),
-        ...(!addExternalChangesToHistory
+        ...(resetHistoryOnExternalChange
           ? [Transaction.addToHistory.of(false)]
           : []),
       ],
     });
-  }, [value, addExternalChangesToHistory]);
+    if (resetHistoryOnExternalChange) {
+      // A full replacement changes declaration offsets, so old undo events cannot be mapped safely.
+      view.dispatch({ effects: historyCompartment.current.reconfigure([]) });
+      view.dispatch({
+        effects: historyCompartment.current.reconfigure(history()),
+      });
+    }
+  }, [value, resetHistoryOnExternalChange]);
 
   useEffect(() => {
     if (initialSelection !== undefined) {

@@ -432,7 +432,7 @@ const MixedStyleBlockEditor = ({
         completionSource={blockCompletionSource}
         autoFocus={!inline}
         chromeless={inline}
-        addExternalChangesToHistory={false}
+        resetHistoryOnExternalChange
         showLineNumbers={!inline}
         readOnly={readonly}
         extensions={extensions}

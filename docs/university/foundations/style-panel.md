@@ -203,11 +203,7 @@ To add several declarations, press Shift+Enter in **Add styles** or paste CSS wi
 
 In the code editor, Enter adds a missing semicolon before starting the next declaration. If you enter an unknown property name, Webstudio saves it as a CSS variable with a `--` prefix.
 
-Use the maximize button beside a source label to open that source in the centered editor. Only Local is editable.
-
-Use the Advanced section menu to show cascaded styles, preset styles, or global variables. Cascaded styles are shown by default; preset styles and global variables are hidden until enabled. In Code view, they appear below the editable local styles.
-
-In Code view, search filters local, cascaded, preset, and global declarations. Local styles become read-only while a search is active; clear the search to edit the full local block.
+Code view and the centered Styles editor show Local, Cascaded, Preset, and Global variables in one CSS block, separated by source comments. Property colors show their source. Editing a Cascaded, Preset, or Global value creates a Local override; deleting a Local override reveals the original value. Source-owned declarations cannot be deleted here. Search filters the combined block and makes it read-only until search is cleared.
 
 In Code view, click the swatch beside a color value to edit that color with the Style panel’s color picker.
 

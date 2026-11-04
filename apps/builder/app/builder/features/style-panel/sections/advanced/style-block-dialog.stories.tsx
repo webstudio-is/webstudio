@@ -1,11 +1,20 @@
+import { useState, type ComponentProps } from "react";
 import { Box, cssVar, theme } from "@webstudio-is/design-system";
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { InlineMixedStyleBlockEditor } from "./style-block-dialog";
+import {
+  InlineMixedStyleBlockEditor,
+  MixedStyleBlockDialog,
+} from "./style-block-dialog";
 
 const cascadedValue = { type: "keyword", value: "blue" } as const;
 const presetValue = { type: "keyword", value: "block" } as const;
 const globalValue = { type: "keyword", value: "red" } as const;
+const localDeclarations: ComponentProps<
+  typeof InlineMixedStyleBlockEditor
+>["declarations"] = [
+  { property: "opacity", value: { type: "unit", unit: "number", value: 0.8 } },
+];
 const inheritedDeclarations: ComputedStyleDecl[] = [
   {
     property: "color",
@@ -31,7 +40,7 @@ const inheritedDeclarations: ComputedStyleDecl[] = [
 ];
 
 export default {
-  title: "Builder/Style panel/Advanced inline code",
+  title: "Builder/Style panel/Advanced code editor",
 };
 
 export const InlineCode = () => (
@@ -42,15 +51,51 @@ export const InlineCode = () => (
     }}
   >
     <InlineMixedStyleBlockEditor
-      declarations={[
-        {
-          property: "opacity",
-          value: { type: "unit", unit: "number", value: 0.8 },
-        },
-      ]}
+      declarations={localDeclarations}
       sourceDeclarations={inheritedDeclarations}
       readonly={false}
       onApply={() => {}}
     />
   </Box>
 );
+
+export const CenteredCode = () => (
+  <MixedStyleBlockDialog
+    declarations={localDeclarations}
+    sourceDeclarations={inheritedDeclarations}
+    readonly={false}
+    open
+    onOpenChange={() => {}}
+    onApply={() => {}}
+  />
+);
+
+export const EditableCode = () => {
+  const [declarations, setDeclarations] = useState<
+    ComponentProps<typeof InlineMixedStyleBlockEditor>["declarations"]
+  >([]);
+  return (
+    <InlineMixedStyleBlockEditor
+      declarations={declarations}
+      sourceDeclarations={inheritedDeclarations}
+      readonly={false}
+      onApply={({ oldStyles, newStyles, canDelete }) => {
+        const styles = new Map(oldStyles);
+        if (canDelete) {
+          for (const property of oldStyles.keys()) {
+            if (!newStyles.has(property)) {
+              styles.delete(property);
+            }
+          }
+        }
+        for (const [property, value] of newStyles) {
+          styles.set(property, value);
+        }
+        setDeclarations(
+          Array.from(styles, ([property, value]) => ({ property, value }))
+        );
+        return styles;
+      }}
+    />
+  );
+};
