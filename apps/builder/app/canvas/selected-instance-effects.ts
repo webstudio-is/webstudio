@@ -147,20 +147,39 @@ const readComputedStyles = (element: HTMLElement) => {
       // also firefox does not support CSSStyleValue
     }
   }
-  if (computedStyle.aspectRatio === "auto" && element.parentElement !== null) {
-    const parentDisplay = getComputedStyle(element.parentElement).display;
-    // A flex/grid item's automatic minimum may depend on its content.
-    // Normal-flow boxes with an automatic aspect ratio use a zero minimum.
-    if (
-      parentDisplay !== "contents" &&
-      parentDisplay.includes("flex") === false &&
-      parentDisplay.includes("grid") === false
-    ) {
-      for (const property of ["min-width", "min-height"] as const) {
-        if (computedValues[property] === "auto") {
-          computedValues[property] = "0px";
-        }
+  if (computedStyle.aspectRatio === "auto") {
+    const parentStyle =
+      element.parentElement && getComputedStyle(element.parentElement);
+    const isOutOfFlow =
+      computedStyle.position === "absolute" ||
+      computedStyle.position === "fixed";
+    const isFlexItem = !isOutOfFlow && parentStyle?.display.includes("flex");
+    const isGridItem = !isOutOfFlow && parentStyle?.display.includes("grid");
+    const verticalWritingMode =
+      parentStyle?.writingMode.startsWith("vertical") ||
+      parentStyle?.writingMode.startsWith("sideways");
+    const flexMainHeight =
+      parentStyle?.flexDirection.startsWith("column") !== verticalWritingMode;
+    for (const property of ["min-width", "min-height"] as const) {
+      if (computedValues[property] !== "auto") {
+        continue;
       }
+      const isMainAxis = (property === "min-height") === flexMainHeight;
+      const overflow =
+        property === "min-height"
+          ? computedStyle.overflowY
+          : computedStyle.overflowX;
+      const nonScrollable = overflow === "visible" || overflow === "clip";
+      // Flex and grid items can have a content-based automatic minimum only
+      // on non-scrollable axes. Flex cross-axis minima always use zero.
+      if (
+        parentStyle?.display === "contents" ||
+        (isGridItem && nonScrollable) ||
+        (isFlexItem && isMainAxis && nonScrollable)
+      ) {
+        continue;
+      }
+      computedValues[property] = "0px";
     }
   }
   return { propertySizes, computedValues };
