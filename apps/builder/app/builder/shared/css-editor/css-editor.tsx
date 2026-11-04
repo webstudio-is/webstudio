@@ -491,6 +491,7 @@ export const cannotRoundTripAsCssText = (
 const AdvancedPropertyValue = ({
   styleDecl,
   readonly = false,
+  multilineDrafts,
   onDeleteProperty,
   onSetProperty,
   onChangeComplete,
@@ -499,6 +500,7 @@ const AdvancedPropertyValue = ({
 }: {
   styleDecl: ComputedStyleDecl;
   readonly?: boolean;
+  multilineDrafts: Map<CssProperty, string>;
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
   onChangeComplete?: (event: { type: string }, atEnd: boolean) => void;
@@ -509,7 +511,10 @@ const AdvancedPropertyValue = ({
   const editorRef = useRef<EditorApi>();
   const selectionRef = useRef(0);
   const closingRef = useRef(false);
-  const [multilineValue, setMultilineValue] = useState<string>();
+  const restoredDraftRef = useRef(multilineDrafts.has(styleDecl.property));
+  const [multilineValue, setMultilineValue] = useState<string | undefined>(() =>
+    multilineDrafts.get(styleDecl.property)
+  );
   const [invalidMultilineValue, setInvalidMultilineValue] = useState(false);
   const isMultiline = multilineValue !== undefined;
 
@@ -539,6 +544,7 @@ const AdvancedPropertyValue = ({
     }
     closingRef.current = true;
     onSetProperty(styleDecl.property)(parsed, { listed: true });
+    multilineDrafts.delete(styleDecl.property);
     setMultilineValue(undefined);
     if (restoreFocus) {
       requestAnimationFrame(() => inputRef.current?.focus());
@@ -557,12 +563,13 @@ const AdvancedPropertyValue = ({
           <CssFragmentEditorContent
             ariaLabel={styleDecl.property}
             editorApiRef={editorRef}
-            autoFocus
+            autoFocus={!restoredDraftRef.current}
             readOnly={readonly}
             initialSelection={selectionRef.current}
             invalid={invalidMultilineValue}
             value={multilineValue}
             onChange={(value) => {
+              multilineDrafts.set(styleDecl.property, value);
               setMultilineValue(value);
               setInvalidMultilineValue(false);
               if (!value.includes("\n")) {
@@ -577,6 +584,7 @@ const AdvancedPropertyValue = ({
                 event.preventDefault();
                 event.stopPropagation();
                 closingRef.current = true;
+                multilineDrafts.delete(styleDecl.property);
                 setMultilineValue(undefined);
                 requestAnimationFrame(() => inputRef.current?.focus());
               }
@@ -658,9 +666,9 @@ const AdvancedPropertyValue = ({
             }
             selectionRef.current = insertionPoint + 1;
             closingRef.current = false;
-            setMultilineValue(
-              `${value.slice(0, insertionPoint)}\n${value.slice(replacementEnd)}`
-            );
+            const multiline = `${value.slice(0, insertionPoint)}\n${value.slice(replacementEnd)}`;
+            multilineDrafts.set(styleDecl.property, multiline);
+            setMultilineValue(multiline);
           }}
           onEnter={() => {
             const input = inputRef.current;
@@ -772,6 +780,7 @@ const AdvancedDeclarationLonghand = memo(
   ({
     styleDecl,
     readonly = false,
+    multilineDrafts,
     onChangeComplete,
     onDeleteProperty,
     onSetProperty,
@@ -784,6 +793,7 @@ const AdvancedDeclarationLonghand = memo(
   }: {
     styleDecl: ComputedStyleDecl;
     readonly?: boolean;
+    multilineDrafts: Map<CssProperty, string>;
     indentation?: string;
     onReset?: () => void;
     onSetProperty: SetProperty;
@@ -829,6 +839,7 @@ const AdvancedDeclarationLonghand = memo(
         <AdvancedPropertyValue
           styleDecl={styleDecl}
           readonly={readonly}
+          multilineDrafts={multilineDrafts}
           onChangeComplete={onChangeComplete}
           onReset={onReset}
           onDeleteProperty={onDeleteProperty}
@@ -898,6 +909,7 @@ export const CssEditor = ({
   recentProperties?: Array<CssProperty>;
   showInlineAddButton?: boolean;
 }) => {
+  const multilineDrafts = useRef(new Map<CssProperty, string>()).current;
   const draftRowRef = useRef<HTMLDivElement>(null);
   const draftPropertyInputRef = useRef<HTMLInputElement>(null);
   const draftValueInputRef = useRef<HTMLInputElement>(null);
@@ -1184,6 +1196,11 @@ export const CssEditor = ({
     if (newEntryAfter === oldProperty) {
       setNewEntryAfter(newProperty);
     }
+    const multilineDraft = multilineDrafts.get(oldProperty);
+    if (multilineDraft !== undefined) {
+      multilineDrafts.delete(oldProperty);
+      multilineDrafts.set(newProperty, multilineDraft);
+    }
     onRenameProperty(oldProperty, newProperty, value);
   };
 
@@ -1304,6 +1321,7 @@ export const CssEditor = ({
     if (options.isEphemeral === true) {
       return;
     }
+    multilineDrafts.delete(property);
     if (newEntryAfter === property) {
       setNewEntryAfter(undefined);
     }
@@ -1665,6 +1683,7 @@ export const CssEditor = ({
               <AdvancedDeclarationLonghand
                 styleDecl={styleDecl}
                 readonly={readonly}
+                multilineDrafts={multilineDrafts}
                 existingProperties={existingDeclarationsMap}
                 deletableProperties={deletableProperties}
                 onRenameProperty={handleRenameProperty}
@@ -1756,6 +1775,7 @@ export const CssEditor = ({
                   <AdvancedDeclarationLonghand
                     styleDecl={styleDecl}
                     readonly={readonly}
+                    multilineDrafts={multilineDrafts}
                     existingProperties={existingDeclarationsMap}
                     deletableProperties={deletableProperties}
                     onRenameProperty={handleRenameProperty}

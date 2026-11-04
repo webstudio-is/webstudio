@@ -177,12 +177,17 @@ export const createColorSwatches = (onComplete: () => void) => {
         return;
       }
       const custom = declaration.property.startsWith("--");
-      const valueAst = custom
-        ? parse(source.slice(value.loc.start.offset, value.loc.end.offset), {
-            context: "value",
-            positions: true,
-          })
-        : value;
+      let valueAst = value;
+      if (custom) {
+        try {
+          valueAst = parse(
+            source.slice(value.loc.start.offset, value.loc.end.offset),
+            { context: "value", positions: true }
+          );
+        } catch {
+          return;
+        }
+      }
       const offset = custom ? value.loc.start.offset : 0;
       const match = custom
         ? undefined
