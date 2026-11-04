@@ -18,7 +18,7 @@ import {
   $availableVariables,
   $cssVarsMap,
 } from "~/builder/features/style-panel/shared/model";
-import { parseStyleInput } from "./parse-style-input";
+import { parseStyleInput, splitStyleInputAtColon } from "./parse-style-input";
 import { PropertyStatusDescription } from "~/builder/features/style-panel/property-status";
 
 export type SearchItem = {
@@ -120,6 +120,7 @@ export const matchOrSuggestToCreate = (
   matched.length = Math.min(matched.length, 100);
 
   if (matched.length === 0) {
+    const hasValue = splitStyleInputAtColon(search) !== undefined;
     const { styleMap: parsedStyleMap } = parseStyleInput(
       search,
       $cssVarsMap.get()
@@ -140,7 +141,7 @@ export const matchOrSuggestToCreate = (
       matched.push({
         key: "",
         property,
-        value: toValue(value),
+        value: hasValue ? toValue(value) : undefined,
         label: `Create "${generateStyleMap(new Map([[property, value]]))}"`,
       });
     }
