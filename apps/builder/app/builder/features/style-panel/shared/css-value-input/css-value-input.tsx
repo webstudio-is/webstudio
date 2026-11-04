@@ -705,7 +705,10 @@ export const CssValueInput = ({
         declaration.usedValue.type !== "invalid" &&
         declaration.usedValue.type !== "guaranteedInvalid"
       ) {
-        return toValue(declaration.usedValue);
+        return (
+          $selectedInstanceSizes.get().computedValues[property] ||
+          toValue(declaration.usedValue)
+        );
       }
     }
     if (value.type === "var") {
