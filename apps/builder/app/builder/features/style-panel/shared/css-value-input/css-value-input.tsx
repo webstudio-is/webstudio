@@ -64,8 +64,9 @@ import {
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { scrollByPointer } from "../scroll-by-pointer";
 import { useStore } from "@nanostores/react";
-import { $availableVariables, $computedStyleDeclarations } from "../model";
+import { $availableVariables, createComputedStyleDeclStore } from "../model";
 import { $isAltPressed } from "../modifier-keys";
+import { getComputedValuePreview } from "../computed-value-preview";
 
 // Subjective adjust ment based on how it feels on macbook/trackpad.
 // It won't be ideal for everyone with different input devices and preferences.
@@ -466,6 +467,10 @@ export const CssValueInput = ({
   ...props
 }: CssValueInputProps) => {
   const isAltPressed = useStore($isAltPressed);
+  const $computedStyleDecl = useMemo(
+    () => createComputedStyleDeclStore(property),
+    [property]
+  );
   const value = props.intermediateValue ?? props.value ?? initialValue;
   const valueRef = useRef(value);
   valueRef.current = value;
@@ -693,26 +698,21 @@ export const CssValueInput = ({
     const isFocused = document.activeElement === inputRef.current;
     if (
       isAltPressed &&
+      isFocused &&
       props.intermediateValue === undefined &&
       props.value !== undefined
     ) {
-      const declaration = $computedStyleDeclarations
-        .get()
-        .find((item) => item.property === property);
-      if (
-        declaration !== undefined &&
-        toValue(declaration.cascadedValue) === toValue(props.value) &&
-        declaration.usedValue.type !== "invalid" &&
-        declaration.usedValue.type !== "guaranteedInvalid"
-      ) {
-        return (
-          $selectedInstanceSizes.get().computedValues[property] ||
-          toValue(declaration.usedValue)
-        );
+      const preview = getComputedValuePreview(
+        property,
+        props.value,
+        $computedStyleDecl.get()
+      );
+      if (preview !== undefined) {
+        return preview;
       }
     }
     if (value.type === "var") {
-      if (isAltPressed) {
+      if (isAltPressed && isFocused) {
         const variable = $availableVariables
           .get()
           .find((item) => item.value === value.value);

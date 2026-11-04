@@ -147,6 +147,22 @@ const readComputedStyles = (element: HTMLElement) => {
       // also firefox does not support CSSStyleValue
     }
   }
+  if (computedStyle.aspectRatio === "auto" && element.parentElement !== null) {
+    const parentDisplay = getComputedStyle(element.parentElement).display;
+    // A flex/grid item's automatic minimum may depend on its content.
+    // Normal-flow boxes with an automatic aspect ratio use a zero minimum.
+    if (
+      parentDisplay !== "contents" &&
+      parentDisplay.includes("flex") === false &&
+      parentDisplay.includes("grid") === false
+    ) {
+      for (const property of ["min-width", "min-height"] as const) {
+        if (computedValues[property] === "auto") {
+          computedValues[property] = "0px";
+        }
+      }
+    }
+  }
   return { propertySizes, computedValues };
 };
 
