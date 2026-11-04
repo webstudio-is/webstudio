@@ -209,6 +209,8 @@ Use the Advanced section menu to show cascaded styles, preset styles, or global 
 
 In Code view, search filters local, cascaded, preset, and global declarations. Local styles become read-only while a search is active; clear the search to edit the full local block.
 
+In Code view, click the swatch beside a color value to edit that color with the Style panel’s color picker.
+
 Autocomplete includes standard, experimental, nonstandard, and obsolete CSS
 properties. A yellow warning marks any property that is not standard. Open the
 warning to review its status and browser-support risk, then select **Learn more
