@@ -1,4 +1,4 @@
-import { parse, tokenize, tokenTypes } from "css-tree";
+import { parse } from "css-tree";
 import {
   toValue,
   type CssProperty,
@@ -92,42 +92,11 @@ export const getMixedStyleGroups = (code: string): MixedStyleGroup[] => {
 };
 
 export const getProtectedMixedRanges = (code: string) => {
-  const ranges: Array<{ from: number; to: number }> = [];
-  for (const group of getMixedStyleGroups(code)) {
-    ranges.push({ from: group.from, to: group.contentFrom });
-    if (group.source === "local") {
-      continue;
-    }
-    const content = code.slice(group.contentFrom, group.to);
-    let ast;
-    try {
-      ast = parse(content, { context: "declarationList", positions: true });
-    } catch {
-      continue;
-    }
-    ast.children.forEach((node) => {
-      if (node.type !== "Declaration" || node.loc === null) {
-        return;
-      }
-      const from = group.contentFrom + node.loc.start.offset;
-      const to = group.contentFrom + node.loc.end.offset;
-      let colon: number | undefined;
-      tokenize(code.slice(from, to), (type, start) => {
-        if (colon === undefined && type === tokenTypes.Colon) {
-          colon = from + start;
-        }
-      });
-      if (colon !== undefined) {
-        ranges.push({ from, to: colon + 1 });
-        const suffixEnd = code[to] === ";" ? to + 1 : to;
-        ranges.push({
-          from: to,
-          to: code[suffixEnd] === "\n" ? suffixEnd + 1 : suffixEnd,
-        });
-      }
-    });
-  }
-  return ranges;
+  return getMixedStyleGroups(code).map((group) => ({
+    from: group.from,
+    to: group.source === "local" ? group.contentFrom : group.to,
+    inclusive: group.source !== "local",
+  }));
 };
 
 export const getMixedPropertyRanges = (code: string): MixedPropertyRange[] => {
@@ -162,73 +131,25 @@ export const getMixedPropertyRanges = (code: string): MixedPropertyRange[] => {
 
 export const parseMixedStyleBlock = (
   code: string,
-  localStyles: CssStyleMap,
-  declarations: ComputedStyleDecl[],
   parseDeclarations: typeof parseBlock
 ) => {
-  const local: CssStyleMap = new Map();
-  const mentionedProperties = new Set<CssProperty>();
-  const diagnostics: ReturnType<typeof parseBlock>["diagnostics"] = [];
-  const overriddenRanges: Array<{ from: number; to: number }> = [];
-  let canDelete = true;
-  for (const group of getMixedStyleGroups(code)) {
-    const content = code.slice(group.contentFrom, group.to);
-    const sourceDeclarations =
-      group.source === "local"
-        ? []
-        : declarations.filter(
-            (declaration) =>
-              getAdvancedStyleSource(declaration) === group.source &&
-              !localStyles.has(declaration.property)
-          );
-    if (
-      group.source !== "local" &&
-      content.trim() === formatDeclarations(sourceDeclarations)
-    ) {
-      continue;
-    }
-    const parsed = parseDeclarations(content);
-    diagnostics.push(
-      ...parsed.diagnostics.map((diagnostic) => ({
-        ...diagnostic,
-        from: diagnostic.from + group.contentFrom,
-        to: diagnostic.to + group.contentFrom,
-      }))
-    );
-    overriddenRanges.push(
-      ...parsed.overriddenRanges.map(({ from, to }) => ({
-        from: from + group.contentFrom,
-        to: to + group.contentFrom,
-      }))
-    );
-    canDelete &&= parsed.canDelete;
-    if (group.source === "local") {
-      for (const [property, value] of parsed.styleMap) {
-        local.set(property, value);
-      }
-      for (const property of parsed.mentionedProperties) {
-        mentionedProperties.add(property);
-      }
-      continue;
-    }
-    const original = new Map(
-      sourceDeclarations.map((declaration) => [
-        declaration.property,
-        toValue(declaration.cascadedValue),
-      ])
-    );
-    for (const [property, value] of parsed.styleMap) {
-      if (original.get(property) !== toValue(value)) {
-        local.set(property, value);
-        mentionedProperties.add(property);
-      }
-    }
-  }
+  const group = getMixedStyleGroups(code).find(
+    (group) => group.source === "local"
+  );
+  const parsed = parseDeclarations(
+    group === undefined ? "" : code.slice(group.contentFrom, group.to)
+  );
+  const offset = group?.contentFrom ?? 0;
   return {
-    styleMap: local,
-    mentionedProperties,
-    diagnostics,
-    overriddenRanges,
-    canDelete,
+    ...parsed,
+    diagnostics: parsed.diagnostics.map((diagnostic) => ({
+      ...diagnostic,
+      from: diagnostic.from + offset,
+      to: diagnostic.to + offset,
+    })),
+    overriddenRanges: parsed.overriddenRanges.map(({ from, to }) => ({
+      from: from + offset,
+      to: to + offset,
+    })),
   };
 };

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import type { CompletionSource } from "@codemirror/autocomplete";
 import { linter } from "@codemirror/lint";
 import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import {
@@ -53,8 +54,8 @@ import {
 } from "./mixed-style-block";
 import { formatStyleBlock } from "./style-block-format";
 
-const blockedDeleteMessage =
-  "This declaration comes from another source. Edit its value to create a local override.";
+const blockedEditMessage =
+  "This declaration comes from another source. Add a local declaration to override it.";
 const blockedEdit = StateEffect.define<void>();
 
 type Declaration = { property: CssProperty; value: StyleValue };
@@ -95,6 +96,13 @@ const getLocalStyles = (declarations: Declaration[]): CssStyleMap =>
       value,
     ])
   );
+
+const mixedCompletionSource: CompletionSource = (context) => {
+  const group = getMixedStyleGroups(context.state.doc.toString()).find(
+    ({ contentFrom, to }) => context.pos >= contentFrom && context.pos < to
+  );
+  return group?.source === "local" ? blockCompletionSource(context) : null;
+};
 
 const MixedStyleBlockEditor = ({
   declarations,
@@ -164,12 +172,7 @@ const MixedStyleBlockEditor = ({
     if (codeRef.current === appliedCodeRef.current) {
       return;
     }
-    const parsed = parseMixedStyleBlock(
-      codeRef.current,
-      oldStylesRef.current,
-      sourceSnapshotRef.current,
-      parseBlock
-    );
+    const parsed = parseMixedStyleBlock(codeRef.current, parseBlock);
     const appliedStyles = onApply({
       oldStyles: oldStylesRef.current,
       initialParsedStyles: initialParsedRef.current,
@@ -180,12 +183,7 @@ const MixedStyleBlockEditor = ({
     });
     if (appliedStyles !== undefined) {
       oldStylesRef.current = appliedStyles;
-      initialParsedRef.current = parseMixedStyleBlock(
-        codeRef.current,
-        appliedStyles,
-        sourceSnapshotRef.current,
-        parseBlock
-      ).styleMap;
+      initialParsedRef.current = parsed.styleMap;
       appliedCodeRef.current = codeRef.current;
       if (parsed.canDelete && parsed.diagnostics.length === 0) {
         cleanCodeRef.current = codeRef.current;
@@ -217,16 +215,12 @@ const MixedStyleBlockEditor = ({
               range.to
             );
           }),
-          ...parseMixedStyleBlock(
-            value,
-            oldStylesRef.current,
-            sourceSnapshotRef.current,
-            parseBlock
-          ).overriddenRanges.map(({ from, to }) =>
-            Decoration.mark({ class: "cm-overridden-declaration" }).range(
-              from,
-              to
-            )
+          ...parseMixedStyleBlock(value, parseBlock).overriddenRanges.map(
+            ({ from, to }) =>
+              Decoration.mark({ class: "cm-overridden-declaration" }).range(
+                from,
+                to
+              )
           ),
         ],
         true
@@ -265,7 +259,10 @@ const MixedStyleBlockEditor = ({
           if (
             protectedRanges.some(
               (range) =>
-                (from === to && from > range.from && from < range.to) ||
+                (from === to &&
+                  (range.inclusive
+                    ? from >= range.from && from <= range.to
+                    : from > range.from && from < range.to)) ||
                 (from < to && from < range.to && to > range.from)
             )
           ) {
@@ -276,7 +273,7 @@ const MixedStyleBlockEditor = ({
           ? {
               effects: [
                 blockedEdit.of(),
-                EditorView.announce.of(blockedDeleteMessage),
+                EditorView.announce.of(blockedEditMessage),
               ],
             }
           : transaction;
@@ -287,7 +284,7 @@ const MixedStyleBlockEditor = ({
             transaction.effects.some((effect) => effect.is(blockedEdit))
           )
         ) {
-          toast.error(blockedDeleteMessage);
+          toast.error(blockedEditMessage);
         }
       }),
       hoverTooltip((view, position) => {
@@ -355,7 +352,7 @@ const MixedStyleBlockEditor = ({
                             camelCaseProperty(range.property)
                           ]
                         }
-                        {!isLocal && <p>{blockedDeleteMessage}</p>}
+                        {!isLocal && <p>{blockedEditMessage}</p>}
                       </>
                     }
                     styles={[styleDecl]}
@@ -394,12 +391,8 @@ const MixedStyleBlockEditor = ({
       }),
       linter(
         (view) =>
-          parseMixedStyleBlock(
-            view.state.doc.toString(),
-            oldStylesRef.current,
-            sourceSnapshotRef.current,
-            parseBlock
-          ).diagnostics
+          parseMixedStyleBlock(view.state.doc.toString(), parseBlock)
+            .diagnostics
       ),
       linterTooltipTheme,
       declarationLineBreak,
@@ -429,7 +422,7 @@ const MixedStyleBlockEditor = ({
       <CssFragmentEditorContent
         ariaLabel="Styles"
         language={cssBlockLanguage}
-        completionSource={blockCompletionSource}
+        completionSource={mixedCompletionSource}
         autoFocus={!inline}
         initialSelection={getMixedStyleGroups(code)[0]?.contentFrom ?? 0}
         chromeless={inline}

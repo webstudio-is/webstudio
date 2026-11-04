@@ -25,6 +25,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { $cssVarsMap } from "../../shared/model";
+import { getMixedStyleGroups } from "./mixed-style-block";
 
 const swatchClass = css({
   display: "inline-flex",
@@ -49,25 +50,29 @@ class ColorSwatch extends WidgetType {
   readonly from: number;
   readonly to: number;
   readonly onComplete: () => void;
+  readonly editable: boolean;
 
   constructor(
     color: ColorValue,
     from: number,
     to: number,
-    onComplete: () => void
+    onComplete: () => void,
+    editable: boolean
   ) {
     super();
     this.color = color;
     this.from = from;
     this.to = to;
     this.onComplete = onComplete;
+    this.editable = editable;
   }
 
   eq(other: ColorSwatch) {
     return (
       toValue(this.color) === toValue(other.color) &&
       this.from === other.from &&
-      this.to === other.to
+      this.to === other.to &&
+      this.editable === other.editable
     );
   }
 
@@ -75,11 +80,11 @@ class ColorSwatch extends WidgetType {
     if (!mounted.active) {
       mounted.root.render(
         <ColorThumb
-          interactive={!mounted.view.state.readOnly}
+          interactive={this.editable && !mounted.view.state.readOnly}
           color={toValue(this.color)}
           aria-label={toValue(this.color)}
           onClick={() => {
-            if (mounted.view.state.readOnly) {
+            if (!this.editable || mounted.view.state.readOnly) {
               return;
             }
             const previous = activeSwatches.get(mounted.view);
@@ -108,7 +113,7 @@ class ColorSwatch extends WidgetType {
       <ColorPicker
         open
         value={this.color}
-        disabled={mounted.view.state.readOnly}
+        disabled={!this.editable || mounted.view.state.readOnly}
         onOpenChange={(open) => {
           if (!open) {
             mounted.active = false;
@@ -179,6 +184,8 @@ export const createColorSwatches = (onComplete: () => void) => {
   const decorate = (state: EditorState) => {
     const widgets: Range<Decoration>[] = [];
     const source = state.doc.toString();
+    const groups = getMixedStyleGroups(source);
+    const localGroup = groups.find((group) => group.source === "local");
     const ast = parse(source, { context: "declarationList", positions: true });
     const variables = new Map($cssVarsMap.get());
     ast.children.forEach((node) => {
@@ -274,9 +281,14 @@ export const createColorSwatches = (onComplete: () => void) => {
           return;
         }
         selected.push({ from, to });
+        const editable =
+          groups.length === 0 ||
+          (localGroup !== undefined &&
+            from >= localGroup.contentFrom &&
+            from < localGroup.to);
         widgets.push(
           Decoration.widget({
-            widget: new ColorSwatch(color, from, to, onComplete),
+            widget: new ColorSwatch(color, from, to, onComplete, editable),
             side: -1,
           }).range(from)
         );
