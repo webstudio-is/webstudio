@@ -16,7 +16,11 @@ import {
   IconLink,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
-import { $registeredComponentMetas } from "~/shared/nano-states";
+import {
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $virtualInstances,
+} from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { $instances, $styleSources } from "~/shared/sync/data-stores";
 import type {
@@ -27,7 +31,6 @@ import { useComputedStyles } from "./shared/model";
 import { useReadonly } from "./shared/readonly";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
-import { $virtualInstances } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $isAltPressed } from "./shared/modifier-keys";
 
@@ -78,6 +81,7 @@ export const PropertyInfo = ({
   const styleSources = useStore($styleSources);
   const metas = useStore($registeredComponentMetas);
   const isAltPressed = useStore($isAltPressed);
+  const selectedInstanceId = useStore($selectedInstanceSelector)?.[0];
 
   let resettable = false;
   const breakpointSet = new Set<string>();
@@ -129,6 +133,34 @@ export const PropertyInfo = ({
   const mdnUrl = propertiesData[property]?.mdnUrl;
   const sourceColor =
     styles.length > 0 ? getPriorityStyleValueSource(styles) : undefined;
+  let sourceLabel = sourceColor === "remote" ? "Cascaded" : sourceColor;
+  let sourceDescription = sourceColor && sourceHints[sourceColor];
+  if (
+    selectedInstanceId !== undefined &&
+    (sourceColor === "remote" || sourceColor === "preset")
+  ) {
+    const sourceInstances = styles
+      .filter((style) => style.source.name === sourceColor)
+      .map((style) => style.source.instanceId);
+    if (
+      sourceInstances.every(
+        (instanceId) =>
+          instanceId !== undefined && instanceId !== selectedInstanceId
+      )
+    ) {
+      sourceLabel = sourceColor === "remote" ? "Inherited" : "Preset";
+      sourceDescription =
+        sourceColor === "remote"
+          ? "Comes from a style on an ancestor element."
+          : "Comes from a Webstudio component default on an ancestor element.";
+    } else if (
+      sourceColor === "remote" &&
+      sourceInstances.every((instanceId) => instanceId === selectedInstanceId)
+    ) {
+      sourceDescription =
+        "Comes from another style source, breakpoint, or state on this element.";
+    }
+  }
   return (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
       <Flex justify="between">
@@ -157,13 +189,8 @@ export const PropertyInfo = ({
       <Text>{description}</Text>
       {sourceColor && (
         <Text>
-          <strong>
-            {sourceColor === "remote"
-              ? "Cascaded"
-              : humanizeString(sourceColor)}
-            :{" "}
-          </strong>
-          {sourceHints[sourceColor]}
+          <strong>{humanizeString(sourceLabel ?? sourceColor)}: </strong>
+          {sourceDescription}
         </Text>
       )}
       {(styleSourceNameSet.size > 0 || instanceSet.size > 0) && (
