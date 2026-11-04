@@ -1,7 +1,11 @@
 import type { Diagnostic } from "@codemirror/lint";
 import { cssCompletionSource, cssLanguage } from "@codemirror/lang-css";
+import {
+  CompletionContext,
+  type CompletionSource,
+} from "@codemirror/autocomplete";
+import { EditorState } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
-import type { CompletionSource } from "@codemirror/autocomplete";
 import { generate, parse, tokenize, tokenTypes } from "css-tree";
 import { menuItemCss } from "@webstudio-is/design-system";
 import {
@@ -74,6 +78,28 @@ export const blockCompletionSource: CompletionSource = async (context) => {
     ) {
       declaration = previous;
     }
+  }
+  if (
+    declaration.name !== "Declaration" &&
+    !isPropertyLine &&
+    (line.from !== 0 || line.to !== state.doc.length)
+  ) {
+    // An unfinished neighboring declaration can make the CSS parser treat this
+    // line as a selector. Complete the current line with the same source.
+    const lineState = EditorState.create({
+      doc: line.text,
+      extensions: [cssBlockLanguage],
+    });
+    const result = await blockCompletionSource(
+      new CompletionContext(lineState, pos - line.from, context.explicit)
+    );
+    return (
+      result && {
+        ...result,
+        from: result.from + line.from,
+        to: result.to === undefined ? undefined : result.to + line.from,
+      }
+    );
   }
   const colon = declaration.getChild(":");
   if (colon !== null && pos >= colon.to && !isPropertyLine) {
