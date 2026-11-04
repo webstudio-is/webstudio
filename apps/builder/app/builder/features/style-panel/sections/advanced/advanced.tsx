@@ -128,21 +128,16 @@ const CodeView = ({
   onApply: ComponentProps<typeof InlineMixedStyleBlockEditor>["onApply"];
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>();
-  const { localDeclarations, inheritedDeclarations, visibleDeclarations } =
-    useMemo(() => {
-      const inheritedDeclarations = declarations.filter(
-        (declaration) => getAdvancedStyleSource(declaration) !== undefined
-      );
-      return {
-        localDeclarations:
-          getMatchingDeclarations(blockDeclarations, searchTerm) ??
-          blockDeclarations,
-        inheritedDeclarations,
-        visibleDeclarations:
-          getMatchingDeclarations(inheritedDeclarations, searchTerm) ??
-          inheritedDeclarations,
-      };
-    }, [blockDeclarations, declarations, searchTerm]);
+  const { localDeclarations, visibleDeclarations } = useMemo(
+    () => ({
+      localDeclarations:
+        getMatchingDeclarations(blockDeclarations, searchTerm) ??
+        blockDeclarations,
+      visibleDeclarations:
+        getMatchingDeclarations(declarations, searchTerm) ?? declarations,
+    }),
+    [blockDeclarations, declarations, searchTerm]
+  );
   const searching = searchTerm !== undefined;
   return (
     <>
@@ -158,13 +153,16 @@ const CodeView = ({
       <Box css={{ display: searching ? "none" : undefined }}>
         <InlineMixedStyleBlockEditor
           declarations={blockDeclarations}
-          sourceDeclarations={inheritedDeclarations}
+          sourceDeclarations={declarations}
           readonly={readonly}
           onApply={onApply}
         />
       </Box>
       {searching &&
-        (localDeclarations.length > 0 || visibleDeclarations.length > 0) && (
+        (localDeclarations.length > 0 ||
+          visibleDeclarations.some(
+            (declaration) => getAdvancedStyleSource(declaration) !== undefined
+          )) && (
           <InlineMixedStyleBlockEditor
             declarations={localDeclarations}
             sourceDeclarations={visibleDeclarations}

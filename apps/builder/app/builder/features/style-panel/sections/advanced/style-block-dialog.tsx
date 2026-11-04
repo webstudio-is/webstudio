@@ -8,6 +8,7 @@ import {
   EditorView,
   hoverTooltip,
   placeholder,
+  ViewPlugin,
 } from "@codemirror/view";
 import {
   Box,
@@ -35,7 +36,10 @@ import {
 import { declarationLineBreak } from "~/builder/shared/css-editor/declaration-line-break";
 import { CssFragmentEditorContent } from "../../shared/css-fragment";
 import { $cssVarsMap } from "../../shared/model";
-import { PropertyInfo } from "../../property-label";
+import {
+  getPriorityStyleValueSource,
+  PropertyInfo,
+} from "../../property-label";
 import { ReadonlyProvider } from "../../shared/readonly";
 import { createColorSwatches } from "./style-block-colors";
 import {
@@ -57,6 +61,7 @@ import { formatStyleBlock } from "./style-block-format";
 const blockedEditMessage =
   "This declaration comes from another source. Add a local declaration to override it.";
 const blockedEdit = StateEffect.define<void>();
+const sourceChanged = StateEffect.define<void>();
 
 type Declaration = { property: CssProperty; value: StyleValue };
 type Props = {
@@ -120,6 +125,7 @@ const MixedStyleBlockEditor = ({
   const oldStylesRef = useRef<CssStyleMap>(new Map());
   const initialParsedRef = useRef<CssStyleMap>(new Map());
   const sourceSnapshotRef = useRef(sourceDeclarations);
+  const editorViewRef = useRef<EditorView>();
   const wasOpenRef = useRef(false);
   const applyRef = useRef<() => void>(() => {});
 
@@ -165,6 +171,8 @@ const MixedStyleBlockEditor = ({
       setInitialStyles(localStyles, nextCode);
     } else {
       oldStylesRef.current = localStyles;
+      sourceSnapshotRef.current = sourceDeclarations;
+      editorViewRef.current?.dispatch({ effects: sourceChanged.of() });
     }
   }, [inline, declarations, sourceDeclarations, setInitialStyles]);
 
@@ -201,15 +209,23 @@ const MixedStyleBlockEditor = ({
       Decoration.set(
         [
           ...getMixedPropertyRanges(value).map((range) => {
-            const computed = sourceSnapshotRef.current.find(
-              (declaration) => declaration.property === range.property
-            );
-            const source =
-              range.source === "local"
-                ? computed?.source.name === "overwritten"
+            let source = "remote";
+            if (range.source === "local") {
+              const parsed = parseBlock(
+                value.slice(range.declarationFrom, range.declarationTo)
+              ).styleMap;
+              const properties = new Set(
+                parsed.size > 0 ? parsed.keys() : [range.property]
+              );
+              source =
+                getPriorityStyleValueSource(
+                  sourceSnapshotRef.current.filter((declaration) =>
+                    properties.has(declaration.property)
+                  )
+                ) === "overwritten"
                   ? "overwritten"
-                  : "local"
-                : "remote";
+                  : "local";
+            }
             return Decoration.mark({ class: `cm-mixed-${source}` }).range(
               range.from,
               range.to
@@ -228,7 +244,8 @@ const MixedStyleBlockEditor = ({
     const propertyField = StateField.define<ReturnType<typeof Decoration.set>>({
       create: (state) => decorate(state.doc.toString()),
       update: (decorations, transaction) =>
-        transaction.docChanged
+        transaction.docChanged ||
+        transaction.effects.some((effect) => effect.is(sourceChanged))
           ? decorate(transaction.state.doc.toString())
           : decorations,
       provide: (field) => EditorView.decorations.from(field),
@@ -236,6 +253,16 @@ const MixedStyleBlockEditor = ({
     return [
       colorSwatches,
       propertyField,
+      ViewPlugin.fromClass(
+        class {
+          constructor(view: EditorView) {
+            editorViewRef.current = view;
+          }
+          destroy() {
+            editorViewRef.current = undefined;
+          }
+        }
+      ),
       sourceColorTheme,
       EditorState.transactionFilter.of((transaction) => {
         if (!transaction.docChanged || transaction.annotation(ExternalChange)) {
