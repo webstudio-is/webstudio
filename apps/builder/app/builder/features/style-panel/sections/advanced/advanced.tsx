@@ -145,6 +145,16 @@ const CodeView = ({
     };
   }, [blockDeclarations, declarations, searchTerm]);
   const searching = searchTerm !== undefined;
+  const localHeader = (
+    <PanelContent css={{ paddingBlock: theme.spacing[2] }}>
+      <AdvancedStyleSourceHeader
+        source="local"
+        title="Local"
+        description="These styles are defined on the selected style source"
+        readonly={readonly}
+      />
+    </PanelContent>
+  );
 
   return (
     <>
@@ -157,21 +167,26 @@ const CodeView = ({
           onAbort={() => setSearchTerm(undefined)}
         />
       </PanelContent>
-      {(!searching || localDeclarations.length > 0) && (
+      <Box
+        css={{
+          ...sourceMaximizeHoverCss,
+          display: searching ? "none" : undefined,
+        }}
+      >
+        {localHeader}
+        <InlineStyleBlockEditor
+          declarations={blockDeclarations}
+          readonly={readonly}
+          onApply={onApply}
+        />
+      </Box>
+      {searching && localDeclarations.length > 0 && (
         <Box css={sourceMaximizeHoverCss}>
-          <PanelContent css={{ paddingBlock: theme.spacing[2] }}>
-            <AdvancedStyleSourceHeader
-              source="local"
-              title="Local"
-              description="These styles are defined on the selected style source"
-              readonly={readonly}
-            />
-          </PanelContent>
+          {localHeader}
           <InlineStyleBlockEditor
-            key={searching ? "search" : "edit"}
             declarations={localDeclarations}
-            readonly={readonly || searching}
-            onApply={searching ? () => {} : onApply}
+            readonly
+            onApply={() => {}}
           />
         </Box>
       )}
