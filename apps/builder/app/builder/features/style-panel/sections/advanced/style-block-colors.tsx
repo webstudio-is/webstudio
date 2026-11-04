@@ -1,8 +1,18 @@
 import { createRoot, type Root } from "react-dom/client";
-import { StateField, type EditorState, type Range } from "@codemirror/state";
-import { Decoration, EditorView, WidgetType } from "@codemirror/view";
-import { lexer, parse, walk, type CssNode } from "css-tree";
-import { parseColor } from "@webstudio-is/css-data";
+import {
+  StateEffect,
+  StateField,
+  type EditorState,
+  type Range,
+} from "@codemirror/state";
+import {
+  Decoration,
+  EditorView,
+  ViewPlugin,
+  WidgetType,
+} from "@codemirror/view";
+import { generate, lexer, parse, walk, type CssNode } from "css-tree";
+import { parseColor, parseCssVar } from "@webstudio-is/css-data";
 import {
   toValue,
   type ColorValue,
@@ -14,6 +24,7 @@ import {
   css,
   theme,
 } from "@webstudio-is/design-system";
+import { $cssVarsMap } from "../../shared/model";
 
 const swatchClass = css({
   display: "inline-flex",
@@ -164,10 +175,17 @@ class ColorSwatch extends WidgetType {
 }
 
 export const createColorSwatches = (onComplete: () => void) => {
+  const variablesChanged = StateEffect.define<null>();
   const decorate = (state: EditorState) => {
     const widgets: Range<Decoration>[] = [];
     const source = state.doc.toString();
     const ast = parse(source, { context: "declarationList", positions: true });
+    const variables = new Map($cssVarsMap.get());
+    ast.children.forEach((node) => {
+      if (node.type === "Declaration" && node.property.startsWith("--")) {
+        variables.set(node.property, generate(node.value));
+      }
+    });
     ast.children.forEach((declaration) => {
       if (declaration.type !== "Declaration") {
         return;
@@ -176,6 +194,8 @@ export const createColorSwatches = (onComplete: () => void) => {
       if (value.loc === null) {
         return;
       }
+      const valueStart = value.loc.start.offset;
+      const valueEnd = value.loc.end.offset;
       const custom = declaration.property.startsWith("--");
       let valueAst = value;
       if (custom) {
@@ -192,12 +212,9 @@ export const createColorSwatches = (onComplete: () => void) => {
       const match = custom
         ? undefined
         : lexer.matchProperty(declaration.property, valueAst);
-      if (!custom && match?.error) {
-        return;
-      }
       const selected: Array<{ from: number; to: number }> = [];
       walk(valueAst, (node: CssNode) => {
-        if (node.loc === null || (!custom && !match?.isType(node, "color"))) {
+        if (node.loc === null) {
           return;
         }
         const from = offset + node.loc.start.offset;
@@ -205,8 +222,55 @@ export const createColorSwatches = (onComplete: () => void) => {
         if (selected.some((range) => range.from <= from && range.to >= to)) {
           return;
         }
-        const color = parseColor(source.slice(from, to));
-        if (color === undefined) {
+        let color = parseColor(source.slice(from, to));
+        let isColor = custom || (!match?.error && match?.isType(node, "color"));
+        if (
+          color === undefined &&
+          node.type === "Function" &&
+          node.name === "var" &&
+          node.children.first?.type === "Identifier"
+        ) {
+          const reference = parseCssVar(node);
+          const resolved =
+            variables.get(`--${reference?.value}`) ??
+            (reference?.fallback && toValue(reference.fallback));
+          if (resolved !== undefined) {
+            color = parseColor(resolved);
+            if (color !== undefined && !custom) {
+              const resolvedFrom = from - valueStart;
+              const resolvedValue =
+                source.slice(valueStart, from) +
+                resolved +
+                source.slice(to, valueEnd);
+              try {
+                const resolvedAst = parse(resolvedValue, {
+                  context: "value",
+                  positions: true,
+                });
+                const resolvedMatch = lexer.matchProperty(
+                  declaration.property,
+                  resolvedAst
+                );
+                isColor = false;
+                if (!resolvedMatch.error) {
+                  walk(resolvedAst, (resolvedNode) => {
+                    if (
+                      resolvedNode.loc?.start.offset === resolvedFrom &&
+                      resolvedNode.loc.end.offset ===
+                        resolvedFrom + resolved.length &&
+                      resolvedMatch.isType(resolvedNode, "color")
+                    ) {
+                      isColor = true;
+                    }
+                  });
+                }
+              } catch {
+                isColor = false;
+              }
+            }
+          }
+        }
+        if (color === undefined || !isColor) {
           return;
         }
         selected.push({ from, to });
@@ -220,10 +284,29 @@ export const createColorSwatches = (onComplete: () => void) => {
     });
     return Decoration.set(widgets, true);
   };
-  return StateField.define({
+  const swatches = StateField.define({
     create: decorate,
     update: (widgets, transaction) =>
-      transaction.docChanged ? decorate(transaction.state) : widgets,
+      transaction.docChanged ||
+      transaction.effects.some((effect) => effect.is(variablesChanged))
+        ? decorate(transaction.state)
+        : widgets,
     provide: (field) => EditorView.decorations.from(field),
   });
+  const refreshVariables = ViewPlugin.fromClass(
+    class {
+      private unsubscribe: () => void;
+
+      constructor(view: EditorView) {
+        this.unsubscribe = $cssVarsMap.listen(() => {
+          view.dispatch({ effects: variablesChanged.of(null) });
+        });
+      }
+
+      destroy() {
+        this.unsubscribe();
+      }
+    }
+  );
+  return [swatches, refreshVariables];
 };
