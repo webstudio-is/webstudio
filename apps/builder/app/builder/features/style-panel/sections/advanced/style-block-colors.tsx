@@ -1,14 +1,19 @@
 import { createRoot, type Root } from "react-dom/client";
-import { syntaxTree } from "@codemirror/language";
 import { StateField, type EditorState, type Range } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
+import { lexer, parse, walk, type CssNode } from "css-tree";
 import { parseColor } from "@webstudio-is/css-data";
 import {
   toValue,
   type ColorValue,
   type StyleValue,
 } from "@webstudio-is/css-engine";
-import { ColorPicker, css, theme } from "@webstudio-is/design-system";
+import {
+  ColorPicker,
+  ColorThumb,
+  css,
+  theme,
+} from "@webstudio-is/design-system";
 
 const swatchClass = css({
   display: "inline-flex",
@@ -21,9 +26,12 @@ type MountedSwatch = {
   view: EditorView;
   from: number;
   to: number;
+  widget: ColorSwatch;
+  active: boolean;
 };
 
 const mountedSwatches = new WeakMap<HTMLElement, MountedSwatch>();
+const activeSwatches = new WeakMap<EditorView, MountedSwatch>();
 
 class ColorSwatch extends WidgetType {
   readonly color: ColorValue;
@@ -53,6 +61,29 @@ class ColorSwatch extends WidgetType {
   }
 
   render(mounted: MountedSwatch) {
+    if (!mounted.active) {
+      mounted.root.render(
+        <ColorThumb
+          interactive={!mounted.view.state.readOnly}
+          color={toValue(this.color)}
+          aria-label={toValue(this.color)}
+          onClick={() => {
+            if (mounted.view.state.readOnly) {
+              return;
+            }
+            const previous = activeSwatches.get(mounted.view);
+            if (previous !== undefined && previous !== mounted) {
+              previous.active = false;
+              previous.widget.render(previous);
+            }
+            mounted.active = true;
+            activeSwatches.set(mounted.view, mounted);
+            mounted.widget.render(mounted);
+          }}
+        />
+      );
+      return;
+    }
     const replace = (value: StyleValue) => {
       const insert = toValue(value);
       const { from, to } = mounted;
@@ -64,8 +95,18 @@ class ColorSwatch extends WidgetType {
     };
     mounted.root.render(
       <ColorPicker
+        open
         value={this.color}
         disabled={mounted.view.state.readOnly}
+        onOpenChange={(open) => {
+          if (!open) {
+            mounted.active = false;
+            if (activeSwatches.get(mounted.view) === mounted) {
+              activeSwatches.delete(mounted.view);
+            }
+            mounted.widget.render(mounted);
+          }
+        }}
         onChange={(value) => {
           if (value !== undefined) {
             replace(value);
@@ -87,6 +128,8 @@ class ColorSwatch extends WidgetType {
       view,
       from: this.from,
       to: this.to,
+      widget: this,
+      active: false,
     };
     mountedSwatches.set(element, mounted);
     this.render(mounted);
@@ -101,6 +144,7 @@ class ColorSwatch extends WidgetType {
     mounted.view = view;
     mounted.from = this.from;
     mounted.to = this.to;
+    mounted.widget = this;
     this.render(mounted);
     return true;
   }
@@ -111,6 +155,9 @@ class ColorSwatch extends WidgetType {
 
   destroy(element: HTMLElement) {
     const mounted = mountedSwatches.get(element);
+    if (mounted?.active) {
+      activeSwatches.delete(mounted.view);
+    }
     mounted?.root.unmount();
     mountedSwatches.delete(element);
   }
@@ -119,34 +166,52 @@ class ColorSwatch extends WidgetType {
 export const createColorSwatches = (onComplete: () => void) => {
   const decorate = (state: EditorState) => {
     const widgets: Range<Decoration>[] = [];
-    syntaxTree(state).iterate({
-      enter(node) {
-        if (
-          node.name !== "ColorLiteral" &&
-          node.name !== "ValueName" &&
-          node.name !== "CallExpression"
-        ) {
+    const source = state.doc.toString();
+    const ast = parse(source, { context: "declarationList", positions: true });
+    ast.children.forEach((declaration) => {
+      if (declaration.type !== "Declaration") {
+        return;
+      }
+      const value = declaration.value;
+      if (value.loc === null) {
+        return;
+      }
+      const custom = declaration.property.startsWith("--");
+      const valueAst = custom
+        ? parse(source.slice(value.loc.start.offset, value.loc.end.offset), {
+            context: "value",
+            positions: true,
+          })
+        : value;
+      const offset = custom ? value.loc.start.offset : 0;
+      const match = custom
+        ? undefined
+        : lexer.matchProperty(declaration.property, valueAst);
+      if (!custom && match?.error) {
+        return;
+      }
+      const selected: Array<{ from: number; to: number }> = [];
+      walk(valueAst, (node: CssNode) => {
+        if (node.loc === null || (!custom && !match?.isType(node, "color"))) {
           return;
         }
-        let parent = node.node.parent;
-        while (parent !== null && parent.name !== "Declaration") {
-          parent = parent.parent;
-        }
-        if (parent === null) {
+        const from = offset + node.loc.start.offset;
+        const to = offset + node.loc.end.offset;
+        if (selected.some((range) => range.from <= from && range.to >= to)) {
           return;
         }
-        const color = parseColor(state.doc.sliceString(node.from, node.to));
+        const color = parseColor(source.slice(from, to));
         if (color === undefined) {
           return;
         }
+        selected.push({ from, to });
         widgets.push(
           Decoration.widget({
-            widget: new ColorSwatch(color, node.from, node.to, onComplete),
+            widget: new ColorSwatch(color, from, to, onComplete),
             side: -1,
-          }).range(node.from)
+          }).range(from)
         );
-        return false;
-      },
+      });
     });
     return Decoration.set(widgets, true);
   };
