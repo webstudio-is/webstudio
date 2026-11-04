@@ -2,7 +2,7 @@ import { shallowEqual } from "shallow-equal";
 import warnOnce from "warn-once";
 import type { Instance } from "@webstudio-is/sdk";
 import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
-import { propertiesData } from "@webstudio-is/css-data";
+import { isPseudoElement, propertiesData } from "@webstudio-is/css-data";
 import { selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
@@ -12,6 +12,7 @@ import {
   $stylesIndex,
   $propValuesByInstanceSelectorWithMemoryProps,
   $selectedInstanceStates,
+  $selectedStyleState,
   $allSelectedInstanceSelectors,
   type UnitSizes,
   type PropertySizes,
@@ -125,9 +126,18 @@ const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
 };
 
 const readComputedStyles = (element: HTMLElement) => {
-  const computedStyle = getComputedStyle(element);
+  const selectedState = $selectedStyleState.get();
+  const pseudoElement =
+    selectedState && isPseudoElement(selectedState) ? selectedState : undefined;
   const propertySizes: PropertySizes = {};
   const computedValues: Partial<Record<CssProperty, string>> = {};
+  let computedStyle: CSSStyleDeclaration;
+  try {
+    computedStyle = getComputedStyle(element, pseudoElement);
+  } catch {
+    // Some selectable pseudo-elements cannot be sampled with getComputedStyle.
+    return { propertySizes, computedValues };
+  }
   for (const property in propertiesData) {
     const propertyValue = computedStyle.getPropertyValue(property);
     computedValues[property as CssProperty] = propertyValue;
@@ -147,7 +157,7 @@ const readComputedStyles = (element: HTMLElement) => {
       // also firefox does not support CSSStyleValue
     }
   }
-  if (computedStyle.aspectRatio === "auto") {
+  if (pseudoElement === undefined && computedStyle.aspectRatio === "auto") {
     const parentStyle =
       element.parentElement && getComputedStyle(element.parentElement);
     const isOutOfFlow =
@@ -387,6 +397,7 @@ const subscribeSelectedInstance = (
   updateObservers();
 
   const unsubscribe$stylesIndex = $stylesIndex.subscribe(update);
+  const unsubscribeSelectedStyleState = $selectedStyleState.subscribe(update);
   const unsubscribe$instances = $instances.subscribe(update);
   const unsubscribePropValuesStore =
     $propValuesByInstanceSelectorWithMemoryProps.subscribe(update);
@@ -435,6 +446,7 @@ const subscribeSelectedInstance = (
     unsubscribeScrollState();
     unsubscribeWindowResize();
     unsubscribe$stylesIndex();
+    unsubscribeSelectedStyleState();
     unsubscribe$instances();
     unsubscribePropValuesStore();
   };

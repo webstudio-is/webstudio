@@ -37,14 +37,13 @@ const ensureValue = (css: string) => {
     return `${css}:;`;
   }
   // Is it a known longhand property?
-  if (propertiesData[css as CssProperty]) {
-    return `${css}:;`;
+  const lowercaseCss = css.toLowerCase();
+  if (propertiesData[lowercaseCss as CssProperty]) {
+    return `${lowercaseCss}:;`;
   }
   // Is it a known shorthand property?
-  if (
-    shorthandProperties.includes(css as (typeof shorthandProperties)[number])
-  ) {
-    return `${css}:;`;
+  if (shorthandSet.has(lowercaseCss)) {
+    return `${lowercaseCss}:;`;
   }
   // Is it a custom property without dashes "--foo"?
   if (lexer.match("<custom-ident>", `--${css}`).matched) {
@@ -87,8 +86,22 @@ export const parseStyleInput = (
     const invalidNodes = new Set<object>();
     let normalizedProperty = false;
     ast.children.forEach((node) => {
+      if (node.type !== "Declaration") {
+        return;
+      }
+      if (!node.property.startsWith("--")) {
+        const lowercaseProperty = node.property.toLowerCase();
+        if (
+          (propertiesData[lowercaseProperty as CssProperty] !== undefined ||
+            shorthandSet.has(lowercaseProperty) ||
+            lexer.getProperty(lowercaseProperty) !== null) &&
+          node.property !== lowercaseProperty
+        ) {
+          node.property = lowercaseProperty;
+          normalizedProperty = true;
+        }
+      }
       if (
-        node.type === "Declaration" &&
         !node.property.startsWith("--") &&
         propertiesData[node.property as CssProperty] === undefined &&
         !shorthandSet.has(node.property) &&
@@ -98,7 +111,7 @@ export const parseStyleInput = (
         node.property = `--${node.property}`;
         normalizedProperty = true;
       }
-      if (node.type === "Declaration" && shorthandSet.has(node.property)) {
+      if (shorthandSet.has(node.property)) {
         const value = generate(node.value);
         if (
           value !== "" &&
@@ -137,13 +150,8 @@ export const parsePropertyName = (
   if (trimmedName.includes(":")) {
     return;
   }
-  if (
-    allowShorthand &&
-    shorthandProperties.includes(
-      trimmedName as (typeof shorthandProperties)[number]
-    )
-  ) {
-    return trimmedName as CssProperty;
+  if (allowShorthand && shorthandSet.has(trimmedName.toLowerCase())) {
+    return trimmedName.toLowerCase() as CssProperty;
   }
   const { styleMap, errors, hasSyntaxErrors } = parseStyleInput(
     trimmedName,
