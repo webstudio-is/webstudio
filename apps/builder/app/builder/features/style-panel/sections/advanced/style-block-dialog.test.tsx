@@ -9,12 +9,14 @@ import { TooltipProvider } from "@webstudio-is/design-system";
 import { $availableVariables } from "../../shared/model";
 import { parseStyleInput } from "~/builder/shared/css-editor/parse-style-input";
 import {
-  InlineStyleBlockEditor,
-  StyleBlockDialog,
+  InlineMixedStyleBlockEditor,
+  MixedStyleBlockDialog,
+} from "./style-block-dialog";
+import {
   parseBlock,
   cssBlockLanguage,
   blockCompletionSource,
-} from "./style-block-dialog";
+} from "./style-block-parse";
 import { createColorSwatches } from "./style-block-colors";
 
 (
@@ -155,8 +157,9 @@ const render = (content: React.ReactNode) => {
 
 test("inline Code view renders stored longhands as editable shorthands", async () => {
   const container = render(
-    <InlineStyleBlockEditor
+    <InlineMixedStyleBlockEditor
       declarations={declarations}
+      sourceDeclarations={[]}
       readonly={false}
       onApply={() => {}}
     />
@@ -171,8 +174,9 @@ test("inline Code view renders stored longhands as editable shorthands", async (
 
 test("centered Local editor renders stored longhands as editable shorthands", async () => {
   render(
-    <StyleBlockDialog
+    <MixedStyleBlockDialog
       declarations={declarations}
+      sourceDeclarations={[]}
       readonly={false}
       open
       onOpenChange={() => {}}
@@ -212,8 +216,9 @@ test("reports a missing separator at the next declaration", () => {
 
 test("Enter adds a separator before a new declaration line", async () => {
   render(
-    <StyleBlockDialog
+    <MixedStyleBlockDialog
       declarations={[]}
+      sourceDeclarations={[]}
       readonly={false}
       open
       onOpenChange={() => {}}

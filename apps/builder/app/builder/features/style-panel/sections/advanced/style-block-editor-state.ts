@@ -12,7 +12,7 @@ export type StyleBlockEditorSource =
   | "globalVariables";
 
 export const $styleBlockEditorOpenFor = atom<
-  { selectionKey: string; source: StyleBlockEditorSource } | undefined
+  { selectionKey: string } | undefined
 >(undefined);
 
 export const getStyleBlockSelectionKey = () => {
@@ -25,11 +25,9 @@ export const getStyleBlockSelectionKey = () => {
   return `${instanceKey}:${breakpoint?.id}:${selector?.styleSourceId}:${selector?.state}`;
 };
 
-export const openStyleBlockEditor = (
-  source: StyleBlockEditorSource = "local"
-) => {
+export const openStyleBlockEditor = () => {
   const selectionKey = getStyleBlockSelectionKey();
   if (selectionKey !== undefined) {
-    $styleBlockEditorOpenFor.set({ selectionKey, source });
+    $styleBlockEditorOpenFor.set({ selectionKey });
   }
 };

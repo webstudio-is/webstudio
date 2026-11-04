@@ -70,13 +70,10 @@ import {
 } from "~/shared/nano-states";
 import { $styles } from "~/shared/sync/data-stores";
 import { useReadonly } from "../../shared/readonly";
-import { InlineStyleBlockEditor, StyleBlockDialog } from "./style-block-dialog";
 import {
-  AdvancedStyleSourceHeader,
-  getAdvancedStyleBlocks,
-  InheritedStylesPreview,
-  sourceMaximizeHoverCss,
-} from "./inherited-styles-preview";
+  InlineMixedStyleBlockEditor,
+  MixedStyleBlockDialog,
+} from "./style-block-dialog";
 import { $settings, setSetting } from "~/builder/shared/client-settings";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
@@ -125,37 +122,28 @@ const CodeView = ({
 }: {
   declarations: ComputedStyleDecl[];
   blockDeclarations: ComponentProps<
-    typeof InlineStyleBlockEditor
+    typeof InlineMixedStyleBlockEditor
   >["declarations"];
   readonly: boolean;
-  onApply: ComponentProps<typeof InlineStyleBlockEditor>["onApply"];
+  onApply: ComponentProps<typeof InlineMixedStyleBlockEditor>["onApply"];
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>();
-  const { localDeclarations, visibleDeclarations } = useMemo(() => {
-    const inheritedDeclarations = declarations.filter(
-      (declaration) => getAdvancedStyleSource(declaration) !== undefined
-    );
-    return {
-      localDeclarations:
-        getMatchingDeclarations(blockDeclarations, searchTerm) ??
-        blockDeclarations,
-      visibleDeclarations:
-        getMatchingDeclarations(inheritedDeclarations, searchTerm) ??
+  const { localDeclarations, inheritedDeclarations, visibleDeclarations } =
+    useMemo(() => {
+      const inheritedDeclarations = declarations.filter(
+        (declaration) => getAdvancedStyleSource(declaration) !== undefined
+      );
+      return {
+        localDeclarations:
+          getMatchingDeclarations(blockDeclarations, searchTerm) ??
+          blockDeclarations,
         inheritedDeclarations,
-    };
-  }, [blockDeclarations, declarations, searchTerm]);
+        visibleDeclarations:
+          getMatchingDeclarations(inheritedDeclarations, searchTerm) ??
+          inheritedDeclarations,
+      };
+    }, [blockDeclarations, declarations, searchTerm]);
   const searching = searchTerm !== undefined;
-  const localHeader = (
-    <PanelContent css={{ paddingBlock: theme.spacing[2] }}>
-      <AdvancedStyleSourceHeader
-        source="local"
-        title="Local"
-        description="These styles are defined on the selected style source"
-        readonly={readonly}
-      />
-    </PanelContent>
-  );
-
   return (
     <>
       <PanelContent>
@@ -167,30 +155,23 @@ const CodeView = ({
           onAbort={() => setSearchTerm(undefined)}
         />
       </PanelContent>
-      <Box
-        css={{
-          ...sourceMaximizeHoverCss,
-          display: searching ? "none" : undefined,
-        }}
-      >
-        {localHeader}
-        <InlineStyleBlockEditor
+      <Box css={{ display: searching ? "none" : undefined }}>
+        <InlineMixedStyleBlockEditor
           declarations={blockDeclarations}
+          sourceDeclarations={inheritedDeclarations}
           readonly={readonly}
           onApply={onApply}
         />
       </Box>
-      {searching && localDeclarations.length > 0 && (
-        <Box css={sourceMaximizeHoverCss}>
-          {localHeader}
-          <InlineStyleBlockEditor
+      {searching &&
+        (localDeclarations.length > 0 || visibleDeclarations.length > 0) && (
+          <InlineMixedStyleBlockEditor
             declarations={localDeclarations}
+            sourceDeclarations={visibleDeclarations}
             readonly
             onApply={() => {}}
           />
-        </Box>
-      )}
-      <InheritedStylesPreview declarations={visibleDeclarations} />
+        )}
     </>
   );
 };
@@ -447,11 +428,6 @@ export const Section = () => {
     onDeleteAllDeclarations: handleDeleteAllDeclarations,
   });
 
-  const editorSource = editorOpenFor?.source ?? "local";
-  const editorBlock = getAdvancedStyleBlocks(computedStyleDeclarations).find(
-    (block) => block.source === editorSource
-  );
-
   return (
     <>
       <AdvancedStyleSection
@@ -590,19 +566,16 @@ export const Section = () => {
         )}
       </AdvancedStyleSection>
       {selectedInstanceKey !== undefined && (
-        <StyleBlockDialog
+        <MixedStyleBlockDialog
           key={selectionKey}
           declarations={blockDeclarations}
-          source={editorSource}
-          sourceBlock={editorBlock}
+          sourceDeclarations={visibleAdvancedStyleDeclarations}
           readonly={readonly}
           onApply={handleApplyBlock}
           open={editorOpenFor?.selectionKey === selectionKey}
           onOpenChange={(open) =>
             $styleBlockEditorOpenFor.set(
-              open && selectionKey !== undefined
-                ? { selectionKey, source: editorSource }
-                : undefined
+              open && selectionKey !== undefined ? { selectionKey } : undefined
             )
           }
         />

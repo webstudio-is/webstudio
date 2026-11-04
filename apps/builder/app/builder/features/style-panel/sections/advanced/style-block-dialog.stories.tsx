@@ -1,10 +1,11 @@
 import { Box, cssVar, theme } from "@webstudio-is/design-system";
+import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import { InheritedStylesPreview } from "./inherited-styles-preview";
-import { InlineStyleBlockEditor } from "./style-block-dialog";
+import { InlineMixedStyleBlockEditor } from "./style-block-dialog";
 
 const cascadedValue = { type: "keyword", value: "blue" } as const;
 const presetValue = { type: "keyword", value: "block" } as const;
+const globalValue = { type: "keyword", value: "red" } as const;
 const inheritedDeclarations: ComputedStyleDecl[] = [
   {
     property: "color",
@@ -20,6 +21,13 @@ const inheritedDeclarations: ComputedStyleDecl[] = [
     computedValue: presetValue,
     usedValue: presetValue,
   },
+  {
+    property: "--brand-color",
+    source: { name: "remote", instanceId: ROOT_INSTANCE_ID },
+    cascadedValue: globalValue,
+    computedValue: globalValue,
+    usedValue: globalValue,
+  },
 ];
 
 export default {
@@ -33,13 +41,16 @@ export const InlineCode = () => (
       background: cssVar("--background-primary"),
     }}
   >
-    <InlineStyleBlockEditor
+    <InlineMixedStyleBlockEditor
       declarations={[
-        { property: "color", value: { type: "keyword", value: "red" } },
+        {
+          property: "opacity",
+          value: { type: "unit", unit: "number", value: 0.8 },
+        },
       ]}
+      sourceDeclarations={inheritedDeclarations}
       readonly={false}
       onApply={() => {}}
     />
-    <InheritedStylesPreview declarations={inheritedDeclarations} />
   </Box>
 );

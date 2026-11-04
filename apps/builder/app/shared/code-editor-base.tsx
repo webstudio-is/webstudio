@@ -12,6 +12,7 @@ import {
   EditorSelection,
   EditorState,
   StateEffect,
+  Transaction,
   type Extension,
 } from "@codemirror/state";
 import {
@@ -54,7 +55,7 @@ import { codeHighlightStyle } from "./code-highlight";
 // @ts-expect-error
 EditorView.EDIT_CONTEXT = false;
 
-const ExternalChange = Annotation.define<boolean>();
+export const ExternalChange = Annotation.define<boolean>();
 
 const minHeightVar = declareCssVar("--code-editor-min-height");
 const maxHeightVar = declareCssVar("--code-editor-max-height");
@@ -353,6 +354,7 @@ type EditorContentProps = {
   showShortcuts?: boolean;
   showLineNumbers?: boolean;
   chromeless?: boolean;
+  addExternalChangesToHistory?: boolean;
   value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string, event?: FocusEvent) => void;
@@ -369,6 +371,7 @@ export const EditorContent = ({
   showShortcuts = false,
   showLineNumbers = true,
   chromeless = false,
+  addExternalChangesToHistory = true,
   value,
   onChange,
   onChangeComplete,
@@ -518,9 +521,14 @@ export const EditorContent = ({
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: nextValue },
       selection: clampEditorSelection(view.state.selection, nextValue.length),
-      annotations: [ExternalChange.of(true)],
+      annotations: [
+        ExternalChange.of(true),
+        ...(!addExternalChangesToHistory
+          ? [Transaction.addToHistory.of(false)]
+          : []),
+      ],
     });
-  }, [value]);
+  }, [value, addExternalChangesToHistory]);
 
   useEffect(() => {
     if (initialSelection !== undefined) {
