@@ -16,7 +16,9 @@ import {
   Box,
   MenuList,
   styleSourceColor,
+  Text,
   theme,
+  tooltipContentCss,
 } from "@webstudio-is/design-system";
 import {
   camelCaseProperty,
@@ -75,12 +77,10 @@ const blockedEditTooltip = StateField.define<Tooltip | null>({
         above: true,
         create: () => {
           const dom = document.createElement("div");
-          dom.className = "cm-tooltip-lint";
-          const message = document.createElement("div");
-          message.className = "cm-diagnostic";
-          message.textContent = blockedEditMessage;
-          dom.appendChild(message);
-          return { dom };
+          dom.className = `cm-mixed-blocked-tooltip ${tooltipContentCss({ variant: "wrapped" }).className}`;
+          const root = createRoot(dom);
+          root.render(<Text>{blockedEditMessage}</Text>);
+          return { dom, destroy: () => root.unmount() };
         },
       };
     }
@@ -110,13 +110,14 @@ const sourceColorTheme = EditorView.theme({
   ".cm-mixed-remote, .cm-mixed-remote *": {
     color: `${styleSourceColor.remote.foreground} !important`,
   },
-  ".cm-tooltip:has(> .cm-mixed-property-tooltip)": {
-    border: 0,
-    background: "transparent",
-    boxShadow: "none",
-    padding: 0,
-    pointerEvents: "auto",
-  },
+  ".cm-tooltip:has(> .cm-mixed-property-tooltip), .cm-tooltip:has(> .cm-mixed-blocked-tooltip)":
+    {
+      border: 0,
+      background: "transparent",
+      boxShadow: "none",
+      padding: 0,
+      pointerEvents: "auto",
+    },
   ".cm-overridden-declaration": { textDecoration: "line-through" },
 });
 
