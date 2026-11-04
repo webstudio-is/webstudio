@@ -431,6 +431,7 @@ const MixedStyleBlockEditor = ({
         language={cssBlockLanguage}
         completionSource={blockCompletionSource}
         autoFocus={!inline}
+        initialSelection={getMixedStyleGroups(code)[0]?.contentFrom ?? 0}
         chromeless={inline}
         resetHistoryOnExternalChange
         showLineNumbers={!inline}
