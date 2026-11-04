@@ -124,12 +124,14 @@ const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
   };
 };
 
-const calculatePropertySizes = (element: HTMLElement) => {
+const readComputedStyles = (element: HTMLElement) => {
   const computedStyle = getComputedStyle(element);
   const propertySizes: PropertySizes = {};
+  const computedValues: Partial<Record<CssProperty, string>> = {};
   for (const property in propertiesData) {
+    const propertyValue = computedStyle.getPropertyValue(property);
+    computedValues[property as CssProperty] = propertyValue;
     try {
-      const propertyValue = computedStyle.getPropertyValue(property);
       const value = CSSStyleValue.parse(property, propertyValue);
       if (value instanceof CSSUnitValue) {
         propertySizes[property as CssProperty] = {
@@ -145,7 +147,7 @@ const calculatePropertySizes = (element: HTMLElement) => {
       // also firefox does not support CSSStyleValue
     }
   }
-  return propertySizes;
+  return { propertySizes, computedValues };
 };
 
 const subscribeSelectedInstance = (
@@ -235,8 +237,8 @@ const subscribeSelectedInstance = (
     const [element] = elements;
     // trigger style recomputing every time instance styles are changed
     const unitSizes = calculateUnitSizes(element);
-    const propertySizes = calculatePropertySizes(element);
-    $selectedInstanceSizes.set({ unitSizes, propertySizes });
+    const { propertySizes, computedValues } = readComputedStyles(element);
+    $selectedInstanceSizes.set({ unitSizes, propertySizes, computedValues });
 
     const availableStates = new Set<string>();
     const instanceStyleSourceIds = new Set(
