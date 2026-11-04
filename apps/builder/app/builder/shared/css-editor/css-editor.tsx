@@ -488,6 +488,11 @@ export const cannotRoundTripAsCssText = (
   return false;
 };
 
+type MultilineDraft = {
+  source: ComputedStyleDecl["source"]["name"];
+  value: string;
+};
+
 const AdvancedPropertyValue = ({
   styleDecl,
   readonly = false,
@@ -500,7 +505,7 @@ const AdvancedPropertyValue = ({
 }: {
   styleDecl: ComputedStyleDecl;
   readonly?: boolean;
-  multilineDrafts: Map<CssProperty, string>;
+  multilineDrafts: Map<CssProperty, MultilineDraft>;
   onDeleteProperty: DeleteProperty;
   onSetProperty: SetProperty;
   onChangeComplete?: (event: { type: string }, atEnd: boolean) => void;
@@ -511,9 +516,12 @@ const AdvancedPropertyValue = ({
   const editorRef = useRef<EditorApi>();
   const selectionRef = useRef(0);
   const closingRef = useRef(false);
-  const restoredDraftRef = useRef(multilineDrafts.has(styleDecl.property));
-  const [multilineValue, setMultilineValue] = useState<string | undefined>(() =>
-    multilineDrafts.get(styleDecl.property)
+  const savedDraft = multilineDrafts.get(styleDecl.property);
+  const restoredValue =
+    savedDraft?.source === styleDecl.source.name ? savedDraft.value : undefined;
+  const restoredDraftRef = useRef(restoredValue !== undefined);
+  const [multilineValue, setMultilineValue] = useState<string | undefined>(
+    () => restoredValue
   );
   const [invalidMultilineValue, setInvalidMultilineValue] = useState(false);
   const isMultiline = multilineValue !== undefined;
@@ -569,7 +577,10 @@ const AdvancedPropertyValue = ({
             invalid={invalidMultilineValue}
             value={multilineValue}
             onChange={(value) => {
-              multilineDrafts.set(styleDecl.property, value);
+              multilineDrafts.set(styleDecl.property, {
+                source: styleDecl.source.name,
+                value,
+              });
               setMultilineValue(value);
               setInvalidMultilineValue(false);
               if (!value.includes("\n")) {
@@ -666,8 +677,13 @@ const AdvancedPropertyValue = ({
             }
             selectionRef.current = insertionPoint + 1;
             closingRef.current = false;
+            restoredDraftRef.current = false;
+            setInvalidMultilineValue(false);
             const multiline = `${value.slice(0, insertionPoint)}\n${value.slice(replacementEnd)}`;
-            multilineDrafts.set(styleDecl.property, multiline);
+            multilineDrafts.set(styleDecl.property, {
+              source: styleDecl.source.name,
+              value: multiline,
+            });
             setMultilineValue(multiline);
           }}
           onEnter={() => {
@@ -793,7 +809,7 @@ const AdvancedDeclarationLonghand = memo(
   }: {
     styleDecl: ComputedStyleDecl;
     readonly?: boolean;
-    multilineDrafts: Map<CssProperty, string>;
+    multilineDrafts: Map<CssProperty, MultilineDraft>;
     indentation?: string;
     onReset?: () => void;
     onSetProperty: SetProperty;
@@ -909,7 +925,9 @@ export const CssEditor = ({
   recentProperties?: Array<CssProperty>;
   showInlineAddButton?: boolean;
 }) => {
-  const multilineDrafts = useRef(new Map<CssProperty, string>()).current;
+  const multilineDrafts = useRef(
+    new Map<CssProperty, MultilineDraft>()
+  ).current;
   const draftRowRef = useRef<HTMLDivElement>(null);
   const draftPropertyInputRef = useRef<HTMLInputElement>(null);
   const draftValueInputRef = useRef<HTMLInputElement>(null);
@@ -1018,6 +1036,16 @@ export const CssEditor = ({
   const declarationsMap = new Map(
     declarations.map((decl) => [decl.property, decl])
   );
+  useEffect(() => {
+    const sources = new Map(
+      declarations.map(({ property, source }) => [property, source.name])
+    );
+    for (const [property, draft] of multilineDrafts) {
+      if (sources.get(property) !== draft.source) {
+        multilineDrafts.delete(property);
+      }
+    }
+  }, [declarations, multilineDrafts]);
   const existingDeclarationsMap = new Map(
     existingDeclarations
       .filter((decl) => decl.source.name !== "default")
@@ -1330,6 +1358,9 @@ export const CssEditor = ({
   const handleDeleteAllDeclarations = (styleMap: CssStyleMap) => {
     if (readonly) {
       return;
+    }
+    for (const property of styleMap.keys()) {
+      multilineDrafts.delete(property);
     }
     onDeleteAllDeclarations(styleMap);
   };
@@ -1679,7 +1710,7 @@ export const CssEditor = ({
             return;
           }
           return (
-            <Box key={property}>
+            <Box key={`${property}:${styleDecl.source.name}`}>
               <AdvancedDeclarationLonghand
                 styleDecl={styleDecl}
                 readonly={readonly}
@@ -1771,7 +1802,7 @@ export const CssEditor = ({
               }
 
               const declarationElement = (
-                <Box key={property}>
+                <Box key={`${property}:${styleDecl.source.name}`}>
                   <AdvancedDeclarationLonghand
                     styleDecl={styleDecl}
                     readonly={readonly}
