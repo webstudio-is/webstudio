@@ -18,10 +18,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { StyleSource } from "@webstudio-is/sdk";
 import type { RenameStyleSourceError } from "@webstudio-is/project-build/runtime";
-import {
-  $selectedStyleSources,
-  $selectedStyleState,
-} from "~/shared/nano-states";
+import { $selectedStyleSources } from "~/shared/nano-states";
 import {
   $styleSourceSelections,
   $styleSources,
@@ -55,9 +52,9 @@ export const deselectMatchingStyleSource = (
   }
   const selectedStyleSources = new Map($selectedStyleSources.get());
   if (selectedStyleSources.get(instanceId) === styleSourceId) {
+    // the selected condition is kept and applies to the fallback source
     selectedStyleSources.delete(instanceId);
     $selectedStyleSources.set(selectedStyleSources);
-    $selectedStyleState.set(undefined);
   }
 };
 

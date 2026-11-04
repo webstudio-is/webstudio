@@ -34,6 +34,7 @@ import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { subscribe } from "~/shared/pubsub";
 import { $selectedInstance } from "~/shared/nano-states";
 import { $instanceTags } from "./shared/model";
+import { StyleConditionSelect } from "./style-condition-select";
 
 // Declare command for this module
 declare module "~/shared/pubsub" {
@@ -42,9 +43,11 @@ declare module "~/shared/pubsub" {
   }
 }
 
+// picks where declarations are saved; the selected condition stays as is
+// unless a state is picked explicitly in the source menu
 const selectStyleSource = (
   styleSourceId: StyleSource["id"],
-  state?: StyleDecl["state"]
+  options?: { state: StyleDecl["state"] }
 ) => {
   const instanceId = $selectedInstance.get()?.id;
   if (instanceId === undefined) {
@@ -53,7 +56,9 @@ const selectStyleSource = (
   const selectedStyleSources = new Map($selectedStyleSources.get());
   selectedStyleSources.set(instanceId, styleSourceId);
   $selectedStyleSources.set(selectedStyleSources);
-  $selectedStyleState.set(state);
+  if (options !== undefined) {
+    $selectedStyleState.set(options.state);
+  }
 };
 
 const createStyleSource = (name: string) => {
@@ -403,9 +408,12 @@ export const StyleSourcesSection = () => {
           reorderStyleSources(items.map((item) => item.id));
         }}
         onSelectItem={(styleSourceSelector) => {
+          // chips pass only the source, the source menu passes a state too
           selectStyleSource(
             styleSourceSelector.styleSourceId,
-            styleSourceSelector.state
+            "state" in styleSourceSelector
+              ? { state: styleSourceSelector.state }
+              : undefined
           );
         }}
         // style source renaming
@@ -427,6 +435,7 @@ export const StyleSourcesSection = () => {
           setError(undefined);
         }}
       />
+      <StyleConditionSelect />
       <DeleteStyleSourceDialog
         styleSource={tokenToDelete}
         onClose={() => {
