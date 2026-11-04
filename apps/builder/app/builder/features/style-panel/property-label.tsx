@@ -31,6 +31,15 @@ import { $virtualInstances } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $isAltPressed } from "./shared/modifier-keys";
 
+const sourceHints: Record<StyleValueSourceColor, string> = {
+  local: "Defined in the selected style source.",
+  overwritten: "Defined here, but a later declaration takes precedence.",
+  remote:
+    "Comes from another style source, breakpoint, state, or parent element.",
+  preset: "Comes from Webstudio component defaults.",
+  default: "Comes from a browser default or CSS initial value.",
+};
+
 const renderCss = (styles: ComputedStyleDecl[], isComputed: boolean) => {
   let css = "";
   for (const styleDecl of styles) {
@@ -118,6 +127,8 @@ export const PropertyInfo = ({
   }
 
   const mdnUrl = propertiesData[property]?.mdnUrl;
+  const sourceColor =
+    styles.length > 0 ? getPriorityStyleValueSource(styles) : undefined;
   return (
     <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
       <Flex justify="between">
@@ -144,6 +155,17 @@ export const PropertyInfo = ({
         {code ?? renderCss(styles, isAltPressed)}
       </Text>
       <Text>{description}</Text>
+      {sourceColor && (
+        <Text>
+          <strong>
+            {sourceColor === "remote"
+              ? "Cascaded"
+              : humanizeString(sourceColor)}
+            :{" "}
+          </strong>
+          {sourceHints[sourceColor]}
+        </Text>
+      )}
       {(styleSourceNameSet.size > 0 || instanceSet.size > 0) && (
         <Flex
           direction="column"
