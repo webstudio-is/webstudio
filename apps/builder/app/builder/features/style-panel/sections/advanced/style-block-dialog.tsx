@@ -37,6 +37,7 @@ import { declarationLineBreak } from "~/builder/shared/css-editor/declaration-li
 import { cannotRoundTripAsCssText } from "~/builder/shared/css-editor/css-editor";
 import type { StyleBlockEditorSource } from "./style-block-editor-state";
 import { formatStyleBlock } from "./style-block-format";
+import { createColorSwatches } from "./style-block-colors";
 import {
   getAutocompleteItems,
   matchOrSuggestToCreate,
@@ -418,8 +419,15 @@ const StyleBlockEditor = ({
   const initialCodeRef = useRef("");
   const appliedCodeRef = useRef("");
   const codeRef = useRef("");
+  const applyChangesRef = useRef<() => void>(() => {});
+  const colorSwatches = useMemo(
+    () => createColorSwatches(() => applyChangesRef.current()),
+    []
+  );
+  const readonlyExtensions = useMemo(() => [colorSwatches], [colorSwatches]);
   const extensions = useMemo(
     () => [
+      colorSwatches,
       blockParseField,
       overriddenDeclarationTheme,
       declarationLineBreak,
@@ -456,7 +464,7 @@ const StyleBlockEditor = ({
       linterTooltipTheme,
       ...(inline ? [placeholder("Add local styles")] : []),
     ],
-    [inline]
+    [colorSwatches, inline]
   );
 
   const setInitialStyles = (oldStyles: CssStyleMap, value: string) => {
@@ -540,6 +548,7 @@ const StyleBlockEditor = ({
       }
     }
   };
+  applyChangesRef.current = inline ? applyChanges : () => {};
 
   const content = (
     <Box
@@ -571,7 +580,7 @@ const StyleBlockEditor = ({
         chromeless={inline}
         showLineNumbers={!inline}
         readOnly={readonly || source !== "local"}
-        extensions={source === "local" ? extensions : undefined}
+        extensions={source === "local" ? extensions : readonlyExtensions}
         value={source === "local" ? code : (sourceBlock?.value ?? "")}
         onChange={(value) => {
           if (source === "local") {
