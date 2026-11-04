@@ -8,6 +8,8 @@ import {
   EditorView,
   hoverTooltip,
   placeholder,
+  showTooltip,
+  type Tooltip,
   ViewPlugin,
 } from "@codemirror/view";
 import {
@@ -15,7 +17,6 @@ import {
   MenuList,
   styleSourceColor,
   theme,
-  toast,
 } from "@webstudio-is/design-system";
 import {
   camelCaseProperty,
@@ -60,8 +61,33 @@ import { formatStyleBlock } from "./style-block-format";
 
 const blockedEditMessage =
   "This declaration comes from another source. Add a local declaration to override it.";
-const blockedEdit = StateEffect.define<void>();
+const blockedEdit = StateEffect.define<number>();
 const sourceChanged = StateEffect.define<void>();
+const blockedEditTooltip = StateField.define<Tooltip | null>({
+  create: () => null,
+  update: (tooltip, transaction) => {
+    const blocked = transaction.effects.find((effect) =>
+      effect.is(blockedEdit)
+    );
+    if (blocked) {
+      return {
+        pos: blocked.value,
+        above: true,
+        create: () => {
+          const dom = document.createElement("div");
+          dom.className = "cm-tooltip-lint";
+          const message = document.createElement("div");
+          message.className = "cm-diagnostic";
+          message.textContent = blockedEditMessage;
+          dom.appendChild(message);
+          return { dom };
+        },
+      };
+    }
+    return transaction.docChanged || transaction.selection ? null : tooltip;
+  },
+  provide: (field) => showTooltip.from(field),
+});
 
 type Declaration = { property: CssProperty; value: StyleValue };
 type Props = {
@@ -264,6 +290,7 @@ const MixedStyleBlockEditor = ({
         }
       ),
       sourceColorTheme,
+      blockedEditTooltip,
       EditorState.transactionFilter.of((transaction) => {
         if (!transaction.docChanged || transaction.annotation(ExternalChange)) {
           return transaction;
@@ -282,6 +309,7 @@ const MixedStyleBlockEditor = ({
           transaction.startState.doc.toString()
         );
         let blocked = changedGroups;
+        let blockedPos = transaction.startState.selection.main.head;
         transaction.changes.iterChangedRanges((from, to) => {
           if (
             protectedRanges.some(
@@ -294,25 +322,17 @@ const MixedStyleBlockEditor = ({
             )
           ) {
             blocked = true;
+            blockedPos = from;
           }
         });
         return blocked
           ? {
               effects: [
-                blockedEdit.of(),
+                blockedEdit.of(blockedPos),
                 EditorView.announce.of(blockedEditMessage),
               ],
             }
           : transaction;
-      }),
-      EditorView.updateListener.of((update) => {
-        if (
-          update.transactions.some((transaction) =>
-            transaction.effects.some((effect) => effect.is(blockedEdit))
-          )
-        ) {
-          toast.error(blockedEditMessage);
-        }
       }),
       hoverTooltip((view, position) => {
         const range = getMixedPropertyRanges(view.state.doc.toString()).find(
