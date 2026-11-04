@@ -78,7 +78,7 @@ const sourceColorTheme = EditorView.theme({
   ".cm-mixed-remote, .cm-mixed-remote *": {
     color: `${styleSourceColor.remote.foreground} !important`,
   },
-  ".cm-tooltip.cm-mixed-property-tooltip": {
+  ".cm-tooltip:has(> .cm-mixed-property-tooltip)": {
     border: 0,
     background: "transparent",
     boxShadow: "none",
