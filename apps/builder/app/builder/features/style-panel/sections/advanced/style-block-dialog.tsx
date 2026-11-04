@@ -77,9 +77,15 @@ const blockedEditTooltip = StateField.define<Tooltip | null>({
         above: true,
         create: () => {
           const dom = document.createElement("div");
-          dom.className = `cm-mixed-blocked-tooltip ${tooltipContentCss({ variant: "wrapped" }).className}`;
+          dom.className = "cm-mixed-blocked-tooltip";
           const root = createRoot(dom);
-          root.render(<Text>{blockedEditMessage}</Text>);
+          root.render(
+            <Box
+              className={tooltipContentCss({ variant: "wrapped" }).className}
+            >
+              <Text>{blockedEditMessage}</Text>
+            </Box>
+          );
           return { dom, destroy: () => root.unmount() };
         },
       };
@@ -110,7 +116,7 @@ const sourceColorTheme = EditorView.theme({
   ".cm-mixed-remote, .cm-mixed-remote *": {
     color: `${styleSourceColor.remote.foreground} !important`,
   },
-  ".cm-tooltip:has(> .cm-mixed-property-tooltip), .cm-tooltip:has(> .cm-mixed-blocked-tooltip)":
+  ".cm-tooltip.cm-mixed-property-tooltip, .cm-tooltip.cm-mixed-blocked-tooltip":
     {
       border: 0,
       background: "transparent",
