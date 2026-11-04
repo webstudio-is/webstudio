@@ -22,7 +22,7 @@ const redirectStatuses = new Set([301, 302, 303, 307, 308]);
 const defaultMaxRedirects = 3;
 const maxRequestBytes = 25 * 1024 * 1024;
 
-const protectedResourceRequestHeader = "x-webstudio-protected-resource";
+export const protectedResourceRequestHeader = "x-webstudio-protected-resource";
 
 /** Project identity survives aliases while allowing calls to other projects.
  * This cooperative marker is not a sandbox for untrusted code or proxies that strip it.
@@ -34,7 +34,7 @@ export const isProtectedResourceReentry = (
   projectId !== "" &&
   request.headers.get(protectedResourceRequestHeader) === projectId;
 
-/** Preserve the domain-wide policy for Node and Workers without public routing. */
+/** Domain-wide policy for callers that intentionally restrict an entire zone. */
 export const getDeniedResourceHostnames = (
   hostnames: readonly (string | undefined)[]
 ) =>

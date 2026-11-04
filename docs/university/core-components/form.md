@@ -354,6 +354,8 @@ Resource actions need a server. Webstudio Cloud provides this; a static export c
 
 Self-hosted sites need a supported server setup and an email integration to send Email Resources. See [self-hosting](../self-hosting/README.md).
 
+For a Docker or other Node export, an HTTP Resource action can send to a public API on a sibling subdomain, such as `cms.example.com` from `site.example.com`. The export blocks known site hostnames and rejects marked requests that return through another alias. Rebuild and redeploy the export with an updated CLI; installing a newer SDK in an existing container does not change the generated destination policy.
+
 ## Related
 
 - [Variables](../foundations/variables.md) — Resources, scope, and bindings.
