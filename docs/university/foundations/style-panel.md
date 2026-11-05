@@ -197,17 +197,9 @@ Move, rotate, scale, or skew the instance without affecting layout.
 
 ### Advanced
 
-A free-form CSS property editor for anything not covered by the sections above. Type any valid CSS property name — autocomplete shows the full list — and enter its value.
-
-Click the + button on the insertion line to enter a property and value.
-
-To add several declarations, press Shift+Enter in **Add styles** or paste CSS with line breaks. The highlighted editor expands in place. Click an existing property name to edit it inline. Press Shift+Enter in a value to add a line in the expanding editor. Press Tab from a value, or Enter at its end, to start another declaration below it. Open the Advanced section menu and choose **Open code editor**, or press Option+Shift+X, to use the centered editor.
+Advanced styles uses the code editor. Enter property: value declarations in the Local group; autocomplete suggests properties and values. Cascaded, Preset, and Global variables are read-only. Search highlights matches; press Enter or Shift+Enter in the search field to move between them. Click the maximize button in the editor, or press Option+Shift+X, to open the centered editor. Click a Local color swatch to edit it with the Style panel’s color picker; other swatches are previews.
 
 In the code editor, Enter adds a missing semicolon before starting the next declaration. If you enter an unknown property name, Webstudio saves it as a CSS variable with a `--` prefix.
-
-Code view and the centered Styles editor show Local, Cascaded, Preset, and Global variables in one CSS block, separated by source comments. Property colors show their source. Local declarations are editable. Cascaded, Preset, and Global declarations are read-only; add a Local declaration to override a value. Search highlights matches in the combined block. Press Enter or Shift+Enter in the search field to move between matches. Local declarations remain editable while searching.
-
-In Code view, click a Local color swatch to edit its value with the Style panel’s color picker. Other swatches show color previews.
 
 Autocomplete includes standard, experimental, nonstandard, and obsolete CSS
 properties. A yellow warning marks any property that is not standard. Open the
