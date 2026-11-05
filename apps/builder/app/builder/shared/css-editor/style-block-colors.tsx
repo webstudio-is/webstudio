@@ -24,8 +24,6 @@ import {
   css,
   theme,
 } from "@webstudio-is/design-system";
-import { $cssVarsMap } from "../../shared/model";
-import { getMixedStyleGroups } from "./mixed-style-block";
 
 const swatchClass = css({
   display: "inline-flex",
@@ -220,20 +218,28 @@ class ColorSwatch extends WidgetType {
   }
 }
 
-export const createColorSwatches = (onComplete: () => void) => {
+export const createColorSwatches = (
+  onComplete: () => void,
+  options: {
+    getVariables?: () => Map<string, string>;
+    getEditableRange?: (
+      source: string
+    ) => { from: number; to: number } | undefined;
+    subscribeVariables?: (callback: () => void) => () => void;
+  } = {}
+) => {
   const variablesChanged = StateEffect.define<null>();
   const decorate = (state: EditorState) => {
     const widgets: Range<Decoration>[] = [];
     const source = state.doc.toString();
-    const groups = getMixedStyleGroups(source);
-    const localGroup = groups.find((group) => group.source === "local");
+    const editableRange = options.getEditableRange?.(source);
     let ast;
     try {
       ast = parse(source, { context: "declarationList", positions: true });
     } catch {
       return Decoration.none;
     }
-    const variables = new Map($cssVarsMap.get());
+    const variables = new Map(options.getVariables?.());
     ast.children.forEach((node) => {
       if (node.type === "Declaration" && node.property.startsWith("--")) {
         variables.set(node.property, generate(node.value).trim());
@@ -330,10 +336,10 @@ export const createColorSwatches = (onComplete: () => void) => {
         }
         selected.push({ from, to });
         const editable =
-          groups.length === 0 ||
-          (localGroup !== undefined &&
-            from >= localGroup.contentFrom &&
-            from < localGroup.to);
+          options.getEditableRange === undefined ||
+          (editableRange !== undefined &&
+            from >= editableRange.from &&
+            from < editableRange.to);
         widgets.push(
           Decoration.widget({
             widget: new ColorSwatch(color, from, to, onComplete, editable),
@@ -358,9 +364,10 @@ export const createColorSwatches = (onComplete: () => void) => {
       private unsubscribe: () => void;
 
       constructor(view: EditorView) {
-        this.unsubscribe = $cssVarsMap.listen(() => {
-          view.dispatch({ effects: variablesChanged.of(null) });
-        });
+        this.unsubscribe =
+          options.subscribeVariables?.(() => {
+            view.dispatch({ effects: variablesChanged.of(null) });
+          }) ?? (() => {});
       }
 
       destroy() {

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { generateStyleMap } from "@webstudio-is/css-engine";
 import { parseStyleInput } from "~/builder/shared/css-editor/parse-style-input";
-import { formatStyleBlock } from "./style-block-format";
+import { formatStyleBlock } from "~/builder/shared/css-editor/style-block-format";
 
 const cssVars = new Map<string, string>();
 const parse = (css: string) => parseStyleInput(css, cssVars).styleMap;

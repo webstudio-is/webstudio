@@ -8,7 +8,7 @@ import { CompletionContext } from "@codemirror/autocomplete";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { $availableVariables } from "../../shared/model";
 import { parseStyleInput } from "~/builder/shared/css-editor/parse-style-input";
-import type { ApplyChanges } from "./style-block-parse";
+import type { ApplyChanges } from "~/builder/shared/css-editor/style-block-parse";
 import {
   InlineMixedStyleBlockEditor,
   MixedStyleBlockDialog,
@@ -17,8 +17,8 @@ import {
   parseBlock,
   cssBlockLanguage,
   blockCompletionSource,
-} from "./style-block-parse";
-import { createColorSwatches } from "./style-block-colors";
+} from "~/builder/shared/css-editor/style-block-parse";
+import { createColorSwatches } from "~/builder/shared/css-editor/style-block-colors";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -307,8 +307,9 @@ test.each([
     extensions: [cssBlockLanguage],
   });
   const result = await blockCompletionSource(
-    new CompletionContext(state, value.length, true)
-  );
+    $availableVariables.get(),
+    new Map()
+  )(new CompletionContext(state, value.length, true));
   expect(result?.from).toBe(value.length - 2);
   expect(result?.options.some((option) => option.label === label)).toBe(true);
   vi.restoreAllMocks();

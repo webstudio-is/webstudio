@@ -66,16 +66,17 @@ import {
 } from "~/shared/code-editor-base";
 import { declarationLineBreak } from "~/builder/shared/css-editor/declaration-line-break";
 import { CssFragmentEditorContent } from "../../shared/css-fragment";
-import { $cssVarsMap } from "../../shared/model";
+import { $availableVariables, $cssVarsMap } from "../../shared/model";
 import { PropertyInfo } from "../../property-label";
 import { ReadonlyProvider } from "../../shared/readonly";
-import { createColorSwatches } from "./style-block-colors";
+import { createColorSwatches } from "~/builder/shared/css-editor/style-block-colors";
+import { preserveAssetLayers } from "~/builder/shared/css-editor/preserve-asset-layers";
 import {
   blockCompletionSource,
   cssBlockLanguage,
   parseBlock,
   type ApplyChanges,
-} from "./style-block-parse";
+} from "~/builder/shared/css-editor/style-block-parse";
 import {
   formatMixedStyleBlock,
   getMixedStyleGroups,
@@ -83,7 +84,7 @@ import {
   getProtectedMixedRanges,
   parseMixedStyleBlock,
 } from "./mixed-style-block";
-import { formatStyleBlock } from "./style-block-format";
+import { formatStyleBlock } from "~/builder/shared/css-editor/style-block-format";
 
 const blockedEditMessage =
   "This declaration comes from another source. Add a local declaration to override it.";
@@ -229,52 +230,6 @@ const getLocalStyles = (declarations: Declaration[]): CssStyleMap =>
     ])
   );
 
-const preserveAssetLayers = (
-  stored: CssStyleMap,
-  initiallyParsed: CssStyleMap,
-  edited: CssStyleMap
-) => {
-  const result = new Map(edited);
-  for (const [property, value] of edited) {
-    const original = stored.get(property);
-    const initial = initiallyParsed.get(property);
-    if (
-      original?.type !== "layers" ||
-      initial?.type !== "layers" ||
-      value.type !== "layers"
-    ) {
-      continue;
-    }
-    const visible = original.value.filter((layer) => layer.hidden !== true);
-    if (
-      visible.length !== initial.value.length ||
-      visible.length !== value.value.length
-    ) {
-      continue;
-    }
-    let index = 0;
-    result.set(property, {
-      ...value,
-      value: original.value.map((storedLayer) => {
-        if (storedLayer.hidden === true) {
-          return storedLayer;
-        }
-        const initialLayer = initial.value[index];
-        const layer = value.value[index++];
-        return storedLayer.type === "image" &&
-          storedLayer.value.type === "asset" &&
-          initialLayer.type === "keyword" &&
-          initialLayer.value === "none" &&
-          layer.type === "keyword" &&
-          layer.value === "none"
-          ? storedLayer
-          : layer;
-      }),
-    });
-  }
-  return result;
-};
-
 const mixedCompletionSource: CompletionSource = (context) => {
   const end = context.state.doc.length;
   const group = getMixedStyleGroups(context.state.doc.toString()).find(
@@ -282,7 +237,12 @@ const mixedCompletionSource: CompletionSource = (context) => {
       context.pos >= contentFrom &&
       (context.pos < to || (to === end && context.pos === end))
   );
-  return group?.source === "local" ? blockCompletionSource(context) : null;
+  return group?.source === "local"
+    ? blockCompletionSource(
+        $availableVariables.get(),
+        $cssVarsMap.get()
+      )(context)
+    : null;
 };
 
 const MixedStyleBlockEditor = ({
@@ -337,7 +297,8 @@ const MixedStyleBlockEditor = ({
       oldStylesRef.current = localStyles;
       sourceSnapshotRef.current = sourceDeclarations;
       initialParsedRef.current = parseBlock(
-        formatStyleBlock(localStyles, $cssVarsMap.get())
+        formatStyleBlock(localStyles, $cssVarsMap.get()),
+        $cssVarsMap.get()
       ).styleMap;
       codeRef.current = nextCode;
       cleanCodeRef.current = nextCode;
@@ -376,7 +337,7 @@ const MixedStyleBlockEditor = ({
       onPreview?.(undefined);
       return;
     }
-    const parsed = parseMixedStyleBlock(codeRef.current);
+    const parsed = parseMixedStyleBlock(codeRef.current, $cssVarsMap.get());
     const appliedStyles = onApply({
       oldStyles: oldStylesRef.current,
       initialParsedStyles: initialParsedRef.current,
@@ -401,7 +362,17 @@ const MixedStyleBlockEditor = ({
   applyRef.current = inline ? applyChanges : () => {};
 
   const colorSwatches = useMemo(
-    () => createColorSwatches(() => applyRef.current()),
+    () =>
+      createColorSwatches(() => applyRef.current(), {
+        getVariables: () => $cssVarsMap.get(),
+        subscribeVariables: (callback) => $cssVarsMap.listen(callback),
+        getEditableRange: (source) => {
+          const local = getMixedStyleGroups(source).find(
+            ({ source }) => source === "local"
+          );
+          return local && { from: local.contentFrom, to: local.to };
+        },
+      }),
     []
   );
   const extensions = useMemo(() => {
@@ -441,7 +412,8 @@ const MixedStyleBlockEditor = ({
             let source = range.source === "preset" ? "preset" : "remote";
             if (range.source === "local") {
               const parsed = parseBlock(
-                value.slice(range.declarationFrom, range.declarationTo)
+                value.slice(range.declarationFrom, range.declarationTo),
+                $cssVarsMap.get()
               ).styleMap;
               const properties = new Set(
                 parsed.size > 0 ? parsed.keys() : [range.property]
@@ -459,7 +431,10 @@ const MixedStyleBlockEditor = ({
               range.to
             );
           }),
-          ...parseMixedStyleBlock(value).overriddenRanges.map(({ from, to }) =>
+          ...parseMixedStyleBlock(
+            value,
+            $cssVarsMap.get()
+          ).overriddenRanges.map(({ from, to }) =>
             Decoration.mark({ class: "cm-overridden-declaration" }).range(
               from,
               to
@@ -560,7 +535,7 @@ const MixedStyleBlockEditor = ({
           range.declarationFrom,
           range.declarationTo
         );
-        const parsed = parseBlock(line).styleMap;
+        const parsed = parseBlock(line, $cssVarsMap.get()).styleMap;
         const source = sourceSnapshotRef.current.find(
           (declaration) => declaration.property === range.property
         );
@@ -650,7 +625,9 @@ const MixedStyleBlockEditor = ({
         };
       }),
       linter(
-        (view) => parseMixedStyleBlock(view.state.doc.toString()).diagnostics
+        (view) =>
+          parseMixedStyleBlock(view.state.doc.toString(), $cssVarsMap.get())
+            .diagnostics
       ),
       linterTooltipTheme,
       declarationLineBreak,
@@ -696,7 +673,7 @@ const MixedStyleBlockEditor = ({
             preserveAssetLayers(
               oldStylesRef.current,
               initialParsedRef.current,
-              parseMixedStyleBlock(value).styleMap
+              parseMixedStyleBlock(value, $cssVarsMap.get()).styleMap
             )
           );
         }}

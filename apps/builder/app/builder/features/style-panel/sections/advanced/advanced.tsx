@@ -43,7 +43,7 @@ import {
   InlineMixedStyleBlockEditor,
   MixedStyleBlockDialog,
 } from "./style-block-dialog";
-import type { ApplyChanges } from "./style-block-parse";
+import type { ApplyChanges } from "~/builder/shared/css-editor/style-block-parse";
 import { $settings, setSetting } from "~/builder/shared/client-settings";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 

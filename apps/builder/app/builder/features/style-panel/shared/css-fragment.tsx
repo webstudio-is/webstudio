@@ -7,11 +7,10 @@ import {
   type ReactElement,
 } from "react";
 import { matchSorter, type RankingInfo } from "match-sorter";
-import { EditorView, keymap, tooltips } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
 import type { Extension } from "@codemirror/state";
 import { css } from "@codemirror/lang-css";
 import {
-  autocompletion,
   CompletionContext,
   completionKeymap,
   selectedCompletion,
@@ -28,6 +27,7 @@ import {
   getCodeEditorCssVars,
 } from "~/shared/code-editor-base";
 import { $availableVariables, $cssVarsMap } from "./model";
+import { cssAutocomplete } from "~/builder/shared/css-editor/css-autocomplete";
 
 type ShorthandProperty = (typeof shorthandProperties)[number];
 
@@ -134,24 +134,7 @@ export const CssFragmentEditorContent = ({
   const extensions = useMemo(() => {
     return [
       language ?? css(),
-      // render autocomplete in body
-      // to prevent popover scroll overflow
-      tooltips({ parent: document.body }),
-      autocompletion({
-        override: [completionSource ?? scopeCompletionSource],
-        icons: false,
-        positionInfo: (_view, list, _option, info, space) => {
-          const roomBelow = space.bottom - list.bottom;
-          const roomAbove = list.top - space.top;
-          return {
-            style: "position: static",
-            class:
-              roomBelow >= info.bottom - info.top || roomBelow >= roomAbove
-                ? "cm-completionInfo-below"
-                : "cm-completionInfo-above",
-          };
-        },
-      }),
+      ...cssAutocomplete(completionSource ?? scopeCompletionSource),
       keymap.of([...completionKeymap]),
       EditorView.domEventHandlers({
         keydown(event) {

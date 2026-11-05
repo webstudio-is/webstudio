@@ -1,8 +1,8 @@
-import { Fragment, useId, useMemo, useRef, useState } from "react";
+import { Fragment, useId, useRef, useState } from "react";
 import {
   type StyleValue,
-  toValue,
   type CssProperty,
+  toValue,
 } from "@webstudio-is/css-engine";
 import {
   Grid,
@@ -23,8 +23,11 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "~/builder/features/style-panel/shared/css-value-input";
-import { CssEditor } from "~/builder/shared/css-editor";
-import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { LocalStyleBlockEditor } from "~/builder/shared/css-editor/local-style-block-editor";
+import {
+  $availableVariables,
+  $cssVarsMap,
+} from "~/builder/features/style-panel/shared/model";
 import { calcOffsets, findInsertionIndex, moveItem } from "./keyframe-helpers";
 import {
   AnimationTransforms,
@@ -135,27 +138,19 @@ const Keyframe = ({
   onDelete: () => void;
 }) => {
   const offsetId = useId();
-  const existingDeclarations = useMemo(
-    () =>
-      (Object.keys(value.styles) as CssProperty[]).map((property) => {
-        const styleValue = value.styles[property];
-        return {
-          property,
-          source: { name: "local" },
-          cascadedValue: styleValue,
-          computedValue: styleValue,
-          usedValue: styleValue,
-        } satisfies ComputedStyleDecl;
-      }),
-    [value.styles]
+  const localStyles = new Map(
+    (Object.entries(value.styles) as [CssProperty, StyleValue][]).filter(
+      ([property]) => !transformProperties.includes(property)
+    )
   );
-  const declarations = useMemo(
-    () =>
-      existingDeclarations.filter(
-        ({ property }) => !transformProperties.includes(property)
-      ),
-    [existingDeclarations]
-  );
+  const mergeStyles = (styles: Map<CssProperty, StyleValue>) => {
+    const transforms = Object.fromEntries(
+      (Object.entries(value.styles) as [CssProperty, StyleValue][]).filter(
+        ([property]) => transformProperties.includes(property)
+      )
+    );
+    return { ...transforms, ...Object.fromEntries(styles) };
+  };
 
   return (
     <FloatingPanel
@@ -197,47 +192,19 @@ const Keyframe = ({
             }}
           />
 
-          <CssEditor
-            showSearch={false}
-            showInlineAddButton
-            propertiesPosition="top"
-            virtualize={false}
-            declarations={declarations}
-            existingDeclarations={existingDeclarations}
-            onAddDeclarations={(addedStyleMap) => {
-              const styles = { ...value.styles };
-              for (const [property, value] of addedStyleMap) {
-                styles[property] = value;
-              }
-              onChange({ ...value, styles }, false);
-            }}
-            onDeleteProperty={(property, options = {}) => {
-              if (options.isEphemeral === true) {
+          <LocalStyleBlockEditor
+            styles={localStyles}
+            cssVars={$cssVarsMap.get()}
+            availableVariables={$availableVariables.get()}
+            onPreview={(styles) => {
+              if (styles === undefined) {
                 onResetPreview();
-                return;
+              } else {
+                onChange({ ...value, styles: mergeStyles(styles) }, true);
               }
-              const styles = { ...value.styles };
-              delete styles[property];
-              onChange({ ...value, styles }, false);
             }}
-            onSetProperty={(property) => {
-              return (newValue, options) => {
-                const styles = { ...value.styles, [property]: newValue };
-                onChange({ ...value, styles }, options?.isEphemeral ?? false);
-              };
-            }}
-            onRenameProperty={(oldProperty, newProperty, styleValue) => {
-              const styles = { ...value.styles };
-              delete styles[oldProperty];
-              styles[newProperty] = styleValue;
-              onChange({ ...value, styles }, false);
-            }}
-            onDeleteAllDeclarations={(styleMap) => {
-              const styles = { ...value.styles };
-              for (const [property] of styleMap) {
-                delete styles[property];
-              }
-              onChange({ ...value, styles }, false);
+            onApply={(styles) => {
+              onChange({ ...value, styles: mergeStyles(styles) }, false);
             }}
           />
         </Grid>

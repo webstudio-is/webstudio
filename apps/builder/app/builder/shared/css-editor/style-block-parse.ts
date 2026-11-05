@@ -14,16 +14,15 @@ import {
   propertyDescriptions,
 } from "@webstudio-is/css-data";
 import { type CssProperty, type CssStyleMap } from "@webstudio-is/css-engine";
-import { $availableVariables, $cssVarsMap } from "../../shared/model";
 import {
   getLikelyCssProperty,
   parsePropertyName,
   parseStyleInput,
-} from "~/builder/shared/css-editor/parse-style-input";
+} from "./parse-style-input";
 import {
   getAutocompleteItems,
   matchOrSuggestToCreate,
-} from "~/builder/shared/css-editor/property-autocomplete";
+} from "./property-autocomplete";
 
 export type ApplyChanges = {
   oldStyles: CssStyleMap;
@@ -35,142 +34,152 @@ export type ApplyChanges = {
 
 export const cssBlockLanguage = cssLanguage.configure({ top: "Styles" });
 
-export const blockCompletionSource: CompletionSource = async (context) => {
-  const completion = await cssCompletionSource(context);
-  const { state, pos } = context;
-  const tree = syntaxTree(state);
-  const node = tree.resolveInner(pos, -1);
-  const firstType = completion?.options[0]?.type;
-  const line = state.doc.lineAt(pos);
-  const isPropertyLine =
-    state.doc.sliceString(line.from, node.from).trim() === "" &&
-    (node.name === "TagName" ||
-      (node.name === "Styles" && line.text.trim() === ""));
-  const isVariableProperty =
-    node.name === "VariableName" &&
-    node.parent?.name === "Declaration" &&
-    (node.parent.getChild(":")?.from ?? Infinity) > node.from;
+export const blockCompletionSource =
+  (
+    availableVariables: ReadonlyArray<{ value: string }>,
+    cssVars: Map<string, string>
+  ): CompletionSource =>
+  async (context) => {
+    const completion = await cssCompletionSource(context);
+    const { state, pos } = context;
+    const tree = syntaxTree(state);
+    const node = tree.resolveInner(pos, -1);
+    const firstType = completion?.options[0]?.type;
+    const line = state.doc.lineAt(pos);
+    const isPropertyLine =
+      state.doc.sliceString(line.from, node.from).trim() === "" &&
+      (node.name === "TagName" ||
+        (node.name === "Styles" && line.text.trim() === ""));
+    const isVariableProperty =
+      node.name === "VariableName" &&
+      node.parent?.name === "Declaration" &&
+      (node.parent.getChild(":")?.from ?? Infinity) > node.from;
 
-  if (node.name === "VariableName" && node.parent?.name === "ArgList") {
-    return {
-      from: node.from,
-      to: node.to,
-      options: [
-        ...(completion?.options ?? []),
-        ...$availableVariables.get().map(({ value }) => ({
-          label: `--${value}`,
-          type: "variable",
-        })),
-      ],
-    };
-  }
-
-  let declaration = node;
-  while (declaration.parent !== null && declaration.name !== "Declaration") {
-    declaration = declaration.parent;
-  }
-  if (declaration.name !== "Declaration" && !isPropertyLine) {
-    const previous = tree.topNode.childBefore(pos);
-    if (
-      previous?.name === "Declaration" &&
-      state.doc.sliceString(previous.to, pos).trim() === ""
-    ) {
-      declaration = previous;
+    if (node.name === "VariableName" && node.parent?.name === "ArgList") {
+      return {
+        from: node.from,
+        to: node.to,
+        options: [
+          ...(completion?.options ?? []),
+          ...availableVariables.map(({ value }) => ({
+            label: `--${value}`,
+            type: "variable",
+          })),
+        ],
+      };
     }
-  }
-  if (
-    declaration.name !== "Declaration" &&
-    !isPropertyLine &&
-    (line.from !== 0 || line.to !== state.doc.length)
-  ) {
-    // An unfinished neighboring declaration can make the CSS parser treat this
-    // line as a selector. Complete the current line with the same source.
-    const lineState = EditorState.create({
-      doc: line.text,
-      extensions: [cssBlockLanguage],
-    });
-    const result = await blockCompletionSource(
-      new CompletionContext(lineState, pos - line.from, context.explicit)
-    );
-    return (
-      result && {
-        ...result,
-        from: result.from + line.from,
-        to: result.to === undefined ? undefined : result.to + line.from,
+
+    let declaration = node;
+    while (declaration.parent !== null && declaration.name !== "Declaration") {
+      declaration = declaration.parent;
+    }
+    if (declaration.name !== "Declaration" && !isPropertyLine) {
+      const previous = tree.topNode.childBefore(pos);
+      if (
+        previous?.name === "Declaration" &&
+        state.doc.sliceString(previous.to, pos).trim() === ""
+      ) {
+        declaration = previous;
       }
+    }
+    if (
+      declaration.name !== "Declaration" &&
+      !isPropertyLine &&
+      (line.from !== 0 || line.to !== state.doc.length)
+    ) {
+      // An unfinished neighboring declaration can make the CSS parser treat this
+      // line as a selector. Complete the current line with the same source.
+      const lineState = EditorState.create({
+        doc: line.text,
+        extensions: [cssBlockLanguage],
+      });
+      const result = await blockCompletionSource(
+        availableVariables,
+        cssVars
+      )(new CompletionContext(lineState, pos - line.from, context.explicit));
+      return (
+        result && {
+          ...result,
+          from: result.from + line.from,
+          to: result.to === undefined ? undefined : result.to + line.from,
+        }
+      );
+    }
+    const colon = declaration.getChild(":");
+    if (colon !== null && pos >= colon.to && !isPropertyLine) {
+      const propertyNode =
+        declaration.getChild("PropertyName") ??
+        declaration.getChild("VariableName");
+      const property = propertyNode
+        ? state.doc.sliceString(propertyNode.from, propertyNode.to)
+        : "";
+      const keywords = keywordValues[property as CssProperty] ?? [];
+      return {
+        from:
+          node.name === "VariableName"
+            ? node.from
+            : firstType === "keyword"
+              ? (completion?.from ?? pos)
+              : pos,
+        to:
+          node.name === "VariableName" || node.name === "ValueName"
+            ? node.to
+            : undefined,
+        options: [
+          ...keywords.map((value) => ({ label: value, type: "keyword" })),
+          ...availableVariables.map(({ value }) => ({
+            label: `var(--${value})`,
+            displayLabel: `--${value}`,
+            type: "variable",
+          })),
+        ],
+      };
+    }
+
+    if (!isVariableProperty && firstType !== "property" && !isPropertyLine) {
+      return null;
+    }
+    const from =
+      isVariableProperty || (isPropertyLine && node.name === "TagName")
+        ? node.from
+        : (completion?.from ?? pos);
+    const search = state.doc.sliceString(from, pos);
+    const items = matchOrSuggestToCreate(
+      search,
+      getAutocompleteItems(availableVariables),
+      cssVars
     );
-  }
-  const colon = declaration.getChild(":");
-  if (colon !== null && pos >= colon.to && !isPropertyLine) {
-    const propertyNode =
-      declaration.getChild("PropertyName") ??
-      declaration.getChild("VariableName");
-    const property = propertyNode
-      ? state.doc.sliceString(propertyNode.from, propertyNode.to)
-      : "";
-    const keywords = keywordValues[property as CssProperty] ?? [];
     return {
-      from:
-        node.name === "VariableName"
-          ? node.from
-          : firstType === "keyword"
-            ? (completion?.from ?? pos)
-            : pos,
+      from,
       to:
-        node.name === "VariableName" || node.name === "ValueName"
+        node.name === "PropertyName" ||
+        node.name === "TagName" ||
+        isVariableProperty
           ? node.to
           : undefined,
-      options: [
-        ...keywords.map((value) => ({ label: value, type: "keyword" })),
-        ...$availableVariables.get().map(({ value }) => ({
-          label: `var(--${value})`,
-          displayLabel: `--${value}`,
-          type: "variable",
-        })),
-      ],
+      filter: false,
+      options: items.map((item) => {
+        const description =
+          propertyDescriptions[camelCaseProperty(item.property as CssProperty)];
+        return {
+          label: item.label,
+          apply:
+            colon === null || isPropertyLine
+              ? `${item.property}: ${item.value ?? ""}`
+              : item.property,
+          type: "property",
+          info: description
+            ? () => {
+                const content = document.createElement("div");
+                content.className = menuItemCss({ hint: true }).className;
+                content.textContent = description;
+                return content;
+              }
+            : undefined,
+        };
+      }),
     };
-  }
-
-  if (!isVariableProperty && firstType !== "property" && !isPropertyLine) {
-    return null;
-  }
-  const from =
-    isVariableProperty || (isPropertyLine && node.name === "TagName")
-      ? node.from
-      : (completion?.from ?? pos);
-  const search = state.doc.sliceString(from, pos);
-  const items = matchOrSuggestToCreate(search, getAutocompleteItems());
-  return {
-    from,
-    to:
-      node.name === "PropertyName" ||
-      node.name === "TagName" ||
-      isVariableProperty
-        ? node.to
-        : undefined,
-    filter: false,
-    options: items.map((item) => {
-      const description =
-        propertyDescriptions[camelCaseProperty(item.property as CssProperty)];
-      return {
-        label: item.label,
-        apply:
-          colon === null || isPropertyLine
-            ? `${item.property}: ${item.value ?? ""}`
-            : item.property,
-        type: "property",
-        info: description
-          ? () => {
-              const content = document.createElement("div");
-              content.className = menuItemCss({ hint: true }).className;
-              content.textContent = description;
-              return content;
-            }
-          : undefined,
-      };
-    }),
   };
-};
 
 const hasMissingSeparator = (source: string, offset: number) => {
   let propertyStart: number | undefined;
@@ -209,7 +218,10 @@ const hasMissingSeparator = (source: string, offset: number) => {
   );
 };
 
-export const parseBlock = (source: string) => {
+export const parseBlock = (
+  source: string,
+  cssVars = new Map<string, string>()
+) => {
   const diagnostics: Diagnostic[] = [];
   const declarations: Array<{
     text: string;
@@ -217,7 +229,7 @@ export const parseBlock = (source: string) => {
     from: number;
     to: number;
   }> = [];
-  const draftCssVars = new Map($cssVarsMap.get());
+  const draftCssVars = new Map(cssVars);
   const mentionedProperties = new Set<CssProperty>();
   const propertyRanges = new Map<
     CssProperty,
@@ -340,7 +352,7 @@ export const parseBlock = (source: string) => {
 
   const { styleMap, errors } = parseStyleInput(
     validDeclarations.join(";\n"),
-    $cssVarsMap.get()
+    cssVars
   );
   if (errors.length > 0) {
     canDelete = false;

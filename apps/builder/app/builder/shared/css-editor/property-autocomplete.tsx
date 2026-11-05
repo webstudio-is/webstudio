@@ -1,51 +1,22 @@
 import { matchSorter } from "match-sorter";
-import { Box, Flex, theme } from "@webstudio-is/design-system";
 import {
-  camelCaseProperty,
   propertiesData,
   shorthandProperties,
   keywordValues,
-  propertyDescriptions,
 } from "@webstudio-is/css-data";
 import {
   cssWideKeywords,
   generateStyleMap,
   mergeStyles,
   toValue,
-  type CssProperty,
 } from "@webstudio-is/css-engine";
-import {
-  $availableVariables,
-  $cssVarsMap,
-} from "~/builder/features/style-panel/shared/model";
 import { parseStyleInput, splitStyleInputAtColon } from "./parse-style-input";
-import { PropertyStatusDescription } from "~/builder/features/style-panel/property-status";
 
 export type SearchItem = {
   property: string;
   label: string;
   value?: string;
   key: string;
-};
-
-export const getNewPropertyDescription = (item: null | SearchItem) => {
-  let description: string | undefined = "Add CSS property.";
-  if (item?.property.startsWith("--")) {
-    description = "Create CSS variable.";
-  }
-  if (item) {
-    description =
-      propertyDescriptions[camelCaseProperty(item.property as CssProperty)] ??
-      description;
-  }
-  return (
-    <Box css={{ width: theme.spacing[28] }}>
-      <Flex direction="column" gap="2">
-        {description}
-        {item && <PropertyStatusDescription property={item.property} />}
-      </Flex>
-    </Box>
-  );
 };
 
 const collator = new Intl.Collator();
@@ -85,11 +56,12 @@ for (const [property, values] of Object.entries(keywordValues)) {
   }
 }
 
-let cachedVariables: ReturnType<typeof $availableVariables.get> | undefined;
+let cachedVariables: ReadonlyArray<{ value: string }> | undefined;
 let cachedItems: SearchItem[] = [];
 
-export const getAutocompleteItems = () => {
-  const variables = $availableVariables.get();
+export const getAutocompleteItems = (
+  variables: ReadonlyArray<{ value: string }>
+) => {
   if (variables === cachedVariables) {
     return cachedItems;
   }
@@ -107,7 +79,8 @@ export const getAutocompleteItems = () => {
 
 export const matchOrSuggestToCreate = (
   search: string,
-  items: Array<SearchItem>
+  items: Array<SearchItem>,
+  cssVars: Map<string, string>
 ) => {
   const searchWithSpaces = search.startsWith("--")
     ? search
@@ -121,10 +94,7 @@ export const matchOrSuggestToCreate = (
 
   if (matched.length === 0) {
     const hasValue = splitStyleInputAtColon(search) !== undefined;
-    const { styleMap: parsedStyleMap } = parseStyleInput(
-      search,
-      $cssVarsMap.get()
-    );
+    const { styleMap: parsedStyleMap } = parseStyleInput(search, cssVars);
     const styleMap = mergeStyles(parsedStyleMap);
 
     // When parsedStyles is more than one, user entered a shorthand.

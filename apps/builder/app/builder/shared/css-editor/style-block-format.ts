@@ -6,8 +6,8 @@ import {
   type CssProperty,
   type CssStyleMap,
 } from "@webstudio-is/css-engine";
-import { parseStyleInput } from "~/builder/shared/css-editor/parse-style-input";
-import { cannotRoundTripAsCssText } from "~/builder/shared/css-editor/css-editor";
+import { parseStyleInput } from "./parse-style-input";
+import { cannotRoundTripAsCssText } from "./cannot-round-trip-as-css-text";
 
 type Candidate = {
   property: string;

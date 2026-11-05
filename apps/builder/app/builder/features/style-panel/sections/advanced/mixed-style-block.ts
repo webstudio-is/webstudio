@@ -6,8 +6,8 @@ import {
 } from "@webstudio-is/css-engine";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { getAdvancedStyleSource } from "./stores";
-import { formatStyleBlock } from "./style-block-format";
-import { parseBlock } from "./style-block-parse";
+import { formatStyleBlock } from "~/builder/shared/css-editor/style-block-format";
+import { parseBlock } from "~/builder/shared/css-editor/style-block-parse";
 
 type StyleBlockEditorSource =
   | "local"
@@ -135,12 +135,16 @@ export const getMixedPropertyRanges = (code: string): MixedPropertyRange[] => {
   return ranges;
 };
 
-export const parseMixedStyleBlock = (code: string) => {
+export const parseMixedStyleBlock = (
+  code: string,
+  cssVars = new Map<string, string>()
+) => {
   const group = getMixedStyleGroups(code).find(
     (group) => group.source === "local"
   );
   const parsed = parseBlock(
-    group === undefined ? "" : code.slice(group.contentFrom, group.to)
+    group === undefined ? "" : code.slice(group.contentFrom, group.to),
+    cssVars
   );
   const offset = group?.contentFrom ?? 0;
   return {
