@@ -332,6 +332,7 @@ export const ColorPicker = ({
     const controller = new AbortController();
     const { signal } = controller;
     let isOpen = false;
+    let bodyInertBeforeOpen = document.body.inert;
     let lastStyleValue: StyleValue = callbacksRef.current.value;
     let lastCommittedStyleValue: StyleValue = callbacksRef.current.value;
 
@@ -377,6 +378,7 @@ export const ColorPicker = ({
         // before any change event fires (the component's own JS sets --contrast
         // based on raw color only, ignoring alpha).
         isOpen = true;
+        bodyInertBeforeOpen = document.body.inert;
         lastStyleValue = callbacksRef.current.value;
         lastCommittedStyleValue = callbacksRef.current.value;
         callbacksRef.current.disableCanvasPointerEvents();
@@ -407,6 +409,9 @@ export const ColorPicker = ({
       "close",
       () => {
         isOpen = false;
+        // hdr-color-input makes the body inert while dragging. A quick close
+        // can remove its drag target before pointerup clears that state.
+        document.body.inert = bodyInertBeforeOpen;
         callbacksRef.current.enableCanvasPointerEvents();
         document.body.style.removeProperty("user-select");
         callbacksRef.current.onOpenChange?.(false);
@@ -422,6 +427,9 @@ export const ColorPicker = ({
 
     return () => {
       controller.abort();
+      if (isOpen) {
+        document.body.inert = bodyInertBeforeOpen;
+      }
       callbacksRef.current.enableCanvasPointerEvents();
       document.body.style.removeProperty("user-select");
     };
