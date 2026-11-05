@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import {
   DropdownMenu,
@@ -11,12 +11,19 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
-import { hyphenateProperty, toValue } from "@webstudio-is/css-engine";
+import {
+  hyphenateProperty,
+  toValue,
+  type CssStyleMap,
+} from "@webstudio-is/css-engine";
 import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
-import { createBatchUpdate } from "../../shared/use-style-data";
+import {
+  createBatchUpdate,
+  resetEphemeralStyles,
+} from "../../shared/use-style-data";
 import { useComputedStyles } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
 import { $visibleAdvancedStyleDeclarations } from "./stores";
@@ -95,6 +102,7 @@ export const Section = () => {
   const styles = useStore($styles);
   const editorOpenFor = useStore($styleBlockEditorOpenFor);
   const selectionKey = getStyleBlockSelectionKey();
+  const previewPropertiesRef = useRef(new Set<string>());
 
   useEffect(() => {
     return () => {
@@ -160,6 +168,46 @@ export const Section = () => {
     return appliedStyles;
   };
 
+  const handlePreviewBlock = (previewStyles?: CssStyleMap) => {
+    if (previewStyles === undefined) {
+      resetEphemeralStyles();
+      previewPropertiesRef.current.clear();
+      return;
+    }
+    if (!isCurrentSelection()) {
+      return;
+    }
+    const savedStyles = new Map(
+      blockDeclarations.map(({ property, value }) => [property, value])
+    );
+    const batch = createBatchUpdate();
+    const previewProperties = new Set<string>();
+    for (const [property, value] of previewStyles) {
+      const saved = savedStyles.get(property);
+      if (saved === undefined || toValue(saved) !== toValue(value)) {
+        batch.setProperty(property)(value);
+        previewProperties.add(property);
+      }
+    }
+    if (previewProperties.size === 0) {
+      if (previewPropertiesRef.current.size > 0) {
+        resetEphemeralStyles();
+      }
+      previewPropertiesRef.current = previewProperties;
+      return;
+    }
+    if (
+      previewProperties.size !== previewPropertiesRef.current.size ||
+      [...previewProperties].some(
+        (property) => !previewPropertiesRef.current.has(property)
+      )
+    ) {
+      resetEphemeralStyles();
+    }
+    previewPropertiesRef.current = previewProperties;
+    batch.publish({ isEphemeral: true, listed: true });
+  };
+
   return (
     <>
       <AdvancedStyleSection
@@ -211,6 +259,7 @@ export const Section = () => {
             sourceDeclarations={visibleAdvancedStyleDeclarations}
             readonly={readonly}
             onApply={handleApplyBlock}
+            onPreview={handlePreviewBlock}
             onMaximize={openStyleBlockEditor}
             searchStickyTop={theme.spacing[14]}
           />
@@ -223,6 +272,7 @@ export const Section = () => {
           sourceDeclarations={visibleAdvancedStyleDeclarations}
           readonly={readonly}
           onApply={handleApplyBlock}
+          onPreview={handlePreviewBlock}
           open={editorOpenFor?.selectionKey === selectionKey}
           onOpenChange={(open) =>
             $styleBlockEditorOpenFor.set(

@@ -157,6 +157,7 @@ type Props = {
   sourceDeclarations: ComputedStyleDecl[];
   readonly: boolean;
   onApply: (changes: ApplyChanges) => CssStyleMap | void;
+  onPreview?: (styles?: CssStyleMap) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   inline?: boolean;
@@ -225,6 +226,7 @@ const MixedStyleBlockEditor = ({
   sourceDeclarations,
   readonly,
   onApply,
+  onPreview,
   open,
   onOpenChange,
   inline = false,
@@ -243,6 +245,10 @@ const MixedStyleBlockEditor = ({
   const editorViewRef = useRef<EditorView>();
   const wasOpenRef = useRef(false);
   const applyRef = useRef<() => void>(() => {});
+  const onPreviewRef = useRef(onPreview);
+  onPreviewRef.current = onPreview;
+
+  useEffect(() => () => onPreviewRef.current?.(undefined), []);
 
   useEffect(() => {
     const view = editorViewRef.current;
@@ -303,6 +309,7 @@ const MixedStyleBlockEditor = ({
 
   const applyChanges = () => {
     if (codeRef.current === appliedCodeRef.current) {
+      onPreview?.(undefined);
       return;
     }
     const parsed = parseMixedStyleBlock(codeRef.current);
@@ -321,6 +328,7 @@ const MixedStyleBlockEditor = ({
         cleanCodeRef.current = codeRef.current;
       }
     }
+    onPreview?.(undefined);
   };
   applyRef.current = inline ? applyChanges : () => {};
 
@@ -607,6 +615,7 @@ const MixedStyleBlockEditor = ({
         onChange={(value) => {
           codeRef.current = value;
           setCode(value);
+          onPreview?.(parseMixedStyleBlock(value).styleMap);
         }}
         onChangeComplete={(_value, event) => {
           if (inline) {
