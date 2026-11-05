@@ -66,18 +66,31 @@ export const transferFragmentAssets = async ({
         throw new Error("Imported asset is missing");
       }
       assetIds.set(sourceAsset.id, importedAsset.id);
-      // Keep the old replacement order if an imported ID is another source ID.
-      for (const [sourceId, currentId] of replacementIds) {
-        if (currentId === sourceAsset.id) {
-          replacementIds.set(sourceId, importedAsset.id);
-        }
+      if (
+        sourceAsset.id === importedAsset.id &&
+        (sourceAsset.type !== "font" ||
+          importedAsset.type !== "font" ||
+          sourceAsset.meta.family === importedAsset.meta.family)
+      ) {
+        continue;
       }
-      if (replacementIds.has(sourceAsset.id) === false) {
-        replacementIds.set(sourceAsset.id, importedAsset.id);
+      // Keep the old replacement order if an imported ID is another source ID.
+      if (sourceAsset.id !== importedAsset.id) {
+        for (const [sourceId, currentId] of replacementIds) {
+          if (currentId === sourceAsset.id) {
+            replacementIds.set(sourceId, importedAsset.id);
+          }
+        }
+        if (replacementIds.has(sourceAsset.id) === false) {
+          replacementIds.set(sourceAsset.id, importedAsset.id);
+        }
       }
       if (sourceAsset.type === "font" && importedAsset.type === "font") {
         const from = sourceAsset.meta.family;
         const to = importedAsset.meta.family;
+        if (from === to) {
+          continue;
+        }
         for (const [original, current] of replacementFontFamilies) {
           if (current === from) {
             replacementFontFamilies.set(original, to);
