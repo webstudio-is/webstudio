@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import {
   blockBodyComponent,
   blockComponent,
@@ -8,7 +8,15 @@ import {
   type Prop,
 } from "@webstudio-is/sdk";
 import { applyContentModeTransaction } from "@webstudio-is/project-build/runtime";
-import { createContentModeCapabilities } from "./patch-auth.server";
+const hasProjectPermit = vi.hoisted(() => vi.fn());
+vi.mock("@webstudio-is/trpc-interface/index.server", () => {
+  class AuthorizationError extends Error {}
+  return { AuthorizationError, authorizeProject: { hasProjectPermit } };
+});
+import {
+  authorizePatchEntries,
+  createContentModeCapabilities,
+} from "./patch-auth.server";
 
 test.each([undefined, "read", "readwrite"] as const)(
   "normalizes legacy CodeText and blocks direct expression patches with mode %s",
@@ -375,3 +383,239 @@ test("normalizes saved legacy bindings without allowing Editor expression replac
   expect(contentEdit.success).toBe(true);
   expect(build).toEqual(before);
 });
+
+const createLiteralCodeBuild = (component: string) => ({
+  pages: "{}",
+  instances: JSON.stringify([
+    {
+      id: "block",
+      type: "instance",
+      component,
+      children: [{ type: "id", value: "body" }],
+    },
+    {
+      id: "body",
+      type: "instance",
+      component: blockBodyComponent,
+      children: [{ type: "id", value: "code" }],
+    },
+    {
+      id: "code",
+      type: "instance",
+      component: "CodeText",
+      children: [{ type: "text", value: "before" }],
+    },
+  ]),
+  props: "[]",
+  styleSources: "[]",
+  styleSourceSelections: "[]",
+  styles: "[]",
+  breakpoints: "[]",
+});
+
+test("rejects an Editor overwrite after a Builder adds a CodeText binding in the same batch", async () => {
+  hasProjectPermit.mockImplementation(async (_request, context) =>
+    _request.permit === "build"
+      ? context.authorization.role === "builder"
+      : true
+  );
+  const build = createLiteralCodeBuild(blockComponent);
+  const transaction = (id: string, child: Instance["children"][number]) => ({
+    id,
+    payload: [
+      {
+        namespace: "instances",
+        patches: [
+          {
+            op: "replace",
+            path: ["code", "children"],
+            value: [child],
+          },
+        ],
+      },
+    ],
+  });
+  const patch = {
+    projectId: "project",
+    buildId: "build",
+    clientVersion: 1,
+    entries: [
+      {
+        transaction: transaction("builder", {
+          type: "expression",
+          value: '"protected"',
+        }),
+        writer: {
+          type: "context",
+          context: { authorization: { role: "builder" } },
+        },
+      },
+      {
+        transaction: transaction("editor", {
+          type: "text",
+          value: "overwritten",
+        }),
+        writer: {
+          type: "context",
+          context: { authorization: { role: "editor" } },
+        },
+      },
+    ],
+  };
+  const result = await authorizePatchEntries({} as never, patch as never, () =>
+    createContentModeCapabilities(build)
+  );
+  expect(result.authorized.map(({ entry }) => entry.transaction.id)).toEqual([
+    "builder",
+  ]);
+  expect(result.rejected.map(({ entry }) => entry.transaction.id)).toEqual([
+    "editor",
+  ]);
+});
+
+test("protects a legacy CodeText prop added by a Builder in the same batch", async () => {
+  hasProjectPermit.mockImplementation(async (_request, context) =>
+    _request.permit === "build"
+      ? context.authorization.role === "builder"
+      : true
+  );
+  const patch = {
+    projectId: "project",
+    buildId: "build",
+    clientVersion: 1,
+    entries: [
+      {
+        transaction: {
+          id: "builder",
+          payload: [
+            {
+              namespace: "props",
+              patches: [
+                {
+                  op: "add",
+                  path: ["legacy-code"],
+                  value: {
+                    id: "legacy-code",
+                    instanceId: "code",
+                    name: "code",
+                    type: "expression",
+                    value: '"protected"',
+                    mode: "read",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        writer: {
+          type: "context",
+          context: { authorization: { role: "builder" } },
+        },
+      },
+      {
+        transaction: {
+          id: "editor",
+          payload: [
+            {
+              namespace: "instances",
+              patches: [
+                {
+                  op: "replace",
+                  path: ["code", "children"],
+                  value: [{ type: "text", value: "overwritten" }],
+                },
+              ],
+            },
+          ],
+        },
+        writer: {
+          type: "context",
+          context: { authorization: { role: "editor" } },
+        },
+      },
+    ],
+  };
+  const result = await authorizePatchEntries({} as never, patch as never, () =>
+    createContentModeCapabilities(createLiteralCodeBuild(blockComponent))
+  );
+  expect(result.authorized.map(({ entry }) => entry.transaction.id)).toEqual([
+    "builder",
+  ]);
+  expect(result.rejected.map(({ entry }) => entry.transaction.id)).toEqual([
+    "editor",
+  ]);
+});
+
+test.each([
+  [blockComponent, "Box", false],
+  ["Box", blockComponent, true],
+] as const)(
+  "rechecks Editor access when a Builder changes a Content block from %s to %s",
+  async (before, after, allowed) => {
+    hasProjectPermit.mockImplementation(async (_request, context) =>
+      _request.permit === "build"
+        ? context.authorization.role === "builder"
+        : true
+    );
+    const patch = {
+      projectId: "project",
+      buildId: "build",
+      clientVersion: 1,
+      entries: [
+        {
+          transaction: {
+            id: "builder",
+            payload: [
+              {
+                namespace: "instances",
+                patches: [
+                  {
+                    op: "replace",
+                    path: ["block", "component"],
+                    value: after,
+                  },
+                ],
+              },
+            ],
+          },
+          writer: {
+            type: "context",
+            context: { authorization: { role: "builder" } },
+          },
+        },
+        {
+          transaction: {
+            id: "editor",
+            payload: [
+              {
+                namespace: "instances",
+                patches: [
+                  {
+                    op: "replace",
+                    path: ["code", "children"],
+                    value: [{ type: "text", value: "edited" }],
+                  },
+                ],
+              },
+            ],
+          },
+          writer: {
+            type: "context",
+            context: { authorization: { role: "editor" } },
+          },
+        },
+      ],
+    };
+    const result = await authorizePatchEntries(
+      {} as never,
+      patch as never,
+      () => createContentModeCapabilities(createLiteralCodeBuild(before))
+    );
+    expect(result.authorized.map(({ entry }) => entry.transaction.id)).toEqual(
+      allowed ? ["builder", "editor"] : ["builder"]
+    );
+    expect(result.rejected.map(({ entry }) => entry.transaction.id)).toEqual(
+      allowed ? [] : ["editor"]
+    );
+  }
+);

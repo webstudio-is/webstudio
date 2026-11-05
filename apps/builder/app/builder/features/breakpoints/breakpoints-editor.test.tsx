@@ -65,3 +65,47 @@ test.each(["enter", "tab", "click"])(
     }
   }
 );
+
+test.each([
+  ["Max width", { minWidth: 768 }, { maxWidth: 768 }],
+  ["Min width", { maxWidth: 991 }, { minWidth: 991 }],
+] as const)(
+  "saves a breakpoint when switching to %s",
+  async (option, original, expected) => {
+    const onChangeComplete = vi.fn();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    try {
+      act(() =>
+        root.render(
+          <TooltipProvider>
+            <BreakpointEditorItem
+              breakpoint={{ id: "tablet", label: "Tablet", ...original }}
+              onChangeComplete={onChangeComplete}
+              onDelete={() => {}}
+            />
+          </TooltipProvider>
+        )
+      );
+      await act(async () => {
+        await userEvent.click(container.querySelector('[role="combobox"]')!);
+      });
+      await act(async () => {
+        await userEvent.click(
+          Array.from(
+            document.querySelectorAll<HTMLElement>('[role="option"]')
+          ).find((element) => element.textContent === option)!
+        );
+      });
+      expect(onChangeComplete).toHaveBeenLastCalledWith({
+        id: "tablet",
+        label: "Tablet",
+        ...expected,
+      });
+    } finally {
+      act(() => root.unmount());
+      container.remove();
+    }
+  }
+);
