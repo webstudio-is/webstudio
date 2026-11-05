@@ -179,6 +179,9 @@ const sourceColorTheme = EditorView.theme({
   ".cm-mixed-remote, .cm-mixed-remote *": {
     color: `${styleSourceColor.remote.foreground} !important`,
   },
+  ".cm-mixed-preset, .cm-mixed-preset *": {
+    color: `${cssVar("--foreground-secondary")} !important`,
+  },
   ".cm-tooltip.cm-mixed-property-tooltip, .cm-tooltip.cm-mixed-blocked-tooltip":
     {
       border: 0,
@@ -350,7 +353,7 @@ const MixedStyleBlockEditor = ({
       Decoration.set(
         [
           ...getMixedPropertyRanges(value).map((range) => {
-            let source = "remote";
+            let source = range.source === "preset" ? "preset" : "remote";
             if (range.source === "local") {
               const parsed = parseBlock(
                 value.slice(range.declarationFrom, range.declarationTo)
