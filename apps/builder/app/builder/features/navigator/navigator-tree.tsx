@@ -1275,7 +1275,7 @@ export const NavigatorTree = () => {
         flexBasis: 0,
         flexGrow: 1,
         minHeight: 0,
-        "& [data-tree-sortable-item]": {
+        "& [data-tree-sortable-item]:not([data-has-drop-target])": {
           contentVisibility: "auto",
           containIntrinsicSize: `auto ${theme.sizes.controlHeight}`,
         },

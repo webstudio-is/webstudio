@@ -6,6 +6,7 @@ import { coreMetas, elementComponent, type Instance } from "@webstudio-is/sdk";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import {
   $allSelectedInstanceSelectors,
+  $dragAndDropState,
   $hoveredInstanceSelector,
   $registeredComponentMetas,
   $selectedPageId,
@@ -123,11 +124,36 @@ test("reuses unrelated rows while selection and hover handlers stay current", ()
       $registeredComponentMetas.set(nextMetas);
     });
     expect(third.textContent).toBe("Updated component");
+
+    // The drop marker crosses the row edge, so this row must not clip it.
+    const firstRow = first.closest<HTMLElement>("[data-tree-sortable-item]")!;
+    act(() =>
+      $dragAndDropState.set({
+        isDragging: true,
+        dropTarget: {
+          itemSelector: ["body"],
+          indexWithinChildren: 0,
+          placement: {
+            closestChildIndex: 0,
+            indexAdjustment: 0,
+            childrenOrientation: { type: "vertical", reverse: false },
+          },
+        },
+      })
+    );
+    expect(getComputedStyle(firstRow).contentVisibility).toBe("visible");
+    expect(
+      getComputedStyle(third.closest<HTMLElement>("[data-tree-sortable-item]")!)
+        .contentVisibility
+    ).toBe("auto");
+    act(() => $dragAndDropState.set({ isDragging: false }));
+    expect(getComputedStyle(firstRow).contentVisibility).toBe("auto");
   } finally {
     act(() => root.unmount());
     container.remove();
     selectInstances([]);
     $hoveredInstanceSelector.set(undefined);
+    $dragAndDropState.set({ isDragging: false });
     $selectedPageId.set(undefined);
     $pages.set(undefined);
     $instances.set(new Map());

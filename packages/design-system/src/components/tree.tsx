@@ -452,6 +452,7 @@ export const TreeSortableItem = <Data,>({
     <Box
       ref={elementRef}
       data-tree-sortable-item
+      data-has-drop-target={dropTarget !== undefined || undefined}
       data-level={level}
       data-is-dragging={isDragging}
       data-is-drop-over={isDropOver}
