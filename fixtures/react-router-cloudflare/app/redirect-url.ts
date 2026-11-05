@@ -214,3 +214,8 @@ export const redirectRequest = (
 
   return redirect(`${pathname}${url.search}`, 301);
 };
+
+export const shouldCheckRedirectsOnNavigation = (
+  currentUrl: URL,
+  nextUrl: URL
+) => currentUrl.pathname !== nextUrl.pathname;

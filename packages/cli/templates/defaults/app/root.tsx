@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
-import { Links, Meta, Outlet, useMatches } from "@remix-run/react";
+import { Links, Meta, Outlet, type ShouldRevalidateFunctionArgs, useMatches } from "@remix-run/react";
 import type {
   HeadersFunction,
   LoaderFunctionArgs,
 } from "@remix-run/server-runtime";
-import { redirectRequest } from "./redirect-url";
+import { redirectRequest, shouldCheckRedirectsOnNavigation } from "./redirect-url";
 // @todo think about how to make __generated__ typeable
 // @ts-ignore
 import { CustomCode, projectId, projectVersion, lastPublished } from "./__generated__/_index";
 // @ts-ignore
-import { redirects } from "./__generated__/$resources.redirects";
+import { hasRedirects, redirects } from "./__generated__/$resources.redirects";
 
 export const loader = ({ request }: LoaderFunctionArgs) => {
   const redirectResponse = redirectRequest(request, redirects);
@@ -20,6 +20,14 @@ export const loader = ({ request }: LoaderFunctionArgs) => {
 
   return null;
 };
+
+export const shouldRevalidate = ({
+  currentUrl,
+  nextUrl,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) =>
+  defaultShouldRevalidate ||
+  (hasRedirects && shouldCheckRedirectsOnNavigation(currentUrl, nextUrl));
 
 export const headers: HeadersFunction = ({ errorHeaders }) => {
   if (errorHeaders) {

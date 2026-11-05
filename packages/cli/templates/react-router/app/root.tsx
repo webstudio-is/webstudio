@@ -3,17 +3,18 @@
 import {
   type HeadersFunction,
   type LoaderFunctionArgs,
+  type ShouldRevalidateFunctionArgs,
   Links,
   Meta,
   Outlet,
   useMatches,
 } from "react-router";
-import { redirectRequest } from "./redirect-url";
+import { redirectRequest, shouldCheckRedirectsOnNavigation } from "./redirect-url";
 // @todo think about how to make __generated__ typeable
 // @ts-ignore
 import { CustomCode, projectId, projectVersion, lastPublished } from "./__generated__/_index";
 // @ts-ignore
-import { redirects } from "./__generated__/$resources.redirects";
+import { hasRedirects, redirects } from "./__generated__/$resources.redirects";
 
 export const loader = ({ request }: LoaderFunctionArgs) => {
   const redirectResponse = redirectRequest(request, redirects);
@@ -23,6 +24,14 @@ export const loader = ({ request }: LoaderFunctionArgs) => {
 
   return null;
 };
+
+export const shouldRevalidate = ({
+  currentUrl,
+  nextUrl,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) =>
+  defaultShouldRevalidate ||
+  (hasRedirects && shouldCheckRedirectsOnNavigation(currentUrl, nextUrl));
 
 export const headers: HeadersFunction = ({ errorHeaders }) => {
   if (errorHeaders) {

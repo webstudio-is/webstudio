@@ -470,6 +470,7 @@ describe("generateRedirectsModule", () => {
   test("generates an empty redirects data module", () => {
     expect(generateRedirectsModule(undefined)).toEqual(`
     export const redirects = [];
+    export const hasRedirects = false;
     `);
   });
 
@@ -535,6 +536,7 @@ describe("generateRedirectsModule", () => {
     "status": 301
   }
 ];
+    export const hasRedirects = true;
     `);
   });
 });
