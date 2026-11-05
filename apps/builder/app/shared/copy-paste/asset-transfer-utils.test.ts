@@ -169,3 +169,66 @@ test("imports and remaps every fragment asset reference", async () => {
     ],
   });
 });
+
+test("transfers many asset references without scanning styles for every asset", async () => {
+  const assetCount = 400;
+  const styleCount = 6000;
+  const assets = Array.from(
+    { length: assetCount },
+    (_, index): Asset => ({
+      ...imageAsset,
+      id: `source-${index}`,
+      name: `image-${index}.png`,
+    })
+  );
+  const assetRichFragment: WebstudioFragment = {
+    ...fragment,
+    children: [],
+    instances: [],
+    assets,
+    props: [],
+    styles: Array.from({ length: styleCount }, (_, index) => ({
+      styleSourceId: `style-${index}`,
+      breakpointId: "base",
+      property: "backgroundImage",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "image",
+            value: {
+              type: "asset",
+              value: assets[index % assetCount].id,
+            },
+          },
+        ],
+      },
+    })),
+  };
+  const start = performance.now();
+  const result = await transferFragmentAssets({
+    sourceOrigin: "https://source.example.com",
+    projectId: "target-project",
+    fragments: [assetRichFragment],
+    importAssets: async () =>
+      new Map(
+        assets.map((asset) => [
+          asset.id,
+          { ...asset, id: `imported-${asset.id}` },
+        ])
+      ),
+  });
+  const elapsed = performance.now() - start;
+
+  expect(result.success).toBe(true);
+  if (result.success === false) {
+    return;
+  }
+  expect(result.fragments.get(assetRichFragment)?.styles[0].value).toEqual({
+    type: "layers",
+    value: [
+      { type: "image", value: { type: "asset", value: "imported-source-0" } },
+    ],
+  });
+  expect(elapsed).toBeLessThan(1500);
+}, 20000);
