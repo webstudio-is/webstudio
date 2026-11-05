@@ -185,6 +185,12 @@ const shouldHandleColorInputChange = ({
   return disabled === false && isOpen;
 };
 
+const cancelColorAreaDrag = (colorInput: ColorInput | null) => {
+  colorInput?.shadowRoot
+    ?.querySelector<HTMLElement>(".area-picker.dragging")
+    ?.dispatchEvent(new PointerEvent("pointercancel"));
+};
+
 const useColorInputTheme = () => {
   const [colorInputTheme, setColorInputTheme] = useState<"light" | "dark">(
     "light"
@@ -265,6 +271,7 @@ export const ColorPicker = ({
     const colorInput = colorInputRef.current;
     return () => {
       try {
+        cancelColorAreaDrag(colorInput);
         colorInput?.close();
       } catch {}
     };
@@ -408,6 +415,9 @@ export const ColorPicker = ({
     colorInputElement.addEventListener(
       "close",
       () => {
+        // The web component does not cancel a captured color-area drag on close.
+        // Cancel it before its delayed drag effect can make the body inert again.
+        cancelColorAreaDrag(colorInputElement);
         isOpen = false;
         // hdr-color-input makes the body inert while dragging. A quick close
         // can remove its drag target before pointerup clears that state.
