@@ -27,6 +27,7 @@ import {
   type Tooltip as CodeMirrorTooltip,
   type ViewUpdate,
   ViewPlugin,
+  WidgetType,
 } from "@codemirror/view";
 import {
   Box,
@@ -34,6 +35,7 @@ import {
   Kbd,
   MenuList,
   PanelContent,
+  rawTheme,
   SearchField,
   SmallIconButton,
   styleSourceColor,
@@ -85,6 +87,14 @@ import { formatStyleBlock } from "./style-block-format";
 
 const blockedEditMessage =
   "This declaration comes from another source. Add a local declaration to override it.";
+class ReadonlyDivider extends WidgetType {
+  toDOM() {
+    const element = document.createElement("div");
+    element.className = "cm-mixed-readonly-divider";
+    return element;
+  }
+}
+const readonlyDivider = new ReadonlyDivider();
 const renderTooltip = (className: string, content: ReactNode) => {
   const dom = document.createElement("div");
   dom.className = className;
@@ -184,9 +194,12 @@ const sourceColorTheme = EditorView.theme({
     color: `${cssVar("--foreground-secondary")} !important`,
   },
   ".cm-mixed-readonly-divider": {
-    borderTop: `1px solid ${cssVar("--border-default")}`,
-    marginTop: theme.spacing[3],
-    paddingTop: theme.spacing[3],
+    paddingBlock: rawTheme.spacing[5],
+    "&::before": {
+      content: '""',
+      display: "block",
+      borderTop: `1px solid ${cssVar("--border-default")}`,
+    },
   },
   ".cm-tooltip-hover:has(> .cm-mixed-property-tooltip), .cm-tooltip.cm-mixed-blocked-tooltip":
     {
@@ -418,9 +431,11 @@ const MixedStyleBlockEditor = ({
           ...getMixedStyleGroups(value)
             .slice(1, 2)
             .map(({ from }) =>
-              Decoration.line({ class: "cm-mixed-readonly-divider" }).range(
-                from
-              )
+              Decoration.widget({
+                widget: readonlyDivider,
+                block: true,
+                side: -1,
+              }).range(from)
             ),
           ...getMixedPropertyRanges(value).map((range) => {
             let source = range.source === "preset" ? "preset" : "remote";

@@ -69,7 +69,7 @@ export const formatMixedStyleBlock = (
   }
   return groups
     .map(({ source, value }) => `/* ${sourceTitles[source]} */\n${value}`)
-    .join("\n\n");
+    .join("\n");
 };
 
 export const getMixedStyleGroups = (code: string): MixedStyleGroup[] => {
