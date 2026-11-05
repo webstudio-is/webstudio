@@ -232,3 +232,40 @@ test("transfers many asset references without scanning styles for every asset", 
   });
   expect(elapsed).toBeLessThan(1500);
 }, 20000);
+
+test("preserves sequential remapping when an imported ID matches another source ID", async () => {
+  const first = { ...imageAsset, id: "source-a" };
+  const second = { ...imageAsset, id: "source-b" };
+  const chainedFragment: WebstudioFragment = {
+    ...fragment,
+    assets: [first, second],
+    props: [
+      {
+        id: "image-src",
+        instanceId: "image",
+        name: "src",
+        type: "asset",
+        value: first.id,
+      },
+    ],
+    styles: [],
+  };
+  const result = await transferFragmentAssets({
+    sourceOrigin: "https://source.example.com",
+    projectId: "target-project",
+    fragments: [chainedFragment],
+    importAssets: async () =>
+      new Map([
+        [first.id, { ...first, id: second.id }],
+        [second.id, { ...second, id: "target-c" }],
+      ]),
+  });
+
+  expect(result.success).toBe(true);
+  if (result.success === false) {
+    return;
+  }
+  expect(result.fragments.get(chainedFragment)?.props[0]).toMatchObject({
+    value: "target-c",
+  });
+});
