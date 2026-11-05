@@ -1,69 +1,25 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ComponentProps,
-  type ReactNode,
-} from "react";
+import { useEffect, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuItemRightSlot,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
-  Kbd,
-  PanelContent,
-  SearchField,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
-  SmallIconButton,
-  cssVar,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-  EllipsesIcon,
-} from "@webstudio-is/icons";
-import { findNext, findPrevious } from "@codemirror/search";
-import type { EditorView } from "@codemirror/view";
-import {
-  type CssProperty,
-  type CssStyleMap,
-  type StyleValue,
-  hyphenateProperty,
-  toValue,
-} from "@webstudio-is/css-engine";
-import { camelCaseProperty } from "@webstudio-is/css-data";
-import { getStyleDeclKey } from "@webstudio-is/sdk";
+import { EllipsesIcon } from "@webstudio-is/icons";
+import { hyphenateProperty, toValue } from "@webstudio-is/css-engine";
 import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
-import {
-  createBatchUpdate,
-  deleteProperty,
-  setProperty,
-  type DeleteProperty,
-  type SetProperty,
-} from "../../shared/use-style-data";
-import {
-  $computedStyleDeclarations,
-  useComputedStyles,
-} from "../../shared/model";
+import { createBatchUpdate } from "../../shared/use-style-data";
+import { useComputedStyles } from "../../shared/model";
 import { getDots } from "../../shared/style-section";
-import { CssEditor } from "../../../../shared/css-editor";
-import { insertStyleDeclarations } from "../../../../shared/css-editor/css-editor";
-import { createDeclarationActions } from "../../../../shared/css-editor/css-editor-context-menu";
-import {
-  $advancedStyleDeclarations,
-  $visibleAdvancedStyleDeclarations,
-} from "./stores";
+import { $visibleAdvancedStyleDeclarations } from "./stores";
 import {
   $styleBlockEditorOpenFor,
   getStyleBlockSelectionKey,
@@ -95,7 +51,7 @@ const sourceVisibilityOptions = [
 
 const AdvancedStyleSection = (props: {
   label: string;
-  properties: Array<CssProperty>;
+  properties: Array<ComputedStyleDecl["property"]>;
   children: ReactNode;
   suffix?: ReactNode;
   suffixPlaceholder?: ReactNode;
@@ -127,134 +83,16 @@ const AdvancedStyleSection = (props: {
   );
 };
 
-const CodeView = ({
-  declarations,
-  blockDeclarations,
-  readonly,
-  onApply,
-}: {
-  declarations: ComputedStyleDecl[];
-  blockDeclarations: ComponentProps<
-    typeof InlineMixedStyleBlockEditor
-  >["declarations"];
-  readonly: boolean;
-  onApply: ComponentProps<typeof InlineMixedStyleBlockEditor>["onApply"];
-}) => {
-  const [searchTerm, setSearchTerm] = useState<string>();
-  const [searchNavigation, setSearchNavigation] = useState({
-    hasPrevious: false,
-    hasNext: false,
-  });
-  const editorRef = useRef<EditorView>();
-  const handleEditorView = useCallback((view: EditorView | undefined) => {
-    editorRef.current = view;
-  }, []);
-  const moveSearch = (direction: "previous" | "next") => {
-    const view = editorRef.current;
-    if (
-      view === undefined ||
-      (direction === "previous"
-        ? !searchNavigation.hasPrevious
-        : !searchNavigation.hasNext)
-    ) {
-      return;
-    }
-    (direction === "previous" ? findPrevious : findNext)(view);
-  };
-  return (
-    <>
-      <PanelContent
-        css={{
-          position: "sticky",
-          top: theme.spacing[14],
-          zIndex: 1,
-          background: cssVar("--background-primary"),
-        }}
-      >
-        <SearchField
-          suffix={
-            searchTerm ? (
-              <>
-                <SmallIconButton
-                  aria-label="Previous match"
-                  icon={<ChevronUpIcon />}
-                  bleed={false}
-                  disabled={!searchNavigation.hasPrevious}
-                  onClick={() => moveSearch("previous")}
-                />
-                <SmallIconButton
-                  aria-label="Next match"
-                  icon={<ChevronDownIcon />}
-                  bleed={false}
-                  disabled={!searchNavigation.hasNext}
-                  onClick={() => moveSearch("next")}
-                />
-              </>
-            ) : undefined
-          }
-          onChange={(event) => {
-            setSearchTerm(event.target.value || undefined);
-          }}
-          onAbort={() => setSearchTerm(undefined)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              moveSearch(event.shiftKey ? "previous" : "next");
-            }
-          }}
-        />
-      </PanelContent>
-      <InlineMixedStyleBlockEditor
-        declarations={blockDeclarations}
-        sourceDeclarations={declarations}
-        readonly={readonly}
-        onApply={onApply}
-        searchTerm={searchTerm}
-        onEditorView={handleEditorView}
-        onSearchUpdate={setSearchNavigation}
-      />
-    </>
-  );
-};
-
 export const Section = () => {
-  const advancedStyleDeclarations = useStore($advancedStyleDeclarations);
   const visibleAdvancedStyleDeclarations = useStore(
     $visibleAdvancedStyleDeclarations
   );
-  const computedStyleDeclarations = useStore($computedStyleDeclarations);
   const readonly = useReadonly();
   const settings = useStore($settings);
-  const { codeEditingMode, stickyAdvancedSection } = settings;
-  const properties = advancedStyleDeclarations.map(
-    (styleDecl) => styleDecl.property
-  );
   const selectedInstanceKey = useStore($selectedInstanceKey);
   const selectedBreakpoint = useStore($selectedBreakpoint);
   const styleSourceSelector = useStore($selectedOrLastStyleSourceSelector);
   const styles = useStore($styles);
-  const deletableProperties = new Set<CssProperty>();
-  if (selectedBreakpoint !== undefined && styleSourceSelector !== undefined) {
-    for (const { property } of advancedStyleDeclarations) {
-      if (
-        styles.has(
-          getStyleDeclKey({
-            styleSourceId: styleSourceSelector.styleSourceId,
-            breakpointId: selectedBreakpoint.id,
-            state: styleSourceSelector.state,
-            property: camelCaseProperty(property),
-          })
-        )
-      ) {
-        deletableProperties.add(property);
-      }
-    }
-  }
-  // Memorizing recent properties by instance id, so that when user switches between instances and comes back
-  // they are still in-place
-  const [recentPropertiesMap, setRecentPropertiesMap] = useState<
-    Map<string, Array<CssProperty>>
-  >(new Map());
   const editorOpenFor = useStore($styleBlockEditorOpenFor);
   const selectionKey = getStyleBlockSelectionKey();
 
@@ -283,91 +121,6 @@ export const Section = () => {
 
   const isCurrentSelection = () =>
     selectionKey !== undefined && selectionKey === getStyleBlockSelectionKey();
-
-  const recentProperties = selectedInstanceKey
-    ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
-    : [];
-
-  const updateRecentProperties = (properties: Array<CssProperty>) => {
-    if (selectedInstanceKey === undefined || !isCurrentSelection()) {
-      return;
-    }
-    const newRecentPropertiesMap = new Map(recentPropertiesMap);
-    newRecentPropertiesMap.set(
-      selectedInstanceKey,
-      Array.from(new Set(properties))
-    );
-    setRecentPropertiesMap(newRecentPropertiesMap);
-  };
-
-  const handleAddDeclarations = (styleMap: CssStyleMap) => {
-    if (!isCurrentSelection()) {
-      return;
-    }
-    const batch = createBatchUpdate();
-    for (const [property, value] of styleMap) {
-      batch.setProperty(property)(value);
-    }
-    batch.publish({ listed: true });
-
-    const insertedProperties = Array.from(styleMap.keys());
-    updateRecentProperties([...recentProperties, ...insertedProperties]);
-  };
-
-  const handleDeleteProperty: DeleteProperty = (property, options = {}) => {
-    if (!isCurrentSelection()) {
-      return;
-    }
-    deleteProperty(property, options);
-
-    if (options.isEphemeral === true) {
-      return;
-    }
-    updateRecentProperties(
-      recentProperties.filter((recentProperty) => recentProperty !== property)
-    );
-  };
-
-  const handleRenameProperty = (
-    oldProperty: CssProperty,
-    newProperty: CssProperty,
-    value: StyleValue
-  ) => {
-    if (!isCurrentSelection()) {
-      return;
-    }
-    const batch = createBatchUpdate();
-    batch.setProperty(newProperty)(value);
-    batch.deleteProperty(oldProperty);
-    batch.publish({ listed: true });
-    updateRecentProperties(
-      recentProperties.map((property) =>
-        property === oldProperty ? newProperty : property
-      )
-    );
-  };
-
-  const handleDeleteAllDeclarations = (styleMap: CssStyleMap) => {
-    if (!isCurrentSelection()) {
-      return;
-    }
-    const batch = createBatchUpdate();
-    for (const [property] of styleMap) {
-      batch.deleteProperty(property);
-    }
-    batch.publish();
-    updateRecentProperties(
-      recentProperties.filter(
-        (recentProperty) => styleMap.has(recentProperty) === false
-      )
-    );
-  };
-
-  const handleSetProperty: SetProperty = (property) => (value, options) => {
-    if (isCurrentSelection()) {
-      setProperty(property)(value, options);
-    }
-  };
 
   const handleApplyBlock = ({
     oldStyles,
@@ -408,59 +161,15 @@ export const Section = () => {
       }
     }
     batch.publish({ listed: true });
-    updateRecentProperties([
-      ...recentProperties.filter(
-        (property) =>
-          newStyles.has(property) ||
-          mentionedProperties.has(property) ||
-          !canDelete
-      ),
-      ...Array.from(newStyles.keys()).filter(
-        (property) => !oldStyles.has(property)
-      ),
-    ]);
     return appliedStyles;
   };
-
-  const menuDeclarations = codeEditingMode
-    ? blockDeclarations.map(
-        ({ property, value }) =>
-          ({
-            property,
-            source: { name: "local" },
-            cascadedValue: value,
-            computedValue: value,
-            usedValue: value,
-          }) satisfies ComputedStyleDecl
-      )
-    : advancedStyleDeclarations;
-  const actions = createDeclarationActions({
-    declarations: menuDeclarations,
-    visibleProperties: new Set(
-      menuDeclarations.map(({ property }) => property)
-    ),
-    deletableProperties: codeEditingMode
-      ? new Set(blockDeclarations.map(({ property }) => property))
-      : deletableProperties,
-    readonly,
-    onPaste: (cssText) => {
-      if (!readonly) {
-        insertStyleDeclarations(cssText, handleAddDeclarations);
-      }
-    },
-    onDeleteAllDeclarations: handleDeleteAllDeclarations,
-  });
 
   return (
     <>
       <AdvancedStyleSection
         label="Advanced"
-        sticky={stickyAdvancedSection}
-        properties={
-          codeEditingMode
-            ? blockDeclarations.map(({ property }) => property)
-            : properties
-        }
+        sticky={settings.stickyAdvancedSection}
+        properties={blockDeclarations.map(({ property }) => property)}
         suffixPlaceholder={<SectionTitleButton prefix={<EllipsesIcon />} />}
         suffix={
           selectedInstanceKey !== undefined && (
@@ -474,33 +183,7 @@ export const Section = () => {
               <DropdownMenuContent
                 collisionPadding={16}
                 css={{ width: theme.spacing[28] }}
-                onCloseAutoFocus={(event) => {
-                  if (
-                    $styleBlockEditorOpenFor.get()?.selectionKey ===
-                    selectionKey
-                  ) {
-                    event.preventDefault();
-                  }
-                }}
               >
-                <DropdownMenuItem
-                  withIndicator
-                  disabled={readonly}
-                  onSelect={() => openStyleBlockEditor()}
-                >
-                  Open code editor
-                  <DropdownMenuItemRightSlot>
-                    <Kbd value={["alt", "shift", "x"]} />
-                  </DropdownMenuItemRightSlot>
-                </DropdownMenuItem>
-                <DropdownMenuCheckboxItem
-                  checked={codeEditingMode}
-                  onCheckedChange={(checked) =>
-                    setSetting("codeEditingMode", checked === true)
-                  }
-                >
-                  Code view
-                </DropdownMenuCheckboxItem>
                 {sourceVisibilityOptions.map(({ key, label }) => (
                   <DropdownMenuCheckboxItem
                     key={key}
@@ -513,65 +196,27 @@ export const Section = () => {
                   </DropdownMenuCheckboxItem>
                 ))}
                 <DropdownMenuCheckboxItem
-                  checked={stickyAdvancedSection}
+                  checked={settings.stickyAdvancedSection}
                   onCheckedChange={(checked) =>
                     setSetting("stickyAdvancedSection", checked === true)
                   }
                 >
                   Pin section
                 </DropdownMenuCheckboxItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  withIndicator
-                  disabled={!actions.canCopyAll}
-                  onSelect={actions.copyAll}
-                >
-                  Copy declarations
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  withIndicator
-                  disabled={readonly}
-                  onSelect={actions.paste}
-                >
-                  Paste declarations
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  withIndicator
-                  destructive
-                  disabled={!actions.canDeleteAll}
-                  onSelect={actions.deleteAll}
-                >
-                  Delete declarations
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )
         }
       >
-        {codeEditingMode ? (
-          selectedInstanceKey !== undefined && (
-            <CodeView
-              key={selectionKey}
-              declarations={visibleAdvancedStyleDeclarations}
-              blockDeclarations={blockDeclarations}
-              readonly={readonly}
-              onApply={handleApplyBlock}
-            />
-          )
-        ) : (
-          <CssEditor
+        {selectedInstanceKey !== undefined && (
+          <InlineMixedStyleBlockEditor
             key={selectionKey}
+            declarations={blockDeclarations}
+            sourceDeclarations={visibleAdvancedStyleDeclarations}
             readonly={readonly}
-            showInlineAddButton={selectedInstanceKey !== undefined}
-            declarations={advancedStyleDeclarations}
-            existingDeclarations={computedStyleDeclarations}
-            deletableProperties={deletableProperties}
-            onDeleteProperty={handleDeleteProperty}
-            onSetProperty={handleSetProperty}
-            onRenameProperty={handleRenameProperty}
-            onAddDeclarations={handleAddDeclarations}
-            onDeleteAllDeclarations={handleDeleteAllDeclarations}
-            recentProperties={recentProperties}
+            onApply={handleApplyBlock}
+            onMaximize={openStyleBlockEditor}
+            searchStickyTop={theme.spacing[14]}
           />
         )}
       </AdvancedStyleSection>

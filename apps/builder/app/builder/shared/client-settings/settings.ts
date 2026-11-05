@@ -10,7 +10,6 @@ import {
 const userSettings = z.object({
   navigatorLayout: z.enum(["docked", "undocked"]).default("undocked"),
   stylePanelMode: z.enum(["default", "focus", "advanced"]).default("default"),
-  codeEditingMode: z.boolean().default(false),
   stickyAdvancedSection: z.boolean().default(false),
   showCascadedStyles: z.boolean().default(true),
   showPresetStyles: z.boolean().default(false),

@@ -10,6 +10,8 @@ import { createRoot } from "react-dom/client";
 import type { CompletionSource } from "@codemirror/autocomplete";
 import { linter } from "@codemirror/lint";
 import {
+  findNext,
+  findPrevious,
   getSearchQuery,
   search,
   SearchQuery,
@@ -22,19 +24,25 @@ import {
   hoverTooltip,
   placeholder,
   showTooltip,
-  type Tooltip,
+  type Tooltip as CodeMirrorTooltip,
   type ViewUpdate,
   ViewPlugin,
 } from "@codemirror/view";
 import {
   Box,
+  Kbd,
   MenuList,
+  PanelContent,
+  SearchField,
+  SmallIconButton,
   styleSourceColor,
   Text,
   theme,
+  Tooltip,
   tooltipContentCss,
   cssVar,
 } from "@webstudio-is/design-system";
+import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import {
   camelCaseProperty,
   propertyDescriptions,
@@ -48,6 +56,8 @@ import {
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import {
   EditorDialog,
+  EditorDialogButton,
+  EditorDialogControl,
   ExternalChange,
   linterTooltipTheme,
 } from "~/shared/code-editor-base";
@@ -115,7 +125,7 @@ const getSearchDecorations = (state: EditorState) => {
   }
   return Decoration.set(matches, true);
 };
-const blockedEditTooltip = StateField.define<Tooltip | null>({
+const blockedEditTooltip = StateField.define<CodeMirrorTooltip | null>({
   create: () => null,
   update: (tooltip, transaction) => {
     const blocked = transaction.effects.find((effect) =>
@@ -156,6 +166,7 @@ type Props = {
     hasPrevious: boolean;
     hasNext: boolean;
   }) => void;
+  onMaximize?: () => void;
 };
 
 const sourceColorTheme = EditorView.theme({
@@ -217,6 +228,7 @@ const MixedStyleBlockEditor = ({
   searchTerm,
   onEditorView,
   onSearchUpdate,
+  onMaximize,
 }: Props) => {
   const [code, setCode] = useState("");
   const codeRef = useRef("");
@@ -607,7 +619,27 @@ const MixedStyleBlockEditor = ({
   );
 
   if (inline) {
-    return content;
+    return (
+      <EditorDialogControl>
+        {content}
+        {onMaximize && (
+          <Tooltip
+            content={
+              <Box css={{ display: "flex", gap: theme.spacing[2] }}>
+                Edit local styles
+                <Kbd value={["alt", "shift", "x"]} />
+              </Box>
+            }
+          >
+            <EditorDialogButton
+              aria-label="Edit local styles"
+              disabled={readonly}
+              onClick={onMaximize}
+            />
+          </Tooltip>
+        )}
+      </EditorDialogControl>
+    );
   }
   return (
     <EditorDialog
@@ -625,9 +657,92 @@ const MixedStyleBlockEditor = ({
   );
 };
 
-export const InlineMixedStyleBlockEditor = (
-  props: Omit<Props, "inline" | "open" | "onOpenChange">
-) => <MixedStyleBlockEditor {...props} inline open onOpenChange={() => {}} />;
+export const InlineMixedStyleBlockEditor = ({
+  searchStickyTop,
+  ...props
+}: Omit<
+  Props,
+  | "inline"
+  | "open"
+  | "onOpenChange"
+  | "searchTerm"
+  | "onEditorView"
+  | "onSearchUpdate"
+> & { searchStickyTop?: string }) => {
+  const [searchTerm, setSearchTerm] = useState<string>();
+  const [searchNavigation, setSearchNavigation] = useState({
+    hasPrevious: false,
+    hasNext: false,
+  });
+  const editorRef = useRef<EditorView>();
+  const handleEditorView = useCallback((view: EditorView | undefined) => {
+    editorRef.current = view;
+  }, []);
+  const moveSearch = (direction: "previous" | "next") => {
+    const view = editorRef.current;
+    if (
+      view === undefined ||
+      (direction === "previous"
+        ? !searchNavigation.hasPrevious
+        : !searchNavigation.hasNext)
+    ) {
+      return;
+    }
+    (direction === "previous" ? findPrevious : findNext)(view);
+  };
+  return (
+    <>
+      <PanelContent
+        css={{
+          position: searchStickyTop === undefined ? undefined : "sticky",
+          top: searchStickyTop,
+          zIndex: 1,
+          background: cssVar("--background-primary"),
+        }}
+      >
+        <SearchField
+          suffix={
+            searchTerm ? (
+              <>
+                <SmallIconButton
+                  aria-label="Previous match"
+                  icon={<ChevronUpIcon />}
+                  bleed={false}
+                  disabled={!searchNavigation.hasPrevious}
+                  onClick={() => moveSearch("previous")}
+                />
+                <SmallIconButton
+                  aria-label="Next match"
+                  icon={<ChevronDownIcon />}
+                  bleed={false}
+                  disabled={!searchNavigation.hasNext}
+                  onClick={() => moveSearch("next")}
+                />
+              </>
+            ) : undefined
+          }
+          onChange={(event) => setSearchTerm(event.target.value || undefined)}
+          onAbort={() => setSearchTerm(undefined)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              moveSearch(event.shiftKey ? "previous" : "next");
+            }
+          }}
+        />
+      </PanelContent>
+      <MixedStyleBlockEditor
+        {...props}
+        inline
+        open
+        onOpenChange={() => {}}
+        searchTerm={searchTerm}
+        onEditorView={handleEditorView}
+        onSearchUpdate={setSearchNavigation}
+      />
+    </>
+  );
+};
 
 export const MixedStyleBlockDialog = (props: Omit<Props, "inline">) => (
   <MixedStyleBlockEditor {...props} />

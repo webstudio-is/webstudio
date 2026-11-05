@@ -605,7 +605,7 @@ export const EditorContent = ({
 
 const editorDialogControlStyle = css({
   position: "relative",
-  "&:hover": {
+  "&:hover, &:focus-within": {
     [maximizeIconVisibilityVar]: "visible",
   },
 });
