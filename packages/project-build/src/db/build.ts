@@ -26,6 +26,7 @@ import {
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
 import {
+  migrateCodeTextContentMutable,
   migrateContentBlockDocumentBindingsMutable,
   migrateResourceFormInstancesMutable,
 } from "@webstudio-is/project-migrations";
@@ -38,11 +39,14 @@ import {
   parseProjectSettings,
   removeLegacyProjectSettingsFromPages,
 } from "../shared/project-settings";
-import { breakCyclesMutable } from "../shared/graph-utils";
 import { createPages } from "../template";
 import { serializeStyles } from "./styles";
 import { serializeStyleSourceSelections } from "./style-source-selections";
-import { parseConfig, serializeData } from "./build-parser";
+import {
+  parseCompactInstanceData,
+  parseConfig,
+  serializeData,
+} from "./build-parser";
 import { assertBuildIntegrity } from "../build-integrity";
 
 export {
@@ -55,14 +59,6 @@ export {
 
 const parseCompactData = <Item>(serialized: string) =>
   JSON.parse(serialized) as Item[];
-
-const parseCompactInstanceData = (serialized: string) => {
-  const instances = JSON.parse(serialized) as Instance[];
-
-  breakCyclesMutable(instances, (node) => node.component === "Slot");
-
-  return instances;
-};
 
 const parseMarketplaceProduct = (serialized: string | null | undefined) => {
   const value =
@@ -107,10 +103,13 @@ const parseCompactBuild = async (
   const instances = parseCompactInstanceData(build.instances);
   migrateResourceFormInstancesMutable(instances, hasModernFormMarker);
   const contentEngineData = parseCompactContentEngineData(build);
-  migrateContentBlockDocumentBindingsMutable({
+  const contentData = {
     instances: new Map(instances.map((instance) => [instance.id, instance])),
     props: new Map(contentEngineData.props.map((prop) => [prop.id, prop])),
-  });
+  };
+  migrateCodeTextContentMutable(contentData, { codeOnly: true });
+  migrateContentBlockDocumentBindingsMutable(contentData);
+  contentEngineData.props = Array.from(contentData.props.values());
   const parsedProjectSettings =
     build.projectSettings === undefined || build.projectSettings === null
       ? createProjectSettingsFromPages(pages)

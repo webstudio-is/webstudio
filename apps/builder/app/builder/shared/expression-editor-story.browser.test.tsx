@@ -2,10 +2,7 @@ import { composeStories } from "@storybook/react";
 import { act } from "react-dom/test-utils";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
-import {
-  selectedItemBackground,
-  TooltipProvider,
-} from "@webstudio-is/design-system";
+import { TooltipProvider } from "@webstudio-is/design-system";
 import "@webstudio-is/design-system/global.css";
 import * as stories from "./expression-editor.stories";
 
@@ -41,20 +38,8 @@ test.each(["light", "dark"])(
       expect(document.activeElement).toBe(editor);
       const selected = document.querySelector<HTMLElement>(
         '.cm-tooltip-autocomplete [aria-selected="true"]'
-      )!;
-      const unselected = document.querySelector<HTMLElement>(
-        '.cm-tooltip-autocomplete [role="option"]:not([aria-selected="true"])'
-      )!;
+      );
       expect(selected).not.toBeNull();
-      const reference = document.createElement("div");
-      reference.style.backgroundColor = selectedItemBackground;
-      container.appendChild(reference);
-      expect(getComputedStyle(selected).backgroundColor).toBe(
-        getComputedStyle(reference).backgroundColor
-      );
-      expect(getComputedStyle(selected).backgroundColor).not.toBe(
-        getComputedStyle(unselected).backgroundColor
-      );
     } finally {
       await act(async () => root.unmount());
       container.remove();

@@ -9,8 +9,15 @@ import { UNSAFE_RemixContext } from "@remix-run/react";
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-test.each(["route", "history-anchor", "missing-anchor"])(
-  "Remix %s restoration does not inherit smooth scrolling",
+test.each([
+  "route",
+  "history",
+  "history-anchor",
+  "missing-anchor",
+  "preserve",
+  "anchor",
+] as const)(
+  "Remix %s navigation preserves the intended scroll behavior",
   async (navigation) => {
     const html = document.documentElement;
     const previousStyle = html.style.scrollBehavior;
@@ -20,10 +27,11 @@ test.each(["route", "history-anchor", "missing-anchor"])(
     const root = createRoot(container);
     const Layout = () => (
       <>
-        <ScrollRestoration />
         <Outlet />
+        <ScrollRestoration />
       </>
     );
+    const history = navigation === "history" || navigation === "history-anchor";
     const router = createMemoryRouter(
       [
         {
@@ -32,14 +40,24 @@ test.each(["route", "history-anchor", "missing-anchor"])(
             {
               path: "/",
               element: (
-                <div id="target" style={{ height: 3000 }}>
+                <div
+                  id={navigation === "anchor" ? undefined : "target"}
+                  style={{ height: 3000 }}
+                >
                   First
                 </div>
               ),
             },
             {
               path: "/second",
-              element: <div style={{ height: 3000 }}>Second</div>,
+              element: (
+                <div style={{ height: 3000 }}>
+                  Second
+                  <div id="target" style={{ marginTop: 1000 }}>
+                    Target
+                  </div>
+                </div>
+              ),
             },
           ],
         },
@@ -71,7 +89,7 @@ test.each(["route", "history-anchor", "missing-anchor"])(
           </UNSAFE_RemixContext.Provider>
         )
       );
-      if (navigation === "history-anchor") {
+      if (history) {
         window.scrollTo({ top: 500, behavior: "instant" });
         await act(async () => {
           await router.navigate("/second");
@@ -86,17 +104,38 @@ test.each(["route", "history-anchor", "missing-anchor"])(
           scrollTo(...args);
         }
       );
+      const anchorBehaviors: string[] = [];
+      if (navigation === "anchor") {
+        vi.spyOn(HTMLElement.prototype, "scrollIntoView").mockImplementation(
+          () => {
+            anchorBehaviors.push(getComputedStyle(html).scrollBehavior);
+          }
+        );
+      }
       await act(async () => {
-        if (navigation === "history-anchor") {
+        if (history) {
           await router.navigate(-1);
         } else {
           await router.navigate(
-            navigation === "missing-anchor" ? "/second#missing" : "/second"
+            navigation === "anchor"
+              ? "/second#target"
+              : navigation === "missing-anchor"
+                ? "/second#missing"
+                : "/second",
+            { preventScrollReset: navigation === "preserve" }
           );
         }
       });
-      expect(behaviors).toEqual(["auto"]);
-      expect(window.scrollY).toBe(navigation === "history-anchor" ? 500 : 0);
+      expect(behaviors).toEqual(
+        navigation === "anchor" || navigation === "preserve" ? [] : ["auto"]
+      );
+      if (navigation === "anchor") {
+        expect(anchorBehaviors).toEqual(["smooth"]);
+      } else {
+        expect(window.scrollY).toBe(
+          history ? 500 : navigation === "preserve" ? 1000 : 0
+        );
+      }
       expect(html.style.scrollBehavior).toBe("smooth");
     } finally {
       vi.restoreAllMocks();

@@ -20,6 +20,7 @@ import {
   parseStyles,
 } from "@webstudio-is/project-build/persistence";
 import {
+  migrateCodeTextContentMutable,
   migrateContentBlockDocumentBindingsMutable,
   migrateResourceFormInstancesMutable,
 } from "@webstudio-is/project-migrations";
@@ -139,6 +140,7 @@ export const createContentModeCapabilities = (build: {
     hasHistoricalFormComponentIdentityVersion(JSON.parse(build.pages))
   );
   const props = parseData<Prop>(build.props);
+  migrateCodeTextContentMutable({ instances, props }, { codeOnly: true });
   migrateContentBlockDocumentBindingsMutable({ instances, props });
   return getContentModeCapabilities({
     instances,

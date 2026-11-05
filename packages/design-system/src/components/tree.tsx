@@ -84,7 +84,6 @@ const TreeContainer = ({ children }: { children: ReactNode }) => {
     if (request === undefined) {
       return;
     }
-    cancelFocusRestore();
     const previousButton = request.button;
     const selectedButton =
       previousButton?.getAttribute("aria-selected") === "true" &&
@@ -93,7 +92,11 @@ const TreeContainer = ({ children }: { children: ReactNode }) => {
         : containerRef.current?.querySelector<HTMLElement>(
             '[data-tree-button][aria-selected="true"]'
           );
-    selectedButton?.focus({ preventScroll: true });
+    if (!selectedButton) {
+      return;
+    }
+    cancelFocusRestore();
+    selectedButton.focus({ preventScroll: true });
   });
   return (
     <Box

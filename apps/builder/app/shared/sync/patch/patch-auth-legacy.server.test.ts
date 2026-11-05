@@ -10,6 +10,184 @@ import {
 import { applyContentModeTransaction } from "@webstudio-is/project-build/runtime";
 import { createContentModeCapabilities } from "./patch-auth.server";
 
+test.each([undefined, "read", "readwrite"] as const)(
+  "normalizes legacy CodeText and blocks direct expression patches with mode %s",
+  (mode) => {
+    const expression = {
+      type: "expression" as const,
+      value: '"protected"',
+      ...(mode === undefined ? {} : { mode }),
+    };
+    const code: Instance = {
+      id: "code",
+      type: "instance",
+      component: "CodeText",
+      children: [],
+    };
+    const build = {
+      pages: "{}",
+      instances: JSON.stringify([
+        {
+          id: "block",
+          type: "instance",
+          component: blockComponent,
+          children: [{ type: "id", value: "body" }],
+        },
+        {
+          id: "body",
+          type: "instance",
+          component: blockBodyComponent,
+          children: [{ type: "id", value: "code" }],
+        },
+        code,
+      ]),
+      props: JSON.stringify([
+        { id: "legacy-code", instanceId: "code", name: "code", ...expression },
+      ]),
+      styleSources: "[]",
+      styleSourceSelections: "[]",
+      styles: "[]",
+      breakpoints: "[]",
+    };
+    const capabilities = createContentModeCapabilities(build);
+    expect(capabilities.instances.get("code")?.children).toEqual([expression]);
+    expect(capabilities.props.has("legacy-code")).toBe(false);
+    const text = [{ type: "text", value: "overwrite" }];
+    for (const patch of [
+      { op: "replace" as const, path: ["code", "children"], value: text },
+      {
+        op: "replace" as const,
+        path: ["code", "children", 0, "value"],
+        value: '"overwrite"',
+      },
+      {
+        op: "replace" as const,
+        path: ["code"],
+        value: { ...code, children: text },
+      },
+    ]) {
+      expect(
+        applyContentModeTransaction({
+          capabilities,
+          transaction: {
+            payload: [{ namespace: "instances", patches: [patch] }],
+          },
+        }).success
+      ).toBe(false);
+    }
+    // Readwrite on a computed constant is invalid under the existing policy.
+    // Valid unchanged bindings, and deleting the whole component, stay allowed.
+    expect(
+      applyContentModeTransaction({
+        capabilities,
+        transaction: {
+          payload: [
+            {
+              namespace: "instances",
+              patches: [
+                {
+                  op: "replace",
+                  path: ["code"],
+                  value: { ...code, children: [expression] },
+                },
+              ],
+            },
+          ],
+        },
+      }).success
+    ).toBe(mode !== "readwrite");
+    expect(
+      applyContentModeTransaction({
+        capabilities,
+        transaction: {
+          payload: [
+            {
+              namespace: "instances",
+              patches: [
+                { op: "replace", path: ["body", "children"], value: [] },
+                { op: "remove", path: ["code"] },
+              ],
+            },
+          ],
+        },
+      }).success
+    ).toBe(true);
+  }
+);
+
+test("protects canonical CodeText expressions while allowing literal edits", () => {
+  for (const type of ["expression", "text"] as const) {
+    const capabilities = createContentModeCapabilities({
+      pages: "{}",
+      instances: JSON.stringify([
+        {
+          id: "block",
+          type: "instance",
+          component: blockComponent,
+          children: [{ type: "id", value: "body" }],
+        },
+        {
+          id: "body",
+          type: "instance",
+          component: blockBodyComponent,
+          children: [{ type: "id", value: "code" }],
+        },
+        {
+          id: "code",
+          type: "instance",
+          component: "CodeText",
+          children: [{ type, value: '"before"' }],
+        },
+      ]),
+      props: "[]",
+      styleSources: "[]",
+      styleSourceSelections: "[]",
+      styles: "[]",
+      breakpoints: "[]",
+    });
+    expect(
+      applyContentModeTransaction({
+        capabilities,
+        transaction: {
+          payload: [
+            {
+              namespace: "instances",
+              patches: [
+                {
+                  op: "replace",
+                  path: ["code", "children"],
+                  value: [{ type: "text", value: "after" }],
+                },
+              ],
+            },
+          ],
+        },
+      }).success
+    ).toBe(type === "text");
+    if (type === "text") {
+      expect(
+        applyContentModeTransaction({
+          capabilities,
+          transaction: {
+            payload: [
+              {
+                namespace: "instances",
+                patches: [
+                  {
+                    op: "replace",
+                    path: ["code", "children"],
+                    value: [{ type: "expression", value: '"injected"' }],
+                  },
+                ],
+              },
+            ],
+          },
+        }).success
+      ).toBe(false);
+    }
+  }
+});
+
 test("normalizes saved legacy bindings without allowing Editor expression replacements", () => {
   const expression = `${encodeDataSourceVariable("document")}.frontmatter.title`;
   const instances: Instance[] = [

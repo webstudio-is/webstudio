@@ -1,7 +1,7 @@
 import type { Instance } from "@webstudio-is/sdk";
 import { breakCyclesMutable } from "../shared/graph-utils";
 
-const parseCompactInstanceData = (serialized: string) => {
+export const parseCompactInstanceData = (serialized: string) => {
   const instances = JSON.parse(serialized) as Instance[];
 
   breakCyclesMutable(instances, (node) => node.component === "Slot");

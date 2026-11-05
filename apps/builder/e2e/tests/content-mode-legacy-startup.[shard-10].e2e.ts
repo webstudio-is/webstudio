@@ -26,7 +26,11 @@ import {
 import { selectCanvasImage } from "../flows/canvas-media";
 import { replaceCanvasText } from "../flows/content-editing";
 import { fillSelectedStringProperty } from "../flows/props-panel";
-import { waitForSyncStatus } from "../flows/sync-status";
+import { selectNavigatorItem } from "../flows/navigator";
+import {
+  waitForChangeToBeSaved,
+  waitForSyncStatus,
+} from "../flows/sync-status";
 import { e2ePaidPlanName } from "../plans";
 import { test, withBrowserContext } from "../test";
 
@@ -57,24 +61,51 @@ test("Editor can open and save legacy content before a Builder migrates the proj
   const sourceId = "legacy-image-local";
   const codeId = "legacy-code";
   const code = "const legacyAnswer = 42;";
+  const readOnlyCodeId = "legacy-bound-code";
+  const readOnlyCode = "Protected legacy code";
   const templates = instances.find(({ id }) => id === "content-block-template");
-  const body = instances.find(({ id }) => id === "body");
-  if (templates === undefined || body === undefined) {
-    throw new Error("Expected Content Block templates and a page body");
+  const block = instances.find(({ id }) => id === "content-block");
+  if (templates === undefined || block === undefined) {
+    throw new Error("Expected Content Block templates and a Content Block");
   }
   templates.children.push({ type: "id", value: imageId });
-  body.children.push({ type: "id", value: codeId });
+  block.children.push(
+    { type: "id", value: codeId },
+    { type: "id", value: readOnlyCodeId }
+  );
   instances.push(
     { type: "instance", id: imageId, component: "Image", children: [] },
-    { type: "instance", id: codeId, component: "CodeText", children: [] }
+    {
+      type: "instance",
+      id: codeId,
+      component: "CodeText",
+      label: "Legacy literal code",
+      children: [],
+    },
+    {
+      type: "instance",
+      id: readOnlyCodeId,
+      component: "CodeText",
+      children: [],
+    }
   );
-  props.push({
-    id: "legacy-code-prop",
-    instanceId: codeId,
-    name: "code",
-    type: "string",
-    value: code,
-  });
+  props.push(
+    {
+      id: "legacy-code-prop",
+      instanceId: codeId,
+      name: "code",
+      type: "string",
+      value: code,
+    },
+    {
+      id: "legacy-bound-code-prop",
+      instanceId: readOnlyCodeId,
+      name: "code",
+      type: "expression",
+      value: JSON.stringify(readOnlyCode),
+      mode: "read",
+    }
+  );
   styleSources.push({ id: sourceId, type: "local" });
   selections.push({ instanceId: imageId, values: [sourceId] });
   for (const [property, value] of [
@@ -136,6 +167,29 @@ test("Editor can open and save legacy content before a Builder migrates the proj
   expect(JSON.parse(editedBuild.props)).toEqual(props);
   expect(unexpectedDialogs).toEqual([]);
 
+  const canvas = await waitForCanvasFrame({ page });
+  await canvas.getByText(readOnlyCode, { exact: true }).click();
+  const textContent = page.locator(".cm-content");
+  await expect(textContent).toHaveText(readOnlyCode);
+  await expect(textContent).toHaveAttribute("contenteditable", "false");
+  await selectNavigatorItem({ page, name: "Legacy literal code" });
+  await expect(textContent).toHaveText(code);
+  await expect(textContent).toHaveAttribute("contenteditable", "true");
+  const editedCode = "const savedAnswer = 43;";
+  const codeSave = waitForChangeToBeSaved({ page });
+  codeSave.catch(() => undefined);
+  await textContent.fill(editedCode);
+  await textContent.press("ControlOrMeta+Enter");
+  await codeSave;
+  await openProjectBuilder({
+    page,
+    projectId: fixture.projectId,
+    authToken: fixture.editorToken,
+    mode: "content",
+  });
+  await waitForCanvasText({ page, text: editedCode });
+  await waitForCanvasText({ page, text: readOnlyCode });
+
   // Actual build permission still permits migration while using Content mode.
   await withBrowserContext(browser, async (context) => {
     const builderPage = await context.newPage();
@@ -146,7 +200,7 @@ test("Editor can open and save legacy content before a Builder migrates the proj
       mode: "content",
     });
     await waitForCanvasText({ page: builderPage, text: editedText });
-    await waitForCanvasText({ page: builderPage, text: code });
+    await waitForCanvasText({ page: builderPage, text: editedCode });
     await waitForSyncStatus({ page: builderPage, status: "idle" });
   });
   const migratedBuild = await loadDevBuild({ projectId: fixture.projectId });
@@ -162,7 +216,7 @@ test("Editor can open and save legacy content before a Builder migrates the proj
     (JSON.parse(migratedBuild.instances) as Instance[]).find(
       ({ id }) => id === codeId
     )?.children
-  ).toEqual([{ type: "text", value: code }]);
+  ).toEqual([{ type: "text", value: editedCode }]);
   await openProjectBuilder({
     page,
     projectId: fixture.projectId,
@@ -170,7 +224,8 @@ test("Editor can open and save legacy content before a Builder migrates the proj
     mode: "content",
   });
   await waitForCanvasText({ page, text: editedText });
-  await waitForCanvasText({ page, text: code });
+  await waitForCanvasText({ page, text: editedCode });
+  await waitForCanvasText({ page, text: readOnlyCode });
   await waitForSyncStatus({ page, status: "idle" });
   expect(unexpectedDialogs).toEqual([]);
 });

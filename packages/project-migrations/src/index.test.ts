@@ -5,6 +5,7 @@ import {
   migrateWebstudioDataMutable,
   serializePages,
   migratePages,
+  migrateCodeTextContentMutable,
 } from "./index";
 
 const emptyData: WebstudioData = {
@@ -256,6 +257,40 @@ test("moves legacy Code Text properties into text content", () => {
     { type: "expression", value: "$ws$dataSource$code" },
   ]);
   expect(Array.from(data.props.values())).toEqual([]);
+});
+
+test("normalizes only CodeText content without changing default props", () => {
+  const data = structuredClone(emptyData);
+  data.instances.set("code", {
+    id: "code",
+    type: "instance",
+    component: "CodeText",
+    children: [{ type: "text", value: "ignored legacy child" }],
+  });
+  data.props.set("code", {
+    id: "code",
+    instanceId: "code",
+    name: "code",
+    type: "expression",
+    value: '"protected"',
+    mode: "read",
+  });
+  data.props.set("theme", {
+    id: "theme",
+    instanceId: "code",
+    name: "theme",
+    type: "string",
+    value: "github-light",
+  });
+  const theme = data.props.get("theme");
+
+  migrateCodeTextContentMutable(data, { codeOnly: true });
+  migrateCodeTextContentMutable(data, { codeOnly: true });
+
+  expect(data.instances.get("code")?.children).toEqual([
+    { type: "expression", value: '"protected"', mode: "read" },
+  ]);
+  expect([...data.props.values()]).toEqual([theme]);
 });
 
 test("removes redundant Code Text defaults and preserves custom selections", () => {

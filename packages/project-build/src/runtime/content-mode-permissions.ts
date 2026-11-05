@@ -1690,18 +1690,24 @@ export const applyContentModeTransaction = ({
   }
 
   if (
-    scope === "text-and-props" &&
     transaction.payload.some(
       ({ namespace, patches }) =>
         namespace === "instances" &&
-        patches.some(
-          ({ path }) =>
-            typeof path[0] !== "string" ||
-            !preservesNonTextChildren(
-              capabilities.instances.get(path[0])?.children,
-              transactionCapabilities.instances.get(path[0])?.children
-            )
-        )
+        patches.some(({ path }) => {
+          if (typeof path[0] !== "string") {
+            return scope === "text-and-props";
+          }
+          const before = capabilities.instances.get(path[0]);
+          const after = transactionCapabilities.instances.get(path[0]);
+          // CodeText can change literal text, but cannot add or replace a
+          // binding. Removing the whole content instance remains allowed.
+          const protectBinding =
+            before?.component === "CodeText" && after !== undefined;
+          return (
+            (scope === "text-and-props" || protectBinding) &&
+            !preservesNonTextChildren(before?.children, after?.children)
+          );
+        })
     )
   ) {
     return {

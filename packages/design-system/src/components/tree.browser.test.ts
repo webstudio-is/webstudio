@@ -167,6 +167,49 @@ test.each(["ctrlKey", "metaKey"])(
   }
 );
 
+test("restores focus when a moved row appears after its parent expands", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  const render = (visible: boolean) =>
+    act(() =>
+      root?.render(
+        createElement(
+          TreeRoot,
+          null,
+          visible
+            ? createElement(TreeNode, {
+                level: 1,
+                isSelected: true,
+                buttonProps: {},
+                action: null,
+                children: "Moved row",
+              })
+            : null
+        )
+      )
+    );
+  render(true);
+  const first =
+    container.querySelector<HTMLButtonElement>("[data-tree-button]")!;
+  act(() => {
+    first.focus();
+    first.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowRight",
+        ctrlKey: true,
+        bubbles: true,
+      })
+    );
+  });
+  render(false);
+  expect(document.activeElement).not.toBe(first);
+  render(true);
+  expect(document.activeElement).toBe(
+    container.querySelector("[data-tree-button]")
+  );
+});
+
 test.each(["ctrlKey", "metaKey"])(
   "%s without a move cannot restore focus after leaving the tree",
   (modifier) => {

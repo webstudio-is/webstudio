@@ -115,6 +115,54 @@ describe("loadRawBuildById (msw)", () => {
 // ---------------------------------------------------------------------------
 
 describe("loadBuildById (msw)", () => {
+  test.each(["string", "expression"] as const)(
+    "loads legacy CodeText %s content canonically without writing or removing defaults",
+    async (type) => {
+      const code: Prop = {
+        id: "legacy-code",
+        instanceId: "code",
+        name: "code",
+        type,
+        value: type === "string" ? "const old = 1;" : '"protected"',
+        ...(type === "expression" ? { mode: "read" as const } : {}),
+      };
+      const theme: Prop = {
+        id: "theme",
+        instanceId: "code",
+        name: "theme",
+        type: "string",
+        value: "github-light",
+      };
+      const row = {
+        ...buildRow,
+        instances: JSON.stringify([
+          { id: "code", type: "instance", component: "CodeText", children: [] },
+        ]),
+        props: JSON.stringify([code, theme]),
+      };
+      const before = structuredClone(row);
+      const writes: unknown[] = [];
+      server.use(
+        db.get("Build", () => json([row])),
+        db.patch("Build", async ({ request }) => {
+          writes.push(await request.json());
+          return json([row]);
+        })
+      );
+
+      const result = await loadBuildById(createContext(), row.id);
+      expect(result.instances[0].children).toEqual([
+        type === "string"
+          ? { type: "text", value: code.value }
+          : { type: "expression", value: code.value, mode: "read" },
+      ]);
+      expect(result.props).toEqual([theme]);
+      expect(await loadBuildById(createContext(), row.id)).toEqual(result);
+      expect(row).toEqual(before);
+      expect(writes).toEqual([]);
+    }
+  );
+
   test("normalizes only legacy document bindings on reads without saving them", async () => {
     const expression = `${encodeDataSourceVariable("document")}.frontmatter.title`;
     const bindings = [
