@@ -88,13 +88,6 @@ const blockedEditMessage =
 const renderTooltip = (className: string, content: ReactNode) => {
   const dom = document.createElement("div");
   dom.className = className;
-  Object.assign(dom.style, {
-    border: "0",
-    background: "transparent",
-    boxShadow: "none",
-    padding: "0",
-    pointerEvents: "auto",
-  });
   const root = createRoot(dom);
   root.render(content);
   return { dom, destroy: () => root.unmount() };
@@ -190,6 +183,14 @@ const sourceColorTheme = EditorView.theme({
   ".cm-mixed-preset, .cm-mixed-preset *": {
     color: `${cssVar("--foreground-secondary")} !important`,
   },
+  ".cm-tooltip-hover:has(> .cm-mixed-property-tooltip), .cm-tooltip.cm-mixed-blocked-tooltip":
+    {
+      border: 0,
+      background: "transparent",
+      boxShadow: "none",
+      padding: 0,
+      pointerEvents: "auto",
+    },
   ".cm-overridden-declaration": { textDecoration: "line-through" },
   ".cm-style-searchMatch": {
     backgroundColor: cssVar("--background-warning-subtle"),
