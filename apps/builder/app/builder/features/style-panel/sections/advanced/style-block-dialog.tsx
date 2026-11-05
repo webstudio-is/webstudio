@@ -183,6 +183,10 @@ const sourceColorTheme = EditorView.theme({
   ".cm-mixed-preset, .cm-mixed-preset *": {
     color: `${cssVar("--foreground-secondary")} !important`,
   },
+  ".cm-mixed-readonly-divider": {
+    borderTop: `1px solid ${cssVar("--border-default")}`,
+    paddingTop: theme.spacing[3],
+  },
   ".cm-tooltip-hover:has(> .cm-mixed-property-tooltip), .cm-tooltip.cm-mixed-blocked-tooltip":
     {
       border: 0,
@@ -410,6 +414,13 @@ const MixedStyleBlockEditor = ({
     const decorate = (value: string) =>
       Decoration.set(
         [
+          ...getMixedStyleGroups(value)
+            .slice(1, 2)
+            .map(({ from }) =>
+              Decoration.line({ class: "cm-mixed-readonly-divider" }).range(
+                from
+              )
+            ),
           ...getMixedPropertyRanges(value).map((range) => {
             let source = range.source === "preset" ? "preset" : "remote";
             if (range.source === "local") {
