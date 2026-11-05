@@ -100,6 +100,7 @@ export const body: StyleDecl[] = [
     value: { type: "unit", unit: "number", value: 0 },
   },
   { property: "box-sizing", value: { type: "keyword", value: "border-box" } },
+  { property: "min-width", value: { type: "unit", unit: "number", value: 0 } },
   {
     property: "-webkit-font-smoothing",
     value: { type: "keyword", value: "antialiased" },

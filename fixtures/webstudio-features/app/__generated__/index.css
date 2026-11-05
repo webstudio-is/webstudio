@@ -17,12 +17,14 @@
   }
   body.w-element {
     box-sizing: border-box;
+    min-width: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     margin: 0
   }
   body.w-body {
     box-sizing: border-box;
+    min-width: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     margin: 0
