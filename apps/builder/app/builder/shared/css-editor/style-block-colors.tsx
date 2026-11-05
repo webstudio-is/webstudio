@@ -42,6 +42,8 @@ type MountedSwatch = {
   to: number;
   widget: ColorSwatch;
   active: boolean;
+  pendingValue?: StyleValue;
+  updateTimer?: ReturnType<typeof setTimeout>;
 };
 
 const mountedSwatches = new WeakMap<HTMLElement, MountedSwatch>();
@@ -127,6 +129,7 @@ class ColorSwatch extends WidgetType {
             }
             const previous = activeSwatches.get(mounted.view);
             if (previous !== undefined && previous !== mounted) {
+              previous.widget.flushPending(previous);
               previous.active = false;
               previous.widget.render(previous);
             }
@@ -138,15 +141,6 @@ class ColorSwatch extends WidgetType {
       );
       return;
     }
-    const replace = (value: StyleValue) => {
-      const insert = toValue(value);
-      const { from, to } = mounted;
-      if (mounted.view.state.doc.sliceString(from, to) === insert) {
-        return;
-      }
-      mounted.to = from + insert.length;
-      mounted.view.dispatch({ changes: { from, to, insert } });
-    };
     mounted.root.render(
       <ColorPicker
         open
@@ -155,6 +149,7 @@ class ColorSwatch extends WidgetType {
         disabled={!this.editable || mounted.view.state.readOnly}
         onOpenChange={(open) => {
           if (!open) {
+            this.flushPending(mounted);
             mounted.active = false;
             if (activeSwatches.get(mounted.view) === mounted) {
               activeSwatches.delete(mounted.view);
@@ -164,15 +159,37 @@ class ColorSwatch extends WidgetType {
         }}
         onChange={(value) => {
           if (value !== undefined) {
-            replace(value);
+            mounted.pendingValue = value;
+            mounted.updateTimer ??= setTimeout(
+              () => this.flushPending(mounted),
+              80
+            );
           }
         }}
         onChangeComplete={(value) => {
-          replace(value);
+          mounted.pendingValue = value;
+          this.flushPending(mounted);
           this.onComplete();
         }}
       />
     );
+  }
+
+  flushPending(mounted: MountedSwatch) {
+    if (mounted.updateTimer !== undefined) {
+      clearTimeout(mounted.updateTimer);
+      mounted.updateTimer = undefined;
+    }
+    if (mounted.pendingValue !== undefined) {
+      const insert = toValue(mounted.pendingValue);
+      const { from, to } = mounted;
+      mounted.pendingValue = undefined;
+      if (mounted.view.state.doc.sliceString(from, to) === insert) {
+        return;
+      }
+      mounted.to = from + insert.length;
+      mounted.view.dispatch({ changes: { from, to, insert } });
+    }
   }
 
   toDOM(view: EditorView) {
@@ -214,6 +231,9 @@ class ColorSwatch extends WidgetType {
 
   destroy(element: HTMLElement) {
     const mounted = mountedSwatches.get(element);
+    if (mounted?.updateTimer !== undefined) {
+      clearTimeout(mounted.updateTimer);
+    }
     if (mounted?.active) {
       activeSwatches.delete(mounted.view);
     }
