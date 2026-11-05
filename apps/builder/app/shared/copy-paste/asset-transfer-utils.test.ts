@@ -233,6 +233,51 @@ test("transfers many asset references without scanning styles for every asset", 
   expect(elapsed).toBeLessThan(1500);
 }, 20000);
 
+test("keeps same-project asset transfers fast when references do not change", async () => {
+  const assets = Array.from(
+    { length: 20000 },
+    (_, index): Asset => ({
+      ...imageAsset,
+      id: `image-${index}`,
+    })
+  );
+  const unchangedFragment: WebstudioFragment = {
+    ...fragment,
+    assets,
+    styles: Array.from({ length: 6000 }, (_, index) => ({
+      styleSourceId: `style-${index}`,
+      breakpointId: "base",
+      property: "backgroundImage",
+      value: {
+        type: "layers",
+        value: [
+          {
+            type: "image",
+            value: { type: "asset", value: assets[index].id },
+          },
+        ],
+      },
+    })),
+  };
+  const start = performance.now();
+  const result = await transferFragmentAssets({
+    sourceOrigin: "https://source.example.com",
+    projectId: "target-project",
+    fragments: [unchangedFragment],
+    importAssets: async () => new Map(assets.map((asset) => [asset.id, asset])),
+  });
+  const elapsed = performance.now() - start;
+
+  expect(result.success).toBe(true);
+  if (result.success === false) {
+    return;
+  }
+  expect(result.fragments.get(unchangedFragment)?.styles).toBe(
+    unchangedFragment.styles
+  );
+  expect(elapsed).toBeLessThan(700);
+}, 20000);
+
 test("preserves sequential remapping when an imported ID matches another source ID", async () => {
   const first = { ...imageAsset, id: "source-a" };
   const second = { ...imageAsset, id: "source-b" };
