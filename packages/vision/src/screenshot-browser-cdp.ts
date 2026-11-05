@@ -2398,6 +2398,9 @@ const submitFormWithBrowserRuntime = async (
   let initialPageUrl = options.url;
   const exchanges: { status: number; url: string }[] = [];
   let managedResponseId: string | undefined;
+  let managedResponseBody:
+    | Promise<{ body?: string; base64Encoded?: boolean } | undefined>
+    | undefined;
   const submissionRequestIds = new Set<string>();
   const completedRequestIds = new Set<string>();
   let navigationObserved = false;
@@ -2498,6 +2501,15 @@ const submitFormWithBrowserRuntime = async (
         submissionRequestIds.has(params.requestId)
       ) {
         completedRequestIds.add(params.requestId);
+        if (params.requestId === managedResponseId) {
+          // Navigation can discard Chrome's body before the next DOM poll.
+          managedResponseBody = send<{
+            body?: string;
+            base64Encoded?: boolean;
+          }>("Network.getResponseBody", { requestId: params.requestId }).catch(
+            () => undefined
+          );
+        }
       }
     });
     cdp.on("Network.responseReceived", (params) => {
@@ -2519,10 +2531,18 @@ const submitFormWithBrowserRuntime = async (
           status: params.response.status,
           url: redactUrl(params.response.url),
         });
+        const responseUrl = new URL(params.response.url);
+        const initialUrl = new URL(initialPageUrl);
         if (
+          managedResponseId === undefined &&
           "requestId" in params &&
           typeof params.requestId === "string" &&
-          new URL(params.response.url).pathname.startsWith("/__ws-form")
+          submissionRequestIds.has(params.requestId) &&
+          "frameId" in params &&
+          params.frameId === mainFrameId &&
+          responseUrl.origin === initialUrl.origin &&
+          responseUrl.pathname ===
+            `/__ws-form${initialUrl.pathname === "/" ? "" : initialUrl.pathname}`
         ) {
           managedResponseId = params.requestId;
         }
@@ -2607,7 +2627,7 @@ const submitFormWithBrowserRuntime = async (
     let pageUrl = redactUrl(initialPageUrl);
     let formState = "unknown";
     let didNavigate = false;
-    let lastBusy = false;
+    let lastBusy = true;
     let terminalTransition = false;
     while (Date.now() < deadline) {
       await delay(Math.min(100, remaining()));
@@ -2626,7 +2646,14 @@ const submitFormWithBrowserRuntime = async (
           options.selector
         )})?.getAttribute("aria-busy") === "true"})`,
         returnByValue: true,
+      }).catch((error) => {
+        if (!navigationObserved || isBrowserSessionClosedError(error)) {
+          throw error;
+        }
       });
+      if (observed === undefined) {
+        continue;
+      }
       const current = observed.result?.value;
       pageUrl = redactUrl(current?.pageUrl ?? initialPageUrl);
       didNavigate =
@@ -2654,11 +2681,8 @@ const submitFormWithBrowserRuntime = async (
       resourceName?: string;
     }[] = [];
     const errors: { status?: number; name?: string; message: string }[] = [];
-    if (managedResponseId !== undefined && Date.now() < deadline) {
-      const body = await send<{ body?: string; base64Encoded?: boolean }>(
-        "Network.getResponseBody",
-        { requestId: managedResponseId }
-      ).catch(() => undefined);
+    if (managedResponseBody !== undefined) {
+      const body = await managedResponseBody;
       if (body?.body !== undefined && body.body.length < 1_000_000) {
         try {
           const parsed: unknown = JSON.parse(
