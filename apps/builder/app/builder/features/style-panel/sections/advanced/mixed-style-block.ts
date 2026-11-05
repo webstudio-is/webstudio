@@ -67,9 +67,10 @@ export const formatMixedStyleBlock = (
       });
     }
   }
-  return groups
-    .map(({ source, value }) => `/* ${sourceTitles[source]} */\n${value}`)
-    .join("\n");
+  const [localGroup, ...readOnlyGroups] = groups.map(
+    ({ source, value }) => `/* ${sourceTitles[source]} */\n${value}`
+  );
+  return [localGroup, readOnlyGroups.join("\n\n")].filter(Boolean).join("\n");
 };
 
 export const getMixedStyleGroups = (code: string): MixedStyleGroup[] => {

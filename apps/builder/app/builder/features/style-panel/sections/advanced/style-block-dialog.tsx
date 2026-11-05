@@ -429,7 +429,7 @@ const MixedStyleBlockEditor = ({
       Decoration.set(
         [
           ...getMixedStyleGroups(value)
-            .slice(1)
+            .slice(1, 2)
             .map(({ from }) =>
               Decoration.widget({
                 widget: readonlyDivider,
