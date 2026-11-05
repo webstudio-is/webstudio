@@ -4,7 +4,7 @@ import {
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import { produce } from "immer";
-import { replaceAssetMutable } from "@webstudio-is/project-build/runtime";
+import { traverseStyleValue } from "@webstudio-is/project-build/runtime";
 import type { builderApi } from "../builder-api";
 
 const assetTransferError =
@@ -58,26 +58,48 @@ export const transferFragmentAssets = async ({
   const assetIds = new Map<Asset["id"], Asset["id"]>();
   const transferredFragments = new Map<WebstudioFragment, WebstudioFragment>();
   for (const fragment of fragments) {
-    const transferredFragment = produce(fragment, (draft) => {
-      for (const sourceAsset of fragment.assets) {
-        const importedAsset = importedAssets.get(sourceAsset.id);
-        if (importedAsset === undefined) {
-          throw new Error("Imported asset is missing");
+    const replacementIds = new Map<Asset["id"], Asset["id"]>();
+    const replacementFontFamilies = new Map<string, string>();
+    for (const sourceAsset of fragment.assets) {
+      const importedAsset = importedAssets.get(sourceAsset.id);
+      if (importedAsset === undefined) {
+        throw new Error("Imported asset is missing");
+      }
+      assetIds.set(sourceAsset.id, importedAsset.id);
+      replacementIds.set(sourceAsset.id, importedAsset.id);
+      if (sourceAsset.type === "font" && importedAsset.type === "font") {
+        const from = sourceAsset.meta.family;
+        const to = importedAsset.meta.family;
+        for (const [original, current] of replacementFontFamilies) {
+          if (current === from) {
+            replacementFontFamilies.set(original, to);
+          }
         }
-        assetIds.set(sourceAsset.id, importedAsset.id);
-        replaceAssetMutable({
-          props: draft.props,
-          styles: draft.styles,
-          replacement: {
-            fromAssetId: sourceAsset.id,
-            toAssetId: importedAsset.id,
-            fromFontFamily:
-              sourceAsset.type === "font" ? sourceAsset.meta.family : undefined,
-            toFontFamily:
-              importedAsset.type === "font"
-                ? importedAsset.meta.family
-                : undefined,
-          },
+        if (replacementFontFamilies.has(from) === false) {
+          replacementFontFamilies.set(from, to);
+        }
+      }
+    }
+    const transferredFragment = produce(fragment, (draft) => {
+      for (const prop of draft.props) {
+        if (prop.type === "asset") {
+          prop.value = replacementIds.get(prop.value) ?? prop.value;
+        }
+      }
+      for (const style of draft.styles) {
+        traverseStyleValue(style.value, (item) => {
+          if (item.type === "image" && item.value.type === "asset") {
+            item.value.value =
+              replacementIds.get(item.value.value) ?? item.value.value;
+          }
+          if (item.type === "fontFamily") {
+            const mapped = item.value.map(
+              (family) => replacementFontFamilies.get(family) ?? family
+            );
+            if (mapped.some((family, index) => family !== item.value[index])) {
+              item.value = mapped;
+            }
+          }
         });
       }
       draft.assets = [];
