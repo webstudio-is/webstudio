@@ -119,7 +119,7 @@ test("the picker replaces only its color token", async () => {
     document.dispatchEvent(new Event("pointerup"));
   });
   expect(colorView?.state.doc.toString()).toBe(
-    "box-shadow: 0 0 rgb(0 255 0 / 1); color: blue;"
+    "box-shadow: 0 0 #00ff00; color: blue;"
   );
   expect(container.querySelectorAll("color-input")).toHaveLength(1);
   expect(onComplete).toHaveBeenCalledOnce();
