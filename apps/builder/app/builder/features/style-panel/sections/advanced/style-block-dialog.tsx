@@ -185,6 +185,7 @@ const sourceColorTheme = EditorView.theme({
   },
   ".cm-mixed-readonly-divider": {
     borderTop: `1px solid ${cssVar("--border-default")}`,
+    marginTop: theme.spacing[3],
     paddingTop: theme.spacing[3],
   },
   ".cm-tooltip-hover:has(> .cm-mixed-property-tooltip), .cm-tooltip.cm-mixed-blocked-tooltip":
