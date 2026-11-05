@@ -227,7 +227,12 @@ export const createColorSwatches = (onComplete: () => void) => {
     const source = state.doc.toString();
     const groups = getMixedStyleGroups(source);
     const localGroup = groups.find((group) => group.source === "local");
-    const ast = parse(source, { context: "declarationList", positions: true });
+    let ast;
+    try {
+      ast = parse(source, { context: "declarationList", positions: true });
+    } catch {
+      return Decoration.none;
+    }
     const variables = new Map($cssVarsMap.get());
     ast.children.forEach((node) => {
       if (node.type === "Declaration" && node.property.startsWith("--")) {

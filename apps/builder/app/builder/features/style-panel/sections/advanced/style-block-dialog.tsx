@@ -211,6 +211,48 @@ const getLocalStyles = (declarations: Declaration[]): CssStyleMap =>
     ])
   );
 
+const preserveAssetLayers = (
+  stored: CssStyleMap,
+  initiallyParsed: CssStyleMap,
+  edited: CssStyleMap
+) => {
+  const result = new Map(edited);
+  for (const [property, value] of edited) {
+    const original = stored.get(property);
+    const initial = initiallyParsed.get(property);
+    if (
+      original?.type !== "layers" ||
+      initial?.type !== "layers" ||
+      value.type !== "layers"
+    ) {
+      continue;
+    }
+    const visible = original.value.filter((layer) => layer.hidden !== true);
+    if (
+      visible.length !== initial.value.length ||
+      visible.length !== value.value.length
+    ) {
+      continue;
+    }
+    result.set(property, {
+      ...value,
+      value: value.value.map((layer, index) => {
+        const storedLayer = visible[index];
+        const initialLayer = initial.value[index];
+        return storedLayer.type === "image" &&
+          storedLayer.value.type === "asset" &&
+          initialLayer.type === "keyword" &&
+          initialLayer.value === "none" &&
+          layer.type === "keyword" &&
+          layer.value === "none"
+          ? storedLayer
+          : layer;
+      }),
+    });
+  }
+  return result;
+};
+
 const mixedCompletionSource: CompletionSource = (context) => {
   const end = context.state.doc.length;
   const group = getMixedStyleGroups(context.state.doc.toString()).find(
@@ -316,7 +358,11 @@ const MixedStyleBlockEditor = ({
     const appliedStyles = onApply({
       oldStyles: oldStylesRef.current,
       initialParsedStyles: initialParsedRef.current,
-      newStyles: parsed.styleMap,
+      newStyles: preserveAssetLayers(
+        oldStylesRef.current,
+        initialParsedRef.current,
+        parsed.styleMap
+      ),
       mentionedProperties: parsed.mentionedProperties,
       canDelete: parsed.canDelete,
     });
@@ -615,7 +661,13 @@ const MixedStyleBlockEditor = ({
         onChange={(value) => {
           codeRef.current = value;
           setCode(value);
-          onPreview?.(parseMixedStyleBlock(value).styleMap);
+          onPreview?.(
+            preserveAssetLayers(
+              oldStylesRef.current,
+              initialParsedRef.current,
+              parseMixedStyleBlock(value).styleMap
+            )
+          );
         }}
         onChangeComplete={(_value, event) => {
           if (inline) {
