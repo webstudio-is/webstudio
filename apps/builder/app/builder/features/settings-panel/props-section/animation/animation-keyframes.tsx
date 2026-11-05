@@ -194,6 +194,7 @@ const Keyframe = ({
 
           <LocalStyleBlockEditor
             styles={localStyles}
+            placeholderText="Add styles"
             cssVars={$cssVarsMap.get()}
             availableVariables={$availableVariables.get()}
             onPreview={(styles) => {

@@ -21,6 +21,7 @@ type Props = {
   styles: CssStyleMap;
   cssVars: Map<string, string>;
   availableVariables: ReadonlyArray<{ value: string }>;
+  placeholderText?: string;
   onApply: (styles: CssStyleMap) => void;
   onPreview?: (styles?: CssStyleMap) => void;
 };
@@ -29,6 +30,7 @@ export const LocalStyleBlockEditor = ({
   styles,
   cssVars,
   availableVariables,
+  placeholderText = "Add local styles",
   onApply,
   onPreview,
 }: Props) => {
@@ -129,13 +131,13 @@ export const LocalStyleBlockEditor = ({
       ),
       linterTooltipTheme,
       declarationLineBreak,
-      placeholder("Add local styles"),
+      placeholder(placeholderText),
       overridden,
       EditorView.theme({
         ".cm-overridden-declaration": { textDecoration: "line-through" },
       }),
     ];
-  }, [availableVariables, cssVars]);
+  }, [availableVariables, cssVars, placeholderText]);
 
   return (
     <Box

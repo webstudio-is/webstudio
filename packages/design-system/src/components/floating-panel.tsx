@@ -188,8 +188,10 @@ export const FloatingPanel = ({
     const reference = triggerRef.current;
     // Find container when trigger is available and panel is opening
     if (reference && open && !containerRef.current) {
+      // Nested panels are portalled outside the original container. Anchor them
+      // to the parent dialog instead of leaving them screen-centered.
       const container = reference.closest(
-        "[data-floating-panel-container]"
+        '[data-floating-panel-container], [role="dialog"]'
       ) as HTMLElement | null;
       containerRef.current = container;
     }
