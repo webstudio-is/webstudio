@@ -10,16 +10,13 @@ export const addCssDeclaration = async ({
   property: string;
   value: string;
 }) => {
-  await page.getByRole("button", { name: "Add styles" }).click();
-  const propertyInput = page.locator(
-    'input[aria-label^="Property name:"]:focus'
-  );
-  await propertyInput.fill(property);
-  await propertyInput.press("Enter");
-  const valueInput = page.locator("input:focus");
-  await valueInput.fill(value);
+  const editor = page.getByRole("textbox", { name: "Styles", exact: true });
+  await editor.click();
+  await editor.press("ControlOrMeta+Home");
+  await editor.press("ArrowDown");
+  await page.keyboard.insertText(`${property}: ${value};\n`);
   const save = waitForChangeToBeSaved({ page });
-  await valueInput.press("Enter");
+  await editor.press("ControlOrMeta+Enter");
   await save;
   await waitForSyncStatus({ page, status: "idle" });
 };
