@@ -21,9 +21,15 @@ import {
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
+  SmallIconButton,
+  cssVar,
   theme,
 } from "@webstudio-is/design-system";
-import { EllipsesIcon } from "@webstudio-is/icons";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  EllipsesIcon,
+} from "@webstudio-is/icons";
 import { findNext, findPrevious } from "@codemirror/search";
 import type { EditorView } from "@codemirror/view";
 import {
@@ -128,22 +134,63 @@ const CodeView = ({
   onApply: ComponentProps<typeof InlineMixedStyleBlockEditor>["onApply"];
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>();
+  const [searchNavigation, setSearchNavigation] = useState({
+    hasPrevious: false,
+    hasNext: false,
+  });
   const editorRef = useRef<EditorView>();
   const handleEditorView = useCallback((view: EditorView | undefined) => {
     editorRef.current = view;
   }, []);
+  const moveSearch = (direction: "previous" | "next") => {
+    const view = editorRef.current;
+    if (
+      view === undefined ||
+      (direction === "previous"
+        ? !searchNavigation.hasPrevious
+        : !searchNavigation.hasNext)
+    ) {
+      return;
+    }
+    (direction === "previous" ? findPrevious : findNext)(view);
+  };
   return (
     <>
-      <PanelContent>
+      <PanelContent
+        css={{
+          position: "sticky",
+          top: theme.spacing[14],
+          zIndex: 1,
+          background: cssVar("--background-primary"),
+        }}
+      >
         <SearchField
+          suffix={
+            <>
+              <SmallIconButton
+                aria-label="Previous match"
+                icon={<ChevronUpIcon />}
+                bleed={false}
+                disabled={!searchNavigation.hasPrevious}
+                onClick={() => moveSearch("previous")}
+              />
+              <SmallIconButton
+                aria-label="Next match"
+                icon={<ChevronDownIcon />}
+                bleed={false}
+                disabled={!searchNavigation.hasNext}
+                onClick={() => moveSearch("next")}
+              />
+            </>
+          }
           onChange={(event) => {
             setSearchTerm(event.target.value || undefined);
           }}
           onAbort={() => setSearchTerm(undefined)}
           onKeyDown={(event) => {
-            if (event.key === "Enter" && searchTerm && editorRef.current) {
+            if (event.key === "Enter") {
               event.preventDefault();
-              (event.shiftKey ? findPrevious : findNext)(editorRef.current);
+              moveSearch(event.shiftKey ? "previous" : "next");
             }
           }}
         />
@@ -155,6 +202,7 @@ const CodeView = ({
         onApply={onApply}
         searchTerm={searchTerm}
         onEditorView={handleEditorView}
+        onSearchUpdate={setSearchNavigation}
       />
     </>
   );

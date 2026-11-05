@@ -16,6 +16,7 @@ import {
   placeholder,
   showTooltip,
   type Tooltip,
+  type ViewUpdate,
   ViewPlugin,
 } from "@codemirror/view";
 import {
@@ -141,6 +142,10 @@ type Props = {
   inline?: boolean;
   searchTerm?: string;
   onEditorView?: (view: EditorView | undefined) => void;
+  onSearchUpdate?: (navigation: {
+    hasPrevious: boolean;
+    hasNext: boolean;
+  }) => void;
 };
 
 const sourceColorTheme = EditorView.theme({
@@ -166,8 +171,7 @@ const sourceColorTheme = EditorView.theme({
     backgroundColor: cssVar("--background-warning-subtle"),
   },
   ".cm-style-searchMatch-selected": {
-    backgroundColor: cssVar("--background-text-selection"),
-    color: cssVar("--foreground-on-text-selection"),
+    boxShadow: `inset 0 0 0 1px ${cssVar("--border-focus")}`,
   },
 });
 
@@ -196,6 +200,7 @@ const MixedStyleBlockEditor = ({
   inline = false,
   searchTerm,
   onEditorView,
+  onSearchUpdate,
 }: Props) => {
   const [code, setCode] = useState("");
   const codeRef = useRef("");
@@ -218,7 +223,10 @@ const MixedStyleBlockEditor = ({
     if (query.valid) {
       const first = query.getCursor(view.state).next();
       if (!first.done) {
-        view.dispatch({ effects: EditorView.scrollIntoView(first.value.from) });
+        view.dispatch({
+          selection: { anchor: first.value.from, head: first.value.to },
+          effects: EditorView.scrollIntoView(first.value.from),
+        });
       }
     }
   }, [searchTerm]);
@@ -299,6 +307,26 @@ const MixedStyleBlockEditor = ({
     []
   );
   const extensions = useMemo(() => {
+    const notifySearchUpdate = (view: EditorView) => {
+      if (onSearchUpdate === undefined) {
+        return;
+      }
+      const query = getSearchQuery(view.state);
+      const { from, to } = view.state.selection.main;
+      let hasPrevious = false;
+      let hasNext = false;
+      if (query.valid) {
+        const cursor = query.getCursor(view.state);
+        for (let match = cursor.next(); !match.done; match = cursor.next()) {
+          hasPrevious ||= match.value.to <= from;
+          hasNext ||= match.value.from >= to;
+          if (hasPrevious && hasNext) {
+            break;
+          }
+        }
+      }
+      onSearchUpdate({ hasPrevious, hasNext });
+    };
     const decorate = (value: string) =>
       Decoration.set(
         [
@@ -352,6 +380,18 @@ const MixedStyleBlockEditor = ({
           constructor(view: EditorView) {
             editorViewRef.current = view;
             onEditorView?.(view);
+            notifySearchUpdate(view);
+          }
+          update(update: ViewUpdate) {
+            if (
+              update.docChanged ||
+              update.selectionSet ||
+              update.transactions.some((transaction) =>
+                transaction.effects.some((effect) => effect.is(setSearchQuery))
+              )
+            ) {
+              notifySearchUpdate(update.view);
+            }
           }
           destroy() {
             editorViewRef.current = undefined;
@@ -511,7 +551,7 @@ const MixedStyleBlockEditor = ({
       declarationLineBreak,
       ...(inline ? [placeholder("Add local styles")] : []),
     ];
-  }, [colorSwatches, inline, readonly, onEditorView]);
+  }, [colorSwatches, inline, readonly, onEditorView, onSearchUpdate]);
 
   const content = (
     <Box

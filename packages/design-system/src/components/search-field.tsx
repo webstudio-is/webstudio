@@ -43,6 +43,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
     onAbort,
     value: propsValue = "",
     onKeyDown,
+    suffix,
     ...rest
   } = props;
   const [value, setValue] = useState(String(propsValue));
@@ -67,6 +68,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
       prefix={<SearchIconStyled />}
       suffix={
         <Flex align="center" css={{ padding: theme.spacing[2] }}>
+          {suffix}
           <AbortButton
             hidden={value.length > 0 ? "true" : "false"}
             aria-label="Reset search"
