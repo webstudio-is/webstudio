@@ -470,7 +470,6 @@ describe("generateRedirectsModule", () => {
   test("generates an empty redirects data module", () => {
     expect(generateRedirectsModule(undefined)).toEqual(`
     export const redirects = [];
-    export const hasRedirects = false;
     `);
   });
 
@@ -536,7 +535,6 @@ describe("generateRedirectsModule", () => {
     "status": 301
   }
 ];
-    export const hasRedirects = true;
     `);
   });
 });
@@ -2505,6 +2503,9 @@ sitemap.map((page) => page.path);`
         },
       ])
     );
+    await expect(
+      readFile("app/__generated__/$resources.has-redirects.ts", "utf8")
+    ).resolves.toBe("export const hasRedirects = true;");
 
     const assetsModule = await readFile(
       "app/__generated__/$resources.assets.ts",
@@ -2547,6 +2548,15 @@ sitemap.map((page) => page.path);`
         expect.stringContaining("über"),
       ])
     );
+  });
+
+  test("emits a false redirect flag when a project has no redirects", async () => {
+    await writeSiteData(createSiteData({ redirects: [] }));
+    await prebuild({ assets: false, template: ["defaults"] });
+
+    await expect(
+      readFile("app/__generated__/$resources.has-redirects.ts", "utf8")
+    ).resolves.toBe("export const hasRedirects = false;");
   });
 
   test("selects react-router templates", async () => {

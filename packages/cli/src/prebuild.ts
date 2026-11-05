@@ -874,7 +874,6 @@ export const generateRedirectsModule = (pageRedirects: Pages["redirects"]) => {
 
   return `
     export const redirects = ${JSON.stringify(redirects, null, 2)};
-    export const hasRedirects = ${redirects.length > 0};
     `;
 };
 
@@ -2209,6 +2208,10 @@ export const action = async (args: Parameters<typeof pageAction>[0]) => {
   await writeGeneratedFile(
     join(generatedDir, "$resources.redirects.ts"),
     generateRedirectsModule(pages.redirects)
+  );
+  await writeGeneratedFile(
+    join(generatedDir, "$resources.has-redirects.ts"),
+    `export const hasRedirects = ${Boolean(pages.redirects?.length)};`
   );
 
   const redirectFallbackPath = join(routesDir, "$.tsx");

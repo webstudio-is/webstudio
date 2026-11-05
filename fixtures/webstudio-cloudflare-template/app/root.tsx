@@ -24,7 +24,9 @@ import {
   lastPublished,
 } from "./__generated__/_index";
 // @ts-ignore
-import { hasRedirects, redirects } from "./__generated__/$resources.redirects";
+import { redirects } from "./__generated__/$resources.redirects";
+// @ts-ignore
+import { hasRedirects } from "./__generated__/$resources.has-redirects";
 
 export const loader = ({ request }: LoaderFunctionArgs) => {
   const redirectResponse = redirectRequest(request, redirects);
