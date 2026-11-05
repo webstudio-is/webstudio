@@ -43,7 +43,6 @@ type MountedSwatch = {
   widget: ColorSwatch;
   active: boolean;
   pendingValue?: StyleValue;
-  updateTimer?: ReturnType<typeof setTimeout>;
 };
 
 const mountedSwatches = new WeakMap<HTMLElement, MountedSwatch>();
@@ -129,9 +128,11 @@ class ColorSwatch extends WidgetType {
             }
             const previous = activeSwatches.get(mounted.view);
             if (previous !== undefined && previous !== mounted) {
-              previous.widget.flushPending(previous);
               previous.active = false;
               previous.widget.render(previous);
+              if (previous.widget.flushPending(previous)) {
+                previous.widget.onComplete();
+              }
             }
             mounted.active = true;
             activeSwatches.set(mounted.view, mounted);
@@ -149,47 +150,43 @@ class ColorSwatch extends WidgetType {
         disabled={!this.editable || mounted.view.state.readOnly}
         onOpenChange={(open) => {
           if (!open) {
-            this.flushPending(mounted);
             mounted.active = false;
             if (activeSwatches.get(mounted.view) === mounted) {
               activeSwatches.delete(mounted.view);
             }
             mounted.widget.render(mounted);
+            if (this.flushPending(mounted)) {
+              this.onComplete();
+            }
           }
         }}
         onChange={(value) => {
           if (value !== undefined) {
             mounted.pendingValue = value;
-            mounted.updateTimer ??= setTimeout(
-              () => this.flushPending(mounted),
-              80
-            );
           }
         }}
         onChangeComplete={(value) => {
-          mounted.pendingValue = value;
-          this.flushPending(mounted);
-          this.onComplete();
+          if (mounted.active) {
+            mounted.pendingValue = value;
+          }
         }}
       />
     );
   }
 
   flushPending(mounted: MountedSwatch) {
-    if (mounted.updateTimer !== undefined) {
-      clearTimeout(mounted.updateTimer);
-      mounted.updateTimer = undefined;
-    }
     if (mounted.pendingValue !== undefined) {
       const insert = toValue(mounted.pendingValue);
       const { from, to } = mounted;
       mounted.pendingValue = undefined;
       if (mounted.view.state.doc.sliceString(from, to) === insert) {
-        return;
+        return false;
       }
       mounted.to = from + insert.length;
       mounted.view.dispatch({ changes: { from, to, insert } });
+      return true;
     }
+    return false;
   }
 
   toDOM(view: EditorView) {
@@ -231,9 +228,6 @@ class ColorSwatch extends WidgetType {
 
   destroy(element: HTMLElement) {
     const mounted = mountedSwatches.get(element);
-    if (mounted?.updateTimer !== undefined) {
-      clearTimeout(mounted.updateTimer);
-    }
     if (mounted?.active) {
       activeSwatches.delete(mounted.view);
     }
