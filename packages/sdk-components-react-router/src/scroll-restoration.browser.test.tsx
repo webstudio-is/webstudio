@@ -26,8 +26,8 @@ test.each([
     const root = createRoot(container);
     const Layout = () => (
       <>
-        <ScrollRestoration />
         <Outlet />
+        <ScrollRestoration />
       </>
     );
     const history = navigation === "history" || navigation === "history-anchor";
@@ -39,7 +39,10 @@ test.each([
             {
               path: "/",
               element: (
-                <div id="target" style={{ height: 3000 }}>
+                <div
+                  id={navigation === "anchor" ? undefined : "target"}
+                  style={{ height: 3000 }}
+                >
                   First
                 </div>
               ),
