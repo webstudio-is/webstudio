@@ -12,7 +12,9 @@ import {
 import { applyBuilderNamespacePatches } from "@webstudio-is/project-build/state";
 import {
   type Breakpoint,
+  type Instance,
   type Prop,
+  type Props,
   type StyleSource,
 } from "@webstudio-is/sdk";
 import {
@@ -55,6 +57,25 @@ type GetInitialContentModeCapabilities = () =>
   | ReturnType<typeof createContentModeCapabilities>
   | Promise<ReturnType<typeof createContentModeCapabilities>>;
 
+const normalizeContentModeBindings = (
+  instances: Map<Instance["id"], Instance>,
+  props: Props,
+  priorReservedPropIds?: ReadonlySet<Prop["id"]>
+) => {
+  const originalPropIds = new Set(props.keys());
+  migrateCodeTextContentMutable({ instances, props }, { codeOnly: true });
+  migrateContentBlockDocumentBindingsMutable({ instances, props });
+  const reservedPropIds = new Set(priorReservedPropIds);
+  for (const id of originalPropIds) {
+    if (props.has(id)) {
+      reservedPropIds.delete(id);
+    } else {
+      reservedPropIds.add(id);
+    }
+  }
+  return reservedPropIds;
+};
+
 const advanceBuildCapabilities = (
   capabilities: ContentModeCapabilities,
   transaction: PatchEntry["transaction"]
@@ -91,13 +112,17 @@ const advanceBuildCapabilities = (
   const props = new Map(
     Array.from(next.props, ([id, prop]) => [id, { ...prop }])
   );
-  migrateCodeTextContentMutable({ instances, props }, { codeOnly: true });
-  migrateContentBlockDocumentBindingsMutable({ instances, props });
+  const reservedPropIds = normalizeContentModeBindings(
+    instances,
+    props,
+    next.reservedPropIds
+  );
   return {
     ...getContentModeCapabilities({
       ...next,
       instances,
       props,
+      reservedPropIds,
       contentRootIds: undefined,
     }),
     assetFolders: next.assetFolders,
@@ -191,12 +216,12 @@ export const createContentModeCapabilities = (build: {
     hasHistoricalFormComponentIdentityVersion(JSON.parse(build.pages))
   );
   const props = parseData<Prop>(build.props);
-  migrateCodeTextContentMutable({ instances, props }, { codeOnly: true });
-  migrateContentBlockDocumentBindingsMutable({ instances, props });
+  const reservedPropIds = normalizeContentModeBindings(instances, props);
   return getContentModeCapabilities({
     instances,
     metas: componentMetas,
     props,
+    reservedPropIds,
     styleSources: parseData<StyleSource>(build.styleSources),
     styleSourceSelections: parseStyleSourceSelections(
       build.styleSourceSelections

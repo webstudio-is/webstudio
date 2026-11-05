@@ -16,7 +16,12 @@ test.each([false, true])(
     }
     expect(html.hasAttribute("style")).toBe(hasInlineStyle);
     const markup = renderToStaticMarkup(
-      <InstantScrollRestoration nonce="test-nonce">
+      <InstantScrollRestoration
+        nonce="test-nonce"
+        locationKey="initial"
+        hash=""
+        navigationType="POP"
+      >
         <script
           nonce="test-nonce"
           dangerouslySetInnerHTML={{ __html: "window.scrollTo(0, 2400)" }}
