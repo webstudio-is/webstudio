@@ -17,6 +17,7 @@ import {
   type ElementRef,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -257,6 +258,17 @@ export const ColorPicker = ({
   const colorString = toValue(value);
   const colorSpace = styleValueToColorInputColorSpace(value);
   const colorInputValue = styleValueToColorInputValue(value);
+
+  // Close the native popover before its host leaves the DOM. The web component
+  // does not close the popover in disconnectedCallback.
+  useLayoutEffect(() => {
+    const colorInput = colorInputRef.current;
+    return () => {
+      try {
+        colorInput?.close();
+      } catch {}
+    };
+  }, [disabled]);
 
   const overrideContrast = useCallback(() => {
     const colorInputElement = colorInputRef.current;
