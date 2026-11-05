@@ -218,7 +218,10 @@ export const parseBlock = (source: string) => {
   }> = [];
   const draftCssVars = new Map($cssVarsMap.get());
   const mentionedProperties = new Set<CssProperty>();
-  const propertyRanges = new Map<CssProperty, { from: number; to: number }>();
+  const propertyRanges = new Map<
+    CssProperty,
+    { from: number; to: number; name: string }
+  >();
   const previousValidRanges = new Map<string, { from: number; to: number }>();
   const overriddenRanges: Array<{ from: number; to: number }> = [];
   const invalidProperties = new Set<CssProperty>();
@@ -284,7 +287,7 @@ export const parseBlock = (source: string) => {
       (rawProperty.startsWith("--") ? rawProperty : rawProperty.toLowerCase());
     if (property !== undefined) {
       mentionedProperties.add(property);
-      propertyRanges.set(property, { from, to });
+      propertyRanges.set(property, { from, to, name: rawProperty });
     }
     const isInvalid =
       parsed.styleMap.size === 0 ||
@@ -303,7 +306,11 @@ export const parseBlock = (source: string) => {
       }
       previousValidRanges.set(duplicateKey, { from, to });
     }
-    for (const message of parsed.errors) {
+    for (const message of property?.startsWith("--") &&
+    !rawProperty.startsWith("--") &&
+    parsed.errors.length > 0
+      ? [`Invalid value for ${rawProperty}.`]
+      : parsed.errors) {
       diagnostics.push({ from, to, severity: "error", message });
     }
     for (const [property, value] of parsed.styleMap) {
@@ -313,7 +320,7 @@ export const parseBlock = (source: string) => {
           from,
           to,
           severity: "error",
-          message: `Invalid value for ${property}.`,
+          message: `Invalid value for ${rawProperty}.`,
         });
       }
     }
@@ -336,7 +343,7 @@ export const parseBlock = (source: string) => {
           from: range?.from ?? 0,
           to: range?.to ?? source.length,
           severity: "error",
-          message: `Invalid value for ${property}.`,
+          message: `Invalid value for ${range?.name ?? property}.`,
         });
       }
     }
