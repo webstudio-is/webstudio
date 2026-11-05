@@ -500,17 +500,21 @@ const findNormalizedRedirectIndex = (
   );
 };
 
-const assertUniqueRedirectSources = (redirects: PageRedirect[]) => {
-  const sources = new Set<string>();
+const assertUniqueRedirectSources = (
+  redirects: PageRedirect[],
+  savedRedirects: ReadonlySet<PageRedirect>
+) => {
+  const sources = new Map<string, boolean>();
   for (const redirect of redirects) {
     const source = normalizeRedirectSource(redirect.old);
-    if (sources.has(source)) {
+    const unchanged = savedRedirects.has(redirect);
+    if (sources.has(source) && (!unchanged || !sources.get(source))) {
       return throwBuilderRuntimeError(
         "CONFLICT",
         `Duplicate redirect source "${redirect.old}"`
       );
     }
-    sources.add(source);
+    sources.set(source, unchanged);
   }
 };
 
@@ -615,8 +619,23 @@ export const setRedirects = (
   input: z.infer<typeof redirectSetAllInput>
 ) => {
   const pages = getRequiredPages(state);
-  const redirects = input.redirects.map(parseRedirect);
-  assertUniqueRedirectSources(redirects);
+  const savedRedirects = new Map<string, PageRedirect[]>();
+  const redirectKey = ({ old, new: target, status }: PageRedirect) =>
+    JSON.stringify([old, target, status]);
+  for (const redirect of pages.redirects ?? []) {
+    const key = redirectKey(redirect);
+    const entries = savedRedirects.get(key) ?? [];
+    entries.push(redirect);
+    savedRedirects.set(key, entries);
+  }
+  // Consume exact saved entries once, preserving unsupported legacy values.
+  // New or changed entries still go through the current validators.
+  const redirects = input.redirects.map(
+    (redirect) =>
+      savedRedirects.get(redirectKey(redirect))?.pop() ??
+      parseRedirect(redirect)
+  );
+  assertUniqueRedirectSources(redirects, new Set(pages.redirects));
   return createRuntimeMutation({
     payload: [
       {

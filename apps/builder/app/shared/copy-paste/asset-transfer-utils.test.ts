@@ -73,6 +73,30 @@ const fragment = {
   ],
 } satisfies WebstudioFragment;
 
+test("still validates imported assets without rewriting unchanged references", async () => {
+  const importAssets = vi.fn(
+    async () => new Map(fragment.assets.map((asset) => [asset.id, asset]))
+  );
+  const result = await transferFragmentAssets({
+    sourceOrigin: "https://source.example.com",
+    projectId: "target-project",
+    fragments: [fragment],
+    importAssets,
+  });
+  expect(importAssets).toHaveBeenCalledOnce();
+  expect(result.success).toBe(true);
+  if (result.success === false) {
+    return;
+  }
+  const transferred = result.fragments.get(fragment)!;
+  expect(transferred.assets).toEqual([]);
+  expect(transferred.props).toBe(fragment.props);
+  expect(transferred.styles).toBe(fragment.styles);
+  expect(result.assetIds).toEqual(
+    new Map(fragment.assets.map((asset) => [asset.id, asset.id]))
+  );
+});
+
 test("imports and remaps every fragment asset reference", async () => {
   const importedImage = {
     ...imageAsset,

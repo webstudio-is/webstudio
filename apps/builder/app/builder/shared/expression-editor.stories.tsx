@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { StorySection } from "@webstudio-is/design-system";
 import { ExpressionEditor as ExpressionEditorComponent } from "./expression-editor";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { EditorView } from "@codemirror/view";
+import { startCompletion } from "@codemirror/autocomplete";
 
 export default {
   title: "Expression Editor",
@@ -59,6 +61,40 @@ export const ExpressionEditor: StoryObj = {
         {`Start typing "h" or "o" or press "Tab" to start variables completion`}
       </p>
       <ExpressionStory />
+    </StorySection>
+  ),
+};
+
+const AutocompleteStory = () => {
+  const container = useRef<HTMLDivElement>(null);
+  const [value, setValue] = useState("");
+  useEffect(() => {
+    const editor =
+      container.current?.querySelector<HTMLElement>('[role="textbox"]');
+    const view = editor && EditorView.findFromDOM(editor);
+    if (view) {
+      view.dispatch({ selection: { anchor: view.state.doc.length } });
+      view.focus();
+      startCompletion(view);
+    }
+  }, []);
+  return (
+    <div ref={container} style={{ width: 320 }}>
+      <ExpressionEditorComponent
+        scope={scope}
+        aliases={aliases}
+        value={value}
+        onChange={setValue}
+        onChangeComplete={setValue}
+      />
+    </div>
+  );
+};
+
+export const Autocomplete: StoryObj = {
+  render: () => (
+    <StorySection title="Expression autocomplete">
+      <AutocompleteStory />
     </StorySection>
   ),
 };

@@ -953,36 +953,44 @@ test.each(
   }
 );
 
-test("a managed HTTP action still retries after failure", async () => {
-  const fetcher = vi
-    .fn<typeof fetch>()
-    .mockResolvedValueOnce(new Response("Unavailable", { status: 503 }))
-    .mockResolvedValueOnce(Response.json({ recovered: true }));
-  const results = await loadManagedFormResources(
-    fetcher,
-    {
-      rootIds: ["http"],
-      resources: [
-        {
-          id: "http",
-          outputName: "HTTP",
-          dependencies: [],
-          createRequest: () => ({
-            ...request,
-            control: undefined,
-            url: "https://example.com/submit",
-          }),
-        },
-      ],
-    },
-    undefined,
-    { shouldRetryFailedRoot: shouldRetryManagedFormDestination }
-  );
-  expect(results).toMatchObject({
-    HTTP: { ok: true, data: { recovered: true } },
-  });
-  expect(fetcher).toHaveBeenCalledTimes(2);
-});
+test.each(["get", "post", "put", "delete"] as const)(
+  "a managed HTTP %s action only retries reads",
+  async (method) => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response("Unavailable", { status: 503 }))
+      .mockResolvedValueOnce(Response.json({ recovered: true }));
+    const results = await loadManagedFormResources(
+      fetcher,
+      {
+        rootIds: ["http"],
+        resources: [
+          {
+            id: "http",
+            outputName: "HTTP",
+            dependencies: [],
+            createRequest: () => ({
+              ...request,
+              control: undefined,
+              method,
+              body: undefined,
+              url: "https://example.com/submit",
+            }),
+          },
+        ],
+      },
+      undefined,
+      { shouldRetryFailedRoot: shouldRetryManagedFormDestination }
+    );
+    expect(results).toMatchObject({
+      HTTP:
+        method === "get"
+          ? { ok: true, data: { recovered: true } }
+          : { ok: false, status: 503 },
+    });
+    expect(fetcher).toHaveBeenCalledTimes(method === "get" ? 2 : 1);
+  }
+);
 
 test("a failed Email root is dispatched once and keeps sibling results", async () => {
   const rpc = vi

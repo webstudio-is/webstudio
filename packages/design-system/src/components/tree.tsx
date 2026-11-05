@@ -1,13 +1,11 @@
 import {
-  createContext,
+  useCallback,
   useEffect,
   useInsertionEffect,
-  useContext,
   useRef,
   useState,
   type ComponentPropsWithoutRef,
   type KeyboardEvent,
-  type MutableRefObject,
   type ReactNode,
 } from "react";
 import { FocusScope, useFocusManager } from "@react-aria/focus";
@@ -42,13 +40,6 @@ const treeActionOpacity = declareCssVar("--tree-action-opacity");
 const treeActionWidth = declareCssVar("--tree-action-width");
 export const treeActionBoundary = declareCssVar("--tree-action-boundary");
 
-const TreeFocusRestoreContext = createContext<
-  | undefined
-  | {
-      shouldRestoreFocusRef: MutableRefObject<boolean>;
-    }
->(undefined);
-
 type TreeSelectionState = "none" | "selected" | "selected-descendant";
 
 const getTreeSelectionState = ({
@@ -77,52 +68,89 @@ const EXPAND_WIDTH = 24;
 
 const TreeContainer = ({ children }: { children: ReactNode }) => {
   const focusManager = useFocusManager();
-  const shouldRestoreFocusRef = useRef(false);
+  const restoreFocusRef = useRef<{
+    button: HTMLElement | null;
+    timeout: number;
+  }>();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cancelFocusRestore = useCallback(() => {
+    window.clearTimeout(restoreFocusRef.current?.timeout);
+    restoreFocusRef.current = undefined;
+  }, []);
+  useEffect(() => cancelFocusRestore, [cancelFocusRestore]);
+  // A reorder can move memoized rows without rendering them.
+  useEffect(() => {
+    const request = restoreFocusRef.current;
+    if (request === undefined) {
+      return;
+    }
+    cancelFocusRestore();
+    const previousButton = request.button;
+    const selectedButton =
+      previousButton?.getAttribute("aria-selected") === "true" &&
+      containerRef.current?.contains(previousButton)
+        ? previousButton
+        : containerRef.current?.querySelector<HTMLElement>(
+            '[data-tree-button][aria-selected="true"]'
+          );
+    selectedButton?.focus({ preventScroll: true });
+  });
   return (
-    <TreeFocusRestoreContext.Provider value={{ shouldRestoreFocusRef }}>
-      <Box
-        onKeyDown={(event) => {
-          if (event.defaultPrevented) {
-            return;
+    <Box
+      ref={containerRef}
+      onBlur={(event) => {
+        if (
+          event.relatedTarget instanceof Node &&
+          !event.currentTarget.contains(event.relatedTarget)
+        ) {
+          cancelFocusRestore();
+        }
+      }}
+      onKeyDown={(event) => {
+        cancelFocusRestore();
+        if (event.defaultPrevented) {
+          return;
+        }
+        if (event.metaKey || event.ctrlKey) {
+          if (event.key.startsWith("Arrow")) {
+            restoreFocusRef.current = {
+              button:
+                event.target instanceof HTMLElement
+                  ? event.target.closest<HTMLElement>("[data-tree-button]")
+                  : null,
+              timeout: window.setTimeout(cancelFocusRestore, 1000),
+            };
           }
-          if (event.metaKey || event.ctrlKey) {
-            if (event.key.startsWith("Arrow")) {
-              shouldRestoreFocusRef.current = true;
-              window.setTimeout(() => {
-                shouldRestoreFocusRef.current = false;
-              }, 1000);
-            }
-            return;
-          }
-          if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
-            focusManager?.focusPrevious({
-              accept: (node) => node.hasAttribute("data-tree-button"),
-            });
-            // prevent scrolling
-            event.preventDefault();
-          }
-          if (event.key === "ArrowDown") {
-            focusManager?.focusNext({
-              accept: (node) => node.hasAttribute("data-tree-button"),
-            });
-            // prevent scrolling
-            event.preventDefault();
-          }
-          if (event.key === "ArrowRight") {
-            focusManager?.focusNext({
-              accept: (node) =>
-                node.hasAttribute("data-tree-button") ||
-                // try to focus button inside action
-                node.closest("[data-tree-action]") !== null,
-            });
-            // prevent scrolling
-            event.preventDefault();
-          }
-        }}
-      >
-        {children}
-      </Box>
-    </TreeFocusRestoreContext.Provider>
+          return;
+        }
+        if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+          focusManager?.focusPrevious({
+            accept: (node) => node.hasAttribute("data-tree-button"),
+          });
+          // prevent scrolling
+          event.preventDefault();
+        }
+        if (event.key === "ArrowDown") {
+          focusManager?.focusNext({
+            accept: (node) => node.hasAttribute("data-tree-button"),
+          });
+          // prevent scrolling
+          event.preventDefault();
+        }
+        if (event.key === "ArrowRight") {
+          focusManager?.focusNext({
+            accept: (node) =>
+              node.hasAttribute("data-tree-button") ||
+              // try to focus button inside action
+              node.closest("[data-tree-action]") !== null,
+          });
+          // prevent scrolling
+          event.preventDefault();
+        }
+      }}
+    >
+      {children}
+    </Box>
   );
 };
 
@@ -470,7 +498,6 @@ export const TreeNode = ({
   children: ReactNode;
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const focusRestoreContext = useContext(TreeFocusRestoreContext);
   const selectionState = getTreeSelectionState({
     isSelected,
     isSelectedDescendant,
@@ -485,14 +512,6 @@ export const TreeNode = ({
       });
     }
   }, [isSelected]);
-  useEffect(() => {
-    const shouldRestoreFocusRef = focusRestoreContext?.shouldRestoreFocusRef;
-    if (isSelected && shouldRestoreFocusRef?.current === true) {
-      buttonRef.current?.focus({ preventScroll: true });
-      shouldRestoreFocusRef.current = false;
-    }
-  }, [focusRestoreContext, isSelected]);
-
   const handleKeydown = (event: KeyboardEvent<HTMLDivElement>) => {
     nodeProps?.onKeyDown?.(event);
 

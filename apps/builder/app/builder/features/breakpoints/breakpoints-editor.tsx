@@ -80,7 +80,7 @@ const BreakpointEditorItem = ({
         onChangeComplete(newBreakpoint);
       }
     },
-    { autoSave: true }
+    { autoSave: false }
   );
 
   const hasCondition = localValue.value.condition.trim() !== "";
@@ -159,7 +159,11 @@ const BreakpointEditorItem = ({
                 value: localValue.value.width,
                 unit: "px",
               }}
-              intermediateValue={undefined}
+              intermediateValue={{
+                type: "unit",
+                value: localValue.value.width,
+                unit: "px",
+              }}
               disabled={hasCondition}
               getOptions={() => []}
               onChange={(value) => {
@@ -343,3 +347,5 @@ export const BreakpointsEditor = ({
     </Popover>
   );
 };
+
+export const __testing__ = { BreakpointEditorItem };

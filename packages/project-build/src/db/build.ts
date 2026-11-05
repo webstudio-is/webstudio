@@ -25,7 +25,10 @@ import {
   migratePages,
   serializePages,
 } from "@webstudio-is/project-migrations/pages";
-import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
+import {
+  migrateContentBlockDocumentBindingsMutable,
+  migrateResourceFormInstancesMutable,
+} from "@webstudio-is/project-migrations";
 import { migrateResourcesMutable } from "@webstudio-is/project-migrations/resources";
 import type { Build, CompactBuild } from "../types";
 import { parseDeployment } from "./deployment";
@@ -104,6 +107,10 @@ const parseCompactBuild = async (
   const instances = parseCompactInstanceData(build.instances);
   migrateResourceFormInstancesMutable(instances, hasModernFormMarker);
   const contentEngineData = parseCompactContentEngineData(build);
+  migrateContentBlockDocumentBindingsMutable({
+    instances: new Map(instances.map((instance) => [instance.id, instance])),
+    props: new Map(contentEngineData.props.map((prop) => [prop.id, prop])),
+  });
   const parsedProjectSettings =
     build.projectSettings === undefined || build.projectSettings === null
       ? createProjectSettingsFromPages(pages)

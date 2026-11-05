@@ -1,5 +1,19 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
-import { Scripts, ScrollRestoration } from "react-router";
+import {
+  Scripts,
+  ScrollRestoration as RouterScrollRestoration,
+  useLocation,
+  useNavigationType,
+} from "react-router";
+import { useInstantScrollRestoration } from "@webstudio-is/sdk-components-react";
+
+export const ScrollRestoration = () => {
+  useInstantScrollRestoration({
+    ...useLocation(),
+    navigationType: useNavigationType(),
+  });
+  return <RouterScrollRestoration />;
+};
 
 export const Body = forwardRef<ElementRef<"body">, ComponentProps<"body">>(
   ({ children, ...props }, ref) => (

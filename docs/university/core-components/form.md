@@ -261,7 +261,7 @@ All actions except visitor confirmation must succeed for the Form to show succes
 
 Actions can succeed or fail independently. Your team might receive an email even when an API request fails. Check the individual results before submitting again.
 
-Emails are not automatically resent when delivery is uncertain, to avoid duplicates.
+Emails and API write requests are not automatically resent when the result is uncertain, to avoid duplicates. A failed response can arrive after the service has saved the submission. Check the receiving service before submitting again.
 
 ## Use Form variables
 

@@ -19,7 +19,10 @@ import {
   parseStyleSourceSelections,
   parseStyles,
 } from "@webstudio-is/project-build/persistence";
-import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
+import {
+  migrateContentBlockDocumentBindingsMutable,
+  migrateResourceFormInstancesMutable,
+} from "@webstudio-is/project-migrations";
 import { hasHistoricalFormComponentIdentityVersion } from "@webstudio-is/project-migrations/pages";
 import env from "~/env/env.server";
 import { readAccessToken } from "~/services/token.server";
@@ -135,10 +138,12 @@ export const createContentModeCapabilities = (build: {
     instances.values(),
     hasHistoricalFormComponentIdentityVersion(JSON.parse(build.pages))
   );
+  const props = parseData<Prop>(build.props);
+  migrateContentBlockDocumentBindingsMutable({ instances, props });
   return getContentModeCapabilities({
     instances,
     metas: componentMetas,
-    props: parseData<Prop>(build.props),
+    props,
     styleSources: parseData<StyleSource>(build.styleSources),
     styleSourceSelections: parseStyleSourceSelections(
       build.styleSourceSelections

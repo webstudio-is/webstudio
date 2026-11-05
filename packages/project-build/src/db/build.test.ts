@@ -9,6 +9,13 @@ import {
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import { AuthorizationError } from "@webstudio-is/trpc-interface/index.server";
 import {
+  blockComponent,
+  blockTemplateComponent,
+  encodeDataSourceVariable,
+  type Instance,
+  type Prop,
+} from "@webstudio-is/sdk";
+import {
   loadRawBuildById,
   loadBuildById,
   loadDevBuildContentEngineDataByProjectId,
@@ -108,6 +115,123 @@ describe("loadRawBuildById (msw)", () => {
 // ---------------------------------------------------------------------------
 
 describe("loadBuildById (msw)", () => {
+  test("normalizes only legacy document bindings on reads without saving them", async () => {
+    const expression = `${encodeDataSourceVariable("document")}.frontmatter.title`;
+    const bindings = [
+      { id: "legacy", value: expression },
+      { id: "read", value: expression, mode: "read" as const },
+      { id: "readwrite", value: expression, mode: "readwrite" as const },
+      { id: "computed", value: `${expression} + "!"` },
+      {
+        id: "other-document",
+        value: `${encodeDataSourceVariable("other")}.frontmatter.title`,
+      },
+      {
+        id: "unsafe",
+        value: `${encodeDataSourceVariable("document")}.frontmatter.__proto__.title`,
+      },
+    ];
+    const instances: Instance[] = [
+      {
+        id: "block",
+        type: "instance",
+        component: blockComponent,
+        children: [
+          ...bindings.map(({ id }) => ({ type: "id" as const, value: id })),
+          { type: "id", value: "templates" },
+        ],
+      },
+      ...bindings.map(
+        ({ id, ...binding }): Instance => ({
+          id,
+          type: "instance",
+          component: "Heading",
+          children: [{ type: "expression", ...binding }],
+        })
+      ),
+      {
+        id: "templates",
+        type: "instance",
+        component: blockTemplateComponent,
+        children: [{ type: "id", value: "template-title" }],
+      },
+      {
+        id: "template-title",
+        type: "instance",
+        component: "Heading",
+        children: [{ type: "expression", value: expression }],
+      },
+    ];
+    const props: Prop[] = [
+      {
+        id: "source",
+        instanceId: "block",
+        name: "src",
+        type: "asset",
+        value: "article",
+      },
+      {
+        id: "document-prop",
+        instanceId: "block",
+        name: "document",
+        type: "parameter",
+        value: "document",
+      },
+      ...bindings.map(
+        ({ id, ...binding }): Prop => ({
+          id: `${id}-prop`,
+          instanceId: id,
+          name: "aria-label",
+          type: "expression",
+          ...binding,
+        })
+      ),
+    ];
+    const row = {
+      ...buildRow,
+      instances: JSON.stringify(instances),
+      props: JSON.stringify(props),
+    };
+    const before = structuredClone(row);
+    const writes: unknown[] = [];
+    server.use(
+      db.get("Build", () => json([row])),
+      db.patch("Build", async ({ request }) => {
+        writes.push(await request.json());
+        return json([row]);
+      })
+    );
+    const result = await loadBuildById(createContext(), "build-1");
+    for (const binding of bindings) {
+      const expectedMode = binding.id === "legacy" ? "readwrite" : binding.mode;
+      expect(
+        result.instances.find(({ id }) => id === binding.id)?.children
+      ).toEqual([
+        {
+          type: "expression",
+          value: binding.value,
+          ...(expectedMode === undefined ? {} : { mode: expectedMode }),
+        },
+      ]);
+      expect(
+        result.props.find(({ id }) => id === `${binding.id}-prop`)
+      ).toEqual({
+        id: `${binding.id}-prop`,
+        instanceId: binding.id,
+        name: "aria-label",
+        type: "expression",
+        value: binding.value,
+        ...(expectedMode === undefined ? {} : { mode: expectedMode }),
+      });
+    }
+    expect(
+      result.instances.find(({ id }) => id === "template-title")?.children
+    ).toEqual(instances.at(-1)?.children);
+    expect(await loadBuildById(createContext(), "build-1")).toEqual(result);
+    expect(row).toEqual(before);
+    expect(writes).toEqual([]);
+  });
+
   test.each([
     { marker: 1, expected: "ResourceForm" },
     { marker: undefined, expected: "WebhookForm" },

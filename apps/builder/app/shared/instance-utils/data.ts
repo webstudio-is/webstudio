@@ -26,7 +26,11 @@ import {
 } from "@webstudio-is/project-build/runtime";
 import { applyBuilderPatchTransactions } from "@webstudio-is/project-build/state";
 import { atom } from "nanostores";
-import { $canOpenPageTemplates, $selectedPage } from "../nano-states";
+import {
+  $authPermit,
+  $canOpenPageTemplates,
+  $selectedPage,
+} from "../nano-states";
 import {
   createSyncChangesFromBuilderPatchPayload,
   createTransactionFromBuilderPatchPayload,
@@ -132,6 +136,11 @@ const canCommitWebstudioData = () => {
 };
 
 export const migrateLoadedWebstudioData = () => {
+  // Load migrations can change protected templates and other design data.
+  const authPermit = $authPermit.get();
+  if (authPermit === "edit" || authPermit === "view") {
+    return;
+  }
   const result = executeRuntimeMutation({
     id: "system.migrateLoadedData",
     input: {},
