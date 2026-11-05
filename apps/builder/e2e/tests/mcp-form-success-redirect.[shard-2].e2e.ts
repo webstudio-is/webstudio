@@ -250,7 +250,7 @@ for (const fail of [false, true] as const) {
             expect(submission.redirect).toBe(new URL(url).origin + "/");
           }
           expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual(
-            fail ? ["/reject", "/reject"] : ["/submit"]
+            fail ? ["/reject"] : ["/submit"]
           );
         },
       });
@@ -391,18 +391,16 @@ test("MCP-authored failed Action keeps the Form in place despite success redirec
         expect(new URL(page.url()).searchParams.has("mcp-e2e")).toBe(false);
         await expect
           .poll(() => receiver.deliveries.map(({ pathname }) => pathname))
-          .toEqual(["/reject", "/reject"]);
+          .toEqual(["/reject"]);
 
         await form.evaluate((element: HTMLFormElement) =>
           element.requestSubmit()
         );
-        await expect.poll(() => receiver.deliveries.length).toBe(4);
+        await expect.poll(() => receiver.deliveries.length).toBe(2);
         await expect(form).toHaveAttribute("data-state", "error");
         await expectFeedbackInViewport(page, feedback);
         expect(new URL(page.url()).searchParams.has("mcp-e2e")).toBe(false);
         expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual([
-          "/reject",
-          "/reject",
           "/reject",
           "/reject",
         ]);

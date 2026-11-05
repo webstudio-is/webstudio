@@ -92,6 +92,7 @@ const AutocompleteStory = () => {
 };
 
 export const Autocomplete: StoryObj = {
+  parameters: { visualRegression: { preserveFocus: true } },
   render: () => (
     <StorySection title="Expression autocomplete">
       <AutocompleteStory />
