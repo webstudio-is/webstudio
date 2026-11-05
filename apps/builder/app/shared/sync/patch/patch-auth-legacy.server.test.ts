@@ -196,6 +196,189 @@ test("protects canonical CodeText expressions while allowing literal edits", () 
   }
 });
 
+test("rejects reuse of a stored legacy CodeText prop ID", async () => {
+  hasProjectPermit.mockImplementation(async ({ permit }, context) =>
+    permit === "build" ? context.authorization.role === "builder" : true
+  );
+  const build = {
+    pages: "{}",
+    instances: JSON.stringify([
+      {
+        id: "block",
+        type: "instance",
+        component: blockComponent,
+        children: [{ type: "id", value: "body" }],
+      },
+      {
+        id: "body",
+        type: "instance",
+        component: blockBodyComponent,
+        children: [{ type: "id", value: "link" }],
+      },
+      {
+        id: "link",
+        type: "instance",
+        component: "Link",
+        children: [{ type: "text", value: "Open" }],
+      },
+      {
+        id: "protected-code",
+        type: "instance",
+        component: "CodeText",
+        children: [],
+      },
+    ]),
+    props: JSON.stringify([
+      {
+        id: "legacy-code-prop",
+        instanceId: "protected-code",
+        name: "code",
+        type: "expression",
+        value: '"protected"',
+      },
+    ]),
+    styleSources: "[]",
+    styleSourceSelections: "[]",
+    styles: "[]",
+    breakpoints: "[]",
+  };
+  const patch = {
+    projectId: "project",
+    buildId: "build",
+    clientVersion: 1,
+    entries: [
+      {
+        transaction: {
+          id: "editor",
+          payload: [
+            {
+              namespace: "props",
+              patches: [
+                {
+                  op: "add",
+                  path: ["legacy-code-prop"],
+                  value: {
+                    id: "legacy-code-prop",
+                    instanceId: "link",
+                    name: "href",
+                    type: "string",
+                    value: "/changed",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        writer: {
+          type: "context",
+          context: { authorization: { role: "editor" } },
+        },
+      },
+    ],
+  };
+  const result = await authorizePatchEntries({} as never, patch as never, () =>
+    createContentModeCapabilities(build)
+  );
+  expect(result.authorized).toEqual([]);
+  expect(result.rejected.map(({ entry }) => entry.transaction.id)).toEqual([
+    "editor",
+  ]);
+  const legacyProp = JSON.parse(build.props)[0];
+  const mixedResult = await authorizePatchEntries(
+    {} as never,
+    {
+      ...patch,
+      entries: [
+        {
+          transaction: {
+            id: "builder",
+            payload: [
+              {
+                namespace: "props",
+                patches: [
+                  {
+                    op: "add",
+                    path: [legacyProp.id],
+                    value: legacyProp,
+                  },
+                ],
+              },
+            ],
+          },
+          writer: {
+            type: "context",
+            context: { authorization: { role: "builder" } },
+          },
+        },
+        ...patch.entries,
+      ],
+    } as never,
+    () => createContentModeCapabilities({ ...build, props: "[]" })
+  );
+  expect(
+    mixedResult.authorized.map(({ entry }) => entry.transaction.id)
+  ).toEqual(["builder"]);
+  expect(mixedResult.rejected.map(({ entry }) => entry.transaction.id)).toEqual(
+    ["editor"]
+  );
+
+  const replacement = {
+    id: legacyProp.id,
+    instanceId: "link",
+    name: "href",
+    type: "string",
+    value: "/before",
+  };
+  const trustedReplacement = await authorizePatchEntries(
+    {} as never,
+    {
+      ...patch,
+      entries: [
+        {
+          transaction: {
+            id: "builder",
+            payload: [
+              {
+                namespace: "props",
+                patches: [
+                  { op: "add", path: [legacyProp.id], value: replacement },
+                ],
+              },
+            ],
+          },
+          writer: {
+            type: "context",
+            context: { authorization: { role: "builder" } },
+          },
+        },
+        {
+          ...patch.entries[0],
+          transaction: {
+            id: "editor",
+            payload: [
+              {
+                namespace: "props",
+                patches: [
+                  {
+                    op: "replace",
+                    path: [legacyProp.id, "value"],
+                    value: "/after",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    } as never,
+    () => createContentModeCapabilities(build)
+  );
+  expect(
+    trustedReplacement.authorized.map(({ entry }) => entry.transaction.id)
+  ).toEqual(["builder", "editor"]);
+  expect(trustedReplacement.rejected).toEqual([]);
+});
+
 test("normalizes saved legacy bindings without allowing Editor expression replacements", () => {
   const expression = `${encodeDataSourceVariable("document")}.frontmatter.title`;
   const instances: Instance[] = [
@@ -412,6 +595,46 @@ const createLiteralCodeBuild = (component: string) => ({
   styles: "[]",
   breakpoints: "[]",
 });
+
+test.each(["text", "expression"] as const)(
+  "new CodeText with %s content follows the binding rule",
+  (type) => {
+    const capabilities = createContentModeCapabilities(
+      createLiteralCodeBuild(blockComponent)
+    );
+    const result = applyContentModeTransaction({
+      capabilities,
+      transaction: {
+        payload: [
+          {
+            namespace: "instances",
+            patches: [
+              {
+                op: "add",
+                path: ["new-code"],
+                value: {
+                  id: "new-code",
+                  type: "instance",
+                  component: "CodeText",
+                  children: [{ type, value: "new content" }],
+                },
+              },
+              {
+                op: "replace",
+                path: ["body", "children"],
+                value: [
+                  { type: "id", value: "code" },
+                  { type: "id", value: "new-code" },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(result.success).toBe(type === "text");
+  }
+);
 
 test("rejects an Editor overwrite after a Builder adds a CodeText binding in the same batch", async () => {
   hasProjectPermit.mockImplementation(async (_request, context) =>

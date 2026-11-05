@@ -1,6 +1,12 @@
+import { Fragment } from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
-import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
+import {
+  createMemoryRouter,
+  Outlet,
+  RouterProvider,
+  useLocation,
+} from "react-router";
 import { ScrollRestoration } from "./body";
 import { expect, test, vi } from "vitest";
 
@@ -8,28 +14,38 @@ import { expect, test, vi } from "vitest";
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-test.each([
-  "route",
-  "history",
-  "history-anchor",
-  "missing-anchor",
-  "preserve",
-  "anchor",
-] as const)(
-  "%s navigation preserves the intended scroll behavior",
-  async (navigation) => {
+test.each(
+  (
+    [
+      "route",
+      "history",
+      "history-anchor",
+      "missing-anchor",
+      "preserve",
+      "anchor",
+    ] as const
+  ).flatMap((navigation) => [
+    { navigation, remount: false },
+    { navigation, remount: true },
+  ])
+)(
+  "$navigation navigation preserves scroll behavior (remount: $remount)",
+  async ({ navigation, remount }) => {
     const html = document.documentElement;
     const previousStyle = html.style.scrollBehavior;
     html.style.scrollBehavior = "smooth";
     const container = document.createElement("div");
     document.body.appendChild(container);
     const root = createRoot(container);
-    const Layout = () => (
-      <>
-        <Outlet />
-        <ScrollRestoration />
-      </>
-    );
+    const Layout = () => {
+      const { pathname } = useLocation();
+      return (
+        <Fragment key={remount ? pathname : "layout"}>
+          <Outlet />
+          <ScrollRestoration />
+        </Fragment>
+      );
+    };
     const history = navigation === "history" || navigation === "history-anchor";
     const router = createMemoryRouter(
       [

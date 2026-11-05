@@ -5,18 +5,18 @@ import {
   useLocation,
   useNavigationType,
 } from "@remix-run/react";
-import {
-  InstantScrollRestoration,
-  useInstantScrollRestoration,
-} from "@webstudio-is/sdk-components-react";
+import { InstantScrollRestoration } from "@webstudio-is/sdk-components-react";
 
 export const ScrollRestoration = ({ nonce }: { nonce?: string }) => {
-  useInstantScrollRestoration({
-    ...useLocation(),
-    navigationType: useNavigationType(),
-  });
+  const { key: locationKey, hash } = useLocation();
+  const navigationType = useNavigationType();
   return (
-    <InstantScrollRestoration nonce={nonce}>
+    <InstantScrollRestoration
+      nonce={nonce}
+      locationKey={locationKey}
+      hash={hash}
+      navigationType={navigationType}
+    >
       <RouterScrollRestoration nonce={nonce} />
     </InstantScrollRestoration>
   );
