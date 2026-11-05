@@ -57,6 +57,7 @@ test("reuses unrelated rows while selection and hover handlers stay current", ()
   );
   $selectedPageId.set("home");
   const container = document.createElement("div");
+  container.style.width = "32px";
   document.body.appendChild(container);
   const root = createRoot(container);
   try {
@@ -67,6 +68,20 @@ test("reuses unrelated rows while selection and hover handlers stay current", ()
         </TooltipProvider>
       )
     );
+    expect(
+      container.querySelector("[data-radix-scroll-area-viewport]")
+    ).toBeNull();
+    const sortableRow = container.querySelector<HTMLElement>(
+      "[data-tree-sortable-item]"
+    );
+    expect(sortableRow).not.toBeNull();
+    expect(getComputedStyle(sortableRow!).contentVisibility).toBe("auto");
+    const tree = container.querySelector<HTMLElement>("[data-navigator-tree]")!;
+    const scroller = tree.parentElement?.parentElement as HTMLElement;
+    expect(getComputedStyle(scroller).overflowX).toBe("auto");
+    expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+    scroller.scrollLeft = 100;
+    expect(scroller.scrollLeft).toBeGreaterThan(0);
     act(() => selectInstance(["first", "body"]));
     reads.clear();
     act(() => selectInstance(["second", "body"]));

@@ -24,7 +24,7 @@ import {
   PanelBanner,
   cssVar,
   keyframes,
-  ScrollArea,
+  ScrollAreaNative,
   SmallIconButton,
   styled,
   Text,
@@ -1269,17 +1269,20 @@ export const NavigatorTree = () => {
 
   // oxlint-disable react-hooks/rules-of-hooks -- our useEffectEvent supplies stable callbacks with current state
   return (
-    <ScrollArea
-      direction="both"
+    <ScrollAreaNative
       css={{
         width: "100%",
-        overflow: "hidden",
         flexBasis: 0,
         flexGrow: 1,
+        minHeight: 0,
+        "& [data-tree-sortable-item]": {
+          contentVisibility: "auto",
+          containIntrinsicSize: `auto ${theme.sizes.controlHeight}`,
+        },
       }}
     >
       <TreeRoot>
-        <Box data-navigator-tree>
+        <Box data-navigator-tree css={{ minWidth: "max-content" }}>
           {isContentMode &&
             selectedPage !== undefined &&
             flatTree.length === 0 && (
@@ -1397,7 +1400,7 @@ export const NavigatorTree = () => {
       </TreeRoot>
       {/* space in the end of scroll area */}
       <Box css={{ height: theme.spacing[9] }}></Box>
-    </ScrollArea>
+    </ScrollAreaNative>
   );
   // oxlint-enable react-hooks/rules-of-hooks
 };
