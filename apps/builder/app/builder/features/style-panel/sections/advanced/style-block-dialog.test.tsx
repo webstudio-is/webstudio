@@ -8,6 +8,7 @@ import { CompletionContext } from "@codemirror/autocomplete";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import { $availableVariables } from "../../shared/model";
 import { parseStyleInput } from "~/builder/shared/css-editor/parse-style-input";
+import type { ApplyChanges } from "./style-block-parse";
 import {
   InlineMixedStyleBlockEditor,
   MixedStyleBlockDialog,
@@ -146,6 +147,59 @@ test("read-only blocks show color thumbs without opening a picker", async () => 
   expect(
     container.querySelectorAll("button[aria-label], color-input")
   ).toHaveLength(0);
+});
+
+test("keeps hidden and uploaded image layers when editing a gradient", async () => {
+  const background = parseStyleInput(
+    "background-image: url(example.png), linear-gradient(red, blue)",
+    new Map()
+  ).styleMap.get("background-image");
+  if (background?.type !== "layers") {
+    throw new Error("Expected layered background");
+  }
+  const uploaded = {
+    type: "image" as const,
+    value: { type: "asset" as const, value: "uploaded-image" },
+  };
+  const hidden = {
+    type: "image" as const,
+    value: { type: "asset" as const, value: "hidden-image" },
+    hidden: true,
+  };
+  const stored = {
+    ...background,
+    value: [uploaded, background.value[1], hidden],
+  };
+  let changes: ApplyChanges | undefined;
+  const container = render(
+    <InlineMixedStyleBlockEditor
+      declarations={[{ property: "background-image", value: stored }]}
+      sourceDeclarations={[]}
+      readonly={false}
+      onApply={(next) => {
+        changes = next;
+        return next.newStyles;
+      }}
+    />
+  );
+  const view = EditorView.findFromDOM(container.querySelector(".cm-content")!);
+  expect(view).not.toBeNull();
+  const before = view!.state.doc.toString();
+  const from = before.indexOf("red");
+  expect(from).toBeGreaterThan(-1);
+  act(() => {
+    view!.dispatch({ changes: { from, to: from + 3, insert: "green" } });
+    view!.contentDOM.focus();
+    view!.contentDOM.blur();
+  });
+  expect(changes?.newStyles.get("background-image")).toEqual({
+    ...stored,
+    value: [
+      uploaded,
+      expect.objectContaining({ value: expect.stringContaining("green") }),
+      hidden,
+    ],
+  });
 });
 
 const declarations = Array.from(

@@ -234,11 +234,15 @@ const preserveAssetLayers = (
     ) {
       continue;
     }
+    let index = 0;
     result.set(property, {
       ...value,
-      value: value.value.map((layer, index) => {
-        const storedLayer = visible[index];
+      value: original.value.map((storedLayer) => {
+        if (storedLayer.hidden === true) {
+          return storedLayer;
+        }
         const initialLayer = initial.value[index];
+        const layer = value.value[index++];
         return storedLayer.type === "image" &&
           storedLayer.value.type === "asset" &&
           initialLayer.type === "keyword" &&
