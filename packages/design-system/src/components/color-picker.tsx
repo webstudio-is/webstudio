@@ -187,7 +187,7 @@ const shouldHandleColorInputChange = ({
 
 const cancelColorAreaDrag = (colorInput: ColorInput | null) => {
   colorInput?.shadowRoot
-    ?.querySelector<HTMLElement>(".area-picker.dragging")
+    ?.querySelector<HTMLElement>(".area-picker")
     ?.dispatchEvent(new PointerEvent("pointercancel"));
 };
 
