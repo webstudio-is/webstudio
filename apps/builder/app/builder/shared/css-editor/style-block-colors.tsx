@@ -42,6 +42,7 @@ type MountedSwatch = {
   to: number;
   widget: ColorSwatch;
   active: boolean;
+  openCount: number;
   pendingValue?: StyleValue;
 };
 
@@ -135,6 +136,7 @@ class ColorSwatch extends WidgetType {
               }
             }
             mounted.active = true;
+            mounted.openCount += 1;
             activeSwatches.set(mounted.view, mounted);
             mounted.widget.render(mounted);
           }}
@@ -144,6 +146,7 @@ class ColorSwatch extends WidgetType {
     }
     mounted.root.render(
       <ColorPicker
+        key={mounted.openCount}
         open
         value={this.color}
         css={swatchSize}
@@ -199,6 +202,7 @@ class ColorSwatch extends WidgetType {
       to: this.to,
       widget: this,
       active: false,
+      openCount: 0,
     };
     mountedSwatches.set(element, mounted);
     this.render(mounted);
