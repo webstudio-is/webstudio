@@ -19,18 +19,24 @@ import { humanizeString } from "~/shared/string-utils";
 import {
   $registeredComponentMetas,
   $selectedInstanceSelector,
+  $selectedInstancePathWithRoot,
+  $selectedBreakpointId,
+  $selectedStyleState,
+  selectInstance,
   $virtualInstances,
 } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
 import { $instances, $styleSources } from "~/shared/sync/data-stores";
 import type {
   ComputedStyleDecl,
+  StyleValueSource,
   StyleValueSourceColor,
 } from "~/shared/style-object-model";
 import { useComputedStyles } from "./shared/model";
 import { useReadonly } from "./shared/readonly";
 import { StyleSourceBadge } from "./style-source";
 import { createBatchUpdate } from "./shared/use-style-data";
+import { selectStyleSource } from "~/builder/shared/style-source-actions";
 import { getInstanceLabel } from "~/builder/shared/instance-label";
 import { $isAltPressed } from "./shared/modifier-keys";
 
@@ -82,11 +88,15 @@ export const PropertyInfo = ({
   const metas = useStore($registeredComponentMetas);
   const isAltPressed = useStore($isAltPressed);
   const selectedInstanceId = useStore($selectedInstanceSelector)?.[0];
+  const instancePath = useStore($selectedInstancePathWithRoot);
 
   let resettable = false;
-  const breakpointSet = new Set<string>();
-  const styleSourceNameSet = new Set<string>();
-  const instanceSet = new Set<string>();
+  const breakpointSources = new Map<
+    string,
+    { label: string; source: StyleValueSource }
+  >();
+  const styleSourceNames = new Map<string, StyleValueSource>();
+  const instanceSources = new Map<string, StyleValueSource>();
 
   for (const { source } of styles) {
     if (source.name === "local" || source.name === "overwritten") {
@@ -113,22 +123,45 @@ export const PropertyInfo = ({
         const stateLabel =
           meta?.states?.find((item) => item.selector === source.state)?.label ??
           humanizeString(source.state);
-        styleSourceNameSet.add(`${styleSourceName} (${stateLabel})`);
+        styleSourceNames.set(`${styleSourceName} (${stateLabel})`, source);
       } else {
-        styleSourceNameSet.add(styleSourceName);
+        styleSourceNames.set(styleSourceName, source);
       }
     }
     if (breakpoint) {
-      breakpointSet.add(
-        breakpoint?.minWidth?.toString() ??
-          breakpoint?.maxWidth?.toString() ??
-          "Base"
-      );
+      breakpointSources.set(breakpoint.id, {
+        label:
+          breakpoint.minWidth?.toString() ??
+          breakpoint.maxWidth?.toString() ??
+          "Base",
+        source,
+      });
     }
     if (instance && meta) {
-      instanceSet.add(getInstanceLabel(instance));
+      instanceSources.set(getInstanceLabel(instance), source);
     }
   }
+
+  const jumpToSource = (source: StyleValueSource) => {
+    const target = instancePath?.find(
+      ({ instance }) => instance.id === source.instanceId
+    );
+    if (target === undefined) {
+      return;
+    }
+    selectInstance(target.instanceSelector);
+    if (source.styleSourceId) {
+      selectStyleSource(source.styleSourceId, source.state);
+    } else {
+      $selectedStyleState.set(source.state);
+    }
+    if (source.breakpointId) {
+      $selectedBreakpointId.set(source.breakpointId);
+    }
+  };
+  const canJumpToSource = (source: StyleValueSource) =>
+    instancePath?.some(({ instance }) => instance.id === source.instanceId) ??
+    false;
 
   const mdnUrl = propertiesData[property]?.mdnUrl;
   const sourceColor =
@@ -193,7 +226,7 @@ export const PropertyInfo = ({
           {sourceDescription}
         </Text>
       )}
-      {(styleSourceNameSet.size > 0 || instanceSet.size > 0) && (
+      {(styleSourceNames.size > 0 || instanceSources.size > 0) && (
         <Flex
           direction="column"
           gap="1"
@@ -201,22 +234,45 @@ export const PropertyInfo = ({
         >
           <Text color="moreSubtle">Value comes from</Text>
           <Flex gap="1" wrap="wrap">
-            {Array.from(breakpointSet).map((label) => (
-              <StyleSourceBadge key={label} source="breakpoint" variant="small">
-                {label}
-              </StyleSourceBadge>
-            ))}
-            {Array.from(styleSourceNameSet).map((label) => (
+            {Array.from(breakpointSources).map(([id, { label, source }]) => (
               <StyleSourceBadge
-                key={label}
-                source={label === "Local" ? "local" : "token"}
+                as="button"
+                type="button"
+                key={id}
+                source="breakpoint"
                 variant="small"
+                clickable
+                disabled={!canJumpToSource(source)}
+                onClick={() => jumpToSource(source)}
               >
                 {label}
               </StyleSourceBadge>
             ))}
-            {Array.from(instanceSet).map((label) => (
-              <StyleSourceBadge key={label} source="instance" variant="small">
+            {Array.from(styleSourceNames).map(([label, source]) => (
+              <StyleSourceBadge
+                as="button"
+                type="button"
+                key={label}
+                source={label === "Local" ? "local" : "token"}
+                variant="small"
+                clickable
+                disabled={!canJumpToSource(source)}
+                onClick={() => jumpToSource(source)}
+              >
+                {label}
+              </StyleSourceBadge>
+            ))}
+            {Array.from(instanceSources).map(([label, source]) => (
+              <StyleSourceBadge
+                as="button"
+                type="button"
+                key={label}
+                source="instance"
+                variant="small"
+                clickable
+                disabled={!canJumpToSource(source)}
+                onClick={() => jumpToSource(source)}
+              >
                 {label}
               </StyleSourceBadge>
             ))}

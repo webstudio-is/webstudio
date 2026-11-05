@@ -22,6 +22,8 @@ At the top of the Style Panel is the **style source bar**, which determines wher
 
 Style label colors indicate where each value comes from. See [Label colors](anatomy-of-the-webstudio-builder.md#label-colors) for the full reference.
 
+Click a badge under Value comes from in a property tooltip to jump to that style source, breakpoint, or instance.
+
 ## Sections
 
 The Style Panel is organized into collapsible sections. A dot on the section title indicates at least one property in that section has a value set.

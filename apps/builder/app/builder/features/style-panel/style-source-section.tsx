@@ -4,9 +4,9 @@ import { computed } from "nanostores";
 import { pseudoClassesByTag } from "@webstudio-is/html-data";
 import { isPseudoElement } from "@webstudio-is/css-data";
 import {
+  type StyleDecl,
   type StyleSource,
   type StyleSourceToken,
-  type StyleDecl,
 } from "@webstudio-is/sdk";
 import { type RenameStyleSourceError } from "@webstudio-is/project-build/runtime";
 import { type ItemSource, StyleSourceInput } from "./style-source";
@@ -16,13 +16,13 @@ import {
   DeleteStyleSourceDialog,
   setStyleSourceLocked,
   deselectMatchingStyleSource,
+  selectStyleSource,
 } from "~/builder/shared/style-source-actions";
 import {
   $registeredComponentMetas,
   $selectedInstanceStatesByStyleSourceId,
   $selectedInstanceStyleSources,
   $selectedOrLastStyleSourceSelector,
-  $selectedStyleSources,
   $selectedStyleState,
 } from "~/shared/nano-states";
 import {
@@ -41,20 +41,6 @@ declare module "~/shared/pubsub" {
     focusStyleSourceInput: undefined;
   }
 }
-
-const selectStyleSource = (
-  styleSourceId: StyleSource["id"],
-  state?: StyleDecl["state"]
-) => {
-  const instanceId = $selectedInstance.get()?.id;
-  if (instanceId === undefined) {
-    return;
-  }
-  const selectedStyleSources = new Map($selectedStyleSources.get());
-  selectedStyleSources.set(instanceId, styleSourceId);
-  $selectedStyleSources.set(selectedStyleSources);
-  $selectedStyleState.set(state);
-};
 
 const createStyleSource = (name: string) => {
   const instanceId = $selectedInstance.get()?.id;
