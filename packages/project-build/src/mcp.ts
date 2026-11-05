@@ -10,6 +10,7 @@ import {
   getComponentJsxName,
   inputJsonSchemaAcceptsType,
   parseComponentName,
+  ROOT_INSTANCE_ID,
   toInputJsonSchemaObject,
   type WsComponentMeta,
   type ContentBlockDiagnostic,
@@ -2465,6 +2466,10 @@ export const mcpArgumentExamples: Record<
     {
       instanceId: "instance-id",
       include: ["props", "styles", "children"],
+    },
+    {
+      instanceId: ROOT_INSTANCE_ID,
+      include: ["styles", "sources"],
     },
   ],
   "search-project": [

@@ -996,6 +996,16 @@ source of truth. For tools with no required arguments, pass `{}`.
 }
 ```
 
+```json
+{
+  "instanceId": ":root",
+  "include": [
+    "styles",
+    "sources"
+  ]
+}
+```
+
 ### search-project
 
 ```json
