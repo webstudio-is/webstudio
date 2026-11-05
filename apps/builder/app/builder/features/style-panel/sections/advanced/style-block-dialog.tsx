@@ -197,8 +197,11 @@ const getLocalStyles = (declarations: Declaration[]): CssStyleMap =>
   );
 
 const mixedCompletionSource: CompletionSource = (context) => {
+  const end = context.state.doc.length;
   const group = getMixedStyleGroups(context.state.doc.toString()).find(
-    ({ contentFrom, to }) => context.pos >= contentFrom && context.pos < to
+    ({ contentFrom, to }) =>
+      context.pos >= contentFrom &&
+      (context.pos < to || (to === end && context.pos === end))
   );
   return group?.source === "local" ? blockCompletionSource(context) : null;
 };
@@ -517,23 +520,24 @@ const MixedStyleBlockEditor = ({
                     onReset={
                       isLocal
                         ? () => {
-                            const firstLine = view.state.doc.lineAt(
-                              range.declarationFrom
-                            );
-                            const lastLine = view.state.doc.lineAt(
-                              Math.max(
-                                range.declarationFrom,
-                                range.declarationTo - 1
-                              )
-                            );
+                            const doc = view.state.doc;
+                            let from = range.declarationFrom;
+                            let to = range.declarationTo;
+                            if (doc.sliceString(to, to + 1) === ";") {
+                              to += 1;
+                            }
+                            const firstLine = doc.lineAt(from);
+                            const lastLine = doc.lineAt(Math.max(from, to - 1));
+                            if (
+                              doc.sliceString(firstLine.from, from).trim() ===
+                                "" &&
+                              doc.sliceString(to, lastLine.to).trim() === ""
+                            ) {
+                              from = firstLine.from;
+                              to = Math.min(lastLine.to + 1, doc.length);
+                            }
                             view.dispatch({
-                              changes: {
-                                from: firstLine.from,
-                                to: Math.min(
-                                  lastLine.to + 1,
-                                  view.state.doc.length
-                                ),
-                              },
+                              changes: { from, to },
                             });
                             applyRef.current();
                           }
