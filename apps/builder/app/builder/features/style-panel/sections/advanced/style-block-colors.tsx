@@ -49,6 +49,41 @@ type MountedSwatch = {
 const mountedSwatches = new WeakMap<HTMLElement, MountedSwatch>();
 const activeSwatches = new WeakMap<EditorView, MountedSwatch>();
 
+const resolveVariableColor = (
+  value: string | undefined,
+  variables: Map<string, string>
+) => {
+  const visited = new Set<string>();
+  while (value !== undefined) {
+    value = value.trim();
+    const color = parseColor(value);
+    if (color !== undefined) {
+      return { color, value };
+    }
+    try {
+      const ast = parse(value, { context: "value" });
+      const alias = ast.children.first;
+      if (
+        ast.children.size !== 1 ||
+        alias?.type !== "Function" ||
+        alias.name !== "var"
+      ) {
+        return;
+      }
+      const reference = parseCssVar(alias);
+      if (reference === undefined || visited.has(reference.value)) {
+        return;
+      }
+      visited.add(reference.value);
+      value =
+        variables.get(`--${reference.value}`) ??
+        (reference.fallback && toValue(reference.fallback));
+    } catch {
+      return;
+    }
+  }
+};
+
 class ColorSwatch extends WidgetType {
   readonly color: ColorValue;
   readonly from: number;
@@ -244,16 +279,18 @@ export const createColorSwatches = (onComplete: () => void) => {
           node.children.first?.type === "Identifier"
         ) {
           const reference = parseCssVar(node);
-          const resolved =
+          const resolved = resolveVariableColor(
             variables.get(`--${reference?.value}`) ??
-            (reference?.fallback && toValue(reference.fallback));
+              (reference?.fallback && toValue(reference.fallback)),
+            variables
+          );
           if (resolved !== undefined) {
-            color = parseColor(resolved);
-            if (color !== undefined && !custom) {
+            color = resolved.color;
+            if (!custom) {
               const resolvedFrom = from - valueStart;
               const resolvedValue =
                 source.slice(valueStart, from) +
-                resolved +
+                resolved.value +
                 source.slice(to, valueEnd);
               try {
                 const resolvedAst = parse(resolvedValue, {
@@ -270,7 +307,7 @@ export const createColorSwatches = (onComplete: () => void) => {
                     if (
                       resolvedNode.loc?.start.offset === resolvedFrom &&
                       resolvedNode.loc.end.offset ===
-                        resolvedFrom + resolved.length &&
+                        resolvedFrom + resolved.value.length &&
                       resolvedMatch.isType(resolvedNode, "color")
                     ) {
                       isColor = true;

@@ -5,12 +5,6 @@ import {
   $selectedOrLastStyleSourceSelector,
 } from "~/shared/nano-states";
 
-export type StyleBlockEditorSource =
-  | "local"
-  | "cascaded"
-  | "preset"
-  | "globalVariables";
-
 export const $styleBlockEditorOpenFor = atom<
   { selectionKey: string } | undefined
 >(undefined);

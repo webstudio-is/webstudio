@@ -1,6 +1,5 @@
 import {
   useEffect,
-  useMemo,
   useState,
   type ComponentProps,
   type ReactNode,
@@ -128,16 +127,10 @@ const CodeView = ({
   onApply: ComponentProps<typeof InlineMixedStyleBlockEditor>["onApply"];
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>();
-  const { localDeclarations, visibleDeclarations } = useMemo(
-    () => ({
-      localDeclarations:
-        getMatchingDeclarations(blockDeclarations, searchTerm) ??
-        blockDeclarations,
-      visibleDeclarations:
-        getMatchingDeclarations(declarations, searchTerm) ?? declarations,
-    }),
-    [blockDeclarations, declarations, searchTerm]
-  );
+  const localDeclarations =
+    getMatchingDeclarations(blockDeclarations, searchTerm) ?? blockDeclarations;
+  const visibleDeclarations =
+    getMatchingDeclarations(declarations, searchTerm) ?? declarations;
   const searching = searchTerm !== undefined;
   return (
     <>

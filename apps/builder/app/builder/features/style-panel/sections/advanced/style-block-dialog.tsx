@@ -39,10 +39,7 @@ import {
 import { declarationLineBreak } from "~/builder/shared/css-editor/declaration-line-break";
 import { CssFragmentEditorContent } from "../../shared/css-fragment";
 import { $cssVarsMap } from "../../shared/model";
-import {
-  getPriorityStyleValueSource,
-  PropertyInfo,
-} from "../../property-label";
+import { PropertyInfo } from "../../property-label";
 import { ReadonlyProvider } from "../../shared/readonly";
 import { createColorSwatches } from "./style-block-colors";
 import {
@@ -213,7 +210,7 @@ const MixedStyleBlockEditor = ({
     if (codeRef.current === appliedCodeRef.current) {
       return;
     }
-    const parsed = parseMixedStyleBlock(codeRef.current, parseBlock);
+    const parsed = parseMixedStyleBlock(codeRef.current);
     const appliedStyles = onApply({
       oldStyles: oldStylesRef.current,
       initialParsedStyles: initialParsedRef.current,
@@ -250,26 +247,24 @@ const MixedStyleBlockEditor = ({
               const properties = new Set(
                 parsed.size > 0 ? parsed.keys() : [range.property]
               );
-              source =
-                getPriorityStyleValueSource(
-                  sourceSnapshotRef.current.filter((declaration) =>
-                    properties.has(declaration.property)
-                  )
-                ) === "overwritten"
-                  ? "overwritten"
-                  : "local";
+              source = sourceSnapshotRef.current.some(
+                (declaration) =>
+                  properties.has(declaration.property) &&
+                  declaration.source.name === "overwritten"
+              )
+                ? "overwritten"
+                : "local";
             }
             return Decoration.mark({ class: `cm-mixed-${source}` }).range(
               range.from,
               range.to
             );
           }),
-          ...parseMixedStyleBlock(value, parseBlock).overriddenRanges.map(
-            ({ from, to }) =>
-              Decoration.mark({ class: "cm-overridden-declaration" }).range(
-                from,
-                to
-              )
+          ...parseMixedStyleBlock(value).overriddenRanges.map(({ from, to }) =>
+            Decoration.mark({ class: "cm-overridden-declaration" }).range(
+              from,
+              to
+            )
           ),
         ],
         true
@@ -312,9 +307,7 @@ const MixedStyleBlockEditor = ({
           currentGroups.some(
             (group, index) => group.source !== nextGroups[index]?.source
           );
-        const protectedRanges = getProtectedMixedRanges(
-          transaction.startState.doc.toString()
-        );
+        const protectedRanges = getProtectedMixedRanges(currentGroups);
         let blocked = changedGroups;
         let blockedPos = transaction.startState.selection.main.head;
         transaction.changes.iterChangedRanges((from, to) => {
@@ -444,9 +437,7 @@ const MixedStyleBlockEditor = ({
         };
       }),
       linter(
-        (view) =>
-          parseMixedStyleBlock(view.state.doc.toString(), parseBlock)
-            .diagnostics
+        (view) => parseMixedStyleBlock(view.state.doc.toString()).diagnostics
       ),
       linterTooltipTheme,
       declarationLineBreak,

@@ -7,8 +7,13 @@ import {
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { getAdvancedStyleSource } from "./stores";
 import { formatStyleBlock } from "./style-block-format";
-import type { parseBlock } from "./style-block-parse";
-import type { StyleBlockEditorSource } from "./style-block-editor-state";
+import { parseBlock } from "./style-block-parse";
+
+type StyleBlockEditorSource =
+  | "local"
+  | "cascaded"
+  | "preset"
+  | "globalVariables";
 
 const sourceTitles: Record<StyleBlockEditorSource, string> = {
   local: "Local",
@@ -91,8 +96,8 @@ export const getMixedStyleGroups = (code: string): MixedStyleGroup[] => {
   return groups;
 };
 
-export const getProtectedMixedRanges = (code: string) => {
-  return getMixedStyleGroups(code).map((group) => ({
+export const getProtectedMixedRanges = (groups: MixedStyleGroup[]) => {
+  return groups.map((group) => ({
     from: group.from,
     to: group.source === "local" ? group.contentFrom : group.to,
     inclusive: group.source !== "local",
@@ -129,14 +134,11 @@ export const getMixedPropertyRanges = (code: string): MixedPropertyRange[] => {
   return ranges;
 };
 
-export const parseMixedStyleBlock = (
-  code: string,
-  parseDeclarations: typeof parseBlock
-) => {
+export const parseMixedStyleBlock = (code: string) => {
   const group = getMixedStyleGroups(code).find(
     (group) => group.source === "local"
   );
-  const parsed = parseDeclarations(
+  const parsed = parseBlock(
     group === undefined ? "" : code.slice(group.contentFrom, group.to)
   );
   const offset = group?.contentFrom ?? 0;
