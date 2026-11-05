@@ -1,5 +1,7 @@
 import {
+  useCallback,
   useEffect,
+  useRef,
   useState,
   type ComponentProps,
   type ReactNode,
@@ -13,7 +15,6 @@ import {
   DropdownMenuItemRightSlot,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  Box,
   Kbd,
   PanelContent,
   SearchField,
@@ -23,6 +24,8 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
+import { findNext, findPrevious } from "@codemirror/search";
+import type { EditorView } from "@codemirror/view";
 import {
   type CssProperty,
   type CssStyleMap,
@@ -51,11 +54,9 @@ import { getDots } from "../../shared/style-section";
 import { CssEditor } from "../../../../shared/css-editor";
 import { insertStyleDeclarations } from "../../../../shared/css-editor/css-editor";
 import { createDeclarationActions } from "../../../../shared/css-editor/css-editor-context-menu";
-import { getMatchingDeclarations } from "../../../../shared/css-editor/property-search";
 import {
   $advancedStyleDeclarations,
   $visibleAdvancedStyleDeclarations,
-  getAdvancedStyleSource,
 } from "./stores";
 import {
   $styleBlockEditorOpenFor,
@@ -127,42 +128,34 @@ const CodeView = ({
   onApply: ComponentProps<typeof InlineMixedStyleBlockEditor>["onApply"];
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>();
-  const localDeclarations =
-    getMatchingDeclarations(blockDeclarations, searchTerm) ?? blockDeclarations;
-  const visibleDeclarations =
-    getMatchingDeclarations(declarations, searchTerm) ?? declarations;
-  const searching = searchTerm !== undefined;
+  const editorRef = useRef<EditorView>();
+  const handleEditorView = useCallback((view: EditorView | undefined) => {
+    editorRef.current = view;
+  }, []);
   return (
     <>
       <PanelContent>
         <SearchField
           onChange={(event) => {
-            const search = event.target.value.trim().replaceAll("-", " ");
-            setSearchTerm(search || undefined);
+            setSearchTerm(event.target.value || undefined);
           }}
           onAbort={() => setSearchTerm(undefined)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && searchTerm && editorRef.current) {
+              event.preventDefault();
+              (event.shiftKey ? findPrevious : findNext)(editorRef.current);
+            }
+          }}
         />
       </PanelContent>
-      <Box css={{ display: searching ? "none" : undefined }}>
-        <InlineMixedStyleBlockEditor
-          declarations={blockDeclarations}
-          sourceDeclarations={declarations}
-          readonly={readonly}
-          onApply={onApply}
-        />
-      </Box>
-      {searching &&
-        (localDeclarations.length > 0 ||
-          visibleDeclarations.some(
-            (declaration) => getAdvancedStyleSource(declaration) !== undefined
-          )) && (
-          <InlineMixedStyleBlockEditor
-            declarations={localDeclarations}
-            sourceDeclarations={visibleDeclarations}
-            readonly
-            onApply={() => {}}
-          />
-        )}
+      <InlineMixedStyleBlockEditor
+        declarations={blockDeclarations}
+        sourceDeclarations={declarations}
+        readonly={readonly}
+        onApply={onApply}
+        searchTerm={searchTerm}
+        onEditorView={handleEditorView}
+      />
     </>
   );
 };

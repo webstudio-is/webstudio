@@ -2,6 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { CompletionSource } from "@codemirror/autocomplete";
 import { linter } from "@codemirror/lint";
+import {
+  getSearchQuery,
+  search,
+  SearchQuery,
+  setSearchQuery,
+} from "@codemirror/search";
 import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import {
   Decoration,
@@ -19,6 +25,7 @@ import {
   Text,
   theme,
   tooltipContentCss,
+  cssVar,
 } from "@webstudio-is/design-system";
 import {
   camelCaseProperty,
@@ -62,6 +69,37 @@ const blockedEditMessage =
   "This declaration comes from another source. Add a local declaration to override it.";
 const blockedEdit = StateEffect.define<number>();
 const sourceChanged = StateEffect.define<void>();
+const searchMatches = StateField.define({
+  create: (state) => getSearchDecorations(state),
+  update: (decorations, transaction) =>
+    transaction.docChanged ||
+    transaction.selection !== undefined ||
+    transaction.effects.some((effect) => effect.is(setSearchQuery))
+      ? getSearchDecorations(transaction.state)
+      : decorations,
+  provide: (field) => EditorView.decorations.from(field),
+});
+
+const getSearchDecorations = (state: EditorState) => {
+  const query = getSearchQuery(state);
+  if (!query.valid) {
+    return Decoration.none;
+  }
+  const { from, to } = state.selection.main;
+  const matches = [];
+  const cursor = query.getCursor(state);
+  for (let match = cursor.next(); !match.done; match = cursor.next()) {
+    matches.push(
+      Decoration.mark({
+        class:
+          match.value.from === from && match.value.to === to
+            ? "cm-style-searchMatch cm-style-searchMatch-selected"
+            : "cm-style-searchMatch",
+      }).range(match.value.from, match.value.to)
+    );
+  }
+  return Decoration.set(matches, true);
+};
 const blockedEditTooltip = StateField.define<Tooltip | null>({
   create: () => null,
   update: (tooltip, transaction) => {
@@ -101,6 +139,8 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   inline?: boolean;
+  searchTerm?: string;
+  onEditorView?: (view: EditorView | undefined) => void;
 };
 
 const sourceColorTheme = EditorView.theme({
@@ -122,6 +162,13 @@ const sourceColorTheme = EditorView.theme({
       pointerEvents: "auto",
     },
   ".cm-overridden-declaration": { textDecoration: "line-through" },
+  ".cm-style-searchMatch": {
+    backgroundColor: cssVar("--background-warning-subtle"),
+  },
+  ".cm-style-searchMatch-selected": {
+    backgroundColor: cssVar("--background-text-selection"),
+    color: cssVar("--foreground-on-text-selection"),
+  },
 });
 
 const getLocalStyles = (declarations: Declaration[]): CssStyleMap =>
@@ -147,6 +194,8 @@ const MixedStyleBlockEditor = ({
   open,
   onOpenChange,
   inline = false,
+  searchTerm,
+  onEditorView,
 }: Props) => {
   const [code, setCode] = useState("");
   const codeRef = useRef("");
@@ -158,6 +207,21 @@ const MixedStyleBlockEditor = ({
   const editorViewRef = useRef<EditorView>();
   const wasOpenRef = useRef(false);
   const applyRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    const view = editorViewRef.current;
+    if (view === undefined) {
+      return;
+    }
+    const query = new SearchQuery({ search: searchTerm ?? "", literal: true });
+    view.dispatch({ effects: setSearchQuery.of(query) });
+    if (query.valid) {
+      const first = query.getCursor(view.state).next();
+      if (!first.done) {
+        view.dispatch({ effects: EditorView.scrollIntoView(first.value.from) });
+      }
+    }
+  }, [searchTerm]);
 
   const setInitialStyles = useCallback(
     (localStyles: CssStyleMap, nextCode: string) => {
@@ -281,13 +345,17 @@ const MixedStyleBlockEditor = ({
     return [
       colorSwatches,
       propertyField,
+      search(),
+      searchMatches,
       ViewPlugin.fromClass(
         class {
           constructor(view: EditorView) {
             editorViewRef.current = view;
+            onEditorView?.(view);
           }
           destroy() {
             editorViewRef.current = undefined;
+            onEditorView?.(undefined);
           }
         }
       ),
@@ -443,7 +511,7 @@ const MixedStyleBlockEditor = ({
       declarationLineBreak,
       ...(inline ? [placeholder("Add local styles")] : []),
     ];
-  }, [colorSwatches, inline, readonly]);
+  }, [colorSwatches, inline, readonly, onEditorView]);
 
   const content = (
     <Box

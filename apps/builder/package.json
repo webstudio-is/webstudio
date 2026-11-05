@@ -40,6 +40,7 @@
     "@codemirror/language": "^6.11.0",
     "@codemirror/language-data": "^6.5.2",
     "@codemirror/lint": "^6.8.5",
+    "@codemirror/search": "6.5.11",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.36.4",
     "@emotion/hash": "^0.9.2",
