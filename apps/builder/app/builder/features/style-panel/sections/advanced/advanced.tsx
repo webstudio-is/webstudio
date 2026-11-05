@@ -166,22 +166,24 @@ const CodeView = ({
       >
         <SearchField
           suffix={
-            <>
-              <SmallIconButton
-                aria-label="Previous match"
-                icon={<ChevronUpIcon />}
-                bleed={false}
-                disabled={!searchNavigation.hasPrevious}
-                onClick={() => moveSearch("previous")}
-              />
-              <SmallIconButton
-                aria-label="Next match"
-                icon={<ChevronDownIcon />}
-                bleed={false}
-                disabled={!searchNavigation.hasNext}
-                onClick={() => moveSearch("next")}
-              />
-            </>
+            searchTerm ? (
+              <>
+                <SmallIconButton
+                  aria-label="Previous match"
+                  icon={<ChevronUpIcon />}
+                  bleed={false}
+                  disabled={!searchNavigation.hasPrevious}
+                  onClick={() => moveSearch("previous")}
+                />
+                <SmallIconButton
+                  aria-label="Next match"
+                  icon={<ChevronDownIcon />}
+                  bleed={false}
+                  disabled={!searchNavigation.hasNext}
+                  onClick={() => moveSearch("next")}
+                />
+              </>
+            ) : undefined
           }
           onChange={(event) => {
             setSearchTerm(event.target.value || undefined);
