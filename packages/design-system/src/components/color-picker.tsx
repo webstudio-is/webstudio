@@ -114,6 +114,7 @@ const thumbStyle = css({
   position: "relative",
   width: theme.spacing[9],
   height: theme.spacing[9],
+  padding: 0,
   backgroundBlendMode: "difference",
   borderRadius: theme.borderRadius[2],
   borderWidth: 1,
