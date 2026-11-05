@@ -701,9 +701,23 @@ describe("project session mcp adapter", () => {
           }),
         }),
     });
+    const discovery = await adapter.callTool({
+      name: "meta.get-more-tools",
+      input: { tools: ["inspect-instance"] },
+    });
+    const { tools } = discovery.structuredContent.data as {
+      tools: Array<{ mcpExamples: Array<{ instanceId?: string }> }>;
+    };
+    const rootExample = tools[0].mcpExamples.find(
+      ({ instanceId }) => instanceId === ROOT_INSTANCE_ID
+    );
+    expect(rootExample).toEqual({
+      instanceId: ROOT_INSTANCE_ID,
+      include: ["styles", "sources"],
+    });
     const response = await adapter.callTool({
       name: "inspect-instance",
-      input: { instanceId: ROOT_INSTANCE_ID, include: ["styles"] },
+      input: rootExample,
     });
 
     expect(response.structuredContent).toMatchObject({
