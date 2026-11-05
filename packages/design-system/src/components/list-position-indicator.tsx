@@ -9,7 +9,6 @@ import { cssVar } from "../css-var";
 
 const CIRCLE_SIZE = 8;
 const LINE_THICKNESS = 2;
-const OUTLINE_WIDTH = 1;
 
 // overlap the line with the circle by this much
 // to make sure they are connected
@@ -18,17 +17,6 @@ const OVERLAP = 2;
 const Container = styled(Box, {
   position: "absolute",
   zIndex: 1,
-});
-
-const CircleOutline = styled(Box, {
-  width: CIRCLE_SIZE + OUTLINE_WIDTH * 2,
-  height: CIRCLE_SIZE + OUTLINE_WIDTH * 2,
-  position: "absolute",
-  top: -CIRCLE_SIZE / 2 - OUTLINE_WIDTH,
-  left: -CIRCLE_SIZE / 2 - OUTLINE_WIDTH,
-  borderRadius: "50%",
-  pointerEvents: "none",
-  backgroundColor: cssVar("--foreground-on-accent"),
 });
 
 const Circle = styled(Box, {
@@ -51,8 +39,6 @@ const Line = styled(Box, {
   height: LINE_THICKNESS,
   backgroundColor: cssVar("--background-accent"),
   pointerEvents: "none",
-  outline: `solid ${cssVar("--foreground-on-accent")}`,
-  outlineWidth: OUTLINE_WIDTH,
 });
 
 const LineWithNub = styled(Line, {
@@ -87,7 +73,6 @@ export const TreePositionIndicator = ({
 }) => {
   return (
     <Container style={{ top: y, left: x, width: length }}>
-      <CircleOutline />
       <LineWithNub />
       <Circle />
     </Container>
