@@ -200,7 +200,11 @@ class ColorSwatch extends WidgetType {
     mounted.from = this.from;
     mounted.to = this.to;
     mounted.widget = this;
-    this.render(mounted);
+    // Keep the web component mounted while dragging. Re-rendering it from each
+    // editor text change resets its pointer interaction mid-drag.
+    if (!mounted.active) {
+      this.render(mounted);
+    }
     return true;
   }
 
