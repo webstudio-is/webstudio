@@ -171,7 +171,10 @@ const sourceColorTheme = EditorView.theme({
     backgroundColor: cssVar("--background-warning-subtle"),
   },
   ".cm-style-searchMatch-selected": {
-    boxShadow: `inset 0 0 0 1px ${cssVar("--border-focus")}`,
+    backgroundColor: cssVar("--background-text-selection"),
+  },
+  ".cm-style-searchMatch-selected, .cm-style-searchMatch-selected *": {
+    color: `${cssVar("--foreground-on-text-selection")} !important`,
   },
 });
 
