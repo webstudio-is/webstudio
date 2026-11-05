@@ -2,7 +2,15 @@ import {
   reparentInstance,
   toggleInstanceShow,
 } from "~/shared/instance-utils/mutation";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+} from "react";
+import { shallowEqual } from "shallow-equal";
 import { atom, computed } from "nanostores";
 import { mergeRefs } from "@react-aria/utils";
 import { useStore } from "@nanostores/react";
@@ -900,100 +908,115 @@ const NavigatorRow = memo(
   }) => {
     const level = item.visibleAncestors.length - 1;
     return (
-      <TreeSortableItem
-        level={level}
-        isExpanded={item.isExpanded}
-        isLastChild={item.isLastChild}
-        data={item}
-        canDrag={() => canDrag(item.instance, item.selector)}
-        dropTarget={item.dropTarget}
-        onDropTargetChange={(dropTarget, draggingItem) => {
-          $dragAndDropState.set({
-            ...$dragAndDropState.get(),
-            ...getNavigatorDragState({
-              item,
-              dropTarget,
-              draggingItem,
-              canDropTarget: canDrop,
-            }),
-          });
-        }}
-        onDrop={(data) => {
-          const builderDropTarget = $dragAndDropState.get().dropTarget;
-          commitNavigatorDrop({
-            item: data,
-            dropTarget: builderDropTarget,
-            reparent: reparentInstance,
-          });
-          $dragAndDropState.set({ isDragging: false });
-        }}
-        onExpand={(isExpanded) => handleExpand(item, isExpanded, false)}
-      >
-        <InstanceContextMenu>
-          <TreeNode
-            level={level}
-            isSelected={isSelected}
-            isSelectedDescendant={isSelectedDescendant}
-            isHighlighted={isHighlighted}
-            isExpanded={item.isExpanded}
-            isActionVisible={isAnimating || isMdx}
-            onExpand={(isExpanded, all) => handleExpand(item, isExpanded, all)}
-            nodeProps={{
-              style: {
-                opacity: item.isHidden ? 0.4 : undefined,
-                color: item.isReusable
-                  ? cssVar("--foreground-accent-secondary")
-                  : undefined,
-              },
+      <InstanceContextMenu>
+        <TreeNode
+          level={level}
+          isSelected={isSelected}
+          isSelectedDescendant={isSelectedDescendant}
+          isHighlighted={isHighlighted}
+          isExpanded={item.isExpanded}
+          isActionVisible={isAnimating || isMdx}
+          onExpand={(isExpanded, all) => handleExpand(item, isExpanded, all)}
+          nodeProps={{
+            style: {
+              opacity: item.isHidden ? 0.4 : undefined,
+              color: item.isReusable
+                ? cssVar("--foreground-accent-secondary")
+                : undefined,
+            },
+          }}
+          buttonProps={{
+            onPointerDown: (event) => onPointerDown(item.selector, event),
+            onMouseEnter: () => {
+              $hoveredInstanceSelector.set(item.selector);
+              $blockChildOutline.set(undefined);
+            },
+            onMouseLeave: () => $hoveredInstanceSelector.set(undefined),
+            onClick: (event) => onClick(item.selector, event),
+            onFocus: (event) => onFocus(item.selector, event),
+            onKeyDown: (event) => {
+              onKeyDown(item.selector, event);
+              if (event.defaultPrevented) {
+                return;
+              }
+              if (event.key === "Enter") {
+                emitCommand("editInstanceText");
+              }
+            },
+            onKeyUp,
+          }}
+          action={
+            isMdx ? (
+              <MdxContentMenu assetId={mdxAssetId} />
+            ) : (
+              <ShowToggle
+                instance={item.instance}
+                value={show}
+                isAnimating={isAnimating}
+              />
+            )
+          }
+        >
+          <TreeNodeContent
+            instance={item.instance}
+            mdx={isMdx}
+            isNameEditable={isNameEditable}
+            isEditing={isEditing}
+            onIsEditingChange={(isEditing) => {
+              $editingItemSelector.set(
+                isEditing === true ? item.selector : undefined
+              );
             }}
-            buttonProps={{
-              onPointerDown: (event) => onPointerDown(item.selector, event),
-              onMouseEnter: () => {
-                $hoveredInstanceSelector.set(item.selector);
-                $blockChildOutline.set(undefined);
-              },
-              onMouseLeave: () => $hoveredInstanceSelector.set(undefined),
-              onClick: (event) => onClick(item.selector, event),
-              onFocus: (event) => onFocus(item.selector, event),
-              onKeyDown: (event) => {
-                onKeyDown(item.selector, event);
-                if (event.defaultPrevented) {
-                  return;
-                }
-                if (event.key === "Enter") {
-                  emitCommand("editInstanceText");
-                }
-              },
-              onKeyUp,
-            }}
-            action={
-              isMdx ? (
-                <MdxContentMenu assetId={mdxAssetId} />
-              ) : (
-                <ShowToggle
-                  instance={item.instance}
-                  value={show}
-                  isAnimating={isAnimating}
-                />
-              )
-            }
-          >
-            <TreeNodeContent
-              instance={item.instance}
-              mdx={isMdx}
-              isNameEditable={isNameEditable}
-              isEditing={isEditing}
-              onIsEditingChange={(isEditing) => {
-                $editingItemSelector.set(
-                  isEditing === true ? item.selector : undefined
-                );
-              }}
-            />
-          </TreeNode>
-        </InstanceContextMenu>
-      </TreeSortableItem>
+          />
+        </TreeNode>
+      </InstanceContextMenu>
     );
-  }
+  },
+  // Position changes belong to the sortable wrapper. Row handlers only need
+  // the instance and selector, so unchanged controls can keep their render.
+  ({ item: previous, ...previousProps }, { item: next, ...nextProps }) =>
+    shallowEqual(previousProps, nextProps) &&
+    previous.instance === next.instance &&
+    areInstanceSelectorsEqual(previous.selector, next.selector) &&
+    previous.visibleAncestors.length === next.visibleAncestors.length &&
+    previous.isExpanded === next.isExpanded &&
+    previous.isHidden === next.isHidden &&
+    previous.isReusable === next.isReusable
+);
+
+const NavigatorSortableRow = memo(
+  ({ item, ...props }: ComponentProps<typeof NavigatorRow>) => (
+    <TreeSortableItem
+      level={item.visibleAncestors.length - 1}
+      isExpanded={item.isExpanded}
+      isLastChild={item.isLastChild}
+      data={item}
+      canDrag={() => canDrag(item.instance, item.selector)}
+      dropTarget={item.dropTarget}
+      onDropTargetChange={(dropTarget, draggingItem) => {
+        $dragAndDropState.set({
+          ...$dragAndDropState.get(),
+          ...getNavigatorDragState({
+            item,
+            dropTarget,
+            draggingItem,
+            canDropTarget: canDrop,
+          }),
+        });
+      }}
+      onDrop={(data) => {
+        commitNavigatorDrop({
+          item: data,
+          dropTarget: $dragAndDropState.get().dropTarget,
+          reparent: reparentInstance,
+        });
+        $dragAndDropState.set({ isDragging: false });
+      }}
+      onExpand={(isExpanded) => handleExpand(item, isExpanded, false)}
+    >
+      <NavigatorRow item={item} {...props} />
+    </TreeSortableItem>
+  )
 );
 
 export const NavigatorTree = () => {
@@ -1340,7 +1363,7 @@ export const NavigatorTree = () => {
             }
 
             return (
-              <NavigatorRow
+              <NavigatorSortableRow
                 key={key}
                 item={item}
                 meta={meta}
