@@ -1555,4 +1555,57 @@ describe("data store helpers", () => {
 
     expect(findCycles($instances.get().values())).toEqual([]);
   });
+
+  test.each(["edit", "view"] as const)(
+    "does not submit project-wide loaded data migrations with %s permission",
+    (authPermit) => {
+      setBaseStores();
+      $authPermit.set(authPermit);
+      $builderMode.set("content");
+      $instances
+        .get()
+        .set("legacy-code", createInstance("legacy-code", "CodeText", []));
+      $props.get().set("legacy-code-prop", {
+        id: "legacy-code-prop",
+        instanceId: "legacy-code",
+        type: "string",
+        name: "code",
+        value: "const answer = 42;",
+      });
+      const before = structuredClone(getWebstudioData());
+
+      migrateLoadedWebstudioData();
+
+      expect(serverSyncStore.popAll()).toEqual([]);
+      expect(externalContentSyncStore.popAll()).toEqual([]);
+      expect(getWebstudioData()).toEqual(before);
+    }
+  );
+
+  test.each(["own", "admin", "build"] as const)(
+    "still migrates loaded legacy content in Content mode with %s permission",
+    (authPermit) => {
+      setBaseStores();
+      $authPermit.set(authPermit);
+      $builderMode.set("content");
+      $instances
+        .get()
+        .set("legacy-code", createInstance("legacy-code", "CodeText", []));
+      $props.get().set("legacy-code-prop", {
+        id: "legacy-code-prop",
+        instanceId: "legacy-code",
+        type: "string",
+        name: "code",
+        value: "const answer = 42;",
+      });
+
+      migrateLoadedWebstudioData();
+
+      expect($instances.get().get("legacy-code")?.children).toEqual([
+        { type: "text", value: "const answer = 42;" },
+      ]);
+      expect($props.get().has("legacy-code-prop")).toBe(false);
+      expect(serverSyncStore.popAll()).toHaveLength(1);
+    }
+  );
 });

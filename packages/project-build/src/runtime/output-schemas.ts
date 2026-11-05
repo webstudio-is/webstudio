@@ -12,6 +12,7 @@ import {
   projectMeta,
   prop,
   instance,
+  presetStyleDecl,
   contentBlockDiagnostic,
 } from "@webstudio-is/sdk";
 import {
@@ -494,6 +495,7 @@ export const runtimeOutputSchemas = {
     ancestors: z.array(instanceSummary).optional(),
     props: z.array(prop).optional(),
     styles: z.array(declaration).optional(),
+    presetStyles: z.array(presetStyleDecl).optional(),
     children: z.array(instanceSummary).optional(),
     bindings: z.array(prop).optional(),
     sources: stringArray.optional(),

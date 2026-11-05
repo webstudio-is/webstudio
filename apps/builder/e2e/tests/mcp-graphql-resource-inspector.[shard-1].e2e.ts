@@ -118,7 +118,7 @@ test("MCP-authored GraphQL Form action retains its request and response snapshot
       },
     ],
   });
-  expect(responseBody.previewExchanges).toHaveLength(2);
+  expect(responseBody.previewExchanges).toHaveLength(1);
   for (const exchange of responseBody.previewExchanges) {
     expect(exchange).toMatchObject({
       resourceId: graphqlResourceId,
@@ -164,7 +164,7 @@ test("MCP-authored GraphQL Form action retains its request and response snapshot
   await dialog.getByRole("tab", { name: "Request" }).click();
   const requestEditor = dialog.locator('[role="tabpanel"] .cm-content').last();
   await expect(requestEditor).toContainText('"attempt": 1');
-  await expect(requestEditor).toContainText('"attempt": 2');
+  await expect(requestEditor).not.toContainText('"attempt": 2');
   await expect(requestEditor).toContainText('"method": "POST"');
   await expect(requestEditor).toContainText(url);
   await expect(requestEditor).toContainText("mutation Record");
@@ -175,7 +175,7 @@ test("MCP-authored GraphQL Form action retains its request and response snapshot
   await dialog.getByRole("tab", { name: "Response" }).click();
   const responseEditor = dialog.locator('[role="tabpanel"] .cm-content').last();
   await expect(responseEditor).toContainText('"attempt": 1');
-  await expect(responseEditor).toContainText('"attempt": 2');
+  await expect(responseEditor).not.toContainText('"attempt": 2');
   await expect(responseEditor).toContainText('"status": 502');
   await expect(responseEditor).toContainText(
     '"statusText": "Resource request failed"'

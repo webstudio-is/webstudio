@@ -188,7 +188,7 @@ test("MCP-authored generated Form delivers one Action and reports the next failu
         );
         expect(
           receiver.deliveries.map(({ pathname }) => pathname).sort()
-        ).toEqual(["/reject", "/reject", "/submit"]);
+        ).toEqual(["/reject", "/submit"]);
         const successfulDelivery = receiver.deliveries.find(
           ({ pathname }) => pathname === "/submit"
         );
@@ -301,7 +301,7 @@ test("MCP-authored generated Form sends uploaded files as multipart by default",
         );
         expect(
           receiver.deliveries.map(({ pathname }) => pathname).sort()
-        ).toEqual(["/reject", "/reject", "/submit"]);
+        ).toEqual(["/reject", "/submit"]);
         const delivery = receiver.deliveries.find(
           ({ pathname }) => pathname === "/submit"
         );

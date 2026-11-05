@@ -1,0 +1,162 @@
+import { act } from "react-dom/test-utils";
+import { createRoot } from "react-dom/client";
+import { expect, test } from "vitest";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import { coreMetas, elementComponent, type Instance } from "@webstudio-is/sdk";
+import { TooltipProvider } from "@webstudio-is/design-system";
+import {
+  $allSelectedInstanceSelectors,
+  $dragAndDropState,
+  $hoveredInstanceSelector,
+  $registeredComponentMetas,
+  $selectedPageId,
+  selectInstance,
+  selectInstances,
+} from "~/shared/nano-states";
+import { $instances, $pages } from "~/shared/sync/data-stores";
+import { NavigatorTree } from "./navigator-tree";
+
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
+
+test("reuses unrelated rows while selection and hover handlers stay current", () => {
+  const previousMetas = $registeredComponentMetas.get();
+  const reads = new Map<string, number>();
+  const ids = ["first", "second", "third"];
+  const metas = new Map(Object.entries(coreMetas));
+  for (const id of ids) {
+    metas.set(id, {
+      ...coreMetas[elementComponent],
+      // Count real row-content renders at the metadata boundary, without replacing modules.
+      get label() {
+        reads.set(id, (reads.get(id) ?? 0) + 1);
+        return id;
+      },
+    });
+  }
+  $registeredComponentMetas.set(metas);
+  $pages.set(
+    createDefaultPages({ rootInstanceId: "body", homePageId: "home" })
+  );
+  $instances.set(
+    new Map<string, Instance>([
+      [
+        "body",
+        {
+          type: "instance",
+          id: "body",
+          component: elementComponent,
+          children: ids.map((value) => ({ type: "id", value })),
+        },
+      ],
+      ...ids.map((id): [string, Instance] => [
+        id,
+        { type: "instance", id, component: id, children: [] },
+      ]),
+    ])
+  );
+  $selectedPageId.set("home");
+  const container = document.createElement("div");
+  container.style.width = "32px";
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  try {
+    act(() =>
+      root.render(
+        <TooltipProvider>
+          <NavigatorTree />
+        </TooltipProvider>
+      )
+    );
+    expect(
+      container.querySelector("[data-radix-scroll-area-viewport]")
+    ).toBeNull();
+    const sortableRow = container.querySelector<HTMLElement>(
+      "[data-tree-sortable-item]"
+    );
+    expect(sortableRow).not.toBeNull();
+    expect(getComputedStyle(sortableRow!).contentVisibility).toBe("auto");
+    const tree = container.querySelector<HTMLElement>("[data-navigator-tree]")!;
+    const scroller = tree.parentElement?.parentElement as HTMLElement;
+    expect(getComputedStyle(scroller).overflowX).toBe("auto");
+    expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+    scroller.scrollLeft = 100;
+    expect(scroller.scrollLeft).toBeGreaterThan(0);
+    act(() => selectInstance(["first", "body"]));
+    reads.clear();
+    act(() => selectInstance(["second", "body"]));
+    expect(reads.get("third") ?? 0).toBe(0);
+    expect(reads.get("second")).toBeGreaterThan(0);
+    reads.clear();
+    act(() => $hoveredInstanceSelector.set(["first", "body"]));
+    expect(reads.get("third") ?? 0).toBe(0);
+    expect(reads.get("first")).toBeGreaterThan(0);
+
+    const buttons = Array.from(
+      container.querySelectorAll<HTMLButtonElement>("[data-tree-button]")
+    );
+    const third = buttons.find((button) => button.textContent === "third")!;
+    act(() =>
+      third.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, ctrlKey: true })
+      )
+    );
+    expect($allSelectedInstanceSelectors.get()).toEqual([
+      ["second", "body"],
+      ["third", "body"],
+    ]);
+    const first = buttons.find((button) => button.textContent === "first")!;
+    act(() =>
+      first.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, shiftKey: true })
+      )
+    );
+    expect($allSelectedInstanceSelectors.get()).toEqual(
+      ids.map((id) => [id, "body"])
+    );
+    act(() => {
+      const nextMetas = new Map($registeredComponentMetas.get());
+      nextMetas.set("third", {
+        ...nextMetas.get("third")!,
+        label: "Updated component",
+      });
+      $registeredComponentMetas.set(nextMetas);
+    });
+    expect(third.textContent).toBe("Updated component");
+
+    // The drop marker crosses the row edge, so this row must not clip it.
+    const firstRow = first.closest<HTMLElement>("[data-tree-sortable-item]")!;
+    act(() =>
+      $dragAndDropState.set({
+        isDragging: true,
+        dropTarget: {
+          itemSelector: ["body"],
+          indexWithinChildren: 0,
+          placement: {
+            closestChildIndex: 0,
+            indexAdjustment: 0,
+            childrenOrientation: { type: "vertical", reverse: false },
+          },
+        },
+      })
+    );
+    expect(getComputedStyle(firstRow).contentVisibility).toBe("visible");
+    expect(
+      getComputedStyle(third.closest<HTMLElement>("[data-tree-sortable-item]")!)
+        .contentVisibility
+    ).toBe("auto");
+    act(() => $dragAndDropState.set({ isDragging: false }));
+    expect(getComputedStyle(firstRow).contentVisibility).toBe("auto");
+  } finally {
+    act(() => root.unmount());
+    container.remove();
+    selectInstances([]);
+    $hoveredInstanceSelector.set(undefined);
+    $dragAndDropState.set({ isDragging: false });
+    $selectedPageId.set(undefined);
+    $pages.set(undefined);
+    $instances.set(new Map());
+    $registeredComponentMetas.set(previousMetas);
+  }
+});

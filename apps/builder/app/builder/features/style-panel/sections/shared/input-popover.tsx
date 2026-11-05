@@ -116,7 +116,6 @@ const Input = ({
           batch.deleteProperty(property);
         }
         batch.publish();
-        onClosePopover();
       }}
     />
   );

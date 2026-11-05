@@ -127,7 +127,7 @@ test("MCP-authored Form submission exposes its saved HTTP exchange without anoth
         },
       ],
     });
-    expect(response.previewExchanges).toHaveLength(2);
+    expect(response.previewExchanges).toHaveLength(1);
     for (const exchange of response.previewExchanges) {
       expect(exchange).toMatchObject({
         resourceId: successfulResourceId,

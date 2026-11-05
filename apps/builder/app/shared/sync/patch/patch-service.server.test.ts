@@ -614,6 +614,42 @@ describe("applyPatchRequest", () => {
     });
   });
 
+  test("does not apply a later entry against state left by a failed save", async () => {
+    authorizePatchEntries.mockResolvedValue({
+      authorized: [
+        { entry: patch.entries[0], context: { writer: 1 } },
+        { entry: patch.entries[1], context: { writer: 2 } },
+      ],
+      rejected: [],
+    });
+    patchLoadedBuild.mockResolvedValue({
+      status: "error",
+      errors: "first save failed",
+    });
+
+    const result = await applyPatchRequestForTest(createContext(), patch);
+
+    expect(patchLoadedBuild).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      status: "partial",
+      version: 3,
+      entries: [
+        {
+          seq: 1,
+          transactionId: "tx-1",
+          status: "failed",
+          errors: "first save failed",
+        },
+        {
+          seq: 2,
+          transactionId: "tx-2",
+          status: "failed",
+          errors: "first save failed",
+        },
+      ],
+    });
+  });
+
   test("applies mixed writer entries with their own context without batching", async () => {
     authorizePatchEntries.mockResolvedValue({
       authorized: [

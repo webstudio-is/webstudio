@@ -50,10 +50,11 @@ export type ManagedFormResourceGraph = Omit<
   resources: readonly ManagedFormResource[];
 };
 
-/** An Email failure may occur after delivery; replaying it can send duplicates. */
+/** A failed write response does not mean the submission was not delivered. */
 export const shouldRetryManagedFormDestination: NonNullable<
   EmailResourceGraphLoadOptions["shouldRetryFailedRoot"]
-> = (_resourceId, request) => request.control !== "email";
+> = (_resourceId, request) =>
+  request.control !== "email" && request.method === "get";
 
 const maxFormRequestBytes = 25 * 1024 * 1024;
 const formRequestTooLarge = (maximumBytes: number) =>

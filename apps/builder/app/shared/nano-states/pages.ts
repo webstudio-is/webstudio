@@ -3,6 +3,7 @@ import {
   type Folder,
   type Page,
   type PageTemplate,
+  createId,
   findPageByIdOrPath,
   findParentFolderByChildId,
   getPagePath,
@@ -19,7 +20,27 @@ $selectedPageId.listen(() => {
   clearInstanceSelection();
 });
 
-export const $selectedPageHash = atom<{ hash: string }>({ hash: "" });
+export const $selectedPageHash = atom({ hash: "" });
+
+export const $pageNavigation = atom<
+  | {
+      id: string;
+      pageId: string;
+      hash: string;
+      location?: {
+        key: string;
+        type: "POP" | "PUSH" | "REPLACE";
+      };
+    }
+  | undefined
+>();
+
+export const requestPageNavigation = (
+  request: Omit<NonNullable<ReturnType<typeof $pageNavigation.get>>, "id">
+) => {
+  $pageNavigation.set({ ...request, id: createId() });
+  $selectedPageHash.set({ hash: request.hash });
+};
 
 export const $editingPageId = atom<undefined | Page["id"]>();
 

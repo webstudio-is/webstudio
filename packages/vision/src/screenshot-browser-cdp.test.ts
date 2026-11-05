@@ -927,6 +927,386 @@ const createFormBrowserSession = (socket: FakeWebSocket) =>
     createDependencies({ socket })
   );
 
+const createManagedFormSocket = ({
+  body = JSON.stringify({ results: [{ status: 201, resourceId: "action" }] }),
+  base64Encoded = false,
+  bodyDelay = 0,
+  unreadable = false,
+  navigationGap = false,
+  unrelated,
+}: {
+  body?: string;
+  base64Encoded?: boolean;
+  bodyDelay?: number;
+  unreadable?: boolean;
+  navigationGap?: boolean | "stalled";
+  unrelated?: { method: string; url: string; frameId: string };
+} = {}) => {
+  const url = "http://127.0.0.1:5173/contact";
+  const socket = createFormSubmissionSocket(url, () => ({
+    pageUrl: "http://127.0.0.1:5173/thanks?token=private-query#private-hash",
+    formState: "initial",
+    busy: false,
+  }));
+  const counters = {
+    submissions: 0,
+    reads: [] as string[],
+    lateReads: 0,
+    gaps: 0,
+  };
+  const emit = (method: string, params: unknown) =>
+    socket.emit("message", { data: JSON.stringify({ method, params }) });
+  const send = socket.send;
+  let navigated = false;
+  socket.send = (data) => {
+    const message = JSON.parse(data) as {
+      id: number;
+      method: string;
+      params?: { expression?: string; requestId?: string };
+    };
+    if (message.method === "Network.getResponseBody") {
+      counters.reads.push(message.params!.requestId!);
+      const tooLate = navigated;
+      counters.lateReads += Number(tooLate);
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              id: message.id,
+              ...(tooLate || unreadable
+                ? { error: { code: -32000, message: "Body unavailable" } }
+                : { result: { body, base64Encoded } }),
+            }),
+          }),
+        bodyDelay
+      );
+      return;
+    }
+    if (
+      navigationGap &&
+      message.method === "Runtime.evaluate" &&
+      message.params?.expression?.includes("aria-busy") &&
+      (counters.gaps++ === 0 || navigationGap === "stalled")
+    ) {
+      setTimeout(
+        () =>
+          socket.emit("message", {
+            data: JSON.stringify({
+              id: message.id,
+              error: {
+                code: -32000,
+                message: "Execution context was destroyed",
+              },
+            }),
+          }),
+        0
+      );
+      return;
+    }
+    send(data);
+    if (
+      message.method === "Runtime.evaluate" &&
+      message.params?.expression?.includes("form.requestSubmit(")
+    ) {
+      counters.submissions += 1;
+      setTimeout(() => {
+        if (unrelated) {
+          emit("Network.requestWillBeSent", {
+            requestId: "unrelated",
+            frameId: unrelated.frameId,
+            request: unrelated,
+          });
+          emit("Network.responseReceived", {
+            requestId: "unrelated",
+            frameId: unrelated.frameId,
+            type: "Fetch",
+            response: { status: 200, url: unrelated.url },
+          });
+          emit("Network.loadingFinished", { requestId: "unrelated" });
+        }
+        emit("Network.requestWillBeSent", {
+          requestId: "managed",
+          frameId: "main",
+          request: {
+            method: "POST",
+            url: "http://127.0.0.1:5173/__ws-form/contact",
+          },
+        });
+        emit("Network.responseReceived", {
+          requestId: "managed",
+          frameId: "main",
+          type: "XHR",
+          response: {
+            status: 200,
+            url: "http://127.0.0.1:5173/__ws-form/contact?token=private-query",
+          },
+        });
+        if (unrelated) {
+          emit("Network.requestWillBeSent", {
+            requestId: "unrelated",
+            frameId: unrelated.frameId,
+            request: unrelated,
+          });
+          emit("Network.responseReceived", {
+            requestId: "unrelated",
+            frameId: unrelated.frameId,
+            type: "Fetch",
+            response: { status: 200, url: unrelated.url },
+          });
+          emit("Network.loadingFinished", { requestId: "unrelated" });
+        }
+        emit("Network.loadingFinished", { requestId: "managed" });
+        navigated = true;
+        emit("Page.frameNavigated", {
+          frame: { id: "main", url: "http://127.0.0.1:5173/thanks" },
+        });
+      }, 5);
+    }
+  };
+  return { socket, counters };
+};
+
+test.each([false, true])(
+  "captures a completed managed response before navigation (base64: %s)",
+  async (base64Encoded) => {
+    const summary = {
+      results: [
+        {
+          status: 201,
+          resourceId: "action",
+          resourceName: "Receiver",
+          body: "private-body",
+          headers: { authorization: "private-header" },
+        },
+      ],
+      errors: [
+        {
+          status: 503,
+          resourceName: "Receipt",
+          message: "private-error",
+          body: "private-error-body",
+        },
+      ],
+    };
+    const json = JSON.stringify(summary);
+    const { socket, counters } = createManagedFormSocket({
+      body: base64Encoded ? Buffer.from(json).toString("base64") : json,
+      base64Encoded,
+      bodyDelay: 200,
+    });
+    const session = await createFormBrowserSession(socket);
+    try {
+      const result = await session.submitForm!({
+        url: "http://127.0.0.1:5173/contact",
+        selector: "form",
+        values: [{ name: "email", value: "private-value" }],
+        timeout: 1000,
+      });
+      expect(counters).toMatchObject({
+        submissions: 1,
+        reads: ["managed"],
+        lateReads: 0,
+      });
+      expect(result).toMatchObject({
+        status: "submitted",
+        results: [
+          { status: 201, resourceId: "action", resourceName: "Receiver" },
+        ],
+        errors: [{ status: 503, name: "Receipt" }],
+      });
+      expect(JSON.stringify(result)).not.toContain("private-");
+    } finally {
+      await session.close();
+    }
+  }
+);
+
+test("continues observing across a navigation execution-context gap without replaying the Form", async () => {
+  const { socket, counters } = createManagedFormSocket({ navigationGap: true });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 1000,
+    });
+    expect(result).toMatchObject({
+      status: "submitted",
+      pageUrl: "http://127.0.0.1:5173/thanks",
+      results: [{ status: 201, resourceId: "action" }],
+    });
+    expect(counters.submissions).toBe(1);
+    expect(counters.gaps).toBe(2);
+  } finally {
+    await session.close();
+  }
+});
+
+test("keeps an unobservable navigation outcome unknown without replaying the Form", async () => {
+  const { socket, counters } = createManagedFormSocket({
+    navigationGap: "stalled",
+  });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 280,
+    });
+    expect(result.status).toBe("unknown");
+    expect(counters.submissions).toBe(1);
+  } finally {
+    await session.close();
+  }
+});
+
+test.each([
+  {
+    method: "GET",
+    url: "http://127.0.0.1:5173/__ws-form/contact",
+    frameId: "main",
+  },
+  {
+    method: "POST",
+    url: "https://other.example/__ws-form/contact",
+    frameId: "main",
+  },
+  {
+    method: "POST",
+    url: "http://127.0.0.1:5173/__ws-form-other",
+    frameId: "main",
+  },
+  {
+    method: "POST",
+    url: "http://127.0.0.1:5173/__ws-form/other",
+    frameId: "main",
+  },
+  {
+    method: "POST",
+    url: "http://127.0.0.1:5173/__ws-form/contact",
+    frameId: "child",
+  },
+])(
+  "ignores unrelated managed-looking responses: $method $url $frameId",
+  async (unrelated) => {
+    const { socket, counters } = createManagedFormSocket({ unrelated });
+    const session = await createFormBrowserSession(socket);
+    try {
+      const result = await session.submitForm!({
+        url: "http://127.0.0.1:5173/contact",
+        selector: "form",
+        values: [],
+        timeout: 1000,
+      });
+      expect(result.results).toEqual([{ status: 201, resourceId: "action" }]);
+      expect(counters.reads).toEqual(["managed"]);
+      expect(counters.submissions).toBe(1);
+    } finally {
+      await session.close();
+    }
+  }
+);
+
+test.each([999_999, 1_000_000])(
+  "keeps the managed response body limit at %i characters",
+  async (length) => {
+    const body = JSON.stringify({ results: [{ status: 201 }] }).padEnd(
+      length,
+      " "
+    );
+    const { socket, counters } = createManagedFormSocket({ body });
+    const session = await createFormBrowserSession(socket);
+    try {
+      const result = await session.submitForm!({
+        url: "http://127.0.0.1:5173/contact",
+        selector: "form",
+        values: [],
+        timeout: 1000,
+      });
+      expect(result.status).toBe("submitted");
+      expect(result.results).toEqual(
+        length < 1_000_000 ? [{ status: 201 }] : []
+      );
+      expect(counters).toMatchObject({
+        submissions: 1,
+        reads: ["managed"],
+        lateReads: 0,
+      });
+    } finally {
+      await session.close();
+    }
+  }
+);
+
+test("bounds result and error lists and drops invalid entries and sensitive response fields", async () => {
+  const entries = Array.from({ length: 101 }, (_, index) => ({
+    status: index,
+    resourceId: "action",
+    resourceName: "Receiver",
+    body: "private-body",
+    message: "private-message",
+  }));
+  const { socket, counters } = createManagedFormSocket({
+    body: JSON.stringify({
+      results: [null, {}, ...entries],
+      errors: [null, ...entries],
+    }),
+  });
+  const session = await createFormBrowserSession(socket);
+  try {
+    const result = await session.submitForm!({
+      url: "http://127.0.0.1:5173/contact",
+      selector: "form",
+      values: [],
+      timeout: 1000,
+    });
+    expect(result.results).toHaveLength(98);
+    expect(result.results.at(-1)?.status).toBe(97);
+    expect(result.errors).toHaveLength(99);
+    expect(result.errors.at(-1)?.status).toBe(98);
+    expect(JSON.stringify(result)).not.toContain("private-");
+    expect(counters).toMatchObject({
+      submissions: 1,
+      reads: ["managed"],
+      lateReads: 0,
+    });
+  } finally {
+    await session.close();
+  }
+});
+
+test.each([{ body: "not JSON" }, { unreadable: true }, { bodyDelay: 2000 }])(
+  "preserves the observed outcome when response capture fails: %j",
+  async (options) => {
+    const { socket, counters } = createManagedFormSocket(options);
+    const session = await createFormBrowserSession(socket);
+    try {
+      const result = await session.submitForm!({
+        url: "http://127.0.0.1:5173/contact",
+        selector: "form",
+        values: [],
+        timeout: 300,
+      });
+      expect(result).toMatchObject({
+        status: "submitted",
+        results: [],
+        errors: [],
+        pageUrl: "http://127.0.0.1:5173/thanks",
+      });
+      expect(counters).toMatchObject({
+        submissions: 1,
+        reads: ["managed"],
+        lateReads: 0,
+      });
+      expect(socket.close).toHaveBeenCalledOnce();
+    } finally {
+      await session.close();
+    }
+  }
+);
+
 test("initial route canonicalization is not reported as a form redirect", async () => {
   const canonicalUrl = "http://127.0.0.1:5173/contact/";
   let observations = 0;

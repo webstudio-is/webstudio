@@ -46,15 +46,14 @@ const BreakpointEditorItem = ({
   onChangeComplete,
   onDelete,
 }: BreakpointEditorItemProps) => {
-  const [type, setType] = useState<"minWidth" | "maxWidth">(
-    breakpoint.maxWidth !== undefined ? "maxWidth" : "minWidth"
-  );
-
   const initialValue = useMemo(
     () => ({
       label: breakpoint.label,
       condition: breakpoint.condition ?? "",
       width: breakpoint.minWidth ?? breakpoint.maxWidth ?? 0,
+      type: (breakpoint.maxWidth !== undefined ? "maxWidth" : "minWidth") as
+        | "minWidth"
+        | "maxWidth",
     }),
     [
       breakpoint.label,
@@ -71,7 +70,7 @@ const BreakpointEditorItem = ({
         breakpoint.id,
         value.label,
         value.condition,
-        type,
+        value.type,
         value.width,
         breakpoint
       );
@@ -80,7 +79,7 @@ const BreakpointEditorItem = ({
         onChangeComplete(newBreakpoint);
       }
     },
-    { autoSave: true }
+    { autoSave: false }
   );
 
   const hasCondition = localValue.value.condition.trim() !== "";
@@ -121,7 +120,7 @@ const BreakpointEditorItem = ({
               breakpoint.id,
               localValue.value.label,
               localValue.value.condition,
-              type,
+              localValue.value.type,
               localValue.value.width,
               breakpoint
             );
@@ -142,9 +141,12 @@ const BreakpointEditorItem = ({
             getLabel={(option) =>
               option === "maxWidth" ? "Max width" : "Min width"
             }
-            value={type}
+            value={localValue.value.type}
             onChange={(value) => {
-              setType(value as "minWidth" | "maxWidth");
+              localValue.set({
+                ...localValue.value,
+                type: value as "minWidth" | "maxWidth",
+              });
               localValue.save();
             }}
             disabled={hasCondition}
@@ -159,7 +161,11 @@ const BreakpointEditorItem = ({
                 value: localValue.value.width,
                 unit: "px",
               }}
-              intermediateValue={undefined}
+              intermediateValue={{
+                type: "unit",
+                value: localValue.value.width,
+                unit: "px",
+              }}
               disabled={hasCondition}
               getOptions={() => []}
               onChange={(value) => {
@@ -343,3 +349,5 @@ export const BreakpointsEditor = ({
     </Popover>
   );
 };
+
+export const __testing__ = { BreakpointEditorItem };

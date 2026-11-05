@@ -25,6 +25,8 @@ export type ContentModeCapabilities = {
   instances: Map<Instance["id"], Instance>;
   metas: Map<Instance["component"], WsComponentMeta>;
   props: Props;
+  // IDs removed by read-time migrations may still exist in the saved build.
+  reservedPropIds?: ReadonlySet<Prop["id"]>;
   htmlTagsByInstanceId: Map<Instance["id"], string>;
   styleSources: StyleSources;
   styleSourceSelections: StyleSourceSelections;
@@ -308,6 +310,7 @@ export const getContentModeCapabilities = ({
   instances,
   metas,
   props,
+  reservedPropIds,
   styleSources,
   styleSourceSelections = new Map(),
   styles = new Map(),
@@ -317,6 +320,7 @@ export const getContentModeCapabilities = ({
   instances: Map<Instance["id"], Instance>;
   metas: Map<Instance["component"], WsComponentMeta>;
   props: Props;
+  reservedPropIds?: ReadonlySet<Prop["id"]>;
   styleSources: StyleSources;
   styleSourceSelections?: StyleSourceSelections;
   styles?: Styles;
@@ -345,6 +349,7 @@ export const getContentModeCapabilities = ({
     instances,
     metas,
     props,
+    reservedPropIds,
     htmlTagsByInstanceId: getHtmlTagsFromProps(props),
     styleSources,
     styleSourceSelections,

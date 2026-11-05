@@ -670,18 +670,10 @@ export const createMcpPreviewHandlers = ({
             timeout: input.timeout ?? defaultScreenshotTimeout,
             browser: "auto",
           });
-        } catch {
-          // The request may already have reached a service. Never replay it.
+        } catch (error) {
+          // The browser reports uncertain outcomes itself after dispatch.
           await closeCaptureSession().catch(() => undefined);
-          return {
-            status: "unknown",
-            formState: "unknown",
-            results: [],
-            errors: [],
-            exchanges: [],
-            pageUrl: `${url.origin}${url.pathname}`,
-            correlationId: crypto.randomUUID(),
-          };
+          throw error;
         }
       });
     },

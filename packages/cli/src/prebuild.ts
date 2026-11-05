@@ -2209,6 +2209,10 @@ export const action = async (args: Parameters<typeof pageAction>[0]) => {
     join(generatedDir, "$resources.redirects.ts"),
     generateRedirectsModule(pages.redirects)
   );
+  await writeGeneratedFile(
+    join(generatedDir, "$resources.has-redirects.ts"),
+    `export const hasRedirects = ${Boolean(pages.redirects?.length)};`
+  );
 
   const redirectFallbackPath = join(routesDir, "$.tsx");
   if (

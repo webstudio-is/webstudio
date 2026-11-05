@@ -1,11 +1,15 @@
 import { describe, expect, test } from "vitest";
 import {
+  coreMetas,
+  getStyleDeclKey,
   getInputJsonSchemaMetadata,
   ROOT_INSTANCE_ID,
+  rootComponent,
   toInputJsonSchemaObject,
   type Assets,
   type InputJsonSchema,
   type Instance,
+  type StyleDecl,
 } from "@webstudio-is/sdk";
 import { runtimeOperationContracts } from "../contracts/builder-runtime";
 import { getRuntimeGeneratedInputPaths } from "../contracts/input-schema";
@@ -95,6 +99,104 @@ const paginatedReadOperationIds = [
 ] as const;
 
 const maxCompactListBytes = 16 * 1024;
+
+test.each([false, true])(
+  "inspects virtual Global root presets separately from authored overrides (%s)",
+  (withOverrides) => {
+    const overrides: StyleDecl[] = withOverrides
+      ? [
+          {
+            styleSourceId: "root-token",
+            breakpointId: "base",
+            property: "display",
+            value: { type: "keyword", value: "flex" },
+          },
+          {
+            styleSourceId: "root-local",
+            breakpointId: "base",
+            property: "display",
+            value: { type: "keyword", value: "block" },
+          },
+          {
+            styleSourceId: "root-local",
+            breakpointId: "mobile",
+            state: ":hover",
+            property: "display",
+            value: { type: "keyword", value: "none" },
+          },
+        ]
+      : [];
+    const rootState: BuilderState = {
+      ...state,
+      styles: new Map(
+        overrides.map((style) => [getStyleDeclKey(style), style])
+      ),
+      styleSources: new Map([
+        ["root-token", { id: "root-token", type: "token", name: "Root" }],
+        ["root-local", { id: "root-local", type: "local" }],
+      ]),
+      styleSourceSelections: new Map([
+        [
+          ROOT_INSTANCE_ID,
+          {
+            instanceId: ROOT_INSTANCE_ID,
+            values: ["root-token", "root-local"],
+          },
+        ],
+      ]),
+    };
+    if (!withOverrides) {
+      rootState.styleSources?.clear();
+      rootState.styleSourceSelections?.clear();
+    }
+    const before = structuredClone(rootState);
+    const inspect = () =>
+      executeBuilderRuntimeOperation({
+        id: "instances.inspect",
+        state: rootState,
+        input: {
+          instanceId: ROOT_INSTANCE_ID,
+          include: ["styles", "sources", "props", "children", "ancestors"],
+        },
+        context,
+      });
+    const result = inspect();
+
+    expect(result).toMatchObject({
+      id: ROOT_INSTANCE_ID,
+      component: rootComponent,
+      tag: "html",
+      presetStyles: coreMetas[rootComponent].presetStyle!.html,
+      sources: withOverrides ? ["root-token", "root-local"] : [],
+      props: [],
+      children: [],
+      ancestors: [],
+      styles: overrides.map(({ breakpointId, styleSourceId, ...style }) => ({
+        ...style,
+        instanceId: ROOT_INSTANCE_ID,
+        styleSourceId,
+        breakpoint: breakpointId,
+        source: styleSourceId === "root-token" ? "token" : "local",
+      })),
+    });
+    expect(inspect()).toEqual(result);
+    expect(rootState).toEqual(before);
+    expect(rootState.instances?.has(ROOT_INSTANCE_ID)).toBe(false);
+    expect(
+      getBuilderRuntimeOperation("instances.inspect").outputJsonSchema
+    ).toHaveProperty("properties.presetStyles");
+    expect(
+      runtimeOperationContracts.find(({ id }) => id === "instances.inspect")!
+        .outputSchema
+    ).toHaveProperty("properties.presetStyles");
+    expect(() =>
+      inspectInstance(rootState, { instanceId: "missing-instance" })
+    ).toThrow(expect.objectContaining({ code: "NOT_FOUND" }));
+    expect(
+      inspectInstance(rootState, { instanceId: "body", include: ["styles"] })
+    ).not.toHaveProperty("presetStyles");
+  }
+);
 
 test("property writes load assets and reject an incompatible Image source", () => {
   const operation = getBuilderRuntimeOperation("instances.updateProps");

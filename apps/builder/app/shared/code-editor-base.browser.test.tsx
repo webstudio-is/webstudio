@@ -2,9 +2,10 @@ import { act } from "react-dom/test-utils";
 import { createRoot, type Root } from "react-dom/client";
 import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
+import { autocompletion, startCompletion } from "@codemirror/autocomplete";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { userEvent } from "@vitest/browser/context";
-import { cssVar } from "@webstudio-is/design-system";
+import { cssVar, selectedItemBackground } from "@webstudio-is/design-system";
 import "@webstudio-is/design-system/global.css";
 import {
   EditorContent,
@@ -142,6 +143,64 @@ test("scopes disabled styles to the Webstudio code editor", () => {
   expect(getComputedStyle(editors[0]).opacity).toBe("0.3");
   expect(getComputedStyle(foreignEditor).opacity).toBe("1");
 });
+
+test.each(["light", "dark"] as const)(
+  "distinguishes the selected autocomplete row in %s mode",
+  async (mode) => {
+    document.documentElement.dataset.colorScheme = mode;
+    act(() =>
+      root.render(
+        <EditorContent
+          value="a"
+          onChange={() => {}}
+          onChangeComplete={() => {}}
+          extensions={[
+            autocompletion({
+              override: [
+                () => ({
+                  from: 0,
+                  options: [{ label: "alpha" }, { label: "alpine" }],
+                }),
+              ],
+            }),
+          ]}
+        />
+      )
+    );
+    const editor = container.querySelector<HTMLElement>('[role="textbox"]')!;
+    const view = EditorView.findFromDOM(editor)!;
+    act(() => {
+      view.dispatch({ selection: { anchor: 1 } });
+      view.focus();
+      startCompletion(view);
+    });
+    await vi.waitFor(() =>
+      expect(
+        document.querySelectorAll('.cm-tooltip-autocomplete [role="option"]')
+          .length
+      ).toBe(2)
+    );
+    const selected = document.querySelector<HTMLElement>(
+      '.cm-tooltip-autocomplete [aria-selected="true"]'
+    )!;
+    const unselected = document.querySelector<HTMLElement>(
+      '.cm-tooltip-autocomplete [role="option"]:not([aria-selected="true"])'
+    )!;
+    const reference = document.createElement("div");
+    reference.style.backgroundColor = selectedItemBackground;
+    document.body.appendChild(reference);
+    try {
+      expect(getComputedStyle(selected).backgroundColor).toBe(
+        getComputedStyle(reference).backgroundColor
+      );
+      expect(getComputedStyle(selected).backgroundColor).not.toBe(
+        getComputedStyle(unselected).backgroundColor
+      );
+    } finally {
+      reference.remove();
+    }
+  }
+);
 
 test("keeps the editor maximize button background transparent when hovered", async () => {
   act(() => {

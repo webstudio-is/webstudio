@@ -32,6 +32,7 @@ import {
   textVariants,
   css,
   cssVar,
+  selectedItemBackground,
   declareCssVar,
   SmallIconButton,
   Grid,
@@ -215,11 +216,13 @@ const autocompletionTooltipTheme = EditorView.theme({
     padding: rawTheme.spacing[3],
     borderRadius: rawTheme.borderRadius[3],
   },
-  ".cm-tooltip.cm-tooltip-autocomplete li[aria-selected], .cm-tooltip.cm-tooltip-autocomplete li:hover":
-    {
-      color: cssVar("--foreground-primary"),
-      backgroundColor: cssVar("--overlay-interaction-hover"),
-    },
+  ".cm-tooltip.cm-tooltip-autocomplete li:hover": {
+    color: cssVar("--foreground-primary"),
+    backgroundColor: cssVar("--overlay-interaction-hover"),
+  },
+  '.cm-tooltip.cm-tooltip-autocomplete li[aria-selected="true"]': {
+    backgroundColor: selectedItemBackground,
+  },
   ".cm-tooltip.cm-tooltip-autocomplete .cm-completionLabel": {
     flexGrow: 1,
   },

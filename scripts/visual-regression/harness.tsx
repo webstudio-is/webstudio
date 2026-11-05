@@ -9,6 +9,7 @@ type VisualRegressionParameters = {
   disableAnimations?: boolean;
   disableIntervals?: boolean;
   hideSelectors?: readonly string[];
+  preserveFocus?: boolean;
   settleTime?: number;
 };
 
@@ -43,7 +44,10 @@ const waitForFrames = () =>
     requestAnimationFrame(() => requestAnimationFrame(resolve))
   );
 
-const markReady = async (disableAnimations: boolean) => {
+const markReady = async (
+  disableAnimations: boolean,
+  preserveFocus: boolean
+) => {
   await waitForFrames();
   if (disableAnimations) {
     for (const animation of document.getAnimations()) {
@@ -57,7 +61,7 @@ const markReady = async (disableAnimations: boolean) => {
     }
     await waitForFrames();
   }
-  if (document.activeElement instanceof HTMLElement) {
+  if (!preserveFocus && document.activeElement instanceof HTMLElement) {
     document.activeElement.blur();
   }
   const ready = document.createElement("div");
@@ -204,7 +208,10 @@ window.renderVisualStory = async ({ file, exportName, title }) => {
       window.setTimeout(resolve, options.settleTime)
     );
   }
-  await markReady(options.disableAnimations !== false);
+  await markReady(
+    options.disableAnimations !== false,
+    options.preserveFocus === true
+  );
 };
 
 window.finishVisualStory = async () => {
