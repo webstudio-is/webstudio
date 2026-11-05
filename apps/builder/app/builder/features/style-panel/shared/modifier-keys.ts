@@ -1,19 +1,6 @@
-import { useState, useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
-import { atom } from "nanostores";
-
-export const $isAltPressed = atom(false);
-if (typeof window !== "undefined") {
-  window.addEventListener("keydown", (event) => {
-    $isAltPressed.set(event.altKey);
-  });
-  window.addEventListener("keyup", (event) => {
-    $isAltPressed.set(event.altKey);
-  });
-  window.addEventListener("blur", () => {
-    $isAltPressed.set(false);
-  });
-}
+import { atom, computed } from "nanostores";
 
 export type Modifiers = {
   altKey: boolean;
@@ -24,44 +11,32 @@ export type Modifiers = {
 
 // Used for combined mouse and keyboard interactions, like scrubbing while holding ALT.
 // If it's just a keyboard interaction, you should already have a keyboard event at hand.
-export const useModifierKeys = () => {
-  const [state, setState] = useState({
-    shiftKey: false,
-    altKey: false,
-    ctrlKey: false,
-    metaKey: false,
-  });
-
-  useEffect(() => {
-    const handler = (event: KeyboardEvent | MouseEvent) => {
-      const newState = {
-        shiftKey: event.shiftKey,
-        altKey: event.altKey,
-        ctrlKey: event.ctrlKey,
-        metaKey: event.metaKey,
-      };
-
-      setState((prev) => {
-        if (shallowEqual(prev, newState)) {
-          return prev;
-        }
-
-        return newState;
-      });
-    };
-
-    window.addEventListener("keydown", handler);
-    window.addEventListener("keyup", handler);
-    // The use of only the keyup/keydown events may not be sufficient.
-    // on a Mac, when the meta-shift-4 (printscreen) combination is triggered, there is a possibility of losing the keyup event.
-    window.addEventListener("mousemove", handler);
-
-    return () => {
-      window.removeEventListener("keydown", handler);
-      window.removeEventListener("keyup", handler);
-      window.removeEventListener("mousemove", handler);
-    };
-  }, []);
-
-  return state;
+const defaultModifiers: Modifiers = {
+  shiftKey: false,
+  altKey: false,
+  ctrlKey: false,
+  metaKey: false,
 };
+const $modifierKeys = atom(defaultModifiers);
+export const $isAltPressed = computed($modifierKeys, (keys) => keys.altKey);
+
+if (typeof window !== "undefined") {
+  const update = (event: KeyboardEvent | MouseEvent) => {
+    const keys = {
+      shiftKey: event.shiftKey,
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+    };
+    if (!shallowEqual($modifierKeys.get(), keys)) {
+      $modifierKeys.set(keys);
+    }
+  };
+  // Mouse movement also restores modifier state after a lost keyup event.
+  window.addEventListener("keydown", update);
+  window.addEventListener("keyup", update);
+  window.addEventListener("mousemove", update);
+  window.addEventListener("blur", () => $modifierKeys.set(defaultModifiers));
+}
+
+export const useModifierKeys = () => useStore($modifierKeys);

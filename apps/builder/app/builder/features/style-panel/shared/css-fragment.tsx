@@ -31,8 +31,6 @@ import { $availableVariables, $cssVarsMap } from "./model";
 
 type ShorthandProperty = (typeof shorthandProperties)[number];
 
-export { getCodeEditorCssVars };
-
 export const parseCssFragment = (
   css: string,
   fallbacks: (CssProperty | ShorthandProperty)[]

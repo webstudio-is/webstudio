@@ -1189,15 +1189,19 @@ export const CssEditor = ({
     setSearchTerm(search);
   };
 
-  const afterChangingStyles = (focusValue = true) => {
-    clearHighlightedDraftPreview();
-    setNewEntryAfter(undefined);
+  const resetDraftFields = () => {
     setDraftPropertyName(undefined);
     setBulkDraft(undefined);
     setDraftValue("");
     setDraftMultiline(false);
-    switchingDraftRef.current = false;
     setInvalidDraft(false);
+  };
+
+  const afterChangingStyles = (focusValue = true) => {
+    clearHighlightedDraftPreview();
+    setNewEntryAfter(undefined);
+    resetDraftFields();
+    switchingDraftRef.current = false;
     if (!focusValue) {
       return;
     }
@@ -1253,11 +1257,8 @@ export const CssEditor = ({
     }
     closingDraftRef.current = false;
     switchingDraftRef.current = false;
+    resetDraftFields();
     setDraftPropertyName("");
-    setBulkDraft(undefined);
-    setDraftValue("");
-    setDraftMultiline(false);
-    setInvalidDraft(false);
     setNewEntryAfter(property);
   };
 
@@ -1303,11 +1304,8 @@ export const CssEditor = ({
     clearHighlightedDraftPreview();
     closingDraftRef.current = false;
     switchingDraftRef.current = true;
+    resetDraftFields();
     setBulkDraft({ code, selection });
-    setDraftPropertyName(undefined);
-    setDraftValue("");
-    setDraftMultiline(false);
-    setInvalidDraft(false);
     requestAnimationFrame(() => {
       switchingDraftRef.current = false;
     });
@@ -1698,43 +1696,52 @@ export const CssEditor = ({
     </DraftRow>
   );
 
+  const renderDeclaration = (
+    property: CssProperty,
+    valueInputRef: RefObject<HTMLInputElement>,
+    onReset?: () => void
+  ) => {
+    const styleDecl = declarationsMap.get(property);
+    if (styleDecl === undefined) {
+      return null;
+    }
+    return (
+      <Box key={`${property}:${styleDecl.source.name}`}>
+        <AdvancedDeclarationLonghand
+          styleDecl={styleDecl}
+          readonly={readonly}
+          multilineDrafts={multilineDrafts}
+          existingProperties={existingDeclarationsMap}
+          deletableProperties={deletableProperties}
+          onRenameProperty={handleRenameProperty}
+          valueInputRef={valueInputRef}
+          onChangeComplete={(event, atEnd) => {
+            if (event.type === "tab" || (event.type === "enter" && atEnd)) {
+              startNewEntry(property);
+            }
+          }}
+          onReset={onReset}
+          onDeleteProperty={handleDeleteProperty}
+          onSetProperty={guardedSetProperty}
+        />
+        {draftAnchor === property && draftRow}
+      </Box>
+    );
+  };
+
   const recentPropertiesAndDraft = (
     <Flex
       direction="column"
       css={{ paddingInline: theme.panel.paddingInline, gap: 2 }}
     >
       {showRecentProperties &&
-        recentProperties.map((property) => {
-          const styleDecl = declarationsMap.get(property);
-          if (styleDecl === undefined) {
-            return;
-          }
-          return (
-            <Box key={`${property}:${styleDecl.source.name}`}>
-              <AdvancedDeclarationLonghand
-                styleDecl={styleDecl}
-                readonly={readonly}
-                multilineDrafts={multilineDrafts}
-                existingProperties={existingDeclarationsMap}
-                deletableProperties={deletableProperties}
-                onRenameProperty={handleRenameProperty}
-                valueInputRef={lastRecentValueInputRef}
-                onChangeComplete={(event, atEnd) => {
-                  if (
-                    event.type === "tab" ||
-                    (event.type === "enter" && atEnd)
-                  ) {
-                    startNewEntry(property);
-                  }
-                }}
-                onReset={afterChangingStyles}
-                onDeleteProperty={handleDeleteProperty}
-                onSetProperty={guardedSetProperty}
-              />
-              {draftAnchor === property && draftRow}
-            </Box>
-          );
-        })}
+        recentProperties.map((property) =>
+          renderDeclaration(
+            property,
+            lastRecentValueInputRef,
+            afterChangingStyles
+          )
+        )}
       {draftAnchor === undefined &&
         (draftRow ||
           (showInlineAddButton ? (
@@ -1796,35 +1803,13 @@ export const CssEditor = ({
             ref={containerRef}
           >
             {currentProperties.map((property) => {
-              const styleDecl = declarationsMap.get(property);
-              if (styleDecl === undefined) {
-                return;
-              }
-
-              const declarationElement = (
-                <Box key={`${property}:${styleDecl.source.name}`}>
-                  <AdvancedDeclarationLonghand
-                    styleDecl={styleDecl}
-                    readonly={readonly}
-                    multilineDrafts={multilineDrafts}
-                    existingProperties={existingDeclarationsMap}
-                    deletableProperties={deletableProperties}
-                    onRenameProperty={handleRenameProperty}
-                    onChangeComplete={(event, atEnd) => {
-                      if (
-                        event.type === "tab" ||
-                        (event.type === "enter" && atEnd)
-                      ) {
-                        startNewEntry(property);
-                      }
-                    }}
-                    onDeleteProperty={handleDeleteProperty}
-                    onSetProperty={guardedSetProperty}
-                    valueInputRef={lastRegularValueInputRef}
-                  />
-                  {draftAnchor === property && draftRow}
-                </Box>
+              const declarationElement = renderDeclaration(
+                property,
+                lastRegularValueInputRef
               );
+              if (declarationElement === null) {
+                return null;
+              }
               // When using it in keyframes with layout where delcarations are on top of add input button,
               // we need to focus last added value, but the logic for waiting for the last rendered event would add up complexity.
               // For now we just manually avoid virtualization in this layout.

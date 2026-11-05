@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createRoot } from "react-dom/client";
 import type { CompletionSource } from "@codemirror/autocomplete";
 import { linter } from "@codemirror/lint";
@@ -68,6 +75,13 @@ import { formatStyleBlock } from "./style-block-format";
 
 const blockedEditMessage =
   "This declaration comes from another source. Add a local declaration to override it.";
+const renderTooltip = (className: string, content: ReactNode) => {
+  const dom = document.createElement("div");
+  dom.className = className;
+  const root = createRoot(dom);
+  root.render(content);
+  return { dom, destroy: () => root.unmount() };
+};
 const blockedEdit = StateEffect.define<number>();
 const sourceChanged = StateEffect.define<void>();
 const searchMatches = StateField.define({
@@ -111,19 +125,15 @@ const blockedEditTooltip = StateField.define<Tooltip | null>({
       return {
         pos: blocked.value,
         above: true,
-        create: () => {
-          const dom = document.createElement("div");
-          dom.className = "cm-mixed-blocked-tooltip";
-          const root = createRoot(dom);
-          root.render(
+        create: () =>
+          renderTooltip(
+            "cm-mixed-blocked-tooltip",
             <Box
               className={tooltipContentCss({ variant: "wrapped" }).className}
             >
               <Text>{blockedEditMessage}</Text>
             </Box>
-          );
-          return { dom, destroy: () => root.unmount() };
-        },
+          ),
       };
     }
     return transaction.docChanged || transaction.selection ? null : tooltip;
@@ -250,20 +260,12 @@ const MixedStyleBlockEditor = ({
   );
 
   useEffect(() => {
-    if (open && !wasOpenRef.current) {
-      const localStyles = getLocalStyles(declarations);
-      const nextCode = formatMixedStyleBlock(
-        localStyles,
-        sourceDeclarations,
-        $cssVarsMap.get()
-      );
-      setInitialStyles(localStyles, nextCode);
-    }
+    const wasOpen = wasOpenRef.current;
     wasOpenRef.current = open;
-  }, [open, declarations, sourceDeclarations, setInitialStyles]);
-
-  useEffect(() => {
-    if (!inline || codeRef.current !== cleanCodeRef.current) {
+    if (
+      !open ||
+      (wasOpen && (!inline || codeRef.current !== cleanCodeRef.current))
+    ) {
       return;
     }
     const localStyles = getLocalStyles(declarations);
@@ -272,14 +274,14 @@ const MixedStyleBlockEditor = ({
       sourceDeclarations,
       $cssVarsMap.get()
     );
-    if (nextCode !== cleanCodeRef.current) {
+    if (!wasOpen || nextCode !== cleanCodeRef.current) {
       setInitialStyles(localStyles, nextCode);
     } else {
       oldStylesRef.current = localStyles;
       sourceSnapshotRef.current = sourceDeclarations;
       editorViewRef.current?.dispatch({ effects: sourceChanged.of() });
     }
-  }, [inline, declarations, sourceDeclarations, setInitialStyles]);
+  }, [open, inline, declarations, sourceDeclarations, setInitialStyles]);
 
   const applyChanges = () => {
     if (codeRef.current === appliedCodeRef.current) {
@@ -486,11 +488,9 @@ const MixedStyleBlockEditor = ({
           pos: range.from,
           end: range.to,
           create: () => {
-            const dom = document.createElement("div");
-            dom.className = "cm-mixed-property-tooltip";
-            const root = createRoot(dom);
             const isLocal = range.source === "local";
-            root.render(
+            return renderTooltip(
+              "cm-mixed-property-tooltip",
               <ReadonlyProvider value={readonly}>
                 <MenuList
                   onPointerDown={(event) => event.preventDefault()}
@@ -543,7 +543,6 @@ const MixedStyleBlockEditor = ({
                 </MenuList>
               </ReadonlyProvider>
             );
-            return { dom, destroy: () => root.unmount() };
           },
         };
       }),

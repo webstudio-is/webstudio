@@ -354,7 +354,6 @@ export const parseBlock = (source: string) => {
     styleMap,
     diagnostics,
     mentionedProperties,
-    propertyRanges,
     overriddenRanges,
     canDelete,
   };

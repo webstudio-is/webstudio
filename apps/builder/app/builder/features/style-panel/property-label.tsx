@@ -52,15 +52,20 @@ const sourceHints: Record<StyleValueSourceColor, string> = {
 const renderCss = (styles: ComputedStyleDecl[], isComputed: boolean) => {
   let css = "";
   for (const styleDecl of styles) {
-    let value;
-    if (isComputed) {
-      value = toValue(styleDecl.usedValue);
-    } else {
-      value = toValue(styleDecl.cascadedValue);
-    }
+    const value = toValue(
+      isComputed ? styleDecl.usedValue : styleDecl.cascadedValue
+    );
     css += `${styleDecl.property}: ${value};\n`;
   }
   return css;
+};
+
+const deleteProperties = (properties: CssProperty[]) => {
+  const batch = createBatchUpdate();
+  for (const property of properties) {
+    batch.deleteProperty(property);
+  }
+  batch.publish();
 };
 
 export const PropertyInfo = ({
@@ -162,6 +167,26 @@ export const PropertyInfo = ({
   const canJumpToSource = (source: StyleValueSource) =>
     instancePath?.some(({ instance }) => instance.id === source.instanceId) ??
     false;
+  const sourceBadges = [
+    ...Array.from(breakpointSources, ([id, { label, source }]) => ({
+      key: `breakpoint:${id}`,
+      label,
+      source,
+      color: "breakpoint" as const,
+    })),
+    ...Array.from(styleSourceNames, ([label, source]) => ({
+      key: `style:${label}`,
+      label,
+      source,
+      color: label === "Local" ? ("local" as const) : ("token" as const),
+    })),
+    ...Array.from(instanceSources, ([label, source]) => ({
+      key: `instance:${label}`,
+      label,
+      source,
+      color: "instance" as const,
+    })),
+  ];
 
   const mdnUrl = propertiesData[property]?.mdnUrl;
   const sourceColor =
@@ -234,40 +259,12 @@ export const PropertyInfo = ({
         >
           <Text color="moreSubtle">Value comes from</Text>
           <Flex gap="1" wrap="wrap">
-            {Array.from(breakpointSources).map(([id, { label, source }]) => (
+            {sourceBadges.map(({ key, label, source, color }) => (
               <StyleSourceBadge
                 as="button"
                 type="button"
-                key={id}
-                source="breakpoint"
-                variant="small"
-                clickable
-                disabled={!canJumpToSource(source)}
-                onClick={() => jumpToSource(source)}
-              >
-                {label}
-              </StyleSourceBadge>
-            ))}
-            {Array.from(styleSourceNames).map(([label, source]) => (
-              <StyleSourceBadge
-                as="button"
-                type="button"
-                key={label}
-                source={label === "Local" ? "local" : "token"}
-                variant="small"
-                clickable
-                disabled={!canJumpToSource(source)}
-                onClick={() => jumpToSource(source)}
-              >
-                {label}
-              </StyleSourceBadge>
-            ))}
-            {Array.from(instanceSources).map(([label, source]) => (
-              <StyleSourceBadge
-                as="button"
-                type="button"
-                key={label}
-                source="instance"
+                key={key}
+                source={color}
                 variant="small"
                 clickable
                 disabled={!canJumpToSource(source)}
@@ -317,16 +314,20 @@ export const getPriorityStyleValueSource = (
   return "default";
 };
 
-export const PropertyLabel = ({
+const ResettablePropertyLabel = ({
   label,
   description,
   properties,
   disabled,
+  asChild,
+  children,
 }: {
   label: string;
   description?: string;
   properties: [CssProperty, ...CssProperty[]];
   disabled?: boolean;
+  asChild?: boolean;
+  children: ReactNode;
 }) => {
   const styles = useComputedStyles(properties);
   const readonly = useReadonly();
@@ -336,15 +337,12 @@ export const PropertyLabel = ({
     if (readonly) {
       return;
     }
-    const batch = createBatchUpdate();
-    for (const property of properties) {
-      batch.deleteProperty(property);
-    }
-    batch.publish();
+    deleteProperties(properties);
   };
 
   return (
     <ResettableLabel
+      asChild={asChild}
       disabled={disabled}
       color={styleValueSourceColor}
       onReset={
@@ -365,8 +363,31 @@ export const PropertyLabel = ({
         />
       }
     >
-      {label}
+      {children}
     </ResettableLabel>
+  );
+};
+
+export const PropertyLabel = ({
+  label,
+  description,
+  properties,
+  disabled,
+}: {
+  label: string;
+  description?: string;
+  properties: [CssProperty, ...CssProperty[]];
+  disabled?: boolean;
+}) => {
+  return (
+    <ResettablePropertyLabel
+      label={label}
+      description={description}
+      properties={properties}
+      disabled={disabled}
+    >
+      {label}
+    </ResettablePropertyLabel>
   );
 };
 
@@ -378,48 +399,16 @@ export const PropertySectionLabel = ({
   label: string;
   description: string | undefined;
   properties: [CssProperty, ...CssProperty[]];
-}) => {
-  const styles = useComputedStyles(properties);
-  const readonly = useReadonly();
-  const styleValueSourceColor = getPriorityStyleValueSource(styles);
-
-  const resetProperty = () => {
-    if (readonly) {
-      return;
-    }
-    const batch = createBatchUpdate();
-    for (const property of properties) {
-      batch.deleteProperty(property);
-    }
-    batch.publish();
-  };
-
-  return (
-    <ResettableLabel
-      asChild
-      color={styleValueSourceColor}
-      onReset={
-        styles.some(
-          ({ source }) =>
-            source.name === "local" || source.name === "overwritten"
-        )
-          ? resetProperty
-          : undefined
-      }
-      resetDisabled={readonly}
-      content={
-        <PropertyInfo
-          title={label}
-          property={properties[0]}
-          description={description}
-          styles={styles}
-        />
-      }
-    >
-      <SectionTitleLabel>{label}</SectionTitleLabel>
-    </ResettableLabel>
-  );
-};
+}) => (
+  <ResettablePropertyLabel
+    label={label}
+    description={description}
+    properties={properties}
+    asChild
+  >
+    <SectionTitleLabel>{label}</SectionTitleLabel>
+  </ResettablePropertyLabel>
+);
 
 /**
  * Some properties like layered background-image, background-size are non resetable.
@@ -485,11 +474,7 @@ export const PropertyValueTooltip = ({
     if (readonly) {
       return;
     }
-    const batch = createBatchUpdate();
-    for (const property of properties) {
-      batch.deleteProperty(property);
-    }
-    batch.publish();
+    deleteProperties(properties);
   };
 
   return (

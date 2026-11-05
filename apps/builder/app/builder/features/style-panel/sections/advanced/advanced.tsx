@@ -80,11 +80,18 @@ import {
   InlineMixedStyleBlockEditor,
   MixedStyleBlockDialog,
 } from "./style-block-dialog";
+import type { ApplyChanges } from "./style-block-parse";
 import { $settings, setSetting } from "~/builder/shared/client-settings";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 
 // Only here to keep the same section module interface
 export const properties = [];
+
+const sourceVisibilityOptions = [
+  { key: "showCascadedStyles", label: "Show cascaded styles" },
+  { key: "showPresetStyles", label: "Show preset styles" },
+  { key: "showGlobalVariables", label: "Show global variables" },
+] as const;
 
 const AdvancedStyleSection = (props: {
   label: string;
@@ -217,13 +224,8 @@ export const Section = () => {
   );
   const computedStyleDeclarations = useStore($computedStyleDeclarations);
   const readonly = useReadonly();
-  const {
-    codeEditingMode,
-    stickyAdvancedSection,
-    showCascadedStyles,
-    showPresetStyles,
-    showGlobalVariables,
-  } = useStore($settings);
+  const settings = useStore($settings);
+  const { codeEditingMode, stickyAdvancedSection } = settings;
   const properties = advancedStyleDeclarations.map(
     (styleDecl) => styleDecl.property
   );
@@ -280,13 +282,7 @@ export const Section = () => {
           }));
 
   const isCurrentSelection = () =>
-    selectedInstanceKey !== undefined &&
-    $selectedInstanceKey.get() === selectedInstanceKey &&
-    $selectedBreakpoint.get()?.id === selectedBreakpoint?.id &&
-    $selectedOrLastStyleSourceSelector.get()?.styleSourceId ===
-      styleSourceSelector?.styleSourceId &&
-    $selectedOrLastStyleSourceSelector.get()?.state ===
-      styleSourceSelector?.state;
+    selectionKey !== undefined && selectionKey === getStyleBlockSelectionKey();
 
   const recentProperties = selectedInstanceKey
     ? (recentPropertiesMap.get(selectedInstanceKey) ?? [])
@@ -380,14 +376,7 @@ export const Section = () => {
     newStyles,
     mentionedProperties,
     canDelete,
-  }: {
-    oldStyles: CssStyleMap;
-    initialParsedStyles: CssStyleMap;
-    protectedProperties: ReadonlySet<CssProperty>;
-    newStyles: CssStyleMap;
-    mentionedProperties: ReadonlySet<CssProperty>;
-    canDelete: boolean;
-  }) => {
+  }: ApplyChanges) => {
     if (!isCurrentSelection()) {
       return;
     }
@@ -512,30 +501,17 @@ export const Section = () => {
                 >
                   Code view
                 </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={showCascadedStyles}
-                  onCheckedChange={(checked) =>
-                    setSetting("showCascadedStyles", checked === true)
-                  }
-                >
-                  Show cascaded styles
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={showPresetStyles}
-                  onCheckedChange={(checked) =>
-                    setSetting("showPresetStyles", checked === true)
-                  }
-                >
-                  Show preset styles
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={showGlobalVariables}
-                  onCheckedChange={(checked) =>
-                    setSetting("showGlobalVariables", checked === true)
-                  }
-                >
-                  Show global variables
-                </DropdownMenuCheckboxItem>
+                {sourceVisibilityOptions.map(({ key, label }) => (
+                  <DropdownMenuCheckboxItem
+                    key={key}
+                    checked={settings[key]}
+                    onCheckedChange={(checked) =>
+                      setSetting(key, checked === true)
+                    }
+                  >
+                    {label}
+                  </DropdownMenuCheckboxItem>
+                ))}
                 <DropdownMenuCheckboxItem
                   checked={stickyAdvancedSection}
                   onCheckedChange={(checked) =>

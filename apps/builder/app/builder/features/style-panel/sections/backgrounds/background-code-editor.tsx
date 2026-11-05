@@ -3,9 +3,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CssFragmentEditor,
   CssFragmentEditorContent,
-  getCodeEditorCssVars,
   parseCssFragment,
 } from "../../shared/css-fragment";
+import { getCodeEditorCssVars } from "~/shared/code-editor-base";
 import { PropertyInlineLabel } from "../../property-label";
 import { toValue } from "@webstudio-is/css-engine";
 import { resetEphemeralStyles, setProperty } from "../../shared/use-style-data";
