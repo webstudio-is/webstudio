@@ -6,8 +6,42 @@ import {
 } from "@webstudio-is/css-data";
 import { type CssProperty, type CssStyleMap } from "@webstudio-is/css-engine";
 import { generate, lexer, parse, tokenize, tokenTypes } from "css-tree";
+import { distance } from "fastest-levenshtein";
 
 const shorthandSet = new Set<string>(shorthandProperties);
+const knownProperties = [
+  ...Object.keys(propertiesData),
+  ...shorthandProperties,
+];
+
+export const getLikelyCssProperty = (name: string) => {
+  const normalized = name.toLowerCase();
+  if (
+    name.startsWith("--") ||
+    !lexer.match("<custom-ident>", `--${name}`).matched ||
+    propertiesData[normalized as CssProperty] !== undefined ||
+    shorthandSet.has(normalized) ||
+    lexer.getProperty(normalized) !== null
+  ) {
+    return;
+  }
+  const limit = normalized.length >= 10 ? 2 : 1;
+  let bestDistance = limit + 1;
+  let suggestion: string | undefined;
+  for (const property of knownProperties) {
+    if (Math.abs(property.length - normalized.length) > limit) {
+      continue;
+    }
+    const currentDistance = distance(normalized, property);
+    if (currentDistance < bestDistance) {
+      bestDistance = currentDistance;
+      suggestion = property;
+    } else if (currentDistance === bestDistance) {
+      suggestion = undefined;
+    }
+  }
+  return suggestion;
+};
 
 export const splitStyleInputAtColon = (input: string) => {
   let colonIndex: number | undefined;
@@ -47,7 +81,7 @@ const ensureValue = (css: string) => {
   }
   // Is it a custom property without dashes "--foo"?
   if (lexer.match("<custom-ident>", `--${css}`).matched) {
-    return `--${css}:;`;
+    return `${getLikelyCssProperty(css) ? css : `--${css}`}:;`;
   }
 
   return css;
@@ -75,6 +109,7 @@ export const parseStyleInput = (
   css = ensureValue(css);
   let hasSyntaxErrors = false;
   const shorthandErrors: string[] = [];
+  const typoErrors: string[] = [];
   let validCss = css;
   try {
     const ast = parse(css, {
@@ -108,6 +143,12 @@ export const parseStyleInput = (
         lexer.getProperty(node.property) === null &&
         lexer.match("<custom-ident>", `--${node.property}`).matched
       ) {
+        const suggestion = getLikelyCssProperty(node.property);
+        if (suggestion !== undefined) {
+          typoErrors.push(`Did you mean ${suggestion}?`);
+          invalidNodes.add(node);
+          return;
+        }
         node.property = `--${node.property}`;
         normalizedProperty = true;
       }
@@ -138,7 +179,11 @@ export const parseStyleInput = (
   const styleMap: CssStyleMap = new Map(
     styles.map(({ property, value }) => [property, value])
   );
-  return { styleMap, errors: [...shorthandErrors, ...errors], hasSyntaxErrors };
+  return {
+    styleMap,
+    errors: [...typoErrors, ...shorthandErrors, ...errors],
+    hasSyntaxErrors,
+  };
 };
 
 export const parsePropertyName = (

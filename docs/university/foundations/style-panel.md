@@ -199,7 +199,7 @@ Move, rotate, scale, or skew the instance without affecting layout.
 
 Advanced styles uses the code editor. Enter property: value declarations in the Local group; autocomplete suggests properties and values. Cascaded, Preset, and Global variables are read-only. Search highlights matches; press Enter or Shift+Enter in the search field to move between them. Click the maximize button in the editor, or press Option+Shift+X, to open the centered editor. Click a Local color swatch to edit it with the Style panel’s color picker; other swatches are previews.
 
-In the code editor, Enter adds a missing semicolon before starting the next declaration. If you enter an unknown property name, Webstudio saves it as a CSS variable with a `--` prefix.
+In the code editor, Enter adds a missing semicolon before starting the next declaration. If an unknown property looks like a typo, the editor suggests a CSS property and does not save the typo. Otherwise, Webstudio saves the name as a CSS variable with a `--` prefix.
 
 Autocomplete includes standard, experimental, nonstandard, and obsolete CSS
 properties. A yellow warning marks any property that is not standard. Open the

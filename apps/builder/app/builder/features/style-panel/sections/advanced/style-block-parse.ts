@@ -16,6 +16,7 @@ import {
 import { type CssProperty, type CssStyleMap } from "@webstudio-is/css-engine";
 import { $availableVariables, $cssVarsMap } from "../../shared/model";
 import {
+  getLikelyCssProperty,
   parsePropertyName,
   parseStyleInput,
 } from "~/builder/shared/css-editor/parse-style-input";
@@ -275,6 +276,17 @@ export const parseBlock = (source: string) => {
 
   const validDeclarations: string[] = [];
   for (const { text, property: rawProperty, from, to } of declarations) {
+    const suggestion = getLikelyCssProperty(rawProperty);
+    if (suggestion !== undefined) {
+      canDelete = false;
+      diagnostics.push({
+        from,
+        to,
+        severity: "warning",
+        message: `Did you mean ${suggestion}?`,
+      });
+      continue;
+    }
     const parsed = parseStyleInput(text, draftCssVars);
     const property =
       parsed.styleMap.size === 1
