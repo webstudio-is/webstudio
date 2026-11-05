@@ -37,7 +37,7 @@ import {
   cssVar,
   selectedItemBackground,
   declareCssVar,
-  SmallIconButton,
+  IconButton,
   Grid,
   Flex,
   rawTheme,
@@ -616,21 +616,22 @@ export const EditorDialogControl = ({ children }: { children: ReactNode }) => {
 
 export const EditorDialogButton = forwardRef<
   HTMLButtonElement,
-  Partial<ComponentProps<typeof SmallIconButton>>
+  ComponentProps<typeof IconButton>
 >((props, ref) => {
   return (
-    <SmallIconButton
+    <IconButton
+      type="button"
       {...props}
       ref={ref}
-      icon={<MaximizeIcon />}
       css={{
         position: "absolute",
         top: 4,
         right: 4,
         visibility: cssVar(maximizeIconVisibilityVar, "hidden"),
-        background: "transparent",
       }}
-    />
+    >
+      <MaximizeIcon />
+    </IconButton>
   );
 });
 EditorDialogButton.displayName = "EditorDialogButton";

@@ -30,6 +30,7 @@ import {
 } from "@codemirror/view";
 import {
   Box,
+  Flex,
   Kbd,
   MenuList,
   PanelContent,
@@ -623,10 +624,10 @@ const MixedStyleBlockEditor = ({
         {onMaximize && (
           <Tooltip
             content={
-              <Box css={{ display: "flex", gap: theme.spacing[2] }}>
-                Edit local styles
-                <Kbd value={["alt", "shift", "x"]} />
-              </Box>
+              <Flex align="center" gap="1">
+                <Text>Edit local styles</Text>
+                <Kbd value={["alt", "shift", "x"]} color="moreSubtle" />
+              </Flex>
             }
           >
             <EditorDialogButton

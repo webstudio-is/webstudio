@@ -209,7 +209,7 @@ test.each(["light", "dark"] as const)(
   }
 );
 
-test("keeps the editor maximize button background transparent when hovered", async () => {
+test("uses the standard icon button hover style for editor maximize", async () => {
   act(() => {
     root.render(
       <div style={{ width: 320, height: 160 }}>
@@ -233,7 +233,7 @@ test("keeps the editor maximize button background transparent when hovered", asy
   }
   await userEvent.hover(maximizeButton.parentElement!);
   await userEvent.hover(maximizeButton);
-  expect(getComputedStyle(maximizeButton).backgroundColor).toBe(
+  expect(getComputedStyle(maximizeButton).backgroundColor).not.toBe(
     "rgba(0, 0, 0, 0)"
   );
 });
