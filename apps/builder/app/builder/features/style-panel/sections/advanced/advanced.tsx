@@ -125,7 +125,6 @@ export const Section = () => {
   const handleApplyBlock = ({
     oldStyles,
     initialParsedStyles,
-    protectedProperties,
     newStyles,
     mentionedProperties,
     canDelete,
@@ -148,9 +147,6 @@ export const Section = () => {
     for (const [property, value] of newStyles) {
       const previous = oldStyles.get(property);
       const initialParsed = initialParsedStyles.get(property);
-      if (protectedProperties.has(property)) {
-        continue;
-      }
       if (
         previous === undefined ||
         initialParsed === undefined ||

@@ -19,7 +19,6 @@ import {
   parsePropertyName,
   parseStyleInput,
 } from "~/builder/shared/css-editor/parse-style-input";
-import { cannotRoundTripAsCssText } from "~/builder/shared/css-editor/css-editor";
 import {
   getAutocompleteItems,
   matchOrSuggestToCreate,
@@ -28,7 +27,6 @@ import {
 export type ApplyChanges = {
   oldStyles: CssStyleMap;
   initialParsedStyles: CssStyleMap;
-  protectedProperties: ReadonlySet<CssProperty>;
   newStyles: CssStyleMap;
   mentionedProperties: ReadonlySet<CssProperty>;
   canDelete: boolean;
@@ -172,13 +170,6 @@ export const blockCompletionSource: CompletionSource = async (context) => {
     }),
   };
 };
-
-export const getProtectedProperties = (styles: CssStyleMap) =>
-  new Set(
-    Array.from(styles)
-      .filter(([, value]) => cannotRoundTripAsCssText(value))
-      .map(([property]) => property)
-  );
 
 const hasMissingSeparator = (source: string, offset: number) => {
   let propertyStart: number | undefined;

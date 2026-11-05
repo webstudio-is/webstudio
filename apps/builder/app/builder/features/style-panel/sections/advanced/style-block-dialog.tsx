@@ -70,7 +70,6 @@ import { createColorSwatches } from "./style-block-colors";
 import {
   blockCompletionSource,
   cssBlockLanguage,
-  getProtectedProperties,
   parseBlock,
   type ApplyChanges,
 } from "./style-block-parse";
@@ -306,7 +305,6 @@ const MixedStyleBlockEditor = ({
     const appliedStyles = onApply({
       oldStyles: oldStylesRef.current,
       initialParsedStyles: initialParsedRef.current,
-      protectedProperties: getProtectedProperties(oldStylesRef.current),
       newStyles: parsed.styleMap,
       mentionedProperties: parsed.mentionedProperties,
       canDelete: parsed.canDelete,
