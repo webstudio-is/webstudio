@@ -1,5 +1,6 @@
 import {
   blockTemplateComponent,
+  coreMetas,
   assignUniqueBlockTemplateNamesMutable,
   elementComponent,
   findChildReferenceIndex,
@@ -11,6 +12,8 @@ import {
   expressionBindingMode,
   getStyleDeclKey,
   instance as instanceInput,
+  ROOT_INSTANCE_ID,
+  rootComponent,
   tags,
   type DataSource,
   type ExpressionBindingMode,
@@ -18,6 +21,7 @@ import {
   type Instances,
   type Prop,
   type Props,
+  type PresetStyleDecl,
   type StyleDecl,
   type StyleSource,
   type StyleSourceSelection,
@@ -3916,6 +3920,7 @@ type InstanceInspection = ReturnType<typeof serializeInstanceSummary> & {
   ancestors?: ReturnType<typeof getInstanceAncestors>;
   props?: Prop[];
   styles?: ReturnType<typeof serializeStyleDeclarations>;
+  presetStyles?: PresetStyleDecl[];
   children?: Array<ReturnType<typeof serializeInstanceSummary>>;
   bindings?: Prop[];
   sources?: string[];
@@ -3935,7 +3940,17 @@ export const inspectInstance = (
   }
 ) => {
   const instances = getRequiredInstances(state);
-  const instance = instances.get(input.instanceId);
+  const isRoot = input.instanceId === ROOT_INSTANCE_ID;
+  const instance: Instance | undefined = isRoot
+    ? {
+        type: "instance",
+        id: ROOT_INSTANCE_ID,
+        component: rootComponent,
+        tag: "html",
+        label: coreMetas[rootComponent].label,
+        children: [],
+      }
+    : instances.get(input.instanceId);
   if (instance === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
   }
@@ -3961,7 +3976,11 @@ export const inspectInstance = (
       styleSources: state.styleSources?.values() ?? [],
       styleSourceSelections: state.styleSourceSelections?.values() ?? [],
       instanceIds: new Set([instance.id]),
+      includeTokens: isRoot,
     });
+    if (isRoot) {
+      details.presetStyles = coreMetas[rootComponent].presetStyle?.html ?? [];
+    }
   }
   if (include.has("children")) {
     const maxDepth = input.childDepth ?? 1;

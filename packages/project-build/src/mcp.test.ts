@@ -10,7 +10,12 @@ import { parseExpressionAt } from "acorn";
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { parseDirectPathExpression } from "@webstudio-is/expression";
-import type { WsComponentMeta } from "@webstudio-is/sdk";
+import {
+  coreMetas,
+  ROOT_INSTANCE_ID,
+  rootComponent,
+  type WsComponentMeta,
+} from "@webstudio-is/sdk";
 import { componentMetas } from "@webstudio-is/sdk-components-registry/metas";
 import { validateAssetQuery } from "@webstudio-is/content-engine";
 import { builderPatchTransactionSchema } from "./contracts/patch";
@@ -18,6 +23,7 @@ import { runtimeOperationContracts } from "./contracts/builder-runtime";
 import { getInputSchemaMetadata } from "./contracts/input-schema";
 import { imageDescriptionsSetInput } from "./runtime/assets";
 import { BuilderRuntimeError } from "./runtime/errors";
+import { executeBuilderRuntimeOperation } from "./runtime/registry";
 import { parseWebstudioJsxFragment } from "./runtime/jsx";
 import {
   createProjectSessionMcpCore,
@@ -672,6 +678,44 @@ const createConnectedClient = async (
 };
 
 describe("project session mcp adapter", () => {
+  test("returns Global root defaults through the supported inspect-instance tool", async () => {
+    const contract = runtimeOperationContracts.find(
+      ({ command }) => command === "inspect-instance"
+    )!;
+    const adapter = createProjectSessionMcpCore({
+      operations: [
+        publicOperation({
+          ...contract,
+          description: contract.command,
+          method: "query",
+        }),
+      ],
+      createProjectSession: createSessionFactory(),
+      executeOperation: async ({ input }) =>
+        createEnvelope({
+          operationId: contract.id,
+          result: await executeBuilderRuntimeOperation({
+            id: contract.id,
+            state: { instances: new Map() },
+            input,
+          }),
+        }),
+    });
+    const response = await adapter.callTool({
+      name: "inspect-instance",
+      input: { instanceId: ROOT_INSTANCE_ID, include: ["styles"] },
+    });
+
+    expect(response.structuredContent).toMatchObject({
+      ok: true,
+      data: {
+        id: ROOT_INSTANCE_ID,
+        presetStyles: coreMetas[rootComponent].presetStyle!.html,
+        styles: [],
+      },
+    });
+  });
+
   test("lists restore-point tools only when the host supports them", () => {
     const restorePointToolNames = new Set([
       "create-restore-point",
