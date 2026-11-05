@@ -16,7 +16,7 @@ type Candidate = {
   savings: number;
 };
 
-const sameStyles = (left: CssStyleMap, right: CssStyleMap) =>
+export const sameStyles = (left: CssStyleMap, right: CssStyleMap) =>
   left.size === right.size &&
   Array.from(left).every(([property, value]) =>
     equal(value, right.get(property))

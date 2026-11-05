@@ -17,30 +17,47 @@ export const preserveAssetLayers = (
       continue;
     }
     const visible = original.value.filter((layer) => layer.hidden !== true);
-    if (
-      visible.length !== initial.value.length ||
-      visible.length !== value.value.length
-    ) {
+    if (visible.length !== initial.value.length) {
       continue;
     }
-    let index = 0;
+    const layers = [...value.value];
+    let nextAssetIndex = 0;
+    visible.forEach((storedLayer, index) => {
+      const initialLayer = initial.value[index];
+      if (
+        storedLayer.type !== "image" ||
+        storedLayer.value.type !== "asset" ||
+        initialLayer.type !== "keyword" ||
+        initialLayer.value !== "none"
+      ) {
+        return;
+      }
+      const assetIndex =
+        visible.length === layers.length
+          ? index
+          : layers.findIndex(
+              (layer, position) =>
+                position >= nextAssetIndex &&
+                layer.type === "keyword" &&
+                layer.value === "none"
+            );
+      if (
+        assetIndex >= 0 &&
+        layers[assetIndex].type === "keyword" &&
+        layers[assetIndex].value === "none"
+      ) {
+        layers[assetIndex] = storedLayer;
+        nextAssetIndex = assetIndex + 1;
+      }
+    });
+    original.value.forEach((layer, index) => {
+      if (layer.hidden === true) {
+        layers.splice(Math.min(index, layers.length), 0, layer);
+      }
+    });
     result.set(property, {
       ...value,
-      value: original.value.map((storedLayer) => {
-        if (storedLayer.hidden === true) {
-          return storedLayer;
-        }
-        const initialLayer = initial.value[index];
-        const layer = value.value[index++];
-        return storedLayer.type === "image" &&
-          storedLayer.value.type === "asset" &&
-          initialLayer.type === "keyword" &&
-          initialLayer.value === "none" &&
-          layer.type === "keyword" &&
-          layer.value === "none"
-          ? storedLayer
-          : layer;
-      }),
+      value: layers,
     });
   }
   return result;

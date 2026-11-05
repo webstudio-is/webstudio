@@ -12,7 +12,7 @@ import {
   cssBlockLanguage,
   parseBlock,
 } from "./style-block-parse";
-import { formatStyleBlock } from "./style-block-format";
+import { formatStyleBlock, sameStyles } from "./style-block-format";
 import { createColorSwatches } from "./style-block-colors";
 import { cssAutocomplete } from "./css-autocomplete";
 import { preserveAssetLayers } from "./preserve-asset-layers";
@@ -41,10 +41,29 @@ export const LocalStyleBlockEditor = ({
   const parsedSavedRef = useRef(parseBlock(code, cssVars).styleMap);
   const onApplyRef = useRef(onApply);
   const onPreviewRef = useRef(onPreview);
+  const previewStylesRef = useRef<CssStyleMap>();
   onApplyRef.current = onApply;
   onPreviewRef.current = onPreview;
 
   useEffect(() => () => onPreviewRef.current?.(undefined), []);
+
+  useEffect(() => {
+    if (
+      sameStyles(styles, savedStylesRef.current) ||
+      (previewStylesRef.current !== undefined &&
+        sameStyles(styles, previewStylesRef.current))
+    ) {
+      return;
+    }
+    savedStylesRef.current = styles;
+    if (codeRef.current === appliedCodeRef.current) {
+      const nextCode = formatStyleBlock(styles, cssVars);
+      codeRef.current = nextCode;
+      appliedCodeRef.current = nextCode;
+      parsedSavedRef.current = parseBlock(nextCode, cssVars).styleMap;
+      setCode(nextCode);
+    }
+  }, [styles, cssVars]);
 
   const mergeStyles = (source: string) => {
     const parsed = parseBlock(source, cssVars);
@@ -52,6 +71,7 @@ export const LocalStyleBlockEditor = ({
     for (const [property] of savedStylesRef.current) {
       if (
         parsed.canDelete &&
+        parsedSavedRef.current.has(property) &&
         !parsed.styleMap.has(property) &&
         !parsed.mentionedProperties.has(property)
       ) {
@@ -64,10 +84,8 @@ export const LocalStyleBlockEditor = ({
       parsed.styleMap
     );
     for (const [property, value] of edited) {
-      const original = savedStylesRef.current.get(property);
       const roundTripped = parsedSavedRef.current.get(property);
       if (
-        original === undefined ||
         roundTripped === undefined ||
         toValue(roundTripped) !== toValue(value)
       ) {
@@ -85,6 +103,7 @@ export const LocalStyleBlockEditor = ({
     const nextStyles = mergeStyles(codeRef.current);
     onApplyRef.current(nextStyles);
     savedStylesRef.current = nextStyles;
+    previewStylesRef.current = undefined;
     parsedSavedRef.current = parseBlock(codeRef.current, cssVars).styleMap;
     appliedCodeRef.current = codeRef.current;
   };
@@ -101,7 +120,8 @@ export const LocalStyleBlockEditor = ({
                 from,
                 to
               )
-          )
+          ),
+          true
         ),
       update: (decorations, transaction) =>
         transaction.docChanged
@@ -114,7 +134,8 @@ export const LocalStyleBlockEditor = ({
                   from,
                   to
                 )
-              )
+              ),
+              true
             )
           : decorations,
       provide: (field) => EditorView.decorations.from(field),
@@ -154,7 +175,9 @@ export const LocalStyleBlockEditor = ({
         onChange={(nextCode) => {
           codeRef.current = nextCode;
           setCode(nextCode);
-          onPreview?.(mergeStyles(nextCode));
+          const previewStyles = mergeStyles(nextCode);
+          previewStylesRef.current = previewStyles;
+          onPreview?.(previewStyles);
         }}
         onChangeComplete={applyChanges}
       />

@@ -608,7 +608,16 @@ const MixedStyleBlockEditor = ({
                               doc.sliceString(to, lastLine.to).trim() === ""
                             ) {
                               from = firstLine.from;
-                              to = Math.min(lastLine.to + 1, doc.length);
+                              const local = getMixedStyleGroups(
+                                doc.toString()
+                              ).find((group) => group.source === "local");
+                              const isLastLocalDeclaration =
+                                firstLine.from === local?.contentFrom &&
+                                lastLine.to + 1 === local.to;
+                              to = Math.min(
+                                lastLine.to + (isLastLocalDeclaration ? 0 : 1),
+                                doc.length
+                              );
                             }
                             view.dispatch({
                               changes: { from, to },
