@@ -17,7 +17,7 @@ type StyleBlockEditorSource =
 
 const sourceTitles: Record<StyleBlockEditorSource, string> = {
   local: "Local",
-  cascaded: "Cascaded",
+  cascaded: "Cascaded or inherited",
   preset: "Preset",
   globalVariables: "Global variables",
 };
