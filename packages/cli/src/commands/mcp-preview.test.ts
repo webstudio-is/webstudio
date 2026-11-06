@@ -1939,28 +1939,20 @@ test("reports an interior route HTTP failure instead of a wrong-site error", asy
   });
 });
 
-test("reports a JavaScript source location in responsive capture", async () => {
-  const capturePage = vi
-    .fn()
-    .mockResolvedValueOnce([
-      {
-        output: "builder.png",
-        navigation: {
-          generatedSiteRootPresent: true,
-          javascriptErrorPresent: true,
-          javascriptErrorLocation: { pathname: "/assets/app.js", line: 42 },
+test("does not expose a page script URL in responsive capture errors", async () => {
+  const capturePage = vi.fn().mockResolvedValueOnce([
+    {
+      output: "builder.png",
+      navigation: {
+        generatedSiteRootPresent: true,
+        javascriptErrorPresent: true,
+        javascriptErrorLocation: {
+          pathname: "/private/customer-123.js",
+          line: 42,
         },
       },
-    ])
-    .mockResolvedValueOnce([
-      {
-        output: "builder.png",
-        navigation: {
-          generatedSiteRootPresent: true,
-          javascriptErrorPresent: true,
-        },
-      },
-    ]);
+    },
+  ]);
   const handlers = createMcpPreviewHandlers({
     preview: {
       status: vi.fn(() => ({
@@ -1988,16 +1980,12 @@ test("reports a JavaScript source location in responsive capture", async () => {
   ];
   await expect(handlers.capturePageScreenshots(input)).rejects.toMatchObject({
     code: "SCREENSHOT_JAVASCRIPT_ERROR",
-    message:
-      "The page reported a JavaScript error during screenshot capture at /assets/app.js:42.",
+    message: "The page reported a JavaScript error during screenshot capture.",
     issues: [
       {
         code: "screenshot_javascript_error",
         constraint: "javascript_runtime_error",
       },
     ],
-  });
-  await expect(handlers.capturePageScreenshots(input)).rejects.toMatchObject({
-    message: "The page reported a JavaScript error during screenshot capture.",
   });
 });

@@ -2438,13 +2438,10 @@ test("reports React error boundary errors logged by the page", async () => {
   );
 
   expect(layout.navigation?.javascriptErrorPresent).toBe(true);
-  expect(layout.navigation?.javascriptErrorLocation).toEqual({
-    pathname: "/assets/app.js",
-    line: 42,
-  });
+  expect(layout.navigation).not.toHaveProperty("javascriptErrorLocation");
 });
 
-test("reports a page exception location without its URL query", async () => {
+test("does not expose a page exception URL", async () => {
   const layout = await captureBrowserScreenshot(
     {
       url: "https://example.com",
@@ -2469,10 +2466,8 @@ test("reports a page exception location without its URL query", async () => {
     })
   );
 
-  expect(layout.navigation?.javascriptErrorLocation).toEqual({
-    pathname: "/assets/exception.js",
-    line: 7,
-  });
+  expect(layout.navigation?.javascriptErrorPresent).toBe(true);
+  expect(layout.navigation).not.toHaveProperty("javascriptErrorLocation");
 });
 
 test("does not attribute an outgoing page error to the next route", async () => {
