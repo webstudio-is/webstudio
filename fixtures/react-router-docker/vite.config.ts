@@ -11,6 +11,9 @@ const templateNodeModules = new URL("./node_modules", import.meta.url);
 export default defineConfig({
   // Local previews share node_modules, but must not share optimizer state.
   cacheDir: ".react-router/vite",
+  build: {
+    manifest: true,
+  },
   // Scan generated routes before first navigation to avoid replacing React
   // dependencies while the browser hydrates an initial page.
   optimizeDeps: {

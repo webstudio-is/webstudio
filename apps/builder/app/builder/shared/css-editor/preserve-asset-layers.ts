@@ -33,7 +33,9 @@ export const preserveAssetLayers = (
         return;
       }
       const assetIndex =
-        visible.length === layers.length
+        index >= nextAssetIndex &&
+        layers[index]?.type === "keyword" &&
+        layers[index].value === "none"
           ? index
           : layers.findIndex(
               (layer, position) =>
