@@ -216,7 +216,7 @@ const render = (content: React.ReactNode) => {
   return container;
 };
 
-test("inline Code view renders stored longhands as editable shorthands", async () => {
+test("inline Advanced editor renders stored longhands as editable shorthands", async () => {
   const container = render(
     <InlineMixedStyleBlockEditor
       declarations={declarations}
