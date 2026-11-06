@@ -14,6 +14,8 @@ import {
   Button,
   Checkbox,
   Grid,
+  SectionTitle,
+  SectionTitleLabel,
 } from "@webstudio-is/design-system";
 import { toValue, type StyleValue } from "@webstudio-is/css-engine";
 import {
@@ -385,26 +387,19 @@ const TrackEditor = ({
       onOpenChange={setIsOpen}
       fullWidth
       trigger={
-        <Flex
-          align="center"
-          justify="between"
-          css={{ padding: theme.spacing[5] }}
+        <SectionTitle
+          suffix={
+            !isAuto && (
+              <IconButton disabled={disabled || readonly} onClick={addTrack}>
+                <PlusIcon />
+              </IconButton>
+            )
+          }
         >
-          <Text variant="labels" color="subtle">
+          <SectionTitleLabel>
             {label} ({displayCount ?? tracks.length})
-          </Text>
-          {!isAuto && (
-            <IconButton
-              disabled={disabled || readonly}
-              onClick={(e) => {
-                e.stopPropagation();
-                addTrack();
-              }}
-            >
-              <PlusIcon />
-            </IconButton>
-          )}
-        </Flex>
+          </SectionTitleLabel>
+        </SectionTitle>
       }
     >
       <InteractiveListArrowFocus dragItemId={dragItemId}>

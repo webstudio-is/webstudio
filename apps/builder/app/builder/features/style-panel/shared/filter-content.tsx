@@ -1,6 +1,5 @@
 import {
   type InvalidValue,
-  type TupleValue,
   toValue,
   type StyleValue,
 } from "@webstudio-is/css-engine";
@@ -26,6 +25,17 @@ import type { StyleUpdateOptions } from "../shared/use-style-data";
 import { ShadowContent } from "./shadow-content";
 import { parseCssFragment } from "./css-fragment";
 import { useReadonly } from "./readonly";
+import { $availableUnitVariables } from "./model";
+import { humanizeString } from "~/shared/string-utils";
+
+export const getFilterItemProps = (_index: number, value: StyleValue) => ({
+  label:
+    value.type === "function"
+      ? `${humanizeString(value.name)}: ${toValue(value.args)}`
+      : value.type === "var"
+        ? `--${value.value}`
+        : "Unknown filter",
+});
 
 // filters can't be validated directly in the css-engine. Because, these are not properties
 // but functions that proeprties accept. So, we need to validate them manually using fake proeprties
@@ -83,7 +93,7 @@ type FilterContentProps = {
   tooltip: JSX.Element;
   onEditLayer: (
     index: number,
-    layers: TupleValue,
+    value: StyleValue,
     options: StyleUpdateOptions
   ) => void;
 };
@@ -113,17 +123,16 @@ export const FilterSectionContent = ({
   >(undefined);
 
   useEffect(() => {
+    setIntermediateValue({ type: "intermediate", value: propertyValue });
     if (layer.type !== "function" || isFilterFunction(layer.name) === false) {
+      setFilterFunction(undefined);
+      setFilterFunctionValue(undefined);
       return;
     }
     if (layer.args.type !== "tuple" && layer.args.type !== "shadow") {
       return;
     }
     setFilterFunction(layer.name);
-    setIntermediateValue({
-      type: "intermediate",
-      value: propertyValue,
-    });
     if (layer.args.type === "tuple") {
       setFilterFunctionValue(layer.args.value[0]);
     }
@@ -166,34 +175,15 @@ export const FilterSectionContent = ({
       type: invalid ? "invalid" : "intermediate",
       value,
     });
-    if (parsedValue?.type === "tuple") {
+    if (parsedValue?.type === "tuple" || parsedValue?.type === "var") {
       onEditLayer(index, parsedValue, options);
     }
   };
 
   return (
     <Flex direction="column">
-      <PanelContent as={Flex} direction="column" gap="2">
-        <Grid
-          gap="2"
-          css={{
-            gridTemplateColumns: "1fr 3fr",
-            alignItems: "center",
-          }}
-        >
-          <Flex align="center">
-            <Label>Function</Label>
-          </Flex>
-          <Select
-            disabled={readonly}
-            name="filterFunction"
-            placeholder="Select filter"
-            options={Object.keys(filterFunctions) as FilterFunction[]}
-            value={filterFunction ?? "blur"}
-            onChange={handleFilterFunctionChange}
-          />
-        </Grid>
-        {filterFunction !== "drop-shadow" ? (
+      {layer.type === "function" && (
+        <PanelContent as={Flex} direction="column" gap="2">
           <Grid
             gap="2"
             css={{
@@ -202,30 +192,52 @@ export const FilterSectionContent = ({
             }}
           >
             <Flex align="center">
-              <Label>Value</Label>
+              <Label>Function</Label>
             </Flex>
-            <CssValueInputContainer
+            <Select
               disabled={readonly}
-              key="functionValue"
-              property={
-                filterFunction
-                  ? filterFunctions[filterFunction].fakeProperty
-                  : "outline-offset"
-              }
-              styleSource="local"
-              value={
-                filterFunctionValue ?? {
-                  type: "unit",
-                  value: 0,
-                  unit: "px",
-                }
-              }
-              onUpdate={handleFilterFunctionValueChange}
-              onDelete={() => {}}
+              name="filterFunction"
+              placeholder="Select filter"
+              options={Object.keys(filterFunctions) as FilterFunction[]}
+              value={filterFunction ?? "blur"}
+              onChange={handleFilterFunctionChange}
             />
           </Grid>
-        ) : undefined}
-      </PanelContent>
+          {filterFunction !== "drop-shadow" ? (
+            <Grid
+              gap="2"
+              css={{
+                gridTemplateColumns: "1fr 3fr",
+                alignItems: "center",
+              }}
+            >
+              <Flex align="center">
+                <Label>Value</Label>
+              </Flex>
+              <CssValueInputContainer
+                disabled={readonly}
+                key="functionValue"
+                property={
+                  filterFunction
+                    ? filterFunctions[filterFunction].fakeProperty
+                    : "outline-offset"
+                }
+                styleSource="local"
+                getOptions={() => $availableUnitVariables.get()}
+                value={
+                  filterFunctionValue ?? {
+                    type: "unit",
+                    value: 0,
+                    unit: "px",
+                  }
+                }
+                onUpdate={handleFilterFunctionValueChange}
+                onDelete={() => {}}
+              />
+            </Grid>
+          ) : undefined}
+        </PanelContent>
+      )}
 
       {filterFunction === "drop-shadow" && layer.type === "function" && (
         <ShadowContent
@@ -243,7 +255,9 @@ export const FilterSectionContent = ({
         />
       )}
 
-      <Separator css={{ gridAutoColumns: "span 2" }} />
+      {layer.type === "function" && (
+        <Separator css={{ gridAutoColumns: "span 2" }} />
+      )}
       <PanelContent
         as={Flex}
         direction="column"

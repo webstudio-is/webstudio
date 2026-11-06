@@ -391,9 +391,9 @@ export const RepeatedStyle = (props: {
   let primaryItems: StyleValue[] = [];
   if (primaryValue.type === "var") {
     const reparsed = reparseComputedValue(styles[0]);
-    if (isRepeatedValue(reparsed)) {
-      primaryItems = repeatUntil([primaryValue], reparsed.value.length);
-    }
+    primaryItems = isRepeatedValue(reparsed)
+      ? repeatUntil([primaryValue], reparsed.value.length)
+      : [primaryValue];
   }
   if (isRepeatedValue(primaryValue)) {
     primaryItems = primaryValue.value;

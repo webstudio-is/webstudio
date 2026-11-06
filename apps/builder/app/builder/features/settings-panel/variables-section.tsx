@@ -330,27 +330,31 @@ const VariablesItem = ({
                   <Text color="moreSubtle">Value comes from</Text>
                   <Flex gap="1" wrap="wrap">
                     {source === "local" && (
-                      <StyleSourceBadge source="local" variant="small">
+                      <StyleSourceBadge
+                        as="button"
+                        type="button"
+                        source="local"
+                        variant="small"
+                        clickable
+                        onClick={() => {
+                          showVariableAtSource(variable.id, valueSourceId);
+                        }}
+                      >
                         Local
                       </StyleSourceBadge>
                     )}
-                    <button
+                    <StyleSourceBadge
+                      as="button"
                       type="button"
-                      style={{
-                        border: 0,
-                        padding: 0,
-                        background: "transparent",
-                        display: "inline-flex",
-                        cursor: "pointer",
-                      }}
+                      source="instance"
+                      variant="small"
+                      clickable
                       onClick={() => {
                         showVariableAtSource(variable.id, valueSourceId);
                       }}
                     >
-                      <StyleSourceBadge source="instance" variant="small">
-                        {valueSourceName}
-                      </StyleSourceBadge>
-                    </button>
+                      {valueSourceName}
+                    </StyleSourceBadge>
                   </Flex>
                   {canDelete && (
                     <Button

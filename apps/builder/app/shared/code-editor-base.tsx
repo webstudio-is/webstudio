@@ -9,15 +9,18 @@ import {
 } from "react";
 import {
   Annotation,
+  Compartment,
   EditorSelection,
   EditorState,
   StateEffect,
+  Transaction,
   type Extension,
 } from "@codemirror/state";
 import {
   EditorView,
   drawSelection,
   dropCursor,
+  lineNumbers,
   keymap,
 } from "@codemirror/view";
 import {
@@ -34,7 +37,7 @@ import {
   cssVar,
   selectedItemBackground,
   declareCssVar,
-  SmallIconButton,
+  IconButton,
   Grid,
   Flex,
   rawTheme,
@@ -53,7 +56,7 @@ import { codeHighlightStyle } from "./code-highlight";
 // @ts-expect-error
 EditorView.EDIT_CONTEXT = false;
 
-const ExternalChange = Annotation.define<boolean>();
+export const ExternalChange = Annotation.define<boolean>();
 
 const minHeightVar = declareCssVar("--code-editor-min-height");
 const maxHeightVar = declareCssVar("--code-editor-max-height");
@@ -123,11 +126,19 @@ const editorContentStyle = css({
     borderColor: cssVar("--border-negative"),
     outlineColor: cssVar("--border-negative"),
   },
+  "[data-editor-dialog-content] &": {
+    background: "transparent",
+    borderWidth: 0,
+    padding: 0,
+  },
   "& .cm-focused": {
     outline: "none",
   },
   "& .cm-cursor, & .cm-dropCursor": {
     borderLeftColor: "currentColor",
+  },
+  "& .cm-cursor": {
+    marginLeft: 0,
   },
   "& .cm-activeLine": {
     backgroundColor: cssVar("--overlay-interaction-hover"),
@@ -188,23 +199,26 @@ const shortcutStyle = css({
 const autocompletionTooltipTheme = EditorView.theme({
   ".cm-tooltip.cm-tooltip-autocomplete": {
     ...textVariants.mono,
-    border: "none",
-    backgroundColor: "transparent",
+    display: "flex",
+    flexDirection: "column",
+    width: "max-content",
+    minWidth: "160px",
+    maxWidth: "260px",
+    boxSizing: "border-box",
+    borderRadius: rawTheme.borderRadius[6],
+    border: `1px solid ${cssVar("--border-default")}`,
+    backgroundColor: cssVar("--background-primary"),
+    boxShadow: rawTheme.shadows.menuDropShadow,
+    padding: `${rawTheme.spacing[3]} 0`,
     // override none set on body by radix popover
     pointerEvents: "auto",
   },
   ".cm-tooltip.cm-tooltip-autocomplete ul": {
-    minWidth: "160px",
-    maxWidth: "260px",
-    width: "max-content",
+    width: "100%",
     boxSizing: "border-box",
-    borderRadius: rawTheme.borderRadius[6],
-    backgroundColor: cssVar("--background-primary"),
-    border: `1px solid ${cssVar("--border-default")}`,
-    boxShadow: `${rawTheme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar(
-      "--border-default"
-    )}`,
-    padding: rawTheme.spacing[3],
+    maxHeight: rawTheme.spacing[34],
+    padding: 0,
+    order: 1,
   },
   ".cm-tooltip.cm-tooltip-autocomplete ul li": {
     ...textVariants.labels,
@@ -213,7 +227,9 @@ const autocompletionTooltipTheme = EditorView.theme({
     display: "flex",
     alignItems: "center",
     color: cssVar("--foreground-primary"),
+    marginInline: rawTheme.spacing[3],
     padding: rawTheme.spacing[3],
+    paddingLeft: rawTheme.spacing[11],
     borderRadius: rawTheme.borderRadius[3],
   },
   ".cm-tooltip.cm-tooltip-autocomplete li:hover": {
@@ -231,6 +247,24 @@ const autocompletionTooltipTheme = EditorView.theme({
     textOverflow: "ellipsis",
     fontStyle: "normal",
     color: cssVar("--foreground-secondary"),
+  },
+  ".cm-tooltip.cm-completionInfo": {
+    position: "static",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    border: "none",
+    borderTop: `1px solid ${cssVar("--border-default")}`,
+    backgroundColor: "transparent",
+    boxShadow: "none",
+    order: 2,
+    padding: 0,
+    whiteSpace: "normal",
+  },
+  ".cm-tooltip.cm-completionInfo.cm-completionInfo-above": {
+    borderTop: "none",
+    borderBottom: `1px solid ${cssVar("--border-default")}`,
+    order: 0,
   },
 });
 
@@ -316,12 +350,15 @@ type EditorContentProps = {
   extensions?: Extension[];
   readOnly?: boolean;
   autoFocus?: boolean;
+  initialSelection?: number;
   invalid?: boolean;
   showShortcuts?: boolean;
+  showLineNumbers?: boolean;
   chromeless?: boolean;
+  resetHistoryOnExternalChange?: boolean;
   value?: string;
   onChange: (value: string) => void;
-  onChangeComplete: (value: string) => void;
+  onChangeComplete: (value: string, event?: FocusEvent) => void;
 };
 
 export const EditorContent = ({
@@ -330,15 +367,19 @@ export const EditorContent = ({
   extensions = [],
   readOnly = false,
   autoFocus = false,
+  initialSelection,
   invalid = false,
   showShortcuts = false,
+  showLineNumbers = true,
   chromeless = false,
+  resetHistoryOnExternalChange = false,
   value,
   onChange,
   onChangeComplete,
 }: EditorContentProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<undefined | EditorView>(undefined);
+  const historyCompartment = useRef(new Compartment());
 
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -404,10 +445,11 @@ export const EditorContent = ({
 
     view.dispatch({
       effects: StateEffect.reconfigure.of([
+        ...(showLineNumbers ? [lineNumbers()] : []),
         ...extensions,
         ...(hasDisabledFieldset ? [EditorView.editable.of(false)] : []),
         autocompletionTooltipTheme,
-        history(),
+        historyCompartment.current.of(history()),
         drawSelection(),
         dropCursor(),
         syntaxHighlighting(codeHighlightStyle, { fallback: true }),
@@ -451,8 +493,8 @@ export const EditorContent = ({
           }
         }),
         EditorView.domEventHandlers({
-          blur() {
-            onChangeCompleteRef.current(view.state.doc.toString());
+          blur(event) {
+            onChangeCompleteRef.current(view.state.doc.toString(), event);
           },
           cut(event) {
             // prevent catching cut by global copy paste
@@ -462,7 +504,7 @@ export const EditorContent = ({
         }),
       ]),
     });
-  }, [ariaLabel, readOnly, extensions]);
+  }, [ariaLabel, readOnly, extensions, showLineNumbers]);
 
   // update editor with react value
   // https://github.com/uiwjs/react-codemirror/blob/5d7a37245ce70e61f215b77dc42a7eaf295c46e7/core/src/useCodeMirror.ts#L158-L169
@@ -481,9 +523,34 @@ export const EditorContent = ({
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: nextValue },
       selection: clampEditorSelection(view.state.selection, nextValue.length),
-      annotations: [ExternalChange.of(true)],
+      annotations: [
+        ExternalChange.of(true),
+        ...(resetHistoryOnExternalChange
+          ? [Transaction.addToHistory.of(false)]
+          : []),
+      ],
     });
-  }, [value]);
+    if (resetHistoryOnExternalChange) {
+      // A full replacement changes declaration offsets, so old undo events cannot be mapped safely.
+      view.dispatch({ effects: historyCompartment.current.reconfigure([]) });
+      view.dispatch({
+        effects: historyCompartment.current.reconfigure(history()),
+      });
+    }
+  }, [value, resetHistoryOnExternalChange]);
+
+  useEffect(() => {
+    if (initialSelection !== undefined) {
+      const view = viewRef.current;
+      if (view !== undefined) {
+        view.dispatch({
+          selection: {
+            anchor: Math.min(initialSelection, view.state.doc.length),
+          },
+        });
+      }
+    }
+  }, [initialSelection]);
 
   useImperativeHandle(editorApiRef, () => ({
     replaceSelection: (string) => {
@@ -538,7 +605,7 @@ export const EditorContent = ({
 
 const editorDialogControlStyle = css({
   position: "relative",
-  "&:hover": {
+  "&:hover, &:focus-within": {
     [maximizeIconVisibilityVar]: "visible",
   },
 });
@@ -549,21 +616,22 @@ export const EditorDialogControl = ({ children }: { children: ReactNode }) => {
 
 export const EditorDialogButton = forwardRef<
   HTMLButtonElement,
-  Partial<ComponentProps<typeof SmallIconButton>>
+  ComponentProps<typeof IconButton>
 >((props, ref) => {
   return (
-    <SmallIconButton
+    <IconButton
+      type="button"
       {...props}
       ref={ref}
-      icon={<MaximizeIcon />}
       css={{
         position: "absolute",
         top: 4,
         right: 4,
         visibility: cssVar(maximizeIconVisibilityVar, "hidden"),
-        background: "transparent",
       }}
-    />
+    >
+      <MaximizeIcon />
+    </IconButton>
   );
 });
 EditorDialogButton.displayName = "EditorDialogButton";
@@ -578,14 +646,16 @@ export const EditorDialog = ({
   ...panelProps
 }: {
   title: ReactNode;
+  titleSuffix?: ReactNode;
   content: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   width?: number;
   height?: number;
   contentPadding?: boolean;
   placement?: ComponentProps<typeof FloatingPanel>["placement"];
   resize?: ComponentProps<typeof FloatingPanel>["resize"];
   open?: boolean;
+  modal?: boolean;
   onOpenChange?: (newOpen: boolean) => void;
 }) => {
   return (
@@ -598,13 +668,14 @@ export const EditorDialog = ({
       resize="both"
       content={
         <PanelContent
+          data-editor-dialog-content
           as={Grid}
           align="stretch"
           css={{
             padding: contentPadding ? undefined : 0,
             height: "100%",
-            overflow: "hidden",
-            boxSizing: "content-box",
+            overflow: "auto",
+            boxSizing: "border-box",
           }}
         >
           {content}

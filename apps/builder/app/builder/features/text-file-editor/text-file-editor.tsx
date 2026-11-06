@@ -1002,6 +1002,7 @@ export const TextFileEditor = ({
         size="full"
         expandable={false}
         chromeless
+        showLineNumbers={languageExtensions.length > 0}
         readOnly={canEdit === false}
         onChange={onChange}
         onChangeComplete={save}
@@ -1012,7 +1013,7 @@ export const TextFileEditor = ({
   return (
     <EditorDialog
       title={title}
-      contentPadding={false}
+      contentPadding={!isMarkdown}
       width={isMarkdown ? 1280 : undefined}
       height={isMarkdown ? 960 : undefined}
       open

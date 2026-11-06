@@ -48,6 +48,13 @@ export const BorderProperty = ({
    * from the shorthand property set and pass it instead.
    **/
   const firstPropertyName = borderProperties[0];
+  const getOptions = () => [
+    ...(keywordValues[firstPropertyName] ?? []).map((value) => ({
+      type: "keyword" as const,
+      value,
+    })),
+    ...$availableUnitVariables.get(),
+  ];
 
   const [showIndividualMode, setShowIndividualMode] = useSelectedInstanceKv(
     `${firstPropertyName}-showIndividualMode`,
@@ -81,13 +88,7 @@ export const BorderProperty = ({
             disabled={readonly}
             property={firstPropertyName}
             styleSource={styleValueSourceColor}
-            getOptions={() => [
-              ...(keywordValues[firstPropertyName] ?? []).map((value) => ({
-                type: "keyword" as const,
-                value,
-              })),
-              ...$availableUnitVariables.get(),
-            ]}
+            getOptions={getOptions}
             value={value}
             onUpdate={(newValue, options) => {
               const batch = createBatchUpdate();
@@ -126,12 +127,7 @@ export const BorderProperty = ({
               icon={borderPropertyOptions[styleDecl.property]?.icon}
               property={styleDecl.property}
               styleSource={styleDecl.source.name}
-              getOptions={() =>
-                (keywordValues[firstPropertyName] ?? []).map((value) => ({
-                  type: "keyword" as const,
-                  value,
-                }))
-              }
+              getOptions={getOptions}
               value={styleDecl.cascadedValue}
               onUpdate={setProperty(styleDecl.property)}
               onDelete={(options) =>

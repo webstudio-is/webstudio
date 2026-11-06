@@ -122,6 +122,7 @@ export const SpaceTooltip = ({
       content={
         <PropertyInfo
           title={propertyContent?.label ?? ""}
+          property={property}
           description={propertyContent?.description}
           styles={styles}
           onReset={() => {

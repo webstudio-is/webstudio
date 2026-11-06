@@ -25,7 +25,7 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-test("keeps the maximize button background transparent when hovered", async () => {
+test("shows the maximize button hover background", async () => {
   const container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -47,7 +47,7 @@ test("keeps the maximize button background transparent when hovered", async () =
   );
   expect(maximizeButton).not.toBeNull();
   await userEvent.hover(maximizeButton!);
-  expect(getComputedStyle(maximizeButton!).backgroundColor).toBe(
+  expect(getComputedStyle(maximizeButton!).backgroundColor).not.toBe(
     "rgba(0, 0, 0, 0)"
   );
 });

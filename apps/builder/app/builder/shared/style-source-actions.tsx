@@ -16,7 +16,7 @@ import {
   toast,
   cssVar,
 } from "@webstudio-is/design-system";
-import type { StyleSource } from "@webstudio-is/sdk";
+import type { StyleDecl, StyleSource } from "@webstudio-is/sdk";
 import type { RenameStyleSourceError } from "@webstudio-is/project-build/runtime";
 import {
   $selectedStyleSources,
@@ -45,6 +45,20 @@ export const $styleSourceUsages = computed(
   (styleSourceSelections) =>
     getStyleSourceUsages(styleSourceSelections.values())
 );
+
+export const selectStyleSource = (
+  styleSourceId: StyleSource["id"],
+  state?: StyleDecl["state"]
+) => {
+  const instanceId = $selectedInstance.get()?.id;
+  if (instanceId === undefined) {
+    return;
+  }
+  const selectedStyleSources = new Map($selectedStyleSources.get());
+  selectedStyleSources.set(instanceId, styleSourceId);
+  $selectedStyleSources.set(selectedStyleSources);
+  $selectedStyleState.set(state);
+};
 
 export const deselectMatchingStyleSource = (
   styleSourceId: StyleSource["id"]

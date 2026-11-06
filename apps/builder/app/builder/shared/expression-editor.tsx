@@ -15,7 +15,6 @@ import {
   WidgetType,
   ViewPlugin,
   keymap,
-  lineNumbers,
   EditorView,
   tooltips,
 } from "@codemirror/view";
@@ -580,9 +579,9 @@ export const ExpressionEditor = ({
   color,
   size,
   chromeless = false,
+  showLineNumbers = size === "full",
   autoFocus = false,
   readOnly = false,
-  showLineNumbers = false,
   value,
   onChange,
   onChangeComplete,
@@ -600,9 +599,9 @@ export const ExpressionEditor = ({
   color?: "error";
   size?: "default" | "full";
   chromeless?: boolean;
+  showLineNumbers?: boolean;
   autoFocus?: boolean;
   readOnly?: boolean;
-  showLineNumbers?: boolean;
   value?: string;
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
@@ -687,7 +686,6 @@ export const ExpressionEditor = ({
       ]),
       expressionLinter,
       linterTooltipTheme,
-      ...(showLineNumbers ? [lineNumbers()] : []),
       ...(size === "full" ? [fullSizeEditorTheme] : []),
     ],
     [
@@ -695,16 +693,11 @@ export const ExpressionEditor = ({
       completionScopeWithUnsetVariables,
       aliasesWithUnsetVariables,
       size,
-      showLineNumbers,
     ]
   );
   const dialogExtensions = useMemo(
-    () => [
-      ...extensions,
-      ...(showLineNumbers ? [] : [lineNumbers()]),
-      foldGutterExtension,
-    ],
-    [extensions, showLineNumbers]
+    () => [...extensions, foldGutterExtension],
+    [extensions]
   );
 
   // prevent clicking on autocomplete options propagating to body
@@ -746,6 +739,7 @@ export const ExpressionEditor = ({
       extensions={extensions}
       invalid={color === "error"}
       chromeless={chromeless}
+      showLineNumbers={showLineNumbers}
       readOnly={readOnly}
       autoFocus={autoFocus}
       value={expressionWithUnsetVariables}
@@ -764,7 +758,6 @@ export const ExpressionEditor = ({
         {content}
         <EditorDialog
           title="Expression editor"
-          contentPadding={false}
           content={
             <EditorContent
               aria-label={ariaLabel}
@@ -772,6 +765,7 @@ export const ExpressionEditor = ({
               extensions={dialogExtensions}
               invalid={color === "error"}
               chromeless
+              showLineNumbers
               readOnly={readOnly}
               autoFocus={autoFocus}
               value={expressionWithUnsetVariables}

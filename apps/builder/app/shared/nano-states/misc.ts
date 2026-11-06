@@ -155,6 +155,7 @@ export type PropertySizes = Partial<Record<CssProperty, UnitValue>>;
 export const $selectedInstanceSizes = atom<{
   unitSizes: UnitSizes;
   propertySizes: PropertySizes;
+  computedValues: Partial<Record<CssProperty, string>>;
 }>({
   unitSizes: {
     ch: 8,
@@ -165,6 +166,7 @@ export const $selectedInstanceSizes = atom<{
     px: 1,
   },
   propertySizes: {},
+  computedValues: {},
 });
 
 /**

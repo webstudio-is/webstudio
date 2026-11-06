@@ -1,12 +1,10 @@
-import {
-  toValue,
-  type CssProperty,
-  type StyleValue,
-} from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { InfoTooltip, Flex, Text } from "@webstudio-is/design-system";
-import { humanizeString } from "~/shared/string-utils";
 import { RepeatedStyleSection } from "../../shared/style-section";
-import { FilterSectionContent } from "../../shared/filter-content";
+import {
+  FilterSectionContent,
+  getFilterItemProps,
+} from "../../shared/filter-content";
 import { parseCssFragment } from "../../shared/css-fragment";
 import {
   addRepeatedStyleItem,
@@ -22,14 +20,6 @@ export const properties = ["backdrop-filter"] satisfies [
 
 const label = "Backdrop filters";
 const initialBackdropFilter = "blur(0px)";
-
-const getItemProps = (_index: number, value: StyleValue) => {
-  const label =
-    value.type === "function"
-      ? `${humanizeString(value.name)}: ${toValue(value.args)}`
-      : "Unknown filter";
-  return { label };
-};
 
 export const Section = () => {
   const styleDecl = useComputedStyleDecl("backdrop-filter");
@@ -49,7 +39,7 @@ export const Section = () => {
       <RepeatedStyle
         label={label}
         styles={[styleDecl]}
-        getItemProps={getItemProps}
+        getItemProps={getFilterItemProps}
         renderItemContent={(index, primaryValue) => (
           <FilterSectionContent
             index={index}

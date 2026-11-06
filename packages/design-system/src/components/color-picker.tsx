@@ -17,6 +17,7 @@ import {
   type ElementRef,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -114,6 +115,7 @@ const thumbStyle = css({
   position: "relative",
   width: theme.spacing[9],
   height: theme.spacing[9],
+  padding: 0,
   backgroundBlendMode: "difference",
   borderRadius: theme.borderRadius[2],
   borderWidth: 1,
@@ -181,6 +183,12 @@ const shouldHandleColorInputChange = ({
   isOpen: boolean;
 }) => {
   return disabled === false && isOpen;
+};
+
+const cancelColorAreaDrag = (colorInput: ColorInput | null) => {
+  colorInput?.shadowRoot
+    ?.querySelector<HTMLElement>(".area-picker")
+    ?.dispatchEvent(new PointerEvent("pointercancel"));
 };
 
 const useColorInputTheme = () => {
@@ -257,6 +265,18 @@ export const ColorPicker = ({
   const colorSpace = styleValueToColorInputColorSpace(value);
   const colorInputValue = styleValueToColorInputValue(value);
 
+  // Close the native popover before its host leaves the DOM. The web component
+  // does not close the popover in disconnectedCallback.
+  useLayoutEffect(() => {
+    const colorInput = colorInputRef.current;
+    return () => {
+      try {
+        cancelColorAreaDrag(colorInput);
+        colorInput?.close();
+      } catch {}
+    };
+  }, [disabled]);
+
   const overrideContrast = useCallback(() => {
     const colorInputElement = colorInputRef.current;
     if (!colorInputElement) {
@@ -319,6 +339,7 @@ export const ColorPicker = ({
     const controller = new AbortController();
     const { signal } = controller;
     let isOpen = false;
+    let bodyInertBeforeOpen = document.body.inert;
     let lastStyleValue: StyleValue = callbacksRef.current.value;
     let lastCommittedStyleValue: StyleValue = callbacksRef.current.value;
 
@@ -364,6 +385,7 @@ export const ColorPicker = ({
         // before any change event fires (the component's own JS sets --contrast
         // based on raw color only, ignoring alpha).
         isOpen = true;
+        bodyInertBeforeOpen = document.body.inert;
         lastStyleValue = callbacksRef.current.value;
         lastCommittedStyleValue = callbacksRef.current.value;
         callbacksRef.current.disableCanvasPointerEvents();
@@ -393,7 +415,13 @@ export const ColorPicker = ({
     colorInputElement.addEventListener(
       "close",
       () => {
+        // The web component does not cancel a captured color-area drag on close.
+        // Cancel it before its delayed drag effect can make the body inert again.
+        cancelColorAreaDrag(colorInputElement);
         isOpen = false;
+        // hdr-color-input makes the body inert while dragging. A quick close
+        // can remove its drag target before pointerup clears that state.
+        document.body.inert = bodyInertBeforeOpen;
         callbacksRef.current.enableCanvasPointerEvents();
         document.body.style.removeProperty("user-select");
         callbacksRef.current.onOpenChange?.(false);
@@ -409,6 +437,9 @@ export const ColorPicker = ({
 
     return () => {
       controller.abort();
+      if (isOpen) {
+        document.body.inert = bodyInertBeforeOpen;
+      }
       callbacksRef.current.enableCanvasPointerEvents();
       document.body.style.removeProperty("user-select");
     };
@@ -431,6 +462,9 @@ export const ColorPicker = ({
         }
         .${scopeClass}::part(input) {
           display: none;
+        }
+        .${scopeClass}::part(panel) {
+          white-space: normal;
         }
         .${scopeClass}::part(controls) {
           /* Hack to fix as we can't reach into .control and change grid-template-columns */

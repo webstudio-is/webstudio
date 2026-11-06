@@ -12,6 +12,8 @@ import {
   InteractiveListItem,
   InteractiveListArrowFocus,
   SmallIconButton,
+  SectionTitle,
+  SectionTitleLabel,
 } from "@webstudio-is/design-system";
 import { PlusIcon, MinusIcon } from "@webstudio-is/icons";
 import { toValue } from "@webstudio-is/css-engine";
@@ -607,24 +609,15 @@ export const GridAreas = () => {
       onOpenChange={setIsOpen}
       fullWidth
       trigger={
-        <Flex
-          align="center"
-          justify="between"
-          css={{ padding: theme.spacing[5] }}
+        <SectionTitle
+          suffix={
+            <IconButton disabled={readonly} onClick={addArea}>
+              <PlusIcon />
+            </IconButton>
+          }
         >
-          <Text variant="labels" color="subtle">
-            Areas ({areas.length})
-          </Text>
-          <IconButton
-            disabled={readonly}
-            onClick={(e) => {
-              e.stopPropagation();
-              addArea();
-            }}
-          >
-            <PlusIcon />
-          </IconButton>
-        </Flex>
+          <SectionTitleLabel>Areas ({areas.length})</SectionTitleLabel>
+        </SectionTitle>
       }
     >
       <InteractiveListArrowFocus>

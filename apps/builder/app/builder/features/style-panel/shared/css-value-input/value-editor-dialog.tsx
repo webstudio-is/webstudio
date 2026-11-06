@@ -3,7 +3,6 @@ import {
   cssVar,
   declareCssVar,
   NestedInputButton,
-  rawTheme,
 } from "@webstudio-is/design-system";
 import { MaximizeIcon } from "@webstudio-is/icons";
 import type {
@@ -93,12 +92,10 @@ export const ValueEditorDialog = ({
   return (
     <EditorDialog
       title="CSS value"
-      placement="bottom-within"
-      height={200}
-      width={Number.parseFloat(rawTheme.sizes.sidebarWidth)}
       content={
         <CssFragmentEditorContent
           autoFocus
+          showLineNumbers
           value={intermediateValue?.value ?? value ?? ""}
           invalid={intermediateValue?.type === "invalid"}
           showShortcuts

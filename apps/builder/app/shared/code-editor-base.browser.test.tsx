@@ -5,12 +5,19 @@ import { EditorView } from "@codemirror/view";
 import { autocompletion, startCompletion } from "@codemirror/autocomplete";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { userEvent } from "@vitest/browser/context";
-import { cssVar, selectedItemBackground } from "@webstudio-is/design-system";
+import {
+  cssVar,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  selectedItemBackground,
+} from "@webstudio-is/design-system";
 import "@webstudio-is/design-system/global.css";
 import {
   EditorContent,
   EditorDialogButton,
   EditorDialogControl,
+  EditorDialog,
 } from "./code-editor-base";
 
 (
@@ -202,7 +209,7 @@ test.each(["light", "dark"] as const)(
   }
 );
 
-test("keeps the editor maximize button background transparent when hovered", async () => {
+test("uses the standard icon button hover style for editor maximize", async () => {
   act(() => {
     root.render(
       <div style={{ width: 320, height: 160 }}>
@@ -226,7 +233,52 @@ test("keeps the editor maximize button background transparent when hovered", asy
   }
   await userEvent.hover(maximizeButton.parentElement!);
   await userEvent.hover(maximizeButton);
-  expect(getComputedStyle(maximizeButton).backgroundColor).toBe(
+  expect(getComputedStyle(maximizeButton).backgroundColor).not.toBe(
     "rgba(0, 0, 0, 0)"
   );
+});
+
+test("keeps editor chrome in form dialogs but removes it in editor dialogs", () => {
+  act(() => {
+    root.render(
+      <Dialog open>
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle>Settings</DialogTitle>
+          <EditorContent
+            value="settings code"
+            onChange={() => {}}
+            onChangeComplete={() => {}}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  });
+  const formEditor = document.querySelector<HTMLElement>(
+    '[role="dialog"] .cm-editor'
+  )?.parentElement;
+  expect(formEditor).toBeDefined();
+  expect(getComputedStyle(formEditor!).borderLeftWidth).toBe("1px");
+  expect(getComputedStyle(formEditor!).paddingLeft).not.toBe("0px");
+
+  act(() => {
+    root.render(
+      <EditorDialog
+        open
+        title="Code editor"
+        content={
+          <EditorContent
+            value="full editor"
+            onChange={() => {}}
+            onChangeComplete={() => {}}
+          />
+        }
+      />
+    );
+  });
+  const fullEditor = document.querySelector<HTMLElement>(
+    '[role="dialog"] .cm-editor'
+  )?.parentElement;
+  expect(fullEditor).toBeDefined();
+  expect(getComputedStyle(fullEditor!).borderLeftWidth).toBe("0px");
+  expect(getComputedStyle(fullEditor!).paddingLeft).toBe("0px");
 });

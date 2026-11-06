@@ -1,11 +1,10 @@
 import { Flex, InfoTooltip, Text } from "@webstudio-is/design-system";
-import {
-  toValue,
-  type CssProperty,
-  type StyleValue,
-} from "@webstudio-is/css-engine";
+import { toValue, type CssProperty } from "@webstudio-is/css-engine";
 import { RepeatedStyleSection } from "../../shared/style-section";
-import { FilterSectionContent } from "../../shared/filter-content";
+import {
+  FilterSectionContent,
+  getFilterItemProps,
+} from "../../shared/filter-content";
 import {
   addRepeatedStyleItem,
   editRepeatedStyleItem,
@@ -13,20 +12,11 @@ import {
 } from "../../shared/repeated-style";
 import { parseCssFragment } from "../../shared/css-fragment";
 import { useComputedStyleDecl } from "../../shared/model";
-import { humanizeString } from "~/shared/string-utils";
 
 export const properties = ["filter"] satisfies [CssProperty, ...CssProperty[]];
 
 const label = "Filters";
 const initialFilter = "blur(0px)";
-
-const getItemProps = (_index: number, value: StyleValue) => {
-  const label =
-    value.type === "function"
-      ? `${humanizeString(value.name)}: ${toValue(value.args)}`
-      : "Unknown filter";
-  return { label };
-};
 
 export const Section = () => {
   const styleDecl = useComputedStyleDecl("filter");
@@ -46,7 +36,7 @@ export const Section = () => {
       <RepeatedStyle
         label={label}
         styles={[styleDecl]}
-        getItemProps={getItemProps}
+        getItemProps={getFilterItemProps}
         renderItemContent={(index, primaryValue) => (
           <FilterSectionContent
             index={index}

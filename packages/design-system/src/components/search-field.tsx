@@ -9,7 +9,7 @@ import {
   type KeyboardEventHandler,
   type FormEventHandler,
 } from "react";
-import { XCircledFilledIcon, SearchIcon } from "@webstudio-is/icons";
+import { XIcon, SearchIcon } from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
 import { InputField } from "./input-field";
@@ -43,6 +43,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
     onAbort,
     value: propsValue = "",
     onKeyDown,
+    suffix,
     ...rest
   } = props;
   const [value, setValue] = useState(String(propsValue));
@@ -67,6 +68,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
       prefix={<SearchIconStyled />}
       suffix={
         <Flex align="center" css={{ padding: theme.spacing[2] }}>
+          {suffix}
           <AbortButton
             hidden={value.length > 0 ? "true" : "false"}
             aria-label="Reset search"
@@ -75,7 +77,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
             onClick={() => {
               handleCancel();
             }}
-            icon={<XCircledFilledIcon />}
+            icon={<XIcon />}
           />
         </Flex>
       }

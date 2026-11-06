@@ -13,6 +13,8 @@ overrides:
   '@playwright/test': 1.50.1
   vite@<7: 6.3.4
   '@react-router/dev>vite-node': 3.2.4
+  '@codemirror/state': 6.5.2
+  '@codemirror/view': 6.36.4
 
 patchedDependencies:
   '@radix-ui/react-scroll-area@1.0.5':
@@ -146,11 +148,14 @@ importers:
       '@codemirror/lint':
         specifier: ^6.8.5
         version: 6.8.5
+      '@codemirror/search':
+        specifier: 6.5.11
+        version: 6.5.11
       '@codemirror/state':
-        specifier: ^6.5.2
+        specifier: 6.5.2
         version: 6.5.2
       '@codemirror/view':
-        specifier: ^6.36.4
+        specifier: 6.36.4
         version: 6.36.4
       '@emotion/hash':
         specifier: ^0.9.2
@@ -371,6 +376,9 @@ importers:
       fast-deep-equal:
         specifier: ^3.1.3
         version: 3.1.3
+      fastest-levenshtein:
+        specifier: ^1.0.16
+        version: 1.0.16
       immer:
         specifier: ^10.1.1
         version: 10.1.1
@@ -3916,6 +3924,9 @@ packages:
 
   '@codemirror/lint@6.8.5':
     resolution: {integrity: sha512-s3n3KisH7dx3vsoeGMxsbRAgKe4O1vbrnKBClm99PU0fWxmxsx5rR2PfqQgIt+2MMJBHbiJ5rfIdLYfB9NNvsA==}
+
+  '@codemirror/search@6.5.11':
+    resolution: {integrity: sha512-KmWepDE6jUdL6n8cAAqIpRmLPBZ5ZKnicE8oGU/s3QrAVID+0VhLFrzUucVKHG5035/BSykhExDL/Xm7dHthiA==}
 
   '@codemirror/state@6.5.2':
     resolution: {integrity: sha512-FVqsPqtPWKVVL3dPSxy8wEF/ymIEuVzF1PK3VbUgrxXpJUSHQWWZz4JMToquRxnkw+36LTamCZG2iua2Ptq0fA==}
@@ -14094,6 +14105,12 @@ snapshots:
       '@codemirror/language': 6.11.0
 
   '@codemirror/lint@6.8.5':
+    dependencies:
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.4
+      crelt: 1.0.6
+
+  '@codemirror/search@6.5.11':
     dependencies:
       '@codemirror/state': 6.5.2
       '@codemirror/view': 6.36.4
