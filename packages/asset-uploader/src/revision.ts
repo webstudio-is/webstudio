@@ -1,4 +1,5 @@
 import {
+  detectAssetType,
   formatAssetName,
   getFileNameParts,
   isTextFileAsset,
@@ -172,7 +173,7 @@ export const updateAssetContent = async (
   const insertedFile = await context.postgrest.client.from("File").insert({
     name: revisionName,
     status: "UPLOADING",
-    format: "file",
+    format: detectAssetType(revisionName),
     size: 0,
     uploaderProjectId: projectId,
     createdAt: currentAsset.file.createdAt,
