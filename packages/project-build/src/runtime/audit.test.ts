@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  blockComponent,
   encodeDataSourceVariable,
   getStyleDeclKey,
   type Instance,
@@ -2627,10 +2628,17 @@ describe("project audit and analysis", () => {
       url: `"/orders"`,
       headers: [],
       searchParams: [],
+      body: encodeDataSourceVariable("formData"),
     });
     const dataSources: NonNullable<BuilderState["dataSources"]> = new Map(
       state.dataSources
     );
+    dataSources.set("formData", {
+      id: "formData",
+      type: "parameter",
+      name: "formData",
+      scopeInstanceId: "form",
+    });
     dataSources.set("submit-data", {
       id: "submit-data",
       type: "resource",
@@ -2658,21 +2666,73 @@ describe("project audit and analysis", () => {
 
     expect(securityFindings()).toEqual([]);
 
+    instances.set("block", {
+      type: "instance",
+      id: "block",
+      component: blockComponent,
+      children: [],
+    });
+    instances.set("body", {
+      ...instances.get("body")!,
+      children: [
+        ...instances.get("body")!.children,
+        { type: "id", value: "block" },
+      ],
+    });
+    props.set("block-source", {
+      id: "block-source",
+      instanceId: "block",
+      name: "src",
+      type: "asset",
+      value: "article.mdx",
+    });
+    expect(securityFindings()).toEqual([]);
+
+    const bodyWithBlock = instances.get("body")!;
+    instances.set("body", {
+      ...bodyWithBlock,
+      children: bodyWithBlock.children.filter(
+        (child) => child.type !== "id" || child.value !== "block"
+      ),
+    });
+    instances.set("form", {
+      ...instances.get("form")!,
+      children: [{ type: "id", value: "block" }],
+    });
+    expect(securityFindings()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          location: expect.objectContaining({ resourceId: "submit" }),
+        }),
+      ])
+    );
+    instances.set("form", { ...instances.get("form")!, children: [] });
+    instances.set("body", bodyWithBlock);
+
+    dataSources.set("rendered-submit-data", {
+      id: "rendered-submit-data",
+      type: "resource",
+      name: "Submit order on page",
+      scopeInstanceId: "body",
+      resourceId: "submit",
+    });
     props.set("rendered-submit", {
       id: "rendered-submit",
       instanceId: "heading",
       name: "title",
       type: "expression",
-      value: encodeDataSourceVariable("submit-data"),
+      value: encodeDataSourceVariable("rendered-submit-data"),
     });
-    expect(securityFindings()).toEqual([
-      expect.objectContaining({
-        location: expect.objectContaining({
-          dataSourceId: "submit-data",
-          resourceId: "submit",
+    expect(securityFindings()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          location: expect.objectContaining({
+            dataSourceId: "rendered-submit-data",
+            resourceId: "submit",
+          }),
         }),
-      }),
-    ]);
+      ])
+    );
   });
 
   test("does not treat the read-only Assets query as a mutation", () => {

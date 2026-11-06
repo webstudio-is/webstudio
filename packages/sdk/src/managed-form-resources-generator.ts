@@ -34,9 +34,9 @@ import {
   getTransitiveResourceIds,
 } from "./resource-dependencies";
 
-/** Compose page-load Resources with the inputs reserved for Form submissions. */
-export const generatePageResources = (
-  options: Parameters<typeof generateResources>[0]
+/** Form submission Resources excluded from a page's render-time graph. */
+export const getPageSubmissionResourceIds = (
+  options: Omit<Parameters<typeof generateResources>[0], "scope">
 ) => {
   const instances = options.instances ?? new Map();
   const { formParameterIds, submissionResourceIds } =
@@ -115,6 +115,19 @@ export const generatePageResources = (
       }
     }
   }
+  return {
+    formParameterIds,
+    submissionResourceIds,
+    independentlyUsedResourceIds,
+  };
+};
+
+/** Compose page-load Resources with the inputs reserved for Form submissions. */
+export const generatePageResources = (
+  options: Parameters<typeof generateResources>[0]
+) => {
+  const { formParameterIds, submissionResourceIds } =
+    getPageSubmissionResourceIds(options);
   const emailResources = Array.from(options.resources.values()).filter(
     (resource) => resource.control === "email"
   );
