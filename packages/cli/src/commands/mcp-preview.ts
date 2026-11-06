@@ -564,8 +564,8 @@ export const createMcpPreviewHandlers = ({
       });
     }
     if (result.navigation?.javascriptErrorPresent === true) {
-      const message =
-        "The page reported a JavaScript error during screenshot capture.";
+      const location = result.navigation.javascriptErrorLocation;
+      const message = `The page reported a JavaScript error during screenshot capture${location === undefined ? "." : `: ${location.pathname}:${location.line}.`}`;
       throw Object.assign(new Error(message), {
         code: "SCREENSHOT_JAVASCRIPT_ERROR",
         issues: [
