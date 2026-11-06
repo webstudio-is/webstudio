@@ -63,6 +63,7 @@ class FakeWebSocket {
   readonly pendingFonts: boolean;
   readonly runtimeErrorScenario?:
     | "console-error"
+    | "exception-error"
     | "stale-outgoing-error"
     | "hash-navigation-error";
   private navigationCount = 0;
@@ -442,21 +443,41 @@ class FakeWebSocket {
         }
         const shouldLogError =
           this.runtimeErrorScenario === "console-error" ||
+          this.runtimeErrorScenario === "exception-error" ||
           ((this.runtimeErrorScenario === "stale-outgoing-error" ||
             sameDocumentNavigation) &&
             navigationNumber === 2);
         if (shouldLogError) {
           this.emit("message", {
             data: JSON.stringify({
-              method: "Runtime.consoleAPICalled",
-              params: {
-                type: "error",
-                executionContextId:
-                  shouldLogError &&
-                  this.runtimeErrorScenario !== "console-error"
-                    ? 1
-                    : executionContextId,
-              },
+              method:
+                this.runtimeErrorScenario === "exception-error"
+                  ? "Runtime.exceptionThrown"
+                  : "Runtime.consoleAPICalled",
+              params:
+                this.runtimeErrorScenario === "exception-error"
+                  ? {
+                      exceptionDetails: {
+                        executionContextId,
+                        url: "https://example.com/assets/exception.js?token=private",
+                        lineNumber: 6,
+                      },
+                    }
+                  : {
+                      type: "error",
+                      executionContextId:
+                        this.runtimeErrorScenario === "console-error"
+                          ? executionContextId
+                          : 1,
+                      stackTrace: {
+                        callFrames: [
+                          {
+                            url: "https://example.com/assets/app.js?token=private",
+                            lineNumber: 41,
+                          },
+                        ],
+                      },
+                    },
             }),
           });
         }
@@ -2417,6 +2438,36 @@ test("reports React error boundary errors logged by the page", async () => {
   );
 
   expect(layout.navigation?.javascriptErrorPresent).toBe(true);
+  expect(layout.navigation).not.toHaveProperty("javascriptErrorLocation");
+});
+
+test("does not expose a page exception URL", async () => {
+  const layout = await captureBrowserScreenshot(
+    {
+      url: "https://example.com",
+      output: "/tmp/page-exception.png",
+      width: 800,
+      height: 600,
+      browserPath: "/usr/bin/chromium",
+      waitUntil: "networkidle",
+      waitForTimeout: 0,
+      timeout: 1000,
+    },
+    createDependencies({
+      socket: new FakeWebSocket(
+        200,
+        undefined,
+        undefined,
+        undefined,
+        ["main"],
+        false,
+        "exception-error"
+      ),
+    })
+  );
+
+  expect(layout.navigation?.javascriptErrorPresent).toBe(true);
+  expect(layout.navigation).not.toHaveProperty("javascriptErrorLocation");
 });
 
 test("does not attribute an outgoing page error to the next route", async () => {

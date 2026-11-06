@@ -19,6 +19,12 @@ import {
 
 const server = createTestServer();
 const context = testContext as unknown as AppContext;
+const stagingContext = {
+  ...context,
+  deployment: {
+    env: { PUBLISHER_HOST: "wstd.io" },
+  } as AppContext["deployment"],
+} as AppContext;
 const postgrestUrl = "http://test-postgrest";
 
 const ownershipHandler = db.get("Project", ({ request }) => {
@@ -602,6 +608,64 @@ test("returns publish job status from deployment record", async () => {
     createdAt: "2024-01-03T00:00:00.000Z",
     completedAt: "2024-01-03T00:01:00.000Z",
   });
+});
+
+test.each([
+  ["eagle-ethhp", "https://eagle-ethhp.wstd.io"],
+  ["eagle-ethhp.wstd.io", "https://eagle-ethhp.wstd.io"],
+])(
+  "returns the configured staging origin for %s",
+  async (domain, stagingUrl) => {
+    server.use(
+      db.get("Build", () =>
+        json({
+          id: "build-staging",
+          version: 1,
+          createdAt: "2024-01-03T00:00:00.000Z",
+          updatedAt: "2024-01-03T00:01:00.000Z",
+          publishStatus: "PUBLISHED",
+          deployment: JSON.stringify({
+            destination: "saas",
+            target: "staging",
+            domains: [domain],
+            assetsDomain: domain,
+          }),
+        })
+      )
+    );
+    await expect(
+      getProjectPublishJob(
+        { projectId: "project-1", jobId: "build-staging" },
+        stagingContext
+      )
+    ).resolves.toMatchObject({ status: "success", stagingUrl });
+  }
+);
+
+test("does not invent a hosted URL for a custom-only staging publish", async () => {
+  server.use(
+    db.get("Build", () =>
+      json({
+        id: "build-staging",
+        version: 1,
+        createdAt: "2024-01-03T00:00:00.000Z",
+        updatedAt: "2024-01-03T00:01:00.000Z",
+        publishStatus: "PUBLISHED",
+        deployment: JSON.stringify({
+          destination: "saas",
+          target: "staging",
+          domains: ["custom.example.com"],
+          assetsDomain: "project",
+        }),
+      })
+    )
+  );
+
+  const result = await getProjectPublishJob(
+    { projectId: "project-1", jobId: "build-staging" },
+    stagingContext
+  );
+  expect(result).not.toHaveProperty("stagingUrl");
 });
 
 test.each([

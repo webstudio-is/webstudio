@@ -303,20 +303,18 @@ export const authorizePatchEntries = async (
           "You don't have permission to build this project."
         );
       }
-      const contentModeResult = applyContentModeTransaction({
-        capabilities,
-        transaction: entry.transaction,
-      });
-      if (contentModeResult.success === false) {
-        throw new AuthorizationError(
-          "You don't have permission to build this project."
-        );
-      }
       await assertProjectPermit({
         context: writerContext,
         permit: "edit",
         projectId: patch.projectId,
       });
+      const contentModeResult = applyContentModeTransaction({
+        capabilities,
+        transaction: entry.transaction,
+      });
+      if (contentModeResult.success === false) {
+        throw new AuthorizationError(contentModeResult.error);
+      }
       capabilities = contentModeResult.capabilities;
       authorized.push({ entry, context: writerContext });
     } catch (error) {

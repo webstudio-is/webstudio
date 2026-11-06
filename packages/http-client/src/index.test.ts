@@ -148,6 +148,7 @@ const createFragmentPayload = (): FragmentPayload => ({
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 const expectRequest = (
@@ -1110,6 +1111,48 @@ test("reports invalid build patch transactions", async () => {
       transactions: [{ id: "tx-1" }],
     })
   ).rejects.toThrow("Invalid patch JSON:");
+});
+
+test("bounds build patch commits with an abort signal", async () => {
+  const controller = new AbortController();
+  const timeout = vi
+    .spyOn(AbortSignal, "timeout")
+    .mockReturnValue(controller.signal);
+  const fetch = vi.fn(
+    async (_request: RequestInfo | URL, init?: RequestInit) =>
+      await new Promise<Response>((_resolve, reject) => {
+        expect(init?.signal).toBeInstanceOf(AbortSignal);
+        init?.signal?.addEventListener("abort", () =>
+          reject(init.signal?.reason)
+        );
+        queueMicrotask(() =>
+          controller.abort(new DOMException("deadline", "TimeoutError"))
+        );
+      })
+  );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    applyBuildPatch({
+      ...apiParams,
+      baseVersion: 2,
+      transactions: [
+        {
+          id: "tx-1",
+          payload: [
+            {
+              namespace: "pages",
+              patches: [
+                { op: "replace", path: ["meta", "siteName"], value: "Site" },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  ).rejects.toThrow("aborted");
+  expect(fetch).toHaveBeenCalledOnce();
+  expect(timeout).toHaveBeenCalledWith(120_000);
 });
 
 test("parses build patch transaction input", () => {

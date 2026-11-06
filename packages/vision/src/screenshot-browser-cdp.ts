@@ -1722,7 +1722,7 @@ const capturePageWithBrowserRuntime = async (
         let javascriptErrorPresent = false;
         let navigationFrameId: string | undefined;
         let navigationExecutionContextFrames: Map<number, string> | undefined;
-        let navigationJavascriptErrorContextIds = new Set<number>();
+        const navigationErrorsByContextId = new Set<number>();
         let activeExecutionContextIds = new Set<number>();
         const recordJavascriptError = (params: unknown) => {
           const executionContextId = getExecutionContextId(params);
@@ -1730,7 +1730,7 @@ const capturePageWithBrowserRuntime = async (
             return;
           }
           if (navigationExecutionContextFrames !== undefined) {
-            navigationJavascriptErrorContextIds.add(executionContextId);
+            navigationErrorsByContextId.add(executionContextId);
           } else if (activeExecutionContextIds.has(executionContextId)) {
             javascriptErrorPresent = true;
           }
@@ -1858,7 +1858,7 @@ const capturePageWithBrowserRuntime = async (
             );
             javascriptErrorPresent = false;
             navigationExecutionContextFrames = new Map();
-            navigationJavascriptErrorContextIds.clear();
+            navigationErrorsByContextId.clear();
             activeExecutionContextIds = new Set();
             redirectsByFrame.clear();
             documentResponsesByFrame.clear();
@@ -1898,13 +1898,12 @@ const capturePageWithBrowserRuntime = async (
               }
             }
             for (const executionContextId of activeExecutionContextIds) {
-              if (navigationJavascriptErrorContextIds.has(executionContextId)) {
+              if (navigationErrorsByContextId.has(executionContextId)) {
                 javascriptErrorPresent = true;
-                break;
               }
             }
             navigationExecutionContextFrames = undefined;
-            navigationJavascriptErrorContextIds.clear();
+            navigationErrorsByContextId.clear();
             navigationMs = Date.now() - navigationStartedAt;
             previousUrl = options.url;
           } else {

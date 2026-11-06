@@ -1939,7 +1939,20 @@ test("reports an interior route HTTP failure instead of a wrong-site error", asy
   });
 });
 
-test("reports a JavaScript error instead of a successful generated-site screenshot", async () => {
+test("does not expose a page script URL in responsive capture errors", async () => {
+  const capturePage = vi.fn().mockResolvedValueOnce([
+    {
+      output: "builder.png",
+      navigation: {
+        generatedSiteRootPresent: true,
+        javascriptErrorPresent: true,
+        javascriptErrorLocation: {
+          pathname: "/private/customer-123.js",
+          line: 42,
+        },
+      },
+    },
+  ]);
   const handlers = createMcpPreviewHandlers({
     preview: {
       status: vi.fn(() => ({
@@ -1952,25 +1965,22 @@ test("reports a JavaScript error instead of a successful generated-site screensh
     },
     isStale: () => false,
     createCaptureSession: vi.fn(() => ({
-      capture: vi.fn(async () => ({
-        output: "builder.png",
-        navigation: {
-          generatedSiteRootPresent: true,
-          javascriptErrorPresent: true,
-        },
-      })),
-      capturePage: vi.fn(),
+      capture: vi.fn(),
+      capturePage,
       close: vi.fn(),
     })) as never,
   });
 
-  await expect(
-    handlers.captureScreenshot({
+  const input = [
+    {
       path: "/",
+      source: "session" as const,
       viewport: { width: 1280, height: 720 },
-    })
-  ).rejects.toMatchObject({
+    },
+  ];
+  await expect(handlers.capturePageScreenshots(input)).rejects.toMatchObject({
     code: "SCREENSHOT_JAVASCRIPT_ERROR",
+    message: "The page reported a JavaScript error during screenshot capture.",
     issues: [
       {
         code: "screenshot_javascript_error",
