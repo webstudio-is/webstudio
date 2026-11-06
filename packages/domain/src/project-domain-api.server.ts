@@ -215,6 +215,22 @@ export const getProjectPublishJob = async (
   }
 
   const deployment = parseDeployment(publishJob.deployment);
+  const hostedDeployment =
+    deployment === undefined || deployment.destination === "static"
+      ? undefined
+      : deployment;
+  const target =
+    hostedDeployment === undefined
+      ? undefined
+      : getPublishTarget(hostedDeployment);
+  const hostedDomain =
+    hostedDeployment?.assetsDomain ?? hostedDeployment?.projectDomain;
+  const stagingDomain =
+    target === "staging" &&
+    hostedDomain !== undefined &&
+    hostedDeployment?.domains.includes(hostedDomain)
+      ? hostedDomain
+      : undefined;
   const status =
     deployment === undefined
       ? "removed"
@@ -227,14 +243,13 @@ export const getProjectPublishJob = async (
     id: publishJob.id,
     version: publishJob.version,
     status,
-    target:
-      deployment !== undefined && deployment.destination !== "static"
-        ? getPublishTarget(deployment)
-        : undefined,
-    domains:
-      deployment !== undefined && deployment.destination !== "static"
-        ? deployment.domains
-        : [],
+    target,
+    domains: hostedDeployment?.domains ?? [],
+    ...(stagingDomain === undefined
+      ? {}
+      : {
+          stagingUrl: `https://${stagingDomain.includes(".") ? stagingDomain : `${stagingDomain}.${context.deployment.env.PUBLISHER_HOST}`}`,
+        }),
     createdAt: publishJob.createdAt,
     completedAt:
       status === "success" || status === "failed"
