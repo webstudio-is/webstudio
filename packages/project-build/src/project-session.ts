@@ -634,6 +634,13 @@ const isAmbiguousCommitError = (error: unknown) => {
       return true;
     }
     if (
+      ["ECONNRESET", "TimeoutError", "AbortError"].includes(
+        getProjectSessionErrorCode(current)
+      )
+    ) {
+      return true;
+    }
+    if (
       ("status" in current &&
         typeof current.status === "number" &&
         current.status >= 500 &&

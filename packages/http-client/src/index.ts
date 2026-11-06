@@ -266,8 +266,11 @@ const createAuthTrpcClient = (params: {
   return {
     query: <Result = unknown>(path: string, input?: unknown) =>
       client.query(path, input) as Promise<Result>,
-    mutation: <Result = unknown>(path: string, input?: unknown) =>
-      client.mutation(path, input) as Promise<Result>,
+    mutation: <Result = unknown>(
+      path: string,
+      input?: unknown,
+      options?: { signal?: AbortSignal }
+    ) => client.mutation(path, input, options) as Promise<Result>,
   };
 };
 
@@ -304,12 +307,14 @@ const queryProjectApi = async <Result = unknown>(
 const mutateProjectApi = async <Result = unknown>(
   params: AuthProjectParams,
   path: string,
-  input: Record<string, unknown> = {}
+  input: Record<string, unknown> = {},
+  options?: { signal?: AbortSignal }
 ) => {
-  return await createAuthTrpcClient(params).mutation<Result>(path, {
-    projectId: params.projectId,
-    ...input,
-  });
+  return await createAuthTrpcClient(params).mutation<Result>(
+    path,
+    { projectId: params.projectId, ...input },
+    options
+  );
 };
 
 const pickInput = <Params extends object, Key extends keyof Params>(
@@ -1479,6 +1484,8 @@ export const getBuildSnapshot = projectQueryInput<
   }
 >("snapshot");
 
+const buildPatchRequestTimeoutMs = 120_000;
+
 export const applyBuildPatch = async (
   params: AuthProjectParams & {
     baseVersion: number;
@@ -1491,7 +1498,8 @@ export const applyBuildPatch = async (
     {
       baseVersion: params.baseVersion,
       transactions: parseBuildPatchTransactions(params.transactions),
-    }
+    },
+    { signal: AbortSignal.timeout(buildPatchRequestTimeoutMs) }
   );
 };
 
@@ -1501,10 +1509,15 @@ export const applyRestorePointPatch = async (
     transactions: unknown;
   }
 ) =>
-  await mutateProjectApi(params, projectSessionRestorePointPath, {
-    baseVersion: params.baseVersion,
-    transactions: parseRestorePointPatchTransactions(params.transactions),
-  });
+  await mutateProjectApi(
+    params,
+    projectSessionRestorePointPath,
+    {
+      baseVersion: params.baseVersion,
+      transactions: parseRestorePointPatchTransactions(params.transactions),
+    },
+    { signal: AbortSignal.timeout(buildPatchRequestTimeoutMs) }
+  );
 
 type PageMetaInput = {
   description?: string;
