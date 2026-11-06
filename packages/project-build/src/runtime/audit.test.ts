@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  encodeDataSourceVariable,
   getStyleDeclKey,
   type Instance,
   type Page,
@@ -2597,6 +2598,81 @@ describe("project audit and analysis", () => {
         }),
       ])
     );
+  });
+
+  test("does not flag an action-only Form resource as render-time data", () => {
+    const instances: NonNullable<BuilderState["instances"]> = new Map(
+      state.instances
+    );
+    instances.set("body", {
+      ...instances.get("body")!,
+      children: [
+        { type: "id", value: "form" },
+        { type: "id", value: "heading" },
+      ],
+    });
+    instances.set("form", {
+      type: "instance",
+      id: "form",
+      component: "ResourceForm",
+      children: [],
+    });
+    const resources: NonNullable<BuilderState["resources"]> = new Map(
+      state.resources
+    );
+    resources.set("submit", {
+      id: "submit",
+      name: "Submit order",
+      method: "post",
+      url: `"/orders"`,
+      headers: [],
+      searchParams: [],
+    });
+    const dataSources: NonNullable<BuilderState["dataSources"]> = new Map(
+      state.dataSources
+    );
+    dataSources.set("submit-data", {
+      id: "submit-data",
+      type: "resource",
+      name: "Submit order",
+      scopeInstanceId: "form",
+      resourceId: "submit",
+    });
+    const props: NonNullable<BuilderState["props"]> = new Map(state.props);
+    props.set("action", {
+      id: "action",
+      instanceId: "form",
+      name: "action",
+      type: "json",
+      value: [{ dataSourceId: "submit-data" }],
+    });
+    const project = { ...state, instances, resources, dataSources, props };
+    const securityFindings = () =>
+      audit(
+        project,
+        { scopes: ["security"], verbose: true },
+        { projectVersion: 1 }
+      ).findings.filter(
+        ({ ruleId }) => ruleId === "non-get-resource-exposed-as-data-source"
+      );
+
+    expect(securityFindings()).toEqual([]);
+
+    props.set("rendered-submit", {
+      id: "rendered-submit",
+      instanceId: "heading",
+      name: "title",
+      type: "expression",
+      value: encodeDataSourceVariable("submit-data"),
+    });
+    expect(securityFindings()).toEqual([
+      expect.objectContaining({
+        location: expect.objectContaining({
+          dataSourceId: "submit-data",
+          resourceId: "submit",
+        }),
+      }),
+    ]);
   });
 
   test("does not treat the read-only Assets query as a mutation", () => {
