@@ -3,6 +3,7 @@ import { openProjectBuilder, waitForCanvasText } from "../flows/builder";
 import { selectCanvasTextInstance } from "../flows/canvas-selection";
 import { waitForCanvasTextStyle } from "../flows/canvas-style";
 import { openNavigatorPanel } from "../flows/navigator";
+import { addCssDeclaration } from "../flows/css-declaration";
 import {
   waitForChangeToBeSaved,
   waitForSyncStatus,
@@ -38,21 +39,6 @@ const setCssValue = async ({
 }) => {
   const input = page.getByLabel(property, { exact: true }).first();
   await input.fill(value);
-  const save = waitForChangeToBeSaved({ page });
-  await input.press("Enter");
-  await save;
-  await waitForSyncStatus({ page, status: "idle" });
-};
-
-const addCssDeclaration = async ({
-  page,
-  css,
-}: {
-  page: Page;
-  css: string;
-}) => {
-  const input = page.getByLabel("Add styles", { exact: true }).first();
-  await input.fill(css);
   const save = waitForChangeToBeSaved({ page });
   await input.press("Enter");
   await save;
@@ -144,7 +130,7 @@ test("Builder grid generator fills selected grid and persists after reload", asy
   await page.getByRole("tab", { name: "Style" }).click();
 
   await measure("style panel runtime enable body grid", async () => {
-    await addCssDeclaration({ page, css: "display: grid" });
+    await addCssDeclaration({ page, property: "display", value: "grid" });
   });
   await page.getByRole("button", { name: /Grid layout:/ }).waitFor();
 

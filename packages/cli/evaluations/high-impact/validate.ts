@@ -2234,7 +2234,6 @@ const validateManagedFormRuntime = (
       Array.isArray(actions) &&
       selected.length === actions.length &&
       selected.length === 1 &&
-      selected[0]?.dataSourceId === "runtime-source" &&
       selectedResource?.method === "post" &&
       safeResourceUrl &&
       input.project.resources.every(
@@ -2293,8 +2292,8 @@ const validateManagedFormRuntime = (
         "success,error,success" &&
       input.formRuntimeDeliveries
         ?.map(({ path, status }) => `${path}:${status}`)
-        .join(",") === "/submit:200,/reject:503,/reject:503,/submit:200",
-    "Observe success, one explicit 503 retry, and recovery in the server result and local receiver."
+        .join(",") === "/submit:200,/reject:503,/submit:200",
+    "Observe success, failure, and recovery with one delivery per submission."
   );
 };
 

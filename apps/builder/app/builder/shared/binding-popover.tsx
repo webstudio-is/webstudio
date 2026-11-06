@@ -82,6 +82,7 @@ const BindingPanel = ({
       availableVariables: new Set(aliases.keys()),
     });
     setErrorsCount(errors.length);
+    return errors.length > 0;
   };
 
   const updateExpression = (newExpression: string) => {
@@ -189,8 +190,8 @@ const BindingPanel = ({
               updateExpression(value);
               setTouched(false);
             }}
-            onChangeComplete={() => {
-              onSave(expression, errorsCount > 0);
+            onChangeComplete={(value) => {
+              onSave(value, validate(value));
               setTouched(true);
             }}
           />

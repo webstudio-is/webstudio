@@ -14,7 +14,7 @@ import { matchPathnameRoutes } from "@webstudio-is/wsauth";
 import { toWebstudioParams } from "@webstudio-is/react-sdk";
 import { $selectedPage } from "~/shared/nano-states";
 import { selectPage } from "~/shared/nano-states";
-import { $isPreviewMode, $selectedPageHash } from "~/shared/nano-states";
+import { $isPreviewMode, requestPageNavigation } from "~/shared/nano-states";
 import { $pages } from "~/shared/sync/data-stores";
 import { $currentSystem, updateCurrentSystem } from "~/shared/system";
 
@@ -88,7 +88,7 @@ export const switchPageAndUpdateSystem = (
       );
     }
     const search = getSystemSearch(pageHref.searchParams);
-    $selectedPageHash.set({ hash: pageHref.hash });
+    requestPageNavigation({ pageId: page.id, hash: pageHref.hash });
     selectPage(page.id);
     updateCurrentSystem({
       params: toWebstudioParams(getPagePath(page.id, pages), params),

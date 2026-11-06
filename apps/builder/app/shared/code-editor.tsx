@@ -9,7 +9,6 @@ import type { Extension } from "@codemirror/state";
 import { styleTags, tags } from "@lezer/highlight";
 import {
   keymap,
-  lineNumbers,
   tooltips,
   highlightSpecialChars,
   highlightActiveLine,
@@ -226,9 +225,14 @@ export const CodeEditor = forwardRef<
   );
 
   const dialogExtensions = useMemo(
-    () => [...extensions, lineNumbers(), foldGutterExtension],
+    () => [...extensions, foldGutterExtension],
     [extensions]
   );
+  const isCode =
+    (lang !== undefined && lang !== "markdown") ||
+    (languageSupport !== undefined &&
+      (!(languageSupport instanceof LanguageSupport) ||
+        languageSupport.language.name !== "markdown"));
 
   // prevent clicking on autocomplete options propagating to body
   // and closing dialogs and popovers
@@ -247,6 +251,15 @@ export const CodeEditor = forwardRef<
       document.removeEventListener("pointerdown", handlePointerDown, options);
     };
   }, []);
+  const inlineContent = (
+    <EditorContent
+      {...editorContentProps}
+      showLineNumbers={
+        editorContentProps.showLineNumbers ?? (isCode && size === "full")
+      }
+      extensions={extensions}
+    />
+  );
   return (
     <div
       className={wrapperStyle({ size, color })}
@@ -254,17 +267,17 @@ export const CodeEditor = forwardRef<
       aria-invalid={color === "error" || undefined}
     >
       {expandable === false ? (
-        <EditorContent {...editorContentProps} extensions={extensions} />
+        inlineContent
       ) : (
         <EditorDialogControl>
-          <EditorContent {...editorContentProps} extensions={extensions} />
+          {inlineContent}
           <EditorDialog
             title={title}
-            contentPadding={false}
             content={
               <EditorContent
                 {...editorContentProps}
                 chromeless
+                showLineNumbers={editorContentProps.showLineNumbers ?? isCode}
                 extensions={dialogExtensions}
               />
             }

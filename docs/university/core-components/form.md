@@ -261,7 +261,7 @@ All actions except visitor confirmation must succeed for the Form to show succes
 
 Actions can succeed or fail independently. Your team might receive an email even when an API request fails. Check the individual results before submitting again.
 
-Emails are not automatically resent when delivery is uncertain, to avoid duplicates.
+Emails and API write requests are not automatically resent when the result is uncertain, to avoid duplicates. A failed response can arrive after the service has saved the submission. Check the receiving service before submitting again.
 
 ## Use Form variables
 
@@ -353,6 +353,8 @@ If an email fails, check its response for the reported reason. See [Cloudflareâ€
 Resource actions need a server. Webstudio Cloud provides this; a static export cannot run them.
 
 Self-hosted sites need a supported server setup and an email integration to send Email Resources. See [self-hosting](../self-hosting/README.md).
+
+For a Docker or other Node export, an HTTP Resource action can send to a public API on a sibling subdomain, such as `cms.example.com` from `site.example.com`. The export blocks known site hostnames and rejects marked requests that return through another alias. Rebuild and redeploy the export with an updated CLI; installing a newer SDK in an existing container does not change the generated destination policy.
 
 ## Related
 

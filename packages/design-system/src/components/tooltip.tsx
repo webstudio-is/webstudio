@@ -6,7 +6,7 @@ import {
   type ReferenceElement,
 } from "@floating-ui/dom";
 
-import { styled } from "../stitches.config";
+import { css, styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { Box } from "./box";
@@ -28,7 +28,7 @@ export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
     css?: CSS;
   };
 
-const Content = styled(TooltipPrimitive.Content, menuCss, {
+export const tooltipContentCss = css(menuCss, {
   color: cssVar("--foreground-primary"),
   padding: theme.panel.padding,
   position: "relative",
@@ -44,6 +44,7 @@ const Content = styled(TooltipPrimitive.Content, menuCss, {
     },
   },
 });
+const Content = styled(TooltipPrimitive.Content, tooltipContentCss);
 
 export const Tooltip = forwardRef(
   (

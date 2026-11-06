@@ -33,7 +33,10 @@ import { humanizeString } from "~/shared/string-utils";
 import { PropertyInlineLabel } from "../property-label";
 import type { IntermediateStyleValue } from "./css-value-input";
 import { CssValueInputContainer } from "./css-value-input";
-import type { StyleUpdateOptions } from "./use-style-data";
+import {
+  resetEphemeralStyles,
+  type StyleUpdateOptions,
+} from "./use-style-data";
 import {
   CssFragmentEditor,
   CssFragmentEditorContent,
@@ -164,6 +167,23 @@ export const ShadowContent = ({
       type: "intermediate",
       value,
     });
+  };
+
+  const handleCompletionHighlight = (preview: string | undefined) => {
+    if (preview === undefined && intermediateValue?.value === propertyValue) {
+      resetEphemeralStyles();
+      return;
+    }
+    const { styles } = parseCssFragment(
+      preview ?? intermediateValue?.value ?? propertyValue,
+      [parsedShadowProperty]
+    );
+    const value = styles.get(parsedShadowProperty);
+    if (value?.type === "layers" || value?.type === "var") {
+      onEditLayer(index, value, { isEphemeral: true });
+    } else {
+      resetEphemeralStyles();
+    }
   };
 
   const handleComplete = () => {
@@ -438,6 +458,7 @@ export const ShadowContent = ({
                   autoFocus={disabledControls}
                   value={intermediateValue?.value ?? propertyValue ?? ""}
                   onChange={handleChange}
+                  onCompletionHighlight={handleCompletionHighlight}
                   onChangeComplete={handleComplete}
                 />
               }

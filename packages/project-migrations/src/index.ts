@@ -91,9 +91,13 @@ export const migrateResourceFormInstancesMutable = (
 };
 
 export const migrateCodeTextContentMutable = (
-  data: Pick<WebstudioData, "instances" | "props">
+  data: Pick<WebstudioData, "instances" | "props">,
+  { codeOnly = false }: { codeOnly?: boolean } = {}
 ) => {
   for (const [propId, prop] of data.props) {
+    if (codeOnly && prop.name !== "code") {
+      continue;
+    }
     const instance = data.instances.get(prop.instanceId);
     if (migrateCodeTextPropMutable({ instance, prop }) === false) {
       continue;

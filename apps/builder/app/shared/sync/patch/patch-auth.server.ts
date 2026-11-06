@@ -7,10 +7,14 @@ import {
 import {
   applyContentModeTransaction,
   getContentModeCapabilities,
+  type ContentModeCapabilities,
 } from "@webstudio-is/project-build/runtime";
+import { applyBuilderNamespacePatches } from "@webstudio-is/project-build/state";
 import {
   type Breakpoint,
+  type Instance,
   type Prop,
+  type Props,
   type StyleSource,
 } from "@webstudio-is/sdk";
 import {
@@ -19,7 +23,11 @@ import {
   parseStyleSourceSelections,
   parseStyles,
 } from "@webstudio-is/project-build/persistence";
-import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
+import {
+  migrateCodeTextContentMutable,
+  migrateContentBlockDocumentBindingsMutable,
+  migrateResourceFormInstancesMutable,
+} from "@webstudio-is/project-migrations";
 import { hasHistoricalFormComponentIdentityVersion } from "@webstudio-is/project-migrations/pages";
 import env from "~/env/env.server";
 import { readAccessToken } from "~/services/token.server";
@@ -48,6 +56,78 @@ type PatchEntryWithContext = {
 type GetInitialContentModeCapabilities = () =>
   | ReturnType<typeof createContentModeCapabilities>
   | Promise<ReturnType<typeof createContentModeCapabilities>>;
+
+const normalizeContentModeBindings = (
+  instances: Map<Instance["id"], Instance>,
+  props: Props,
+  priorReservedPropIds?: ReadonlySet<Prop["id"]>
+) => {
+  const originalPropIds = new Set(props.keys());
+  migrateCodeTextContentMutable({ instances, props }, { codeOnly: true });
+  migrateContentBlockDocumentBindingsMutable({ instances, props });
+  const reservedPropIds = new Set(priorReservedPropIds);
+  for (const id of originalPropIds) {
+    if (props.has(id)) {
+      reservedPropIds.delete(id);
+    } else {
+      reservedPropIds.add(id);
+    }
+  }
+  return reservedPropIds;
+};
+
+const advanceBuildCapabilities = (
+  capabilities: ContentModeCapabilities,
+  transaction: PatchEntry["transaction"]
+) => {
+  const next = { ...capabilities };
+  for (const { namespace, patches } of transaction.payload) {
+    switch (namespace) {
+      case "instances":
+      case "props":
+      case "styleSources":
+      case "styleSourceSelections":
+      case "styles":
+      case "breakpoints":
+      case "assetFolders": {
+        next[namespace] = applyBuilderNamespacePatches(
+          next[namespace],
+          patches
+        ) as never;
+        break;
+      }
+    }
+  }
+  // Match the normalized view used when an Editor first loads the project.
+  // Migration mutates instances and props, so do not change the prior snapshot.
+  const instances = new Map(
+    Array.from(next.instances, ([id, instance]) => [
+      id,
+      {
+        ...instance,
+        children: instance.children.map((child) => ({ ...child })),
+      },
+    ])
+  );
+  const props = new Map(
+    Array.from(next.props, ([id, prop]) => [id, { ...prop }])
+  );
+  const reservedPropIds = normalizeContentModeBindings(
+    instances,
+    props,
+    next.reservedPropIds
+  );
+  return {
+    ...getContentModeCapabilities({
+      ...next,
+      instances,
+      props,
+      reservedPropIds,
+      contentRootIds: undefined,
+    }),
+    assetFolders: next.assetFolders,
+  };
+};
 
 export const createWriterContext = async (
   context: AppContext,
@@ -135,10 +215,13 @@ export const createContentModeCapabilities = (build: {
     instances.values(),
     hasHistoricalFormComponentIdentityVersion(JSON.parse(build.pages))
   );
+  const props = parseData<Prop>(build.props);
+  const reservedPropIds = normalizeContentModeBindings(instances, props);
   return getContentModeCapabilities({
     instances,
     metas: componentMetas,
-    props: parseData<Prop>(build.props),
+    props,
+    reservedPropIds,
     styleSources: parseData<StyleSource>(build.styleSources),
     styleSourceSelections: parseStyleSourceSelections(
       build.styleSourceSelections
@@ -189,25 +272,33 @@ export const authorizePatchEntries = async (
     return { authorized, rejected };
   }
 
-  let capabilities = await getInitialContentModeCapabilities();
+  let capabilities: ContentModeCapabilities | undefined =
+    await getInitialContentModeCapabilities();
   for (const {
     entry,
     context: writerContext,
     hasBuildPermit,
   } of entriesWithContext) {
     try {
-      const contentModeResult = applyContentModeTransaction({
-        capabilities,
-        transaction: entry.transaction,
-      });
       if (hasBuildPermit) {
-        if (contentModeResult?.success) {
-          capabilities = contentModeResult.capabilities;
+        // Builder changes can be outside Editor policy, but later Editor
+        // changes must still be checked against the state they leave behind.
+        if (capabilities !== undefined) {
+          try {
+            capabilities = advanceBuildCapabilities(
+              capabilities,
+              entry.transaction
+            );
+          } catch {
+            // Let patch application report the Builder failure, but do not
+            // authorize later Editor changes against stale state.
+            capabilities = undefined;
+          }
         }
         authorized.push({ entry, context: writerContext });
         continue;
       }
-      if (contentModeResult?.success !== true) {
+      if (capabilities === undefined) {
         throw new AuthorizationError(
           "You don't have permission to build this project."
         );
@@ -217,9 +308,14 @@ export const authorizePatchEntries = async (
         permit: "edit",
         projectId: patch.projectId,
       });
-      if (contentModeResult?.success) {
-        capabilities = contentModeResult.capabilities;
+      const contentModeResult = applyContentModeTransaction({
+        capabilities,
+        transaction: entry.transaction,
+      });
+      if (contentModeResult.success === false) {
+        throw new AuthorizationError(contentModeResult.error);
       }
+      capabilities = contentModeResult.capabilities;
       authorized.push({ entry, context: writerContext });
     } catch (error) {
       if (error instanceof AuthorizationError) {

@@ -68,6 +68,7 @@ export const ToggleGroupTooltip = ({
       content={
         <PropertyInfo
           title={label ?? humanizeString(properties[0])}
+          property={properties[0]}
           code={code}
           description={
             <Flex gap="2" direction="column">

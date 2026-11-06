@@ -1106,8 +1106,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
   });
 };
 `
-      : `import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";
-import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
+      : `${evaluationTransport === undefined ? "" : 'import { getDeniedResourceHostnames } from "@webstudio-is/sdk/protected-resource-fetch";\n'}import { createNodeProtectedResourceFetch } from "@webstudio-is/sdk/protected-resource-fetch-node";
 export const createManagedFormEmailSender = (_input: { context: unknown; formData: FormData; projectId: string }) => undefined;
 export const validateManagedFormEmail = (_request: unknown, _formData: FormData) => undefined;
 export const createManagedFormResourceFetch = ({ request, context, projectDomain }: { request: Request; context: unknown; projectDomain?: string }) => {
@@ -1115,10 +1114,18 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
   ${
     evaluationTransport ??
     `return createNodeProtectedResourceFetch({
-    deniedHostnames: getDeniedResourceHostnames([
+    projectId: ${JSON.stringify(siteData.build.projectId)},
+    matchSubdomains: false,
+    deniedHostnames: [
       new URL(request.url).hostname,
       projectDomain,
-    ]),
+      ...${JSON.stringify(
+        siteData.build.deployment !== undefined &&
+          "domains" in siteData.build.deployment
+          ? siteData.build.deployment.domains
+          : []
+      )},
+    ].filter((hostname): hostname is string => hostname !== undefined),
   });`
   }
 };
@@ -2201,6 +2208,10 @@ export const action = async (args: Parameters<typeof pageAction>[0]) => {
   await writeGeneratedFile(
     join(generatedDir, "$resources.redirects.ts"),
     generateRedirectsModule(pages.redirects)
+  );
+  await writeGeneratedFile(
+    join(generatedDir, "$resources.has-redirects.ts"),
+    `export const hasRedirects = ${Boolean(pages.redirects?.length)};`
   );
 
   const redirectFallbackPath = join(routesDir, "$.tsx");

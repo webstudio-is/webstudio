@@ -1,10 +1,19 @@
-import { useMemo, useRef, type ComponentProps, type ReactNode } from "react";
+import {
+  cloneElement,
+  useEffect,
+  useMemo,
+  useRef,
+  type ComponentProps,
+  type ReactElement,
+} from "react";
 import { matchSorter, type RankingInfo } from "match-sorter";
-import { EditorView, keymap, tooltips } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
+import type { Extension } from "@codemirror/state";
 import { css } from "@codemirror/lang-css";
 import {
-  autocompletion,
+  CompletionContext,
   completionKeymap,
+  selectedCompletion,
   type CompletionSource,
 } from "@codemirror/autocomplete";
 import { parseCss, shorthandProperties } from "@webstudio-is/css-data";
@@ -18,10 +27,9 @@ import {
   getCodeEditorCssVars,
 } from "~/shared/code-editor-base";
 import { $availableVariables, $cssVarsMap } from "./model";
+import { cssAutocomplete } from "~/builder/shared/css-editor/css-autocomplete";
 
 type ShorthandProperty = (typeof shorthandProperties)[number];
-
-export { getCodeEditorCssVars };
 
 export const parseCssFragment = (
   css: string,
@@ -95,34 +103,71 @@ const wrapperStyle = style({
   position: "relative",
   ...getCodeEditorCssVars({ minHeight: "3lh", maxHeight: "6lh" }),
 });
+const emptyExtensions: Extension[] = [];
 
 export const CssFragmentEditorContent = ({
   onKeyDown,
+  language,
+  completionSource,
+  onCompletionHighlight,
+  extensions: extraExtensions = emptyExtensions,
+  showLineNumbers = false,
   ...props
 }: ComponentProps<typeof EditorContent> & {
   onKeyDown?: (event: KeyboardEvent) => void;
+  language?: Extension;
+  completionSource?: CompletionSource;
+  onCompletionHighlight?: (value: string | undefined) => void;
 }) => {
   const onKeyDownRef = useRef(onKeyDown);
   onKeyDownRef.current = onKeyDown;
+  const onCompletionHighlightRef = useRef(onCompletionHighlight);
+  onCompletionHighlightRef.current = onCompletionHighlight;
+  const highlightedCompletionRef = useRef<string>();
+  useEffect(() => {
+    return () => {
+      if (highlightedCompletionRef.current !== undefined) {
+        onCompletionHighlightRef.current?.(undefined);
+      }
+    };
+  }, []);
   const extensions = useMemo(() => {
     return [
-      css(),
-      // render autocomplete in body
-      // to prevent popover scroll overflow
-      tooltips({ parent: document.body }),
-      autocompletion({
-        override: [scopeCompletionSource],
-        icons: false,
-      }),
+      language ?? css(),
+      ...cssAutocomplete(completionSource ?? scopeCompletionSource),
       keymap.of([...completionKeymap]),
       EditorView.domEventHandlers({
         keydown(event) {
           onKeyDownRef.current?.(event);
         },
       }),
+      EditorView.updateListener.of(({ state }) => {
+        const completion = selectedCompletion(state);
+        const cursor = state.selection.main.head;
+        const word = completion
+          ? new CompletionContext(state, cursor, false).matchBefore(/[-\w()]+/)
+          : undefined;
+        const preview =
+          completion && word
+            ? state.doc.sliceString(0, word.from) +
+              completion.label +
+              state.doc.sliceString(word.to)
+            : undefined;
+        if (preview !== highlightedCompletionRef.current) {
+          highlightedCompletionRef.current = preview;
+          onCompletionHighlightRef.current?.(preview);
+        }
+      }),
+      ...extraExtensions,
     ];
-  }, []);
-  return <EditorContent extensions={extensions} {...props} />;
+  }, [language, completionSource, extraExtensions]);
+  return (
+    <EditorContent
+      extensions={extensions}
+      showLineNumbers={showLineNumbers}
+      {...props}
+    />
+  );
 };
 
 export const CssFragmentEditor = ({
@@ -130,7 +175,7 @@ export const CssFragmentEditor = ({
   onOpenChange,
   css,
 }: {
-  content: ReactNode;
+  content: ReactElement<ComponentProps<typeof CssFragmentEditorContent>>;
   onOpenChange?: (newOpen: boolean) => void;
   css?: CSS;
 }) => {
@@ -141,7 +186,7 @@ export const CssFragmentEditor = ({
         <EditorDialog
           onOpenChange={onOpenChange}
           title="CSS value"
-          content={content}
+          content={cloneElement(content, { showLineNumbers: true })}
         >
           <EditorDialogButton />
         </EditorDialog>

@@ -634,6 +634,13 @@ const isAmbiguousCommitError = (error: unknown) => {
       return true;
     }
     if (
+      ["ECONNRESET", "TimeoutError", "AbortError"].includes(
+        getProjectSessionErrorCode(current)
+      )
+    ) {
+      return true;
+    }
+    if (
       ("status" in current &&
         typeof current.status === "number" &&
         current.status >= 500 &&
@@ -658,24 +665,28 @@ const createCommitConfirmationError = ({
   confirmationError,
 }: {
   commitError: unknown;
-  confirmationError: unknown;
+  confirmationError?: unknown;
 }) =>
   Object.assign(
     new Error(
       commitError instanceof Error
         ? commitError.message
         : "Commit result could not be confirmed",
-      { cause: confirmationError }
+      { cause: confirmationError ?? commitError }
     ),
     {
       code: "AMBIGUOUS_COMMIT",
-      confirmationFailure: {
-        code: getProjectSessionErrorCode(confirmationError),
-        message:
-          confirmationError instanceof Error
-            ? confirmationError.message
-            : "Unknown error",
-      },
+      ...(confirmationError === undefined
+        ? {}
+        : {
+            confirmationFailure: {
+              code: getProjectSessionErrorCode(confirmationError),
+              message:
+                confirmationError instanceof Error
+                  ? confirmationError.message
+                  : "Unknown error",
+            },
+          }),
     }
   );
 
@@ -696,6 +707,11 @@ const commitWithConfirmation = async ({
   } catch (commitError) {
     if (isAmbiguousCommitError(commitError) === false) {
       throw commitError;
+    }
+    // A lost response may leave the first request running. Retrying before it
+    // finishes could repeat asset and folder side effects before version CAS.
+    if (isVersionConflictError(commitError) === false) {
+      throw createCommitConfirmationError({ commitError });
     }
     try {
       return {

@@ -145,6 +145,9 @@ const Suggestions = ({
       return;
     }
     const handleInput = () => {
+      menuRef.current
+        ?.querySelector("[role=option][aria-selected=true]")
+        ?.removeAttribute("aria-selected");
       setIsListOpen(true);
     };
     let frameId: undefined | number;

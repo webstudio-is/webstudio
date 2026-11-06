@@ -16,9 +16,9 @@ import {
   startMcpPreview,
 } from "./mcp-preview";
 
-test("ambiguous form failure returns unknown without submitting twice", async () => {
+test("browser failure before Form dispatch is reported instead of an unknown submission", async () => {
   const submitForm = vi.fn(async () => {
-    throw new Error("CDP disconnected after dispatch");
+    throw new BrowserStartupError("Browser could not start.");
   });
   const close = vi.fn(async () => undefined);
   const handlers = createMcpPreviewHandlers({
@@ -41,19 +41,13 @@ test("ambiguous form failure returns unknown without submitting twice", async ()
       }) as never,
   });
 
-  const result = await handlers.submitForm({
-    path: "/contact?token=secret#private",
-    selector: "form",
-    values: [{ name: "email", value: "me@example.com" }],
-  });
-  expect(result).toMatchObject({
-    status: "unknown",
-    formState: "unknown",
-    pageUrl: "http://127.0.0.1:53124/contact",
-    correlationId: expect.any(String),
-  });
-  expect(JSON.stringify(result)).not.toContain("secret");
-  expect(JSON.stringify(result)).not.toContain("private");
+  await expect(
+    handlers.submitForm({
+      path: "/contact",
+      selector: "form",
+      values: [{ name: "email", value: "me@example.com" }],
+    })
+  ).rejects.toMatchObject({ code: "BROWSER_STARTUP_FAILED" });
   expect(submitForm).toHaveBeenCalledOnce();
   expect(close).toHaveBeenCalledOnce();
 });
@@ -1945,7 +1939,20 @@ test("reports an interior route HTTP failure instead of a wrong-site error", asy
   });
 });
 
-test("reports a JavaScript error instead of a successful generated-site screenshot", async () => {
+test("does not expose a page script URL in responsive capture errors", async () => {
+  const capturePage = vi.fn().mockResolvedValueOnce([
+    {
+      output: "builder.png",
+      navigation: {
+        generatedSiteRootPresent: true,
+        javascriptErrorPresent: true,
+        javascriptErrorLocation: {
+          pathname: "/private/customer-123.js",
+          line: 42,
+        },
+      },
+    },
+  ]);
   const handlers = createMcpPreviewHandlers({
     preview: {
       status: vi.fn(() => ({
@@ -1958,25 +1965,22 @@ test("reports a JavaScript error instead of a successful generated-site screensh
     },
     isStale: () => false,
     createCaptureSession: vi.fn(() => ({
-      capture: vi.fn(async () => ({
-        output: "builder.png",
-        navigation: {
-          generatedSiteRootPresent: true,
-          javascriptErrorPresent: true,
-        },
-      })),
-      capturePage: vi.fn(),
+      capture: vi.fn(),
+      capturePage,
       close: vi.fn(),
     })) as never,
   });
 
-  await expect(
-    handlers.captureScreenshot({
+  const input = [
+    {
       path: "/",
+      source: "session" as const,
       viewport: { width: 1280, height: 720 },
-    })
-  ).rejects.toMatchObject({
+    },
+  ];
+  await expect(handlers.capturePageScreenshots(input)).rejects.toMatchObject({
     code: "SCREENSHOT_JAVASCRIPT_ERROR",
+    message: "The page reported a JavaScript error during screenshot capture.",
     issues: [
       {
         code: "screenshot_javascript_error",

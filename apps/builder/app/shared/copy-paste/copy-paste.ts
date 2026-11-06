@@ -54,7 +54,7 @@ const isTextEditing = (event: ClipboardEvent) => {
  * # How to test:
  * 1. Focus on an input in the style panel (width, style source) or name input in settings. Select the text, then copy and paste any instance in the Navigator tree or on the Canvas.
  * 2. Edit text in a paragraph on the Canvas. Select text (single or multiple lines), then press Cmd+X. The paragraph should not be deleted.
- * 3. Select CSS preview text, then select an instance in the Navigator. Press Cmd+C, then Cmd+V.
+ * 3. Select text in a Builder panel, then select an instance in the Navigator. Press Cmd+C, then Cmd+V.
  **/
 const validateClipboardEvent = (event: ClipboardEvent) => {
   if (event.clipboardData === null) {
@@ -65,7 +65,7 @@ const validateClipboardEvent = (event: ClipboardEvent) => {
     return false;
   }
 
-  // Allows native selection of text in the Builder panels, such as CSS preview.
+  // Allows native selection of text in the Builder panels.
   if (event.type === "copy") {
     const isInBuilderContext = window.self === window.top;
     const selection = window.getSelection();

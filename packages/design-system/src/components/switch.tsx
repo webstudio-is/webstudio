@@ -29,7 +29,7 @@ const switchStyle = css({
     position: "absolute",
     inset: padding,
     borderRadius: theme.borderRadius.pill,
-    backgroundColor: neutralControlBackground,
+    backgroundColor: cssVar("--foreground-disabled"),
   },
 
   "&[data-state=checked]:not([data-disabled]):before, &[aria-checked=true]:not([data-disabled]):before":
@@ -38,7 +38,7 @@ const switchStyle = css({
     },
 
   "&[data-disabled]:before": {
-    backgroundColor: cssVar("--foreground-disabled"),
+    backgroundColor: neutralControlBackground,
   },
 
   "&:focus": {

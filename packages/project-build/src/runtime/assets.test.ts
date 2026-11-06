@@ -2129,6 +2129,60 @@ describe("replaceAssetInStyleValue", () => {
     });
   });
 
+  test.each([undefined, "Inter"])(
+    "does not scan references when asset ID and font family %s are unchanged",
+    (family) => {
+      let propReads = 0;
+      let styleReads = 0;
+      const props: Iterable<Prop> = {
+        *[Symbol.iterator]() {
+          propReads += 1;
+          yield assetProp;
+        },
+      };
+      const styles: Iterable<StyleDecl> = {
+        *[Symbol.iterator]() {
+          styleReads += 1;
+        },
+      };
+      replaceAssetMutable({
+        props,
+        styles,
+        replacement: {
+          fromAssetId: "asset",
+          toAssetId: "asset",
+          fromFontFamily: family,
+          toFontFamily: family,
+        },
+      });
+      expect(propReads).toBe(0);
+      expect(styleReads).toBe(0);
+    }
+  );
+
+  test("still replaces a changed font family with the same asset ID", () => {
+    const style: StyleDecl = {
+      styleSourceId: "local",
+      breakpointId: "base",
+      property: "fontFamily",
+      value: { type: "fontFamily", value: ["Inter", "sans-serif"] },
+    };
+    replaceAssetMutable({
+      props: [],
+      styles: [style],
+      replacement: {
+        fromAssetId: "font",
+        toAssetId: "font",
+        fromFontFamily: "Inter",
+        toFontFamily: "Roboto",
+      },
+    });
+    expect(style.value).toEqual({
+      type: "fontFamily",
+      value: ["Roboto", "sans-serif"],
+    });
+  });
+
   test("replaces asset references in pages props and styles", () => {
     const pages = createDefaultPages({ rootInstanceId: "root" });
     const projectSettings = {

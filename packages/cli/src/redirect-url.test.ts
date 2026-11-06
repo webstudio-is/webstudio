@@ -1,15 +1,18 @@
 import { describe, expect, test } from "vitest";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { createMemoryRouter } from "react-router";
 import {
   generateRedirectUrl as generateRemixRedirectUrl,
   matchRedirect as matchRemixRedirect,
   redirectRequest as redirectRemixRequest,
+  shouldCheckRedirectsOnNavigation as shouldCheckRemixRedirectsOnNavigation,
 } from "../templates/defaults/app/redirect-url";
 import {
   generateRedirectUrl as generateReactRouterRedirectUrl,
   matchRedirect as matchReactRouterRedirect,
   redirectRequest as redirectReactRouterRequest,
+  shouldCheckRedirectsOnNavigation as shouldCheckReactRouterRedirectsOnNavigation,
 } from "../templates/react-router/app/redirect-url";
 
 const implementations = [
@@ -18,12 +21,15 @@ const implementations = [
     generateRedirectUrl: generateRemixRedirectUrl,
     matchRedirect: matchRemixRedirect,
     redirectRequest: redirectRemixRequest,
+    shouldCheckRedirectsOnNavigation: shouldCheckRemixRedirectsOnNavigation,
   },
   {
     name: "React Router",
     generateRedirectUrl: generateReactRouterRedirectUrl,
     matchRedirect: matchReactRouterRedirect,
     redirectRequest: redirectReactRouterRequest,
+    shouldCheckRedirectsOnNavigation:
+      shouldCheckReactRouterRedirectsOnNavigation,
   },
 ] as const;
 
@@ -92,7 +98,61 @@ for (const {
   generateRedirectUrl,
   matchRedirect,
   redirectRequest,
+  shouldCheckRedirectsOnNavigation,
 } of implementations) {
+  test(`${name}: follows a project redirect during client navigation with a custom 404`, async () => {
+    const checkedPaths: string[] = [];
+    const redirects = [{ old: "/old", new: "/new" }];
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          loader: ({ request }) => {
+            checkedPaths.push(new URL(request.url).pathname);
+            return redirectRequest(request, redirects);
+          },
+          shouldRevalidate: ({
+            currentUrl,
+            nextUrl,
+            defaultShouldRevalidate,
+          }) =>
+            defaultShouldRevalidate ||
+            shouldCheckRedirectsOnNavigation(currentUrl, nextUrl),
+          children: [
+            { index: true, loader: () => null },
+            { path: "new", loader: () => null },
+            {
+              path: "*",
+              loader: () => {
+                throw new Response("Not Found", { status: 404 });
+              },
+            },
+          ],
+        },
+      ],
+      { initialEntries: ["/"] }
+    );
+    try {
+      await new Promise<void>((resolve) => {
+        if (router.state.initialized) {
+          resolve();
+          return;
+        }
+        const unsubscribe = router.subscribe((state) => {
+          if (state.initialized) {
+            unsubscribe();
+            resolve();
+          }
+        });
+      });
+      await router.navigate("/old");
+      expect(router.state.location.pathname).toBe("/new");
+      expect(checkedPaths).toContain("/old");
+    } finally {
+      router.dispose();
+    }
+  });
+
   describe(`${name}: generateRedirectUrl`, () => {
     const cases: Array<{
       name: string;

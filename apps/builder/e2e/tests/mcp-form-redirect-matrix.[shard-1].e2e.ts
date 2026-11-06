@@ -241,7 +241,7 @@ for (const { name, fail, message, behavior } of [
             .toEqual([{ tagName: "FORM", behavior }]);
           expect(new URL(page.url()).searchParams.has("matrix")).toBe(false);
           expect(receiver.deliveries.map(({ pathname }) => pathname)).toEqual(
-            fail ? ["/reject", "/reject"] : ["/submit"]
+            fail ? ["/reject"] : ["/submit"]
           );
         },
       });

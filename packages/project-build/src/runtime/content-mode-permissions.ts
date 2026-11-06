@@ -459,7 +459,10 @@ const validatePropPatches = (
   }
   for (const patch of patches) {
     const [propId, field] = patch.path;
-    if (typeof propId !== "string") {
+    if (
+      typeof propId !== "string" ||
+      capabilities.reservedPropIds?.has(propId)
+    ) {
       return {
         success: false,
         error: "Prop patch is not editable in content mode.",
@@ -1690,18 +1693,29 @@ export const applyContentModeTransaction = ({
   }
 
   if (
-    scope === "text-and-props" &&
     transaction.payload.some(
       ({ namespace, patches }) =>
         namespace === "instances" &&
-        patches.some(
-          ({ path }) =>
-            typeof path[0] !== "string" ||
+        patches.some(({ path }) => {
+          if (typeof path[0] !== "string") {
+            return scope === "text-and-props";
+          }
+          const before = capabilities.instances.get(path[0]);
+          const after = transactionCapabilities.instances.get(path[0]);
+          // CodeText can change literal text, but cannot add or replace a
+          // binding. Removing the whole content instance remains allowed.
+          const addsOrChangesBinding =
+            after?.component === "CodeText" &&
             !preservesNonTextChildren(
-              capabilities.instances.get(path[0])?.children,
-              transactionCapabilities.instances.get(path[0])?.children
-            )
-        )
+              before?.component === "CodeText" ? before.children : [],
+              after.children
+            );
+          return (
+            addsOrChangesBinding ||
+            (scope === "text-and-props" &&
+              !preservesNonTextChildren(before?.children, after?.children))
+          );
+        })
     )
   ) {
     return {

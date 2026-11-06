@@ -3,12 +3,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CssFragmentEditor,
   CssFragmentEditorContent,
-  getCodeEditorCssVars,
   parseCssFragment,
 } from "../../shared/css-fragment";
+import { getCodeEditorCssVars } from "~/shared/code-editor-base";
 import { PropertyInlineLabel } from "../../property-label";
 import { toValue } from "@webstudio-is/css-engine";
-import { setProperty } from "../../shared/use-style-data";
+import { resetEphemeralStyles, setProperty } from "../../shared/use-style-data";
 import {
   editRepeatedStyleItem,
   setRepeatedStyleItem,
@@ -138,6 +138,30 @@ export const BackgroundCodeEditor = ({
     );
   }, [index, intermediateValue, styleDecl, styleValue]);
 
+  const handleCompletionHighlight = (preview: string | undefined) => {
+    if (preview === undefined && intermediateValue === undefined) {
+      resetEphemeralStyles();
+      return;
+    }
+    const value = preview ?? textAreaValue;
+    const { styles } = parseCssFragment(value, [
+      "background-image",
+      "background",
+    ]);
+    const backgroundImage = styles.get("background-image");
+    const validPreview =
+      backgroundImage !== undefined &&
+      backgroundImage.type !== "invalid" &&
+      (onValidate?.(value, styles)?.length ?? 0) === 0;
+    if (validPreview) {
+      setRepeatedStyleItem(styleDecl, index, backgroundImage, {
+        isEphemeral: true,
+      });
+    } else {
+      resetEphemeralStyles();
+    }
+  };
+
   const handleOnCompleteRef = useRef(handleOnComplete);
   useEffect(() => {
     handleOnCompleteRef.current = handleOnComplete;
@@ -165,6 +189,7 @@ export const BackgroundCodeEditor = ({
               autoFocus={styleValue.type === "var"}
               value={textAreaValue ?? ""}
               onChange={handleChange}
+              onCompletionHighlight={handleCompletionHighlight}
               onChangeComplete={handleOnComplete}
             />
           }

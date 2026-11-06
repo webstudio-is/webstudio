@@ -783,7 +783,8 @@ const usePublishProgress = (projectId: Project["id"]) => {
 
 const waitForPublishStatus = async (
   refresh: () => Promise<Project | undefined>,
-  isCurrentProject: () => boolean
+  isCurrentProject: () => boolean,
+  previousBuildId?: string
 ) => {
   let sleepTime = 15000;
   const timeToFinish = Date.now() + PENDING_TIMEOUT + 2 * sleepTime;
@@ -794,7 +795,11 @@ const waitForPublishStatus = async (
       if (isCurrentProject() === false) {
         return;
       }
-      if (refreshedProject !== undefined) {
+      if (
+        refreshedProject !== undefined &&
+        (previousBuildId === undefined ||
+          refreshedProject.latestBuildVirtual?.buildId !== previousBuildId)
+      ) {
         const { statusText, status } =
           refreshedProject.latestBuildVirtual != null
             ? getPublishStatusAndText(refreshedProject.latestBuildVirtual)
@@ -1048,6 +1053,7 @@ const Publish = ({
   ]);
 
   const publish = async (domains: string[]) => {
+    const previousBuildId = $project.get()?.latestBuildVirtual?.buildId;
     const publishResult = await nativeClient.domain.publish.mutate({
       projectId: project.id,
       domains,
@@ -1101,7 +1107,8 @@ const Publish = ({
           projectId: project.id,
           isCurrent: isCurrentProject,
         }),
-      isCurrentProject
+      isCurrentProject,
+      previousBuildId
     );
     reportPublishResult({
       result,

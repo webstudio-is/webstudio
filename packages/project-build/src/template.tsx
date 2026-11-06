@@ -28,12 +28,19 @@ export const createPages = (): WebstudioData => {
         ws:id={notFoundBodyId}
         ws:style={css`
           display: flex;
-          justify-content: center;
-          align-items: center;
+          flex-direction: column;
           background-color: #fff;
         `}
       >
-        <div>
+        <main
+          ws:style={css`
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+          `}
+        >
           <div
             ws:style={css`
               position: relative;
@@ -85,7 +92,7 @@ export const createPages = (): WebstudioData => {
           >
             PAGE NOT FOUND
           </p>
-        </div>
+        </main>
         {coreTemplates.builtWithWebstudio.template}
       </body>
     </>,

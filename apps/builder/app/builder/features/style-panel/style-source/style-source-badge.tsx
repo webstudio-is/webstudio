@@ -14,6 +14,20 @@ export const StyleSourceBadge = styled(Text, {
   // @tood doesn't work in tooltips, needs a workaround
   textOverflow: "ellipsis",
   variants: {
+    clickable: {
+      true: {
+        border: 0,
+        cursor: "pointer",
+        "&:not(:disabled):hover": {
+          boxShadow: `inset 0 0 0 1px ${cssVar("--border-focus")}`,
+        },
+        "&:focus-visible": {
+          outline: `2px solid ${cssVar("--border-focus")}`,
+          outlineOffset: 2,
+        },
+        "&:disabled": { cursor: "default" },
+      },
+    },
     source: {
       local: {
         backgroundColor: styleSourceColors.local.background,

@@ -281,6 +281,12 @@ export const replaceAssetMutable = ({
   styles: Iterable<StyleDecl>;
   replacement: AssetStyleValueReplacement;
 }) => {
+  if (
+    replacement.fromAssetId === replacement.toAssetId &&
+    replacement.fromFontFamily === replacement.toFontFamily
+  ) {
+    return;
+  }
   if (projectSettings?.meta.faviconAssetId === replacement.fromAssetId) {
     projectSettings.meta.faviconAssetId = replacement.toAssetId;
   }

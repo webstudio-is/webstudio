@@ -90,115 +90,92 @@ test("runtime validator rejects unobserved delivery", () => {
   expect(result.checks.runtimeFormAction).toBe("failed");
 });
 
-test("runtime validator requires the observed success, failure, recovery sequence", () => {
-  const project = structuredClone(managedFormRuntimeFixture.project);
-  project.pages.push({
-    id: "runtime-page",
-    name: "Runtime",
-    path: "/contact-runtime",
-    rootInstanceId: "runtime-root",
-  });
-  project.instances.push({
-    id: "runtime-root",
-    component: "Body",
-    children: [{ type: "id", value: "runtime-form" }],
-  });
-  project.instances.push({
-    id: "runtime-form",
-    component: "ResourceForm",
-    children: ["name", "email", "subject", "message"].map((name) => ({
-      type: "id" as const,
-      value: `field-${name}`,
-    })),
-  });
-  for (const name of ["name", "email", "subject", "message"]) {
+test.each(["runtime-source", "generated-source-75"])(
+  "runtime validator follows %s and requires the observed success, failure, recovery sequence",
+  (sourceId) => {
+    const project = structuredClone(managedFormRuntimeFixture.project);
+    project.pages.push({
+      id: "runtime-page",
+      name: "Runtime",
+      path: "/contact-runtime",
+      rootInstanceId: "runtime-root",
+    });
     project.instances.push({
-      id: `field-${name}`,
-      component: name === "message" ? "Textarea" : "Input",
-      children: [],
+      id: "runtime-root",
+      component: "Body",
+      children: [{ type: "id", value: "runtime-form" }],
     });
+    project.instances.push({
+      id: "runtime-form",
+      component: "ResourceForm",
+      children: ["name", "email", "subject", "message"].map((name) => ({
+        type: "id" as const,
+        value: `field-${name}`,
+      })),
+    });
+    for (const name of ["name", "email", "subject", "message"]) {
+      project.instances.push({
+        id: `field-${name}`,
+        component: name === "message" ? "Textarea" : "Input",
+        children: [],
+      });
+      project.props.push({
+        id: `prop-${name}`,
+        instanceId: `field-${name}`,
+        name: "name",
+        type: "string",
+        value: name,
+      });
+    }
     project.props.push({
-      id: `prop-${name}`,
-      instanceId: `field-${name}`,
-      name: "name",
-      type: "string",
-      value: name,
+      id: "action",
+      instanceId: "runtime-form",
+      name: "action",
+      type: "json",
+      value: [{ dataSourceId: sourceId }],
     });
-  }
-  project.props.push({
-    id: "action",
-    instanceId: "runtime-form",
-    name: "action",
-    type: "json",
-    value: [{ dataSourceId: "runtime-source" }],
-  });
-  project.dataSources.push({
-    id: "runtime-source",
-    resourceId: "runtime-resource",
-  });
-  project.resources.push({
-    id: "runtime-resource",
-    name: "Test receiver",
-    method: "post",
-    url: '"https://mcp-delivery.example/submit"',
-    headers: [],
-  });
-  const submissions = (["success", "error", "success"] as const).map(
-    (formState) => ({
-      name: "forms.simulate-submission",
-      arguments: {
-        path: "/contact-runtime",
-        siteOrigin: "https://site.example",
-        formValueNames: ["name", "email", "subject", "message"],
-      },
-      formStatus: "submitted" as const,
-      formState,
-    })
-  );
-  const result = evaluateHighImpactOutcome({
-    fixture: managedFormRuntimeFixture,
-    project,
-    toolCalls: [{ name: "meta.guide" }, ...submissions],
-    formRuntimeDeliveries: [
-      { path: "/submit", status: 200 },
-      { path: "/reject", status: 503 },
-      { path: "/reject", status: 503 },
-      { path: "/submit", status: 200 },
-    ],
-  });
-  expect(result.checks.runtimeFormFields).toBe("passed");
-  expect(result.checks.runtimeFormAction).toBe("passed");
-  expect(result.checks.runtimeObservedStates).toBe("passed");
-  expect(result.checks.runtimeSessionPreview).toBe("passed");
-
-  const withLegacyKey = structuredClone(project);
-  withLegacyKey.props.find((prop) => prop.id === "action")!.value = [
-    { dataSourceId: "runtime-source", enabled: false },
-  ];
-  expect(
-    evaluateHighImpactOutcome({
+    project.dataSources.push({
+      id: sourceId,
+      resourceId: "runtime-resource",
+    });
+    project.resources.push({
+      id: "runtime-resource",
+      name: "Test receiver",
+      method: "post",
+      url: '"https://mcp-delivery.example/submit"',
+      headers: [],
+    });
+    const submissions = (["success", "error", "success"] as const).map(
+      (formState) => ({
+        name: "forms.simulate-submission",
+        arguments: {
+          path: "/contact-runtime",
+          siteOrigin: "https://site.example",
+          formValueNames: ["name", "email", "subject", "message"],
+        },
+        formStatus: "submitted" as const,
+        formState,
+      })
+    );
+    const result = evaluateHighImpactOutcome({
       fixture: managedFormRuntimeFixture,
-      project: withLegacyKey,
+      project,
       toolCalls: [{ name: "meta.guide" }, ...submissions],
       formRuntimeDeliveries: [
         { path: "/submit", status: 200 },
         { path: "/reject", status: 503 },
-        { path: "/reject", status: 503 },
         { path: "/submit", status: 200 },
       ],
-    }).checks.runtimeFormAction
-  ).toBe("passed");
+    });
+    expect(result.checks.runtimeFormFields).toBe("passed");
+    expect(result.checks.runtimeFormAction).toBe("passed");
+    expect(result.checks.runtimeObservedStates).toBe("passed");
+    expect(result.checks.runtimeSessionPreview).toBe("passed");
 
-  for (const value of [
-    [{ dataSourceId: "unexpected" }],
-    [{ dataSourceId: "runtime-source" }, { dataSourceId: "unexpected" }],
-  ]) {
-    const malformed = structuredClone(project);
-    malformed.props.find((prop) => prop.id === "action")!.value = value;
     expect(
       evaluateHighImpactOutcome({
         fixture: managedFormRuntimeFixture,
-        project: malformed,
+        project,
         toolCalls: [{ name: "meta.guide" }, ...submissions],
         formRuntimeDeliveries: [
           { path: "/submit", status: 200 },
@@ -206,22 +183,78 @@ test("runtime validator requires the observed success, failure, recovery sequenc
           { path: "/reject", status: 503 },
           { path: "/submit", status: 200 },
         ],
+      }).checks.runtimeObservedStates
+    ).toBe("failed");
+
+    const withLegacyKey = structuredClone(project);
+    withLegacyKey.props.find((prop) => prop.id === "action")!.value = [
+      { dataSourceId: sourceId, enabled: false },
+    ];
+    expect(
+      evaluateHighImpactOutcome({
+        fixture: managedFormRuntimeFixture,
+        project: withLegacyKey,
+        toolCalls: [{ name: "meta.guide" }, ...submissions],
+        formRuntimeDeliveries: [
+          { path: "/submit", status: 200 },
+          { path: "/reject", status: 503 },
+          { path: "/submit", status: 200 },
+        ],
+      }).checks.runtimeFormAction
+    ).toBe("passed");
+
+    for (const value of [
+      [{ dataSourceId: "unexpected" }],
+      [{ dataSourceId: sourceId }, { dataSourceId: "unexpected" }],
+    ]) {
+      const malformed = structuredClone(project);
+      malformed.props.find((prop) => prop.id === "action")!.value = value;
+      expect(
+        evaluateHighImpactOutcome({
+          fixture: managedFormRuntimeFixture,
+          project: malformed,
+          toolCalls: [{ name: "meta.guide" }, ...submissions],
+          formRuntimeDeliveries: [
+            { path: "/submit", status: 200 },
+            { path: "/reject", status: 503 },
+            { path: "/submit", status: 200 },
+          ],
+        }).checks.runtimeFormAction
+      ).toBe("failed");
+    }
+
+    const missingResource = structuredClone(project);
+    missingResource.dataSources[0].resourceId = "missing-resource";
+    const wrongMethod = structuredClone(project);
+    wrongMethod.resources[0].method = "get";
+    for (const malformed of [missingResource, wrongMethod]) {
+      expect(
+        evaluateHighImpactOutcome({
+          fixture: managedFormRuntimeFixture,
+          project: malformed,
+          toolCalls: [{ name: "meta.guide" }, ...submissions],
+          formRuntimeDeliveries: [
+            { path: "/submit", status: 200 },
+            { path: "/reject", status: 503 },
+            { path: "/submit", status: 200 },
+          ],
+        }).checks.runtimeFormAction
+      ).toBe("failed");
+    }
+
+    project.resources[0].url = '"https://somewhere-else.example/submit"';
+    expect(
+      evaluateHighImpactOutcome({
+        fixture: managedFormRuntimeFixture,
+        project,
+        toolCalls: [
+          { name: "meta.guide" },
+          { name: "preview.start" },
+          ...submissions,
+          { name: "preview.stop" },
+        ],
+        formRuntimeDeliveries: [],
       }).checks.runtimeFormAction
     ).toBe("failed");
   }
-
-  project.resources[0].url = '"https://somewhere-else.example/submit"';
-  expect(
-    evaluateHighImpactOutcome({
-      fixture: managedFormRuntimeFixture,
-      project,
-      toolCalls: [
-        { name: "meta.guide" },
-        { name: "preview.start" },
-        ...submissions,
-        { name: "preview.stop" },
-      ],
-      formRuntimeDeliveries: [],
-    }).checks.runtimeFormAction
-  ).toBe("failed");
-});
+);

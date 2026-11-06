@@ -131,6 +131,7 @@ export const InsetTooltip = ({
       content={
         <PropertyInfo
           title={propertyContent?.label ?? ""}
+          property={property}
           description={propertyContent?.description}
           styles={styles}
           onReset={() => {

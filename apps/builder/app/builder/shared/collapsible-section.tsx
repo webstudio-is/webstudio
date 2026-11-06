@@ -7,6 +7,8 @@ import {
   SectionTitleLabel,
   SectionTitleButton,
   Separator,
+  css,
+  cssVar,
   theme,
 } from "@webstudio-is/design-system";
 import {
@@ -22,6 +24,27 @@ import { PlusIcon } from "@webstudio-is/icons";
 import type { Simplify } from "type-fest";
 
 type Label = string;
+
+const sectionStyle = css({
+  variants: {
+    background: {
+      true: { background: cssVar("--background-primary") },
+    },
+    sticky: {
+      true: { position: "sticky", bottom: 0, zIndex: 1 },
+    },
+    stickyHeader: {
+      true: {
+        "& > [data-focus-scope-start] + [data-state]": {
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          background: cssVar("--background-primary"),
+        },
+      },
+    },
+  },
+});
 
 type State = {
   [label: string]: boolean;
@@ -39,6 +62,8 @@ const CollapsibleSectionContext = createContext<
   | undefined
   | {
       handleOpenState: HandleOpenState;
+      sectionBackground: boolean;
+      stickyHeaders: boolean;
     }
 >(undefined);
 
@@ -46,10 +71,14 @@ export const CollapsibleProvider = ({
   children,
   accordion,
   initialOpen,
+  sectionBackground = false,
+  stickyHeaders = false,
 }: {
   children: ReactNode;
   accordion?: boolean;
   initialOpen?: Label;
+  sectionBackground?: boolean;
+  stickyHeaders?: boolean;
 }) => {
   const state = useStore($state);
   useEffect(() => {
@@ -98,7 +127,9 @@ export const CollapsibleProvider = ({
   );
 
   return (
-    <CollapsibleSectionContext.Provider value={{ handleOpenState }}>
+    <CollapsibleSectionContext.Provider
+      value={{ handleOpenState, sectionBackground, stickyHeaders }}
+    >
       {children}
     </CollapsibleSectionContext.Provider>
   );
@@ -121,6 +152,7 @@ type CollapsibleSectionBaseProps = {
   label?: string;
   isOpen?: boolean;
   onOpenChange?: (value: boolean) => void;
+  sticky?: boolean;
 };
 
 export const CollapsibleSectionRoot = ({
@@ -131,9 +163,21 @@ export const CollapsibleSectionRoot = ({
   showSeparator = true,
   isOpen,
   onOpenChange,
+  sticky,
 }: CollapsibleSectionBaseProps) => {
+  const { sectionBackground = false, stickyHeaders = false } =
+    useContext(CollapsibleSectionContext) ?? {};
   return (
-    <Collapsible.Root defaultOpen open={isOpen} onOpenChange={onOpenChange}>
+    <Collapsible.Root
+      defaultOpen
+      open={isOpen}
+      onOpenChange={onOpenChange}
+      className={sectionStyle({
+        background: sectionBackground,
+        sticky,
+        stickyHeader: stickyHeaders,
+      })}
+    >
       <Collapsible.Trigger asChild>
         {trigger ?? (
           <SectionTitle>
@@ -168,7 +212,7 @@ type CollapsibleSectionProps = Simplify<
 >;
 
 export const CollapsibleSection = (props: CollapsibleSectionProps) => {
-  const { label, trigger, children, fullWidth, showSeparator } = props;
+  const { label, trigger, children, fullWidth, showSeparator, sticky } = props;
   const [isOpen, setIsOpen] = useOpenState(label, props.isOpen);
   return (
     <CollapsibleSectionRoot
@@ -176,6 +220,7 @@ export const CollapsibleSection = (props: CollapsibleSectionProps) => {
       trigger={trigger}
       fullWidth={fullWidth}
       showSeparator={showSeparator}
+      sticky={sticky}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
     >
@@ -211,6 +256,7 @@ export const CollapsibleSectionWithAddButton = ({
       label={label}
       fullWidth={props.fullWidth}
       showSeparator={props.showSeparator}
+      sticky={props.sticky}
       isOpen={isOpenFinal}
       onOpenChange={(nextIsOpen) => {
         setIsOpen(nextIsOpen);

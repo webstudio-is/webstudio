@@ -12,7 +12,11 @@ import {
   Tooltip,
   toast,
 } from "@webstudio-is/design-system";
-import type { ExpressionBindingMode, Instance } from "@webstudio-is/sdk";
+import {
+  codeTextDefaultLanguage,
+  type ExpressionBindingMode,
+  type Instance,
+} from "@webstudio-is/sdk";
 import { AlertIcon } from "@webstudio-is/icons";
 import { $instances } from "~/shared/sync/data-stores";
 import {
@@ -48,7 +52,9 @@ export const TextContent = ({
   const instance = useInstance(instanceId);
   const languageProp = meta.editor?.languageProp;
   const languageSupport = useCodeTextLanguageSupport(
-    languageProp === undefined ? undefined : computedProps?.get(languageProp)
+    languageProp === undefined
+      ? undefined
+      : (computedProps?.get(languageProp) ?? codeTextDefaultLanguage)
   );
   const childrenCount = instance?.children.length ?? 0;
   const hasChildren = childrenCount > 0;

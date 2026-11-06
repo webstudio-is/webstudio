@@ -8,4 +8,5 @@ export {
   getFormDataValue,
 } from "./form-submission";
 export { useFormFeedbackScroll } from "./form-feedback-scroll";
+export { InstantScrollRestoration } from "./instant-scroll-restoration";
 export { submitManagedForm } from "./managed-form-client";

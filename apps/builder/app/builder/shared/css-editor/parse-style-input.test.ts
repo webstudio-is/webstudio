@@ -1,5 +1,18 @@
 import { describe, test, expect } from "vitest";
-import { parseStyleInput } from "./parse-style-input";
+import { parsePropertyName, parseStyleInput } from "./parse-style-input";
+
+describe("parsePropertyName", () => {
+  test("accepts a single longhand or custom property name", () => {
+    expect(parsePropertyName(" color ", new Map())).toBe("color");
+    expect(parsePropertyName("--brand", new Map())).toBe("--brand");
+  });
+
+  test("rejects a declaration, shorthand, or malformed name", () => {
+    expect(parsePropertyName("color: red", new Map())).toBeUndefined();
+    expect(parsePropertyName("margin", new Map())).toBeUndefined();
+    expect(parsePropertyName("bad name", new Map())).toBeUndefined();
+  });
+});
 
 describe("parseStyleInput", () => {
   test("parses custom property", () => {
@@ -85,6 +98,23 @@ describe("parseStyleInput", () => {
     expect(result).toEqual(
       new Map([["--notaproperty", { type: "unparsed", value: "" }]])
     );
+  });
+
+  test("converts an unknown property with a value to a custom property", () => {
+    const { styleMap, errors, hasSyntaxErrors } = parseStyleInput(
+      "bla: 123",
+      new Map()
+    );
+    expect(styleMap).toEqual(
+      new Map([["--bla", { type: "unit", unit: "number", value: 123 }]])
+    );
+    expect(errors).toEqual([]);
+    expect(hasSyntaxErrors).toBe(false);
+  });
+
+  test("keeps a known shorthand even when its value is invalid", () => {
+    const { styleMap } = parseStyleInput("overflow: not-a-mode", new Map());
+    expect(styleMap.has("--overflow")).toBe(false);
   });
 
   test("parses single property-value pair", () => {
@@ -186,7 +216,7 @@ describe("parseStyleInput", () => {
     );
   });
 
-  test("parses multiple property-value pairs, one is invalid", () => {
+  test("parses multiple property-value pairs, including an unknown property", () => {
     const { styleMap: result } = parseStyleInput(
       "color: red; somethinginvalid: block",
       new Map()
@@ -194,7 +224,7 @@ describe("parseStyleInput", () => {
     expect(result).toEqual(
       new Map([
         ["color", { type: "keyword", value: "red" }],
-        ["--somethinginvalid", { type: "invalid", value: "block" }],
+        ["--somethinginvalid", { type: "unparsed", value: "block" }],
       ])
     );
   });

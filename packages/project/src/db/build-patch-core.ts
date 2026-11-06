@@ -1,5 +1,8 @@
 import type { Patch } from "immer";
-import { migrateResourceFormInstancesMutable } from "@webstudio-is/project-migrations";
+import {
+  migrateCodeTextContentMutable,
+  migrateResourceFormInstancesMutable,
+} from "@webstudio-is/project-migrations";
 import {
   hasHistoricalFormComponentIdentityVersion,
   migratePages,
@@ -242,6 +245,32 @@ export const createBuildPatchUpdate = async ({
     );
     for (const instanceId of changedInstanceIds) {
       touchedInstances.keys.add(instanceId);
+    }
+  }
+
+  // Direct UI patches address the normalized children seen at load time.
+  // Remove their legacy code props in the same update, or a later load would
+  // restore the old code. Leave unrelated legacy instances and defaults alone.
+  const codeTextTargets = createTouchedKeys();
+  for (const transaction of transactions) {
+    for (const { namespace, patches } of transaction.payload) {
+      if (namespace === "instances") {
+        addTouchedPatchKeys(codeTextTargets, patches);
+      }
+    }
+  }
+  if (
+    buildData.instances !== undefined &&
+    (codeTextTargets.wholeMap || codeTextTargets.keys.size > 0)
+  ) {
+    const props = parseData<Prop>(build.props);
+    const propCount = props.size;
+    migrateCodeTextContentMutable(
+      { instances: getTouchedMap(buildData.instances, codeTextTargets), props },
+      { codeOnly: true }
+    );
+    if (props.size !== propCount) {
+      buildData.props = props;
     }
   }
 

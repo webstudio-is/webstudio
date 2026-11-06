@@ -70,9 +70,8 @@ export const __testing__ = {
 
 export const SectionRedirects = () => {
   const publishedOrigin = useStore($publishedOrigin);
-  const [redirects, setRedirects] = useState(
-    () => $pages.get()?.redirects ?? []
-  );
+  const pages = useStore($pages);
+  const redirects = pages?.redirects ?? [];
 
   const [fromPath, setFromPath] = useState<string>("");
   const [toPath, setToPath] = useState<string>("");
@@ -84,7 +83,6 @@ export const SectionRedirects = () => {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const pages = useStore($pages);
   const existingPaths = getExistingRoutePaths(pages);
   const fromPathRef = useRef<HTMLInputElement>(null);
 
@@ -127,7 +125,6 @@ export const SectionRedirects = () => {
   };
 
   const handleSave = (redirects: Array<PageRedirect>) => {
-    setRedirects(redirects);
     executeRuntimeMutation({
       id: "redirects.setAll",
       input: {

@@ -1131,6 +1131,68 @@ describe("prebuild", () => {
     }
   );
 
+  test("allows a sibling API host but blocks the site's hosts in a Node export", async () => {
+    const siteData = createSiteData();
+    siteData.projectDomain = "project.wstd.io";
+    await writeFile(
+      ".webstudio/data.json",
+      JSON.stringify({
+        ...siteData,
+        build: {
+          ...siteData.build,
+          deployment: {
+            destination: undefined,
+            domains: ["webstudio-demo-john.stauferth.de"],
+          },
+        },
+      })
+    );
+    await prebuild({ assets: false, template: ["react-router"] });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    const bundle = await build({
+      entryPoints: [
+        join(
+          tempDir,
+          "app/__generated__/$resources.managed-form-fetch.server.ts"
+        ),
+      ],
+      bundle: true,
+      format: "esm",
+      platform: "node",
+      conditions: ["webstudio"],
+      banner: {
+        js: `import { createRequire } from "node:module"; const require = createRequire(${JSON.stringify(pathToFileURL(join(originalCwd, "package.json")).href)});`,
+      },
+      write: false,
+    });
+    const adapter = (await import(
+      /* @vite-ignore */
+      `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`
+    )) as {
+      createManagedFormResourceFetch: (input: {
+        request: Request;
+        context: unknown;
+        projectDomain: string;
+      }) => typeof fetch & { validateDestination: (url: URL) => void };
+    };
+    const resourceFetch = adapter.createManagedFormResourceFetch({
+      request: new Request("https://webstudio-demo-john.stauferth.de"),
+      context: {},
+      projectDomain: siteData.projectDomain,
+    });
+    expect(() =>
+      resourceFetch.validateDestination(new URL("https://cms.stauferth.de"))
+    ).not.toThrow();
+    for (const hostname of [
+      "webstudio-demo-john.stauferth.de",
+      "project.wstd.io",
+    ]) {
+      expect(() =>
+        resourceFetch.validateDestination(new URL(`https://${hostname}`))
+      ).toThrow();
+    }
+  });
+
   test("publishes configured file-input attributes", async () => {
     await writeSiteData(
       createSiteData({
@@ -2441,6 +2503,9 @@ sitemap.map((page) => page.path);`
         },
       ])
     );
+    await expect(
+      readFile("app/__generated__/$resources.has-redirects.ts", "utf8")
+    ).resolves.toBe("export const hasRedirects = true;");
 
     const assetsModule = await readFile(
       "app/__generated__/$resources.assets.ts",
@@ -2483,6 +2548,15 @@ sitemap.map((page) => page.path);`
         expect.stringContaining("über"),
       ])
     );
+  });
+
+  test("emits a false redirect flag when a project has no redirects", async () => {
+    await writeSiteData(createSiteData({ redirects: [] }));
+    await prebuild({ assets: false, template: ["defaults"] });
+
+    await expect(
+      readFile("app/__generated__/$resources.has-redirects.ts", "utf8")
+    ).resolves.toBe("export const hasRedirects = false;");
   });
 
   test("selects react-router templates", async () => {
@@ -5608,7 +5682,7 @@ export const createManagedFormResourceFetch = () => {
   );
 
   test.each(["defaults", "react-router"])(
-    "retries only a failed managed Form destination per submission (%s)",
+    "reports partial managed Form failure without replaying POST destinations and recovers on resubmit (%s)",
     async (template) => {
       const siteData = createSiteData({
         instances: [
@@ -5722,7 +5796,7 @@ export const createManagedFormResourceFetch = () => {
         pathToFileURL(join(tempDir, "retry-action.mjs")).href
       );
       const attempts = new Map<string, number>();
-      let failure: "status" | "network" | "timeout" | "persistent" = "status";
+      let failure: "status" | "network" | "timeout" | "persistent" | undefined;
       vi.stubGlobal(
         "__testManagedFormFetch",
         vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -5741,7 +5815,7 @@ export const createManagedFormResourceFetch = () => {
           if (failure === "persistent") {
             return new Response("Still failed", { status: 422 });
           }
-          if (attempt === 1) {
+          if (failure !== undefined && attempt === 1) {
             if (failure === "status") {
               return new Response("Temporary failure", { status: 503 });
             }
@@ -5774,117 +5848,81 @@ export const createManagedFormResourceFetch = () => {
           context: {},
         });
       };
-      const expectAttempts = (failed: number) => {
-        expect(attempts.get("https://receiver.example/dependency")).toBe(1);
-        expect(attempts.get("https://receiver.example/sibling")).toBe(1);
+      const expectAttempts = (count: number) => {
+        expect(attempts.get("https://receiver.example/dependency")).toBe(count);
+        expect(attempts.get("https://receiver.example/sibling")).toBe(count);
         expect(attempts.get("https://receiver.example/failed/resolved")).toBe(
-          failed
+          count
         );
       };
-
-      await expect(submit()).resolves.toEqual({
-        success: true,
+      const siblingResult = {
+        resourceId: "sibling",
+        resourceName: expect.any(String),
         status: 200,
-        results: [
-          {
-            resourceId: "sibling",
-            resourceName: expect.any(String),
-            status: 200,
-            body: { accepted: true },
-          },
-          {
-            resourceId: "failed",
-            resourceName: expect.any(String),
-            status: 200,
-            body: { accepted: true },
-          },
-        ],
-        errors: [],
-      });
-      expectAttempts(2);
-      attempts.clear();
-      failure = "network";
+        body: { accepted: true },
+      };
       const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
-      await expect(submit()).resolves.toMatchObject({
-        success: true,
-        status: 200,
-        results: [
+      try {
+        for (const outcome of [
+          { failure: "status", status: 503, body: "Temporary failure" },
           {
-            resourceId: "sibling",
-            resourceName: expect.any(String),
-            status: 200,
-            body: { accepted: true },
+            failure: "network",
+            status: 502,
+            body: { error: { code: "NETWORK_ERROR" } },
           },
           {
+            failure: "timeout",
+            status: 504,
+            body: { error: { code: "REQUEST_TIMEOUT" } },
+          },
+          { failure: "persistent", status: 422, body: "Still failed" },
+        ] as const) {
+          attempts.clear();
+          failure = outcome.failure;
+          if (failure === "timeout") {
+            vi.useFakeTimers();
+          }
+          const failedResult = {
             resourceId: "failed",
             resourceName: expect.any(String),
+            status: outcome.status,
+            body: outcome.body,
+          };
+          const pending = submit();
+          if (failure === "timeout") {
+            await vi.advanceTimersByTimeAsync(10_000);
+          }
+          await expect(pending).resolves.toMatchObject({
+            success: false,
+            status: 502,
+            results: [siblingResult, failedResult],
+            errors: [failedResult],
+          });
+          expectAttempts(1);
+
+          // A new submission dispatches each destination once, including the sibling.
+          failure = undefined;
+          await expect(submit()).resolves.toEqual({
+            success: true,
             status: 200,
-            body: { accepted: true },
-          },
-        ],
-        errors: [],
-      });
-      expectAttempts(2);
-      errorLog.mockRestore();
-      attempts.clear();
-      failure = "timeout";
-      vi.useFakeTimers();
-      try {
-        const pending = submit();
-        await vi.advanceTimersByTimeAsync(10_000);
-        await expect(pending).resolves.toMatchObject({
-          success: true,
-          status: 200,
-          results: [
-            {
-              resourceId: "sibling",
-              resourceName: expect.any(String),
-              status: 200,
-              body: { accepted: true },
-            },
-            {
-              resourceId: "failed",
-              resourceName: expect.any(String),
-              status: 200,
-              body: { accepted: true },
-            },
-          ],
-          errors: [],
-        });
-        expectAttempts(2);
+            results: [
+              siblingResult,
+              {
+                resourceId: "failed",
+                resourceName: expect.any(String),
+                status: 200,
+                body: { accepted: true },
+              },
+            ],
+            errors: [],
+          });
+          expectAttempts(2);
+          vi.useRealTimers();
+        }
       } finally {
         vi.useRealTimers();
+        errorLog.mockRestore();
       }
-      attempts.clear();
-      failure = "persistent";
-      await expect(submit()).resolves.toEqual({
-        success: false,
-        status: 502,
-        results: [
-          {
-            resourceId: "sibling",
-            resourceName: expect.any(String),
-            status: 200,
-            body: { accepted: true },
-          },
-          {
-            resourceId: "failed",
-            resourceName: expect.any(String),
-            status: 422,
-            body: "Still failed",
-          },
-        ],
-        errors: [
-          {
-            resourceId: "failed",
-            resourceName: expect.any(String),
-            status: 422,
-            body: "Still failed",
-            message: "Resource request failed (422)",
-          },
-        ],
-      });
-      expectAttempts(2);
     }
   );
 

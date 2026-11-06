@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
-import type { Asset, Prop } from "@webstudio-is/sdk";
+import type { Asset, Prop, Instance } from "@webstudio-is/sdk";
+import { migrateCodeTextContentMutable } from "@webstudio-is/project-migrations";
+import type { Database } from "@webstudio-is/postgrest/index.server";
 import {
   createTestServer,
   db,
@@ -12,6 +14,7 @@ import { defaultPlanFeatures } from "@webstudio-is/plans";
 import {
   parseInstanceData,
   parsePages,
+  parseData,
 } from "@webstudio-is/project-build/persistence";
 import {
   patchBuild,
@@ -100,6 +103,126 @@ const transaction = (
   ],
   ...overrides,
 });
+
+test.each(["children", "nested", "instance"] as const)(
+  "saves legacy CodeText %s patches without stale props, including undo, redo and retries",
+  async (shape) => {
+    const code: Instance = {
+      id: "code",
+      type: "instance",
+      component: "CodeText",
+      children: [],
+    };
+    const legacy: Prop = {
+      id: "legacy-code",
+      instanceId: "code",
+      name: "code",
+      type: "string",
+      value: "before",
+    };
+    const untouched: Prop = {
+      ...legacy,
+      id: "untouched-code",
+      instanceId: "untouched",
+    };
+    const theme: Prop = {
+      id: "theme",
+      instanceId: "code",
+      name: "theme",
+      type: "string",
+      value: "github-light",
+    };
+    let build: Database["public"]["Tables"]["Build"]["Row"] = {
+      ...buildRow,
+      instances: JSON.stringify([code, { ...code, id: "untouched" }]),
+      props: JSON.stringify([legacy, untouched, theme]),
+    };
+    for (const [index, value] of ["after", "before", "after", ""].entries()) {
+      const children = [{ type: "text", value }];
+      const patch =
+        shape === "nested"
+          ? {
+              op: "replace" as const,
+              path: ["code", "children", 0, "value"],
+              value,
+            }
+          : shape === "instance"
+            ? {
+                op: "replace" as const,
+                path: ["code"],
+                value: { ...code, children },
+              }
+            : {
+                op: "replace" as const,
+                path: ["code", "children"],
+                value: children,
+              };
+      const transactions = [
+        transaction({
+          id: `code-${index}`,
+          payload: [{ namespace: "instances", patches: [patch] }],
+        }),
+      ];
+      const before = structuredClone(build);
+      const input = {
+        build,
+        clientVersion: build.version,
+        transactions,
+        loadAssets: async () => ({
+          assets: [],
+          changedAssetIds: new Set<string>(),
+        }),
+      };
+      const result = await createBuildPatchUpdate(input);
+      expect(result.status).toBe("ok");
+      if (result.status !== "ok" || result.update === undefined) {
+        throw new Error("Expected a saved CodeText update");
+      }
+      if (index === 0) {
+        expect(result.update.props).toBeDefined();
+        // Older Builders explicitly remove the migrated prop. Both payload
+        // orders must work even when normalization already removed it.
+        for (const propsFirst of [true, false]) {
+          const payload: BuildPatchTransaction["payload"] = [
+            { namespace: "instances", patches: [patch] },
+            {
+              namespace: "props",
+              patches: [{ op: "remove", path: [legacy.id] }],
+            },
+          ];
+          const olderClient = await createBuildPatchUpdate({
+            ...input,
+            transactions: [
+              transaction({
+                payload: propsFirst ? payload.reverse() : payload,
+              }),
+            ],
+          });
+          expect(olderClient.status).toBe("ok");
+          if (olderClient.status === "ok") {
+            expect(olderClient.update?.instances).toBe(result.update.instances);
+            expect(olderClient.update?.props).toBe(result.update.props);
+          }
+        }
+      }
+      expect(build).toEqual(before);
+      build = { ...build, ...result.update };
+      const data = {
+        instances: parseInstanceData(build.instances),
+        props: parseData<Prop>(build.props),
+      };
+      expect(data.instances.get("code")?.children).toEqual(children);
+      expect([...data.props.values()]).toEqual([untouched, theme]);
+      expect(data.instances.get("untouched")?.children).toEqual([]);
+      // A later Builder visit must not restore the old code over the Editor's edit.
+      migrateCodeTextContentMutable(data);
+      expect(data.instances.get("code")?.children).toEqual(children);
+      const retry = await createBuildPatchUpdate({ ...input, build });
+      expect(retry).toMatchObject({ status: "ok", nextVersion: build.version });
+      expect(retry).not.toHaveProperty("update");
+    }
+  }
+);
 
 test("a pages-only save persists marked modern Form as ResourceForm with pages", async () => {
   const markedPages = {

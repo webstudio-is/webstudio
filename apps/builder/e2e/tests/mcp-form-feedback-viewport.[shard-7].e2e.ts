@@ -257,7 +257,7 @@ test("MCP-authored partial Action failure scrolls error feedback into view", asy
           .toEqual([expect.stringContaining(errorMessage)]);
         expect(
           receiver.deliveries.map(({ pathname }) => pathname).sort()
-        ).toEqual(["/reject", "/reject", "/submit"]);
+        ).toEqual(["/reject", "/submit"]);
       },
     });
   } finally {

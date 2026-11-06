@@ -62,6 +62,16 @@ While the server is running, stdout is reserved for MCP JSON-RPC messages. Do no
 
 ## One-Shot Tool Calls
 
+### Native Form actions
+
+A native Form (`ResourceForm`) selects Resources through a data source. Create
+the Resource with `scopeInstanceId` on the Form or an ancestor and
+`exposeAsDataSource:true`; use the returned `dataSourceId` in the Form's `action`
+JSON array with `update-props`. Scope it to the Form when the request needs
+`formData`. Do not bind a resource prop or set `exposeAsDataSource:false` for a
+native Form action. The selected Resource runs on submission unless page
+content also reads it.
+
 ### Server-side Form simulation
 
 `forms.simulate-submission` evaluates a saved Form using synthetic string fields
@@ -992,6 +1002,16 @@ source of truth. For tools with no required arguments, pass `{}`.
     "props",
     "styles",
     "children"
+  ]
+}
+```
+
+```json
+{
+  "instanceId": ":root",
+  "include": [
+    "styles",
+    "sources"
   ]
 }
 ```

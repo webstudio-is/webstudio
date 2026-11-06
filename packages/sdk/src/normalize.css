@@ -90,6 +90,8 @@ body {
   margin: 0;
   /* webstudio custom opinionated presets */
   box-sizing: border-box;
+  /* Allow the root grid item to shrink around horizontal scroll containers. */
+  min-width: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

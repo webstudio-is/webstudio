@@ -46,7 +46,6 @@ export const JsonForm = forwardRef<
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label>Value</Label>
         <ExpressionEditor
-          showLineNumbers
           color={valueError ? "error" : undefined}
           value={value}
           onChange={onChange}

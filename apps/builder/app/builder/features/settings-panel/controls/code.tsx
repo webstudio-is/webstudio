@@ -18,6 +18,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
+import { codeTextDefaultLanguage } from "@webstudio-is/sdk";
 import { CodeEditor } from "~/shared/code-editor";
 import { BindableExpressionControl } from "~/builder/shared/bindable-expression";
 import {
@@ -157,7 +158,9 @@ export const CodeControl = ({
   };
   const lang = meta.control === "code" ? meta.language : undefined;
   const codeTextLanguageSupport = useCodeTextLanguageSupport(
-    meta.control === "codetext" ? computedProps?.get("language") : undefined
+    meta.control === "codetext"
+      ? (computedProps?.get("language") ?? codeTextDefaultLanguage)
+      : undefined
   );
   const label = humanizeAttribute(metaOverride.label || propName);
   const editorValue = behavior

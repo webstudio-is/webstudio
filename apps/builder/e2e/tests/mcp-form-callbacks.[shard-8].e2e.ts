@@ -96,7 +96,6 @@ for (const mode of ["legacy", "managed"] as const) {
           expect(receiver.deliveries).toEqual([
             { outcome: "success" },
             { outcome: "failure" },
-            { outcome: "failure" },
             { outcome: "success" },
           ]);
           return;
@@ -139,7 +138,6 @@ for (const mode of ["legacy", "managed"] as const) {
         }
         expect(receiver.deliveries).toEqual([
           { outcome: "success" },
-          { outcome: "failure" },
           { outcome: "failure" },
           { outcome: "success" },
         ]);
@@ -242,7 +240,6 @@ test("MCP-authored managed Form callbacks update same-page history, error, and r
         }
         expect(receiver.deliveries).toEqual([
           { outcome: "success" },
-          { outcome: "failure" },
           { outcome: "failure" },
           { outcome: "success" },
         ]);

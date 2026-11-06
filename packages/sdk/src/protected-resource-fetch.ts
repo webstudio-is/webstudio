@@ -22,7 +22,7 @@ const redirectStatuses = new Set([301, 302, 303, 307, 308]);
 const defaultMaxRedirects = 3;
 const maxRequestBytes = 25 * 1024 * 1024;
 
-const protectedResourceRequestHeader = "x-webstudio-protected-resource";
+export const protectedResourceRequestHeader = "x-webstudio-protected-resource";
 
 /** Project identity survives aliases while allowing calls to other projects.
  * This cooperative marker is not a sandbox for untrusted code or proxies that strip it.
@@ -34,7 +34,7 @@ export const isProtectedResourceReentry = (
   projectId !== "" &&
   request.headers.get(protectedResourceRequestHeader) === projectId;
 
-/** Preserve the domain-wide policy for Node and Workers without public routing. */
+/** Domain-wide policy for callers that intentionally restrict an entire zone. */
 export const getDeniedResourceHostnames = (
   hostnames: readonly (string | undefined)[]
 ) =>
@@ -95,7 +95,8 @@ export const createProtectedResourceFetch = ({
     validateProtectedResourceDestination(url, deniedHostnames, matchSubdomains);
   const protectedFetch: typeof fetch = async (input, init) => {
     const original = new Request(input, init);
-    const body = await readLimitedBytes(original.body, maxRequestBytes);
+    let body = await readLimitedBytes(original.body, maxRequestBytes);
+    let method = original.method;
     let headers = new Headers(original.headers);
     // The vetted URL controls DNS and TLS routing. A configured Host override
     // could otherwise route the public connection to an internal virtual host.
@@ -107,7 +108,7 @@ export const createProtectedResourceFetch = ({
       validateDestination(url);
       const { response, release } = await transport({
         url,
-        method: original.method,
+        method,
         headers,
         body,
         signal: original.signal,
@@ -121,22 +122,26 @@ export const createProtectedResourceFetch = ({
             throw new Error("Resource destination redirected too many times");
           }
           if (
-            original.method !== "GET" &&
-            original.method !== "HEAD" &&
-            response.status !== 307 &&
-            response.status !== 308
+            ((response.status === 301 || response.status === 302) &&
+              method === "POST") ||
+            (response.status === 303 && method !== "GET" && method !== "HEAD")
           ) {
-            throw new Error(
-              "Resource destination changed the submission method"
-            );
+            method = "GET";
+            body = undefined;
+            for (const name of [
+              "content-encoding",
+              "content-language",
+              "content-location",
+              "content-type",
+              "content-length",
+            ]) {
+              headers.delete(name);
+            }
           }
           const next = new URL(location, url);
           validateDestination(next);
           if (next.origin !== url.origin) {
-            if (
-              (original.method !== "GET" && original.method !== "HEAD") ||
-              body !== undefined
-            ) {
+            if ((method !== "GET" && method !== "HEAD") || body !== undefined) {
               throw new Error(
                 "Resource destination redirected a submission to another origin"
               );

@@ -33520,6 +33520,24 @@ export const runtimeOperationContractData = [
             additionalProperties: {},
           },
         },
+        presetStyles: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              state: {
+                type: "string",
+              },
+              property: {
+                type: "string",
+              },
+              value: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+            required: ["property", "value"],
+          },
+        },
         children: {
           type: "array",
           items: {

@@ -290,8 +290,13 @@ const applyAuthorizedEntries = async ({
 
   const entries: PatchEntryResult[] = [];
   let currentVersion = version;
+  let previousError: string | undefined;
 
   for (const { entry, context: entryContext } of authorized) {
+    if (previousError !== undefined) {
+      entries.push(failedResult(entry, previousError));
+      continue;
+    }
     const entryResult = await patchLoadedBuild(
       {
         build: currentBuild,
@@ -313,6 +318,7 @@ const applyAuthorizedEntries = async ({
     if (entryResult.status === "version_mismatched") {
       return entryResult;
     }
+    previousError = entryResult.errors;
     entries.push(failedResult(entry, entryResult.errors));
   }
 

@@ -3,7 +3,13 @@ import {
   isLiteralExpression,
   parseStringLiteralExpression,
 } from "@webstudio-is/expression";
-import { isAssetsResource, type StyleDecl } from "@webstudio-is/sdk";
+import {
+  getContentBlockSources,
+  getPageSubmissionResourceIds,
+  findTreeInstanceIds,
+  isAssetsResource,
+  type StyleDecl,
+} from "@webstudio-is/sdk";
 import { hasTopLevelJsonLdContext } from "@webstudio-is/sdk/runtime";
 import { validateJsonLdWithSchemaOrg } from "@webstudio-is/sdk/schema-org";
 import { ariaAttributes, ariaRoles } from "@webstudio-is/html-data";
@@ -301,7 +307,7 @@ const getHeadingLevel = (tag: string | undefined) => {
   return Number(tag.slice(1));
 };
 
-const getPagesToAudit = (
+const getPagesInScope = (
   state: Pick<BuilderState, "pages">,
   input: Pick<ProjectAnalysisInput, "pageId" | "pagePath">
 ) => {
@@ -312,11 +318,17 @@ const getPagesToAudit = (
       : [findSerializedPageByInput(pages, input)].filter(
           (page): page is (typeof pages.pages)[number] => page !== undefined
         );
-  return selectedPages.filter(
+  return selectedPages;
+};
+
+const getPagesToAudit = (
+  state: Pick<BuilderState, "pages">,
+  input: Pick<ProjectAnalysisInput, "pageId" | "pagePath">
+) =>
+  getPagesInScope(state, input).filter(
     (page) =>
       page.meta.documentType !== "xml" && page.meta.documentType !== "text"
   );
-};
 
 const getRelatedPageInstanceIds = (
   instanceId: string,
@@ -1221,6 +1233,51 @@ export const analyzeProject = (
   }
 
   if (scopes.has("security")) {
+    const actionOnlyResourceIds = new Set<string>();
+    const connectedContentBlockIds = getContentBlockSources({
+      instances: state.instances.values(),
+      props: state.props.values(),
+    });
+    // A connected block inside a Form can read its scoped Resource from MDX.
+    const possiblyRenderedFormInstanceIds = new Set<string>();
+    for (const instance of instances.values()) {
+      if (instance.component !== "ResourceForm") {
+        continue;
+      }
+      const formInstanceIds = findTreeInstanceIds(instances, instance.id);
+      if ([...formInstanceIds].some((id) => connectedContentBlockIds.has(id))) {
+        for (const id of formInstanceIds) {
+          possiblyRenderedFormInstanceIds.add(id);
+        }
+      }
+    }
+    const pages = getPagesInScope(state, input);
+    for (const [index, page] of pages.entries()) {
+      const { submissionResourceIds, independentlyUsedResourceIds } =
+        getPageSubmissionResourceIds({
+          page,
+          instances: state.instances,
+          props: state.props,
+          dataSources: state.dataSources,
+          resources: state.resources,
+        });
+      if (index === 0) {
+        for (const id of submissionResourceIds) {
+          if (!independentlyUsedResourceIds.has(id)) {
+            actionOnlyResourceIds.add(id);
+          }
+        }
+      } else {
+        for (const id of actionOnlyResourceIds) {
+          if (
+            !submissionResourceIds.has(id) ||
+            independentlyUsedResourceIds.has(id)
+          ) {
+            actionOnlyResourceIds.delete(id);
+          }
+        }
+      }
+    }
     for (const dataSource of state.dataSources.values()) {
       if (
         dataSource.type !== "resource" ||
@@ -1234,7 +1291,11 @@ export const analyzeProject = (
       if (
         resource === undefined ||
         resource.method === "get" ||
-        isAssetsResource(resource)
+        isAssetsResource(resource) ||
+        (actionOnlyResourceIds.has(resource.id) &&
+          !possiblyRenderedFormInstanceIds.has(
+            dataSource.scopeInstanceId ?? ""
+          ))
       ) {
         continue;
       }

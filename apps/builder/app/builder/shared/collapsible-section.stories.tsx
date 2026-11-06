@@ -1,4 +1,12 @@
-import { Flex, StorySection, Text } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  ScrollAreaNative,
+  StorySection,
+  Text,
+  cssVar,
+  theme,
+} from "@webstudio-is/design-system";
 import {
   CollapsibleSectionRoot,
   CollapsibleSection,
@@ -61,4 +69,21 @@ export const CollapsibleSections = () => (
       </CollapsibleProvider>
     </Flex>
   </StorySection>
+);
+
+export const StickySectionHeaders = () => (
+  <ScrollAreaNative css={{ height: 240, width: theme.sizes.sidebarWidth }}>
+    <CollapsibleProvider sectionBackground stickyHeaders>
+      <CollapsibleSection label="Layout">
+        <Box
+          css={{ height: 360, background: cssVar("--background-secondary") }}
+        />
+      </CollapsibleSection>
+      <CollapsibleSection label="Size">
+        <Box
+          css={{ height: 360, background: cssVar("--background-secondary") }}
+        />
+      </CollapsibleSection>
+    </CollapsibleProvider>
+  </ScrollAreaNative>
 );

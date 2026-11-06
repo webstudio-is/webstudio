@@ -14,8 +14,14 @@ import { StyleSection } from "../../shared/style-section";
 import { useKeyboardNavigation } from "../shared/keyboard";
 import { useComputedStyleDecl, useComputedStyles } from "../../shared/model";
 import { createBatchUpdate, deleteProperty } from "../../shared/use-style-data";
-import { useModifierKeys, type Modifiers } from "../../shared/modifier-keys";
+import {
+  $isAltPressed,
+  useModifierKeys,
+  type Modifiers,
+} from "../../shared/modifier-keys";
 import { useReadonly } from "../../shared/readonly";
+import { useStore } from "@nanostores/react";
+import { getComputedValuePreview } from "../../shared/computed-value-preview";
 
 const movementMapSpace = {
   "margin-top": ["margin-bottom", "margin-right", "padding-top", "margin-left"],
@@ -95,6 +101,7 @@ const Cell = ({
   onPopoverClose,
   onHover,
   property,
+  isAltPreviewed,
   getActiveProperties,
   scrubStatus,
 }: {
@@ -102,6 +109,7 @@ const Cell = ({
   onPopoverClose: () => void;
   onHover: (target: HoverTarget | undefined) => void;
   property: SpaceStyleProperty;
+  isAltPreviewed: boolean;
   getActiveProperties: (modifiers?: Modifiers) => CssProperty[];
   scrubStatus: ReturnType<typeof useScrub> & { readonly: boolean };
 }) => {
@@ -109,6 +117,10 @@ const Cell = ({
   const finalValue =
     (scrubStatus.isActive && scrubStatus.values[property]) ||
     styleDecl.cascadedValue;
+  const preview =
+    isAltPreviewed && !scrubStatus.isActive
+      ? getComputedValuePreview(property, finalValue, styleDecl)
+      : undefined;
 
   return (
     <>
@@ -121,7 +133,7 @@ const Cell = ({
         onClose={onPopoverClose}
       />
       <ValueText
-        value={finalValue}
+        value={preview ? { type: "unparsed", value: preview } : finalValue}
         source={styleDecl.source.name}
         onMouseEnter={(event) =>
           onHover({ property, element: event.currentTarget })
@@ -144,6 +156,7 @@ export { spaceProperties as properties };
 
 export const Section = () => {
   const readonly = useReadonly();
+  const isAltPressed = useStore($isAltPressed);
   const styles = useComputedStyles(spaceProperties);
   const [hoverTarget, setHoverTarget] = useState<HoverTarget>();
   const styleValue = styles.find(
@@ -277,6 +290,9 @@ export const Section = () => {
               }}
               onHover={handleHover}
               property={property}
+              isAltPreviewed={
+                isAltPressed && hoverTarget?.property === property
+              }
               getActiveProperties={getActiveProperties}
               scrubStatus={{
                 ...scrubStatus,

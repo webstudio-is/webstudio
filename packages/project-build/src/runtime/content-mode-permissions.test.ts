@@ -3047,6 +3047,15 @@ describe("content mode permissions", () => {
       transaction: insert(copiedWidth),
     });
     expect(inserted.success).toBe(true);
+    expect(
+      validateContentModeTransaction({
+        capabilities: {
+          ...capabilities,
+          reservedPropIds: new Set([copiedWidth.id]),
+        },
+        transaction: insert(copiedWidth),
+      }).success
+    ).toBe(false);
     if (inserted.success) {
       expect(inserted.capabilities.props.get(copiedWidth.id)).toEqual(
         copiedWidth

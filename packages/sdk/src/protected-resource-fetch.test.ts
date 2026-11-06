@@ -7,6 +7,111 @@ import {
 } from "./protected-resource-fetch";
 
 describe("protected Resource fetch", () => {
+  test.each(
+    (
+      [
+        ["POST", 301],
+        ["POST", 302],
+        ["POST", 303],
+        ["PUT", 303],
+        ["DELETE", 303],
+      ] as const
+    ).flatMap(([method, status]) =>
+      [true, false].map((sameOrigin) => ({ method, status, sameOrigin }))
+    )
+  )(
+    "$method $status follows a bodyless GET (same origin: $sameOrigin)",
+    async ({ method, status, sameOrigin }) => {
+      const hops: Array<{
+        method: string;
+        body: Uint8Array | undefined;
+        headers: Headers;
+      }> = [];
+      const protectedFetch = createProtectedResourceFetch({
+        deniedHostnames: ["own.example"],
+        transport: async ({ method, body, headers }) => {
+          hops.push({ method, body, headers: new Headers(headers) });
+          return {
+            response:
+              hops.length === 1
+                ? new Response(null, {
+                    status,
+                    headers: {
+                      location: sameOrigin
+                        ? "/response"
+                        : "https://result.example/response",
+                    },
+                  })
+                : Response.json({ accepted: true }),
+          };
+        },
+      });
+      const response = await protectedFetch("https://api.example/submit", {
+        method,
+        body: "message=hello",
+        headers: {
+          authorization: "Bearer test",
+          cookie: "test=value",
+          "content-type": "application/x-www-form-urlencoded",
+          "content-encoding": "identity",
+          "content-language": "en",
+          "content-location": "/submit",
+          "content-length": "13",
+        },
+      });
+      expect(await response.json()).toEqual({ accepted: true });
+      expect(hops.map(({ method }) => method)).toEqual([method, "GET"]);
+      expect(hops[0].body).toBeDefined();
+      expect(hops[1].body).toBeUndefined();
+      expect([...hops[1].headers]).toEqual(
+        sameOrigin
+          ? [
+              ["authorization", "Bearer test"],
+              ["cookie", "test=value"],
+            ]
+          : []
+      );
+    }
+  );
+
+  test("keeps a rewritten GET bodyless through further redirects", async () => {
+    const hops: Array<{
+      method: string;
+      body: Uint8Array | undefined;
+      headers: Headers;
+    }> = [];
+    const protectedFetch = createProtectedResourceFetch({
+      deniedHostnames: ["own.example"],
+      transport: async ({ method, body, headers }) => {
+        hops.push({ method, body, headers: new Headers(headers) });
+        return {
+          response:
+            hops.length === 1
+              ? new Response(null, {
+                  status: 302,
+                  headers: { location: "/result" },
+                })
+              : hops.length === 2
+                ? new Response(null, {
+                    status: 307,
+                    headers: { location: "https://result.example/final" },
+                  })
+                : new Response("accepted"),
+        };
+      },
+    });
+    const response = await protectedFetch("https://api.example/submit", {
+      method: "POST",
+      body: "message=hello",
+      headers: { authorization: "Bearer test" },
+    });
+    expect(await response.text()).toBe("accepted");
+    expect(hops.map(({ method }) => method)).toEqual(["POST", "GET", "GET"]);
+    expect(hops.slice(1).every(({ body }) => body === undefined)).toBe(true);
+    expect(hops[1].headers.get("authorization")).toBe("Bearer test");
+    expect([...hops[2].headers]).toEqual([]);
+  });
+
   test("preflights allowed and denied URL policy without opening a connection", () => {
     const transport = vi.fn();
     const protectedFetch = createProtectedResourceFetch({
@@ -257,20 +362,7 @@ describe("protected Resource fetch", () => {
     expect(workerFetch).toHaveBeenCalledTimes(1);
   });
 
-  test("rejects redirect method changes and oversized response bodies", async () => {
-    const redirect = createProtectedResourceFetch({
-      deniedHostnames: [],
-      transport: async () => ({
-        response: new Response(null, {
-          status: 302,
-          headers: { location: "/next" },
-        }),
-      }),
-    });
-    await expect(
-      redirect("https://api.example/submit", { method: "POST" })
-    ).rejects.toThrow("changed the submission method");
-
+  test("rejects oversized response bodies", async () => {
     const large = createProtectedResourceFetch({
       deniedHostnames: [],
       transport: async () => ({

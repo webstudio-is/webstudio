@@ -22,6 +22,8 @@ At the top of the Style Panel is the **style source bar**, which determines wher
 
 Style label colors indicate where each value comes from. See [Label colors](anatomy-of-the-webstudio-builder.md#label-colors) for the full reference.
 
+Click a badge under Value comes from in a property tooltip to jump to that style source, breakpoint, or instance.
+
 ## Sections
 
 The Style Panel is organized into collapsible sections. A dot on the section title indicates at least one property in that section has a value set.
@@ -195,7 +197,11 @@ Move, rotate, scale, or skew the instance without affecting layout.
 
 ### Advanced
 
-A free-form CSS property editor for anything not covered by the sections above. Type any valid CSS property name — autocomplete shows the full list — and enter its value.
+Advanced styles uses the code editor. Enter property: value declarations in the Local group; autocomplete suggests properties and values. Cascaded or inherited, Preset, and Global variables are read-only. Search highlights matches; press Enter or Shift+Enter in the search field to move between them. Click the maximize button in the editor, or press Option+Shift+X, to open the centered editor. Click a Local color swatch to edit it with the Style panel’s color picker; other swatches are previews.
+
+While you type in Advanced styles, valid Local declarations preview on the canvas. Your editor text stays as typed; changes save when you finish editing.
+
+In the code editor, Enter adds a missing semicolon before starting the next declaration. If an unknown property looks like a typo, the editor suggests a CSS property and does not save the typo. Otherwise, Webstudio saves the name as a CSS variable with a `--` prefix.
 
 Autocomplete includes standard, experimental, nonstandard, and obsolete CSS
 properties. A yellow warning marks any property that is not standard. Open the
@@ -204,6 +210,7 @@ on MDN** for compatibility details. Test these properties in the browsers your
 site supports before relying on them.
 
 **Common uses:**
+
 - Properties not exposed elsewhere: `cursor`, `pointer-events`, `will-change`, `content`, `list-style`, `appearance`, `resize`, `clip-path`, etc.
 - Defining [CSS variables](css-variables.md): add a property like `--my-color` with a value, and it becomes available to all child instances
 - Setting properties you know by name without searching the panel
