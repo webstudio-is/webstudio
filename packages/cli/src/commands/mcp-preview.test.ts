@@ -1989,7 +1989,7 @@ test("reports a JavaScript source location in responsive capture", async () => {
   await expect(handlers.capturePageScreenshots(input)).rejects.toMatchObject({
     code: "SCREENSHOT_JAVASCRIPT_ERROR",
     message:
-      "The page reported a JavaScript error during screenshot capture: /assets/app.js:42.",
+      "The page reported a JavaScript error during screenshot capture at /assets/app.js:42.",
     issues: [
       {
         code: "screenshot_javascript_error",
