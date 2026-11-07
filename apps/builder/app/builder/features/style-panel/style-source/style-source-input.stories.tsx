@@ -1,4 +1,5 @@
 import { createId } from "@webstudio-is/sdk";
+import type { StoryFn } from "@storybook/react";
 import { useState } from "react";
 import { Flex, StorySection, Text, theme } from "@webstudio-is/design-system";
 import {
@@ -6,6 +7,7 @@ import {
   type ItemSource,
   StyleSourceInput as StyleSourceInputComponent,
 } from ".";
+import { StyleSourceMenu as StyleSourceMenuComponent } from "./style-source-menu";
 
 const createNanoId = () => createId("nano");
 
@@ -181,3 +183,21 @@ export const StyleSourceInput = () => {
     </StorySection>
   );
 };
+
+export const TokenMenu: StoryFn<typeof StyleSourceMenuComponent> = () => (
+  <StyleSourceMenuComponent
+    open
+    onOpenChange={() => {}}
+    selectedItemSelector={undefined}
+    item={{
+      id: "button-token",
+      label: "Button",
+      source: "token",
+      disabled: false,
+      locked: false,
+      states: [],
+    }}
+    hasStyles
+    states={[]}
+  />
+);

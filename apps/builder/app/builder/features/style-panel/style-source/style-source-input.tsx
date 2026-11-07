@@ -312,6 +312,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onDeleteItem?: (id: Item["id"]) => void;
   onClearStyles?: (id: Item["id"]) => void;
   onDuplicateItem?: (id: Item["id"]) => void;
+  onCopyItem?: (id: Item["id"]) => void;
   onToggleLockItem?: (id: Item["id"], locked: boolean) => void;
   onConvertToToken?: (id: Item["id"]) => void;
   onCreateItem?: (label: string) => void;
@@ -457,6 +458,7 @@ export const StyleSourceInput = (
                 }}
                 onSelect={props.onSelectItem}
                 onDuplicate={props.onDuplicateItem}
+                onCopy={props.onCopyItem}
                 onToggleLock={props.onToggleLockItem}
                 onConvertToToken={props.onConvertToToken}
                 onEnable={props.onEnableItem}
