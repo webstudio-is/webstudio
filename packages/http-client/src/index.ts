@@ -2160,6 +2160,16 @@ export const listDesignTokens = projectQueryInput<
     }
 >("list-design-tokens");
 
+export const copyDesignToken = projectQueryInput<
+  AuthProjectParams & { tokenId: string; sourceOrigin?: string },
+  { data: string }
+>("copy-design-token");
+
+export const pasteDesignToken = projectMutationInput<
+  AuthProjectParams & { data: string; instanceId?: string },
+  { tokenId: string }
+>("paste-design-token");
+
 type DesignTokenStyleInput = {
   property: string;
   value: unknown;
