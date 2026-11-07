@@ -34,6 +34,8 @@ import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { subscribe } from "~/shared/pubsub";
 import { $selectedInstance } from "~/shared/nano-states";
 import { $instanceTags } from "./shared/model";
+import { copyToken } from "~/shared/copy-paste/copy-paste";
+import { builderApi } from "~/shared/builder-api";
 
 // Declare command for this module
 declare module "~/shared/pubsub" {
@@ -366,6 +368,13 @@ export const StyleSourcesSection = () => {
           if (newId !== undefined) {
             setEditingItem(newId);
           }
+        }}
+        onCopyItem={(id) => {
+          copyToken(id).catch(() => {
+            builderApi.toast.error(
+              "Could not prepare the selected content for copying."
+            );
+          });
         }}
         onConvertToToken={(id) => {
           convertLocalStyleSourceToToken(id);

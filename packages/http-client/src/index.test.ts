@@ -17,6 +17,7 @@ import {
   attachDesignToken,
   bindProps,
   cloneInstance,
+  copyDesignToken,
   createAssetFolder,
   createProjectAssetFolder,
   createBreakpoint,
@@ -99,6 +100,7 @@ import {
   readProjectAssetContent,
   parseBuildPatchTransactions,
   parseBuilderUrl,
+  pasteDesignToken,
   toLocalProjectBundle,
   uploadAsset,
   uploadAssets,
@@ -737,6 +739,12 @@ test("wraps project api trpc calls in named functions", async () => {
       withUsage: true,
       sort: "usage",
     });
+    await copyDesignToken({ ...params, tokenId: "token-id" });
+    await pasteDesignToken({
+      ...params,
+      data: "token-data",
+      instanceId: "instance-id",
+    });
     await createDesignTokens({
       ...params,
       tokens: [
@@ -1033,6 +1041,11 @@ test("wraps project api trpc calls in named functions", async () => {
     expectBodyRequest("/trpc/api.styles.deleteDeclarations", '"deletions"'),
     expectBodyRequest("/trpc/api.styles.replaceValues", '"fromValue"'),
     expectRequest("/trpc/api.designTokens.list"),
+    expectRequest("/trpc/api.designTokens.copy"),
+    expectBodyRequest(
+      "/trpc/api.designTokens.paste",
+      '"instanceId":"instance-id"'
+    ),
     expectBodyRequest("/trpc/api.designTokens.create", '"name":"Primary"'),
     expectBodyRequest(
       "/trpc/api.designTokens.updateStyles",

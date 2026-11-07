@@ -16,6 +16,7 @@ import { jsx } from "./plugin-jsx";
 import { markdown } from "./plugin-markdown";
 import { webflow } from "./plugin-webflow/plugin-webflow";
 import { designTokens } from "./plugin-design-tokens";
+import { token, copyTokenData } from "./plugin-token";
 import { builderApi } from "../builder-api";
 import { readClipboardText } from "../clipboard";
 import { $selectedInstance } from "../nano-states";
@@ -329,6 +330,7 @@ export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
   initPlugins({
     plugins: [
       variableClipboard,
+      token,
       pageText,
       instanceJson,
       instanceText,
@@ -467,6 +469,9 @@ const writeClipboardText = async (
 export const copyInstance = () => {
   return writeClipboardText(instanceText.onCopy?.());
 };
+
+export const copyToken = async (tokenId: string) =>
+  writeClipboardText(copyTokenData(tokenId));
 
 export const copyPage = (pageId: string) => {
   return writeClipboardText(copyPageData(pageId));
