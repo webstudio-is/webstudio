@@ -526,11 +526,87 @@ test("keeps distinct root variables separate from token overrides", () => {
   });
   expect(pasted.styles?.get("new-token:base:backgroundColor:")?.value).toEqual({
     type: "unparsed",
-    value: "var(--brand-1)",
+    value: "var(--brand-1-1)",
+  });
+  expect(pasted.styles?.get("target-root:base:--brand-1-1:")?.value).toEqual({
+    type: "unparsed",
+    value: "red",
   });
   expect(pasted.styles?.get("new-token:mobile:--brand-2:")?.value).toEqual({
     type: "unparsed",
     value: "green",
+  });
+});
+
+test("preserves variables that depend on each other across breakpoints", () => {
+  const copied = copyDesignToken(
+    {
+      assets: new Map(),
+      breakpoints: new Map([
+        ["base", { id: "base", label: "Base" }],
+        ["mobile", { id: "mobile", label: "Mobile", maxWidth: 600 }],
+      ]),
+      styleSources: new Map([
+        ["token", { type: "token", id: "token", name: "Button" }],
+        ["source-root", { type: "local", id: "source-root" }],
+      ]),
+      styleSourceSelections: new Map([
+        [
+          ROOT_INSTANCE_ID,
+          { instanceId: ROOT_INSTANCE_ID, values: ["source-root"] },
+        ],
+      ]),
+      styles: styleMap([
+        style("token", "base", "color", "var(--b)"),
+        style("source-root", "base", "--a", "red"),
+        style("source-root", "base", "--b", "var(--a)"),
+        style("source-root", "mobile", "--a", "var(--b)"),
+        style("source-root", "mobile", "--b", "green"),
+      ]),
+    },
+    { tokenId: "token" }
+  );
+  const target = {
+    assets: new Map(),
+    breakpoints: new Map([
+      ["base", { id: "base", label: "Base" }],
+      ["mobile", { id: "mobile", label: "Mobile", maxWidth: 600 }],
+    ]),
+    styleSources: new Map([
+      ["target-root", { type: "local" as const, id: "target-root" }],
+    ]),
+    styleSourceSelections: new Map([
+      [
+        ROOT_INSTANCE_ID,
+        { instanceId: ROOT_INSTANCE_ID, values: ["target-root"] },
+      ],
+    ]),
+    styles: styleMap([
+      style("target-root", "base", "--a", "blue"),
+      style("target-root", "base", "--b", "var(--a)"),
+      style("target-root", "mobile", "--a", "var(--b)"),
+      style("target-root", "mobile", "--b", "green"),
+    ]),
+  };
+  const mutation = pasteDesignToken(
+    target,
+    { data: copied.data },
+    { createId: () => "new-token" }
+  );
+  const pasted = applyBuilderPatchTransactions(target, [
+    { id: "paste", payload: mutation.payload },
+  ]).state;
+  expect(pasted.styles?.get("new-token:base:color:")?.value).toEqual({
+    type: "unparsed",
+    value: "var(--b-1)",
+  });
+  expect(pasted.styles?.get("target-root:base:--b-1:")?.value).toEqual({
+    type: "unparsed",
+    value: "var(--a-1)",
+  });
+  expect(pasted.styles?.get("target-root:mobile:--a-1:")?.value).toEqual({
+    type: "unparsed",
+    value: "var(--b-1)",
   });
 });
 

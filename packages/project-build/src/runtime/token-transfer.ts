@@ -386,70 +386,15 @@ export const pasteDesignToken = (
     ...incomingVariables.map((style) => style.property),
     ...tokenVariableNames,
   ]);
-  const incomingByName = new Map<string, StyleDecl[]>();
   for (const style of incomingVariables) {
-    const declarations = incomingByName.get(style.property) ?? [];
-    declarations.push(style);
-    incomingByName.set(style.property, declarations);
-  }
-  const processing = new Set<string>();
-  const processed = new Set<string>();
-  const resolveName = (name: string) => {
-    if (processed.has(name) || processing.has(name)) {
-      return;
-    }
-    processing.add(name);
-    const declarations = incomingByName.get(name) ?? [];
-    for (const style of declarations) {
-      for (const dependency of collectVariableReferences(style.value)) {
-        if (incomingByName.has(dependency)) {
-          resolveName(dependency);
-        }
-      }
-    }
-    const candidateNames = [
-      name,
-      ...Array.from(existingNames).filter(
-        (candidate) =>
-          candidate.startsWith(`${name}-`) &&
-          incomingByName.has(candidate) === false &&
-          tokenVariableNames.has(candidate) === false
-      ),
-    ];
-    const matchingName = candidateNames.find((candidateName) => {
-      const existing = existingVariables.filter(
-        (style) => style.property === candidateName
-      );
-      return (
-        existing.length === declarations.length &&
-        declarations.every((style) => {
-          const breakpointId =
-            breakpointIds.get(style.breakpointId) ?? style.breakpointId;
-          const targetStyle = existing.find(
-            (candidate) =>
-              candidate.breakpointId === breakpointId &&
-              candidate.state === style.state
-          );
-          return (
-            targetStyle !== undefined &&
-            toValue(targetStyle.value) ===
-              toValue(rewriteVariableReferences(style.value, replacements))
-          );
-        })
-      );
-    });
-    if (matchingName !== undefined && matchingName !== name) {
-      replacements[name] = matchingName;
-    } else if (matchingName === undefined && existingRootNames.has(name)) {
-      const renamed = getUniqueNameWithSuffix(name, existingNames);
-      replacements[name] = renamed;
+    if (
+      existingRootNames.has(style.property) &&
+      replacements[style.property] === undefined
+    ) {
+      const renamed = getUniqueNameWithSuffix(style.property, existingNames);
+      replacements[style.property] = renamed;
       existingNames.add(renamed);
     }
-    processing.delete(name);
-    processed.add(name);
-  };
-  for (const name of incomingByName.keys()) {
-    resolveName(name);
   }
   const mappedStyles = fragment.styles.map((style) => {
     return {
