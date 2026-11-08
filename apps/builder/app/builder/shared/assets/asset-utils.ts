@@ -55,6 +55,18 @@ export const getImageNameAndType = (fileName: string) => {
 };
 
 const extractImageNameAndMimeTypeFromUrl = (url: URL) => {
+  if (url.pathname.startsWith("/cgi/asset/")) {
+    try {
+      const filename = decodeURIComponent(url.pathname.split("/").at(-1) ?? "");
+      const extension = getFileExtension(filename);
+      const mimeType = extension && getMimeTypeByExtension(extension);
+      if (mimeType) {
+        return [mimeType, filename] as const;
+      }
+    } catch {
+      // Fall back to the existing URL naming behavior.
+    }
+  }
   const nameFromPath = url.pathname
     .split("/")
     .map(getImageNameAndType)

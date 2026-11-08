@@ -107,14 +107,16 @@ test("reports browser URL image fetch failures", async () => {
   );
 });
 
-test("hashes remote asset bytes for upload deduplication", async () => {
-  const fetch = vi.fn(async () => new Response("same image bytes"));
+test("hashes remote SVG bytes for upload deduplication", async () => {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
+  const fetch = vi.fn(async () => new Response(svg));
   vi.stubGlobal("fetch", fetch);
 
   await expect(
-    getUrlAssetContentHash("https://source.example.com/image.png", "image.png")
-  ).resolves.toBe(
-    await getAssetContentHash(new TextEncoder().encode("same image bytes"))
-  );
+    getUrlAssetContentHash(
+      "https://source.example.com/cgi/image/logo.svg?format=raw",
+      "logo.svg"
+    )
+  ).resolves.toBe(await getAssetContentHash(new TextEncoder().encode(svg)));
   expect(fetch).toHaveBeenCalledOnce();
 });

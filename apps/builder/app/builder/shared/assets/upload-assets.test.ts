@@ -613,9 +613,9 @@ describe("upload-assets", () => {
           {
             id: "existing",
             projectId: "target-project",
-            name: "hero.png",
+            name: "hero.svg",
             type: "image",
-            format: "png",
+            format: "svg",
             size: 4,
             createdAt: "2026-01-01",
             description: null,
@@ -627,7 +627,7 @@ describe("upload-assets", () => {
     request.mockResolvedValue(
       Response.json({
         assetId: "existing",
-        name: "hero.png",
+        name: "hero.svg",
         deduplicated: true,
       })
     );
@@ -635,16 +635,16 @@ describe("upload-assets", () => {
       authToken: "token",
       projectId: "target-project",
       fileOrUrl: new URL(
-        "https://source.example.com/cgi/image/hero.png?format=raw"
+        "https://source.example.com/cgi/asset/hero.svg?format=raw"
       ),
       preserveFilename: true,
       assetType: "image",
       request,
     });
     const [_url, init] = request.mock.calls[0] as [string, { body: FormData }];
-    expect(init.body.get("filename")).toBe("hero.png");
+    expect(init.body.get("filename")).toBe("hero.svg");
     expect(init.body.get("sourceUrl")).toBe(
-      "https://source.example.com/cgi/image/hero.png?format=raw"
+      "https://source.example.com/cgi/asset/hero.svg?format=raw"
     );
   });
 

@@ -2,6 +2,8 @@ import { expect, test, describe } from "vitest";
 import type { Asset } from "@webstudio-is/sdk";
 import {
   getImageNameAndType,
+  getFileName,
+  getMimeType,
   getSha256Hash,
   getFileUploadFingerprint,
   isAssetFilenameUsed,
@@ -51,6 +53,14 @@ test("matches full asset filenames only in the requested folder", () => {
       excludeAssetId: asset.id,
     })
   ).toBe(false);
+});
+
+test("keeps the filename and MIME type of a font asset URL", () => {
+  const url = new URL(
+    "https://source.example.com/cgi/asset/brand.woff2?format=raw"
+  );
+  expect(getFileName(url)).toBe("brand.woff2");
+  expect(getMimeType(url)).toBe("font/woff2");
 });
 
 test("distinguishes upload fingerprints by filename and content", async () => {
