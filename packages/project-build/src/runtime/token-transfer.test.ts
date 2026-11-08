@@ -6,12 +6,9 @@ import {
   type Asset,
   type StyleDecl,
 } from "@webstudio-is/sdk";
-import {
-  copyDesignToken,
-  pasteDesignToken,
-  remapTokenTransferAssets,
-} from "./token-transfer";
-import { parseTokenTransferData } from "./data-formats/token-transfer";
+import { copyDesignToken, pasteDesignToken } from "./token-transfer";
+import { parseTokenTransferData } from "./data-formats/token-css";
+import { remapFragmentAssets } from "./fragment";
 import { applyBuilderPatchTransactions } from "../state/patch";
 
 const style = (
@@ -805,32 +802,28 @@ test("remaps image and font dependencies after transfer", () => {
   if (copiedParsed.valid === false) {
     return;
   }
-  const remapped = remapTokenTransferAssets(
-    copied.data,
-    new Map(
-      copiedParsed.data.fragment.assets.map(
-        (asset) =>
-          [
-            asset.id,
-            asset.type === "font"
-              ? {
-                  ...font,
-                  id: "target-font",
-                  projectId: "target",
-                  meta: { ...font.meta, family: "Target Font" },
-                }
-              : { ...image, id: "target-image", projectId: "target" },
-          ] as const
-      )
+  const importedAssets = new Map(
+    copiedParsed.data.fragment.assets.map(
+      (asset) =>
+        [
+          asset.id,
+          asset.type === "font"
+            ? {
+                ...font,
+                id: "target-font",
+                projectId: "target",
+                meta: { ...font.meta, family: "Target Font" },
+              }
+            : { ...image, id: "target-image", projectId: "target" },
+        ] as const
     )
   );
-  const parsed = parseTokenTransferData(remapped);
-  expect(parsed.valid).toBe(true);
-  if (parsed.valid === false) {
-    return;
-  }
-  expect(parsed.data.fragment.assets).toEqual([]);
-  expect(parsed.data.fragment.styles.map((item) => item.value)).toEqual([
+  const remapped = remapFragmentAssets(
+    copiedParsed.data.fragment,
+    importedAssets
+  );
+  expect(remapped.assets).toEqual([]);
+  expect(remapped.styles.map((item) => item.value)).toEqual([
     {
       type: "layers",
       value: [
@@ -839,6 +832,32 @@ test("remaps image and font dependencies after transfer", () => {
     },
     { type: "fontFamily", value: ["Target Font", "sans-serif"] },
   ]);
+  const target = {
+    assets: new Map(
+      [...importedAssets.values()].map((asset) => [asset.id, asset])
+    ),
+    breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+    styleSources: new Map(),
+    styleSourceSelections: new Map(),
+    styles: new Map(),
+  };
+  const mutation = pasteDesignToken(
+    target,
+    {
+      data: copied.data,
+      assetIds: [...importedAssets].map(([sourceId, asset]) => [
+        sourceId,
+        asset.id,
+      ]),
+    },
+    { createId: () => "pasted-token" }
+  );
+  const pasted = applyBuilderPatchTransactions(target, [
+    { id: "paste", payload: mutation.payload },
+  ]).state;
+  expect(
+    [...(pasted.styles?.values() ?? [])].map((style) => style.value)
+  ).toEqual(remapped.styles.map((style) => style.value));
 });
 
 test("copies font assets used by a root CSS variable", () => {
@@ -879,8 +898,8 @@ test("copies font assets used by a root CSS variable", () => {
   expect(parsed.data.fragment.assets).toEqual([
     expect.objectContaining({ name: font.name, type: "font", meta: font.meta }),
   ]);
-  const remapped = remapTokenTransferAssets(
-    copied.data,
+  const remapped = remapFragmentAssets(
+    parsed.data.fragment,
     new Map([
       [
         parsed.data.fragment.assets[0].id,
@@ -893,12 +912,7 @@ test("copies font assets used by a root CSS variable", () => {
       ],
     ])
   );
-  const transferred = parseTokenTransferData(remapped);
-  expect(transferred.valid).toBe(true);
-  if (transferred.valid === false) {
-    return;
-  }
-  const variable = transferred.data.fragment.styles.find(
+  const variable = remapped.styles.find(
     (item) => item.property === "--heading-font"
   );
   expect(variable?.value.type).toBe("unparsed");

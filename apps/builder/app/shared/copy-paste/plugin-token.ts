@@ -1,8 +1,5 @@
 import { copyDesignToken } from "@webstudio-is/project-build/runtime";
-import {
-  parseTokenTransferData,
-  tokenTransferDataVersion,
-} from "@webstudio-is/project-build/transfer";
+import { parseTokenTransferData } from "@webstudio-is/project-build/transfer";
 import { $project } from "~/shared/sync/data-stores";
 import { $selectedInstance } from "~/shared/nano-states";
 import {
@@ -54,20 +51,12 @@ export const token: Plugin = {
       ) {
         return { success: false, error: "Project changed while pasting." };
       }
-      const fragment = transfer.fragments.get(parsed.data.fragment);
-      if (fragment === undefined) {
-        return {
-          success: false,
-          error: "Token assets could not be transferred",
-        };
-      }
       const result = executeRuntimeMutation({
         id: "designTokens.paste",
         input: {
           instanceId,
-          data: JSON.stringify({
-            [tokenTransferDataVersion]: { ...parsed.data, fragment },
-          }),
+          data,
+          assetIds: [...transfer.assetIds],
         },
       });
       return result === undefined

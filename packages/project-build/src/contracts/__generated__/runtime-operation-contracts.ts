@@ -69567,6 +69567,22 @@ export const runtimeOperationContractData = [
         instanceId: {
           type: "string",
         },
+        assetIds: {
+          type: "array",
+          items: {
+            type: "array",
+            prefixItems: [
+              {
+                type: "string",
+              },
+              {
+                type: "string",
+              },
+            ],
+            minItems: 2,
+            maxItems: 2,
+          },
+        },
       },
       required: ["data"],
     },

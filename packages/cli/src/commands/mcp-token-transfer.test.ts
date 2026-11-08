@@ -1,6 +1,5 @@
 import { expect, test } from "vitest";
 import { copyDesignToken } from "@webstudio-is/project-build/runtime";
-import { parseTokenTransferData } from "@webstudio-is/project-build/transfer";
 import { getStyleDeclKey, type Asset, type StyleDecl } from "@webstudio-is/sdk";
 import { prepareMcpTokenPasteData } from "./mcp-token-transfer";
 
@@ -61,16 +60,12 @@ test("MCP paste transfers token assets before passing data to the runtime", asyn
     "upload:image.png:3:true",
     "refresh",
   ]);
-  const parsed = parseTokenTransferData(prepared);
-  expect(parsed.valid).toBe(true);
-  if (parsed.valid === false) {
-    return;
-  }
-  expect(parsed.data.fragment.assets).toEqual([]);
-  expect(parsed.data.fragment.styles[0]?.value).toEqual({
-    type: "layers",
-    value: [{ type: "image", value: { type: "asset", value: "target-image" } }],
-  });
+  expect(prepared).toEqual([
+    [
+      "https://builder.example.com/cgi/image/image.png?format=raw",
+      "target-image",
+    ],
+  ]);
 });
 
 test("MCP dry runs do not upload token assets", async () => {

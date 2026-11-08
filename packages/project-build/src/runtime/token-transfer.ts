@@ -26,9 +26,8 @@ import {
 } from "./style-utils";
 import {
   parseTokenTransferData,
-  tokenTransferDataVersion,
-} from "./data-formats/token-transfer";
-import { serializeTokenCss } from "./data-formats/token-css";
+  serializeTokenCss,
+} from "./data-formats/token-css";
 
 type TokenState = Pick<
   BuilderState,
@@ -61,6 +60,7 @@ export const copyDesignTokenInput = z.object({
 export const pasteDesignTokenInput = z.object({
   data: z.string(),
   instanceId: z.string().optional(),
+  assetIds: z.array(z.tuple([z.string(), z.string()])).optional(),
 });
 
 const collectVariableReferences = (value: StyleValue) => {
@@ -117,35 +117,6 @@ const rewriteVariableReferences = (
     }
   });
   return rewritten;
-};
-
-export const remapTokenTransferAssets = (
-  serializedData: string,
-  importedAssets: Map<Asset["id"], Asset>
-) => {
-  const parsed = parseTokenTransferData(serializedData);
-  if (parsed.valid === false) {
-    return throwBuilderRuntimeError("INVALID_INPUT", "Invalid token data");
-  }
-  const { fragment } = parsed.data;
-  for (const source of fragment.assets) {
-    const imported = importedAssets.get(source.id);
-    if (imported === undefined) {
-      return throwBuilderRuntimeError("NOT_FOUND", "Token asset is missing");
-    }
-    if (source.type !== imported.type) {
-      return throwBuilderRuntimeError(
-        "INVALID_INPUT",
-        "Token asset type changed"
-      );
-    }
-  }
-  return JSON.stringify({
-    [tokenTransferDataVersion]: {
-      ...parsed.data,
-      fragment: remapFragmentAssets(fragment, importedAssets),
-    },
-  });
 };
 
 export const copyDesignToken = (
@@ -284,7 +255,26 @@ export const pasteDesignToken = (
   if (parsed.valid === false) {
     return throwBuilderRuntimeError("INVALID_INPUT", "Invalid token data");
   }
-  const { tokenId, fragment } = parsed.data;
+  const { tokenId } = parsed.data;
+  let { fragment } = parsed.data;
+  if (fragment.assets.length > 0) {
+    const assetIds = new Map(input.assetIds ?? []);
+    const importedAssets = new Map<Asset["id"], Asset>();
+    for (const source of fragment.assets) {
+      const imported = target.assets.get(assetIds.get(source.id) ?? source.id);
+      if (imported === undefined) {
+        return throwBuilderRuntimeError("NOT_FOUND", "Token asset is missing");
+      }
+      if (source.type !== imported.type) {
+        return throwBuilderRuntimeError(
+          "INVALID_INPUT",
+          "Token asset type changed"
+        );
+      }
+      importedAssets.set(source.id, imported);
+    }
+    fragment = remapFragmentAssets(fragment, importedAssets);
+  }
   if (input.instanceId !== undefined) {
     if (
       target.instances === undefined ||

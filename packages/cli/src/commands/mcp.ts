@@ -2155,7 +2155,7 @@ const createCliMcpHost = async ({
       ) {
         operationInput = {
           ...operationInput,
-          data: await prepareMcpTokenPasteData({
+          assetIds: await prepareMcpTokenPasteData({
             data: operationInput.data,
             projectOrigin,
             dryRun: dryRun === true,

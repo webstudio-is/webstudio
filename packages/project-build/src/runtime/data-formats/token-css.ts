@@ -22,13 +22,18 @@ import {
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import * as cssTree from "css-tree";
-import type { TokenTransferData } from "./token-transfer";
 import { parseWebstudioPragma } from "./webstudio-pragma";
 import { traverseStyleValue } from "../style-utils";
 
 const tokenId = "clipboard-token";
 const rootId = "clipboard-root";
 const baseId = "clipboard-base";
+
+export type TokenTransferData = {
+  tokenId: string;
+  fragment: WebstudioFragment;
+  sourceOrigin?: string;
+};
 
 export const serializeTokenCss = (data: TokenTransferData): string => {
   const { fragment, sourceOrigin } = data;
@@ -153,7 +158,7 @@ const getUrls = (value: cssTree.CssNode): string[] => {
   return urls;
 };
 
-export const parseTokenCss = (source: string): ParsedTokenCss => {
+export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   const pragma = parseWebstudioPragma({
     source,
     syntax: "css",

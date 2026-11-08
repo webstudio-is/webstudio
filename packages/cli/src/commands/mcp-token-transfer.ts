@@ -1,4 +1,3 @@
-import { remapTokenTransferAssets } from "@webstudio-is/project-build/runtime";
 import { parseTokenTransferData } from "@webstudio-is/project-build/transfer";
 import { getAssetUrl, type Asset } from "@webstudio-is/sdk";
 
@@ -23,7 +22,7 @@ export const prepareMcpTokenPasteData = async ({
 }) => {
   const parsed = parseTokenTransferData(data);
   if (parsed.valid === false || parsed.data.fragment.assets.length === 0) {
-    return data;
+    return [];
   }
   if (dryRun) {
     throw new Error("Asset transfer is unavailable in dry-run mode");
@@ -52,5 +51,5 @@ export const prepareMcpTokenPasteData = async ({
     importedAssets.set(asset.id, imported);
   }
   await refreshAssets();
-  return remapTokenTransferAssets(data, importedAssets);
+  return [...importedAssets].map(([sourceId, asset]) => [sourceId, asset.id]);
 };

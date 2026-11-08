@@ -1,9 +1,6 @@
 import { expect, test } from "vitest";
 import { copyDesignToken } from "../token-transfer";
-import {
-  parseTokenTransferData,
-  tokenTransferDataVersion,
-} from "./token-transfer";
+import { parseTokenTransferData } from "./token-css";
 
 test("reads a CSS token with variables, states, breakpoints, images, and fonts", () => {
   const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
@@ -58,19 +55,10 @@ test("rejects unsupported token CSS while keeping ordinary CSS pasteable", () =>
   });
 });
 
-test("continues to accept previously copied JSON tokens", () => {
-  const css = parseTokenTransferData(
-    '/* @webstudio/token-css/v1 "Button" */ .ws-token { color: red; }'
-  );
-  expect(css.valid).toBe(true);
-  if (css.valid === false) {
-    return;
-  }
-  const json = JSON.stringify({ [tokenTransferDataVersion]: css.data });
-  expect(parseTokenTransferData(json)).toMatchObject({
-    owned: true,
-    valid: true,
-    data: { tokenId: css.data.tokenId },
+test("does not claim the removed JSON token format", () => {
+  expect(parseTokenTransferData('{"@webstudio/token/v0.1":{}}')).toEqual({
+    owned: false,
+    valid: false,
   });
 });
 
