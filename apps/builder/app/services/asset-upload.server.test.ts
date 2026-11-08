@@ -1,5 +1,8 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { getAssetContentHash, RESIZABLE_IMAGE_MIME_TYPES } from "@webstudio-is/sdk";
+import {
+  getAssetContentHash,
+  RESIZABLE_IMAGE_MIME_TYPES,
+} from "@webstudio-is/sdk";
 import {
   getBrowserUploadBody,
   getUrlAssetContentHash,
