@@ -179,6 +179,104 @@ test("copies a token with breakpoint styles and transitive root CSS variables", 
   );
 });
 
+test("copies the winning root variable when root sources overlap", () => {
+  const copied = copyDesignToken(
+    {
+      assets: new Map(),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([
+        ["token", { type: "token", id: "token", name: "Button" }],
+        ["local", { type: "local", id: "local" }],
+        ["theme", { type: "token", id: "theme", name: "Theme" }],
+      ]),
+      styleSourceSelections: new Map([
+        [
+          ROOT_INSTANCE_ID,
+          { instanceId: ROOT_INSTANCE_ID, values: ["theme", "local"] },
+        ],
+      ]),
+      styles: styleMap([
+        style("token", "base", "color", "var(--brand)"),
+        style("local", "base", "--brand", "red"),
+        style("theme", "base", "--brand", "blue"),
+      ]),
+    },
+    { tokenId: "token" }
+  );
+  const parsed = parseTokenTransferData(copied.data);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid === false) {
+    return;
+  }
+  expect(
+    parsed.data.fragment.styles.filter((item) => item.property === "--brand")
+  ).toEqual([style("local", "base", "--brand", "red")]);
+});
+
+test("reserves token-local variables when renaming imported root variables", () => {
+  const copied = copyDesignToken(
+    {
+      assets: new Map(),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([
+        ["token", { type: "token", id: "token", name: "Button" }],
+        ["source-root", { type: "local", id: "source-root" }],
+      ]),
+      styleSourceSelections: new Map([
+        [
+          ROOT_INSTANCE_ID,
+          { instanceId: ROOT_INSTANCE_ID, values: ["source-root"] },
+        ],
+      ]),
+      styles: styleMap([
+        style("token", "base", "color", "var(--brand)"),
+        style("token", "base", "--brand-1", "green"),
+        style("source-root", "base", "--brand", "red"),
+      ]),
+    },
+    { tokenId: "token" }
+  );
+  const target = {
+    assets: new Map(),
+    breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+    styleSources: new Map([
+      ["target-root", { type: "local" as const, id: "target-root" }],
+    ]),
+    styleSourceSelections: new Map([
+      [
+        ROOT_INSTANCE_ID,
+        { instanceId: ROOT_INSTANCE_ID, values: ["target-root"] },
+      ],
+    ]),
+    styles: styleMap([
+      style("target-root", "base", "--brand", "blue"),
+      style("target-root", "base", "--brand-1", "red"),
+    ]),
+  };
+  const mutation = pasteDesignToken(
+    target,
+    { data: copied.data },
+    {
+      createId: () => "new-token",
+    }
+  );
+  const pasted = applyBuilderPatchTransactions(target, [
+    { id: "paste", payload: mutation.payload },
+  ]).state;
+  expect(pasted.styles?.get("target-root:base:--brand-2:")?.value).toEqual({
+    type: "unparsed",
+    value: "red",
+  });
+  expect(pasted.styles?.get("new-token:base:color:")?.value).toEqual({
+    type: "unparsed",
+    value: "var(--brand-2)",
+  });
+  expect(pasted.styles?.get("new-token:base:--brand-1:")?.value).toEqual({
+    type: "unparsed",
+    value: "green",
+  });
+});
+
 test("rejects incomplete token data", () => {
   expect(() =>
     pasteDesignToken(
@@ -315,4 +413,42 @@ test("remaps image and font dependencies after transfer", () => {
     { type: "image", value: { type: "asset", value: "target-image" } },
     { type: "fontFamily", value: ["Target Font"] },
   ]);
+});
+
+test("copies font assets used by a root CSS variable", () => {
+  const font: Asset = {
+    id: "heading-font",
+    projectId: "source",
+    name: "heading.woff2",
+    type: "font",
+    format: "woff2",
+    meta: { family: "Playfair Display", style: "normal", weight: 400 },
+    size: 100,
+    description: null,
+    createdAt: "2026-01-01",
+  };
+  const copied = copyDesignToken(
+    {
+      assets: new Map([[font.id, font]]),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([
+        ["token", { type: "token", id: "token", name: "Heading" }],
+        ["root", { type: "local", id: "root" }],
+      ]),
+      styleSourceSelections: new Map([
+        [ROOT_INSTANCE_ID, { instanceId: ROOT_INSTANCE_ID, values: ["root"] }],
+      ]),
+      styles: styleMap([
+        style("token", "base", "fontFamily", "var(--heading-font)"),
+        style("root", "base", "--heading-font", "'Playfair Display', serif"),
+      ]),
+    },
+    { tokenId: "token" }
+  );
+  const parsed = parseTokenTransferData(copied.data);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid === false) {
+    return;
+  }
+  expect(parsed.data.fragment.assets).toEqual([font]);
 });

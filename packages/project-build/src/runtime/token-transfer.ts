@@ -20,7 +20,7 @@ import { createRuntimeMutation } from "./mutation";
 import { remapFragmentAssets } from "./fragment";
 import { createStyleSourceSelectionAttachPayload } from "./styles";
 import {
-  collectFontFamiliesFromStyleValue,
+  collectFontFamiliesFromStyleDecls,
   getUniqueNameWithSuffix,
   traverseStyleValue,
 } from "./style-utils";
@@ -160,15 +160,31 @@ export const copyDesignToken = (
   const tokenStyles = Array.from(styles.values()).filter(
     (style) => style.styleSourceId === token.id
   );
-  const rootSourceIds = new Set(
-    styleSourceSelections.get(ROOT_INSTANCE_ID)?.values
+  const rootSourceOrder = new Map(
+    styleSourceSelections
+      .get(ROOT_INSTANCE_ID)
+      ?.values.map((id, index) => [id, index] as const)
   );
-  const rootStyles = Array.from(styles.values()).filter(
-    (style) =>
-      style.styleSourceId !== token.id &&
-      rootSourceIds.has(style.styleSourceId) &&
-      style.property.startsWith("--")
-  );
+  const rootStylesByKey = new Map<string, StyleDecl>();
+  for (const style of styles.values()) {
+    if (
+      style.styleSourceId === token.id ||
+      rootSourceOrder.has(style.styleSourceId) === false ||
+      style.property.startsWith("--") === false
+    ) {
+      continue;
+    }
+    const key = getStyleDeclKey({ ...style, styleSourceId: ROOT_INSTANCE_ID });
+    const previous = rootStylesByKey.get(key);
+    if (
+      previous === undefined ||
+      rootSourceOrder.get(style.styleSourceId)! >
+        rootSourceOrder.get(previous.styleSourceId)!
+    ) {
+      rootStylesByKey.set(key, style);
+    }
+  }
+  const rootStyles = Array.from(rootStylesByKey.values());
   const variableNames = new Set<string>(
     rootStyles.map((style) => style.property)
   );
@@ -205,17 +221,14 @@ export const copyDesignToken = (
     }
   }
   const assetIds = new Set<string>();
-  const fontFamilies = new Set<string>();
   for (const style of copiedStyles) {
     traverseStyleValue(style.value, (value) => {
       if (value.type === "image" && value.value.type === "asset") {
         assetIds.add(value.value.value);
       }
     });
-    for (const family of collectFontFamiliesFromStyleValue(style.value)) {
-      fontFamilies.add(family);
-    }
   }
+  const fontFamilies = collectFontFamiliesFromStyleDecls(copiedStyles);
   const fragment: WebstudioFragment = {
     children: [],
     instances: [],
@@ -352,9 +365,18 @@ export const pasteDesignToken = (
   const existingRootNames = new Set<string>(
     existingVariables.map((style) => style.property)
   );
+  const tokenVariableNames = new Set<string>(
+    fragment.styles
+      .filter(
+        (style) =>
+          style.styleSourceId === tokenId && style.property.startsWith("--")
+      )
+      .map((style) => style.property)
+  );
   const existingNames = new Set<string>([
     ...existingVariables.map((style) => style.property),
     ...incomingVariables.map((style) => style.property),
+    ...tokenVariableNames,
   ]);
   const incomingByName = new Map<string, StyleDecl[]>();
   for (const style of incomingVariables) {
@@ -379,8 +401,10 @@ export const pasteDesignToken = (
     }
     const candidateNames = [
       name,
-      ...Array.from(existingNames).filter((candidate) =>
-        candidate.startsWith(`${name}-`)
+      ...Array.from(existingNames).filter(
+        (candidate) =>
+          candidate.startsWith(`${name}-`) &&
+          tokenVariableNames.has(candidate) === false
       ),
     ];
     const matchingName = candidateNames.find((candidateName) => {
