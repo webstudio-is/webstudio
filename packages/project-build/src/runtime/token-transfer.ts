@@ -168,7 +168,6 @@ export const copyDesignToken = (
   const rootStylesByKey = new Map<string, StyleDecl>();
   for (const style of styles.values()) {
     if (
-      style.styleSourceId === token.id ||
       rootSourceOrder.has(style.styleSourceId) === false ||
       style.property.startsWith("--") === false
     ) {
@@ -205,9 +204,13 @@ export const copyDesignToken = (
       );
     }
   }
-  const variableStyles = rootStyles.filter((style) =>
-    referencedNames.has(style.property)
-  );
+  const variableStyles = rootStyles
+    .filter((style) => referencedNames.has(style.property))
+    .map((style) =>
+      style.styleSourceId === token.id
+        ? { ...style, styleSourceId: ROOT_INSTANCE_ID }
+        : style
+    );
   const copiedStyles = [...tokenStyles, ...variableStyles];
   const breakpointIds = new Set(
     copiedStyles.map((style) => style.breakpointId)
@@ -447,12 +450,25 @@ export const pasteDesignToken = (
   for (const name of incomingByName.keys()) {
     resolveName(name);
   }
-  const mappedStyles = fragment.styles.map((style) => ({
-    ...style,
-    property: (replacements[style.property] ??
-      style.property) as StyleDecl["property"],
-    value: rewriteVariableReferences(style.value, replacements),
-  }));
+  const tokenReplacements = Object.fromEntries(
+    Object.entries(replacements).filter(
+      ([name]) => tokenVariableNames.has(name) === false
+    )
+  );
+  const mappedStyles = fragment.styles.map((style) => {
+    const isTokenStyle = style.styleSourceId === tokenId;
+    return {
+      ...style,
+      property: (isTokenStyle
+        ? style.property
+        : (replacements[style.property] ??
+          style.property)) as StyleDecl["property"],
+      value: rewriteVariableReferences(
+        style.value,
+        isTokenStyle ? tokenReplacements : replacements
+      ),
+    };
+  });
   const tokenNames = new Set(
     Array.from(target.styleSources.values()).flatMap((source) =>
       source.type === "token" ? [source.name] : []
