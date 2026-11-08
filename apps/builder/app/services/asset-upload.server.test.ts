@@ -1,6 +1,9 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { RESIZABLE_IMAGE_MIME_TYPES } from "@webstudio-is/sdk";
-import { getBrowserUploadBody } from "./asset-upload.server";
+import { getAssetContentHash, RESIZABLE_IMAGE_MIME_TYPES } from "@webstudio-is/sdk";
+import {
+  getBrowserUploadBody,
+  getUrlAssetContentHash,
+} from "./asset-upload.server";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -99,4 +102,16 @@ test("reports browser URL image fetch failures", async () => {
   ).rejects.toThrow(
     "An error occurred while fetching the image at https://example.com/image.png: not found"
   );
+});
+
+test("hashes remote asset bytes for upload deduplication", async () => {
+  const fetch = vi.fn(async () => new Response("same image bytes"));
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    getUrlAssetContentHash("https://source.example.com/image.png", "image.png")
+  ).resolves.toBe(
+    await getAssetContentHash(new TextEncoder().encode("same image bytes"))
+  );
+  expect(fetch).toHaveBeenCalledOnce();
 });

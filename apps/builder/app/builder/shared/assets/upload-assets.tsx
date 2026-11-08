@@ -345,6 +345,9 @@ const createUploadTicket = async ({
   if (contentHash !== undefined && deduplicate) {
     metaFormData.append("contentHash", contentHash);
   }
+  if (fileOrUrl instanceof URL && deduplicate && preserveFilename) {
+    metaFormData.append("sourceUrl", fileOrUrl.href);
+  }
   const existingNames = new Set<string>();
   for (const asset of $assets.get().values()) {
     if (asset.folderId === folderId) {
@@ -620,16 +623,14 @@ export const importAssets = async (
   dependencies: {
     upload?: (
       type: AssetType,
-      filesOrUrls: Array<File | URL>,
+      urls: URL[],
       options: Parameters<typeof uploadAssets>[2]
-    ) => Promise<Map<File | URL, string>>;
+    ) => Promise<Map<URL, string>>;
     waitForUpload?: typeof waitForAssetUpload;
-    fetchAsset?: typeof fetch;
   } = {}
 ) => {
   const upload = dependencies.upload ?? uploadAssets;
   const waitForUpload = dependencies.waitForUpload ?? waitForAssetUpload;
-  const fetchAsset = dependencies.fetchAsset ?? fetch;
   const importedAssets = new Map<Asset["id"], Asset>();
 
   for (const source of sources) {
@@ -667,22 +668,10 @@ export const importAssets = async (
       // never modify an existing target Asset that upload deduplication reused.
       options = { deduplicate: false };
     }
-    let fileOrUrl: File | URL = url;
-    if (
-      url.origin === window.location.origin &&
-      (source.asset.type === "image" || source.asset.type === "font")
-    ) {
-      const response = await fetchAsset(url);
-      if (response.ok === false) {
-        throw new Error("Failed to import asset");
-      }
-      const blob = await response.blob();
-      fileOrUrl = new File([blob], source.asset.name, { type: blob.type });
+    if (source.asset.type === "image" || source.asset.type === "font") {
       options = { ...options, preserveFilename: true };
     }
-    const assetId = (await upload(source.asset.type, [fileOrUrl], options)).get(
-      fileOrUrl
-    );
+    const assetId = (await upload(source.asset.type, [url], options)).get(url);
     if (assetId === undefined) {
       throw new Error("Failed to import asset");
     }

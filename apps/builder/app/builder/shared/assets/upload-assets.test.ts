@@ -285,7 +285,7 @@ describe("upload-assets", () => {
       1,
       "font",
       [new URL("https://source.example.com/brand.woff2")],
-      {}
+      { preserveFilename: true }
     );
     expect(upload).toHaveBeenNthCalledWith(
       2,
@@ -324,7 +324,7 @@ describe("upload-assets", () => {
       projectId: "target-project",
     } satisfies Asset;
     $assets.set(new Map([[existingAsset.id, existingAsset]]));
-    const upload = vi.fn(async (_type, [url]: Array<File | URL>) => {
+    const upload = vi.fn(async (_type, [url]: URL[]) => {
       return new Map([[url, importedAsset.id]]);
     });
     const waitForUpload = vi.fn(async () => importedAsset);
@@ -366,7 +366,7 @@ describe("upload-assets", () => {
         id: "article-copy",
         projectId: "target-project",
       } satisfies Asset;
-      const upload = vi.fn(async (_type, [url]: Array<File | URL>) => {
+      const upload = vi.fn(async (_type, [url]: URL[]) => {
         return new Map([[url, importedAsset.id]]);
       });
       const waitForUpload = vi.fn(async () => importedAsset);
@@ -418,7 +418,7 @@ describe("upload-assets", () => {
     expect(waitForUpload).not.toHaveBeenCalled();
   });
 
-  test("uses the content-hash upload path when importing a same-origin image again", async () => {
+  test("requests content deduplication when importing an image again", async () => {
     $project.set({ id: "target-project" } as Project);
     const sourceAsset = {
       id: "source-image",
@@ -438,32 +438,27 @@ describe("upload-assets", () => {
       name: "stored-hero.png",
     } satisfies Asset;
     $assets.set(new Map([[targetAsset.id, targetAsset]]));
-    const url = `${window.location.origin}/cgi/image/hero.png?format=raw`;
-    const fetchAsset = vi.fn(
-      async () => new Response(new Blob(["same"], { type: "image/png" }))
-    );
+    const url = "https://source.example.com/cgi/image/hero.png?format=raw";
     const upload = vi.fn(
       async (
         _type: string,
-        [file]: Array<File | URL>,
+        [sourceUrl]: URL[],
         _options?: { preserveFilename?: boolean }
-      ) => new Map([[file, targetAsset.id]])
+      ) => new Map([[sourceUrl, targetAsset.id]])
     );
     const waitForUpload = vi.fn(async () => targetAsset);
 
     const imported = await importAssets(
       "target-project",
       [{ asset: sourceAsset, url }],
-      { fetchAsset, upload, waitForUpload }
+      { upload, waitForUpload }
     );
 
     expect(imported.get(sourceAsset.id)).toEqual(targetAsset);
-    expect(fetchAsset).toHaveBeenCalledWith(new URL(url));
     expect(upload).toHaveBeenCalledOnce();
-    const [type, [file], options] = upload.mock.calls[0];
+    const [type, [sourceUrl], options] = upload.mock.calls[0];
     expect(type).toBe("image");
-    expect(file).toBeInstanceOf(File);
-    expect((file as File).name).toBe("hero.png");
+    expect(sourceUrl.href).toBe(url);
     expect(options).toEqual({ preserveFilename: true });
   });
 
@@ -610,7 +605,7 @@ describe("upload-assets", () => {
     });
   });
 
-  test("keeps the source filename when requesting content deduplication", async () => {
+  test("sends the source URL and stable filename for server content deduplication", async () => {
     $assets.set(
       new Map([
         [
@@ -639,15 +634,18 @@ describe("upload-assets", () => {
     await createUploadTicket({
       authToken: "token",
       projectId: "target-project",
-      fileOrUrl: new File(["same"], "hero.png", { type: "image/png" }),
-      contentHash: "same-content-hash",
+      fileOrUrl: new URL(
+        "https://source.example.com/cgi/image/hero.png?format=raw"
+      ),
       preserveFilename: true,
       assetType: "image",
       request,
     });
     const [_url, init] = request.mock.calls[0] as [string, { body: FormData }];
     expect(init.body.get("filename")).toBe("hero.png");
-    expect(init.body.get("contentHash")).toBe("same-content-hash");
+    expect(init.body.get("sourceUrl")).toBe(
+      "https://source.example.com/cgi/image/hero.png?format=raw"
+    );
   });
 
   test("preserves identical file content with different filenames", async () => {

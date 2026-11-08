@@ -175,6 +175,7 @@ export const assetUploadReservationRequest = z.strictObject({
     .string()
     .regex(/^[a-f0-9]{64}$/)
     .optional(),
+  sourceUrl: z.url().optional(),
 });
 
 /** Concrete query payload accepted by the Assets REST API. */
