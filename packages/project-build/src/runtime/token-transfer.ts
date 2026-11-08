@@ -412,6 +412,7 @@ export const pasteDesignToken = (
       ...Array.from(existingNames).filter(
         (candidate) =>
           candidate.startsWith(`${name}-`) &&
+          incomingByName.has(candidate) === false &&
           tokenVariableNames.has(candidate) === false
       ),
     ];

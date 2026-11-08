@@ -464,6 +464,76 @@ test("keeps conditional token overrides of an imported root variable", () => {
   });
 });
 
+test("keeps distinct root variables separate from token overrides", () => {
+  const copied = copyDesignToken(
+    {
+      assets: new Map(),
+      breakpoints: new Map([
+        ["base", { id: "base", label: "Base" }],
+        ["mobile", { id: "mobile", label: "Mobile", maxWidth: 600 }],
+      ]),
+      styleSources: new Map([
+        ["token", { type: "token", id: "token", name: "Button" }],
+        ["source-root", { type: "local", id: "source-root" }],
+      ]),
+      styleSourceSelections: new Map([
+        [
+          ROOT_INSTANCE_ID,
+          { instanceId: ROOT_INSTANCE_ID, values: ["source-root"] },
+        ],
+      ]),
+      styles: styleMap([
+        style("token", "base", "color", "var(--brand)"),
+        style("token", "base", "backgroundColor", "var(--brand-1)"),
+        style("token", "mobile", "--brand", "green"),
+        style("source-root", "base", "--brand", "red"),
+        style("source-root", "base", "--brand-1", "red"),
+      ]),
+    },
+    { tokenId: "token" }
+  );
+  const target = {
+    assets: new Map(),
+    breakpoints: new Map([
+      ["base", { id: "base", label: "Base" }],
+      ["mobile", { id: "mobile", label: "Mobile", maxWidth: 600 }],
+    ]),
+    styleSources: new Map([
+      ["target-root", { type: "local" as const, id: "target-root" }],
+    ]),
+    styleSourceSelections: new Map([
+      [
+        ROOT_INSTANCE_ID,
+        { instanceId: ROOT_INSTANCE_ID, values: ["target-root"] },
+      ],
+    ]),
+    styles: styleMap([
+      style("target-root", "base", "--brand", "blue"),
+      style("target-root", "base", "--brand-1", "red"),
+    ]),
+  };
+  const mutation = pasteDesignToken(
+    target,
+    { data: copied.data },
+    { createId: () => "new-token" }
+  );
+  const pasted = applyBuilderPatchTransactions(target, [
+    { id: "paste", payload: mutation.payload },
+  ]).state;
+  expect(pasted.styles?.get("new-token:base:color:")?.value).toEqual({
+    type: "unparsed",
+    value: "var(--brand-2)",
+  });
+  expect(pasted.styles?.get("new-token:base:backgroundColor:")?.value).toEqual({
+    type: "unparsed",
+    value: "var(--brand-1)",
+  });
+  expect(pasted.styles?.get("new-token:mobile:--brand-2:")?.value).toEqual({
+    type: "unparsed",
+    value: "green",
+  });
+});
+
 test("rejects incomplete token data", () => {
   expect(() =>
     pasteDesignToken(
