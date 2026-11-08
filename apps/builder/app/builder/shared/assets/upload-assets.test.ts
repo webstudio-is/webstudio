@@ -324,7 +324,7 @@ describe("upload-assets", () => {
       projectId: "target-project",
     } satisfies Asset;
     $assets.set(new Map([[existingAsset.id, existingAsset]]));
-    const upload = vi.fn(async (_type, [url]: URL[]) => {
+    const upload = vi.fn(async (_type, [url]: Array<File | URL>) => {
       return new Map([[url, importedAsset.id]]);
     });
     const waitForUpload = vi.fn(async () => importedAsset);
@@ -366,7 +366,7 @@ describe("upload-assets", () => {
         id: "article-copy",
         projectId: "target-project",
       } satisfies Asset;
-      const upload = vi.fn(async (_type, [url]: URL[]) => {
+      const upload = vi.fn(async (_type, [url]: Array<File | URL>) => {
         return new Map([[url, importedAsset.id]]);
       });
       const waitForUpload = vi.fn(async () => importedAsset);
@@ -416,6 +416,55 @@ describe("upload-assets", () => {
 
     expect(upload).not.toHaveBeenCalled();
     expect(waitForUpload).not.toHaveBeenCalled();
+  });
+
+  test("uses the content-hash upload path when importing a same-origin image again", async () => {
+    $project.set({ id: "target-project" } as Project);
+    const sourceAsset = {
+      id: "source-image",
+      projectId: "source-project",
+      name: "hero.png",
+      type: "image",
+      format: "png",
+      size: 4,
+      createdAt: "2026-01-01",
+      description: null,
+      meta: { width: 100, height: 100 },
+    } satisfies Asset;
+    const targetAsset = {
+      ...sourceAsset,
+      id: "target-image",
+      projectId: "target-project",
+      name: "stored-hero.png",
+    } satisfies Asset;
+    $assets.set(new Map([[targetAsset.id, targetAsset]]));
+    const url = `${window.location.origin}/cgi/image/hero.png?format=raw`;
+    const fetchAsset = vi.fn(
+      async () => new Response(new Blob(["same"], { type: "image/png" }))
+    );
+    const upload = vi.fn(
+      async (
+        _type: string,
+        [file]: Array<File | URL>,
+        _options?: { preserveFilename?: boolean }
+      ) => new Map([[file, targetAsset.id]])
+    );
+    const waitForUpload = vi.fn(async () => targetAsset);
+
+    const imported = await importAssets(
+      "target-project",
+      [{ asset: sourceAsset, url }],
+      { fetchAsset, upload, waitForUpload }
+    );
+
+    expect(imported.get(sourceAsset.id)).toEqual(targetAsset);
+    expect(fetchAsset).toHaveBeenCalledWith(new URL(url));
+    expect(upload).toHaveBeenCalledOnce();
+    const [type, [file], options] = upload.mock.calls[0];
+    expect(type).toBe("image");
+    expect(file).toBeInstanceOf(File);
+    expect((file as File).name).toBe("hero.png");
+    expect(options).toEqual({ preserveFilename: true });
   });
 
   test("passes the existing browser content hash to the shared upload ticket", async () => {
@@ -559,6 +608,46 @@ describe("upload-assets", () => {
       contentHash,
       fingerprintId: JSON.stringify(["image.png", contentHash]),
     });
+  });
+
+  test("keeps the source filename when requesting content deduplication", async () => {
+    $assets.set(
+      new Map([
+        [
+          "existing",
+          {
+            id: "existing",
+            projectId: "target-project",
+            name: "hero.png",
+            type: "image",
+            format: "png",
+            size: 4,
+            createdAt: "2026-01-01",
+            description: null,
+            meta: { width: 100, height: 100 },
+          } satisfies Asset,
+        ],
+      ])
+    );
+    request.mockResolvedValue(
+      Response.json({
+        assetId: "existing",
+        name: "hero.png",
+        deduplicated: true,
+      })
+    );
+    await createUploadTicket({
+      authToken: "token",
+      projectId: "target-project",
+      fileOrUrl: new File(["same"], "hero.png", { type: "image/png" }),
+      contentHash: "same-content-hash",
+      preserveFilename: true,
+      assetType: "image",
+      request,
+    });
+    const [_url, init] = request.mock.calls[0] as [string, { body: FormData }];
+    expect(init.body.get("filename")).toBe("hero.png");
+    expect(init.body.get("contentHash")).toBe("same-content-hash");
   });
 
   test("preserves identical file content with different filenames", async () => {

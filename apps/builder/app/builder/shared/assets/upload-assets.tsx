@@ -41,6 +41,7 @@ type UploadAssetsOptions = {
   folderId?: string;
   dimensions?: { width: number; height: number };
   deduplicate?: boolean;
+  preserveFilename?: boolean;
 };
 
 const safeDeleteAssets = (assetIds: Asset["id"][], projectId: string) => {
@@ -320,6 +321,7 @@ const createUploadTicket = async ({
   fileOrUrl,
   contentHash,
   deduplicate = true,
+  preserveFilename = false,
   assetType,
   request = fetch,
 }: {
@@ -329,6 +331,7 @@ const createUploadTicket = async ({
   fileOrUrl: File | URL;
   contentHash?: string;
   deduplicate?: boolean;
+  preserveFilename?: boolean;
   assetType: AssetType;
   request?: typeof fetch;
 }): Promise<UploadTicket> => {
@@ -348,7 +351,9 @@ const createUploadTicket = async ({
       existingNames.add(formatAssetName(asset));
     }
   }
-  const deduplicatedFilename = deduplicateAssetName(fileName, existingNames);
+  const deduplicatedFilename = preserveFilename
+    ? fileName
+    : deduplicateAssetName(fileName, existingNames);
   // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
   // should be removed after fix
   metaFormData.append("filename", sanitizeS3Key(deduplicatedFilename));
@@ -549,6 +554,7 @@ export const uploadAssets = async <T extends File | URL>(
         contentHash:
           fileData.source === "file" ? fileData.contentHash : undefined,
         deduplicate: options.deduplicate,
+        preserveFilename: options.preserveFilename,
         assetType: fileData.type,
       });
       fileData.assetId = ticket.assetId;
@@ -614,14 +620,16 @@ export const importAssets = async (
   dependencies: {
     upload?: (
       type: AssetType,
-      urls: URL[],
+      filesOrUrls: Array<File | URL>,
       options: Parameters<typeof uploadAssets>[2]
-    ) => Promise<Map<URL, string>>;
+    ) => Promise<Map<File | URL, string>>;
     waitForUpload?: typeof waitForAssetUpload;
+    fetchAsset?: typeof fetch;
   } = {}
 ) => {
   const upload = dependencies.upload ?? uploadAssets;
   const waitForUpload = dependencies.waitForUpload ?? waitForAssetUpload;
+  const fetchAsset = dependencies.fetchAsset ?? fetch;
   const importedAssets = new Map<Asset["id"], Asset>();
 
   for (const source of sources) {
@@ -659,7 +667,22 @@ export const importAssets = async (
       // never modify an existing target Asset that upload deduplication reused.
       options = { deduplicate: false };
     }
-    const assetId = (await upload(source.asset.type, [url], options)).get(url);
+    let fileOrUrl: File | URL = url;
+    if (
+      url.origin === window.location.origin &&
+      (source.asset.type === "image" || source.asset.type === "font")
+    ) {
+      const response = await fetchAsset(url);
+      if (response.ok === false) {
+        throw new Error("Failed to import asset");
+      }
+      const blob = await response.blob();
+      fileOrUrl = new File([blob], source.asset.name, { type: blob.type });
+      options = { ...options, preserveFilename: true };
+    }
+    const assetId = (await upload(source.asset.type, [fileOrUrl], options)).get(
+      fileOrUrl
+    );
     if (assetId === undefined) {
       throw new Error("Failed to import asset");
     }
