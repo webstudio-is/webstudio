@@ -55,20 +55,19 @@ export const transferFragmentAssets = async ({
   }
 
   const assetIds = new Map<Asset["id"], Asset["id"]>();
-  const transferredFragments = new Map<WebstudioFragment, WebstudioFragment>();
-  for (const fragment of fragments) {
-    for (const sourceAsset of fragment.assets) {
-      const importedAsset = importedAssets.get(sourceAsset.id);
-      if (importedAsset === undefined) {
-        throw new Error("Imported asset is missing");
-      }
-      assetIds.set(sourceAsset.id, importedAsset.id);
+  for (const sourceAsset of assets.values()) {
+    const importedAsset = importedAssets.get(sourceAsset.id);
+    if (importedAsset === undefined) {
+      throw new Error("Imported asset is missing");
     }
-    transferredFragments.set(
-      fragment,
-      remapFragmentAssets(fragment, importedAssets)
-    );
+    assetIds.set(sourceAsset.id, importedAsset.id);
   }
+  const transferredFragments = new Map(
+    fragments.map((fragment) => [
+      fragment,
+      remapFragmentAssets(fragment, importedAssets),
+    ])
+  );
   return {
     success: true,
     fragments: transferredFragments,

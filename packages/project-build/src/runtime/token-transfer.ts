@@ -164,16 +164,11 @@ export const copyDesignToken = (
   while (queue.length > 0) {
     const style = queue.shift()!;
     for (const name of collectVariableReferences(style.value)) {
-      if (variableNames.has(name) === false) {
-        continue;
-      }
-      if (referencedNames.has(name)) {
+      if (variableNames.has(name) === false || referencedNames.has(name)) {
         continue;
       }
       referencedNames.add(name);
-      queue.push(
-        ...rootStyles.filter((candidate) => candidate.property === name)
-      );
+      queue.push(...rootStyles.filter((style) => style.property === name));
     }
   }
   const variableStyles = rootStyles
@@ -187,13 +182,12 @@ export const copyDesignToken = (
   const breakpointIds = new Set(
     copiedStyles.map((style) => style.breakpointId)
   );
-  for (const breakpointId of breakpointIds) {
-    if (breakpoints.has(breakpointId) === false) {
-      return throwBuilderRuntimeError(
-        "NOT_FOUND",
-        "Token breakpoint is missing"
-      );
-    }
+  const copiedBreakpoints = Array.from(breakpointIds).flatMap((id) => {
+    const breakpoint = breakpoints.get(id);
+    return breakpoint === undefined ? [] : [breakpoint];
+  });
+  if (copiedBreakpoints.length !== breakpointIds.size) {
+    return throwBuilderRuntimeError("NOT_FOUND", "Token breakpoint is missing");
   }
   const assetIds = new Set<string>();
   for (const style of copiedStyles) {
@@ -213,10 +207,7 @@ export const copyDesignToken = (
     styleSourceSelections: [],
     styleSources: [token],
     styles: copiedStyles,
-    breakpoints: Array.from(breakpointIds).flatMap((id) => {
-      const breakpoint = breakpoints.get(id);
-      return breakpoint === undefined ? [] : [breakpoint];
-    }),
+    breakpoints: copiedBreakpoints,
     assets: Array.from(assets.values()).filter(
       (asset) =>
         assetIds.has(asset.id) ||
@@ -257,6 +248,10 @@ export const pasteDesignToken = (
   }
   const { tokenId } = parsed.data;
   let { fragment } = parsed.data;
+  const sourceToken = fragment.styleSources[0];
+  if (sourceToken?.type !== "token") {
+    return throwBuilderRuntimeError("INVALID_INPUT", "Invalid token data");
+  }
   if (fragment.assets.length > 0) {
     const assetIds = new Map(input.assetIds ?? []);
     const importedAssets = new Map<Asset["id"], Asset>();
@@ -284,43 +279,7 @@ export const pasteDesignToken = (
       return throwBuilderRuntimeError("NOT_FOUND", "Instance not found");
     }
   }
-  if (
-    fragment.styleSources.length !== 1 ||
-    fragment.styleSources[0]?.type !== "token" ||
-    fragment.styleSources[0].id !== tokenId ||
-    fragment.styles.some(
-      (style) =>
-        style.styleSourceId !== tokenId &&
-        style.property.startsWith("--") === false
-    )
-  ) {
-    return throwBuilderRuntimeError("INVALID_INPUT", "Invalid token data");
-  }
-  const referencedAssetIds = new Set<string>();
-  for (const style of fragment.styles) {
-    traverseStyleValue(style.value, (value) => {
-      if (value.type === "image" && value.value.type === "asset") {
-        referencedAssetIds.add(value.value.value);
-      }
-    });
-  }
-  for (const assetId of referencedAssetIds) {
-    if (target.assets.has(assetId) === false) {
-      return throwBuilderRuntimeError("NOT_FOUND", "Token asset is missing");
-    }
-  }
-  const missingBreakpoints = fragment.styles.some(
-    (style) =>
-      fragment.breakpoints.some(
-        (breakpoint) => breakpoint.id === style.breakpointId
-      ) === false
-  );
-  if (missingBreakpoints) {
-    return throwBuilderRuntimeError(
-      "INVALID_INPUT",
-      "Token breakpoint is missing"
-    );
-  }
+  // The CSS parser creates only token and root-variable styles with matching breakpoints.
   const breakpointIds = buildMergedBreakpointIds(
     fragment.breakpoints,
     target.breakpoints
@@ -398,7 +357,6 @@ export const pasteDesignToken = (
       source.type === "token" ? [source.name] : []
     )
   );
-  const sourceToken = fragment.styleSources[0];
   let copyNumber = 1;
   while (tokenNames.has(`${sourceToken.name} copy ${copyNumber}`)) {
     copyNumber++;
@@ -410,17 +368,18 @@ export const pasteDesignToken = (
     name: `${sourceToken.name} copy ${copyNumber}`,
   };
   const variablePatches: BuilderPatchChange["patches"] = [];
+  const tokenPatches: BuilderPatchChange["patches"] = [];
   for (const style of mappedStyles) {
-    if (style.styleSourceId === tokenId) {
-      continue;
-    }
     const mapped: StyleDecl = {
       ...style,
-      styleSourceId: rootSourceId,
+      styleSourceId:
+        style.styleSourceId === tokenId ? newTokenId : rootSourceId,
       breakpointId: breakpointIds.get(style.breakpointId) ?? style.breakpointId,
     };
     const key = getStyleDeclKey(mapped);
-    if (target.styles.has(key) === false) {
+    if (style.styleSourceId === tokenId) {
+      tokenPatches.push({ op: "add", path: [key], value: mapped });
+    } else if (target.styles.has(key) === false) {
       variablePatches.push({ op: "add", path: [key], value: mapped });
     }
   }
@@ -437,29 +396,12 @@ export const pasteDesignToken = (
     path: [newTokenId],
     value: newToken,
   });
-  const stylePatches: BuilderPatchChange["patches"] = [...variablePatches];
-  for (const style of mappedStyles) {
-    if (style.styleSourceId !== tokenId) {
-      continue;
-    }
-    const mapped: StyleDecl = {
-      ...style,
-      styleSourceId: newTokenId,
-      breakpointId: breakpointIds.get(style.breakpointId) ?? style.breakpointId,
-    };
-    stylePatches.push({
-      op: "add",
-      path: [getStyleDeclKey(mapped)],
-      value: mapped,
-    });
-  }
+  const stylePatches = [...variablePatches, ...tokenPatches];
   const payload: BuilderPatchChange[] = [];
   if (breakpointPatches.length > 0) {
     payload.push({ namespace: "breakpoints", patches: breakpointPatches });
   }
-  if (sourcePatches.length > 0) {
-    payload.push({ namespace: "styleSources", patches: sourcePatches });
-  }
+  payload.push({ namespace: "styleSources", patches: sourcePatches });
   if (stylePatches.length > 0) {
     payload.push({ namespace: "styles", patches: stylePatches });
   }
