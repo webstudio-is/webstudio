@@ -450,23 +450,12 @@ export const pasteDesignToken = (
   for (const name of incomingByName.keys()) {
     resolveName(name);
   }
-  const tokenReplacements = Object.fromEntries(
-    Object.entries(replacements).filter(
-      ([name]) => tokenVariableNames.has(name) === false
-    )
-  );
   const mappedStyles = fragment.styles.map((style) => {
-    const isTokenStyle = style.styleSourceId === tokenId;
     return {
       ...style,
-      property: (isTokenStyle
-        ? style.property
-        : (replacements[style.property] ??
-          style.property)) as StyleDecl["property"],
-      value: rewriteVariableReferences(
-        style.value,
-        isTokenStyle ? tokenReplacements : replacements
-      ),
+      property: (replacements[style.property] ??
+        style.property) as StyleDecl["property"],
+      value: rewriteVariableReferences(style.value, replacements),
     };
   });
   const tokenNames = new Set(
