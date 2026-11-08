@@ -399,6 +399,76 @@ test("reserves token-local variables when renaming imported root variables", () 
   });
 });
 
+test("reserves destination-local variable names when importing root variables", () => {
+  const copied = copyDesignToken(
+    {
+      assets: new Map(),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([
+        ["token", { type: "token", id: "token", name: "Button" }],
+        ["source-root", { type: "local", id: "source-root" }],
+      ]),
+      styleSourceSelections: new Map([
+        [
+          ROOT_INSTANCE_ID,
+          { instanceId: ROOT_INSTANCE_ID, values: ["source-root"] },
+        ],
+      ]),
+      styles: styleMap([
+        style("token", "base", "color", "var(--brand)"),
+        style("source-root", "base", "--brand", "red"),
+      ]),
+    },
+    { tokenId: "token" }
+  );
+  const target = {
+    assets: new Map(),
+    instances: new Map([
+      [
+        "box",
+        {
+          type: "instance" as const,
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]),
+    breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+    styleSources: new Map([
+      ["target-root", { type: "local" as const, id: "target-root" }],
+      ["target-local", { type: "local" as const, id: "target-local" }],
+    ]),
+    styleSourceSelections: new Map([
+      [
+        ROOT_INSTANCE_ID,
+        { instanceId: ROOT_INSTANCE_ID, values: ["target-root"] },
+      ],
+      ["box", { instanceId: "box", values: ["target-local"] }],
+    ]),
+    styles: styleMap([
+      style("target-root", "base", "--brand", "blue"),
+      style("target-local", "base", "--brand-1", "green"),
+    ]),
+  };
+  const mutation = pasteDesignToken(
+    target,
+    { data: copied.data, instanceId: "box" },
+    { createId: () => "new-token" }
+  );
+  const pasted = applyBuilderPatchTransactions(target, [
+    { id: "paste", payload: mutation.payload },
+  ]).state;
+  expect(pasted.styles?.get("target-root:base:--brand-2:")?.value).toEqual({
+    type: "unparsed",
+    value: "red",
+  });
+  expect(pasted.styles?.get("new-token:base:color:")?.value).toEqual({
+    type: "unparsed",
+    value: "var(--brand-2)",
+  });
+});
+
 test("keeps conditional token overrides of an imported root variable", () => {
   const copied = copyDesignToken(
     {

@@ -363,15 +363,11 @@ export const pasteDesignToken = (
   const incomingVariables = fragment.styles.filter(
     (style) => style.styleSourceId !== tokenId
   );
-  const existingRootSourceIds = new Set(selection?.values);
-  const existingVariables = Array.from(target.styles.values()).filter(
-    (style) =>
-      existingRootSourceIds.has(style.styleSourceId) &&
-      style.property.startsWith("--")
-  );
   const replacements: Record<string, string> = {};
-  const existingRootNames = new Set<string>(
-    existingVariables.map((style) => style.property)
+  const targetVariableNames = new Set<string>(
+    Array.from(target.styles.values())
+      .filter((style) => style.property.startsWith("--"))
+      .map((style) => style.property)
   );
   const tokenVariableNames = new Set<string>(
     fragment.styles
@@ -382,13 +378,13 @@ export const pasteDesignToken = (
       .map((style) => style.property)
   );
   const existingNames = new Set<string>([
-    ...existingVariables.map((style) => style.property),
+    ...targetVariableNames,
     ...incomingVariables.map((style) => style.property),
     ...tokenVariableNames,
   ]);
   for (const style of incomingVariables) {
     if (
-      existingRootNames.has(style.property) &&
+      targetVariableNames.has(style.property) &&
       replacements[style.property] === undefined
     ) {
       const renamed = getUniqueNameWithSuffix(style.property, existingNames);
