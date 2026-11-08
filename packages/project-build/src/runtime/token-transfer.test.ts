@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+import { parseCssValue } from "@webstudio-is/css-data";
 import {
   getStyleDeclKey,
   ROOT_INSTANCE_ID,
@@ -451,4 +452,33 @@ test("copies font assets used by a root CSS variable", () => {
     return;
   }
   expect(parsed.data.fragment.assets).toEqual([font]);
+  const remapped = remapTokenTransferAssets(
+    copied.data,
+    new Map([
+      [
+        font.id,
+        {
+          ...font,
+          id: "target-font",
+          projectId: "target",
+          meta: { ...font.meta, family: "Target Font" },
+        },
+      ],
+    ])
+  );
+  const transferred = parseTokenTransferData(remapped);
+  expect(transferred.valid).toBe(true);
+  if (transferred.valid === false) {
+    return;
+  }
+  const variable = transferred.data.fragment.styles.find(
+    (item) => item.property === "--heading-font"
+  );
+  expect(variable?.value.type).toBe("unparsed");
+  if (variable?.value.type === "unparsed") {
+    expect(parseCssValue("font-family", variable.value.value)).toEqual({
+      type: "fontFamily",
+      value: ["Target Font", "serif"],
+    });
+  }
 });

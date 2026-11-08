@@ -2,6 +2,8 @@
 // Webstudio fragments. Put serialization-style instance subtree cloning and
 // fragment asset/style/data remapping here, not live tree placement decisions.
 import { migrateCodeTextContentMutable } from "@webstudio-is/project-migrations";
+import { parseCssValue } from "@webstudio-is/css-data";
+import { toValue } from "@webstudio-is/css-engine";
 import { produce } from "immer";
 import {
   createId,
@@ -54,6 +56,7 @@ import {
 } from "./style-copy";
 import { unwrap } from "./unwrap";
 import {
+  collectFontFamiliesFromStyleDecls,
   collectFontFamiliesFromStyleValue,
   traverseStyleValue,
 } from "./style-utils";
@@ -122,6 +125,12 @@ export const remapFragmentAssets = (
       }
     }
   }
+  const fontVariableStyleKeys = new Set<string>();
+  if (replacementFontFamilies.size > 0) {
+    collectFontFamiliesFromStyleDecls(fragment.styles, undefined, (style) => {
+      fontVariableStyleKeys.add(getStyleDeclKey(style));
+    });
+  }
   return produce(fragment, (draft) => {
     for (const prop of draft.props) {
       if (prop.type === "asset") {
@@ -129,6 +138,10 @@ export const remapFragmentAssets = (
       }
     }
     for (const style of draft.styles) {
+      const isFontValue =
+        replacementFontFamilies.size > 0 &&
+        (style.property === "fontFamily" ||
+          fontVariableStyleKeys.has(getStyleDeclKey(style)));
       traverseStyleValue(style.value, (item) => {
         if (item.type === "image" && item.value.type === "asset") {
           item.value.value =
@@ -140,6 +153,22 @@ export const remapFragmentAssets = (
           );
           if (mapped.some((family, index) => family !== item.value[index])) {
             item.value = mapped;
+          }
+        }
+        if (isFontValue && item.type === "unparsed") {
+          const parsed = parseCssValue("font-family", item.value);
+          let changed = false;
+          traverseStyleValue(parsed, (part) => {
+            if (part.type === "fontFamily") {
+              part.value = part.value.map((family) => {
+                const replacement = replacementFontFamilies.get(family);
+                changed ||= replacement !== undefined && replacement !== family;
+                return replacement ?? family;
+              });
+            }
+          });
+          if (changed) {
+            item.value = toValue(parsed);
           }
         }
       });

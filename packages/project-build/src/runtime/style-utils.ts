@@ -109,15 +109,16 @@ export const collectFontFamiliesFromStyleDecls = <
     family: string,
     styleDecl: Declaration,
     fromVariable: boolean
-  ) => void
+  ) => void,
+  onVariableDefinition?: (styleDecl: Declaration) => void
 ) => {
   const fontFamilies = new Set<string>();
-  const customProperties = new Map<string, StyleValue[]>();
+  const customProperties = new Map<string, Declaration[]>();
   const declarations = Array.from(styles);
   for (const styleDecl of declarations) {
     if (styleDecl.property?.startsWith("--")) {
       const values = customProperties.get(styleDecl.property) ?? [];
-      values.push(styleDecl.value);
+      values.push(styleDecl);
       customProperties.set(styleDecl.property, values);
     }
   }
@@ -152,7 +153,8 @@ export const collectFontFamiliesFromStyleDecls = <
             }
             visitedVariables.add(name);
             for (const definition of customProperties.get(name) ?? []) {
-              collectFromVariable(definition, true);
+              onVariableDefinition?.(definition);
+              collectFromVariable(definition.value, true);
             }
           }
         });
