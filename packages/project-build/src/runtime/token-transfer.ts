@@ -342,6 +342,11 @@ export const pasteDesignToken = (
   const breakpointPatches: BuilderPatchChange["patches"] = [];
   for (const breakpoint of newBreakpoints) {
     const id = context.createId();
+    for (const [sourceId, mappedId] of breakpointIds) {
+      if (mappedId === breakpoint.id) {
+        breakpointIds.set(sourceId, id);
+      }
+    }
     breakpointIds.set(breakpoint.id, id);
     breakpointPatches.push({
       op: "add",

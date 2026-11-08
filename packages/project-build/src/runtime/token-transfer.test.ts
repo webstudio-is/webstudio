@@ -214,6 +214,52 @@ test("copies the winning root variable when root sources overlap", () => {
   ).toEqual([style("local", "base", "--brand", "red")]);
 });
 
+test("maps duplicate source breakpoints to the created target breakpoint", () => {
+  const copied = copyDesignToken(
+    {
+      assets: new Map(),
+      breakpoints: new Map([
+        ["base", { id: "base", label: "Base" }],
+        ["small-a", { id: "small-a", label: "Small", maxWidth: 600 }],
+        ["small-b", { id: "small-b", label: "Small", maxWidth: 600 }],
+      ]),
+      styleSources: new Map([
+        ["token", { type: "token", id: "token", name: "Button" }],
+      ]),
+      styleSourceSelections: new Map(),
+      styles: styleMap([
+        style("token", "small-a", "color", "red"),
+        style("token", "small-b", "paddingTop", "12px"),
+      ]),
+    },
+    { tokenId: "token" }
+  );
+  const target = {
+    assets: new Map(),
+    breakpoints: new Map([
+      ["target-base", { id: "target-base", label: "Base" }],
+    ]),
+    styleSources: new Map(),
+    styleSourceSelections: new Map(),
+    styles: new Map(),
+  };
+  const ids = ["target-small", "new-token"];
+  const mutation = pasteDesignToken(
+    target,
+    { data: copied.data },
+    {
+      createId: () => ids.shift()!,
+    }
+  );
+  const pasted = applyBuilderPatchTransactions(target, [
+    { id: "paste", payload: mutation.payload },
+  ]).state;
+  expect(pasted.breakpoints?.has("target-small")).toBe(true);
+  expect(
+    Array.from(pasted.styles?.values() ?? [], (item) => item.breakpointId)
+  ).toEqual(["target-small", "target-small"]);
+});
+
 test("reserves token-local variables when renaming imported root variables", () => {
   const copied = copyDesignToken(
     {
