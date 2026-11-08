@@ -14,7 +14,11 @@ export const prepareMcpTokenPasteData = async ({
   projectOrigin: string;
   dryRun: boolean;
   download: (url: URL) => Promise<Pick<Response, "ok" | "url" | "arrayBuffer">>;
-  upload: (asset: Asset, data: ArrayBuffer) => Promise<Asset[]>;
+  upload: (
+    asset: Asset,
+    data: ArrayBuffer,
+    detectMetadata: boolean
+  ) => Promise<Asset[]>;
   refreshAssets: () => Promise<unknown>;
 }) => {
   const parsed = parseTokenTransferData(data);
@@ -36,7 +40,11 @@ export const prepareMcpTokenPasteData = async ({
     ) {
       throw new Error("Token asset could not be downloaded");
     }
-    const uploaded = await upload(asset, await response.arrayBuffer());
+    const uploaded = await upload(
+      asset,
+      await response.arrayBuffer(),
+      parsed.version === "v1"
+    );
     const imported = uploaded.find((item) => item.type === asset.type);
     if (imported === undefined) {
       throw new Error("Token asset could not be uploaded");

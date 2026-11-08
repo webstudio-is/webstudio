@@ -58,22 +58,20 @@ test("copies a token with breakpoint styles and transitive root CSS variables", 
     ]),
   };
   const copied = copyDesignToken(source, { tokenId: "token" });
+  expect(copied.data.startsWith('/* @webstudio/token-css/v1 "Button" */')).toBe(
+    true
+  );
   const parsed = parseTokenTransferData(copied.data);
   expect(parsed.valid).toBe(true);
   if (parsed.valid === false) {
     return;
   }
-  expect(parsed.data.fragment.styles.map((item) => item.property)).toEqual([
-    "color",
-    "paddingTop",
-    "--brand",
-    "--brand",
-    "--tone",
-  ]);
-  expect(parsed.data.fragment.breakpoints.map((item) => item.id)).toEqual([
-    "base",
-    "mobile",
-  ]);
+  expect(
+    parsed.data.fragment.styles.map((item) => item.property).sort()
+  ).toEqual(["color", "paddingTop", "--brand", "--brand", "--tone"].sort());
+  expect(parsed.data.fragment.breakpoints).toEqual(
+    expect.arrayContaining([expect.objectContaining({ maxWidth: 600 })])
+  );
 
   const target = {
     assets: new Map(),
@@ -211,7 +209,12 @@ test("copies the winning root variable when root sources overlap", () => {
   }
   expect(
     parsed.data.fragment.styles.filter((item) => item.property === "--brand")
-  ).toEqual([style("local", "base", "--brand", "red")]);
+  ).toEqual([
+    expect.objectContaining({
+      property: "--brand",
+      value: { type: "unparsed", value: "red" },
+    }),
+  ]);
 });
 
 test("maps duplicate source breakpoints to the created target breakpoint", () => {
@@ -797,20 +800,29 @@ test("remaps image and font dependencies after transfer", () => {
     },
     { tokenId: "token" }
   );
+  const copiedParsed = parseTokenTransferData(copied.data);
+  expect(copiedParsed.valid).toBe(true);
+  if (copiedParsed.valid === false) {
+    return;
+  }
   const remapped = remapTokenTransferAssets(
     copied.data,
-    new Map<string, Asset>([
-      [image.id, { ...image, id: "target-image", projectId: "target" }],
-      [
-        font.id,
-        {
-          ...font,
-          id: "target-font",
-          projectId: "target",
-          meta: { ...font.meta, family: "Target Font" },
-        },
-      ],
-    ])
+    new Map(
+      copiedParsed.data.fragment.assets.map(
+        (asset) =>
+          [
+            asset.id,
+            asset.type === "font"
+              ? {
+                  ...font,
+                  id: "target-font",
+                  projectId: "target",
+                  meta: { ...font.meta, family: "Target Font" },
+                }
+              : { ...image, id: "target-image", projectId: "target" },
+          ] as const
+      )
+    )
   );
   const parsed = parseTokenTransferData(remapped);
   expect(parsed.valid).toBe(true);
@@ -819,8 +831,13 @@ test("remaps image and font dependencies after transfer", () => {
   }
   expect(parsed.data.fragment.assets).toEqual([]);
   expect(parsed.data.fragment.styles.map((item) => item.value)).toEqual([
-    { type: "image", value: { type: "asset", value: "target-image" } },
-    { type: "fontFamily", value: ["Target Font"] },
+    {
+      type: "layers",
+      value: [
+        { type: "image", value: { type: "asset", value: "target-image" } },
+      ],
+    },
+    { type: "fontFamily", value: ["Target Font", "sans-serif"] },
   ]);
 });
 
@@ -859,12 +876,14 @@ test("copies font assets used by a root CSS variable", () => {
   if (parsed.valid === false) {
     return;
   }
-  expect(parsed.data.fragment.assets).toEqual([font]);
+  expect(parsed.data.fragment.assets).toEqual([
+    expect.objectContaining({ name: font.name, type: "font", meta: font.meta }),
+  ]);
   const remapped = remapTokenTransferAssets(
     copied.data,
     new Map([
       [
-        font.id,
+        parsed.data.fragment.assets[0].id,
         {
           ...font,
           id: "target-font",

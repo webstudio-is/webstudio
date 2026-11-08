@@ -1114,6 +1114,12 @@ test("wraps project api trpc calls in named functions", async () => {
   expect(decodeURIComponent(requests[0]?.search ?? "")).toContain(
     '"version":2'
   );
+  const copyRequest = requests.find(
+    (request) => request.path === "/trpc/api.designTokens.copy"
+  );
+  expect(decodeURIComponent(copyRequest?.search ?? "")).toContain(
+    '"sourceOrigin":"http://127.0.0.1:'
+  );
 });
 
 test("reports invalid build patch transactions", async () => {
@@ -1280,6 +1286,28 @@ test("uploads assets as binary requests", async () => {
   expect((init.headers as Headers).get("content-type")).toBe(
     "application/octet-stream"
   );
+});
+
+test("lets the server detect metadata for assets described only by token CSS", async () => {
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify({ uploadedAssets: [], deduplicated: false }), {
+      headers: { "content-type": "application/json" },
+    })
+  );
+  vi.stubGlobal("fetch", fetch);
+  await uploadAsset({
+    ...apiParams,
+    upload: {
+      asset: createImageAssetFixture(),
+      data: new Uint8Array([1, 2, 3]),
+      detectMetadata: true,
+    },
+  });
+  const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
+  expect(url.searchParams.has("width")).toBe(false);
+  expect(url.searchParams.has("height")).toBe(false);
+  expect(url.searchParams.has("format")).toBe(false);
+  expect((init.headers as Headers).has("x-webstudio-asset-meta")).toBe(false);
 });
 
 test("rejects malformed successful asset upload responses", async () => {

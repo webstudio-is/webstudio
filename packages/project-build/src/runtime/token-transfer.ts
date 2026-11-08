@@ -28,6 +28,7 @@ import {
   parseTokenTransferData,
   tokenTransferDataVersion,
 } from "./data-formats/token-transfer";
+import { serializeTokenCss } from "./data-formats/token-css";
 
 type TokenState = Pick<
   BuilderState,
@@ -257,12 +258,10 @@ export const copyDesignToken = (
     }
   }
   return {
-    data: JSON.stringify({
-      [tokenTransferDataVersion]: {
-        tokenId: token.id,
-        fragment,
-        sourceOrigin: input.sourceOrigin,
-      },
+    data: serializeTokenCss({
+      tokenId: token.id,
+      fragment,
+      sourceOrigin: input.sourceOrigin,
     }),
   };
 };

@@ -48,8 +48,8 @@ test("MCP paste transfers token assets before passing data to the runtime", asyn
         arrayBuffer: async () => new ArrayBuffer(3),
       };
     },
-    upload: async (asset, bytes) => {
-      steps.push(`upload:${asset.id}:${bytes.byteLength}`);
+    upload: async (asset, bytes, detectMetadata) => {
+      steps.push(`upload:${asset.name}:${bytes.byteLength}:${detectMetadata}`);
       return [{ ...image, id: "target-image", projectId: "target" }];
     },
     refreshAssets: async () => {
@@ -58,7 +58,7 @@ test("MCP paste transfers token assets before passing data to the runtime", asyn
   });
   expect(steps).toEqual([
     "download:/cgi/image/image.png",
-    "upload:source-image:3",
+    "upload:image.png:3:true",
     "refresh",
   ]);
   const parsed = parseTokenTransferData(prepared);
@@ -68,8 +68,8 @@ test("MCP paste transfers token assets before passing data to the runtime", asyn
   }
   expect(parsed.data.fragment.assets).toEqual([]);
   expect(parsed.data.fragment.styles[0]?.value).toEqual({
-    type: "image",
-    value: { type: "asset", value: "target-image" },
+    type: "layers",
+    value: [{ type: "image", value: { type: "asset", value: "target-image" } }],
   });
 });
 

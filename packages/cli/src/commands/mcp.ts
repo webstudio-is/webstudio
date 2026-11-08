@@ -2160,10 +2160,14 @@ const createCliMcpHost = async ({
             projectOrigin,
             dryRun: dryRun === true,
             download: (url) => fetch(url),
-            upload: (asset, data) =>
+            upload: (asset, data, detectMetadata) =>
               httpClient.uploadAsset({
                 ...apiConnection,
-                upload: { asset: { ...asset, folderId: undefined }, data },
+                upload: {
+                  asset: { ...asset, folderId: undefined },
+                  data,
+                  detectMetadata,
+                },
               }),
             refreshAssets: () => session.refresh(["assets"]),
           }),

@@ -408,6 +408,7 @@ type AssetUpload = {
   asset: Asset;
   data: BinaryAssetData;
   force?: boolean;
+  detectMetadata?: boolean;
 };
 
 type AssetUploadDescriptor = {
@@ -510,11 +511,13 @@ const getBinaryAssetDataHash = async (data: BinaryAssetData) => {
 const getAssetUploadUrl = ({
   asset,
   force,
+  detectMetadata,
   origin,
   projectId,
 }: {
   asset: Asset;
   force?: boolean;
+  detectMetadata?: boolean;
   origin: string;
   projectId: string;
 }) => {
@@ -525,11 +528,14 @@ const getAssetUploadUrl = ({
   if (asset.folderId !== undefined) {
     url.searchParams.set("folderId", asset.folderId);
   }
-  if (asset.type === "image" || asset.type === "video") {
+  if (
+    detectMetadata !== true &&
+    (asset.type === "image" || asset.type === "video")
+  ) {
     url.searchParams.set("width", String(asset.meta.width));
     url.searchParams.set("height", String(asset.meta.height));
   }
-  if (asset.format !== undefined) {
+  if (detectMetadata !== true && asset.format !== undefined) {
     url.searchParams.set("format", asset.format);
   }
   if (force === true) {
@@ -550,6 +556,7 @@ export const uploadAsset = async (
     getAssetUploadUrl({
       asset: upload.asset,
       force: upload.force,
+      detectMetadata: upload.detectMetadata,
       origin,
       projectId,
     }),
@@ -565,7 +572,9 @@ export const uploadAsset = async (
             : encodeAssetDescriptionHeader(description),
         [assetDescriptionEncodingHeader]:
           description === undefined ? undefined : assetDescriptionEncoding,
-        "x-webstudio-asset-meta": JSON.stringify(upload.asset.meta),
+        "x-webstudio-asset-meta": upload.detectMetadata
+          ? undefined
+          : JSON.stringify(upload.asset.meta),
         "content-type": "application/octet-stream",
       }),
     }
@@ -2160,10 +2169,19 @@ export const listDesignTokens = projectQueryInput<
     }
 >("list-design-tokens");
 
-export const copyDesignToken = projectQueryInput<
+const queryCopyDesignToken = projectQueryInput<
   AuthProjectParams & { tokenId: string; sourceOrigin?: string },
   { data: string }
 >("copy-design-token");
+
+export const copyDesignToken = (
+  params: AuthProjectParams & { tokenId: string; sourceOrigin?: string }
+) =>
+  queryCopyDesignToken({
+    ...params,
+    sourceOrigin:
+      params.sourceOrigin ?? parseBuilderUrl(params.origin).sourceOrigin,
+  });
 
 export const pasteDesignToken = projectMutationInput<
   AuthProjectParams & { data: string; instanceId?: string },
