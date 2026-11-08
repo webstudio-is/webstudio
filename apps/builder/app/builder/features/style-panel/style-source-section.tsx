@@ -34,7 +34,7 @@ import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { subscribe } from "~/shared/pubsub";
 import { $selectedInstance } from "~/shared/nano-states";
 import { $instanceTags } from "./shared/model";
-import { copyToken } from "~/shared/copy-paste/copy-paste";
+import { copyToken, pasteToken } from "~/shared/copy-paste/copy-paste";
 import { builderApi } from "~/shared/builder-api";
 
 // Declare command for this module
@@ -376,6 +376,7 @@ export const StyleSourcesSection = () => {
             );
           });
         }}
+        onPasteToken={pasteToken}
         onConvertToToken={(id) => {
           convertLocalStyleSourceToToken(id);
           setEditingItem(id);

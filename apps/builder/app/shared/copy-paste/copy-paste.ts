@@ -473,6 +473,13 @@ export const copyInstance = () => {
 export const copyToken = async (tokenId: string) =>
   writeClipboardText(copyTokenData(tokenId));
 
+export const pasteToken = async (data: string) => {
+  const result = await token.onPaste?.(data);
+  if (result !== undefined) {
+    reportPasteResult(result);
+  }
+};
+
 export const copyPage = (pageId: string) => {
   return writeClipboardText(copyPageData(pageId));
 };

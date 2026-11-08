@@ -31,6 +31,7 @@ import {
   ComboboxScrollArea,
 } from "@webstudio-is/design-system";
 import type { StyleSource } from "@webstudio-is/sdk";
+import { parseTokenTransferData } from "@webstudio-is/project-build/transfer";
 import {
   forwardRef,
   useState,
@@ -313,6 +314,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onClearStyles?: (id: Item["id"]) => void;
   onDuplicateItem?: (id: Item["id"]) => void;
   onCopyItem?: (id: Item["id"]) => void;
+  onPasteToken?: (data: string) => void;
   onToggleLockItem?: (id: Item["id"], locked: boolean) => void;
   onConvertToToken?: (id: Item["id"]) => void;
   onCreateItem?: (label: string) => void;
@@ -440,6 +442,16 @@ export const StyleSourceInput = (
           <TextField
             // @todo inputProps is any which breaks all types passed to TextField
             {...inputProps}
+            onPaste={(event) => {
+              const data = event.clipboardData.getData("text/plain");
+              if (
+                props.onPasteToken !== undefined &&
+                parseTokenTransferData(data).owned
+              ) {
+                event.preventDefault();
+                props.onPasteToken(data);
+              }
+            }}
             inputRef={props.inputRef}
             error={props.error}
             renderMenu={({ item, hasStyles, open, onOpenChange }) => (
