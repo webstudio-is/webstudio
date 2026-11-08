@@ -2,6 +2,7 @@
 // Webstudio fragments. Put serialization-style instance subtree cloning and
 // fragment asset/style/data remapping here, not live tree placement decisions.
 import { migrateCodeTextContentMutable } from "@webstudio-is/project-migrations";
+import { produce } from "immer";
 import {
   createId,
   type Asset,
@@ -75,6 +76,77 @@ export const assertNoAmbiguousFormInstance = (
 };
 
 const createNanoId = () => createId("nano");
+
+export const remapFragmentAssets = (
+  fragment: WebstudioFragment,
+  importedAssets: ReadonlyMap<Asset["id"], Asset>
+) => {
+  const replacementIds = new Map<Asset["id"], Asset["id"]>();
+  const replacementFontFamilies = new Map<string, string>();
+  for (const sourceAsset of fragment.assets) {
+    const importedAsset = importedAssets.get(sourceAsset.id);
+    if (importedAsset === undefined) {
+      throw new Error("Imported asset is missing");
+    }
+    if (
+      sourceAsset.id === importedAsset.id &&
+      (sourceAsset.type !== "font" ||
+        importedAsset.type !== "font" ||
+        sourceAsset.meta.family === importedAsset.meta.family)
+    ) {
+      continue;
+    }
+    if (sourceAsset.id !== importedAsset.id) {
+      for (const [sourceId, currentId] of replacementIds) {
+        if (currentId === sourceAsset.id) {
+          replacementIds.set(sourceId, importedAsset.id);
+        }
+      }
+      if (replacementIds.has(sourceAsset.id) === false) {
+        replacementIds.set(sourceAsset.id, importedAsset.id);
+      }
+    }
+    if (sourceAsset.type === "font" && importedAsset.type === "font") {
+      const from = sourceAsset.meta.family;
+      const to = importedAsset.meta.family;
+      if (from === to) {
+        continue;
+      }
+      for (const [original, current] of replacementFontFamilies) {
+        if (current === from) {
+          replacementFontFamilies.set(original, to);
+        }
+      }
+      if (replacementFontFamilies.has(from) === false) {
+        replacementFontFamilies.set(from, to);
+      }
+    }
+  }
+  return produce(fragment, (draft) => {
+    for (const prop of draft.props) {
+      if (prop.type === "asset") {
+        prop.value = replacementIds.get(prop.value) ?? prop.value;
+      }
+    }
+    for (const style of draft.styles) {
+      traverseStyleValue(style.value, (item) => {
+        if (item.type === "image" && item.value.type === "asset") {
+          item.value.value =
+            replacementIds.get(item.value.value) ?? item.value.value;
+        }
+        if (item.type === "fontFamily") {
+          const mapped = item.value.map(
+            (family) => replacementFontFamilies.get(family) ?? family
+          );
+          if (mapped.some((family, index) => family !== item.value[index])) {
+            item.value = mapped;
+          }
+        }
+      });
+    }
+    draft.assets = [];
+  });
+};
 
 export type ContentModeCopyableProp = (input: {
   prop: Prop;

@@ -17,6 +17,7 @@ import type { BuilderPatchChange } from "../contracts/patch";
 import { buildMergedBreakpointIds, maxBreakpoints } from "./breakpoints";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
+import { remapFragmentAssets } from "./fragment";
 import { createStyleSourceSelectionAttachPayload } from "./styles";
 import {
   collectFontFamiliesFromStyleValue,
@@ -125,8 +126,7 @@ export const remapTokenTransferAssets = (
   if (parsed.valid === false) {
     return throwBuilderRuntimeError("INVALID_INPUT", "Invalid token data");
   }
-  const fragment = structuredClone(parsed.data.fragment);
-  const fontFamilies = new Map<string, string>();
+  const { fragment } = parsed.data;
   for (const source of fragment.assets) {
     const imported = importedAssets.get(source.id);
     if (imported === undefined) {
@@ -138,26 +138,12 @@ export const remapTokenTransferAssets = (
         "Token asset type changed"
       );
     }
-    if (source.type === "font" && imported.type === "font") {
-      fontFamilies.set(source.meta.family, imported.meta.family);
-    }
   }
-  for (const style of fragment.styles) {
-    traverseStyleValue(style.value, (value) => {
-      if (value.type === "image" && value.value.type === "asset") {
-        value.value.value =
-          importedAssets.get(value.value.value)?.id ?? value.value.value;
-      }
-      if (value.type === "fontFamily") {
-        value.value = value.value.map(
-          (family) => fontFamilies.get(family) ?? family
-        );
-      }
-    });
-  }
-  fragment.assets = [];
   return JSON.stringify({
-    [tokenTransferDataVersion]: { ...parsed.data, fragment },
+    [tokenTransferDataVersion]: {
+      ...parsed.data,
+      fragment: remapFragmentAssets(fragment, importedAssets),
+    },
   });
 };
 
