@@ -39,11 +39,7 @@ export const prepareMcpTokenPasteData = async ({
     ) {
       throw new Error("Token asset could not be downloaded");
     }
-    const uploaded = await upload(
-      asset,
-      await response.arrayBuffer(),
-      parsed.version === "v1"
-    );
+    const uploaded = await upload(asset, await response.arrayBuffer(), true);
     const imported = uploaded.find((item) => item.type === asset.type);
     if (imported === undefined) {
       throw new Error("Token asset could not be uploaded");

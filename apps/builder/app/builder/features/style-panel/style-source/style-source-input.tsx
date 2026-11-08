@@ -31,7 +31,7 @@ import {
   ComboboxScrollArea,
 } from "@webstudio-is/design-system";
 import type { StyleSource } from "@webstudio-is/sdk";
-import { parseTokenTransferData } from "@webstudio-is/project-build/transfer";
+import { parseWebstudioPragma } from "@webstudio-is/project-build/transfer";
 import {
   forwardRef,
   useState,
@@ -446,7 +446,11 @@ export const StyleSourceInput = (
               const data = event.clipboardData.getData("text/plain");
               if (
                 props.onPasteToken !== undefined &&
-                parseTokenTransferData(data).owned
+                parseWebstudioPragma({
+                  source: data,
+                  syntax: "css",
+                  namespace: "token-css",
+                }).owned
               ) {
                 event.preventDefault();
                 props.onPasteToken(data);

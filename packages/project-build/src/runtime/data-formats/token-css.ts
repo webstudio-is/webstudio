@@ -95,7 +95,7 @@ export const serializeTokenCss = (data: TokenTransferData): string => {
 type ParsedTokenCss =
   | { owned: false; valid: false }
   | { owned: true; valid: false }
-  | { owned: true; valid: true; version: "v1"; data: TokenTransferData };
+  | { owned: true; valid: true; data: TokenTransferData };
 
 const assetFromUrl = (
   urlText: string,
@@ -148,16 +148,6 @@ const assetFromUrl = (
   return { ...common, type, format, meta: { width: 0, height: 0 } };
 };
 
-const getUrls = (value: cssTree.CssNode): string[] => {
-  const urls: string[] = [];
-  cssTree.walk(value, (node) => {
-    if (node.type === "Url") {
-      urls.push(node.value);
-    }
-  });
-  return urls;
-};
-
 export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   const pragma = parseWebstudioPragma({
     source,
@@ -177,14 +167,17 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   const body = source.slice(pragma.end);
   let syntaxError = false;
   const ast = cssTree.parse(body, {
+    positions: true,
     onParseError: () => {
       syntaxError = true;
     },
   });
   const fonts: Asset[] = [];
-  let supported = true;
-  const visit = (nodes: cssTree.List<cssTree.CssNode>, inMedia = false) => {
-    nodes.forEach((node) => {
+  const visit = (
+    nodes: cssTree.List<cssTree.CssNode>,
+    inMedia = false
+  ): boolean =>
+    nodes.toArray().every((node) => {
       if (node.type === "Rule") {
         const selector = cssTree.generate(node.prelude);
         const tokenSelector =
@@ -197,28 +190,15 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
                 item.children.first?.type === "ClassSelector" &&
                 item.children.first.name === "ws-token"
             );
-        if (node.block === null || (selector !== ":root" && !tokenSelector)) {
-          supported = false;
-        }
-      } else if (
-        node.type === "Atrule" &&
-        node.name.toLowerCase() === "media" &&
-        !inMedia
-      ) {
-        if (node.block === null) {
-          supported = false;
-        } else {
-          visit(node.block.children, true);
-        }
-      } else if (
-        node.type === "Atrule" &&
-        node.name.toLowerCase() === "font-face" &&
-        !inMedia
-      ) {
-        if (node.block === null) {
-          supported = false;
-          return;
-        }
+        return node.block !== null && (selector === ":root" || tokenSelector);
+      }
+      if (node.type !== "Atrule" || node.block === null || inMedia) {
+        return false;
+      }
+      if (node.name.toLowerCase() === "media") {
+        return visit(node.block.children, true);
+      }
+      if (node.name.toLowerCase() === "font-face") {
         const declarations = new Map<string, cssTree.Declaration>();
         node.block.children.forEach((child) => {
           if (child.type === "Declaration") {
@@ -256,34 +236,37 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
           Number.isFinite(weight) === false ||
           src === undefined
         ) {
-          supported = false;
-          return;
+          return false;
         }
-        const urls = getUrls(src);
-        if (urls.length === 0) {
-          supported = false;
-        }
-        for (const url of urls) {
-          const asset = assetFromUrl(url, "font", { family, style, weight });
-          if (asset === undefined) {
-            supported = false;
-            continue;
+        let foundUrl = false;
+        let validUrls = true;
+        cssTree.walk(src, (node) => {
+          if (node.type !== "Url") {
+            return;
           }
-          fonts.push(asset);
-        }
-      } else {
-        supported = false;
+          foundUrl = true;
+          const asset = assetFromUrl(node.value, "font", {
+            family,
+            style,
+            weight,
+          });
+          if (asset === undefined) {
+            validUrls = false;
+          } else {
+            fonts.push(asset);
+          }
+        });
+        return foundUrl && validUrls;
       }
+      return false;
     });
-  };
   if (ast.type !== "StyleSheet") {
     return { owned: true, valid: false };
   }
-  visit(ast.children);
-  if (syntaxError || !supported) {
+  if (syntaxError || !visit(ast.children)) {
     return { owned: true, valid: false };
   }
-  const parsed = parseCss(body, new Map());
+  const parsed = parseCss(body, new Map(), ast);
   if (parsed.errors.length > 0) {
     return { owned: true, valid: false };
   }
@@ -295,16 +278,7 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   let sourceOrigin: string | undefined;
   const styles: StyleDecl[] = [];
   for (const style of parsed.styles) {
-    if (
-      style.selector !== ":root" &&
-      style.selector.startsWith(".ws-token") === false
-    ) {
-      return { owned: true, valid: false };
-    }
-    if (
-      style.selector === ":root" &&
-      (style.state !== undefined || !style.property.startsWith("--"))
-    ) {
+    if (style.selector === ":root" && !style.property.startsWith("--")) {
       return { owned: true, valid: false };
     }
     const breakpointId = style.breakpoint ?? baseId;
@@ -370,7 +344,6 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   return {
     owned: true,
     valid: true,
-    version: "v1",
     data: { tokenId, fragment, sourceOrigin },
   };
 };

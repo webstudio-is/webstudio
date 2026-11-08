@@ -738,9 +738,11 @@ export const extractCssCustomProperties = (
 
 export const parseCss = (
   css: string,
-  cssVars: Map<string, string>
+  cssVars: Map<string, string>,
+  // Callers may reuse a css-tree AST parsed with positions: true.
+  parsedAst?: csstree.CssNode
 ): ParseCssResult => {
-  const ast = cssTreeTryParse(css);
+  const ast = parsedAst ?? cssTreeTryParse(css);
   const stylesMap = new Map<string, ParsedStyleDecl>();
   const errors: string[] = [];
 

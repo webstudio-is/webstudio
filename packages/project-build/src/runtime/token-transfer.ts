@@ -228,14 +228,6 @@ export const copyDesignToken = (
   };
 };
 
-const getRootSource = (state: Required<TokenState>) => {
-  const selection = state.styleSourceSelections.get(ROOT_INSTANCE_ID);
-  const sourceId = selection?.values.findLast(
-    (id) => state.styleSources.get(id)?.type === "local"
-  );
-  return { selection, sourceId };
-};
-
 export const pasteDesignToken = (
   state: TokenState,
   input: z.infer<typeof pasteDesignTokenInput>,
@@ -306,7 +298,10 @@ export const pasteDesignToken = (
     });
   }
 
-  const { selection, sourceId } = getRootSource(target);
+  const selection = target.styleSourceSelections.get(ROOT_INSTANCE_ID);
+  const sourceId = selection?.values.findLast(
+    (id) => target.styleSources.get(id)?.type === "local"
+  );
   const rootSourceId = sourceId ?? context.createId();
   const incomingVariables = fragment.styles.filter(
     (style) => style.styleSourceId !== tokenId
@@ -344,14 +339,12 @@ export const pasteDesignToken = (
       existingNames.add(renamed);
     }
   }
-  const mappedStyles = fragment.styles.map((style) => {
-    return {
-      ...style,
-      property: (replacements[style.property] ??
-        style.property) as StyleDecl["property"],
-      value: rewriteVariableReferences(style.value, replacements),
-    };
-  });
+  const mappedStyles = fragment.styles.map((style) => ({
+    ...style,
+    property: (replacements[style.property] ??
+      style.property) as StyleDecl["property"],
+    value: rewriteVariableReferences(style.value, replacements),
+  }));
   const tokenNames = new Set(
     Array.from(target.styleSources.values()).flatMap((source) =>
       source.type === "token" ? [source.name] : []
@@ -383,8 +376,9 @@ export const pasteDesignToken = (
       variablePatches.push({ op: "add", path: [key], value: mapped });
     }
   }
+  const needsRootSource = sourceId === undefined && variablePatches.length > 0;
   const sourcePatches: BuilderPatchChange["patches"] = [];
-  if (sourceId === undefined && variablePatches.length > 0) {
+  if (needsRootSource) {
     sourcePatches.push({
       op: "add",
       path: [rootSourceId],
@@ -405,7 +399,7 @@ export const pasteDesignToken = (
   if (stylePatches.length > 0) {
     payload.push({ namespace: "styles", patches: stylePatches });
   }
-  if (sourceId === undefined && variablePatches.length > 0) {
+  if (needsRootSource) {
     payload.push({
       namespace: "styleSourceSelections",
       patches: [
@@ -425,7 +419,7 @@ export const pasteDesignToken = (
   }
   if (input.instanceId !== undefined) {
     const selections = new Map(target.styleSourceSelections);
-    if (sourceId === undefined && variablePatches.length > 0) {
+    if (needsRootSource) {
       selections.set(ROOT_INSTANCE_ID, {
         instanceId: ROOT_INSTANCE_ID,
         values: [...(selection?.values ?? []), rootSourceId],
