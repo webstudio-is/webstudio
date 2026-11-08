@@ -1,5 +1,9 @@
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
-import { parseCssValue } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  parseCssValue,
+  type ParsedStyleDecl,
+} from "@webstudio-is/css-data";
 import type {
   Instance,
   Styles,
@@ -34,6 +38,31 @@ export const getUniqueNameWithSuffix = (
     }
   }
   return `${name}-${maxCounter + 1}`;
+};
+
+export const mapParsedCssStyles = (
+  declarations: Iterable<ParsedStyleDecl>,
+  getContext: (
+    declaration: ParsedStyleDecl
+  ) =>
+    | (Pick<StyleDecl, "styleSourceId" | "breakpointId"> &
+        Partial<Pick<StyleDecl, "value" | "state">>)
+    | undefined
+): StyleDecl[] => {
+  const styles: StyleDecl[] = [];
+  for (const declaration of declarations) {
+    const context = getContext(declaration);
+    if (context === undefined) {
+      continue;
+    }
+    styles.push({
+      property: camelCaseProperty(declaration.property),
+      value: declaration.value,
+      ...(declaration.state ? { state: declaration.state } : {}),
+      ...context,
+    });
+  }
+  return styles;
 };
 
 export const traverseStyleValue = (

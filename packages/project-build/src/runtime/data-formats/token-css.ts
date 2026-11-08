@@ -1,8 +1,4 @@
-import {
-  camelCaseProperty,
-  parseCss,
-  parseMediaQuery,
-} from "@webstudio-is/css-data";
+import { parseCss, parseMediaQuery } from "@webstudio-is/css-data";
 import {
   createRegularStyleSheet,
   FakeStyleElement,
@@ -18,12 +14,11 @@ import {
   getAssetUrl,
   type Asset,
   type Breakpoint,
-  type StyleDecl,
   type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import * as cssTree from "css-tree";
 import { parseWebstudioPragma } from "./webstudio-pragma";
-import { traverseStyleValue } from "../style-utils";
+import { mapParsedCssStyles, traverseStyleValue } from "../style-utils";
 
 const tokenId = "clipboard-token";
 const rootId = "clipboard-root";
@@ -267,7 +262,12 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
     return { owned: true, valid: false };
   }
   const parsed = parseCss(body, new Map(), ast);
-  if (parsed.errors.length > 0) {
+  if (
+    parsed.errors.length > 0 ||
+    parsed.styles.some(
+      (style) => style.selector === ":root" && !style.property.startsWith("--")
+    )
+  ) {
     return { owned: true, valid: false };
   }
   const breakpoints = new Map<string, Breakpoint>();
@@ -276,16 +276,14 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
     fonts.map((asset) => [asset.id, asset])
   );
   let sourceOrigin: string | undefined;
-  const styles: StyleDecl[] = [];
-  for (const style of parsed.styles) {
-    if (style.selector === ":root" && !style.property.startsWith("--")) {
-      return { owned: true, valid: false };
-    }
+  let invalidBreakpoint = false;
+  const styles = mapParsedCssStyles(parsed.styles, (style) => {
     const breakpointId = style.breakpoint ?? baseId;
     if (!breakpoints.has(breakpointId)) {
       const media = parseMediaQuery(breakpointId);
       if (media === undefined) {
-        return { owned: true, valid: false };
+        invalidBreakpoint = true;
+        return;
       }
       breakpoints.set(breakpointId, {
         id: breakpointId,
@@ -293,11 +291,11 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
         ...media,
       });
     }
-    let value =
+    const value = structuredClone(
       style.value.type === "var"
         ? { type: "unparsed" as const, value: toValue(style.value) }
-        : style.value;
-    value = structuredClone(value);
+        : style.value
+    );
     traverseStyleValue(value, (item) => {
       if (item.type === "image" && item.value.type === "url") {
         const asset = assetFromUrl(item.value.url, "image");
@@ -307,18 +305,19 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
         }
       }
     });
-    const selectorSuffix =
+    const suffix =
       style.selector === ":root"
         ? ""
         : style.selector.slice(".ws-token".length);
-    const state = `${selectorSuffix}${style.state ?? ""}` || undefined;
-    styles.push({
+    return {
       styleSourceId: style.selector === ":root" ? rootId : tokenId,
       breakpointId,
-      state,
-      property: camelCaseProperty(style.property),
       value,
-    });
+      state: `${suffix}${style.state ?? ""}` || undefined,
+    };
+  });
+  if (invalidBreakpoint) {
+    return { owned: true, valid: false };
   }
   for (const asset of assets.values()) {
     const url = new URL(asset.id);
