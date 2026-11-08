@@ -364,11 +364,15 @@ export const pasteDesignToken = (
     (style) => style.styleSourceId !== tokenId
   );
   const replacements: Record<string, string> = {};
-  const targetVariableNames = new Set<string>(
-    Array.from(target.styles.values())
-      .filter((style) => style.property.startsWith("--"))
-      .map((style) => style.property)
-  );
+  const targetVariableNames = new Set<string>();
+  for (const style of target.styles.values()) {
+    if (style.property.startsWith("--")) {
+      targetVariableNames.add(style.property);
+    }
+    for (const name of collectVariableReferences(style.value)) {
+      targetVariableNames.add(name);
+    }
+  }
   const tokenVariableNames = new Set<string>(
     fragment.styles
       .filter(

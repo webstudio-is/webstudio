@@ -399,7 +399,13 @@ test("reserves token-local variables when renaming imported root variables", () 
   });
 });
 
-test("reserves destination-local variable names when importing root variables", () => {
+test.each([
+  ["declaration", style("target-local", "base", "--brand-1", "green")],
+  [
+    "fallback reference",
+    style("target-local", "base", "color", "var(--brand-1, green)"),
+  ],
+])("reserves destination variable names (%s)", (_scenario, localStyle) => {
   const copied = copyDesignToken(
     {
       assets: new Map(),
@@ -448,7 +454,7 @@ test("reserves destination-local variable names when importing root variables", 
     ]),
     styles: styleMap([
       style("target-root", "base", "--brand", "blue"),
-      style("target-local", "base", "--brand-1", "green"),
+      localStyle,
     ]),
   };
   const mutation = pasteDesignToken(
