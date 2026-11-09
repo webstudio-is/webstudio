@@ -615,14 +615,18 @@ export const subscribeStyles = () => {
     prevStylesSet = nextPrevStylesSet;
     // delete before adding declarations by the same key
     for (const styleDecl of deletedStyles) {
-      if ($styleSources.get().get(styleDecl.styleSourceId)?.type === "tagToken") {
+      if (
+        $styleSources.get().get(styleDecl.styleSourceId)?.type === "tagToken"
+      ) {
         continue;
       }
       const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
       rule.deleteDeclaration(toDeclarationParams(styleDecl));
     }
     for (const styleDecl of addedStyles) {
-      if ($styleSources.get().get(styleDecl.styleSourceId)?.type === "tagToken") {
+      if (
+        $styleSources.get().get(styleDecl.styleSourceId)?.type === "tagToken"
+      ) {
         continue;
       }
       const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
