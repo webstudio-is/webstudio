@@ -224,6 +224,24 @@ test("keeps combined custom media conditions", () => {
   }
 });
 
+test.each(["prefers-reduced-motion: reduce", "min-width: 600px"])(
+  "keeps negated media condition %s",
+  (feature) => {
+    const parsed =
+      parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+@media not (${feature}) {
+  .ws-token { color: red; }
+}
+`);
+    expect(parsed.valid).toBe(true);
+    if (parsed.valid) {
+      const condition = `not (${feature.replace(": ", ":")})`;
+      expect(parsed.data.fragment.breakpoints[1].condition).toBe(condition);
+      expect(serializeTokenCss(parsed.data)).toContain(`@media ${condition}`);
+    }
+  }
+);
+
 test("allows token shorthands to reference ancestor variables", () => {
   const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
 .ws-token { padding: var(--space); }

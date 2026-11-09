@@ -331,12 +331,19 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
         invalidBreakpoint = true;
         return;
       }
+      const preserveCondition =
+        breakpointId.startsWith("not ") ||
+        (media.condition !== undefined &&
+          breakpointId !== `(${media.condition})`);
       breakpoints.set(breakpointId, {
         id: breakpointId,
         label: breakpointId,
-        // MediaRule wraps conditions in parentheses when serializing.
-        ...(media.condition !== undefined && breakpointId.includes(") and (")
-          ? { condition: breakpointId.slice(1, -1) }
+        ...(preserveCondition
+          ? {
+              condition: breakpointId.startsWith("(")
+                ? breakpointId.slice(1, -1)
+                : breakpointId,
+            }
           : media),
       });
     }
