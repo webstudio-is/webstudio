@@ -214,6 +214,37 @@ test("copies the winning root variable when root sources overlap", () => {
   ]);
 });
 
+test("keeps project breakpoint order when equal media rules overlap", () => {
+  const copied = copyDesignToken(
+    {
+      assets: new Map(),
+      breakpoints: new Map([
+        ["base", { id: "base", label: "Base" }],
+        ["first", { id: "first", label: "First", maxWidth: 600 }],
+        ["second", { id: "second", label: "Second", maxWidth: 600 }],
+      ]),
+      styleSources: new Map([
+        ["token", { type: "token", id: "token", name: "Button" }],
+      ]),
+      styleSourceSelections: new Map(),
+      styles: styleMap([
+        style("token", "second", "color", "blue"),
+        style("token", "first", "color", "red"),
+      ]),
+    },
+    { tokenId: "token" }
+  );
+  const parsed = parseTokenTransferData(copied.data);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(
+      parsed.data.fragment.styles
+        .filter((item) => item.property === "color")
+        .at(-1)?.value
+    ).toEqual({ type: "keyword", value: "blue" });
+  }
+});
+
 test("maps duplicate source breakpoints to the created target breakpoint", () => {
   const copied = copyDesignToken(
     {

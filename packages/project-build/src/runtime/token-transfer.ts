@@ -165,10 +165,9 @@ export const copyDesignToken = (
   const breakpointIds = new Set(
     copiedStyles.map((style) => style.breakpointId)
   );
-  const copiedBreakpoints = Array.from(breakpointIds).flatMap((id) => {
-    const breakpoint = breakpoints.get(id);
-    return breakpoint === undefined ? [] : [breakpoint];
-  });
+  const copiedBreakpoints = Array.from(breakpoints.values()).filter(
+    (breakpoint) => breakpointIds.has(breakpoint.id)
+  );
   if (copiedBreakpoints.length !== breakpointIds.size) {
     return throwBuilderRuntimeError("NOT_FOUND", "Token breakpoint is missing");
   }
