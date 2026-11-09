@@ -285,7 +285,7 @@ describe("upload-assets", () => {
       1,
       "font",
       [new URL("https://source.example.com/brand.woff2")],
-      {}
+      { preserveFilename: true }
     );
     expect(upload).toHaveBeenNthCalledWith(
       2,
@@ -416,6 +416,50 @@ describe("upload-assets", () => {
 
     expect(upload).not.toHaveBeenCalled();
     expect(waitForUpload).not.toHaveBeenCalled();
+  });
+
+  test("requests content deduplication when importing an image again", async () => {
+    $project.set({ id: "target-project" } as Project);
+    const sourceAsset = {
+      id: "source-image",
+      projectId: "source-project",
+      name: "hero.png",
+      type: "image",
+      format: "png",
+      size: 4,
+      createdAt: "2026-01-01",
+      description: null,
+      meta: { width: 100, height: 100 },
+    } satisfies Asset;
+    const targetAsset = {
+      ...sourceAsset,
+      id: "target-image",
+      projectId: "target-project",
+      name: "stored-hero.png",
+    } satisfies Asset;
+    $assets.set(new Map([[targetAsset.id, targetAsset]]));
+    const url = "https://source.example.com/cgi/image/hero.png?format=raw";
+    const upload = vi.fn(
+      async (
+        _type: string,
+        [sourceUrl]: URL[],
+        _options?: { preserveFilename?: boolean }
+      ) => new Map([[sourceUrl, targetAsset.id]])
+    );
+    const waitForUpload = vi.fn(async () => targetAsset);
+
+    const imported = await importAssets(
+      "target-project",
+      [{ asset: sourceAsset, url }],
+      { upload, waitForUpload }
+    );
+
+    expect(imported.get(sourceAsset.id)).toEqual(targetAsset);
+    expect(upload).toHaveBeenCalledOnce();
+    const [type, [sourceUrl], options] = upload.mock.calls[0];
+    expect(type).toBe("image");
+    expect(sourceUrl.href).toBe(url);
+    expect(options).toEqual({ preserveFilename: true });
   });
 
   test("passes the existing browser content hash to the shared upload ticket", async () => {
@@ -559,6 +603,49 @@ describe("upload-assets", () => {
       contentHash,
       fingerprintId: JSON.stringify(["image.png", contentHash]),
     });
+  });
+
+  test("sends the source URL and stable filename for server content deduplication", async () => {
+    $assets.set(
+      new Map([
+        [
+          "existing",
+          {
+            id: "existing",
+            projectId: "target-project",
+            name: "hero.svg",
+            type: "image",
+            format: "svg",
+            size: 4,
+            createdAt: "2026-01-01",
+            description: null,
+            meta: { width: 100, height: 100 },
+          } satisfies Asset,
+        ],
+      ])
+    );
+    request.mockResolvedValue(
+      Response.json({
+        assetId: "existing",
+        name: "hero.svg",
+        deduplicated: true,
+      })
+    );
+    await createUploadTicket({
+      authToken: "token",
+      projectId: "target-project",
+      fileOrUrl: new URL(
+        "https://source.example.com/cgi/asset/hero.svg?format=raw"
+      ),
+      preserveFilename: true,
+      assetType: "image",
+      request,
+    });
+    const [_url, init] = request.mock.calls[0] as [string, { body: FormData }];
+    expect(init.body.get("filename")).toBe("hero.svg");
+    expect(init.body.get("sourceUrl")).toBe(
+      "https://source.example.com/cgi/asset/hero.svg?format=raw"
+    );
   });
 
   test("preserves identical file content with different filenames", async () => {

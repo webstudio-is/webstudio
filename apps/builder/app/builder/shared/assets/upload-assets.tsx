@@ -41,6 +41,7 @@ type UploadAssetsOptions = {
   folderId?: string;
   dimensions?: { width: number; height: number };
   deduplicate?: boolean;
+  preserveFilename?: boolean;
 };
 
 const safeDeleteAssets = (assetIds: Asset["id"][], projectId: string) => {
@@ -320,6 +321,7 @@ const createUploadTicket = async ({
   fileOrUrl,
   contentHash,
   deduplicate = true,
+  preserveFilename = false,
   assetType,
   request = fetch,
 }: {
@@ -329,6 +331,7 @@ const createUploadTicket = async ({
   fileOrUrl: File | URL;
   contentHash?: string;
   deduplicate?: boolean;
+  preserveFilename?: boolean;
   assetType: AssetType;
   request?: typeof fetch;
 }): Promise<UploadTicket> => {
@@ -342,13 +345,18 @@ const createUploadTicket = async ({
   if (contentHash !== undefined && deduplicate) {
     metaFormData.append("contentHash", contentHash);
   }
+  if (fileOrUrl instanceof URL && deduplicate && preserveFilename) {
+    metaFormData.append("sourceUrl", fileOrUrl.href);
+  }
   const existingNames = new Set<string>();
   for (const asset of $assets.get().values()) {
     if (asset.folderId === folderId) {
       existingNames.add(formatAssetName(asset));
     }
   }
-  const deduplicatedFilename = deduplicateAssetName(fileName, existingNames);
+  const deduplicatedFilename = preserveFilename
+    ? fileName
+    : deduplicateAssetName(fileName, existingNames);
   // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
   // should be removed after fix
   metaFormData.append("filename", sanitizeS3Key(deduplicatedFilename));
@@ -549,6 +557,7 @@ export const uploadAssets = async <T extends File | URL>(
         contentHash:
           fileData.source === "file" ? fileData.contentHash : undefined,
         deduplicate: options.deduplicate,
+        preserveFilename: options.preserveFilename,
         assetType: fileData.type,
       });
       fileData.assetId = ticket.assetId;
@@ -658,6 +667,9 @@ export const importAssets = async (
       // Copy mutable documents independently because reference rewriting must
       // never modify an existing target Asset that upload deduplication reused.
       options = { deduplicate: false };
+    }
+    if (source.asset.type === "image" || source.asset.type === "font") {
+      options = { ...options, preserveFilename: true };
     }
     const assetId = (await upload(source.asset.type, [url], options)).get(url);
     if (assetId === undefined) {

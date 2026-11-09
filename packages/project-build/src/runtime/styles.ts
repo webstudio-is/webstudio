@@ -42,7 +42,10 @@ import { getInstanceDepths } from "./instances";
 import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
-import { serializeStyleDeclarations } from "./style-utils";
+import {
+  mapCssValueVariables,
+  serializeStyleDeclarations,
+} from "./style-utils";
 import { createPropValue } from "./props";
 import { getStyleSourceStylesSignature } from "./style-copy";
 import { isBaseWidthBreakpoint } from "./breakpoints";
@@ -425,6 +428,10 @@ export const createCssVariableNamesRegex = (names: Set<string>) => {
 export const collectCssVariableReferences = (value: string, regex?: RegExp) => {
   const references = new Set<string>();
   if (regex === undefined) {
+    mapCssValueVariables(value, (name) => {
+      references.add(name);
+      return;
+    });
     return references;
   }
   regex.lastIndex = 0;

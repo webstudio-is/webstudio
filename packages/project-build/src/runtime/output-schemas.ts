@@ -659,6 +659,8 @@ export const runtimeOutputSchemas = {
   "styles.deleteSelectedDeclarations": styleKeysResult,
   "styles.replaceValues": styleKeysResult,
   "designTokens.list": looseObject({ tokens: z.array(token), ...outputPage }),
+  "designTokens.copy": looseObject({ data: z.string() }),
+  "designTokens.paste": looseObject({ tokenId: id }),
   "designTokens.create": looseObject({ tokenIds: stringArray }),
   "designTokens.import": looseObject({
     plan: z.array(designTokenImportPlanEntrySchema),

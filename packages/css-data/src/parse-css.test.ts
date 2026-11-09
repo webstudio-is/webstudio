@@ -1620,7 +1620,7 @@ test("parse &:functional-pseudo as state", () => {
   expect(parseCss(`&:nth-child(2) { color: red }`, new Map()).styles).toEqual([
     {
       selector: "",
-      state: ":nth-child",
+      state: ":nth-child(2)",
       property: "color",
       value: { type: "keyword", value: "red" },
     },
