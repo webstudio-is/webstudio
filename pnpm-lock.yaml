@@ -1426,9 +1426,6 @@ importers:
       '@webstudio-is/content-engine':
         specifier: workspace:*
         version: link:../content-engine
-      '@webstudio-is/css-data':
-        specifier: workspace:*
-        version: link:../css-data
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
@@ -1640,9 +1637,6 @@ importers:
       css-tree:
         specifier: ^3.2.1
         version: 3.2.1
-      postcss:
-        specifier: ^8.5.16
-        version: 8.5.16
       warn-once:
         specifier: ^0.1.1
         version: 0.1.1
@@ -2362,6 +2356,9 @@ importers:
       papaparse:
         specifier: ^5.5.3
         version: 5.5.3
+      postcss:
+        specifier: ^8.5.16
+        version: 8.5.16
       slugify:
         specifier: ^1.6.6
         version: 1.6.6

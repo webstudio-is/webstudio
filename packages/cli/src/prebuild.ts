@@ -81,7 +81,7 @@ import {
   getZodValidationIssues,
   createAssetUrlsByPath,
 } from "@webstudio-is/project-build/runtime";
-import { parseGeneratedStyleDeclaration } from "@webstudio-is/css-data";
+import { parseGeneratedStyleDeclaration } from "@webstudio-is/project-build/persistence";
 import {
   createPublishedBuildContentCompilationPlan,
   getDynamicPublishedMdxSourceBlockIds,
