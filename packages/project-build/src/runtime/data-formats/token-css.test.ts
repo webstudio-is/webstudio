@@ -141,6 +141,37 @@ test("keeps variable references in mixed token shorthands", () => {
   }
 });
 
+test("keeps fallback variables in mixed token shorthands", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+.ws-token { outline: var(--width, 2px) solid red; }
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(
+      parsed.data.fragment.styles.find(
+        (style) => style.property === "outlineWidth"
+      )?.value
+    ).toEqual({ type: "unparsed", value: "var(--width, 2px)" });
+  }
+});
+
+test("keeps token styles at non-pixel width breakpoints", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+@media (min-width: 40em) { .ws-token { color: red; } }
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.breakpoints).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ condition: "min-width:40em" }),
+      ])
+    );
+    expect(parsed.data.fragment.styles).toEqual(
+      expect.arrayContaining([expect.objectContaining({ property: "color" })])
+    );
+  }
+});
+
 test("allows token shorthands to reference ancestor variables", () => {
   const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
 .ws-token { padding: var(--space); }

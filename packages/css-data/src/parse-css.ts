@@ -247,9 +247,9 @@ const preserveOriginalVarLonghands = (
     );
   }
 
-  // Recover unresolved var()->longhand mapping when shorthand expansion drops
+  // Recover var()->longhand mapping when shorthand expansion drops
   // the var() token (e.g. outline/border cases that default to currentcolor).
-  for (const varText of getFallbacklessVarTexts(value)) {
+  for (const varText of getVarTexts(value)) {
     const varName = getVarNameFromVarText(varText);
     if (varName === undefined) {
       continue;
@@ -298,17 +298,14 @@ const preserveOriginalVarLonghands = (
     return serialized.includes('"type":"var"') || serialized.includes("var(");
   });
 
-  const firstFallbacklessVarText = getFallbacklessVarTexts(value)[0];
+  const firstVarText = getVarTexts(value)[0];
 
-  if (firstFallbacklessVarText !== undefined) {
+  if (firstVarText !== undefined) {
     for (const [prop, styleValue] of parsedCss) {
       if (styleValue.type !== "invalid") {
         continue;
       }
-      parsedCss.set(
-        prop,
-        parseCssValueLonghand(prop, firstFallbacklessVarText)
-      );
+      parsedCss.set(prop, parseCssValueLonghand(prop, firstVarText));
     }
   }
 
@@ -318,12 +315,9 @@ const preserveOriginalVarLonghands = (
   // When no var() survived at all, keep the first unresolved var() on all
   // parsed longhands so authored references are not lost.
   if (!hasAnyPreservedVar) {
-    if (firstFallbacklessVarText !== undefined) {
+    if (firstVarText !== undefined) {
       for (const prop of parsedCss.keys()) {
-        parsedCss.set(
-          prop,
-          parseCssValueLonghand(prop, firstFallbacklessVarText)
-        );
+        parsedCss.set(prop, parseCssValueLonghand(prop, firstVarText));
       }
     }
   }
@@ -395,7 +389,7 @@ const getSingleFallbacklessVarText = (value: string): string | undefined => {
   }
 };
 
-const getFallbacklessVarTexts = (value: string): string[] => {
+const getVarTexts = (value: string): string[] => {
   try {
     const ast = csstree.parse(value, { context: "value" });
     const vars: string[] = [];
@@ -408,7 +402,7 @@ const getFallbacklessVarTexts = (value: string): string[] => {
           return;
         }
         const parsedVar = parseCssVar(fnNode);
-        if (!parsedVar || parsedVar.fallback !== undefined) {
+        if (!parsedVar) {
           return;
         }
         vars.push(csstree.generate(fnNode));
@@ -422,7 +416,7 @@ const getFallbacklessVarTexts = (value: string): string[] => {
 };
 
 const getVarNameFromVarText = (varText: string): string | undefined => {
-  const match = varText.trim().match(/^var\(\s*(--[\w-]+)\s*\)$/);
+  const match = varText.trim().match(/^var\(\s*(--[\w-]+)/);
   return match?.[1];
 };
 
@@ -744,6 +738,7 @@ export const parseCss = (
   parsedAst?: csstree.CssNode,
   options: {
     preserveShorthandVariables?: boolean;
+    preserveNonPixelWidth?: boolean;
     parseSelector?: (selector: csstree.Selector) => Selector;
   } = {}
 ): ParseCssResult => {
@@ -841,6 +836,7 @@ export const parseCss = (
               if (
                 node.type === "Dimension" &&
                 node.unit !== "px" &&
+                options.preserveNonPixelWidth !== true &&
                 (currentFeatureName === "min-width" ||
                   currentFeatureName === "max-width")
               ) {
@@ -1191,7 +1187,8 @@ type ParsedBreakpoint = {
 };
 
 export const parseMediaQuery = (
-  mediaQuery: string
+  mediaQuery: string,
+  options: { preserveNonPixelWidth?: boolean } = {}
 ): undefined | ParsedBreakpoint => {
   const ast = csstree.parse(mediaQuery, { context: "mediaQuery" });
   let minWidth: undefined | number;
@@ -1219,12 +1216,18 @@ export const parseMediaQuery = (
         otherFeatures.push(cleaned);
       }
     }
-    if (node.type === "Dimension" && node.unit === "px") {
-      const value = Number(node.value);
-      if (currentWidthProperty === "minWidth") {
-        minWidth = value;
-      } else if (currentWidthProperty === "maxWidth") {
-        maxWidth = value;
+    if (node.type === "Dimension" && currentWidthProperty !== undefined) {
+      if (node.unit === "px") {
+        const value = Number(node.value);
+        if (currentWidthProperty === "minWidth") {
+          minWidth = value;
+        } else {
+          maxWidth = value;
+        }
+      } else if (options.preserveNonPixelWidth) {
+        const property =
+          currentWidthProperty === "minWidth" ? "min-width" : "max-width";
+        otherFeatures.push(`${property}:${node.value}${node.unit}`);
       }
       currentWidthProperty = undefined;
     }

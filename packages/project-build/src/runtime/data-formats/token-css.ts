@@ -292,6 +292,7 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   }
   const parsed = parseCss(body, extractCssCustomProperties(body, ast), ast, {
     preserveShorthandVariables: true,
+    preserveNonPixelWidth: true,
     parseSelector: (selector) => {
       const name =
         selector.children.first?.type === "PseudoClassSelector"
@@ -321,7 +322,9 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   const styles = mapParsedCssStyles(parsed.styles, (style) => {
     const breakpointId = style.breakpoint ?? baseId;
     if (!breakpoints.has(breakpointId)) {
-      const media = parseMediaQuery(breakpointId);
+      const media = parseMediaQuery(breakpointId, {
+        preserveNonPixelWidth: true,
+      });
       if (media === undefined) {
         invalidBreakpoint = true;
         return;
