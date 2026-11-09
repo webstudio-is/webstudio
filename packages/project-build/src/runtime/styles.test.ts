@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   type Breakpoint,
   getStyleDeclKey,
+  getTagTokenId,
   ROOT_INSTANCE_ID,
   type Instance,
   type Prop,
@@ -1589,6 +1590,84 @@ describe("runtime style operations", () => {
         patches: [{ op: "remove", path: ["token:desktop:color:"] }],
       },
     ]);
+  });
+
+  test("editing a tag token creates a global source without attaching it", () => {
+    const id = getTagTokenId("button");
+    const mutation = updateSelectedStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: toMap([instance("button-instance")]),
+        styles: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      {
+        updates: [
+          {
+            instanceId: "button-instance",
+            styleSourceId: id,
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            state: ":hover",
+          },
+        ],
+      }
+    );
+
+    expect(mutation.payload).toContainEqual({
+      namespace: "styleSources",
+      patches: [
+        {
+          op: "add",
+          path: [id],
+          value: { type: "tagToken", id, tag: "button" },
+        },
+      ],
+    });
+    expect(mutation.payload).toContainEqual({
+      namespace: "styles",
+      patches: [
+        expect.objectContaining({
+          path: [`${id}:desktop:color::hover`],
+          value: expect.objectContaining({
+            styleSourceId: id,
+            state: ":hover",
+          }),
+        }),
+      ],
+    });
+    expect(
+      mutation.payload.some(
+        (change) => change.namespace === "styleSourceSelections"
+      )
+    ).toBe(false);
+  });
+
+  test("rejects a descendant selector on a tag token", () => {
+    const id = getTagTokenId("button");
+    expect(() =>
+      updateSelectedStyleDeclarations(
+        {
+          breakpoints: runtimeBreakpoints,
+          instances: toMap([instance("button-instance")]),
+          styles: new Map(),
+          styleSources: new Map(),
+          styleSourceSelections: new Map(),
+        },
+        {
+          updates: [
+            {
+              instanceId: "button-instance",
+              styleSourceId: id,
+              property: "color",
+              value: { type: "keyword", value: "red" },
+              state: " p",
+            },
+          ],
+        }
+      )
+    ).toThrow();
   });
 
   test("renames, locks, and deletes style sources", () => {

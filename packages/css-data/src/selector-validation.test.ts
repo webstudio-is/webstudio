@@ -34,6 +34,35 @@ describe("validateSelector", () => {
     expect(validateSelector(selector).success).toBe(true);
   });
 
+  test.each([" p", " button:hover", " a[aria-current=page]"])(
+    "accepts one descendant tag and its states: %s",
+    (selector) => {
+      expect(validateSelector(selector)).toMatchObject({
+        success: true,
+        type: "tag",
+      });
+    }
+  );
+
+  test.each([" p strong", " .card", " #card", " p + span"])(
+    "rejects unsupported descendant tag selectors: %s",
+    (selector) => {
+      expect(validateSelector(selector).success).toBe(false);
+    }
+  );
+
+  test("limits a tag token to states of its own tag", () => {
+    expect(
+      validateSelector(":hover", { allowDescendants: false }).success
+    ).toBe(true);
+    expect(validateSelector(" p", { allowDescendants: false }).success).toBe(
+      false
+    );
+    expect(
+      validateSelector(":hover p", { allowDescendants: false }).success
+    ).toBe(false);
+  });
+
   test.each([
     ":not-a-real-state:hover",
     ":hover:not-a-real-state",

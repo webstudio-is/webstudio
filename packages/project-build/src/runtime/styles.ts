@@ -16,6 +16,7 @@ import {
 import {
   createId,
   getStyleDeclKey,
+  getTagFromTokenId,
   ROOT_INSTANCE_ID,
   styleDecl as styleDeclSchema,
   type Breakpoint,
@@ -2236,7 +2237,11 @@ export const deleteStyleSources = (
 ) => {
   const styleState = getRequiredStyleState(state);
   for (const styleSourceId of input.styleSourceIds) {
-    if (styleState.styleSources.has(styleSourceId) === false) {
+    const source = styleState.styleSources.get(styleSourceId);
+    if (source === undefined) {
+      return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
+    }
+    if (source.type === "tagToken") {
       return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
     }
   }
@@ -2458,7 +2463,7 @@ export const duplicateStyleSource = (
   if (styleSource === undefined) {
     return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
   }
-  if (styleSource.type === "local") {
+  if (styleSource.type !== "token") {
     return throwBuilderRuntimeError(
       "BAD_REQUEST",
       "Local style sources cannot be duplicated. Convert the local style source to a design token first."
@@ -3138,33 +3143,36 @@ export const createSelectedStyleDeclarationUpdatePayload = ({
       nextStyleSourceIds.add(update.styleSource.id);
     }
 
-    const selection = styleSourceSelectionByInstanceId.get(update.instanceId);
-    const hasPendingSelection =
-      selection === undefined &&
-      nextSelectionValuesByInstanceId.has(update.instanceId);
-    const selectionValues =
-      nextSelectionValuesByInstanceId.get(update.instanceId) ?? [];
-    if (selectionValues.includes(update.styleSourceId) === false) {
-      styleSelectionPatches.push(
-        selection === undefined && hasPendingSelection === false
-          ? {
-              op: "add" as const,
-              path: [update.instanceId],
-              value: {
-                instanceId: update.instanceId,
-                values: [update.styleSourceId],
-              },
-            }
-          : {
-              op: "add" as const,
-              path: [update.instanceId, "values", selectionValues.length],
-              value: update.styleSourceId,
-            }
-      );
-      nextSelectionValuesByInstanceId.set(update.instanceId, [
-        ...selectionValues,
-        update.styleSourceId,
-      ]);
+    // Tag tokens render globally and never enter instance selections.
+    if (update.styleSource.type !== "tagToken") {
+      const selection = styleSourceSelectionByInstanceId.get(update.instanceId);
+      const hasPendingSelection =
+        selection === undefined &&
+        nextSelectionValuesByInstanceId.has(update.instanceId);
+      const selectionValues =
+        nextSelectionValuesByInstanceId.get(update.instanceId) ?? [];
+      if (selectionValues.includes(update.styleSourceId) === false) {
+        styleSelectionPatches.push(
+          selection === undefined && hasPendingSelection === false
+            ? {
+                op: "add" as const,
+                path: [update.instanceId],
+                value: {
+                  instanceId: update.instanceId,
+                  values: [update.styleSourceId],
+                },
+              }
+            : {
+                op: "add" as const,
+                path: [update.instanceId, "values", selectionValues.length],
+                value: update.styleSourceId,
+              }
+        );
+        nextSelectionValuesByInstanceId.set(update.instanceId, [
+          ...selectionValues,
+          update.styleSourceId,
+        ]);
+      }
     }
 
     for (const styleDecl of createStyleDeclsFromInput({
@@ -3415,9 +3423,29 @@ export const updateSelectedStyleDeclarations = (
     input.updates.map((update) => update.instanceId)
   );
   const updates = input.updates.map((update) => {
-    const styleSource = styleState.styleSources.get(update.styleSourceId);
-    if (styleSource === undefined) {
+    const existingSource = styleState.styleSources.get(update.styleSourceId);
+    const tag = getTagFromTokenId(update.styleSourceId);
+    if (existingSource === undefined && tag === undefined) {
       return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
+    }
+    if (existingSource && tag && existingSource.type !== "tagToken") {
+      return throwBuilderRuntimeError("CONFLICT", "Tag token id is in use");
+    }
+    const styleSource: StyleSource = existingSource ?? {
+      type: "tagToken",
+      id: update.styleSourceId,
+      tag: tag!,
+    };
+    if (
+      styleSource.type === "tagToken" &&
+      update.state !== undefined &&
+      validateSelector(update.state, { allowDescendants: false }).success ===
+        false
+    ) {
+      return throwBuilderRuntimeError(
+        "BAD_REQUEST",
+        "Selector must be one state scoped to the current element"
+      );
     }
     if (isStyleSourceLocked(styleSource)) {
       return throwBuilderRuntimeError("BAD_REQUEST", "Style source is locked");

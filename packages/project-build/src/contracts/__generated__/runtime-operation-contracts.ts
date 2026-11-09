@@ -11239,6 +11239,22 @@ export const runtimeOperationContractData = [
                             properties: {
                               type: {
                                 type: "string",
+                                const: "tagToken",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              tag: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "tag"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
                                 const: "local",
                               },
                               id: {
@@ -14499,6 +14515,22 @@ export const runtimeOperationContractData = [
                               },
                             },
                             required: ["type", "id", "name"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "tagToken",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              tag: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "tag"],
                           },
                           {
                             type: "object",
@@ -17782,6 +17814,22 @@ export const runtimeOperationContractData = [
                             properties: {
                               type: {
                                 type: "string",
+                                const: "tagToken",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              tag: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "tag"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
                                 const: "local",
                               },
                               id: {
@@ -21042,6 +21090,22 @@ export const runtimeOperationContractData = [
                               },
                             },
                             required: ["type", "id", "name"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "tagToken",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              tag: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "tag"],
                           },
                           {
                             type: "object",
@@ -27223,6 +27287,22 @@ export const runtimeOperationContractData = [
                                   properties: {
                                     type: {
                                       type: "string",
+                                      const: "tagToken",
+                                    },
+                                    id: {
+                                      type: "string",
+                                    },
+                                    tag: {
+                                      type: "string",
+                                    },
+                                  },
+                                  required: ["type", "id", "tag"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
                                       const: "local",
                                     },
                                     id: {
@@ -30697,6 +30777,22 @@ export const runtimeOperationContractData = [
                                   properties: {
                                     type: {
                                       type: "string",
+                                      const: "tagToken",
+                                    },
+                                    id: {
+                                      type: "string",
+                                    },
+                                    tag: {
+                                      type: "string",
+                                    },
+                                  },
+                                  required: ["type", "id", "tag"],
+                                },
+                                {
+                                  type: "object",
+                                  properties: {
+                                    type: {
+                                      type: "string",
                                       const: "local",
                                     },
                                     id: {
@@ -33506,7 +33602,7 @@ export const runtimeOperationContractData = [
               },
               source: {
                 type: "string",
-                enum: ["local", "token"],
+                enum: ["local", "token", "tagToken"],
               },
             },
             required: [
@@ -45295,6 +45391,22 @@ export const runtimeOperationContractData = [
                             properties: {
                               type: {
                                 type: "string",
+                                const: "tagToken",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              tag: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "tag"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
                                 const: "local",
                               },
                               id: {
@@ -48634,6 +48746,22 @@ export const runtimeOperationContractData = [
                               },
                             },
                             required: ["type", "id", "name"],
+                          },
+                          {
+                            type: "object",
+                            properties: {
+                              type: {
+                                type: "string",
+                                const: "tagToken",
+                              },
+                              id: {
+                                type: "string",
+                              },
+                              tag: {
+                                type: "string",
+                              },
+                            },
+                            required: ["type", "id", "tag"],
                           },
                           {
                             type: "object",
@@ -55615,6 +55743,22 @@ export const runtimeOperationContractData = [
                     properties: {
                       type: {
                         type: "string",
+                        const: "tagToken",
+                      },
+                      id: {
+                        type: "string",
+                      },
+                      tag: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "id", "tag"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
                         const: "local",
                       },
                       id: {
@@ -61571,6 +61715,22 @@ export const runtimeOperationContractData = [
                       },
                     },
                     required: ["type", "id", "name"],
+                  },
+                  {
+                    type: "object",
+                    properties: {
+                      type: {
+                        type: "string",
+                        const: "tagToken",
+                      },
+                      id: {
+                        type: "string",
+                      },
+                      tag: {
+                        type: "string",
+                      },
+                    },
+                    required: ["type", "id", "tag"],
                   },
                   {
                     type: "object",
@@ -68962,7 +69122,7 @@ export const runtimeOperationContractData = [
               },
               source: {
                 type: "string",
-                enum: ["local", "token"],
+                enum: ["local", "token", "tagToken"],
               },
               valueType: {
                 type: "string",

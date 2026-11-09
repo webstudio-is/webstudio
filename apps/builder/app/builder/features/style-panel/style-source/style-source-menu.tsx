@@ -1,4 +1,5 @@
 import { Fragment, useState } from "react";
+import { tags } from "@webstudio-is/sdk";
 import {
   Box,
   Combobox,
@@ -31,7 +32,7 @@ import {
 } from "./style-source-control";
 
 export type SelectorConfig = {
-  type: "state" | "pseudoElement";
+  type: "state" | "pseudoElement" | "tag";
   selector: string;
   label: string;
   description?: string;
@@ -103,11 +104,13 @@ const MenuTriggerGradient = styled(Box, {
 const selectorLabels = [
   "state",
   "pseudoElement",
+  "tag",
 ] satisfies SelectorConfig["type"][];
 
 const categoryLabels: Record<SelectorConfig["type"], string> = {
   state: "States",
   pseudoElement: "Pseudo elements",
+  tag: "Tag",
 };
 
 const menuActionDescriptions = {
@@ -131,6 +134,7 @@ const canEditStyleSourceStyles = (item: IntermediateItem) =>
 const allSelectors = [
   ...Object.keys(pseudoClassDescriptions),
   ...Object.keys(pseudoElementDescriptions),
+  ...tags.filter((tag) => tag !== "html"),
 ];
 
 const getDescription = (selector: string, type: "state" | "pseudoElement") => {
@@ -167,27 +171,40 @@ const getSelectorDescription = (selector: string | null | undefined) => {
 
 const SelectorCombobox = ({
   existingSelectors,
+  allowDescendants,
   onSelect,
 }: {
   existingSelectors: string[];
+  allowDescendants: boolean;
   onSelect: (selector: string) => void;
 }) => {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string>();
 
   const handleSubmit = (selector: string) => {
-    const validation = validateSelector(selector);
+    let normalizedSelector = selector;
+    let validation = validateSelector(normalizedSelector, { allowDescendants });
+    if (validation.success === false && allowDescendants) {
+      const tagSelector = ` ${selector}`;
+      const tagValidation = validateSelector(tagSelector, { allowDescendants });
+      if (tagValidation.success && tagValidation.type === "tag") {
+        normalizedSelector = tagSelector;
+        validation = tagValidation;
+      }
+    }
     if (validation.success === false) {
       setError(validation.error);
       return;
     }
     setError(undefined);
-    onSelect(selector);
+    onSelect(normalizedSelector);
     setValue("");
   };
 
-  const availableItems = allSelectors.filter((selector) =>
-    existingSelectors.every((s) => s !== selector)
+  const availableItems = allSelectors.filter(
+    (selector) =>
+      (allowDescendants || tags.includes(selector) === false) &&
+      existingSelectors.every((s) => s.trim() !== selector)
   );
 
   return (
@@ -252,9 +269,16 @@ type StyleSourceMenuProps = {
 };
 
 export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
+  const availableStates =
+    props.item.source === "tag"
+      ? props.states.filter(
+          ({ selector }) =>
+            validateSelector(selector, { allowDescendants: false }).success
+        )
+      : props.states;
   const [highlightedSelector, setHighlightedSelector] = useState<{
     selector: string;
-    type: "state" | "pseudoElement";
+    type: "state" | "pseudoElement" | "tag";
     description?: string;
   }>();
   const [highlightedAction, setHighlightedAction] = useState<MenuAction>();
@@ -263,7 +287,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
   // Get description for highlighted or selected item
   const selectedState = props.selectedItemSelector?.state;
   const selectedConfig = selectedState
-    ? props.states.find((s) => s.selector === selectedState)
+    ? availableStates.find((s) => s.selector === selectedState)
     : undefined;
   const descriptionSelector =
     highlightedSelector ??
@@ -282,7 +306,12 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
 
   const selectorDescription = descriptionSelector
     ? (descriptionSelector.description ??
-      getDescription(descriptionSelector.selector, descriptionSelector.type))
+      (descriptionSelector.type === "tag"
+        ? undefined
+        : getDescription(
+            descriptionSelector.selector,
+            descriptionSelector.type
+          )))
     : undefined;
 
   // Get source description based on item source
@@ -319,7 +348,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             )}
           </Flex>
         </DropdownMenuLabel>
-        {props.item.source !== "local" && (
+        {props.item.source === "token" && (
           <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
@@ -330,7 +359,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Rename
           </DropdownMenuItem>
         )}
-        {props.item.source !== "local" && (
+        {props.item.source === "token" && (
           <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
@@ -388,7 +417,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Clear styles
           </DropdownMenuItem>
         )}
-        {props.item.source !== "local" && (
+        {props.item.source === "token" && (
           <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
@@ -399,7 +428,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Detach
           </DropdownMenuItem>
         )}
-        {props.item.source !== "local" && (
+        {props.item.source === "token" && (
           <DropdownMenuItem
             destructive={true}
             onFocus={() => {
@@ -413,7 +442,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
         )}
         {canEditStyles &&
           selectorLabels.map((currentCategory) => {
-            const categoryStates = props.states.filter(
+            const categoryStates = availableStates.filter(
               ({ type }) => type === currentCategory
             );
             if (categoryStates.length === 0) {
@@ -497,7 +526,10 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             <DropdownMenuLabel>Add more</DropdownMenuLabel>
             <Box css={{ padding: theme.spacing[4] }}>
               <SelectorCombobox
-                existingSelectors={props.states.map((state) => state.selector)}
+                existingSelectors={availableStates.map(
+                  (state) => state.selector
+                )}
+                allowDescendants={props.item.source !== "tag"}
                 onSelect={(selector) =>
                   props.onAddSelector?.(props.item.id, selector)
                 }

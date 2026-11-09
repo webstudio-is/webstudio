@@ -13,6 +13,7 @@ import type { Props } from "./schema/props";
 import type { Breakpoints } from "./schema/breakpoints";
 import type { Styles } from "./schema/styles";
 import type { StyleSourceSelections } from "./schema/style-source-selections";
+import type { StyleSources } from "./schema/style-sources";
 import type { WsComponentMeta } from "./schema/component-meta";
 import { createScope } from "./scope";
 import {
@@ -50,6 +51,7 @@ export type CssConfig = {
   props: Props;
   breakpoints: Breakpoints;
   styles: Styles;
+  styleSources: StyleSources;
   styleSourceSelections: StyleSourceSelections;
   componentMetas: Map<string, WsComponentMeta>;
   assetBaseUrl: string;
@@ -90,6 +92,7 @@ export const generateCss = ({
   props,
   breakpoints,
   styles,
+  styleSources,
   styleSourceSelections,
   componentMetas,
   assetBaseUrl,
@@ -97,6 +100,7 @@ export const generateCss = ({
 }: CssConfig) => {
   const fontSheet = createRegularStyleSheet({ name: "ssr" });
   const presetSheet = createRegularStyleSheet({ name: "ssr" });
+  const tagTokenSheet = createRegularStyleSheet({ name: "ssr" });
   const userSheet = createRegularStyleSheet({ name: "ssr" });
 
   addFontRules({ sheet: fontSheet, assets, assetBaseUrl });
@@ -153,6 +157,7 @@ export const generateCss = ({
   }
 
   for (const breakpoint of breakpoints.values()) {
+    tagTokenSheet.addMediaRule(breakpoint.id, breakpoint);
     userSheet.addMediaRule(breakpoint.id, breakpoint);
   }
 
@@ -160,15 +165,24 @@ export const generateCss = ({
     assetBaseUrl,
   });
   userSheet.setTransformer(imageValueTransformer);
+  tagTokenSheet.setTransformer(imageValueTransformer);
 
   for (const styleDecl of styles.values()) {
-    const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
+    const styleSource = styleSources.get(styleDecl.styleSourceId);
+    const sheet = styleSource?.type === "tagToken" ? tagTokenSheet : userSheet;
+    const rule = sheet.addMixinRule(styleDecl.styleSourceId);
     rule.setDeclaration({
       breakpoint: styleDecl.breakpointId,
       selector: styleDecl.state ?? "",
       property: styleDecl.property,
       value: styleDecl.value,
     });
+  }
+
+  for (const source of styleSources.values()) {
+    if (source.type === "tagToken") {
+      tagTokenSheet.addNestingRule(source.tag).applyMixins([source.id]);
+    }
   }
 
   const classes = new Map<Instance["id"], string[]>();
@@ -243,6 +257,8 @@ export const generateCss = ({
     "@media all ",
     "@layer presets "
   );
+  const tagTokenCss = tagTokenSheet.cssText;
+  const tagTokenCssPrefix = tagTokenCss ? `${tagTokenCss}\n` : "";
 
   if (atomic) {
     const { cssText } = generateAtomic(userSheet, {
@@ -251,12 +267,12 @@ export const generateCss = ({
       classes,
     });
     return {
-      cssText: `${fontCss}${presetCss}\n${cssText}`,
+      cssText: `${fontCss}${presetCss}\n${tagTokenCssPrefix}${cssText}`,
       classes,
     };
   }
   return {
-    cssText: `${fontCss}${presetCss}\n${userSheet.cssText}`,
+    cssText: `${fontCss}${presetCss}\n${tagTokenCssPrefix}${userSheet.cssText}`,
     classes,
   };
 };

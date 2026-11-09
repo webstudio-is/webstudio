@@ -34,6 +34,7 @@ import {
   $props,
   $styles,
   $styleSourceSelections,
+  $styleSources,
 } from "~/shared/sync/data-stores";
 import {
   getComputedStyleDecl,
@@ -133,12 +134,16 @@ const getDefinedStyles = ({
   matchingBreakpoints: matchingBreakpointsArray,
   styleSourceSelections,
   styles,
+  tagTokenIds,
+  instanceTags,
 }: {
   instancePath: InstancePath;
   metas: Map<string, WsComponentMeta>;
   matchingBreakpoints: Breakpoint["id"][];
   styleSourceSelections: StyleSourceSelections;
   styles: Styles;
+  tagTokenIds: Map<string, string>;
+  instanceTags: Map<Instance["id"], HtmlTags>;
 }) => {
   type Defined = {
     property: CssProperty;
@@ -169,6 +174,15 @@ const getDefinedStyles = ({
         } else {
           inheritedStyleSources.add(styleSourceId);
         }
+      }
+    }
+    const tag = instanceTags.get(instance.id);
+    const tagTokenId = tag ? tagTokenIds.get(tag) : undefined;
+    if (tagTokenId) {
+      if (instance.id === startingInstanceSelector[0]) {
+        instanceStyleSources.add(tagTokenId);
+      } else {
+        inheritedStyleSources.add(tagTokenId);
       }
     }
   }
@@ -212,6 +226,7 @@ const getDefinedStyles = ({
 export const $styleObjectModel = computed(
   [
     $styles,
+    $styleSources,
     $styleSourceSelections,
     $presetStyles,
     $instanceTags,
@@ -221,6 +236,7 @@ export const $styleObjectModel = computed(
   ],
   (
     styles,
+    styleSources,
     styleSourceSelections,
     presetStyles,
     instanceTags,
@@ -228,8 +244,15 @@ export const $styleObjectModel = computed(
     matchingBreakpoints,
     matchingStates
   ): StyleObjectModel => {
+    const tagTokenIds = new Map<string, string>();
+    for (const source of styleSources.values()) {
+      if (source.type === "tagToken") {
+        tagTokenIds.set(source.tag, source.id);
+      }
+    }
     return {
       styles,
+      tagTokenIds,
       styleSourceSelections,
       presetStyles,
       instanceTags,
@@ -268,6 +291,8 @@ export const $computedStyleDeclarations = computed(
       matchingBreakpoints,
       styleSourceSelections,
       styles,
+      tagTokenIds: model.tagTokenIds,
+      instanceTags: model.instanceTags,
     });
     // In advanced mode we assume user knows the properties they need, so we don't need to show these.
     // @todo will be fully deleted https://github.com/webstudio-is/webstudio/issues/4871
