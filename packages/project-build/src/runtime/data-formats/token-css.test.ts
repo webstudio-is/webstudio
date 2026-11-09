@@ -205,6 +205,19 @@ test("imports image URLs inside custom properties", () => {
   }
 });
 
+test("discovers image assets inside variable fallbacks", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+:root { --hero: var(--missing, url("https://builder.example.com/cgi/image/hero.svg?format=raw")); }
+.ws-token { background-image: var(--hero); }
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.assets).toEqual([
+      expect.objectContaining({ name: "hero.svg", type: "image" }),
+    ]);
+  }
+});
+
 test("escapes token names that contain a CSS comment terminator", () => {
   const copied = copyDesignToken(
     {

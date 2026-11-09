@@ -5,7 +5,7 @@ import {
   parseCssValue,
   type ParsedStyleDecl,
 } from "@webstudio-is/css-data";
-import { generate, walk } from "css-tree";
+import { generate, walk, type CssNode } from "css-tree";
 import type {
   Instance,
   Styles,
@@ -67,30 +67,9 @@ export const mapParsedCssStyles = (
   return styles;
 };
 
-export const mapCssValueUrls = (
+const mapCssValueNodes = (
   value: string,
-  mapUrl: (url: string) => string | undefined
-) => {
-  const parsed = cssTryParseValue(value);
-  if (parsed === undefined) {
-    return value;
-  }
-  let changed = false;
-  walk(parsed, (node) => {
-    if (node.type === "Url") {
-      const replacement = mapUrl(node.value);
-      if (replacement !== undefined && replacement !== node.value) {
-        node.value = replacement;
-        changed = true;
-      }
-    }
-  });
-  return changed ? generate(parsed) : value;
-};
-
-export const mapCssValueVariables = (
-  value: string,
-  mapName: (name: string) => string | undefined
+  mapNode: (node: CssNode) => boolean
 ) => {
   const active = new Set<string>();
   const map = (text: string): string => {
@@ -105,17 +84,8 @@ export const mapCssValueVariables = (
     }
     let changed = false;
     walk(parsed, (node) => {
-      if (node.type === "Function" && node.name === "var") {
-        const name = node.children.first;
-        if (name?.type === "Identifier" && name.name.startsWith("--")) {
-          const replacement = mapName(name.name);
-          if (replacement !== undefined && replacement !== name.name) {
-            name.name = replacement;
-            changed = true;
-          }
-        }
-      }
-      if (node.type === "Raw" && node.value.includes("var(")) {
+      changed = mapNode(node) || changed;
+      if (node.type === "Raw") {
         const replacement = map(node.value);
         if (replacement !== node.value) {
           node.value = replacement;
@@ -128,6 +98,42 @@ export const mapCssValueVariables = (
   };
   return map(value);
 };
+
+export const mapCssValueUrls = (
+  value: string,
+  mapUrl: (url: string) => string | undefined
+) =>
+  mapCssValueNodes(value, (node) => {
+    if (node.type !== "Url") {
+      return false;
+    }
+    const replacement = mapUrl(node.value);
+    if (replacement === undefined || replacement === node.value) {
+      return false;
+    }
+    node.value = replacement;
+    return true;
+  });
+
+export const mapCssValueVariables = (
+  value: string,
+  mapName: (name: string) => string | undefined
+) =>
+  mapCssValueNodes(value, (node) => {
+    if (node.type !== "Function" || node.name !== "var") {
+      return false;
+    }
+    const name = node.children.first;
+    if (name?.type !== "Identifier" || !name.name.startsWith("--")) {
+      return false;
+    }
+    const replacement = mapName(name.name);
+    if (replacement === undefined || replacement === name.name) {
+      return false;
+    }
+    name.name = replacement;
+    return true;
+  });
 
 export const traverseStyleValue = (
   value: StyleValue,
