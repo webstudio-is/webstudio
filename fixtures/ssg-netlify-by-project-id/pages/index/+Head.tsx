@@ -6,6 +6,7 @@ import {
   pageFontAssets,
   siteName,
 } from "../../app/__generated__/_index";
+import "../../app/__generated__/index.css";
 
 export const Head = ({}: { data: PageContext["data"] }) => {
   const ldJson = {
@@ -15,7 +16,6 @@ export const Head = ({}: { data: PageContext["data"] }) => {
   };
   return (
     <>
-      <link rel="stylesheet" href="/__webstudio/css/index.d906a5200ebd.css" />
       {siteName && (
         <script
           type="application/ld+json"

@@ -9,6 +9,7 @@ const templateDirectory = fileURLToPath(new URL(".", import.meta.url));
 const templateNodeModules = new URL("./node_modules", import.meta.url);
 
 export default defineConfig({
+  css: { transformer: "lightningcss" },
   // Local previews share node_modules, but must not share optimizer state.
   cacheDir: ".react-router/vite",
   build: {

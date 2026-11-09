@@ -6,6 +6,7 @@ import {
   pageFontAssets,
   siteName,
 } from "__CLIENT__";
+import "__CSS__";
 
 export const Head = ({}: { data: PageContext["data"] }) => {
   const ldJson = {
@@ -15,7 +16,6 @@ export const Head = ({}: { data: PageContext["data"] }) => {
   };
   return (
     <>
-      <link rel="stylesheet" href="__CSS__" />
       {siteName && (
         <script
           type="application/ld+json"

@@ -596,6 +596,9 @@ importers:
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
+      lightningcss:
+        specifier: 1.31.1
+        version: 1.31.1
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -681,6 +684,9 @@ importers:
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
+      lightningcss:
+        specifier: 1.31.1
+        version: 1.31.1
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -760,6 +766,9 @@ importers:
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
+      lightningcss:
+        specifier: 1.31.1
+        version: 1.31.1
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -839,6 +848,9 @@ importers:
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
+      lightningcss:
+        specifier: 1.31.1
+        version: 1.31.1
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -922,6 +934,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.7.0
         version: 4.7.0(vite@7.1.12(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))
+      lightningcss:
+        specifier: 1.31.1
+        version: 1.31.1
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -986,6 +1001,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.7.0
         version: 4.7.0(vite@7.1.12(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.31.1)(tsx@4.19.3)(yaml@2.9.0))
+      lightningcss:
+        specifier: 1.31.1
+        version: 1.31.1
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -1080,6 +1098,9 @@ importers:
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.2
+      lightningcss:
+        specifier: 1.31.1
+        version: 1.31.1
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -1140,6 +1161,9 @@ importers:
       isbot:
         specifier: ^5.1.25
         version: 5.1.25
+      lightningcss:
+        specifier: 1.31.1
+        version: 1.31.1
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -1320,6 +1344,9 @@ importers:
       immer:
         specifier: ^10.1.1
         version: 10.1.1
+      lightningcss:
+        specifier: 1.31.1
+        version: 1.31.1
       p-limit:
         specifier: ^6.2.0
         version: 6.2.0
@@ -8707,10 +8734,6 @@ packages:
     resolution: {integrity: sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==}
     engines: {node: '>=0.10'}
     hasBin: true
-
-  detect-libc@2.0.3:
-    resolution: {integrity: sha512-bwy0MGW55bG41VqxxypOsdSdGqLwXPI/focwgTYCFMbdUiBAxLg9CFzG08sz2aqzknwiX7Hkl0bQENjg8iLByw==}
-    engines: {node: '>=8'}
 
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
@@ -18909,8 +18932,6 @@ snapshots:
 
   detect-libc@1.0.3: {}
 
-  detect-libc@2.0.3: {}
-
   detect-libc@2.1.2: {}
 
   detect-node-es@1.1.0: {}
@@ -20519,7 +20540,6 @@ snapshots:
       lightningcss-linux-x64-musl: 1.31.1
       lightningcss-win32-arm64-msvc: 1.31.1
       lightningcss-win32-x64-msvc: 1.31.1
-    optional: true
 
   lilconfig@2.1.0: {}
 
@@ -22971,7 +22991,7 @@ snapshots:
   sharp@0.33.5:
     dependencies:
       color: 4.2.3
-      detect-libc: 2.0.3
+      detect-libc: 2.1.2
       semver: 7.7.1
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.33.5

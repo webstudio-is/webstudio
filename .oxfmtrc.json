@@ -13,7 +13,6 @@
     "**/*.jsonc",
     "docs/**",
     "packages/cli/templates/**",
-    "fixtures/**/__generated__/**",
-    "fixtures/**/public/__webstudio/css/**"
+    "fixtures/**/__generated__/**"
   ]
 }

@@ -11,9 +11,9 @@ import { createReadStream, existsSync } from "node:fs";
 import { rm, cp, readFile, writeFile, readdir } from "node:fs/promises";
 import { cwd, exit } from "node:process";
 import { fileURLToPath } from "node:url";
-import { createHash } from "node:crypto";
 import { parse } from "acorn";
 import { transform as transformCss } from "esbuild";
+import { transform as transformLightningCss } from "lightningcss";
 import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import deepEqual from "fast-deep-equal";
@@ -1722,29 +1722,32 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
       true,
   };
   const { cssText, classes } = generateCss(cssConfig);
-  try {
-    const result = await transformCss(cssText, { loader: "css", minify: true });
-    if (result.warnings.length > 0) {
-      console.warn(
-        JSON.stringify({
-          type: "webstudio-build-warning",
-          code: "invalid-generated-css",
-          severity: "warning",
-        })
-      );
+  const canBuildCss = async (css: string) => {
+    try {
+      transformLightningCss({ filename: "index.css", code: Buffer.from(css) });
+      await transformCss(css, { loader: "css", minify: true });
+      return true;
+    } catch {
+      return false;
     }
-  } catch {
+  };
+  let generatedCss = cssText;
+  if ((await canBuildCss(cssText)) === false) {
+    const fallbackCss = generateCss({
+      ...cssConfig,
+      styles: new Map(),
+    }).cssText;
+    generatedCss = (await canBuildCss(fallbackCss)) ? fallbackCss : "";
     console.warn(
       JSON.stringify({
         type: "webstudio-build-warning",
         code: "invalid-generated-css",
         severity: "warning",
+        fallback: generatedCss === "" ? "empty" : "presets-and-fonts",
       })
     );
   }
-  const cssFileName = `index.${createHash("sha256").update(cssText).digest("hex").slice(0, 12)}.css`;
-  await writeGeneratedFile(join(generatedCssDir, cssFileName), cssText);
-  const cssUrl = `/__webstudio/css/${cssFileName}`;
+  await writeGeneratedFile(join(generatedDir, "index.css"), generatedCss);
 
   for (const page of generatedPages) {
     const scope = createScope([
@@ -2146,7 +2149,10 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
           "__SERVER__",
           importFrom(`./app/__generated__/${generatedBasename}.server`, file)
         )
-        .replaceAll("__CSS__", cssUrl);
+        .replaceAll(
+          "__CSS__",
+          importFrom(`./app/__generated__/index.css`, file)
+        );
       await writeGeneratedFile(file, content);
     }
     if (

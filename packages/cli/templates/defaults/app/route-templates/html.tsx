@@ -55,7 +55,7 @@ import {
   contactEmail,
 } from "__SERVER__";
 import * as constants from "__CONSTANTS__";
-const css = "__CSS__";
+import css from "__CSS__?url";
 import { sitemap } from "__SITEMAP__";
 import { authRoutes } from "__AUTH__";
 import { createGeneratedAssetResourceFetch } from "__ASSET_QUERY_RUNTIME__";
