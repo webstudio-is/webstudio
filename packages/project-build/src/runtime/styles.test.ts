@@ -1644,6 +1644,41 @@ describe("runtime style operations", () => {
     ).toBe(false);
   });
 
+  test("editing the html Tag token from Global root creates a global source", () => {
+    const id = getTagTokenId("html");
+    const mutation = updateSelectedStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: new Map(),
+        styles: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      {
+        updates: [
+          {
+            instanceId: ROOT_INSTANCE_ID,
+            styleSourceId: id,
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      }
+    );
+
+    expect(mutation.payload).toContainEqual({
+      namespace: "styleSources",
+      patches: [
+        { op: "add", path: [id], value: { type: "tagToken", id, tag: "html" } },
+      ],
+    });
+    expect(
+      mutation.payload.some(
+        (change) => change.namespace === "styleSourceSelections"
+      )
+    ).toBe(false);
+  });
+
   test("rejects a descendant selector on a tag token", () => {
     const id = getTagTokenId("button");
     expect(() =>
