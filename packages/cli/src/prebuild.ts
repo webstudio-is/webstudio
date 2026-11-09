@@ -81,6 +81,7 @@ import {
   getZodValidationIssues,
   createAssetUrlsByPath,
 } from "@webstudio-is/project-build/runtime";
+import { isValidGeneratedStyleDeclaration } from "@webstudio-is/project-build/css-declaration-validation.server";
 import {
   createPublishedBuildContentCompilationPlan,
   getDynamicPublishedMdxSourceBlockIds,
@@ -1678,12 +1679,17 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     }
   }
 
+  const publishableStyles = new Map(
+    Array.from(publishedStyles).filter(([, style]) =>
+      isValidGeneratedStyleDeclaration(style)
+    )
+  );
   const { cssText, classes } = generateCss({
     instances: publishedInstances,
     props: publishedProps,
     assets,
     breakpoints: publishedBreakpoints,
-    styles: publishedStyles,
+    styles: publishableStyles,
     styleSourceSelections: publishedStyleSourceSelections,
     // pass only used metas to not generate unused preset styles
     componentMetas: usedMetas,

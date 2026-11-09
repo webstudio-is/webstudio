@@ -1690,6 +1690,69 @@ describe("patchBuild", () => {
     ).rejects.toThrow();
   });
 
+  test("rejects an invalid style while leaving older invalid styles editable", async () => {
+    const invalidStyle = {
+      styleSourceId: "source",
+      breakpointId: "base",
+      property: "--pE--_WitxzZqY_3KruPxn-\\ \\>\\ \\.figma-block-translate",
+      value: { type: "unparsed", value: "none" },
+    };
+    const build = { ...buildRow, styles: JSON.stringify([invalidStyle]) };
+    const input = {
+      loadAssets: async () => ({
+        assets: [],
+        changedAssetIds: new Set<string>(),
+      }),
+      build,
+      clientVersion: 3,
+    };
+    const validUpdate = await createBuildPatchUpdate({
+      ...input,
+      transactions: [
+        transaction({
+          payload: [
+            {
+              namespace: "styles",
+              patches: [
+                {
+                  op: "add",
+                  path: ["source:base:color:"],
+                  value: { ...invalidStyle, property: "color" },
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+    expect(validUpdate.status).toBe("ok");
+    if (validUpdate.status === "ok") {
+      expect(JSON.parse(validUpdate.update?.styles ?? "")).toHaveLength(2);
+    }
+
+    await expect(
+      createBuildPatchUpdate({
+        ...input,
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "styles",
+                patches: [
+                  {
+                    op: "add",
+                    path: ["source:base:new:"],
+                    value: invalidStyle,
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      })
+    ).rejects.toThrow();
+  });
+
   test("validates only touched instances while preserving untouched instances", async () => {
     const buildWithInvalidUntouchedInstance = {
       ...buildRow,

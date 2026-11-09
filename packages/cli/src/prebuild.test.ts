@@ -831,6 +831,53 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 
 describe("prebuild", () => {
   test.each([true, false])(
+    "publishes valid styles beside an older malformed declaration (atomic: %s)",
+    async (atomicStyles) => {
+      const siteData = createSiteData();
+      siteData.build.pages.compiler = { atomicStyles };
+      siteData.build.breakpoints = [
+        ["base", { id: "base", label: "Base" }],
+      ] as never;
+      siteData.build.styleSources = [
+        ["source", { id: "source", type: "local" }],
+      ] as never;
+      siteData.build.styleSourceSelections = [
+        ["root", { instanceId: "root", values: ["source"] }],
+      ] as never;
+      siteData.build.styles = [
+        [
+          "source:base:invalid:",
+          {
+            styleSourceId: "source",
+            breakpointId: "base",
+            property:
+              "--pE--_WitxzZqY_3KruPxn-\\ \\>\\ \\.figma-block-translate",
+            value: { type: "unparsed", value: "none" },
+          },
+        ],
+        [
+          "source:base:color:",
+          {
+            styleSourceId: "source",
+            breakpointId: "base",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+
+      await prebuild({ assets: false, template: ["react-router"] });
+
+      const css = await readFile("app/__generated__/index.css", "utf8");
+      expect(css).toContain("color: red");
+      expect(css).not.toContain("figma-block-translate");
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await runGeneratedCommand("react-router", ["build"]);
+    },
+    30_000
+  );
+  test.each([true, false])(
     "imports managed Form formatting only when used (%s)",
     async (hasErrors) => {
       const siteData = createSiteData({

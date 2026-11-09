@@ -32,7 +32,6 @@ import {
   styleSources,
   type StyleSource,
   type Styles,
-  styles,
   getHomePage,
 } from "@webstudio-is/sdk";
 import {
@@ -44,6 +43,7 @@ import {
   findCycles,
   getPropAssetError,
 } from "@webstudio-is/project-build/runtime";
+import { writableStyles } from "@webstudio-is/project-build/css-declaration-validation.server";
 import {
   parsePages,
   serializePages,
@@ -571,7 +571,7 @@ export const createBuildPatchUpdate = async ({
 
   if (buildData.styles) {
     const stylesData = buildData.styles;
-    validateTouchedMap(styles, stylesData, touchedStyles);
+    validateTouchedMap(writableStyles, stylesData, touchedStyles);
     update.styles = serializeStyles(stylesData);
   }
 

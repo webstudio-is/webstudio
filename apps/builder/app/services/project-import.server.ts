@@ -29,6 +29,7 @@ import {
   createProjectSettingsFromPages,
   removeLegacyProjectSettingsFromPages,
 } from "@webstudio-is/project-build";
+import { writableStyles } from "@webstudio-is/project-build/css-declaration-validation.server";
 import {
   isAssetFileName,
   MissingImportedAssetFilesError,
@@ -122,7 +123,7 @@ const createBuildImportUpdate = ({
           marketplaceProduct: serializeConfig(data.build.marketplaceProduct),
         }),
     breakpoints: serializeData<Breakpoint>(toMap(data.build.breakpoints)),
-    styles: serializeStyles(toMap(data.build.styles)),
+    styles: serializeStyles(writableStyles.parse(toMap(data.build.styles))),
     styleSources: serializeData<StyleSource>(toMap(data.build.styleSources)),
     styleSourceSelections: serializeStyleSourceSelections(
       toMap(data.build.styleSourceSelections)
@@ -384,6 +385,12 @@ export const importPublishedProjectBundle = async (
 
   const build = await dependencies.loadDevBuildByProjectId(ctx, projectId);
   const nextVersion = build.version + 1;
+  const buildUpdate = createBuildImportUpdate({
+    data,
+    lastTransactionId: createId(),
+    updatedAt: new Date().toISOString(),
+    version: nextVersion,
+  });
 
   assertImportedAssets(data.assets);
   const { assets: normalizedAssets, folders: importedAssetFolders } =
@@ -402,12 +409,6 @@ export const importPublishedProjectBundle = async (
       assetStore: dependencies.assetStore ?? createAssetClient(),
     });
   }
-  const buildUpdate = createBuildImportUpdate({
-    data,
-    lastTransactionId: createId(),
-    updatedAt: new Date().toISOString(),
-    version: nextVersion,
-  });
   const update = await ctx.postgrest.client
     .from("Build")
     .update(buildUpdate, { count: "exact" })
