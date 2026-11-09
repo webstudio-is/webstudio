@@ -22,7 +22,7 @@ import {
   $selectedInstancePathWithRoot,
   $selectedBreakpointId,
   $selectedStyleState,
-  $temporaryTagTokenId,
+  $temporaryTagStyleId,
   selectInstance,
   $virtualInstances,
 } from "~/shared/nano-states";
@@ -126,7 +126,7 @@ export const PropertyInfo = ({
       const styleSourceName =
         styleSource.type === "token"
           ? styleSource.name
-          : styleSource.type === "tagToken"
+          : styleSource.type === "tagStyle"
             ? styleSource.tag
             : "Local";
       if (source.state) {
@@ -161,8 +161,8 @@ export const PropertyInfo = ({
     }
     selectInstance(target.instanceSelector);
     if (source.styleSourceId) {
-      if (styleSources.get(source.styleSourceId)?.type === "tagToken") {
-        $temporaryTagTokenId.set(source.styleSourceId);
+      if (styleSources.get(source.styleSourceId)?.type === "tagStyle") {
+        $temporaryTagStyleId.set(source.styleSourceId);
       }
       selectStyleSource(source.styleSourceId, source.state);
     } else {
@@ -188,8 +188,8 @@ export const PropertyInfo = ({
       source,
       color:
         source.styleSourceId &&
-        styleSources.get(source.styleSourceId)?.type === "tagToken"
-          ? ("tag" as const)
+        styleSources.get(source.styleSourceId)?.type === "tagStyle"
+          ? ("tagStyle" as const)
           : label === "Local"
             ? ("local" as const)
             : ("token" as const),

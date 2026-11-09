@@ -7,8 +7,8 @@ import {
   type StyleDecl,
   type StyleSource,
   type StyleSourceToken,
-  getTagTokenId,
-  isTagTokenTag,
+  getTagStyleId,
+  isTagStyleTag,
 } from "@webstudio-is/sdk";
 import { type RenameStyleSourceError } from "@webstudio-is/project-build/runtime";
 import { type ItemSource, StyleSourceInput } from "./style-source";
@@ -26,7 +26,7 @@ import {
   $selectedInstanceStyleSources,
   $selectedOrLastStyleSourceSelector,
   $selectedStyleState,
-  $temporaryTagTokenId,
+  $temporaryTagStyleId,
 } from "~/shared/nano-states";
 import {
   $styleSourceSelections,
@@ -266,7 +266,7 @@ const $componentStates = computed(
     $styles,
     $selectedStyleState,
     $styleSourceSelections,
-    $temporaryTagTokenId,
+    $temporaryTagStyleId,
   ],
   (
     selectedInstance,
@@ -275,7 +275,7 @@ const $componentStates = computed(
     styles,
     selectedStyleState,
     styleSourceSelections,
-    temporaryTagTokenId
+    temporaryTagStyleId
   ) => {
     if (selectedInstance === undefined) {
       return;
@@ -286,8 +286,8 @@ const $componentStates = computed(
     const instanceStyleSourceIds = new Set(
       styleSourceSelections.get(selectedInstance.id)?.values
     );
-    if (temporaryTagTokenId) {
-      instanceStyleSourceIds.add(temporaryTagTokenId);
+    if (temporaryTagStyleId) {
+      instanceStyleSourceIds.add(temporaryTagStyleId);
     }
     return getComponentStates({
       predefinedStates: pseudoClassesByTag[tag ?? ""] ?? [],
@@ -317,11 +317,11 @@ const convertToInputItem = (
     label:
       styleSource.type === "local"
         ? "Local"
-        : styleSource.type === "tagToken"
+        : styleSource.type === "tagStyle"
           ? styleSource.tag
           : styleSource.name,
     disabled: false,
-    source: styleSource.type === "tagToken" ? "tag" : styleSource.type,
+    source: styleSource.type === "tagStyle" ? "tagStyle" : styleSource.type,
     locked: styleSource.type === "token" && styleSource.locked === true,
     states,
   };
@@ -334,11 +334,11 @@ const $availableStyleSources = computed(
     const tag = selectedInstance
       ? instanceTags.get(selectedInstance.id)
       : undefined;
-    if (tag && isTagTokenTag(tag)) {
-      const id = getTagTokenId(tag);
+    if (tag && isTagStyleTag(tag)) {
+      const id = getTagStyleId(tag);
       availableStylesSources.push(
         convertToInputItem(
-          styleSources.get(id) ?? { type: "tagToken", id, tag },
+          styleSources.get(id) ?? { type: "tagStyle", id, tag },
           []
         )
       );
@@ -371,13 +371,13 @@ export const StyleSourcesSection = () => {
     ? instanceTags.get(selectedInstance.id)
     : undefined;
   useEffect(() => {
-    const temporaryId = $temporaryTagTokenId.get();
+    const temporaryId = $temporaryTagStyleId.get();
     if (
       temporaryId &&
       selectedTag &&
-      temporaryId !== getTagTokenId(selectedTag)
+      temporaryId !== getTagStyleId(selectedTag)
     ) {
-      $temporaryTagTokenId.set(undefined);
+      $temporaryTagStyleId.set(undefined);
       deselectMatchingStyleSource(temporaryId);
     }
   }, [selectedTag]);
@@ -423,8 +423,8 @@ export const StyleSourcesSection = () => {
         componentStates={componentStates}
         onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id, source }) => {
-          if (source === "tag") {
-            $temporaryTagTokenId.set(id);
+          if (source === "tagStyle") {
+            $temporaryTagStyleId.set(id);
             selectStyleSource(id);
           } else {
             addStyleSourceToInstance(id);
@@ -450,8 +450,8 @@ export const StyleSourcesSection = () => {
         }}
         onClearStyles={clearStyles}
         onDetachItem={(id) => {
-          if (id === $temporaryTagTokenId.get()) {
-            $temporaryTagTokenId.set(undefined);
+          if (id === $temporaryTagStyleId.get()) {
+            $temporaryTagStyleId.set(undefined);
             deselectMatchingStyleSource(id);
           } else {
             removeStyleSourceFromInstance(id);

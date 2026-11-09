@@ -164,7 +164,7 @@ const declaration = looseObject({
   value: styleValue,
   breakpoint: id,
   state: z.string().optional(),
-  source: z.enum(["local", "token", "tagToken"]),
+  source: z.enum(["local", "token", "tagStyle"]),
 });
 const declarationSummary = declaration.omit({ value: true }).extend({
   valueType: z.string(),

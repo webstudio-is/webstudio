@@ -12,27 +12,27 @@ const styleSourceToken = z.object({
 
 export type StyleSourceToken = z.infer<typeof styleSourceToken>;
 
-export const getTagTokenId = (tag: string) => `tag-token:${tag}`;
+export const getTagStyleId = (tag: string) => `tag-style:${tag}`;
 
-export const isTagTokenTag = (tag: string) => tags.includes(tag);
+export const isTagStyleTag = (tag: string) => tags.includes(tag);
 
-export const getTagFromTokenId = (id: string) => {
-  if (id.startsWith("tag-token:") === false) {
+export const getTagFromStyleId = (id: string) => {
+  if (id.startsWith("tag-style:") === false) {
     return;
   }
-  const tag = id.slice("tag-token:".length);
-  return isTagTokenTag(tag) ? tag : undefined;
+  const tag = id.slice("tag-style:".length);
+  return isTagStyleTag(tag) ? tag : undefined;
 };
 
-const styleSourceTagToken = z
+const styleSourceTagStyle = z
   .object({
-    type: z.literal("tagToken"),
+    type: z.literal("tagStyle"),
     id: styleSourceId,
-    tag: z.string().refine(isTagTokenTag),
+    tag: z.string().refine(isTagStyleTag),
   })
-  .refine((source) => source.id === getTagTokenId(source.tag));
+  .refine((source) => source.id === getTagStyleId(source.tag));
 
-export type StyleSourceTagToken = z.infer<typeof styleSourceTagToken>;
+export type StyleSourceTagStyle = z.infer<typeof styleSourceTagStyle>;
 
 const styleSourceLocal = z.object({
   type: z.literal("local"),
@@ -41,7 +41,7 @@ const styleSourceLocal = z.object({
 
 export const styleSource = z.union([
   styleSourceToken,
-  styleSourceTagToken,
+  styleSourceTagStyle,
   styleSourceLocal,
 ]);
 

@@ -16,7 +16,7 @@ import {
 import {
   createId,
   getStyleDeclKey,
-  getTagFromTokenId,
+  getTagFromStyleId,
   ROOT_INSTANCE_ID,
   styleDecl as styleDeclSchema,
   type Breakpoint,
@@ -2241,7 +2241,7 @@ export const deleteStyleSources = (
     if (source === undefined) {
       return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
     }
-    if (source.type === "tagToken") {
+    if (source.type === "tagStyle") {
       return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
     }
   }
@@ -3143,8 +3143,8 @@ export const createSelectedStyleDeclarationUpdatePayload = ({
       nextStyleSourceIds.add(update.styleSource.id);
     }
 
-    // Tag tokens render globally and never enter instance selections.
-    if (update.styleSource.type !== "tagToken") {
+    // Tag styles render globally and never enter instance selections.
+    if (update.styleSource.type !== "tagStyle") {
       const selection = styleSourceSelectionByInstanceId.get(update.instanceId);
       const hasPendingSelection =
         selection === undefined &&
@@ -3424,20 +3424,20 @@ export const updateSelectedStyleDeclarations = (
   );
   const updates = input.updates.map((update) => {
     const existingSource = styleState.styleSources.get(update.styleSourceId);
-    const tag = getTagFromTokenId(update.styleSourceId);
+    const tag = getTagFromStyleId(update.styleSourceId);
     if (existingSource === undefined && tag === undefined) {
       return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
     }
-    if (existingSource && tag && existingSource.type !== "tagToken") {
-      return throwBuilderRuntimeError("CONFLICT", "Tag token id is in use");
+    if (existingSource && tag && existingSource.type !== "tagStyle") {
+      return throwBuilderRuntimeError("CONFLICT", "Tag style id is in use");
     }
     const styleSource: StyleSource = existingSource ?? {
-      type: "tagToken",
+      type: "tagStyle",
       id: update.styleSourceId,
       tag: tag!,
     };
     if (
-      styleSource.type === "tagToken" &&
+      styleSource.type === "tagStyle" &&
       update.state !== undefined &&
       validateSelector(update.state, { allowDescendants: false }).success ===
         false

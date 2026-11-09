@@ -3,7 +3,7 @@ import { expect, test, describe } from "vitest";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import {
   coreMetas,
-  getTagTokenId,
+  getTagStyleId,
   ROOT_INSTANCE_ID,
   type StyleDecl,
 } from "@webstudio-is/sdk";
@@ -60,14 +60,14 @@ const setupSelectedBody = () => {
   selectInstance(["body"]);
 };
 
-test("Global root offers only the html Tag token first", () => {
+test("Global root offers only the html Tag style first", () => {
   setupSelectedBody();
   $registeredComponentMetas.set(new Map(Object.entries(coreMetas)));
   $styleSources.set(
     new Map([
       [
-        getTagTokenId("p"),
-        { type: "tagToken", id: getTagTokenId("p"), tag: "p" },
+        getTagStyleId("p"),
+        { type: "tagStyle", id: getTagStyleId("p"), tag: "p" },
       ],
       ["token", { type: "token", id: "token", name: "Token" }],
     ])
@@ -75,7 +75,7 @@ test("Global root offers only the html Tag token first", () => {
   selectInstance([ROOT_INSTANCE_ID]);
 
   expect($availableStyleSources.get().map(({ id }) => id)).toEqual([
-    getTagTokenId("html"),
+    getTagStyleId("html"),
     "token",
   ]);
 });

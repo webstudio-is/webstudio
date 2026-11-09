@@ -8,7 +8,7 @@ import {
   type Instance,
   type StyleDecl,
   getStyleDeclKey,
-  getTagTokenId,
+  getTagStyleId,
 } from "@webstudio-is/sdk";
 import {
   createTemplateComponentFixture,
@@ -105,7 +105,7 @@ const createModel = ({
   }
   return {
     styles,
-    tagTokenIds: new Map(),
+    tagStyleIds: new Map(),
     styleSourceSelections,
     presetStyles,
     instanceTags,
@@ -1084,14 +1084,14 @@ test("tag token provides the source for an unstyled matching element", () => {
     css: "",
     jsx: <Box ws:id="box" ws:tag="p" />,
   });
-  const id = getTagTokenId("p");
+  const id = getTagStyleId("p");
   const declaration: StyleDecl = {
     styleSourceId: id,
     breakpointId: "base",
     property: "color",
     value: { type: "keyword", value: "red" },
   };
-  model.tagTokenIds.set("p", id);
+  model.tagStyleIds.set("p", id);
   model.styles.set(getStyleDeclKey(declaration), declaration);
 
   expect(
@@ -1108,14 +1108,14 @@ test("selected tag token remains the source when an instance overrides it", () =
     css: "local { color: blue; }",
     jsx: <Box ws:id="box" ws:tag="p" class="local" />,
   });
-  const id = getTagTokenId("p");
+  const id = getTagStyleId("p");
   const declaration: StyleDecl = {
     styleSourceId: id,
     breakpointId: "base",
     property: "color",
     value: { type: "keyword", value: "red" },
   };
-  model.tagTokenIds.set("p", id);
+  model.tagStyleIds.set("p", id);
   model.styles.set(getStyleDeclKey(declaration), declaration);
 
   expect(

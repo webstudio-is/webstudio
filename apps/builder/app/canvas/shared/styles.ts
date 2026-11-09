@@ -5,7 +5,7 @@ import {
   type Instance,
   ROOT_INSTANCE_ID,
   getStyleDeclKey,
-  getTagFromTokenId,
+  getTagFromStyleId,
   descendantComponent,
   rootComponent,
   type Breakpoint,
@@ -32,7 +32,7 @@ import {
   $registeredComponentMetas,
   $selectedBreakpoint,
   $selectedStyleState,
-  $temporaryTagTokenId,
+  $temporaryTagStyleId,
   assetBaseUrl,
 } from "~/shared/nano-states";
 import { $assets } from "~/shared/sync/data-stores";
@@ -67,7 +67,7 @@ const fontsAndDefaultsSheet = createRegularStyleSheet({
   name: "fonts-and-defaults",
 });
 const presetSheet = createRegularStyleSheet({ name: "preset-styles" });
-const tagTokenSheet = createRegularStyleSheet({ name: "tag-token-styles" });
+const tagStyleSheet = createRegularStyleSheet({ name: "tag-style-styles" });
 
 /**
  * maintain order of rendered stylesheets
@@ -76,7 +76,7 @@ const tagTokenSheet = createRegularStyleSheet({ name: "tag-token-styles" });
 export const mountStyles = () => {
   fontsAndDefaultsSheet.render();
   presetSheet.render();
-  tagTokenSheet.render();
+  tagStyleSheet.render();
   userSheet.render();
   stateSheet.render();
   helpersSheet.render();
@@ -527,7 +527,7 @@ export const subscribeStyles = () => {
     renderUserSheetInTheNextFrame();
   });
 
-  const unsubscribeTagTokens = computed(
+  const unsubscribeTagStyles = computed(
     [
       $styleSources,
       $styles,
@@ -560,37 +560,37 @@ export const subscribeStyles = () => {
       transformValue,
       ephemeralStyles,
     }) => {
-      tagTokenSheet.clear();
-      tagTokenSheet.setTransformer(transformValue);
+      tagStyleSheet.clear();
+      tagStyleSheet.setTransformer(transformValue);
       const mediaRules = simulateConditionBreakpoints({
         breakpoints: breakpoints.values(),
         selectedBreakpoint,
       });
       for (const [id, options] of mediaRules) {
-        tagTokenSheet.addMediaRule(id, options);
+        tagStyleSheet.addMediaRule(id, options);
       }
-      const tagTokens = new Map<string, string>();
+      const tagStyles = new Map<string, string>();
       for (const source of styleSources.values()) {
-        if (source.type === "tagToken") {
-          tagTokens.set(source.id, source.tag);
-          tagTokenSheet.addNestingRule(source.tag);
+        if (source.type === "tagStyle") {
+          tagStyles.set(source.id, source.tag);
+          tagStyleSheet.addNestingRule(source.tag);
         }
       }
       for (const styleDecl of [...styles.values(), ...ephemeralStyles]) {
         const tag =
-          tagTokens.get(styleDecl.styleSourceId) ??
+          tagStyles.get(styleDecl.styleSourceId) ??
           (styleSources.has(styleDecl.styleSourceId)
             ? undefined
-            : getTagFromTokenId(styleDecl.styleSourceId));
+            : getTagFromStyleId(styleDecl.styleSourceId));
         if (tag === undefined) {
           continue;
         }
-        tagTokenSheet.addNestingRule(tag).setDeclaration({
+        tagStyleSheet.addNestingRule(tag).setDeclaration({
           ...toDeclarationParams(styleDecl),
           value: styleDecl.value,
         });
       }
-      tagTokenSheet.render();
+      tagStyleSheet.render();
     }
   );
 
@@ -616,7 +616,7 @@ export const subscribeStyles = () => {
     // delete before adding declarations by the same key
     for (const styleDecl of deletedStyles) {
       if (
-        $styleSources.get().get(styleDecl.styleSourceId)?.type === "tagToken"
+        $styleSources.get().get(styleDecl.styleSourceId)?.type === "tagStyle"
       ) {
         continue;
       }
@@ -625,7 +625,7 @@ export const subscribeStyles = () => {
     }
     for (const styleDecl of addedStyles) {
       if (
-        $styleSources.get().get(styleDecl.styleSourceId)?.type === "tagToken"
+        $styleSources.get().get(styleDecl.styleSourceId)?.type === "tagStyle"
       ) {
         continue;
       }
@@ -677,7 +677,7 @@ export const subscribeStyles = () => {
     unsubscribeBreakpoints();
     unsubscribeStyles();
     unsubscribeStyleSourceSelections();
-    unsubscribeTagTokens();
+    unsubscribeTagStyles();
     unsubscribeDescendantSelectors();
     unsubscribeTransformValue();
     cancelScheduledRender();
@@ -749,14 +749,14 @@ const computeInstanceStyles = ({
   selectedStyleState,
   breakpoints,
   styleSourceSelections,
-  temporaryTagTokenId,
+  temporaryTagStyleId,
   styles,
 }: {
   selectedInstance: Instance | undefined;
   selectedStyleState: string | undefined;
   breakpoints: Map<string, Breakpoint>;
   styleSourceSelections: Map<string, { values: string[] }>;
-  temporaryTagTokenId?: string;
+  temporaryTagStyleId?: string;
   styles: Map<string, StyleDecl>;
 }) => {
   if (selectedInstance === undefined || selectedStyleState === undefined) {
@@ -765,8 +765,8 @@ const computeInstanceStyles = ({
   const styleSources = new Set(
     styleSourceSelections.get(selectedInstance.id)?.values
   );
-  if (temporaryTagTokenId) {
-    styleSources.add(temporaryTagTokenId);
+  if (temporaryTagStyleId) {
+    styleSources.add(temporaryTagStyleId);
   }
   const instanceStyles: StyleDecl[] = [];
   for (const styleDecl of styles.values()) {
@@ -791,7 +791,7 @@ const $instanceStyles = computed(
     $selectedStyleState,
     $breakpoints,
     $styleSourceSelections,
-    $temporaryTagTokenId,
+    $temporaryTagStyleId,
     $styles,
   ],
   (
@@ -799,7 +799,7 @@ const $instanceStyles = computed(
     selectedStyleState,
     breakpoints,
     styleSourceSelections,
-    temporaryTagTokenId,
+    temporaryTagStyleId,
     styles
   ) =>
     computeInstanceStyles({
@@ -807,7 +807,7 @@ const $instanceStyles = computed(
       selectedStyleState,
       breakpoints,
       styleSourceSelections,
-      temporaryTagTokenId,
+      temporaryTagStyleId,
       styles,
     })
 );
@@ -920,7 +920,7 @@ const subscribeEphemeralStyle = () => {
       const rule = userSheet.addNestingRule(selector);
       let ephemeralSheetUpdated = false;
       for (const styleDecl of ephemeralStyles) {
-        if (getTagFromTokenId(styleDecl.styleSourceId)) {
+        if (getTagFromStyleId(styleDecl.styleSourceId)) {
           continue;
         }
         // update custom property

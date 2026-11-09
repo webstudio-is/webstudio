@@ -9,7 +9,7 @@ import { generateCss, type CssConfig } from "./css";
 import type { Breakpoint } from "./schema/breakpoints";
 import type { Asset } from "./schema/assets";
 import { rootComponent } from "./core-metas";
-import { getTagTokenId } from "./schema/style-sources";
+import { getTagStyleId } from "./schema/style-sources";
 
 const Body = createTemplateComponentFixture("Body");
 const Box = createTemplateComponentFixture("Box");
@@ -39,7 +39,7 @@ test("renders an unattached tag token before instance styles", () => {
       `}
     />
   );
-  const id = getTagTokenId("p");
+  const id = getTagStyleId("p");
   const declaration = {
     styleSourceId: id,
     breakpointId: "base",
@@ -55,7 +55,7 @@ test("renders an unattached tag token before instance styles", () => {
     breakpoints: toMap<Breakpoint>([{ id: "base", label: "Base" }]),
     styleSources: new Map([
       ...data.styleSources,
-      [id, { type: "tagToken" as const, id, tag: "p" }],
+      [id, { type: "tagStyle" as const, id, tag: "p" }],
     ]),
     styles: new Map([
       ...data.styles,

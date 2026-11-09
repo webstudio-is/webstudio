@@ -1,12 +1,13 @@
 import { describe, expect, test } from "vitest";
-import { getTagFromTokenId, getTagTokenId, styleSource } from "./style-sources";
+import { getTagFromStyleId, getTagStyleId, styleSource } from "./style-sources";
 
 describe("StyleSource", () => {
-  test("accepts an html Tag token for Global root", () => {
-    const id = getTagTokenId("html");
-    expect(getTagFromTokenId(id)).toBe("html");
-    expect(styleSource.parse({ type: "tagToken", id, tag: "html" })).toEqual({
-      type: "tagToken",
+  test("accepts an html Tag style for Global root", () => {
+    const id = getTagStyleId("html");
+    expect(id).toBe("tag-style:html");
+    expect(getTagFromStyleId(id)).toBe("html");
+    expect(styleSource.parse({ type: "tagStyle", id, tag: "html" })).toEqual({
+      type: "tagStyle",
       id,
       tag: "html",
     });

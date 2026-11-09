@@ -46,7 +46,7 @@ const getItems = (): Array<Item> => [
   {
     id: createNanoId(),
     label: "Tag",
-    source: "tag",
+    source: "tagStyle",
     disabled: false,
     locked: false,
     states: [],
