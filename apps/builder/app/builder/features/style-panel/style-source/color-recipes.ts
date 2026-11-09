@@ -13,12 +13,9 @@ const instanceBackground = `color-mix(in oklab, ${cssVar(
 )} 86%, ${cssVar("--foreground-primary")})`;
 const tagStyleBackground = `light-dark(
   color-mix(in oklab, ${cssVar("--foreground-primary")} 80%, ${cssVar("--background-primary")}),
-  color-mix(in oklab, ${cssVar("--foreground-primary")} 42%, ${cssVar("--background-primary")})
+  color-mix(in oklab, ${cssVar("--foreground-primary")} 65%, ${cssVar("--background-primary")})
 )`;
-const tagStyleForeground = `light-dark(
-  ${cssVar("--foreground-on-inverse")},
-  ${cssVar("--foreground-primary")}
-)`;
+const tagStyleForeground = cssVar("--foreground-on-inverse");
 const breakpointBackground = rotateBoundedBackgroundHue(accentBackground, 60);
 const neutralBackground = `light-dark(
   ${cssVar("--foreground-secondary")},

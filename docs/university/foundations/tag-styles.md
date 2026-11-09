@@ -15,7 +15,7 @@ description: Set site-wide styles for HTML tags such as div, h1, and button.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/tag-style-source-dark.png">
-  <img src="../../.gitbook/assets/tag-style-source-light.png" alt="Style sources field with the div Tag style selected before the Local source" width="240">
+  <img src="../../.gitbook/assets/tag-style-source-light.png" alt="Style sources field with the div Tag style selected before a card Token and the Local source" width="240">
 </picture>
 
 The source appears only while you work on the selected instance. If you select another instance and return, open the field to add it again. The saved style remains in the project and continues to affect every matching tag. Only the Tag style for the selected instance's HTML tag is offered. The Global root is the `html` tag and can also have a Tag style.

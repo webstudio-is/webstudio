@@ -211,7 +211,15 @@ export const TagStyle = () => {
     locked: false,
     states: [":hover"],
   };
-  const [value, setValue] = useState<Array<Item>>([tagStyle, localItem]);
+  const token: Item = {
+    id: "card-token",
+    label: "card",
+    source: "token",
+    disabled: false,
+    locked: false,
+    states: [],
+  };
+  const [value, setValue] = useState<Array<Item>>([tagStyle, token, localItem]);
   const [selectedItemSelector, setSelectedItemSelector] = useState<
     undefined | ItemSelector
   >({ styleSourceId: tagStyle.id });
