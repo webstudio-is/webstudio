@@ -2668,6 +2668,7 @@ describe("builder runtime registry", () => {
       ["styles.updateSelectedDeclarations", { updates: {} }],
       ["styles.deleteSelectedDeclarations", { deletions: {} }],
       ["styles.replaceValues", {}],
+      ["designTokens.paste", {}],
       ["designTokens.create", { tokens: {} }],
       ["designTokens.import", {}],
       ["designTokens.createAttached", { tokens: {}, instanceIds: [] }],

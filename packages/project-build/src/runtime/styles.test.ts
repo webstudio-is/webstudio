@@ -572,6 +572,9 @@ describe("css variable usage", () => {
     expect(collectCssVariableReferences("var(--special-$name)", regex)).toEqual(
       new Set(["--special-$name"])
     );
+    expect(
+      collectCssVariableReferences("var(--ancestor, var(--fallback))")
+    ).toEqual(new Set(["--ancestor", "--fallback"]));
   });
 
   test("finds css variable definitions and references", () => {

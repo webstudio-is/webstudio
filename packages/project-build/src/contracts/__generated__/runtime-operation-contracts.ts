@@ -69514,6 +69514,112 @@ export const runtimeOperationContractData = [
     retryOnConflict: false,
   },
   {
+    id: "designTokens.copy",
+    command: "copy-design-token",
+    client: "copyDesignToken",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        tokenId: {
+          type: "string",
+        },
+        sourceOrigin: {
+          type: "string",
+          format: "uri",
+        },
+      },
+      required: ["tokenId"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        data: {
+          type: "string",
+        },
+      },
+      required: ["data"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "assets",
+      "breakpoints",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+    ],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
+    id: "designTokens.paste",
+    command: "paste-design-token",
+    client: "pasteDesignToken",
+    kind: "mutation",
+    inputSchema: {
+      type: "object",
+      properties: {
+        data: {
+          type: "string",
+        },
+        instanceId: {
+          type: "string",
+        },
+        assetIds: {
+          type: "array",
+          items: {
+            type: "array",
+            prefixItems: [
+              {
+                type: "string",
+              },
+              {
+                type: "string",
+              },
+            ],
+            minItems: 2,
+            maxItems: 2,
+          },
+        },
+      },
+      required: ["data"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        tokenId: {
+          type: "string",
+        },
+      },
+      required: ["tokenId"],
+      additionalProperties: {},
+    },
+    readNamespaces: [
+      "assets",
+      "breakpoints",
+      "instances",
+      "styles",
+      "styleSources",
+      "styleSourceSelections",
+    ],
+    writeNamespaces: [
+      "breakpoints",
+      "styleSources",
+      "styles",
+      "styleSourceSelections",
+    ],
+    invalidatesNamespaces: [
+      "breakpoints",
+      "styleSources",
+      "styles",
+      "styleSourceSelections",
+    ],
+    retryOnConflict: false,
+    requiresAssets: true,
+  },
+  {
     id: "designTokens.create",
     command: "create-design-token",
     client: "createDesignTokens",

@@ -63,6 +63,10 @@ If an imported name conflicts with an existing token, choose how to continue:
 Review imported tokens and CSS variables before applying them throughout the
 Project, especially when the source contains multiple modes or aliases.
 
+## Copy tokens between projects
+
+Open a token’s menu and choose Copy. Select an instance in another project, then paste. Webstudio attaches a new token named “Button copy 1” (or the next available number) to that instance, with the source token’s breakpoint styles, referenced CSS variables, image assets, and fonts. Missing breakpoints are created.
+
 ## How to use tokens <a href="#how-to-use-tokens-in-webstudio" id="how-to-use-tokens-in-webstudio"></a>
 
 The workflow for styling Tokens in Webstudio is nearly the same as styling classes in Webflow, except better.
