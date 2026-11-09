@@ -11,8 +11,14 @@ const accentBackground = cssVar("--background-accent");
 const instanceBackground = `color-mix(in oklab, ${cssVar(
   "--background-primary"
 )} 86%, ${cssVar("--foreground-primary")})`;
-const tagStyleBackground = cssVar("--border-default");
-const tagStyleForeground = cssVar("--foreground-secondary");
+const tagStyleBackground = `light-dark(
+  color-mix(in oklab, ${cssVar("--foreground-primary")} 80%, ${cssVar("--background-primary")}),
+  color-mix(in oklab, ${cssVar("--foreground-primary")} 42%, ${cssVar("--background-primary")})
+)`;
+const tagStyleForeground = `light-dark(
+  ${cssVar("--foreground-on-inverse")},
+  ${cssVar("--foreground-primary")}
+)`;
 const breakpointBackground = rotateBoundedBackgroundHue(accentBackground, 60);
 const neutralBackground = `light-dark(
   ${cssVar("--foreground-secondary")},
