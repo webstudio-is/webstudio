@@ -141,6 +141,24 @@ test("keeps variable references in mixed token shorthands", () => {
   }
 });
 
+test("allows token shorthands to reference ancestor variables", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+.ws-token { padding: var(--space); }
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(
+      parsed.data.fragment.styles.filter((style) =>
+        style.property.startsWith("padding")
+      )
+    ).toHaveLength(4);
+    expect(parsed.data.fragment.styles[0].value).toEqual({
+      type: "unparsed",
+      value: "var(--space)",
+    });
+  }
+});
+
 test("keeps pseudo-class positions before descendant selectors", () => {
   const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
 .ws-token:hover > svg { fill: red; }

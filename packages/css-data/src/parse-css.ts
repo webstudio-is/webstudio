@@ -969,10 +969,12 @@ export const parseCss = (
                   substituted.result
                 )
               : substituted.result;
-          for (const varName of substituted.droppedVars) {
-            errors.push(
-              `"${property}" was not applied because ${varName} could not be resolved`
-            );
+          if (!options.preserveShorthandVariables) {
+            for (const varName of substituted.droppedVars) {
+              errors.push(
+                `"${property}" was not applied because ${varName} could not be resolved`
+              );
+            }
           }
         } else {
           parsedCss = parseCssValue(property, stringValue);
