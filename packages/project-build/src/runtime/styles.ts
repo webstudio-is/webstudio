@@ -2,13 +2,11 @@ import { z } from "zod";
 import deepEqual from "fast-deep-equal";
 import {
   camelCaseProperty,
-  cssTryParseValue,
   parseCss,
   parseCssValue,
   shorthandProperties,
   validateSelector,
 } from "@webstudio-is/css-data";
-import { walk } from "css-tree";
 import {
   hyphenateProperty,
   styleValue,
@@ -44,7 +42,10 @@ import { getInstanceDepths } from "./instances";
 import { addZodValidationIssue, throwBuilderRuntimeError } from "./errors";
 import { runtimeGeneratedIdInput } from "./generated-id-input";
 import { createRuntimeMutation } from "./mutation";
-import { serializeStyleDeclarations } from "./style-utils";
+import {
+  mapCssValueVariables,
+  serializeStyleDeclarations,
+} from "./style-utils";
 import { createPropValue } from "./props";
 import { getStyleSourceStylesSignature } from "./style-copy";
 import { isBaseWidthBreakpoint } from "./breakpoints";
@@ -427,29 +428,10 @@ export const createCssVariableNamesRegex = (names: Set<string>) => {
 export const collectCssVariableReferences = (value: string, regex?: RegExp) => {
   const references = new Set<string>();
   if (regex === undefined) {
-    const seen = new Set<string>();
-    const collect = (text: string) => {
-      if (seen.has(text)) {
-        return;
-      }
-      seen.add(text);
-      const parsed = cssTryParseValue(text);
-      if (parsed === undefined) {
-        return;
-      }
-      walk(parsed, (node) => {
-        if (node.type === "Function" && node.name === "var") {
-          const name = node.children.first;
-          if (name?.type === "Identifier" && name.name.startsWith("--")) {
-            references.add(name.name);
-          }
-        }
-        if (node.type === "Raw" && node.value.includes("var(")) {
-          collect(node.value);
-        }
-      });
-    };
-    collect(value);
+    mapCssValueVariables(value, (name) => {
+      references.add(name);
+      return;
+    });
     return references;
   }
   regex.lastIndex = 0;

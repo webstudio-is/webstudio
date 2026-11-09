@@ -1,6 +1,4 @@
 import { toValue } from "@webstudio-is/css-engine";
-import { cssTryParseValue } from "@webstudio-is/css-data";
-import { generate, walk } from "css-tree";
 import {
   createId,
   getStyleDeclKey,
@@ -26,6 +24,7 @@ import {
 import {
   collectFontFamiliesFromStyleDecls,
   getUniqueNameWithSuffix,
+  mapCssValueVariables,
   traverseStyleValue,
 } from "./style-utils";
 import {
@@ -80,23 +79,10 @@ const rewriteVariableReferences = (
       item.value = replacements[`--${item.value}`]?.slice(2) ?? item.value;
     }
     if (item.type === "unparsed") {
-      const parsed = cssTryParseValue(item.value);
-      if (parsed === undefined) {
-        return;
-      }
-      let changed = false;
-      walk(parsed, (node) => {
-        if (node.type === "Function" && node.name === "var") {
-          const name = node.children.first;
-          if (name?.type === "Identifier" && replacements[name.name]) {
-            name.name = replacements[name.name];
-            changed = true;
-          }
-        }
-      });
-      if (changed) {
-        item.value = generate(parsed);
-      }
+      item.value = mapCssValueVariables(
+        item.value,
+        (name) => replacements[name]
+      );
     }
   });
   return rewritten;

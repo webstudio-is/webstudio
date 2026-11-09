@@ -88,6 +88,47 @@ export const mapCssValueUrls = (
   return changed ? generate(parsed) : value;
 };
 
+export const mapCssValueVariables = (
+  value: string,
+  mapName: (name: string) => string | undefined
+) => {
+  const active = new Set<string>();
+  const map = (text: string): string => {
+    if (active.has(text)) {
+      return text;
+    }
+    active.add(text);
+    const parsed = cssTryParseValue(text);
+    if (parsed === undefined) {
+      active.delete(text);
+      return text;
+    }
+    let changed = false;
+    walk(parsed, (node) => {
+      if (node.type === "Function" && node.name === "var") {
+        const name = node.children.first;
+        if (name?.type === "Identifier" && name.name.startsWith("--")) {
+          const replacement = mapName(name.name);
+          if (replacement !== undefined && replacement !== name.name) {
+            name.name = replacement;
+            changed = true;
+          }
+        }
+      }
+      if (node.type === "Raw" && node.value.includes("var(")) {
+        const replacement = map(node.value);
+        if (replacement !== node.value) {
+          node.value = replacement;
+          changed = true;
+        }
+      }
+    });
+    active.delete(text);
+    return changed ? generate(parsed) : text;
+  };
+  return map(value);
+};
+
 export const traverseStyleValue = (
   value: StyleValue,
   callback: (value: StyleValue) => void
