@@ -218,6 +218,7 @@ export const builderRuntimeCutoverManifests = [
     family: "style-reads",
     operationIds: [
       "styles.getDeclarations",
+      "tagStyles.list",
       "designTokens.list",
       "designTokens.copy",
     ] as const,
@@ -226,6 +227,7 @@ export const builderRuntimeCutoverManifests = [
       "appRouter.api.designTokens",
       "Builder token menu",
       "MCP/CLI token transfer",
+      "MCP/CLI Tag style discovery",
     ] as const,
   },
   {
