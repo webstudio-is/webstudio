@@ -172,6 +172,22 @@ test("keeps token styles at non-pixel width breakpoints", () => {
   }
 });
 
+test("keeps range-syntax custom media conditions", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+@media (width >= 600px) { .ws-token { color: red; } }
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.breakpoints[1].condition).toContain("width");
+    expect(parsed.data.fragment.styles).toEqual(
+      expect.arrayContaining([expect.objectContaining({ property: "color" })])
+    );
+    expect(serializeTokenCss(parsed.data)).toContain(
+      "@media all and (width>=600px)"
+    );
+  }
+});
+
 test("keeps combined width and custom media conditions", () => {
   const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
 @media (min-width: 600px) and (orientation: landscape) {

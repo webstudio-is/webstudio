@@ -322,9 +322,11 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   const styles = mapParsedCssStyles(parsed.styles, (style) => {
     const breakpointId = style.breakpoint ?? baseId;
     if (!breakpoints.has(breakpointId)) {
-      const media = parseMediaQuery(breakpointId, {
-        preserveNonPixelWidth: true,
-      });
+      const media =
+        parseMediaQuery(breakpointId, { preserveNonPixelWidth: true }) ??
+        (breakpointId.startsWith("(") && breakpointId.endsWith(")")
+          ? { condition: breakpointId.slice(1, -1) }
+          : undefined);
       if (media === undefined) {
         invalidBreakpoint = true;
         return;
