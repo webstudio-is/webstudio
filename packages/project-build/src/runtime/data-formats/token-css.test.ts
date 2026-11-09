@@ -172,6 +172,42 @@ test("keeps token styles at non-pixel width breakpoints", () => {
   }
 });
 
+test("keeps combined width and custom media conditions", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+@media (min-width: 600px) and (orientation: landscape) {
+  .ws-token { color: red; }
+}
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.breakpoints).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          condition: "min-width:600px) and (orientation:landscape",
+        }),
+      ])
+    );
+    expect(parsed.data.fragment.breakpoints[1]).not.toHaveProperty("minWidth");
+    expect(serializeTokenCss(parsed.data)).toContain(
+      "@media all and (min-width:600px) and (orientation:landscape)"
+    );
+  }
+});
+
+test("keeps combined custom media conditions", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+@media (orientation: landscape) and (hover: hover) {
+  .ws-token { color: red; }
+}
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(serializeTokenCss(parsed.data)).toContain(
+      "@media all and (orientation:landscape) and (hover:hover)"
+    );
+  }
+});
+
 test("allows token shorthands to reference ancestor variables", () => {
   const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
 .ws-token { padding: var(--space); }

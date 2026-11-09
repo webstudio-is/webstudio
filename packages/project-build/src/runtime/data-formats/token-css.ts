@@ -332,7 +332,10 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
       breakpoints.set(breakpointId, {
         id: breakpointId,
         label: breakpointId,
-        ...media,
+        // MediaRule wraps conditions in parentheses when serializing.
+        ...(media.condition !== undefined && breakpointId.includes(") and (")
+          ? { condition: breakpointId.slice(1, -1) }
+          : media),
       });
     }
     const value = structuredClone(
