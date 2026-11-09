@@ -15,13 +15,10 @@ import { styled, theme, type CSS } from "../stitches.config";
 import { IconButton } from "./icon-button";
 import { textVariants } from "./text";
 import { cssVar } from "../css-var";
+import { toggleGroupBackground } from "./component-state-color";
 
 type Color = "default" | "preset" | "local" | "remote" | "overwritten";
 type ToggleGroupVariant = "framed" | "frameless";
-
-const toggleGroupBackground = `color-mix(in oklab, ${cssVar(
-  "--background-primary"
-)} 96%, ${cssVar("--foreground-primary")})`;
 
 const ToggleGroupContext = createContext<{
   color?: Color;

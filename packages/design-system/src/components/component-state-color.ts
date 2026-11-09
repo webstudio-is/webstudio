@@ -9,6 +9,10 @@ export const getSelectedItemBackground = (background: string) => `light-dark(
   color-mix(in oklab, ${cssVar("--background-accent")} 20%, ${background})
 )`;
 
+export const toggleGroupBackground = `color-mix(in oklab, ${cssVar(
+  "--background-primary"
+)} 96%, ${cssVar("--foreground-primary")})`;
+
 export const selectedItemBackground = getSelectedItemBackground(
   cssVar("--background-primary")
 );
