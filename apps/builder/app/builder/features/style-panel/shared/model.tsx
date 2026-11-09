@@ -134,7 +134,7 @@ const getDefinedStyles = ({
   matchingBreakpoints: matchingBreakpointsArray,
   styleSourceSelections,
   styles,
-  tagTokenIds,
+  tagStyleIds,
   instanceTags,
 }: {
   instancePath: InstancePath;
@@ -142,7 +142,7 @@ const getDefinedStyles = ({
   matchingBreakpoints: Breakpoint["id"][];
   styleSourceSelections: StyleSourceSelections;
   styles: Styles;
-  tagTokenIds: Map<string, string>;
+  tagStyleIds: Map<string, string>;
   instanceTags: Map<Instance["id"], HtmlTags>;
 }) => {
   type Defined = {
@@ -177,12 +177,12 @@ const getDefinedStyles = ({
       }
     }
     const tag = instanceTags.get(instance.id);
-    const tagTokenId = tag ? tagTokenIds.get(tag) : undefined;
-    if (tagTokenId) {
+    const tagStyleId = tag ? tagStyleIds.get(tag) : undefined;
+    if (tagStyleId) {
       if (instance.id === startingInstanceSelector[0]) {
-        instanceStyleSources.add(tagTokenId);
+        instanceStyleSources.add(tagStyleId);
       } else {
-        inheritedStyleSources.add(tagTokenId);
+        inheritedStyleSources.add(tagStyleId);
       }
     }
   }
@@ -244,15 +244,15 @@ export const $styleObjectModel = computed(
     matchingBreakpoints,
     matchingStates
   ): StyleObjectModel => {
-    const tagTokenIds = new Map<string, string>();
+    const tagStyleIds = new Map<string, string>();
     for (const source of styleSources.values()) {
-      if (source.type === "tagToken") {
-        tagTokenIds.set(source.tag, source.id);
+      if (source.type === "tagStyle") {
+        tagStyleIds.set(source.tag, source.id);
       }
     }
     return {
       styles,
-      tagTokenIds,
+      tagStyleIds,
       styleSourceSelections,
       presetStyles,
       instanceTags,
@@ -291,7 +291,7 @@ export const $computedStyleDeclarations = computed(
       matchingBreakpoints,
       styleSourceSelections,
       styles,
-      tagTokenIds: model.tagTokenIds,
+      tagStyleIds: model.tagStyleIds,
       instanceTags: model.instanceTags,
     });
     // In advanced mode we assume user knows the properties they need, so we don't need to show these.

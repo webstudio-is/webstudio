@@ -27,7 +27,7 @@ export const StyleSourceBadge: StoryFn<
           <StyleSourceBadgeComponent source="token" variant="small">
             Token
           </StyleSourceBadgeComponent>
-          <StyleSourceBadgeComponent source="tag" variant="small">
+          <StyleSourceBadgeComponent source="tagStyle" variant="small">
             Tag
           </StyleSourceBadgeComponent>
           <StyleSourceBadgeComponent source="breakpoint" variant="small">

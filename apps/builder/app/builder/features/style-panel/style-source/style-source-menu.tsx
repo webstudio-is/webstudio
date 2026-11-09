@@ -270,7 +270,7 @@ type StyleSourceMenuProps = {
 
 export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
   const availableStates =
-    props.item.source === "tag"
+    props.item.source === "tagStyle"
       ? props.states.filter(
           ({ selector }) =>
             validateSelector(selector, { allowDescendants: false }).success
@@ -529,7 +529,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
                 existingSelectors={availableStates.map(
                   (state) => state.selector
                 )}
-                allowDescendants={props.item.source !== "tag"}
+                allowDescendants={props.item.source !== "tagStyle"}
                 onSelect={(selector) =>
                   props.onAddSelector?.(props.item.id, selector)
                 }

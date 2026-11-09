@@ -340,7 +340,7 @@ const matchOrSuggestToCreate = (
   const matched = matchSorter(items, search, {
     keys: [itemToString],
   });
-  const order: ItemSource[] = ["tag", "token"];
+  const order: ItemSource[] = ["tagStyle", "token"];
   matched.sort((leftItem, rightItem) => {
     return order.indexOf(leftItem.source) - order.indexOf(rightItem.source);
   });
@@ -349,7 +349,7 @@ const matchOrSuggestToCreate = (
     itemToString(matched[0]).toLocaleLowerCase() !==
       search.toLocaleLowerCase().trim()
   ) {
-    matched.splice(matched[0]?.source === "tag" ? 1 : 0, 0, {
+    matched.splice(matched[0]?.source === "tagStyle" ? 1 : 0, 0, {
       id: newItemId,
       label: search.trim(),
       disabled: false,
@@ -431,7 +431,7 @@ export const StyleSourceInput = (
   });
 
   let hasNewTokenItem = false;
-  let hasTagTokenItem = false;
+  let hasTagStyleItem = false;
   let hasGlobalTokenItem = false;
 
   const states = props.componentStates ?? [];
@@ -530,15 +530,15 @@ export const StyleSourceInput = (
                   }
 
                   let label = null;
-                  if (item.source === "tag" && hasTagTokenItem === false) {
-                    hasTagTokenItem = true;
-                    label = <ComboboxLabel>Tag token</ComboboxLabel>;
+                  if (item.source === "tagStyle" && hasTagStyleItem === false) {
+                    hasTagStyleItem = true;
+                    label = <ComboboxLabel>Tag style</ComboboxLabel>;
                   }
                   if (item.source === "token" && hasGlobalTokenItem === false) {
                     hasGlobalTokenItem = true;
                     label = (
                       <>
-                        {(hasNewTokenItem || hasTagTokenItem) && (
+                        {(hasNewTokenItem || hasTagStyleItem) && (
                           <ComboboxSeparator />
                         )}
                         <ComboboxLabel>Global tokens</ComboboxLabel>

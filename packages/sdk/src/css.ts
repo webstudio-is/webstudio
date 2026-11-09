@@ -100,7 +100,7 @@ export const generateCss = ({
 }: CssConfig) => {
   const fontSheet = createRegularStyleSheet({ name: "ssr" });
   const presetSheet = createRegularStyleSheet({ name: "ssr" });
-  const tagTokenSheet = createRegularStyleSheet({ name: "ssr" });
+  const tagStyleSheet = createRegularStyleSheet({ name: "ssr" });
   const userSheet = createRegularStyleSheet({ name: "ssr" });
 
   addFontRules({ sheet: fontSheet, assets, assetBaseUrl });
@@ -157,7 +157,7 @@ export const generateCss = ({
   }
 
   for (const breakpoint of breakpoints.values()) {
-    tagTokenSheet.addMediaRule(breakpoint.id, breakpoint);
+    tagStyleSheet.addMediaRule(breakpoint.id, breakpoint);
     userSheet.addMediaRule(breakpoint.id, breakpoint);
   }
 
@@ -165,11 +165,11 @@ export const generateCss = ({
     assetBaseUrl,
   });
   userSheet.setTransformer(imageValueTransformer);
-  tagTokenSheet.setTransformer(imageValueTransformer);
+  tagStyleSheet.setTransformer(imageValueTransformer);
 
   for (const styleDecl of styles.values()) {
     const styleSource = styleSources.get(styleDecl.styleSourceId);
-    const sheet = styleSource?.type === "tagToken" ? tagTokenSheet : userSheet;
+    const sheet = styleSource?.type === "tagStyle" ? tagStyleSheet : userSheet;
     const rule = sheet.addMixinRule(styleDecl.styleSourceId);
     rule.setDeclaration({
       breakpoint: styleDecl.breakpointId,
@@ -180,8 +180,8 @@ export const generateCss = ({
   }
 
   for (const source of styleSources.values()) {
-    if (source.type === "tagToken") {
-      tagTokenSheet.addNestingRule(source.tag).applyMixins([source.id]);
+    if (source.type === "tagStyle") {
+      tagStyleSheet.addNestingRule(source.tag).applyMixins([source.id]);
     }
   }
 
@@ -257,8 +257,8 @@ export const generateCss = ({
     "@media all ",
     "@layer presets "
   );
-  const tagTokenCss = tagTokenSheet.cssText;
-  const tagTokenCssPrefix = tagTokenCss ? `${tagTokenCss}\n` : "";
+  const tagStyleCss = tagStyleSheet.cssText;
+  const tagStyleCssPrefix = tagStyleCss ? `${tagStyleCss}\n` : "";
 
   if (atomic) {
     const { cssText } = generateAtomic(userSheet, {
@@ -267,12 +267,12 @@ export const generateCss = ({
       classes,
     });
     return {
-      cssText: `${fontCss}${presetCss}\n${tagTokenCssPrefix}${cssText}`,
+      cssText: `${fontCss}${presetCss}\n${tagStyleCssPrefix}${cssText}`,
       classes,
     };
   }
   return {
-    cssText: `${fontCss}${presetCss}\n${tagTokenCssPrefix}${userSheet.cssText}`,
+    cssText: `${fontCss}${presetCss}\n${tagStyleCssPrefix}${userSheet.cssText}`,
     classes,
   };
 };

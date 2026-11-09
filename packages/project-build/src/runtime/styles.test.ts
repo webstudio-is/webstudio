@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   type Breakpoint,
   getStyleDeclKey,
-  getTagTokenId,
+  getTagStyleId,
   ROOT_INSTANCE_ID,
   type Instance,
   type Prop,
@@ -1593,7 +1593,7 @@ describe("runtime style operations", () => {
   });
 
   test("editing a tag token creates a global source without attaching it", () => {
-    const id = getTagTokenId("button");
+    const id = getTagStyleId("button");
     const mutation = updateSelectedStyleDeclarations(
       {
         breakpoints: runtimeBreakpoints,
@@ -1621,7 +1621,7 @@ describe("runtime style operations", () => {
         {
           op: "add",
           path: [id],
-          value: { type: "tagToken", id, tag: "button" },
+          value: { type: "tagStyle", id, tag: "button" },
         },
       ],
     });
@@ -1644,8 +1644,8 @@ describe("runtime style operations", () => {
     ).toBe(false);
   });
 
-  test("editing the html Tag token from Global root creates a global source", () => {
-    const id = getTagTokenId("html");
+  test("editing the html Tag style from Global root creates a global source", () => {
+    const id = getTagStyleId("html");
     const mutation = updateSelectedStyleDeclarations(
       {
         breakpoints: runtimeBreakpoints,
@@ -1669,7 +1669,7 @@ describe("runtime style operations", () => {
     expect(mutation.payload).toContainEqual({
       namespace: "styleSources",
       patches: [
-        { op: "add", path: [id], value: { type: "tagToken", id, tag: "html" } },
+        { op: "add", path: [id], value: { type: "tagStyle", id, tag: "html" } },
       ],
     });
     expect(
@@ -1680,7 +1680,7 @@ describe("runtime style operations", () => {
   });
 
   test("rejects a descendant selector on a tag token", () => {
-    const id = getTagTokenId("button");
+    const id = getTagStyleId("button");
     expect(() =>
       updateSelectedStyleDeclarations(
         {
