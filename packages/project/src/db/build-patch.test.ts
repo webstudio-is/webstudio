@@ -1757,6 +1757,42 @@ describe("patchBuild", () => {
     ).rejects.toThrow();
   });
 
+  test("rejects a malformed state selector while saving a style", async () => {
+    const build = { ...buildRow, styles: JSON.stringify([]) };
+    await expect(
+      createBuildPatchUpdate({
+        build,
+        clientVersion: 3,
+        loadAssets: async () => ({
+          assets: [],
+          changedAssetIds: new Set<string>(),
+        }),
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "styles",
+                patches: [
+                  {
+                    op: "add",
+                    path: ["source:base:color:/*"],
+                    value: {
+                      styleSourceId: "source",
+                      breakpointId: "base",
+                      property: "color",
+                      state: "/*",
+                      value: { type: "unparsed", value: "red" },
+                    },
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      })
+    ).rejects.toThrow();
+  });
+
   test("validates only touched instances while preserving untouched instances", async () => {
     const buildWithInvalidUntouchedInstance = {
       ...buildRow,

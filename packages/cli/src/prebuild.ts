@@ -12,8 +12,7 @@ import { rm, cp, readFile, writeFile, readdir } from "node:fs/promises";
 import { cwd, exit } from "node:process";
 import { fileURLToPath } from "node:url";
 import { parse } from "acorn";
-import { transform as transformCss } from "esbuild";
-import { transform as transformLightningCss } from "lightningcss";
+import { canBuildCss } from "@webstudio-is/project-build/css-build-validation/server";
 import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import deepEqual from "fast-deep-equal";
@@ -1722,15 +1721,6 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
       true,
   };
   const { cssText, classes } = generateCss(cssConfig);
-  const canBuildCss = async (css: string) => {
-    try {
-      transformLightningCss({ filename: "index.css", code: Buffer.from(css) });
-      await transformCss(css, { loader: "css", minify: true });
-      return true;
-    } catch {
-      return false;
-    }
-  };
   let generatedCss = cssText;
   if ((await canBuildCss(cssText)) === false) {
     const fallbackCss = generateCss({

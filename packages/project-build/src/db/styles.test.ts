@@ -24,7 +24,7 @@ test("parses CSS emitted from a saved style", () => {
   ).toEqual([]);
 });
 
-test("accepts escaped CSS properties that can be served without bundler parsing", () => {
+test("accepts escaped CSS properties used in generated stylesheets", () => {
   expect(
     parseGeneratedStyleDeclaration(
       style("--pE--_WitxzZqY_3KruPxn-\\ \\>\\ \\.figma-block-translate")
@@ -51,5 +51,18 @@ test("rejects malformed writable style maps", () => {
   expect(
     writableStyles.safeParse(new Map([["valid", style("color", "red")]]))
       .success
+  ).toBe(true);
+});
+
+test("rejects malformed state selectors before saving styles", () => {
+  expect(
+    writableStyles.safeParse(
+      new Map([["invalid", { ...style("color", "red"), state: "/*" }]])
+    ).success
+  ).toBe(false);
+  expect(
+    writableStyles.safeParse(
+      new Map([["valid", { ...style("color", "red"), state: ":hover" }]])
+    ).success
   ).toBe(true);
 });

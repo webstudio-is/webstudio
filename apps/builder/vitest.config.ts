@@ -67,6 +67,7 @@ const projects = [
 export default defineConfig({
   optimizeDeps: {
     entries: ["app/**/*.{test,spec}.{ts,tsx}"],
+    exclude: ["lightningcss"],
     include: [
       "react/jsx-dev-runtime",
       "react-router-dom",
@@ -89,6 +90,7 @@ export default defineConfig({
     conditions: ["webstudio", "browser", "development|production"],
   },
   ssr: {
+    external: ["lightningcss"],
     resolve: {
       conditions: ["webstudio", "node", "development|production"],
     },

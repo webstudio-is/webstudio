@@ -123,6 +123,7 @@ export default defineConfig(({ mode }) => {
       ],
     },
     ssr: {
+      external: ["lightningcss"],
       resolve: {
         conditions: [...conditions, "node", "development|production"],
       },

@@ -12,6 +12,8 @@ import {
   setMarketplaceApprovalStatus,
 } from "@webstudio-is/project/index.server";
 import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
+import { canBuildCss } from "@webstudio-is/project-build/css-build-validation/server";
+import { parseGeneratedStyleDeclaration } from "@webstudio-is/project-build/persistence";
 import { singlePlayerVersionMismatchError } from "@webstudio-is/project/build-patch-core.server";
 import {
   createProjectDomain,
@@ -62,7 +64,12 @@ import {
   loadApiToken,
 } from "./api-permits.server";
 import { componentMetas } from "~/shared/component-metas.server";
-import type { Asset, AssetFolder } from "@webstudio-is/sdk";
+import {
+  generateCss,
+  getStyleDeclKey,
+  type Asset,
+  type AssetFolder,
+} from "@webstudio-is/sdk";
 import {
   createContentBlockApplication,
   type BuilderRuntimeContext,
@@ -596,6 +603,44 @@ const loadRuntimeAssetData = async (ctx: AppContext, projectId: string) => {
   return loadAssetDataByProject(projectId, ctx, {
     skipPermissionsCheck: true,
   });
+};
+
+const canPublishBuildCss = async (build: CompactBuild, assets: Asset[]) => {
+  const usedComponents = new Set(
+    build.instances.map((instance) => instance.component)
+  );
+  const { cssText } = generateCss({
+    assets: new Map(assets.map((asset) => [asset.id, asset])),
+    instances: new Map(
+      build.instances.map((instance) => [instance.id, instance])
+    ),
+    props: new Map(build.props.map((prop) => [prop.id, prop])),
+    breakpoints: new Map(
+      build.breakpoints.map((breakpoint) => [breakpoint.id, breakpoint])
+    ),
+    styles: new Map(
+      build.styles
+        .filter(
+          (style) => parseGeneratedStyleDeclaration(style).errors.length === 0
+        )
+        .map((style) => [getStyleDeclKey(style), style])
+    ),
+    styleSourceSelections: new Map(
+      build.styleSourceSelections.map((selection) => [
+        selection.instanceId,
+        selection,
+      ])
+    ),
+    componentMetas: new Map(
+      [...componentMetas].filter(([name]) => usedComponents.has(name))
+    ),
+    assetBaseUrl: "",
+    atomic:
+      build.projectSettings?.compiler?.atomicStyles ??
+      build.pages?.compiler?.atomicStyles ??
+      true,
+  });
+  return canBuildCss(cssText);
 };
 
 const createServerContentBlockApplication = ({
@@ -1175,11 +1220,14 @@ export const apiRouter = router({
           ctx,
           { build }
         );
+        const { assets } = await loadRuntimeAssetData(ctx, input.projectId);
+        const cssValid = await canPublishBuildCss(build, assets);
         return {
           valid: true,
           target: input.target,
           domains,
           diagnostics,
+          cssValid,
         };
       },
       { command: "validate-publish", client: "validatePublish" }

@@ -1,5 +1,8 @@
 import { generateStyleMap, hyphenateProperty } from "@webstudio-is/css-engine";
-import { parseSingleCssDeclaration } from "@webstudio-is/css-data";
+import {
+  parseSingleCssDeclaration,
+  validateSelector,
+} from "@webstudio-is/css-data";
 import {
   type Styles,
   type StyleDecl,
@@ -20,7 +23,11 @@ export const parseGeneratedStyleDeclaration = ({
 
 export const writableStyles = styles.refine((value) =>
   Array.from(value.values()).every(
-    (style) => parseGeneratedStyleDeclaration(style).errors.length === 0
+    (style) =>
+      parseGeneratedStyleDeclaration(style).errors.length === 0 &&
+      (style.state === undefined ||
+        style.state === "" ||
+        validateSelector(style.state).success)
   )
 );
 
