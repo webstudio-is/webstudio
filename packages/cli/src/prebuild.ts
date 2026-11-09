@@ -12,6 +12,7 @@ import { rm, cp, readFile, writeFile, readdir } from "node:fs/promises";
 import { cwd, exit } from "node:process";
 import { fileURLToPath } from "node:url";
 import { parse } from "acorn";
+import { transform as transformCss } from "esbuild";
 import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import deepEqual from "fast-deep-equal";
@@ -81,7 +82,10 @@ import {
   getZodValidationIssues,
   createAssetUrlsByPath,
 } from "@webstudio-is/project-build/runtime";
-import { parseGeneratedStyleDeclaration } from "@webstudio-is/project-build/persistence";
+import {
+  getGeneratedStylesheetErrors,
+  parseGeneratedStyleDeclaration,
+} from "@webstudio-is/project-build/persistence";
 import {
   createPublishedBuildContentCompilationPlan,
   getDynamicPublishedMdxSourceBlockIds,
@@ -1679,12 +1683,24 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     }
   }
 
-  const publishableStyles = new Map(
-    Array.from(publishedStyles).filter(
-      ([, style]) => parseGeneratedStyleDeclaration(style).errors.length === 0
-    )
-  );
-  const { cssText, classes } = generateCss({
+  const publishableStyles = new Map(publishedStyles);
+  for (const [key, style] of publishedStyles) {
+    if (parseGeneratedStyleDeclaration(style).errors.length === 0) {
+      continue;
+    }
+    publishableStyles.delete(key);
+    console.warn(
+      JSON.stringify({
+        type: "webstudio-build-warning",
+        code: "invalid-css-declaration",
+        severity: "warning",
+        styleSourceId: style.styleSourceId,
+        breakpointId: style.breakpointId,
+        property: style.property,
+      })
+    );
+  }
+  const cssConfig = {
     instances: publishedInstances,
     props: publishedProps,
     assets,
@@ -1698,9 +1714,37 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
       siteData.build.projectSettings?.compiler.atomicStyles ??
       pages.compiler?.atomicStyles ??
       true,
-  });
+  };
+  const { cssText, classes } = generateCss(cssConfig);
+  const canBuildCss = async (cssText: string) => {
+    if (getGeneratedStylesheetErrors(cssText).length > 0) {
+      return false;
+    }
+    try {
+      await transformCss(cssText, { loader: "css", minify: true });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  let generatedCss = cssText;
+  if ((await canBuildCss(cssText)) === false) {
+    const fallbackCss = generateCss({
+      ...cssConfig,
+      styles: new Map(),
+    }).cssText;
+    generatedCss = (await canBuildCss(fallbackCss)) ? fallbackCss : "";
+    console.warn(
+      JSON.stringify({
+        type: "webstudio-build-warning",
+        code: "invalid-generated-css",
+        severity: "warning",
+        fallback: generatedCss === "" ? "empty" : "presets-and-fonts",
+      })
+    );
+  }
 
-  await writeGeneratedFile(join(generatedDir, "index.css"), cssText);
+  await writeGeneratedFile(join(generatedDir, "index.css"), generatedCss);
 
   for (const page of generatedPages) {
     const scope = createScope([

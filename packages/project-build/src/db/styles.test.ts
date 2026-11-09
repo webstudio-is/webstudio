@@ -1,6 +1,10 @@
 import { expect, test } from "vitest";
 import type { StyleDecl } from "@webstudio-is/sdk";
-import { parseGeneratedStyleDeclaration, writableStyles } from "./styles";
+import {
+  getGeneratedStylesheetErrors,
+  parseGeneratedStyleDeclaration,
+  writableStyles,
+} from "./styles";
 
 const style = (property: string, value = "none"): StyleDecl => ({
   styleSourceId: "source",
@@ -34,6 +38,13 @@ test("reports CSS that would break the publish parser", () => {
     expect(result.declaration).toBeUndefined();
     expect(result.errors.length).toBeGreaterThan(0);
   }
+});
+
+test("reports malformed complete stylesheets", () => {
+  expect(getGeneratedStylesheetErrors("a { color: red }")).toEqual([]);
+  expect(getGeneratedStylesheetErrors("a { color: red").length).toBeGreaterThan(
+    0
+  );
 });
 
 test("rejects malformed writable style maps", () => {

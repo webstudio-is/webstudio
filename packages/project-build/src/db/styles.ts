@@ -7,6 +7,17 @@ import {
   styles,
 } from "@webstudio-is/sdk";
 
+const parseGeneratedCss = (cssText: string) => {
+  try {
+    return { root: postcss.parse(cssText), errors: [] as string[] };
+  } catch (error) {
+    return { errors: [error instanceof Error ? error.message : String(error)] };
+  }
+};
+
+export const getGeneratedStylesheetErrors = (cssText: string): string[] =>
+  parseGeneratedCss(cssText).errors;
+
 export const parseGeneratedStyleDeclaration = ({
   property,
   value,
@@ -14,36 +25,35 @@ export const parseGeneratedStyleDeclaration = ({
   declaration?: { property: string; value: string };
   errors: string[];
 } => {
-  try {
-    const root = postcss.parse(
-      `a{${generateStyleMap(new Map([[property, value]]))}}`
-    );
-    const rule = root.first;
-    if (
-      root.nodes.length !== 1 ||
-      rule?.type !== "rule" ||
-      rule.selector !== "a"
-    ) {
-      return { errors: ["Expected one CSS rule"] };
-    }
-    const declarations = rule.nodes.filter((node) => node.type === "decl");
-    if (
-      declarations.length !== 1 ||
-      declarations[0].prop !== hyphenateProperty(property) ||
-      rule.nodes.some((node) => node.type !== "decl" && node.type !== "comment")
-    ) {
-      return { errors: ["Expected one CSS declaration"] };
-    }
-    return {
-      declaration: {
-        property: declarations[0].prop,
-        value: declarations[0].value,
-      },
-      errors: [],
-    };
-  } catch (error) {
-    return { errors: [error instanceof Error ? error.message : String(error)] };
+  const { root, errors } = parseGeneratedCss(
+    `a{${generateStyleMap(new Map([[property, value]]))}}`
+  );
+  if (root === undefined) {
+    return { errors };
   }
+  const rule = root.first;
+  if (
+    root.nodes.length !== 1 ||
+    rule?.type !== "rule" ||
+    rule.selector !== "a"
+  ) {
+    return { errors: ["Expected one CSS rule"] };
+  }
+  const declarations = rule.nodes.filter((node) => node.type === "decl");
+  if (
+    declarations.length !== 1 ||
+    declarations[0].prop !== hyphenateProperty(property) ||
+    rule.nodes.some((node) => node.type !== "decl" && node.type !== "comment")
+  ) {
+    return { errors: ["Expected one CSS declaration"] };
+  }
+  return {
+    declaration: {
+      property: declarations[0].prop,
+      value: declarations[0].value,
+    },
+    errors: [],
+  };
 };
 
 export const writableStyles = styles.refine((value) =>

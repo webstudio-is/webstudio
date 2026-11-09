@@ -833,6 +833,7 @@ describe("prebuild", () => {
   test.each([true, false])(
     "publishes valid styles beside an older malformed declaration (atomic: %s)",
     async (atomicStyles) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
       const siteData = createSiteData();
       siteData.build.pages.compiler = { atomicStyles };
       siteData.build.breakpoints = [
@@ -869,6 +870,17 @@ describe("prebuild", () => {
 
       await prebuild({ assets: false, template: ["react-router"] });
 
+      expect(
+        warn.mock.calls.map(([value]) => JSON.parse(String(value)))
+      ).toContainEqual(
+        expect.objectContaining({
+          type: "webstudio-build-warning",
+          code: "invalid-css-declaration",
+          severity: "warning",
+          styleSourceId: "source",
+          breakpointId: "base",
+        })
+      );
       const css = await readFile("app/__generated__/index.css", "utf8");
       expect(css).toContain("color: red");
       expect(css).not.toContain("figma-block-translate");
@@ -876,6 +888,55 @@ describe("prebuild", () => {
       await runGeneratedCommand("react-router", ["build"]);
     },
     30_000
+  );
+
+  test.each(["react-router", "ssg"] as const)(
+    "publishes when a generated CSS rule is malformed (%s)",
+    async (template) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const siteData = createSiteData();
+      siteData.build.breakpoints = [
+        ["base", { id: "base", label: "Base" }],
+      ] as never;
+      siteData.build.styleSources = [
+        ["source", { id: "source", type: "local" }],
+      ] as never;
+      siteData.build.styleSourceSelections = [
+        ["root", { instanceId: "root", values: ["source"] }],
+      ] as never;
+      siteData.build.styles = [
+        [
+          "source:base:color:bad-state",
+          {
+            styleSourceId: "source",
+            breakpointId: "base",
+            state: "/*",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+
+      await prebuild({ assets: false, template: [template] });
+
+      expect(
+        warn.mock.calls.map(([value]) => JSON.parse(String(value)))
+      ).toContainEqual(
+        expect.objectContaining({
+          type: "webstudio-build-warning",
+          code: "invalid-generated-css",
+          severity: "warning",
+        })
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      if (template === "ssg") {
+        await prerenderSsg();
+      } else {
+        await runGeneratedCommand("react-router", ["build"]);
+      }
+    },
+    60_000
   );
   test.each([true, false])(
     "imports managed Form formatting only when used (%s)",
