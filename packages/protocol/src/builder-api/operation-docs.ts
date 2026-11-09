@@ -484,7 +484,7 @@ const curatedPublicApiOperationDocumentation = [
     command: "list-tag-styles",
     description: "List global Tag styles and their declarations",
     examples: [
-      'MCP tool: list-tag-styles {}',
+      "MCP tool: list-tag-styles {}",
       'MCP tool: list-tag-styles {"tag":"button","verbose":true}',
     ],
   },
