@@ -129,6 +129,59 @@ export const serializeDesignTokens = ({
   return { tokens: items, ...pagination };
 };
 
+export const listTagStyles = (
+  state: Pick<BuilderState, "styles" | "styleSources">,
+  input: PaginatedOutputInput & { tag?: string } = {}
+) => {
+  if (state.styles === undefined || state.styleSources === undefined) {
+    return throwBuilderRuntimeError(
+      "BAD_REQUEST",
+      "Style namespaces are missing"
+    );
+  }
+  const declarationsBySource = new Map<string, StyleDecl[]>();
+  for (const declaration of state.styles.values()) {
+    const declarations =
+      declarationsBySource.get(declaration.styleSourceId) ?? [];
+    declarations.push(declaration);
+    declarationsBySource.set(declaration.styleSourceId, declarations);
+  }
+  const tagStyles = Array.from(state.styleSources.values())
+    .filter((source) => source.type === "tagStyle")
+    .filter((source) => input.tag === undefined || source.tag === input.tag)
+    .sort((left, right) => left.tag.localeCompare(right.tag))
+    .map((source) => {
+      const declarations = declarationsBySource.get(source.id) ?? [];
+      return projectOutput({
+        input,
+        compact: {
+          id: source.id,
+          tag: source.tag,
+          declarationCount: declarations.length,
+        },
+        expanded: () => ({
+          declarations: declarations.map(
+            ({ property, value, breakpointId, state }) => ({
+              property,
+              value,
+              breakpoint: breakpointId,
+              state,
+            })
+          ),
+        }),
+      });
+    });
+  const { items, ...pagination } = paginateOutput({
+    items: tagStyles,
+    cursor: input.cursor,
+    limit: input.limit,
+    filters: { tag: input.tag },
+    verbose: input.verbose,
+    invalidCursorMessage: "Invalid Tag style cursor",
+  });
+  return { tagStyles: items, ...pagination };
+};
+
 const getRequiredStyleState = (
   state: Pick<BuilderState, "styles" | "styleSources" | "styleSourceSelections">
 ) => {

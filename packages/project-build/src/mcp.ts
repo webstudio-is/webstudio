@@ -4587,8 +4587,11 @@ const capabilityAreas = [
     goal: "Read and change styles, design tokens, CSS variables, and breakpoints.",
     tools: [
       "get-styles",
+      "list-tag-styles",
       "update-styles",
       "delete-styles",
+      "update-selected-styles",
+      "delete-selected-styles",
       "replace-styles",
       "list-design-tokens",
       "create-design-token",
@@ -7305,6 +7308,7 @@ const workflowOnlyGuideToolNames = new Set([
 ]);
 const designSystemGuideToolNames = new Set([
   "list-design-tokens",
+  "list-tag-styles",
   "attach-design-token",
   "update-design-token-styles",
 ]);

@@ -52,6 +52,7 @@ import {
   getReferencedCssVariables,
   getStyleSourceInsertionIndex,
   getStyleDeclarations,
+  listTagStyles,
   getUnusedCssVariableNames,
   performCssVariableRename,
   renameCssVariable,
@@ -2141,6 +2142,47 @@ describe("serializeDesignTokens", () => {
         ?.usageCount
     ).toBeUndefined();
   });
+});
+
+test("lists global Tag styles separately from design tokens", () => {
+  const divId = getTagStyleId("div");
+  const buttonId = getTagStyleId("button");
+  const declaration: StyleDecl = {
+    styleSourceId: divId,
+    breakpointId: "base",
+    property: "color",
+    state: ":hover",
+    value: { type: "keyword", value: "red" },
+  };
+  const state = {
+    styleSources: new Map<string, StyleSource>([
+      [divId, { type: "tagStyle", id: divId, tag: "div" }],
+      [buttonId, { type: "tagStyle", id: buttonId, tag: "button" }],
+      ["token", { type: "token", id: "token", name: "Primary" }],
+    ]),
+    styles: new Map([[getStyleDeclKey(declaration), declaration]]),
+  };
+  expect(listTagStyles(state).tagStyles).toEqual([
+    { id: buttonId, tag: "button", declarationCount: 0 },
+    { id: divId, tag: "div", declarationCount: 1 },
+  ]);
+  expect(listTagStyles(state, { tag: "div", verbose: true }).tagStyles).toEqual(
+    [
+      {
+        id: divId,
+        tag: "div",
+        declarationCount: 1,
+        declarations: [
+          {
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            breakpoint: "base",
+            state: ":hover",
+          },
+        ],
+      },
+    ]
+  );
 });
 
 test("expands style values without changing pagination or filters", () => {

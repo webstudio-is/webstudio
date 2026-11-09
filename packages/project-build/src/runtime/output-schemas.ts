@@ -177,6 +177,21 @@ const token = looseObject({
   styles: z.record(z.string(), styleValue).optional(),
   usageCount: z.number().int().optional(),
 });
+const tagStyle = looseObject({
+  id,
+  tag: z.string(),
+  declarationCount: z.number().int(),
+  declarations: z
+    .array(
+      looseObject({
+        property: z.string(),
+        value: styleValue,
+        breakpoint: id,
+        state: z.string().optional(),
+      })
+    )
+    .optional(),
+});
 const cssVariable = looseObject({
   name: z.string(),
   value: z.string(),
@@ -659,6 +674,10 @@ export const runtimeOutputSchemas = {
   "styles.deleteSelectedDeclarations": styleKeysResult,
   "styles.replaceValues": styleKeysResult,
   "designTokens.list": looseObject({ tokens: z.array(token), ...outputPage }),
+  "tagStyles.list": looseObject({
+    tagStyles: z.array(tagStyle),
+    ...outputPage,
+  }),
   "designTokens.copy": looseObject({ data: z.string() }),
   "designTokens.paste": looseObject({ tokenId: id }),
   "designTokens.create": looseObject({ tokenIds: stringArray }),

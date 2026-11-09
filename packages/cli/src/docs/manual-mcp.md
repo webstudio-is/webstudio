@@ -418,6 +418,7 @@ terms, agents can:
 - Bind props to expressions, resources, actions, and runtime system values.
 - Read, add, update, delete, and replace local styles.
 - Update selected style-source styles.
+- List and edit global Tag styles.
 - List, create, update, attach, detach, extract, duplicate, rename, lock, unlock, reorder, clear, and delete design tokens and style sources.
 - List, define, rename, delete, and rewrite CSS variables.
 - List, create, update, and delete static data variables.

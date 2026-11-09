@@ -473,6 +473,10 @@ const designTokenListInput = z.object({
   sort: z.enum(["name", "usage"]).optional(),
   ...paginatedOutputInputSchema.shape,
 });
+const tagStyleListInput = z.object({
+  tag: z.string().optional(),
+  ...paginatedOutputInputSchema.shape,
+});
 const cssVariableListInput = z.object({
   filter: z.string().optional(),
   withUsage: z.boolean().optional(),
@@ -1850,6 +1854,13 @@ export const builderRuntimeOperations = [
     readContract(styleNamespaces),
     designTokenListInput,
     ({ state, input }) => styles.listDesignTokens(state, input)
+  ),
+  runtimeOperation(
+    "tagStyles.list",
+    api("list-tag-styles", "listTagStyles"),
+    readContract(["styleSources", "styles"]),
+    tagStyleListInput,
+    ({ state, input }) => styles.listTagStyles(state, input)
   ),
   runtimeOperation(
     "designTokens.copy",

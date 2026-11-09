@@ -69674,6 +69674,136 @@ export const runtimeOperationContractData = [
     retryOnConflict: false,
   },
   {
+    id: "tagStyles.list",
+    command: "list-tag-styles",
+    client: "listTagStyles",
+    kind: "read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        tag: {
+          type: "string",
+        },
+        cursor: {
+          type: "string",
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200,
+        },
+        verbose: {
+          description:
+            "Expand the same result with complete records and diagnostics. Omit for compact output.",
+          type: "boolean",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        tagStyles: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: {
+                type: "string",
+              },
+              tag: {
+                type: "string",
+              },
+              declarationCount: {
+                type: "integer",
+                minimum: -9007199254740991,
+                maximum: 9007199254740991,
+              },
+              declarations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    property: {
+                      type: "string",
+                    },
+                    value: {
+                      type: "object",
+                      properties: {
+                        type: {
+                          type: "string",
+                          description: "CSS value kind",
+                        },
+                        hidden: {
+                          type: "boolean",
+                        },
+                      },
+                      required: ["type"],
+                      additionalProperties: {},
+                    },
+                    breakpoint: {
+                      type: "string",
+                    },
+                    state: {
+                      type: "string",
+                    },
+                  },
+                  required: ["property", "value", "breakpoint"],
+                  additionalProperties: {},
+                },
+              },
+            },
+            required: ["id", "tag", "declarationCount"],
+            additionalProperties: {},
+          },
+        },
+        detail: {
+          type: "string",
+          enum: ["compact", "verbose"],
+        },
+        total: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        returnedCount: {
+          type: "integer",
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        nextCursor: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "null",
+            },
+          ],
+        },
+        filters: {
+          type: "object",
+          properties: {},
+          additionalProperties: {},
+          required: [],
+        },
+      },
+      required: [
+        "tagStyles",
+        "detail",
+        "total",
+        "returnedCount",
+        "nextCursor",
+        "filters",
+      ],
+      additionalProperties: {},
+    },
+    readNamespaces: ["styleSources", "styles"],
+    writeNamespaces: [],
+    invalidatesNamespaces: [],
+    retryOnConflict: false,
+  },
+  {
     id: "designTokens.copy",
     command: "copy-design-token",
     client: "copyDesignToken",

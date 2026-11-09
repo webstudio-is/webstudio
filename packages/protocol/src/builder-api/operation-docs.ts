@@ -481,10 +481,25 @@ const curatedPublicApiOperationDocumentation = [
     examples: ["webstudio get-styles --instance instance-id --json"],
   },
   {
+    command: "list-tag-styles",
+    description: "List global Tag styles and their declarations",
+    examples: [
+      "webstudio list-tag-styles --json",
+      "webstudio list-tag-styles --tag button --verbose --json",
+    ],
+  },
+  {
     command: "update-styles",
     description: "Create or update local style declarations",
     requiredOptions: ["input", "json"],
     examples: ["webstudio update-styles --input styles.json --json"],
+  },
+  {
+    command: "update-selected-styles",
+    description:
+      "Create or update selected style-source declarations. Use tag-style:<tag> to create or edit a global Tag style.",
+    requiredOptions: ["input", "json"],
+    examples: ["webstudio update-selected-styles --input styles.json --json"],
   },
   {
     command: "delete-styles",
