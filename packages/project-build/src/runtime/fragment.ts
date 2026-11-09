@@ -2,6 +2,9 @@
 // Webstudio fragments. Put serialization-style instance subtree cloning and
 // fragment asset/style/data remapping here, not live tree placement decisions.
 import { migrateCodeTextContentMutable } from "@webstudio-is/project-migrations";
+import { parseCssValue } from "@webstudio-is/css-data";
+import { toValue } from "@webstudio-is/css-engine";
+import { produce } from "immer";
 import {
   createId,
   type Asset,
@@ -21,6 +24,7 @@ import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
   getStyleDeclKey,
+  getAssetUrl,
   getHomePage,
   isFormSubmission,
   portalComponent,
@@ -53,7 +57,9 @@ import {
 } from "./style-copy";
 import { unwrap } from "./unwrap";
 import {
+  collectFontFamiliesFromStyleDecls,
   collectFontFamiliesFromStyleValue,
+  mapCssValueUrls,
   traverseStyleValue,
 } from "./style-utils";
 import { countDataSourceAssetReferences } from "./assets";
@@ -75,6 +81,158 @@ export const assertNoAmbiguousFormInstance = (
 };
 
 const createNanoId = () => createId("nano");
+
+export const remapFragmentAssets = (
+  fragment: WebstudioFragment,
+  importedAssets: ReadonlyMap<Asset["id"], Asset>
+) => {
+  const replacementIds = new Map<Asset["id"], Asset["id"]>();
+  const replacementUrls = new Map<string, string>();
+  const replacementFontFamilies = new Map<string, string>();
+  for (const sourceAsset of fragment.assets) {
+    const importedAsset = importedAssets.get(sourceAsset.id);
+    if (importedAsset === undefined) {
+      throw new Error("Imported asset is missing");
+    }
+    if (
+      sourceAsset.id === importedAsset.id &&
+      (sourceAsset.type !== "font" ||
+        importedAsset.type !== "font" ||
+        sourceAsset.meta.family === importedAsset.meta.family)
+    ) {
+      continue;
+    }
+    if (sourceAsset.id !== importedAsset.id) {
+      if (sourceAsset.type === "image") {
+        const importedUrl = getAssetUrl(
+          importedAsset,
+          "https://webstudio.invalid"
+        );
+        replacementUrls.set(
+          new URL(sourceAsset.id, "https://webstudio.invalid").href,
+          importedUrl.pathname + importedUrl.search
+        );
+      }
+      for (const [sourceId, currentId] of replacementIds) {
+        if (currentId === sourceAsset.id) {
+          replacementIds.set(sourceId, importedAsset.id);
+        }
+      }
+      if (replacementIds.has(sourceAsset.id) === false) {
+        replacementIds.set(sourceAsset.id, importedAsset.id);
+      }
+    }
+    if (sourceAsset.type === "font" && importedAsset.type === "font") {
+      const from = sourceAsset.meta.family;
+      const to = importedAsset.meta.family;
+      if (from === to) {
+        continue;
+      }
+      for (const [original, current] of replacementFontFamilies) {
+        if (current === from) {
+          replacementFontFamilies.set(original, to);
+        }
+      }
+      if (replacementFontFamilies.has(from) === false) {
+        replacementFontFamilies.set(from, to);
+      }
+    }
+  }
+  const fontVariableStyleKeys = new Set<string>();
+  if (replacementFontFamilies.size > 0) {
+    collectFontFamiliesFromStyleDecls(fragment.styles, undefined, (style) => {
+      fontVariableStyleKeys.add(getStyleDeclKey(style));
+    });
+  }
+  return produce(fragment, (draft) => {
+    for (const prop of draft.props) {
+      if (prop.type === "asset") {
+        prop.value = replacementIds.get(prop.value) ?? prop.value;
+      }
+    }
+    for (const style of draft.styles) {
+      const isFontValue =
+        replacementFontFamilies.size > 0 &&
+        (style.property === "fontFamily" ||
+          fontVariableStyleKeys.has(getStyleDeclKey(style)));
+      traverseStyleValue(style.value, (item) => {
+        if (item.type === "image" && item.value.type === "asset") {
+          item.value.value =
+            replacementIds.get(item.value.value) ?? item.value.value;
+        }
+        if (replacementUrls.size > 0 && item.type === "unparsed") {
+          item.value = mapCssValueUrls(item.value, (url) => {
+            try {
+              return replacementUrls.get(
+                new URL(url, "https://webstudio.invalid").href
+              );
+            } catch {
+              return;
+            }
+          });
+        }
+        if (item.type === "fontFamily") {
+          const mapped = item.value.map(
+            (family) => replacementFontFamilies.get(family) ?? family
+          );
+          if (mapped.some((family, index) => family !== item.value[index])) {
+            item.value = mapped;
+          }
+        }
+        if (isFontValue && item.type === "unparsed") {
+          const parsed = parseCssValue("font-family", item.value);
+          let changed = false;
+          traverseStyleValue(parsed, (part) => {
+            if (part.type === "fontFamily") {
+              part.value = part.value.map((family) => {
+                const replacement = replacementFontFamilies.get(family);
+                changed ||= replacement !== undefined && replacement !== family;
+                return replacement ?? family;
+              });
+            }
+          });
+          if (changed) {
+            item.value = toValue(parsed);
+          }
+        }
+      });
+    }
+    draft.assets = [];
+  });
+};
+
+export const importFragmentAssets = async (
+  fragments: WebstudioFragment[],
+  importAssets: (assets: Asset[]) => Promise<Map<Asset["id"], Asset>>
+) => {
+  const assets = new Map(
+    fragments.flatMap((fragment) =>
+      fragment.assets.map((asset) => [asset.id, asset] as const)
+    )
+  );
+  const importedAssets =
+    assets.size === 0
+      ? new Map<Asset["id"], Asset>()
+      : await importAssets([...assets.values()]);
+  if (importedAssets.size !== assets.size) {
+    throw new Error("Imported asset is missing");
+  }
+  const assetIds = new Map(
+    [...importedAssets].map(([sourceId, asset]) => [sourceId, asset.id])
+  );
+  return {
+    fragments: new Map(
+      fragments.map((fragment) => [
+        fragment,
+        fragment.assets.length === 0
+          ? fragment
+          : remapFragmentAssets(fragment, importedAssets),
+      ])
+    ),
+    assetIds,
+    assets: importedAssets,
+  };
+};
 
 export type ContentModeCopyableProp = (input: {
   prop: Prop;

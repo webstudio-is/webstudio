@@ -481,6 +481,7 @@ export const Builder = (props: BuilderProps) => {
                 bottom: 0,
                 width: 1,
                 background: cssVar("--border-default"),
+                zIndex: 1,
               },
             }}
           >

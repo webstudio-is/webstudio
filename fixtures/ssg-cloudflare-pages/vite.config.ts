@@ -6,6 +6,7 @@ const sourceConditions =
   process.env.WEBSTUDIO_LOCAL_CLI_BOOTSTRAPPED === "1" ? ["webstudio"] : [];
 
 export default defineConfig({
+  css: { transformer: "lightningcss" },
   plugins: [react(), vike()],
   resolve: {
     conditions: [...sourceConditions, "browser", "development|production"],

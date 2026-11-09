@@ -62,6 +62,10 @@ While the server is running, stdout is reserved for MCP JSON-RPC messages. Do no
 
 ## One-Shot Tool Calls
 
+### Token transfer
+
+Use `copy-design-token` with `tokenId` to get a transfer payload. Pass that payload as `data` to `paste-design-token` in the target project. Set `instanceId` to attach the new token to an instance; without it, paste creates the token without attaching it. Each paste creates the next numbered copy. Image and font assets transfer when both projects use the same Webstudio origin.
+
 ### Native Form actions
 
 A native Form (`ResourceForm`) selects Resources through a data source. Create

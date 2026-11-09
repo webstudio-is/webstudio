@@ -873,6 +873,33 @@ describe("project session mcp adapter", () => {
     ]);
     expect(toolNames).toContain("insert-fragment");
     expect(toolNames).not.toContain("meta.get_more_tools");
+    const tokenTools = listProjectSessionMcpTools(
+      runtimeOperationContracts
+        .filter(
+          ({ id }) => id === "designTokens.copy" || id === "designTokens.paste"
+        )
+        .map((contract) =>
+          publicOperation({
+            command: contract.command,
+            id: contract.id,
+            method: contract.kind === "read" ? "query" : "mutation",
+            permit: contract.kind === "read" ? "view" : "edit",
+            description: contract.command,
+            inputSchema: contract.inputSchema,
+            readNamespaces: contract.readNamespaces,
+            writeNamespaces: contract.writeNamespaces,
+          })
+        )
+    ).filter(
+      (tool) =>
+        tool.name === "copy-design-token" || tool.name === "paste-design-token"
+    );
+    expect(tokenTools.map(({ name }) => name)).toEqual([
+      "copy-design-token",
+      "paste-design-token",
+    ]);
+    expect(tokenTools[0]?.inputSchema.required).toContain("tokenId");
+    expect(tokenTools[1]?.inputSchema.required).toContain("data");
     const responseHeaderTools = listProjectSessionMcpTools(
       runtimeOperationContracts
         .filter(({ id }) => id.startsWith("responseHeaders."))

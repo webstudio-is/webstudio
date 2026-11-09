@@ -61,6 +61,7 @@ import {
   getPagePath,
 } from "@webstudio-is/sdk";
 import { matchPathnameRoutes } from "@webstudio-is/wsauth";
+import { prepareMcpTokenPasteData } from "./mcp-token-transfer";
 import { fontMetaUpdate } from "@webstudio-is/fonts";
 import { resolveApiConnection } from "../api-connection";
 import {
@@ -2142,7 +2143,36 @@ const createCliMcpHost = async ({
     onProjectSessionChange: previewFreshness.markStale,
     executeOperation: async ({ command, input, dryRun }) => {
       assertMcpToolServerSupport(command, apiContract, dryRun === true);
-      const operationInput = getMcpOperationInput(command, input);
+      let operationInput = getMcpOperationInput(command, input);
+      const projectOrigin = new URL(apiConnection.origin).origin;
+      if (command === "copy-design-token" && isPlainRecord(operationInput)) {
+        operationInput = { ...operationInput, sourceOrigin: projectOrigin };
+      }
+      if (
+        command === "paste-design-token" &&
+        isPlainRecord(operationInput) &&
+        typeof operationInput.data === "string"
+      ) {
+        operationInput = {
+          ...operationInput,
+          assetIds: await prepareMcpTokenPasteData({
+            data: operationInput.data,
+            projectOrigin,
+            dryRun: dryRun === true,
+            download: (url) => fetch(url),
+            upload: (asset, data, detectMetadata) =>
+              httpClient.uploadAsset({
+                ...apiConnection,
+                upload: {
+                  asset: { ...asset, folderId: undefined },
+                  data,
+                  detectMetadata,
+                },
+              }),
+            refreshAssets: () => session.refresh(["assets"]),
+          }),
+        };
+      }
       const textAssetFeedback = await prepareTextAssetWriteFeedback({
         command,
         input,

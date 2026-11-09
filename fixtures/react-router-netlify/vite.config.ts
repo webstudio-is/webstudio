@@ -3,6 +3,7 @@ import { defineConfig } from "vite";
 import netlifyPlugin from "@netlify/vite-plugin-react-router";
 
 export default defineConfig({
+  css: { transformer: "lightningcss" },
   optimizeDeps: {
     entries: ["app/root.tsx", "app/routes/**/*.{ts,tsx}"],
   },

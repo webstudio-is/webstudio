@@ -1690,6 +1690,109 @@ describe("patchBuild", () => {
     ).rejects.toThrow();
   });
 
+  test("rejects an invalid style while leaving older invalid styles editable", async () => {
+    const invalidStyle = {
+      styleSourceId: "source",
+      breakpointId: "base",
+      property: "backgroundColor",
+      value: { type: "unparsed", value: "red; width: 10px" },
+    };
+    const build = { ...buildRow, styles: JSON.stringify([invalidStyle]) };
+    const input = {
+      loadAssets: async () => ({
+        assets: [],
+        changedAssetIds: new Set<string>(),
+      }),
+      build,
+      clientVersion: 3,
+    };
+    const validUpdate = await createBuildPatchUpdate({
+      ...input,
+      transactions: [
+        transaction({
+          payload: [
+            {
+              namespace: "styles",
+              patches: [
+                {
+                  op: "add",
+                  path: ["source:base:color:"],
+                  value: {
+                    ...invalidStyle,
+                    property: "color",
+                    value: { type: "unparsed", value: "red" },
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+    expect(validUpdate.status).toBe("ok");
+    if (validUpdate.status === "ok") {
+      expect(JSON.parse(validUpdate.update?.styles ?? "")).toHaveLength(2);
+    }
+
+    await expect(
+      createBuildPatchUpdate({
+        ...input,
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "styles",
+                patches: [
+                  {
+                    op: "add",
+                    path: ["source:base:new:"],
+                    value: invalidStyle,
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      })
+    ).rejects.toThrow();
+  });
+
+  test("rejects a malformed state selector while saving a style", async () => {
+    const build = { ...buildRow, styles: JSON.stringify([]) };
+    await expect(
+      createBuildPatchUpdate({
+        build,
+        clientVersion: 3,
+        loadAssets: async () => ({
+          assets: [],
+          changedAssetIds: new Set<string>(),
+        }),
+        transactions: [
+          transaction({
+            payload: [
+              {
+                namespace: "styles",
+                patches: [
+                  {
+                    op: "add",
+                    path: ["source:base:color:/*"],
+                    value: {
+                      styleSourceId: "source",
+                      breakpointId: "base",
+                      property: "color",
+                      state: "/*",
+                      value: { type: "unparsed", value: "red" },
+                    },
+                  },
+                ],
+              },
+            ],
+          }),
+        ],
+      })
+    ).rejects.toThrow();
+  });
+
   test("validates only touched instances while preserving untouched instances", async () => {
     const buildWithInvalidUntouchedInstance = {
       ...buildRow,

@@ -275,6 +275,12 @@ test("reports a missing separator at the next declaration", () => {
   expect(parseBlock("color: red;\nbackground: blue").diagnostics).toEqual([]);
 });
 
+test("reports malformed pasted CSS without saving the broken declaration", () => {
+  const parsed = parseBlock("color: red }");
+  expect(parsed.diagnostics.length).toBeGreaterThan(0);
+  expect(parsed.styleMap.has("color")).toBe(false);
+});
+
 test("Enter adds a separator before a new declaration line", async () => {
   render(
     <MixedStyleBlockDialog

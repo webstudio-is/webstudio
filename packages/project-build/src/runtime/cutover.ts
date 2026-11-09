@@ -216,8 +216,17 @@ export const builderRuntimeCutoverManifests = [
   },
   {
     family: "style-reads",
-    operationIds: ["styles.getDeclarations", "designTokens.list"] as const,
-    callers: ["appRouter.api.styles", "appRouter.api.designTokens"] as const,
+    operationIds: [
+      "styles.getDeclarations",
+      "designTokens.list",
+      "designTokens.copy",
+    ] as const,
+    callers: [
+      "appRouter.api.styles",
+      "appRouter.api.designTokens",
+      "Builder token menu",
+      "MCP/CLI token transfer",
+    ] as const,
   },
   {
     family: "style-declaration-mutations",
@@ -241,8 +250,13 @@ export const builderRuntimeCutoverManifests = [
       "designTokens.detach",
       "designTokens.extract",
       "designTokens.createAttached",
+      "designTokens.paste",
     ] as const,
-    callers: ["appRouter.api.designTokens"] as const,
+    callers: [
+      "appRouter.api.designTokens",
+      "Builder token paste",
+      "MCP/CLI token transfer",
+    ] as const,
   },
   {
     family: "style-source-mutations",

@@ -25,6 +25,7 @@ const conditions = hasPrivateFolders
   : ["webstudio"];
 
 export default defineConfig(({ mode }) => ({
+  css: { transformer: "lightningcss" },
   resolve: {
     conditions: [...conditions, "browser", "development|production"],
   },

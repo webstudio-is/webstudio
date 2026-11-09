@@ -1079,16 +1079,17 @@ const validateEditableInstanceReachability = (
   return { success: true };
 };
 
-const validateEditableInstanceReferences = (
-  context: ContentModeTransactionContext
-): ContentModeValidationResult => {
+const countContentInstanceReferences = (
+  instances: Map<Instance["id"], Instance>,
+  contentRootIds: Set<Instance["id"]>
+) => {
   const referenceCounts = new Map<Instance["id"], number>();
   const visited = new Set<Instance["id"]>();
   const visit = (instanceId: Instance["id"]) => {
     if (visited.has(instanceId)) {
       return;
     }
-    const instance = context.capabilities.instances.get(instanceId);
+    const instance = instances.get(instanceId);
     if (
       instance === undefined ||
       instance.component === blockTemplateComponent
@@ -1108,13 +1109,55 @@ const validateEditableInstanceReferences = (
     }
   };
 
-  for (const rootId of context.capabilities.contentRootIds) {
+  for (const rootId of contentRootIds) {
     visit(rootId);
   }
+
+  return referenceCounts;
+};
+
+const hasInstancePath = (
+  instances: Map<Instance["id"], Instance>,
+  fromId: Instance["id"],
+  toId: Instance["id"]
+) => {
+  const visited = new Set<Instance["id"]>();
+  const pending = [fromId];
+  while (pending.length > 0) {
+    const instanceId = pending.pop()!;
+    if (instanceId === toId) {
+      return true;
+    }
+    if (visited.has(instanceId)) {
+      continue;
+    }
+    visited.add(instanceId);
+    for (const child of instances.get(instanceId)?.children ?? []) {
+      if (child.type === "id") {
+        pending.push(child.value);
+      }
+    }
+  }
+  return false;
+};
+
+const validateEditableInstanceReferences = (
+  context: ContentModeTransactionContext,
+  initialInstances: Map<Instance["id"], Instance>
+): ContentModeValidationResult => {
+  const initialReferenceCounts = countContentInstanceReferences(
+    initialInstances,
+    context.initialContentRootIds
+  );
+  const referenceCounts = countContentInstanceReferences(
+    context.capabilities.instances,
+    context.capabilities.contentRootIds
+  );
 
   for (const [instanceId, referenceCount] of referenceCounts) {
     if (
       referenceCount > 1 &&
+      referenceCount > (initialReferenceCounts.get(instanceId) ?? 0) &&
       (context.initialEditableInstanceIds.has(instanceId) ||
         context.addedInstanceIds.has(instanceId))
     ) {
@@ -1122,6 +1165,30 @@ const validateEditableInstanceReferences = (
         success: false,
         error: "Content instances must not be referenced multiple times.",
       };
+    }
+  }
+
+  for (const [instanceId, instance] of context.capabilities.instances) {
+    const initialChildren = initialInstances.get(instanceId)?.children;
+    if (instance.children === initialChildren) {
+      continue;
+    }
+    const initialChildIds = new Set(
+      initialChildren
+        ?.filter((child) => child.type === "id")
+        .map((child) => child.value)
+    );
+    for (const child of instance.children ?? []) {
+      if (
+        child.type === "id" &&
+        initialChildIds.has(child.value) === false &&
+        hasInstancePath(context.capabilities.instances, child.value, instanceId)
+      ) {
+        return {
+          success: false,
+          error: "Content instances must not contain cycles.",
+        };
+      }
     }
   }
 
@@ -1635,8 +1702,10 @@ export const applyContentModeTransaction = ({
   if (editableInstanceReachabilityResult.success === false) {
     return editableInstanceReachabilityResult;
   }
-  const editableInstanceReferencesResult =
-    validateEditableInstanceReferences(context);
+  const editableInstanceReferencesResult = validateEditableInstanceReferences(
+    context,
+    capabilities.instances
+  );
   if (editableInstanceReferencesResult.success === false) {
     return editableInstanceReferencesResult;
   }

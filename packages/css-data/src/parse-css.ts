@@ -32,6 +32,77 @@ export type ParsedStyleDecl = {
   value: StyleValue;
 };
 
+export const parseSingleCssDeclaration = (
+  declarationCss: string,
+  expectedProperty: string
+): {
+  declaration?: { property: string; value: string };
+  errors: string[];
+} => {
+  let root: csstree.CssNode;
+  let parseError = false;
+  try {
+    root = csstree.parse(`a{${declarationCss}}`, {
+      onParseError: () => {
+        parseError = true;
+      },
+    });
+  } catch {
+    return { errors: ["Invalid CSS declaration"] };
+  }
+  if (parseError) {
+    return { errors: ["Invalid CSS declaration"] };
+  }
+  if (root.type !== "StyleSheet") {
+    return { errors: ["Expected one CSS rule"] };
+  }
+  const rules = root.children.toArray();
+  const rule = rules[0];
+  if (
+    rules.length !== 1 ||
+    rule?.type !== "Rule" ||
+    csstree.generate(rule.prelude) !== "a"
+  ) {
+    return { errors: ["Expected one CSS rule"] };
+  }
+  const declarations = rule.block.children.toArray();
+  const declaration = declarations[0];
+  if (
+    declarations.length !== 1 ||
+    declaration?.type !== "Declaration" ||
+    declaration.property !== expectedProperty
+  ) {
+    return { errors: ["Expected one CSS declaration"] };
+  }
+  return {
+    declaration: {
+      property: declaration.property,
+      value: csstree.generate(declaration.value),
+    },
+    errors: [],
+  };
+};
+
+export const hasCssSyntaxError = (css: string): boolean => {
+  const endRule = ".__webstudio_css_end__{--webstudio-css-end:1}";
+  let parseError = false;
+  try {
+    const stylesheet = csstree.parse(`${css}\n${endRule}`, {
+      onParseError: () => {
+        parseError = true;
+      },
+    });
+    const lastRule = stylesheet.children.toArray().at(-1);
+    return (
+      parseError ||
+      lastRule?.type !== "Rule" ||
+      csstree.generate(lastRule) !== endRule
+    );
+  } catch {
+    return true;
+  }
+};
+
 export const hasUnsupportedCssTemplateRules = (source: string): boolean => {
   try {
     const ast = csstree.parse(source, { context: "declarationList" });
@@ -247,9 +318,9 @@ const preserveOriginalVarLonghands = (
     );
   }
 
-  // Recover unresolved var()->longhand mapping when shorthand expansion drops
+  // Recover var()->longhand mapping when shorthand expansion drops
   // the var() token (e.g. outline/border cases that default to currentcolor).
-  for (const varText of getFallbacklessVarTexts(value)) {
+  for (const varText of getVarTexts(value)) {
     const varName = getVarNameFromVarText(varText);
     if (varName === undefined) {
       continue;
@@ -298,17 +369,14 @@ const preserveOriginalVarLonghands = (
     return serialized.includes('"type":"var"') || serialized.includes("var(");
   });
 
-  const firstFallbacklessVarText = getFallbacklessVarTexts(value)[0];
+  const firstVarText = getVarTexts(value)[0];
 
-  if (firstFallbacklessVarText !== undefined) {
+  if (firstVarText !== undefined) {
     for (const [prop, styleValue] of parsedCss) {
       if (styleValue.type !== "invalid") {
         continue;
       }
-      parsedCss.set(
-        prop,
-        parseCssValueLonghand(prop, firstFallbacklessVarText)
-      );
+      parsedCss.set(prop, parseCssValueLonghand(prop, firstVarText));
     }
   }
 
@@ -318,12 +386,9 @@ const preserveOriginalVarLonghands = (
   // When no var() survived at all, keep the first unresolved var() on all
   // parsed longhands so authored references are not lost.
   if (!hasAnyPreservedVar) {
-    if (firstFallbacklessVarText !== undefined) {
+    if (firstVarText !== undefined) {
       for (const prop of parsedCss.keys()) {
-        parsedCss.set(
-          prop,
-          parseCssValueLonghand(prop, firstFallbacklessVarText)
-        );
+        parsedCss.set(prop, parseCssValueLonghand(prop, firstVarText));
       }
     }
   }
@@ -395,7 +460,7 @@ const getSingleFallbacklessVarText = (value: string): string | undefined => {
   }
 };
 
-const getFallbacklessVarTexts = (value: string): string[] => {
+const getVarTexts = (value: string): string[] => {
   try {
     const ast = csstree.parse(value, { context: "value" });
     const vars: string[] = [];
@@ -408,7 +473,7 @@ const getFallbacklessVarTexts = (value: string): string[] => {
           return;
         }
         const parsedVar = parseCssVar(fnNode);
-        if (!parsedVar || parsedVar.fallback !== undefined) {
+        if (!parsedVar) {
           return;
         }
         vars.push(csstree.generate(fnNode));
@@ -422,7 +487,7 @@ const getFallbacklessVarTexts = (value: string): string[] => {
 };
 
 const getVarNameFromVarText = (varText: string): string | undefined => {
-  const match = varText.trim().match(/^var\(\s*(--[\w-]+)\s*\)$/);
+  const match = varText.trim().match(/^var\(\s*(--[\w-]+)/);
   return match?.[1];
 };
 
@@ -713,10 +778,11 @@ export type ParseCssResult = {
  * to be resolved together as if they apply to the same element.
  */
 export const extractCssCustomProperties = (
-  css: string
+  css: string,
+  parsedAst?: csstree.CssNode
 ): Map<string, string> => {
   const map = new Map<string, string>();
-  const ast = cssTreeTryParse(css);
+  const ast = parsedAst ?? cssTreeTryParse(css);
   if (ast === undefined) {
     return map;
   }
@@ -738,9 +804,16 @@ export const extractCssCustomProperties = (
 
 export const parseCss = (
   css: string,
-  cssVars: Map<string, string>
+  cssVars: Map<string, string>,
+  // Callers may reuse a css-tree AST parsed with positions: true.
+  parsedAst?: csstree.CssNode,
+  options: {
+    preserveShorthandVariables?: boolean;
+    preserveNonPixelWidth?: boolean;
+    parseSelector?: (selector: csstree.Selector) => Selector;
+  } = {}
 ): ParseCssResult => {
-  const ast = cssTreeTryParse(css);
+  const ast = parsedAst ?? cssTreeTryParse(css);
   const stylesMap = new Map<string, ParsedStyleDecl>();
   const errors: string[] = [];
 
@@ -756,6 +829,7 @@ export const parseCss = (
   //   border-color: rgb(x y z / var(--op));  --op: 0.6;
   // resolve correctly regardless of declaration order.
   const customProperties = new Map<string, string>();
+  const emptyCustomProperties = new Map<string, string>();
 
   const collectRuleCustomProperties = (rule: csstree.Rule) => {
     customProperties.clear();
@@ -833,6 +907,7 @@ export const parseCss = (
               if (
                 node.type === "Dimension" &&
                 node.unit !== "px" &&
+                options.preserveNonPixelWidth !== true &&
                 (currentFeatureName === "min-width" ||
                   currentFeatureName === "max-width")
               ) {
@@ -870,6 +945,10 @@ export const parseCss = (
         if (node.type !== "Selector") {
           continue;
         }
+        if (options.parseSelector !== undefined) {
+          selectors.push(options.parseSelector(node));
+          continue;
+        }
         let selector: Selector | undefined = undefined;
         const children = node.children.toArray();
         const startsWithNesting = children[0]?.type === "NestingSelector";
@@ -898,14 +977,14 @@ export const parseCss = (
             case "PseudoClassSelector": {
               // First pseudo selector is not a state but an element selector, e.g. :root
               if (selector) {
-                state = `:${childNode.name}`;
+                state = csstree.generate(childNode);
               } else {
-                name = `:${childNode.name}`;
+                name = csstree.generate(childNode);
               }
               break;
             }
             case "PseudoElementSelector":
-              state = `::${childNode.name}`;
+              state = csstree.generate(childNode);
               break;
             case "Combinator":
               // " " vs " > "
@@ -917,7 +996,7 @@ export const parseCss = (
           if (selector) {
             selector.name += name;
             if (state) {
-              selector.state = state;
+              selector.state = `${selector.state ?? ""}${state}`;
             }
           } else {
             selector = { name, state };
@@ -943,15 +1022,26 @@ export const parseCss = (
         const substituted = substituteVarsInShorthand(
           property,
           stringValue,
-          customProperties,
+          options.preserveShorthandVariables
+            ? emptyCustomProperties
+            : customProperties,
           cssVars
         );
         if (substituted !== undefined) {
-          parsedCss = substituted.result;
-          for (const varName of substituted.droppedVars) {
-            errors.push(
-              `"${property}" was not applied because ${varName} could not be resolved`
-            );
+          parsedCss =
+            options.preserveShorthandVariables && stringValue.includes("var(")
+              ? preserveOriginalVarLonghands(
+                  property,
+                  stringValue,
+                  substituted.result
+                )
+              : substituted.result;
+          if (!options.preserveShorthandVariables) {
+            for (const varName of substituted.droppedVars) {
+              errors.push(
+                `"${property}" was not applied because ${varName} could not be resolved`
+              );
+            }
           }
         } else {
           parsedCss = parseCssValue(property, stringValue);
@@ -1168,7 +1258,8 @@ type ParsedBreakpoint = {
 };
 
 export const parseMediaQuery = (
-  mediaQuery: string
+  mediaQuery: string,
+  options: { preserveNonPixelWidth?: boolean } = {}
 ): undefined | ParsedBreakpoint => {
   const ast = csstree.parse(mediaQuery, { context: "mediaQuery" });
   let minWidth: undefined | number;
@@ -1196,12 +1287,18 @@ export const parseMediaQuery = (
         otherFeatures.push(cleaned);
       }
     }
-    if (node.type === "Dimension" && node.unit === "px") {
-      const value = Number(node.value);
-      if (currentWidthProperty === "minWidth") {
-        minWidth = value;
-      } else if (currentWidthProperty === "maxWidth") {
-        maxWidth = value;
+    if (node.type === "Dimension" && currentWidthProperty !== undefined) {
+      if (node.unit === "px") {
+        const value = Number(node.value);
+        if (currentWidthProperty === "minWidth") {
+          minWidth = value;
+        } else {
+          maxWidth = value;
+        }
+      } else if (options.preserveNonPixelWidth) {
+        const property =
+          currentWidthProperty === "minWidth" ? "min-width" : "max-width";
+        otherFeatures.push(`${property}:${node.value}${node.unit}`);
       }
       currentWidthProperty = undefined;
     }

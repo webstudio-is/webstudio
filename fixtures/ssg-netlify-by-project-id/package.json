@@ -29,7 +29,8 @@
     "@vitejs/plugin-react": "^4.7.0",
     "typescript": "7.0.2",
     "vite": "7.1.12",
-    "webstudio": "workspace:*"
+    "webstudio": "workspace:*",
+    "lightningcss": "1.31.1"
   },
   "dependencies": {
     "@webstudio-is/image": "workspace:*",

@@ -42,6 +42,7 @@ import * as slot from "./slot";
 import * as designTokenImport from "./design-token-import";
 import * as audit from "./audit";
 import * as styles from "./styles";
+import * as tokenTransfer from "./token-transfer";
 import {
   getZodValidationIssues,
   throwBuilderRuntimeError,
@@ -1849,6 +1850,34 @@ export const builderRuntimeOperations = [
     readContract(styleNamespaces),
     designTokenListInput,
     ({ state, input }) => styles.listDesignTokens(state, input)
+  ),
+  runtimeOperation(
+    "designTokens.copy",
+    api("copy-design-token", "copyDesignToken"),
+    readContract(["assets", "breakpoints", ...styleNamespaces]),
+    tokenTransfer.copyDesignTokenInput,
+    ({ state, input }) => tokenTransfer.copyDesignToken(state, input)
+  ),
+  runtimeOperation(
+    "designTokens.paste",
+    api("paste-design-token", "pasteDesignToken"),
+    mutationContract({
+      readNamespaces: [
+        "assets",
+        "breakpoints",
+        "instances",
+        ...styleNamespaces,
+      ],
+      writeNamespaces: [
+        "breakpoints",
+        "styleSources",
+        "styles",
+        "styleSourceSelections",
+      ],
+    }),
+    tokenTransfer.pasteDesignTokenInput,
+    ({ state, input, context }) =>
+      tokenTransfer.pasteDesignToken(state, input, context)
   ),
   runtimeOperation(
     "designTokens.create",
