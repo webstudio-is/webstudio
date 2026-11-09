@@ -1,5 +1,4 @@
-import postcss from "postcss";
-import { generateStyleMap, hyphenateProperty } from "@webstudio-is/css-engine";
+import { parseGeneratedStyleDeclaration } from "@webstudio-is/css-data";
 import {
   type Styles,
   type StyleDecl,
@@ -7,38 +6,10 @@ import {
   styles,
 } from "@webstudio-is/sdk";
 
-export const isValidGeneratedStyleDeclaration = ({
-  property,
-  value,
-}: StyleDecl): boolean => {
-  const expectedProperty = hyphenateProperty(property);
-  try {
-    const root = postcss.parse(
-      `a{${generateStyleMap(new Map([[property, value]]))}}`
-    );
-    const rule = root.first;
-    if (
-      root.nodes.length !== 1 ||
-      rule?.type !== "rule" ||
-      rule.selector !== "a"
-    ) {
-      return false;
-    }
-    const declarations = rule.nodes.filter((node) => node.type === "decl");
-    return (
-      declarations.length === 1 &&
-      declarations[0].prop === expectedProperty &&
-      rule.nodes.every(
-        (node) => node.type === "decl" || node.type === "comment"
-      )
-    );
-  } catch {
-    return false;
-  }
-};
-
 export const writableStyles = styles.refine((value) =>
-  Array.from(value.values()).every(isValidGeneratedStyleDeclaration)
+  Array.from(value.values()).every(
+    (style) => parseGeneratedStyleDeclaration(style).errors.length === 0
+  )
 );
 
 export const parseStyles = (stylesString: string): Styles => {

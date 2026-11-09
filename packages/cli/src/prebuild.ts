@@ -81,7 +81,7 @@ import {
   getZodValidationIssues,
   createAssetUrlsByPath,
 } from "@webstudio-is/project-build/runtime";
-import { isValidGeneratedStyleDeclaration } from "@webstudio-is/project-build/persistence";
+import { parseGeneratedStyleDeclaration } from "@webstudio-is/css-data";
 import {
   createPublishedBuildContentCompilationPlan,
   getDynamicPublishedMdxSourceBlockIds,
@@ -1680,8 +1680,8 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
   }
 
   const publishableStyles = new Map(
-    Array.from(publishedStyles).filter(([, style]) =>
-      isValidGeneratedStyleDeclaration(style)
+    Array.from(publishedStyles).filter(
+      ([, style]) => parseGeneratedStyleDeclaration(style).errors.length === 0
     )
   );
   const { cssText, classes } = generateCss({

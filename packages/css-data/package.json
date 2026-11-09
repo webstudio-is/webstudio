@@ -46,6 +46,7 @@
     "@webstudio-is/css-engine": "workspace:*",
     "change-case": "^5.4.4",
     "css-tree": "^3.2.1",
+    "postcss": "^8.5.16",
     "warn-once": "^0.1.1"
   }
 }

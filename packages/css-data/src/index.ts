@@ -20,6 +20,7 @@ export * from "./property-parsers";
 // shorthand property parsers
 export * from "./parse-css-value";
 export * from "./parse-css";
+export * from "./parse-generated-style-declaration";
 export * from "./shorthands";
 export * from "./media-condition-simulator";
 export { shorthandProperties } from "./__generated__/shorthand-properties";

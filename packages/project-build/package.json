@@ -96,7 +96,6 @@
     "fastest-levenshtein": "^1.0.16",
     "immer": "^10.1.1",
     "papaparse": "^5.5.3",
-    "postcss": "^8.5.16",
     "slugify": "^1.6.6",
     "title-case": "^4.3.2",
     "urlpattern-polyfill": "^10.1.0",
