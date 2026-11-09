@@ -11,6 +11,7 @@ import { createReadStream, existsSync } from "node:fs";
 import { rm, cp, readFile, writeFile, readdir } from "node:fs/promises";
 import { cwd, exit } from "node:process";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 import { parse } from "acorn";
 import { transform as transformCss } from "esbuild";
 import { log, spinner } from "@clack/prompts";
@@ -82,10 +83,7 @@ import {
   getZodValidationIssues,
   createAssetUrlsByPath,
 } from "@webstudio-is/project-build/runtime";
-import {
-  getGeneratedStylesheetErrors,
-  parseGeneratedStyleDeclaration,
-} from "@webstudio-is/project-build/persistence";
+import { parseGeneratedStyleDeclaration } from "@webstudio-is/project-build/persistence";
 import {
   createPublishedBuildContentCompilationPlan,
   getDynamicPublishedMdxSourceBlockIds,
@@ -162,9 +160,14 @@ const contentRuntimeBundleUrl = new URL(
 const contentRuntimeFile = "$resources.asset-query-vendor.js";
 const appRoot = "app";
 const generatedDir = join(appRoot, "__generated__");
+const generatedCssDir = join("public", "__webstudio", "css");
 const sitemapModule = join(generatedDir, "$resources.sitemap.xml");
 const routesDir = join(appRoot, "routes");
-const generatedOutputDirectories = [generatedDir, routesDir] as const;
+const generatedOutputDirectories = [
+  generatedDir,
+  routesDir,
+  generatedCssDir,
+] as const;
 
 type SiteDataByPage = {
   [id: Page["id"]]: {
@@ -1025,6 +1028,9 @@ export const prebuild = async (options: {
   if (options.incremental !== true) {
     await rm(routesDir, { recursive: true, force: true });
   }
+  if (options.incremental !== true) {
+    await rm(generatedCssDir, { recursive: true, force: true });
+  }
 
   const generatedFiles = new Set<string>();
   const previousGeneratedFiles =
@@ -1716,35 +1722,29 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
       true,
   };
   const { cssText, classes } = generateCss(cssConfig);
-  const canBuildCss = async (cssText: string) => {
-    if (getGeneratedStylesheetErrors(cssText).length > 0) {
-      return false;
+  try {
+    const result = await transformCss(cssText, { loader: "css", minify: true });
+    if (result.warnings.length > 0) {
+      console.warn(
+        JSON.stringify({
+          type: "webstudio-build-warning",
+          code: "invalid-generated-css",
+          severity: "warning",
+        })
+      );
     }
-    try {
-      await transformCss(cssText, { loader: "css", minify: true });
-      return true;
-    } catch {
-      return false;
-    }
-  };
-  let generatedCss = cssText;
-  if ((await canBuildCss(cssText)) === false) {
-    const fallbackCss = generateCss({
-      ...cssConfig,
-      styles: new Map(),
-    }).cssText;
-    generatedCss = (await canBuildCss(fallbackCss)) ? fallbackCss : "";
+  } catch {
     console.warn(
       JSON.stringify({
         type: "webstudio-build-warning",
         code: "invalid-generated-css",
         severity: "warning",
-        fallback: generatedCss === "" ? "empty" : "presets-and-fonts",
       })
     );
   }
-
-  await writeGeneratedFile(join(generatedDir, "index.css"), generatedCss);
+  const cssFileName = `index.${createHash("sha256").update(cssText).digest("hex").slice(0, 12)}.css`;
+  await writeGeneratedFile(join(generatedCssDir, cssFileName), cssText);
+  const cssUrl = `/__webstudio/css/${cssFileName}`;
 
   for (const page of generatedPages) {
     const scope = createScope([
@@ -2146,10 +2146,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
           "__SERVER__",
           importFrom(`./app/__generated__/${generatedBasename}.server`, file)
         )
-        .replaceAll(
-          "__CSS__",
-          importFrom(`./app/__generated__/index.css`, file)
-        );
+        .replaceAll("__CSS__", cssUrl);
       await writeGeneratedFile(file, content);
     }
     if (

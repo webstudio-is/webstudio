@@ -309,8 +309,8 @@ describe("build import helpers", () => {
         {
           styleSourceId: "source-1",
           breakpointId: "base",
-          property: "--pE--_WitxzZqY_3KruPxn-\\ \\>\\ \\.figma-block-translate",
-          value: { type: "unparsed", value: "none" },
+          property: "color",
+          value: { type: "unparsed", value: "red; width: 10px" },
         },
       ],
     ] as never;

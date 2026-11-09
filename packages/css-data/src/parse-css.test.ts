@@ -4,9 +4,22 @@ import {
   hasUnsupportedCssTemplateRules,
   parseClassBasedSelector,
   parseCss,
+  parseSingleCssDeclaration,
   parseMediaQuery,
 } from "./parse-css";
 import { propertyVarTestFixtures } from "./__generated__/property-var-test-fixtures";
+
+test("single declaration parser rejects CSS that changes the rule structure", () => {
+  expect(
+    parseSingleCssDeclaration('content:"a; } b"', "content").errors
+  ).toEqual([]);
+  expect(
+    parseSingleCssDeclaration("color:red; width:10px", "color").errors.length
+  ).toBeGreaterThan(0);
+  expect(
+    parseSingleCssDeclaration("color:red} b{width:10px", "color").errors.length
+  ).toBeGreaterThan(0);
+});
 
 describe("Parse CSS", () => {
   test("flex with a nested calc basis matches explicit longhands", () => {

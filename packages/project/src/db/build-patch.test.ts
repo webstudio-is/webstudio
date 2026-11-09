@@ -1694,8 +1694,8 @@ describe("patchBuild", () => {
     const invalidStyle = {
       styleSourceId: "source",
       breakpointId: "base",
-      property: "--pE--_WitxzZqY_3KruPxn-\\ \\>\\ \\.figma-block-translate",
-      value: { type: "unparsed", value: "none" },
+      property: "backgroundColor",
+      value: { type: "unparsed", value: "red; width: 10px" },
     };
     const build = { ...buildRow, styles: JSON.stringify([invalidStyle]) };
     const input = {
@@ -1717,7 +1717,11 @@ describe("patchBuild", () => {
                 {
                   op: "add",
                   path: ["source:base:color:"],
-                  value: { ...invalidStyle, property: "color" },
+                  value: {
+                    ...invalidStyle,
+                    property: "color",
+                    value: { type: "unparsed", value: "red" },
+                  },
                 },
               ],
             },

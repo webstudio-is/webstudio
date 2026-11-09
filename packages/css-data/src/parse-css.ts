@@ -32,6 +32,49 @@ export type ParsedStyleDecl = {
   value: StyleValue;
 };
 
+export const parseSingleCssDeclaration = (
+  declarationCss: string,
+  expectedProperty: string
+): {
+  declaration?: { property: string; value: string };
+  errors: string[];
+} => {
+  let root: csstree.CssNode;
+  try {
+    root = csstree.parse(`a{${declarationCss}}`);
+  } catch {
+    return { errors: ["Invalid CSS declaration"] };
+  }
+  if (root.type !== "StyleSheet") {
+    return { errors: ["Expected one CSS rule"] };
+  }
+  const rules = root.children.toArray();
+  const rule = rules[0];
+  if (
+    rules.length !== 1 ||
+    rule?.type !== "Rule" ||
+    csstree.generate(rule.prelude) !== "a"
+  ) {
+    return { errors: ["Expected one CSS rule"] };
+  }
+  const declarations = rule.block.children.toArray();
+  const declaration = declarations[0];
+  if (
+    declarations.length !== 1 ||
+    declaration?.type !== "Declaration" ||
+    declaration.property !== expectedProperty
+  ) {
+    return { errors: ["Expected one CSS declaration"] };
+  }
+  return {
+    declaration: {
+      property: declaration.property,
+      value: csstree.generate(declaration.value),
+    },
+    errors: [],
+  };
+};
+
 export const hasUnsupportedCssTemplateRules = (source: string): boolean => {
   try {
     const ast = csstree.parse(source, { context: "declarationList" });

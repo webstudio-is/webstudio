@@ -1,10 +1,6 @@
 import { expect, test } from "vitest";
 import type { StyleDecl } from "@webstudio-is/sdk";
-import {
-  getGeneratedStylesheetErrors,
-  parseGeneratedStyleDeclaration,
-  writableStyles,
-} from "./styles";
+import { parseGeneratedStyleDeclaration, writableStyles } from "./styles";
 
 const style = (property: string, value = "none"): StyleDecl => ({
   styleSourceId: "source",
@@ -28,9 +24,16 @@ test("parses CSS emitted from a saved style", () => {
   ).toEqual([]);
 });
 
-test("reports CSS that would break the publish parser", () => {
+test("accepts escaped CSS properties that can be served without bundler parsing", () => {
+  expect(
+    parseGeneratedStyleDeclaration(
+      style("--pE--_WitxzZqY_3KruPxn-\\ \\>\\ \\.figma-block-translate")
+    ).errors
+  ).toEqual([]);
+});
+
+test("rejects CSS values that create additional declarations or rules", () => {
   for (const [property, value] of [
-    ["--pE--_WitxzZqY_3KruPxn-\\ \\>\\ \\.figma-block-translate", "none"],
     ["color", "red; width: 10px"],
     ["color", "red } a { width: 10px"],
   ]) {
@@ -40,17 +43,8 @@ test("reports CSS that would break the publish parser", () => {
   }
 });
 
-test("reports malformed complete stylesheets", () => {
-  expect(getGeneratedStylesheetErrors("a { color: red }")).toEqual([]);
-  expect(getGeneratedStylesheetErrors("a { color: red").length).toBeGreaterThan(
-    0
-  );
-});
-
 test("rejects malformed writable style maps", () => {
-  const invalid = style(
-    "--pE--_WitxzZqY_3KruPxn-\\ \\>\\ \\.figma-block-translate"
-  );
+  const invalid = style("color", "red; width: 10px");
   expect(
     writableStyles.safeParse(new Map([["invalid", invalid]])).success
   ).toBe(false);

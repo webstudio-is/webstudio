@@ -55,7 +55,7 @@ import {
   contactEmail,
 } from "../__generated__/_index.server";
 import * as constants from "../constants.mjs";
-import css from "../__generated__/index.css?url";
+const css = "/__webstudio/css/index.60b4b3c438ed.css";
 import { sitemap } from "../__generated__/$resources.sitemap.xml";
 import { authRoutes } from "../__generated__/$resources.wsauth.server";
 import { createGeneratedAssetResourceFetch } from "../__generated__/$resources.asset-query-runtime";

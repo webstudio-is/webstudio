@@ -1,22 +1,11 @@
-import postcss from "postcss";
 import { generateStyleMap, hyphenateProperty } from "@webstudio-is/css-engine";
+import { parseSingleCssDeclaration } from "@webstudio-is/css-data";
 import {
   type Styles,
   type StyleDecl,
   getStyleDeclKey,
   styles,
 } from "@webstudio-is/sdk";
-
-const parseGeneratedCss = (cssText: string) => {
-  try {
-    return { root: postcss.parse(cssText), errors: [] as string[] };
-  } catch (error) {
-    return { errors: [error instanceof Error ? error.message : String(error)] };
-  }
-};
-
-export const getGeneratedStylesheetErrors = (cssText: string): string[] =>
-  parseGeneratedCss(cssText).errors;
 
 export const parseGeneratedStyleDeclaration = ({
   property,
@@ -25,35 +14,8 @@ export const parseGeneratedStyleDeclaration = ({
   declaration?: { property: string; value: string };
   errors: string[];
 } => {
-  const { root, errors } = parseGeneratedCss(
-    `a{${generateStyleMap(new Map([[property, value]]))}}`
-  );
-  if (root === undefined) {
-    return { errors };
-  }
-  const rule = root.first;
-  if (
-    root.nodes.length !== 1 ||
-    rule?.type !== "rule" ||
-    rule.selector !== "a"
-  ) {
-    return { errors: ["Expected one CSS rule"] };
-  }
-  const declarations = rule.nodes.filter((node) => node.type === "decl");
-  if (
-    declarations.length !== 1 ||
-    declarations[0].prop !== hyphenateProperty(property) ||
-    rule.nodes.some((node) => node.type !== "decl" && node.type !== "comment")
-  ) {
-    return { errors: ["Expected one CSS declaration"] };
-  }
-  return {
-    declaration: {
-      property: declarations[0].prop,
-      value: declarations[0].value,
-    },
-    errors: [],
-  };
+  const declarationCss = generateStyleMap(new Map([[property, value]]));
+  return parseSingleCssDeclaration(declarationCss, hyphenateProperty(property));
 };
 
 export const writableStyles = styles.refine((value) =>

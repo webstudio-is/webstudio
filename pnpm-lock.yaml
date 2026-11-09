@@ -2356,9 +2356,6 @@ importers:
       papaparse:
         specifier: ^5.5.3
         version: 5.5.3
-      postcss:
-        specifier: ^8.5.16
-        version: 8.5.16
       slugify:
         specifier: ^1.6.6
         version: 1.6.6
