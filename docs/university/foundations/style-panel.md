@@ -13,10 +13,11 @@ The Style Panel is on the right side of the builder. It exposes every CSS proper
 
 ## Style sources
 
-At the top of the Style Panel is the **style source bar**, which determines where styles are saved and how reusable they are. There are two types of style sources:
+At the top of the Style Panel is the **style source bar**, which determines where styles are saved and how reusable they are. There are three types of style sources:
 
 - **Local** — styles apply only to this instance. See [Design tokens](design-tokens.md) for the full explanation of Local vs. Tokens.
 - **Tokens** — reusable style groups shared across multiple instances. See [Design tokens](design-tokens.md).
+- **Tag styles** — site-wide styles for an HTML tag, such as `h1` or `button`. See [Tag styles](tag-styles.md).
 
 [CSS variables](css-variables.md) are not a style source — they are named values (e.g. `--color-brand`) defined on any instance in the Advanced section and referenced inside style inputs across the site.
 
@@ -218,6 +219,7 @@ site supports before relying on them.
 ## Related
 
 - [Design tokens](design-tokens.md) – Local styles, tokens, and how they work together
+- [Tag styles](tag-styles.md) – Set site-wide styles for HTML tags
 - [CSS variables](css-variables.md) – Named values used inside style inputs
 - [Label colors](anatomy-of-the-webstudio-builder.md#label-colors) – What the blue, orange, and gray labels mean
 - [States and selectors](states-and-selectors.md) – Style hover, focus, and other states

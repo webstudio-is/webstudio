@@ -50,9 +50,11 @@ You can type any valid CSS pseudo-class into the Style Sources dropdown. If it's
 {% hint style="info" %}
 Custom states can target descendants while staying scoped to the selected instance. For example, `:hover .button` targets descendants with the [custom class](custom-classes-and-attributes.md) `button` while the selected instance is hovered, and `:hover > .icon` targets only direct children with the custom class `icon`.
 
+You can also select a descendant tag in a Local source or Token. For example, `p` targets paragraphs inside that instance. A [Tag style](tag-styles.md) targets one tag across the site instead.
+
 Prefer [CSS variables for parent-child interactions](css-variables.md#parent-child-interactions). They keep each property on the child that uses it, can coordinate several children from one parent state, and do not couple the interaction to descendant classes or structure. Use a descendant custom state when the interaction specifically requires selector-based targeting.
 
-Start the selector with a pseudo-class, pseudo-element, or attribute selector for the selected instance. You can then use a descendant (` `) or child (`>`) combinator. Selector lists, selectors that start with a type, class, or ID, and sibling combinators (`+` and `~`) are rejected because they can target elements outside the selected instance.
+Start a custom state with a pseudo-class, pseudo-element, or attribute selector for the selected instance. You can then use a descendant (` `) or child (`>`) combinator. A tag name on its own is treated as a descendant selector. Selector lists, class or ID selectors at the start, and sibling combinators (`+` and `~`) are rejected because they can target elements outside the selected instance.
 {% endhint %}
 
 ## Pseudo-elements

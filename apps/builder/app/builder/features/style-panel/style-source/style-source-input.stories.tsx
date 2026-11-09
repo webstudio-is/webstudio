@@ -201,3 +201,46 @@ export const TokenMenu: StoryFn<typeof StyleSourceMenuComponent> = () => (
     states={[]}
   />
 );
+
+export const TagStyle = () => {
+  const tagStyle: Item = {
+    id: "tag-style-div",
+    label: "div",
+    source: "tagStyle",
+    disabled: false,
+    locked: false,
+    states: [":hover"],
+  };
+  const [value, setValue] = useState<Array<Item>>([tagStyle, localItem]);
+  const [selectedItemSelector, setSelectedItemSelector] = useState<
+    undefined | ItemSelector
+  >({ styleSourceId: tagStyle.id });
+
+  return (
+    <Flex
+      css={{
+        width: theme.sizes.sidebarWidth,
+        padding: theme.spacing[5],
+        boxSizing: "content-box",
+      }}
+    >
+      <StyleSourceInputComponent
+        inputRef={() => {}}
+        css={{ width: theme.sizes.sidebarWidth }}
+        items={getItems()}
+        value={value}
+        selectedItemSelector={selectedItemSelector}
+        componentStates={[
+          { type: "state", selector: ":hover", label: ":hover" },
+          {
+            type: "state",
+            selector: ":focus-visible",
+            label: ":focus-visible",
+          },
+        ]}
+        onSelectItem={setSelectedItemSelector}
+        onSort={setValue}
+      />
+    </Flex>
+  );
+};
