@@ -1,5 +1,11 @@
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
-import { parseCssValue } from "@webstudio-is/css-data";
+import {
+  camelCaseProperty,
+  cssTryParseValue,
+  parseCssValue,
+  type ParsedStyleDecl,
+} from "@webstudio-is/css-data";
+import { generate, walk, type CssNode } from "css-tree";
 import type {
   Instance,
   Styles,
@@ -35,6 +41,99 @@ export const getUniqueNameWithSuffix = (
   }
   return `${name}-${maxCounter + 1}`;
 };
+
+export const mapParsedCssStyles = (
+  declarations: Iterable<ParsedStyleDecl>,
+  getContext: (
+    declaration: ParsedStyleDecl
+  ) =>
+    | (Pick<StyleDecl, "styleSourceId" | "breakpointId"> &
+        Partial<Pick<StyleDecl, "value" | "state">>)
+    | undefined
+): StyleDecl[] => {
+  const styles: StyleDecl[] = [];
+  for (const declaration of declarations) {
+    const context = getContext(declaration);
+    if (context === undefined) {
+      continue;
+    }
+    styles.push({
+      property: camelCaseProperty(declaration.property),
+      value: declaration.value,
+      ...(declaration.state ? { state: declaration.state } : {}),
+      ...context,
+    });
+  }
+  return styles;
+};
+
+const mapCssValueNodes = (
+  value: string,
+  mapNode: (node: CssNode) => boolean
+) => {
+  const active = new Set<string>();
+  const map = (text: string): string => {
+    if (active.has(text)) {
+      return text;
+    }
+    active.add(text);
+    const parsed = cssTryParseValue(text);
+    if (parsed === undefined) {
+      active.delete(text);
+      return text;
+    }
+    let changed = false;
+    walk(parsed, (node) => {
+      changed = mapNode(node) || changed;
+      if (node.type === "Raw") {
+        const replacement = map(node.value);
+        if (replacement !== node.value) {
+          node.value = replacement;
+          changed = true;
+        }
+      }
+    });
+    active.delete(text);
+    return changed ? generate(parsed) : text;
+  };
+  return map(value);
+};
+
+export const mapCssValueUrls = (
+  value: string,
+  mapUrl: (url: string) => string | undefined
+) =>
+  mapCssValueNodes(value, (node) => {
+    if (node.type !== "Url") {
+      return false;
+    }
+    const replacement = mapUrl(node.value);
+    if (replacement === undefined || replacement === node.value) {
+      return false;
+    }
+    node.value = replacement;
+    return true;
+  });
+
+export const mapCssValueVariables = (
+  value: string,
+  mapName: (name: string) => string | undefined
+) =>
+  mapCssValueNodes(value, (node) => {
+    if (node.type !== "Function" || node.name !== "var") {
+      return false;
+    }
+    const name = node.children.first;
+    if (name?.type !== "Identifier" || !name.name.startsWith("--")) {
+      return false;
+    }
+    const replacement = mapName(name.name);
+    if (replacement === undefined || replacement === name.name) {
+      return false;
+    }
+    name.name = replacement;
+    return true;
+  });
 
 export const traverseStyleValue = (
   value: StyleValue,
@@ -109,15 +208,16 @@ export const collectFontFamiliesFromStyleDecls = <
     family: string,
     styleDecl: Declaration,
     fromVariable: boolean
-  ) => void
+  ) => void,
+  onVariableDefinition?: (styleDecl: Declaration) => void
 ) => {
   const fontFamilies = new Set<string>();
-  const customProperties = new Map<string, StyleValue[]>();
+  const customProperties = new Map<string, Declaration[]>();
   const declarations = Array.from(styles);
   for (const styleDecl of declarations) {
     if (styleDecl.property?.startsWith("--")) {
       const values = customProperties.get(styleDecl.property) ?? [];
-      values.push(styleDecl.value);
+      values.push(styleDecl);
       customProperties.set(styleDecl.property, values);
     }
   }
@@ -152,7 +252,8 @@ export const collectFontFamiliesFromStyleDecls = <
             }
             visitedVariables.add(name);
             for (const definition of customProperties.get(name) ?? []) {
-              collectFromVariable(definition, true);
+              onVariableDefinition?.(definition);
+              collectFromVariable(definition.value, true);
             }
           }
         });

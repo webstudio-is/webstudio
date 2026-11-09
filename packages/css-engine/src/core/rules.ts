@@ -351,24 +351,28 @@ export class MediaRule {
     if (rules.length === 0) {
       return "";
     }
-    let conditionText = "";
+    let query = "";
     const { minWidth, maxWidth, condition, mediaType = "all" } = this.options;
 
     // condition and minWidth/maxWidth are mutually exclusive
     // If condition is set, use it exclusively (minWidth/maxWidth must be undefined)
     if (condition !== undefined) {
-      conditionText = ` and (${condition})`;
+      query =
+        mediaType === "all" && condition.startsWith("not (")
+          ? condition
+          : `${mediaType} and (${condition})`;
     } else {
       // Otherwise use width-based conditions (condition must be undefined)
+      query = mediaType;
       if (minWidth !== undefined) {
-        conditionText = ` and (min-width: ${minWidth}px)`;
+        query += ` and (min-width: ${minWidth}px)`;
       }
       if (maxWidth !== undefined) {
-        conditionText += ` and (max-width: ${maxWidth}px)`;
+        query += ` and (max-width: ${maxWidth}px)`;
       }
     }
 
-    return `@media ${mediaType}${conditionText} {\n${rules.join("\n")}\n}`;
+    return `@media ${query} {\n${rules.join("\n")}\n}`;
   }
 }
 

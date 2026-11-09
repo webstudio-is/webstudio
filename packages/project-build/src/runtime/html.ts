@@ -15,7 +15,6 @@ import {
   type StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import {
-  camelCaseProperty,
   parseCss,
   extractCssCustomProperties,
   parseClassBasedSelector,
@@ -33,6 +32,7 @@ import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import * as csstree from "css-tree";
 import { titleCase } from "title-case";
 import { getHtmlAttributeTypes } from "./html-attribute-utils";
+import { mapParsedCssStyles } from "./style-utils";
 
 type ElementNode = DefaultTreeAdapterMap["element"];
 
@@ -491,15 +491,15 @@ export const generateFragmentFromHtml = (
     };
     styleSources.push(localStyleSource);
     styleSourceSelections.push({ instanceId, values: [localStyleSource.id] });
-    for (const { property, value } of parseCss(`.styles{${css}}`, new Map())
-      .styles) {
-      styles.push({
-        styleSourceId: localStyleSource.id,
-        breakpointId: getBaseBreakpointId(),
-        property: camelCaseProperty(property),
-        value,
-      });
-    }
+    styles.push(
+      ...mapParsedCssStyles(
+        parseCss(`.styles{${css}}`, new Map()).styles,
+        () => ({
+          styleSourceId: localStyleSource.id,
+          breakpointId: getBaseBreakpointId(),
+        })
+      )
+    );
   };
 
   // ---- Pre-parse all <style> tags to extract class-based tokens ----
@@ -1031,52 +1031,46 @@ export const generateFragmentFromHtml = (
     const decls =
       classRules.get(className) ?? nestedClassRules.get(className)?.decls;
     if (decls) {
-      for (const decl of decls) {
-        let breakpointId: string;
-        if (decl.breakpoint) {
-          const parsed = parseMediaQuery(decl.breakpoint);
-          if (parsed === undefined) {
-            continue;
-          }
-          const hasWidth =
-            parsed.minWidth !== undefined || parsed.maxWidth !== undefined;
-          const hasCondition = parsed.condition !== undefined;
-          if (hasCondition) {
-            const conditionParts: string[] = [];
-            if (parsed.minWidth !== undefined) {
-              conditionParts.push(`min-width:${parsed.minWidth}px`);
+      styles.push(
+        ...mapParsedCssStyles(decls, (decl) => {
+          let breakpointId: string;
+          if (decl.breakpoint) {
+            const parsed = parseMediaQuery(decl.breakpoint);
+            if (parsed === undefined) {
+              return;
             }
-            if (parsed.maxWidth !== undefined) {
-              conditionParts.push(`max-width:${parsed.maxWidth}px`);
+            const hasWidth =
+              parsed.minWidth !== undefined || parsed.maxWidth !== undefined;
+            if (parsed.condition !== undefined) {
+              const conditionParts: string[] = [];
+              if (parsed.minWidth !== undefined) {
+                conditionParts.push(`min-width:${parsed.minWidth}px`);
+              }
+              if (parsed.maxWidth !== undefined) {
+                conditionParts.push(`max-width:${parsed.maxWidth}px`);
+              }
+              conditionParts.push(parsed.condition);
+              breakpointId = getOrCreateBreakpoint({
+                condition: conditionParts.join(" and "),
+              });
+            } else if (hasWidth) {
+              breakpointId = getOrCreateBreakpoint({
+                ...(parsed.minWidth !== undefined
+                  ? { minWidth: parsed.minWidth }
+                  : {}),
+                ...(parsed.maxWidth !== undefined
+                  ? { maxWidth: parsed.maxWidth }
+                  : {}),
+              });
+            } else {
+              return;
             }
-            // hasCondition guarantees parsed.condition is defined
-            conditionParts.push(parsed.condition as string);
-            breakpointId = getOrCreateBreakpoint({
-              condition: conditionParts.join(" and "),
-            });
-          } else if (hasWidth) {
-            breakpointId = getOrCreateBreakpoint({
-              ...(parsed.minWidth !== undefined
-                ? { minWidth: parsed.minWidth }
-                : {}),
-              ...(parsed.maxWidth !== undefined
-                ? { maxWidth: parsed.maxWidth }
-                : {}),
-            });
           } else {
-            continue;
+            breakpointId = getBaseBreakpointId();
           }
-        } else {
-          breakpointId = getBaseBreakpointId();
-        }
-        styles.push({
-          styleSourceId,
-          breakpointId,
-          property: camelCaseProperty(decl.property),
-          value: decl.value,
-          ...(decl.state ? { state: decl.state } : {}),
-        });
-      }
+          return { styleSourceId, breakpointId };
+        })
+      );
     }
   }
 
@@ -1088,15 +1082,12 @@ export const generateFragmentFromHtml = (
       instanceId: ROOT_INSTANCE_ID,
       values: [rootStyleSourceId],
     });
-    for (const decl of rootRules) {
-      styles.push({
+    styles.push(
+      ...mapParsedCssStyles(rootRules, () => ({
         styleSourceId: rootStyleSourceId,
         breakpointId: getBaseBreakpointId(),
-        property: camelCaseProperty(decl.property),
-        value: decl.value,
-        ...(decl.state ? { state: decl.state } : {}),
-      });
-    }
+      }))
+    );
   }
 
   // Create style source selections for instances that use tokens

@@ -11,10 +11,19 @@ import {
   collectFontFamiliesFromStyleValue,
   getUniqueNameWithSuffix,
   isAutoGridPlacement,
+  mapCssValueUrls,
   resetGridChildPlacement,
   serializeStyleDeclarations,
   traverseStyleValue,
 } from "./style-utils";
+
+test("maps image URLs inside raw variable fallbacks", () => {
+  expect(
+    mapCssValueUrls('var(--missing, url("/cgi/image/source.svg"))', (url) =>
+      url === "/cgi/image/source.svg" ? "/cgi/image/target.svg" : undefined
+    )
+  ).toContain("/cgi/image/target.svg");
+});
 
 test("creates a unique name after the highest numeric suffix", () => {
   expect(

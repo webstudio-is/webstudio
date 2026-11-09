@@ -1,5 +1,6 @@
 import type { WebstudioFragment } from "@webstudio-is/sdk";
 import { generateFragmentFromHtml } from "@webstudio-is/project-build/runtime";
+import { parseWebstudioPragma } from "@webstudio-is/project-build/transfer";
 import { generateFragmentFromTailwind } from "../tailwind/tailwind";
 import { denormalizeSrcProps } from "./asset-upload";
 import { pasteHandled, pasteIgnored, type Plugin } from "./copy-paste";
@@ -9,8 +10,6 @@ import {
   insertFragmentWithBreakpointWarning,
 } from "./fragment-utils";
 
-const inceptionMark = `<!-- @webstudio/inception/1 -->`;
-
 const handlePasteHtml = async (html: string) => {
   const parseResult = generateFragmentFromHtml(html);
   const { skippedSelectors } = parseResult;
@@ -19,7 +18,12 @@ const handlePasteHtml = async (html: string) => {
     return pasteIgnored;
   }
   fragment = await denormalizeSrcProps(fragment);
-  if (html.includes(inceptionMark)) {
+  const pragma = parseWebstudioPragma({
+    source: html,
+    syntax: "html",
+    namespace: "inception",
+  });
+  if (pragma.valid && pragma.version === "1") {
     fragment = await generateFragmentFromTailwind(fragment);
   }
   if ((await insertFragmentWithBreakpointWarning(fragment)) === false) {

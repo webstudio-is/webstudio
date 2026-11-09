@@ -15,6 +15,7 @@ import {
   readAssetRestFormData,
   readAssetRestJson,
 } from "~/services/asset-rest.server";
+import { getUrlAssetContentHash } from "~/services/asset-upload.server";
 
 // Keep upload commands under an explicit collection so read-only Assets API
 // operations can use stable names without colliding with uploaded filenames.
@@ -56,13 +57,18 @@ export const action = async (props: ActionFunctionArgs) => {
       input.projectId,
       "edit"
     );
+    const contentHash =
+      input.contentHash ??
+      (input.sourceUrl === undefined
+        ? undefined
+        : await getUrlAssetContentHash(input.sourceUrl, input.filename));
     const ticket = await repository.createUploadTicket({
       type: input.type,
       filename: input.filename,
       displayFilename: input.displayFilename,
       description: input.description,
       folderId: input.folderId,
-      contentHash: input.contentHash,
+      contentHash,
     });
     return json(ticket, { headers: privateNoStoreResponseHeaders });
   } catch (error) {
