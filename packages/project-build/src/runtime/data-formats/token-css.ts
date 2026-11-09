@@ -292,12 +292,21 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   }
   const parsed = parseCss(body, extractCssCustomProperties(body, ast), ast, {
     preserveShorthandVariables: true,
+    parseSelector: (selector) => {
+      const name =
+        selector.children.first?.type === "PseudoClassSelector"
+          ? ":root"
+          : ".ws-token";
+      return {
+        name,
+        state: cssTree.generate(selector).slice(name.length) || undefined,
+      };
+    },
   });
   if (
     parsed.errors.length > 0 ||
     parsed.styles.some(
-      (style) =>
-        style.selector.startsWith(":root") && !style.property.startsWith("--")
+      (style) => style.selector === ":root" && !style.property.startsWith("--")
     )
   ) {
     return { owned: true, valid: false };
@@ -346,15 +355,12 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
         });
       }
     });
-    const isRoot = style.selector.startsWith(":root");
-    const suffix = style.selector.slice(
-      isRoot ? ":root".length : ".ws-token".length
-    );
+    const isRoot = style.selector === ":root";
     return {
       styleSourceId: isRoot ? rootId : tokenId,
       breakpointId,
       value,
-      state: `${suffix}${style.state ?? ""}` || undefined,
+      state: style.state,
     };
   });
   if (invalidBreakpoint) {

@@ -15,6 +15,7 @@ import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderPatchChange } from "../contracts/patch";
 import { buildMergedBreakpointIds, maxBreakpoints } from "./breakpoints";
+import { createCopyName } from "./copy-name";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
 import { remapFragmentAssets } from "./fragment";
@@ -355,15 +356,15 @@ export const pasteDesignToken = (
       source.type === "token" ? [source.name] : []
     )
   );
-  let copyNumber = 1;
-  while (tokenNames.has(`${sourceToken.name} copy ${copyNumber}`)) {
-    copyNumber++;
-  }
   const newTokenId = context.createId();
   const newToken = {
     ...sourceToken,
     id: newTokenId,
-    name: `${sourceToken.name} copy ${copyNumber}`,
+    name: createCopyName(
+      sourceToken.name,
+      (name) => tokenNames.has(name),
+      true
+    ),
   };
   const variablePatches: BuilderPatchChange["patches"] = [];
   const tokenPatches: BuilderPatchChange["patches"] = [];

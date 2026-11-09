@@ -742,7 +742,10 @@ export const parseCss = (
   cssVars: Map<string, string>,
   // Callers may reuse a css-tree AST parsed with positions: true.
   parsedAst?: csstree.CssNode,
-  options: { preserveShorthandVariables?: boolean } = {}
+  options: {
+    preserveShorthandVariables?: boolean;
+    parseSelector?: (selector: csstree.Selector) => Selector;
+  } = {}
 ): ParseCssResult => {
   const ast = parsedAst ?? cssTreeTryParse(css);
   const stylesMap = new Map<string, ParsedStyleDecl>();
@@ -875,6 +878,10 @@ export const parseCss = (
         if (node.type !== "Selector") {
           continue;
         }
+        if (options.parseSelector !== undefined) {
+          selectors.push(options.parseSelector(node));
+          continue;
+        }
         let selector: Selector | undefined = undefined;
         const children = node.children.toArray();
         const startsWithNesting = children[0]?.type === "NestingSelector";
@@ -954,7 +961,14 @@ export const parseCss = (
           cssVars
         );
         if (substituted !== undefined) {
-          parsedCss = substituted.result;
+          parsedCss =
+            options.preserveShorthandVariables && stringValue.includes("var(")
+              ? preserveOriginalVarLonghands(
+                  property,
+                  stringValue,
+                  substituted.result
+                )
+              : substituted.result;
           for (const varName of substituted.droppedVars) {
             errors.push(
               `"${property}" was not applied because ${varName} could not be resolved`

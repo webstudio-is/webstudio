@@ -73,7 +73,7 @@ test("keeps token attribute and descendant states", () => {
   }
   expect(parsed.data.fragment.styles.map((style) => style.state)).toEqual([
     "[disabled]",
-    " > svg",
+    ">svg",
   ]);
 });
 
@@ -123,6 +123,31 @@ test("keeps same-rule variable references in token shorthands", () => {
         (style) => style.property === "paddingTop"
       )?.value
     ).toEqual({ type: "unparsed", value: "var(--space)" });
+  }
+});
+
+test("keeps variable references in mixed token shorthands", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+.ws-token { --width: 2px; outline: var(--width) solid red; }
+@media (max-width: 600px) { .ws-token { --width: 4px; } }
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(
+      parsed.data.fragment.styles.find(
+        (style) => style.property === "outlineWidth"
+      )?.value
+    ).toEqual({ type: "unparsed", value: "var(--width)" });
+  }
+});
+
+test("keeps pseudo-class positions before descendant selectors", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+.ws-token:hover > svg { fill: red; }
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.styles[0].state).toBe(":hover>svg");
   }
 });
 
