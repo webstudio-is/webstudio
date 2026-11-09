@@ -679,7 +679,10 @@ export const runtimeOutputSchemas = {
     ...outputPage,
   }),
   "designTokens.copy": looseObject({ data: z.string() }),
-  "designTokens.paste": looseObject({ tokenId: id }),
+  "designTokens.paste": z.union([
+    looseObject({ tokenId: id }),
+    looseObject({ styleSourceId: id }),
+  ]),
   "designTokens.create": looseObject({ tokenIds: stringArray }),
   "designTokens.import": looseObject({
     plan: z.array(designTokenImportPlanEntrySchema),

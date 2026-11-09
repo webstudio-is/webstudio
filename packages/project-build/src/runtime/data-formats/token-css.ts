@@ -2,6 +2,7 @@ import {
   extractCssCustomProperties,
   parseCss,
   parseMediaQuery,
+  validateSelector,
 } from "@webstudio-is/css-data";
 import {
   createRegularStyleSheet,
@@ -16,6 +17,8 @@ import {
 } from "@webstudio-is/fonts";
 import {
   getAssetUrl,
+  getTagStyleId,
+  isTagStyleTag,
   type Asset,
   type Breakpoint,
   type WebstudioFragment,
@@ -38,12 +41,24 @@ export type TokenTransferData = {
   sourceOrigin?: string;
 };
 
-export const serializeTokenCss = (data: TokenTransferData): string => {
+type TransferKind = "token" | "tagStyle" | "local";
+
+const transferFormat = (kind: TransferKind) =>
+  kind === "token"
+    ? { namespace: "token-css", selector: ".ws-token" }
+    : kind === "tagStyle"
+      ? { namespace: "tag-style-css", selector: ".ws-tag-style" }
+      : { namespace: "local-style-css", selector: ".ws-local" };
+
+export const serializeTokenCss = (
+  data: TokenTransferData,
+  kind: TransferKind = "token"
+): string => {
   const { fragment, sourceOrigin } = data;
   const token = fragment.styleSources.find(
     (source) => source.id === data.tokenId
   );
-  if (token?.type !== "token") {
+  if (token?.type !== kind) {
     throw new Error("Invalid token data");
   }
   const sheet = createRegularStyleSheet({ element: new FakeStyleElement() });
@@ -96,15 +111,23 @@ export const serializeTokenCss = (data: TokenTransferData): string => {
     });
   }
   sheet.addNestingRule(":root").applyMixins([rootId]);
-  sheet.addNestingRule(".ws-token").applyMixins([data.tokenId]);
+  sheet
+    .addNestingRule(transferFormat(kind).selector)
+    .applyMixins([data.tokenId]);
   const fonts = fragment.assets.filter((asset) => asset.type === "font");
   for (const face of getFontFaces(fonts, {
     assetBaseUrl: sourceOrigin ? `${sourceOrigin}/cgi/asset/` : "/cgi/asset/",
   })) {
     sheet.addFontFaceRule(face);
   }
-  const name = JSON.stringify(token.name).replaceAll("*/", "*\\/");
-  return `/* @webstudio/token-css/v1 ${name} */\n${sheet.cssText}`;
+  const name = JSON.stringify(
+    token.type === "token"
+      ? token.name
+      : token.type === "tagStyle"
+        ? token.tag
+        : "local"
+  ).replaceAll("*/", "*\\/");
+  return `/* @webstudio/${transferFormat(kind).namespace}/v1 ${name} */\n${sheet.cssText}`;
 };
 
 type ParsedTokenCss =
@@ -163,18 +186,24 @@ const assetFromUrl = (
   return { ...common, type, format, meta: { width: 0, height: 0 } };
 };
 
-export const parseTokenTransferData = (source: string): ParsedTokenCss => {
+const parseStyleSourceTransferData = (
+  source: string,
+  kind: TransferKind
+): ParsedTokenCss => {
+  const format = transferFormat(kind);
   const pragma = parseWebstudioPragma({
     source,
     syntax: "css",
-    namespace: "token-css",
+    namespace: format.namespace,
   });
   if (pragma.valid === false) {
     return pragma;
   }
   if (
     pragma.version !== "v1" ||
-    pragma.value === undefined ||
+    typeof pragma.value !== "string" ||
+    (kind === "tagStyle" && !isTagStyleTag(pragma.value)) ||
+    (kind === "local" && pragma.value !== "local") ||
     source.slice(0, pragma.start).trim() !== ""
   ) {
     return { owned: true, valid: false };
@@ -212,7 +241,7 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
               (item) =>
                 item.type === "Selector" &&
                 item.children.first?.type === "ClassSelector" &&
-                item.children.first.name === "ws-token"
+                item.children.first.name === format.selector.slice(1)
             );
         return node.block !== null && (rootSelector || tokenSelector);
       }
@@ -297,7 +326,7 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
       const name =
         selector.children.first?.type === "PseudoClassSelector"
           ? ":root"
-          : ".ws-token";
+          : format.selector;
       return {
         name,
         state: cssTree.generate(selector).slice(name.length) || undefined,
@@ -307,7 +336,13 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   if (
     parsed.errors.length > 0 ||
     parsed.styles.some(
-      (style) => style.selector === ":root" && !style.property.startsWith("--")
+      (style) =>
+        (style.selector === ":root" && !style.property.startsWith("--")) ||
+        (kind === "tagStyle" &&
+          style.selector !== ":root" &&
+          style.state !== undefined &&
+          validateSelector(style.state, { allowDescendants: false }).success ===
+            false)
     )
   ) {
     return { owned: true, valid: false };
@@ -399,6 +434,8 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
       sourceOrigin = url.origin;
     }
   }
+  const tagStyleId =
+    kind === "tagStyle" ? getTagStyleId(pragma.value) : tokenId;
   const fragment: WebstudioFragment = {
     children: [],
     instances: [],
@@ -406,7 +443,13 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
     dataSources: [],
     resources: [],
     styleSourceSelections: [],
-    styleSources: [{ type: "token", id: tokenId, name: pragma.value }],
+    styleSources: [
+      kind === "token"
+        ? { type: "token", id: tokenId, name: pragma.value }
+        : kind === "tagStyle"
+          ? { type: "tagStyle", id: tagStyleId, tag: pragma.value }
+          : { type: "local", id: tokenId },
+    ],
     styles,
     breakpoints: [...breakpoints.values()],
     assets: [...assets.values()],
@@ -414,6 +457,34 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   return {
     owned: true,
     valid: true,
-    data: { tokenId, fragment, sourceOrigin },
+    data: {
+      tokenId: tagStyleId,
+      fragment: {
+        ...fragment,
+        styles:
+          kind === "token"
+            ? fragment.styles
+            : fragment.styles.map((style) =>
+                style.styleSourceId === tokenId
+                  ? { ...style, styleSourceId: tagStyleId }
+                  : style
+              ),
+      },
+      sourceOrigin,
+    },
   };
+};
+
+export const parseTokenTransferData = (source: string) =>
+  parseStyleSourceTransferData(source, "token");
+
+export const parseTagStyleTransferData = (source: string) =>
+  parseStyleSourceTransferData(source, "tagStyle");
+
+export const parseLocalStyleTransferData = (source: string) =>
+  parseStyleSourceTransferData(source, "local");
+
+export const parseReusableStyleSourceTransferData = (source: string) => {
+  const tagStyle = parseTagStyleTransferData(source);
+  return tagStyle.owned ? tagStyle : parseLocalStyleTransferData(source);
 };

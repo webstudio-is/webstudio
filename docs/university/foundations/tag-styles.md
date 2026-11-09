@@ -26,10 +26,14 @@ Open the Tag style's menu and choose a state such as `:hover` or `:focus-visible
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/tag-style-states-dark.png">
-  <img src="../../.gitbook/assets/tag-style-states-light.png" alt="div Tag style menu showing hover and focus-visible states" width="240">
+  <img src="../../.gitbook/assets/tag-style-states-light.png" alt="div Tag style menu with Copy above hover and focus-visible states" width="240">
 </picture>
 
 A Tag style targets its tag and state across the site. To style a descendant within one element instead, use a [custom state or selector](states-and-selectors.md#custom-states) on a Token or Local source.
+
+## Copy and paste
+
+Open a Tag style's menu and choose **Copy**. Paste into the **Style sources** field in another project, or use the usual paste shortcut. Webstudio merges the copied styles into the Tag style for the same tag. Pasted values replace existing values for the same property, state, and breakpoint; other styles remain. No new Token is created.
 
 ## How Tag styles combine with other styles
 

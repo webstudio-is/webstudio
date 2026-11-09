@@ -898,7 +898,12 @@ describe("project session mcp adapter", () => {
       "copy-design-token",
       "paste-design-token",
     ]);
-    expect(tokenTools[0]?.inputSchema.required).toContain("tokenId");
+    expect(tokenTools[0]?.inputSchema).toMatchObject({
+      anyOf: expect.arrayContaining([
+        expect.objectContaining({ required: ["tokenId"] }),
+        expect.objectContaining({ required: ["styleSourceId", "sourceType"] }),
+      ]),
+    });
     expect(tokenTools[1]?.inputSchema.required).toContain("data");
     const responseHeaderTools = listProjectSessionMcpTools(
       runtimeOperationContracts

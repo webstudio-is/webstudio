@@ -1,5 +1,11 @@
-import { copyDesignToken } from "@webstudio-is/project-build/runtime";
-import { parseTokenTransferData } from "@webstudio-is/project-build/transfer";
+import {
+  copyDesignToken,
+  copyStyleSourceTransfer,
+} from "@webstudio-is/project-build/runtime";
+import {
+  parseReusableStyleSourceTransferData,
+  parseTokenTransferData,
+} from "@webstudio-is/project-build/transfer";
 import { $project } from "~/shared/sync/data-stores";
 import { $selectedInstance } from "~/shared/nano-states";
 import {
@@ -16,24 +22,49 @@ export const copyTokenData = (tokenId: string) =>
     sourceOrigin: window.location.origin,
   }).data;
 
-export const token: Plugin = {
-  name: "token",
+export const copyReusableStyleSourceData = (
+  styleSourceId: string,
+  sourceType: "tagStyle" | "local"
+) =>
+  copyStyleSourceTransfer(getWebstudioData(), {
+    styleSourceId,
+    sourceType,
+    sourceOrigin: window.location.origin,
+  }).data;
+
+export const styleSource: Plugin = {
+  name: "style-source",
   mimeType: "text/plain",
   onPaste: async (data) => {
-    const parsed = parseTokenTransferData(data);
+    const token = parseTokenTransferData(data);
+    const reusable = token.owned
+      ? undefined
+      : parseReusableStyleSourceTransferData(data);
+    const parsed = token.owned ? token : reusable!;
+    const sourceType = reusable?.valid
+      ? reusable.data.fragment.styleSources[0]?.type
+      : undefined;
+    const cannotPaste = reusable?.owned
+      ? "Style source cannot be pasted here"
+      : "Token cannot be pasted here";
     if (parsed.owned === false) {
       return pasteIgnored;
     }
     if (parsed.valid === false) {
-      return { success: false, error: "Invalid token data" };
+      return {
+        success: false,
+        error: reusable?.owned
+          ? "Invalid style source data"
+          : "Invalid token data",
+      };
     }
     const projectId = $project.get()?.id;
     const instanceId = $selectedInstance.get()?.id;
     if (projectId === undefined) {
       return { success: false, error: "Project is unavailable" };
     }
-    if (instanceId === undefined) {
-      return { success: false, error: "Token cannot be pasted here" };
+    if (sourceType !== "tagStyle" && instanceId === undefined) {
+      return { success: false, error: cannotPaste };
     }
     try {
       const transfer = await transferFragmentAssets({
@@ -53,17 +84,13 @@ export const token: Plugin = {
       }
       const result = executeRuntimeMutation({
         id: "designTokens.paste",
-        input: {
-          instanceId,
-          data,
-          assetIds: [...transfer.assetIds],
-        },
+        input: { instanceId, data, assetIds: [...transfer.assetIds] },
       });
       return result === undefined
-        ? { success: false, error: "Token cannot be pasted here" }
+        ? { success: false, error: cannotPaste }
         : pasteHandled;
     } catch {
-      return { success: false, error: "Token cannot be pasted here" };
+      return { success: false, error: cannotPaste };
     }
   },
 };

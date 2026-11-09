@@ -69809,17 +69809,38 @@ export const runtimeOperationContractData = [
     client: "copyDesignToken",
     kind: "read",
     inputSchema: {
-      type: "object",
-      properties: {
-        tokenId: {
-          type: "string",
+      anyOf: [
+        {
+          type: "object",
+          properties: {
+            tokenId: {
+              type: "string",
+            },
+            sourceOrigin: {
+              type: "string",
+              format: "uri",
+            },
+          },
+          required: ["tokenId"],
         },
-        sourceOrigin: {
-          type: "string",
-          format: "uri",
+        {
+          type: "object",
+          properties: {
+            styleSourceId: {
+              type: "string",
+            },
+            sourceType: {
+              type: "string",
+              enum: ["token", "tagStyle", "local"],
+            },
+            sourceOrigin: {
+              type: "string",
+              format: "uri",
+            },
+          },
+          required: ["styleSourceId", "sourceType"],
         },
-      },
-      required: ["tokenId"],
+      ],
     },
     outputSchema: {
       type: "object",
@@ -69877,14 +69898,28 @@ export const runtimeOperationContractData = [
       required: ["data"],
     },
     outputSchema: {
-      type: "object",
-      properties: {
-        tokenId: {
-          type: "string",
+      anyOf: [
+        {
+          type: "object",
+          properties: {
+            tokenId: {
+              type: "string",
+            },
+          },
+          required: ["tokenId"],
+          additionalProperties: {},
         },
-      },
-      required: ["tokenId"],
-      additionalProperties: {},
+        {
+          type: "object",
+          properties: {
+            styleSourceId: {
+              type: "string",
+            },
+          },
+          required: ["styleSourceId"],
+          additionalProperties: {},
+        },
+      ],
     },
     readNamespaces: [
       "assets",

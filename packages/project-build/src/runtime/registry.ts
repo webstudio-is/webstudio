@@ -1867,7 +1867,7 @@ export const builderRuntimeOperations = [
     api("copy-design-token", "copyDesignToken"),
     readContract(["assets", "breakpoints", ...styleNamespaces]),
     tokenTransfer.copyDesignTokenInput,
-    ({ state, input }) => tokenTransfer.copyDesignToken(state, input)
+    ({ state, input }) => tokenTransfer.copyStyleSourceTransfer(state, input)
   ),
   runtimeOperation(
     "designTokens.paste",
@@ -1888,7 +1888,7 @@ export const builderRuntimeOperations = [
     }),
     tokenTransfer.pasteDesignTokenInput,
     ({ state, input, context }) =>
-      tokenTransfer.pasteDesignToken(state, input, context)
+      tokenTransfer.pasteStyleSourceTransfer(state, input, context)
   ),
   runtimeOperation(
     "designTokens.create",

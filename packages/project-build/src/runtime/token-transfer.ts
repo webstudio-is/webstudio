@@ -1,6 +1,7 @@
 import { toValue } from "@webstudio-is/css-engine";
 import {
   createId,
+  getTagFromStyleId,
   getStyleDeclKey,
   ROOT_INSTANCE_ID,
   type Asset,
@@ -21,6 +22,7 @@ import { remapFragmentAssets } from "./fragment";
 import {
   collectCssVariableReferences,
   createStyleSourceSelectionAttachPayload,
+  getLocalStyleSourceId,
 } from "./styles";
 import {
   getUniqueNameWithSuffix,
@@ -28,6 +30,9 @@ import {
   traverseStyleValue,
 } from "./style-utils";
 import {
+  parseTagStyleTransferData,
+  parseLocalStyleTransferData,
+  parseReusableStyleSourceTransferData,
   parseTokenTransferData,
   serializeTokenCss,
 } from "./data-formats/token-css";
@@ -55,10 +60,14 @@ const requireTokenState = (state: TokenState) => {
   return state as Required<TokenState>;
 };
 
-export const copyDesignTokenInput = z.object({
-  tokenId: z.string(),
-  sourceOrigin: z.string().url().optional(),
-});
+export const copyDesignTokenInput = z.union([
+  z.object({ tokenId: z.string(), sourceOrigin: z.string().url().optional() }),
+  z.object({
+    styleSourceId: z.string(),
+    sourceType: z.enum(["token", "tagStyle", "local"]),
+    sourceOrigin: z.string().url().optional(),
+  }),
+]);
 
 export const pasteDesignTokenInput = z.object({
   data: z.string(),
@@ -88,18 +97,30 @@ const rewriteVariableReferences = (
   return rewritten;
 };
 
-export const copyDesignToken = (
+const copyStyleSource = (
   state: TokenState,
-  input: z.infer<typeof copyDesignTokenInput>
+  input: { sourceId: string; sourceOrigin?: string },
+  kind: "token" | "tagStyle" | "local"
 ) => {
   const { assets, breakpoints, styleSources, styleSourceSelections, styles } =
     requireTokenState(state);
-  const token = styleSources.get(input.tokenId);
-  if (token?.type !== "token") {
-    return throwBuilderRuntimeError("NOT_FOUND", "Design token not found");
+  const tag =
+    kind === "tagStyle" ? getTagFromStyleId(input.sourceId) : undefined;
+  const source =
+    styleSources.get(input.sourceId) ??
+    (tag
+      ? { type: "tagStyle" as const, id: input.sourceId, tag }
+      : kind === "local"
+        ? { type: "local" as const, id: input.sourceId }
+        : undefined);
+  if (source?.type !== kind) {
+    return throwBuilderRuntimeError(
+      "NOT_FOUND",
+      kind === "token" ? "Design token not found" : "Style source not found"
+    );
   }
   const tokenStyles = Array.from(styles.values()).filter(
-    (style) => style.styleSourceId === token.id
+    (style) => style.styleSourceId === source.id
   );
   const rootSourceOrder = new Map(
     styleSourceSelections
@@ -141,9 +162,13 @@ export const copyDesignToken = (
     }
   }
   const variableStyles = rootStyles
-    .filter((style) => referencedNames.has(style.property))
+    .filter(
+      (style) =>
+        referencedNames.has(style.property) &&
+        (kind !== "local" || style.styleSourceId !== source.id)
+    )
     .map((style) =>
-      style.styleSourceId === token.id
+      style.styleSourceId === source.id
         ? { ...style, styleSourceId: ROOT_INSTANCE_ID }
         : style
     );
@@ -172,7 +197,7 @@ export const copyDesignToken = (
     dataSources: [],
     resources: [],
     styleSourceSelections: [],
-    styleSources: [token],
+    styleSources: [source],
     styles: copiedStyles,
     breakpoints: copiedBreakpoints,
     assets: Array.from(assets.values()).filter((asset) =>
@@ -181,33 +206,85 @@ export const copyDesignToken = (
   };
   for (const assetId of usedAssets.keys()) {
     if (assets.has(assetId) === false) {
-      return throwBuilderRuntimeError("NOT_FOUND", "Token asset is missing");
+      return throwBuilderRuntimeError(
+        "NOT_FOUND",
+        kind === "token"
+          ? "Token asset is missing"
+          : "Style source asset is missing"
+      );
     }
   }
   return {
-    data: serializeTokenCss({
-      tokenId: token.id,
-      fragment,
-      sourceOrigin: input.sourceOrigin,
-    }),
+    data: serializeTokenCss(
+      {
+        tokenId: source.id,
+        fragment,
+        sourceOrigin: input.sourceOrigin,
+      },
+      kind
+    ),
   };
 };
 
-export const pasteDesignToken = (
+export const copyDesignToken = (
+  state: TokenState,
+  input: { tokenId: string; sourceOrigin?: string }
+) =>
+  copyStyleSource(
+    state,
+    { sourceId: input.tokenId, sourceOrigin: input.sourceOrigin },
+    "token"
+  );
+
+export const copyStyleSourceTransfer = (
+  state: TokenState,
+  input: z.infer<typeof copyDesignTokenInput>
+) =>
+  "tokenId" in input
+    ? copyDesignToken(state, input)
+    : copyStyleSource(
+        state,
+        { sourceId: input.styleSourceId, sourceOrigin: input.sourceOrigin },
+        input.sourceType
+      );
+
+const pasteStyleSource = (
   state: TokenState,
   input: z.infer<typeof pasteDesignTokenInput>,
+  kind: "token" | "tagStyle" | "local",
   context: { createId: () => string } = { createId: () => createId("nano") }
 ) => {
   const target = requireTokenState(state);
-  const parsed = parseTokenTransferData(input.data);
+  const parsed =
+    kind === "token"
+      ? parseTokenTransferData(input.data)
+      : kind === "tagStyle"
+        ? parseTagStyleTransferData(input.data)
+        : parseLocalStyleTransferData(input.data);
   if (parsed.valid === false) {
-    return throwBuilderRuntimeError("INVALID_INPUT", "Invalid token data");
+    return throwBuilderRuntimeError(
+      "INVALID_INPUT",
+      kind === "token" ? "Invalid token data" : "Invalid style source data"
+    );
   }
   const { tokenId } = parsed.data;
   let { fragment } = parsed.data;
   const sourceToken = fragment.styleSources[0];
-  if (sourceToken?.type !== "token") {
-    return throwBuilderRuntimeError("INVALID_INPUT", "Invalid token data");
+  if (sourceToken?.type !== kind) {
+    return throwBuilderRuntimeError(
+      "INVALID_INPUT",
+      kind === "token" ? "Invalid token data" : "Invalid style source data"
+    );
+  }
+  if (kind === "local" && input.instanceId === undefined) {
+    return throwBuilderRuntimeError("BAD_REQUEST", "Instance not found");
+  }
+  if (
+    kind === "tagStyle" &&
+    target.styleSources.get(tokenId) !== undefined &&
+    target.styleSources.get(tokenId)?.type !== "tagStyle"
+  ) {
+    return throwBuilderRuntimeError("CONFLICT", "Tag style id is in use");
   }
   if (fragment.assets.length > 0) {
     const assetIds = new Map(input.assetIds ?? []);
@@ -215,12 +292,19 @@ export const pasteDesignToken = (
     for (const source of fragment.assets) {
       const imported = target.assets.get(assetIds.get(source.id) ?? source.id);
       if (imported === undefined) {
-        return throwBuilderRuntimeError("NOT_FOUND", "Token asset is missing");
+        return throwBuilderRuntimeError(
+          "NOT_FOUND",
+          kind === "token"
+            ? "Token asset is missing"
+            : "Style source asset is missing"
+        );
       }
       if (source.type !== imported.type) {
         return throwBuilderRuntimeError(
           "INVALID_INPUT",
-          "Token asset type changed"
+          kind === "token"
+            ? "Token asset type changed"
+            : "Style source asset type changed"
         );
       }
       importedAssets.set(source.id, imported);
@@ -268,6 +352,15 @@ export const pasteDesignToken = (
     (id) => target.styleSources.get(id)?.type === "local"
   );
   const rootSourceId = sourceId ?? context.createId();
+  const localSourceId =
+    kind === "local"
+      ? getLocalStyleSourceId({
+          styleSources: target.styleSources,
+          styleSourceSelection: target.styleSourceSelections.get(
+            input.instanceId!
+          ),
+        })
+      : undefined;
   const incomingVariables = fragment.styles.filter(
     (style) => style.styleSourceId !== tokenId
   );
@@ -320,16 +413,27 @@ export const pasteDesignToken = (
       source.type === "token" ? [source.name] : []
     )
   );
-  const newTokenId = context.createId();
-  const newToken = {
-    ...sourceToken,
-    id: newTokenId,
-    name: createCopyName(
-      sourceToken.name,
-      (name) => tokenNames.has(name),
-      true
-    ),
-  };
+  const newTokenId =
+    kind === "token"
+      ? context.createId()
+      : kind === "local"
+        ? (localSourceId ??
+          (input.instanceId === ROOT_INSTANCE_ID
+            ? rootSourceId
+            : context.createId()))
+        : tokenId;
+  const newToken =
+    sourceToken.type === "token"
+      ? {
+          ...sourceToken,
+          id: newTokenId,
+          name: createCopyName(
+            sourceToken.name,
+            (name) => tokenNames.has(name),
+            true
+          ),
+        }
+      : { ...sourceToken, id: newTokenId };
   const variablePatches: BuilderPatchChange["patches"] = [];
   const tokenPatches: BuilderPatchChange["patches"] = [];
   for (const style of mappedStyles) {
@@ -341,7 +445,11 @@ export const pasteDesignToken = (
     };
     const key = getStyleDeclKey(mapped);
     if (style.styleSourceId === tokenId) {
-      tokenPatches.push({ op: "add", path: [key], value: mapped });
+      tokenPatches.push({
+        op: kind !== "token" && target.styles.has(key) ? "replace" : "add",
+        path: [key],
+        value: mapped,
+      });
     } else if (target.styles.has(key) === false) {
       variablePatches.push({ op: "add", path: [key], value: mapped });
     }
@@ -355,39 +463,72 @@ export const pasteDesignToken = (
       value: { type: "local", id: rootSourceId } satisfies StyleSource,
     });
   }
-  sourcePatches.push({
-    op: "add",
-    path: [newTokenId],
-    value: newToken,
-  });
+  if (
+    target.styleSources.has(newTokenId) === false &&
+    (!needsRootSource || newTokenId !== rootSourceId)
+  ) {
+    sourcePatches.push({ op: "add", path: [newTokenId], value: newToken });
+  }
   const stylePatches = [...variablePatches, ...tokenPatches];
   const payload: BuilderPatchChange[] = [];
   if (breakpointPatches.length > 0) {
     payload.push({ namespace: "breakpoints", patches: breakpointPatches });
   }
-  payload.push({ namespace: "styleSources", patches: sourcePatches });
+  if (sourcePatches.length > 0) {
+    payload.push({ namespace: "styleSources", patches: sourcePatches });
+  }
   if (stylePatches.length > 0) {
     payload.push({ namespace: "styles", patches: stylePatches });
   }
+  const selectionPatches: BuilderPatchChange["patches"] = [];
   if (needsRootSource) {
+    selectionPatches.push(
+      selection === undefined
+        ? {
+            op: "add",
+            path: [ROOT_INSTANCE_ID],
+            value: { instanceId: ROOT_INSTANCE_ID, values: [rootSourceId] },
+          }
+        : {
+            op: "add",
+            path: [ROOT_INSTANCE_ID, "values", selection.values.length],
+            value: rootSourceId,
+          }
+    );
+  }
+  if (
+    kind === "local" &&
+    localSourceId === undefined &&
+    !(input.instanceId === ROOT_INSTANCE_ID && needsRootSource)
+  ) {
+    const destinationSelection = target.styleSourceSelections.get(
+      input.instanceId!
+    );
+    selectionPatches.push(
+      destinationSelection === undefined
+        ? {
+            op: "add",
+            path: [input.instanceId!],
+            value: { instanceId: input.instanceId!, values: [newTokenId] },
+          }
+        : {
+            op: "add",
+            path: [
+              input.instanceId!,
+              "values",
+              destinationSelection.values.length,
+            ],
+            value: newTokenId,
+          }
+    );
+  }
+  if (selectionPatches.length > 0) {
     payload.push({
       namespace: "styleSourceSelections",
-      patches: [
-        selection === undefined
-          ? {
-              op: "add",
-              path: [ROOT_INSTANCE_ID],
-              value: { instanceId: ROOT_INSTANCE_ID, values: [rootSourceId] },
-            }
-          : {
-              op: "add",
-              path: [ROOT_INSTANCE_ID, "values", selection.values.length],
-              value: rootSourceId,
-            },
-      ],
+      patches: selectionPatches,
     });
   }
-  if (input.instanceId !== undefined) {
+  if (kind === "token" && input.instanceId !== undefined) {
     const selections = new Map(target.styleSourceSelections);
     if (needsRootSource) {
       selections.set(ROOT_INSTANCE_ID, {
@@ -406,7 +547,7 @@ export const pasteDesignToken = (
   }
   return createRuntimeMutation({
     payload,
-    result: { tokenId: newTokenId },
+    result: { styleSourceId: newTokenId },
     invalidatesNamespaces: [
       "breakpoints",
       "styleSources",
@@ -414,4 +555,37 @@ export const pasteDesignToken = (
       "styleSourceSelections",
     ],
   });
+};
+
+export const pasteDesignToken = (
+  state: TokenState,
+  input: z.infer<typeof pasteDesignTokenInput>,
+  context?: { createId: () => string }
+) => {
+  const mutation = pasteStyleSource(state, input, "token", context);
+  return { ...mutation, result: { tokenId: mutation.result.styleSourceId } };
+};
+
+export const pasteStyleSourceTransfer = (
+  state: TokenState,
+  input: z.infer<typeof pasteDesignTokenInput>,
+  context?: { createId: () => string }
+) => {
+  const reusable = parseReusableStyleSourceTransferData(input.data);
+  if (reusable.owned) {
+    const kind = reusable.valid
+      ? reusable.data.fragment.styleSources[0]?.type
+      : undefined;
+    const mutation = pasteStyleSource(
+      state,
+      input,
+      kind === "local" ? "local" : "tagStyle",
+      context
+    );
+    return {
+      ...mutation,
+      result: { styleSourceId: mutation.result.styleSourceId },
+    };
+  }
+  return pasteDesignToken(state, input, context);
 };

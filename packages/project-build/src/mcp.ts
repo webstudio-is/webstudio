@@ -4588,6 +4588,8 @@ const capabilityAreas = [
     tools: [
       "get-styles",
       "list-tag-styles",
+      "copy-design-token",
+      "paste-design-token",
       "update-styles",
       "delete-styles",
       "update-selected-styles",
@@ -7309,6 +7311,8 @@ const workflowOnlyGuideToolNames = new Set([
 const designSystemGuideToolNames = new Set([
   "list-design-tokens",
   "list-tag-styles",
+  "copy-design-token",
+  "paste-design-token",
   "attach-design-token",
   "update-design-token-styles",
 ]);

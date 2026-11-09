@@ -16,8 +16,11 @@ The Style Panel is on the right side of the builder. It exposes every CSS proper
 At the top of the Style Panel is the **style source bar**, which determines where styles are saved and how reusable they are. There are three types of style sources:
 
 - **Local** — styles apply only to this instance. See [Design tokens](design-tokens.md) for the full explanation of Local vs. Tokens.
+
 - **Tokens** — reusable style groups shared across multiple instances. See [Design tokens](design-tokens.md).
 - **Tag styles** — site-wide styles for an HTML tag, such as `h1` or `button`. See [Tag styles](tag-styles.md).
+
+To reuse Local styles on another instance, open the Local source menu and choose **Copy**, then select the destination instance and paste. Webstudio merges the copied styles into that instance's Local source. Pasted values replace matching properties, states, and breakpoints; other Local styles remain.
 
 [CSS variables](css-variables.md) are not a style source — they are named values (e.g. `--color-brand`) defined on any instance in the Advanced section and referenced inside style inputs across the site.
 

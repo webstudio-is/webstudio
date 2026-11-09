@@ -1,6 +1,28 @@
 import { expect, test } from "vitest";
 import { copyDesignToken } from "../token-transfer";
-import { parseTokenTransferData, serializeTokenCss } from "./token-css";
+import {
+  parseTagStyleTransferData,
+  parseTokenTransferData,
+  serializeTokenCss,
+} from "./token-css";
+
+test("Tag style clipboard data accepts only a supported tag and its CSS selector", () => {
+  expect(
+    parseTagStyleTransferData(
+      '/* @webstudio/tag-style-css/v1 "not-a-tag" */\n.ws-tag-style { color: red; }'
+    ).valid
+  ).toBe(false);
+  expect(
+    parseTagStyleTransferData(
+      '/* @webstudio/tag-style-css/v1 "button" */\n.ws-token { color: red; }'
+    ).valid
+  ).toBe(false);
+  expect(
+    parseTagStyleTransferData(
+      '/* @webstudio/tag-style-css/v1 "button" */\n.ws-tag-style p { color: red; }'
+    ).valid
+  ).toBe(false);
+});
 
 test("reads a CSS token with variables, states, breakpoints, images, and fonts", () => {
   const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */

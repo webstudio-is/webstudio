@@ -314,7 +314,7 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
   onClearStyles?: (id: Item["id"]) => void;
   onDuplicateItem?: (id: Item["id"]) => void;
   onCopyItem?: (id: Item["id"]) => void;
-  onPasteToken?: (data: string) => void;
+  onPasteStyleSource?: (data: string) => void;
   onToggleLockItem?: (id: Item["id"], locked: boolean) => void;
   onConvertToToken?: (id: Item["id"]) => void;
   onCreateItem?: (label: string) => void;
@@ -446,15 +446,20 @@ export const StyleSourceInput = (
             onPaste={(event) => {
               const data = event.clipboardData.getData("text/plain");
               if (
-                props.onPasteToken !== undefined &&
-                parseWebstudioPragma({
-                  source: data,
-                  syntax: "css",
-                  namespace: "token-css",
-                }).owned
+                props.onPasteStyleSource !== undefined &&
+                (
+                  ["token-css", "tag-style-css", "local-style-css"] as const
+                ).some(
+                  (namespace) =>
+                    parseWebstudioPragma({
+                      source: data,
+                      syntax: "css",
+                      namespace,
+                    }).owned
+                )
               ) {
                 event.preventDefault();
-                props.onPasteToken(data);
+                props.onPasteStyleSource(data);
               }
             }}
             inputRef={props.inputRef}

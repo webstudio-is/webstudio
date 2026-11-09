@@ -3,6 +3,7 @@ import {
   styleSourceColor,
   rotateBoundedBackgroundHue,
 } from "@webstudio-is/design-system";
+import { selectedControlBackground } from "@webstudio-is/design-system/component-state-color";
 
 const gradient = (color: string) =>
   `linear-gradient(90deg, oklch(from ${color} l c h / 0) 0%, ${color} 31.87%)`;
@@ -11,11 +12,8 @@ const accentBackground = cssVar("--background-accent");
 const instanceBackground = `color-mix(in oklab, ${cssVar(
   "--background-primary"
 )} 86%, ${cssVar("--foreground-primary")})`;
-const tagStyleBackground = `light-dark(
-  color-mix(in oklab, ${cssVar("--foreground-primary")} 80%, ${cssVar("--background-primary")}),
-  color-mix(in oklab, ${cssVar("--foreground-primary")} 65%, ${cssVar("--background-primary")})
-)`;
-const tagStyleForeground = cssVar("--foreground-on-inverse");
+const tagStyleBackground = selectedControlBackground;
+const tagStyleForeground = cssVar("--foreground-primary");
 const breakpointBackground = rotateBoundedBackgroundHue(accentBackground, 60);
 const neutralBackground = `light-dark(
   ${cssVar("--foreground-secondary")},

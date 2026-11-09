@@ -8,6 +8,7 @@ import {
   type StyleSource,
   type StyleSourceToken,
   getTagStyleId,
+  getTagFromStyleId,
   isTagStyleTag,
 } from "@webstudio-is/sdk";
 import { type RenameStyleSourceError } from "@webstudio-is/project-build/runtime";
@@ -37,7 +38,11 @@ import { executeRuntimeMutation } from "~/shared/instance-utils/data";
 import { subscribe } from "~/shared/pubsub";
 import { $selectedInstance } from "~/shared/nano-states";
 import { $instanceTags } from "./shared/model";
-import { copyToken, pasteToken } from "~/shared/copy-paste/copy-paste";
+import {
+  copyToken,
+  copyReusableStyleSource,
+  pasteStyleSource,
+} from "~/shared/copy-paste/copy-paste";
 import { builderApi } from "~/shared/builder-api";
 
 // Declare command for this module
@@ -437,13 +442,20 @@ export const StyleSourcesSection = () => {
           }
         }}
         onCopyItem={(id) => {
-          copyToken(id).catch(() => {
+          const source = $styleSources.get().get(id);
+          const type =
+            source?.type ?? (getTagFromStyleId(id) ? "tagStyle" : "local");
+          const copy =
+            type === "token"
+              ? copyToken(id)
+              : copyReusableStyleSource(id, type);
+          copy.catch(() => {
             builderApi.toast.error(
               "Could not prepare the selected content for copying."
             );
           });
         }}
-        onPasteToken={pasteToken}
+        onPasteStyleSource={pasteStyleSource}
         onConvertToToken={(id) => {
           convertLocalStyleSourceToToken(id);
           setEditingItem(id);

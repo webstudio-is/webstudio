@@ -1,7 +1,15 @@
 import { expect, test } from "vitest";
-import { copyDesignToken } from "@webstudio-is/project-build/runtime";
-import { getStyleDeclKey, type Asset, type StyleDecl } from "@webstudio-is/sdk";
-import { prepareMcpTokenPasteData } from "./mcp-token-transfer";
+import {
+  copyDesignToken,
+  copyStyleSourceTransfer,
+} from "@webstudio-is/project-build/runtime";
+import {
+  getStyleDeclKey,
+  getTagStyleId,
+  type Asset,
+  type StyleDecl,
+} from "@webstudio-is/sdk";
+import { prepareMcpStyleSourcePasteData } from "./mcp-style-source-transfer";
 
 const image: Asset = {
   id: "source-image",
@@ -33,9 +41,87 @@ const data = copyDesignToken(
   { tokenId: "token", sourceOrigin: "https://builder.example.com" }
 ).data;
 
+const tagId = getTagStyleId("button");
+const tagStyle = { ...style, styleSourceId: tagId };
+const tagData = copyStyleSourceTransfer(
+  {
+    assets: new Map([[image.id, image]]),
+    breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+    styleSources: new Map([
+      [tagId, { type: "tagStyle", id: tagId, tag: "button" }],
+    ]),
+    styleSourceSelections: new Map(),
+    styles: new Map([[getStyleDeclKey(tagStyle), tagStyle]]),
+  },
+  {
+    styleSourceId: tagId,
+    sourceType: "tagStyle",
+    sourceOrigin: "https://builder.example.com",
+  }
+).data;
+
+const localId = "local-source";
+const localStyle = { ...style, styleSourceId: localId };
+const localData = copyStyleSourceTransfer(
+  {
+    assets: new Map([[image.id, image]]),
+    breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+    styleSources: new Map([[localId, { type: "local", id: localId }]]),
+    styleSourceSelections: new Map(),
+    styles: new Map([[getStyleDeclKey(localStyle), localStyle]]),
+  },
+  {
+    styleSourceId: localId,
+    sourceType: "local",
+    sourceOrigin: "https://builder.example.com",
+  }
+).data;
+
+test("MCP paste transfers Local style assets", async () => {
+  const prepared = await prepareMcpStyleSourcePasteData({
+    data: localData,
+    projectOrigin: "https://builder.example.com",
+    dryRun: false,
+    download: async (url) => ({
+      ok: true,
+      url: url.href,
+      arrayBuffer: async () => new ArrayBuffer(3),
+    }),
+    upload: async () => [{ ...image, id: "target-image", projectId: "target" }],
+    refreshAssets: async () => {},
+  });
+  expect(prepared).toEqual([
+    [
+      "https://builder.example.com/cgi/image/image.png?format=raw",
+      "target-image",
+    ],
+  ]);
+});
+
+test("MCP paste transfers Tag style assets", async () => {
+  const prepared = await prepareMcpStyleSourcePasteData({
+    data: tagData,
+    projectOrigin: "https://builder.example.com",
+    dryRun: false,
+    download: async (url) => ({
+      ok: true,
+      url: url.href,
+      arrayBuffer: async () => new ArrayBuffer(3),
+    }),
+    upload: async () => [{ ...image, id: "target-image", projectId: "target" }],
+    refreshAssets: async () => {},
+  });
+  expect(prepared).toEqual([
+    [
+      "https://builder.example.com/cgi/image/image.png?format=raw",
+      "target-image",
+    ],
+  ]);
+});
+
 test("MCP paste transfers token assets before passing data to the runtime", async () => {
   const steps: string[] = [];
-  const prepared = await prepareMcpTokenPasteData({
+  const prepared = await prepareMcpStyleSourcePasteData({
     data,
     projectOrigin: "https://builder.example.com",
     dryRun: false,
@@ -71,7 +157,7 @@ test("MCP paste transfers token assets before passing data to the runtime", asyn
 test("MCP dry runs do not upload token assets", async () => {
   let requested = false;
   await expect(
-    prepareMcpTokenPasteData({
+    prepareMcpStyleSourcePasteData({
       data,
       projectOrigin: "https://builder.example.com",
       dryRun: true,
@@ -94,7 +180,7 @@ test("MCP dry runs do not upload token assets", async () => {
 test("MCP paste rejects assets from another origin before downloading", async () => {
   let requested = false;
   await expect(
-    prepareMcpTokenPasteData({
+    prepareMcpStyleSourcePasteData({
       data,
       projectOrigin: "https://another-builder.example.com",
       dryRun: false,

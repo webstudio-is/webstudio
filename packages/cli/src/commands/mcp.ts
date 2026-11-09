@@ -61,7 +61,7 @@ import {
   getPagePath,
 } from "@webstudio-is/sdk";
 import { matchPathnameRoutes } from "@webstudio-is/wsauth";
-import { prepareMcpTokenPasteData } from "./mcp-token-transfer";
+import { prepareMcpStyleSourcePasteData } from "./mcp-style-source-transfer";
 import { fontMetaUpdate } from "@webstudio-is/fonts";
 import { resolveApiConnection } from "../api-connection";
 import {
@@ -2155,7 +2155,7 @@ const createCliMcpHost = async ({
       ) {
         operationInput = {
           ...operationInput,
-          assetIds: await prepareMcpTokenPasteData({
+          assetIds: await prepareMcpStyleSourcePasteData({
             data: operationInput.data,
             projectOrigin,
             dryRun: dryRun === true,

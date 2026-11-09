@@ -2937,6 +2937,12 @@ describe("builder runtime registry", () => {
         { deletions: [{ instanceId: "heading", property: "color" }] },
       ],
       [
+        "designTokens.paste",
+        {
+          data: '/* @webstudio/tag-style-css/v1 "h1" */\n.ws-tag-style { color: red; }',
+        },
+      ],
+      [
         "designTokens.create",
         {
           tokens: [

@@ -2187,9 +2187,36 @@ export const copyDesignToken = (
       params.sourceOrigin ?? parseBuilderUrl(params.origin).sourceOrigin,
   });
 
+const queryCopyStyleSource = projectQueryInput<
+  AuthProjectParams & {
+    styleSourceId: string;
+    sourceType: "token" | "tagStyle" | "local";
+    sourceOrigin?: string;
+  },
+  { data: string }
+>("copy-design-token");
+
+export const copyStyleSource = (
+  params: AuthProjectParams & {
+    styleSourceId: string;
+    sourceType: "token" | "tagStyle" | "local";
+    sourceOrigin?: string;
+  }
+) =>
+  queryCopyStyleSource({
+    ...params,
+    sourceOrigin:
+      params.sourceOrigin ?? parseBuilderUrl(params.origin).sourceOrigin,
+  });
+
 export const pasteDesignToken = projectMutationInput<
   AuthProjectParams & { data: string; instanceId?: string },
   { tokenId: string }
+>("paste-design-token");
+
+export const pasteStyleSource = projectMutationInput<
+  AuthProjectParams & { data: string; instanceId?: string },
+  { styleSourceId: string }
 >("paste-design-token");
 
 type DesignTokenStyleInput = {

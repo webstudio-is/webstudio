@@ -370,7 +370,9 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Duplicate
           </DropdownMenuItem>
         )}
-        {props.item.source === "token" && (
+        {(props.item.source === "token" ||
+          props.item.source === "tagStyle" ||
+          props.item.source === "local") && (
           <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
