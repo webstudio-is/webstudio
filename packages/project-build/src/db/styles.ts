@@ -1,5 +1,5 @@
 import postcss from "postcss";
-import { hyphenateProperty, toValue } from "@webstudio-is/css-engine";
+import { generateStyleMap, hyphenateProperty } from "@webstudio-is/css-engine";
 import {
   type Styles,
   type StyleDecl,
@@ -13,15 +13,24 @@ export const isValidGeneratedStyleDeclaration = ({
 }: StyleDecl): boolean => {
   const expectedProperty = hyphenateProperty(property);
   try {
-    const root = postcss.parse(`a{${expectedProperty}: ${toValue(value)}}`);
+    const root = postcss.parse(
+      `a{${generateStyleMap(new Map([[property, value]]))}}`
+    );
     const rule = root.first;
+    if (
+      root.nodes.length !== 1 ||
+      rule?.type !== "rule" ||
+      rule.selector !== "a"
+    ) {
+      return false;
+    }
+    const declarations = rule.nodes.filter((node) => node.type === "decl");
     return (
-      root.nodes.length === 1 &&
-      rule?.type === "rule" &&
-      rule.selector === "a" &&
-      rule.nodes.length === 1 &&
-      rule.first?.type === "decl" &&
-      rule.first.prop === expectedProperty
+      declarations.length === 1 &&
+      declarations[0].prop === expectedProperty &&
+      rule.nodes.every(
+        (node) => node.type === "decl" || node.type === "comment"
+      )
     );
   } catch {
     return false;

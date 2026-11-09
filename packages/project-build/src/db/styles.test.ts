@@ -16,6 +16,9 @@ test("accepts normal declarations and escaped content", () => {
   expect(isValidGeneratedStyleDeclaration(style("content", '"a; } b"'))).toBe(
     true
   );
+  expect(
+    isValidGeneratedStyleDeclaration(style("color", "red /* comment */"))
+  ).toBe(true);
 });
 
 test("rejects CSS that the publish parser cannot read as one declaration", () => {
