@@ -1,9 +1,11 @@
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   camelCaseProperty,
+  cssTryParseValue,
   parseCssValue,
   type ParsedStyleDecl,
 } from "@webstudio-is/css-data";
+import { generate, walk } from "css-tree";
 import type {
   Instance,
   Styles,
@@ -63,6 +65,27 @@ export const mapParsedCssStyles = (
     });
   }
   return styles;
+};
+
+export const mapCssValueUrls = (
+  value: string,
+  mapUrl: (url: string) => string | undefined
+) => {
+  const parsed = cssTryParseValue(value);
+  if (parsed === undefined) {
+    return value;
+  }
+  let changed = false;
+  walk(parsed, (node) => {
+    if (node.type === "Url") {
+      const replacement = mapUrl(node.value);
+      if (replacement !== undefined && replacement !== node.value) {
+        node.value = replacement;
+        changed = true;
+      }
+    }
+  });
+  return changed ? generate(parsed) : value;
 };
 
 export const traverseStyleValue = (

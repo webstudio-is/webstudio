@@ -329,6 +329,11 @@ export const pasteDesignToken = (
     ...incomingVariables.map((style) => style.property),
     ...tokenVariableNames,
   ]);
+  for (const style of fragment.styles) {
+    for (const name of collectVariableReferences(style.value)) {
+      existingNames.add(name);
+    }
+  }
   for (const style of incomingVariables) {
     if (
       targetVariableNames.has(style.property) &&

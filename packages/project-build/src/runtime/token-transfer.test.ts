@@ -686,6 +686,65 @@ test("preserves variables that depend on each other across breakpoints", () => {
   });
 });
 
+test("reserves undefined variable references in the incoming token", () => {
+  const copied = copyDesignToken(
+    {
+      assets: new Map(),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([
+        ["token", { type: "token", id: "token", name: "Button" }],
+        ["source-root", { type: "local", id: "source-root" }],
+      ]),
+      styleSourceSelections: new Map([
+        [
+          ROOT_INSTANCE_ID,
+          { instanceId: ROOT_INSTANCE_ID, values: ["source-root"] },
+        ],
+      ]),
+      styles: styleMap([
+        style("token", "base", "color", "var(--brand)"),
+        style("token", "base", "backgroundColor", "var(--brand-1, green)"),
+        style("source-root", "base", "--brand", "red"),
+      ]),
+    },
+    { tokenId: "token" }
+  );
+  const target = {
+    assets: new Map(),
+    breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+    styleSources: new Map([
+      ["target-root", { type: "local" as const, id: "target-root" }],
+    ]),
+    styleSourceSelections: new Map([
+      [
+        ROOT_INSTANCE_ID,
+        { instanceId: ROOT_INSTANCE_ID, values: ["target-root"] },
+      ],
+    ]),
+    styles: styleMap([style("target-root", "base", "--brand", "blue")]),
+  };
+  const mutation = pasteDesignToken(
+    target,
+    { data: copied.data },
+    { createId: () => "new-token" }
+  );
+  const pasted = applyBuilderPatchTransactions(target, [
+    { id: "paste", payload: mutation.payload },
+  ]).state;
+  expect(pasted.styles?.get("target-root:base:--brand-2:")?.value).toEqual({
+    type: "unparsed",
+    value: "red",
+  });
+  expect(pasted.styles?.get("new-token:base:color:")?.value).toEqual({
+    type: "unparsed",
+    value: "var(--brand-2)",
+  });
+  expect(pasted.styles?.get("new-token:base:backgroundColor:")?.value).toEqual({
+    type: "unparsed",
+    value: "var(--brand-1, green)",
+  });
+});
+
 test("rejects incomplete token data", () => {
   expect(() =>
     pasteDesignToken(
@@ -858,6 +917,62 @@ test("remaps image and font dependencies after transfer", () => {
   expect(
     [...(pasted.styles?.values() ?? [])].map((style) => style.value)
   ).toEqual(remapped.styles.map((style) => style.value));
+});
+
+test("remaps an image asset referenced through a root variable", () => {
+  const image: Asset = {
+    id: "source-image",
+    projectId: "source",
+    name: "hero.svg",
+    type: "image",
+    format: "svg",
+    meta: { width: 100, height: 100 },
+    size: 100,
+    description: null,
+    createdAt: "2026-01-01",
+  };
+  const copied = copyDesignToken(
+    {
+      assets: new Map([[image.id, image]]),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([
+        ["token", { type: "token", id: "token", name: "Hero" }],
+        ["root", { type: "local", id: "root" }],
+      ]),
+      styleSourceSelections: new Map([
+        [ROOT_INSTANCE_ID, { instanceId: ROOT_INSTANCE_ID, values: ["root"] }],
+      ]),
+      styles: styleMap([
+        style("token", "base", "backgroundImage", "var(--hero)"),
+        {
+          styleSourceId: "root",
+          breakpointId: "base",
+          property: "--hero",
+          value: { type: "image", value: { type: "asset", value: image.id } },
+        },
+      ]),
+    },
+    { tokenId: "token", sourceOrigin: "https://builder.example.com" }
+  );
+  const parsed = parseTokenTransferData(copied.data);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid === false) {
+    return;
+  }
+  expect(parsed.data.fragment.assets).toEqual([
+    expect.objectContaining({ name: "hero.svg", type: "image" }),
+  ]);
+  const importedImage = { ...image, id: "target-image", name: "target.svg" };
+  const remapped = remapFragmentAssets(
+    parsed.data.fragment,
+    new Map([[parsed.data.fragment.assets[0].id, importedImage]])
+  );
+  expect(
+    remapped.styles.find((item) => item.property === "--hero")?.value
+  ).toEqual({
+    type: "unparsed",
+    value: "url(/cgi/image/target.svg?format=raw)",
+  });
 });
 
 test("copies font assets used by a root CSS variable", () => {

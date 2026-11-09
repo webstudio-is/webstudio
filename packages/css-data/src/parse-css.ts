@@ -713,10 +713,11 @@ export type ParseCssResult = {
  * to be resolved together as if they apply to the same element.
  */
 export const extractCssCustomProperties = (
-  css: string
+  css: string,
+  parsedAst?: csstree.CssNode
 ): Map<string, string> => {
   const map = new Map<string, string>();
-  const ast = cssTreeTryParse(css);
+  const ast = parsedAst ?? cssTreeTryParse(css);
   if (ast === undefined) {
     return map;
   }
@@ -900,14 +901,14 @@ export const parseCss = (
             case "PseudoClassSelector": {
               // First pseudo selector is not a state but an element selector, e.g. :root
               if (selector) {
-                state = `:${childNode.name}`;
+                state = csstree.generate(childNode);
               } else {
-                name = `:${childNode.name}`;
+                name = csstree.generate(childNode);
               }
               break;
             }
             case "PseudoElementSelector":
-              state = `::${childNode.name}`;
+              state = csstree.generate(childNode);
               break;
             case "Combinator":
               // " " vs " > "
@@ -919,7 +920,7 @@ export const parseCss = (
           if (selector) {
             selector.name += name;
             if (state) {
-              selector.state = state;
+              selector.state = `${selector.state ?? ""}${state}`;
             }
           } else {
             selector = { name, state };

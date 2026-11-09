@@ -1,4 +1,8 @@
-import { parseCss, parseMediaQuery } from "@webstudio-is/css-data";
+import {
+  extractCssCustomProperties,
+  parseCss,
+  parseMediaQuery,
+} from "@webstudio-is/css-data";
 import {
   createRegularStyleSheet,
   FakeStyleElement,
@@ -18,7 +22,11 @@ import {
 } from "@webstudio-is/sdk";
 import * as cssTree from "css-tree";
 import { parseWebstudioPragma } from "./webstudio-pragma";
-import { mapParsedCssStyles, traverseStyleValue } from "../style-utils";
+import {
+  mapCssValueUrls,
+  mapParsedCssStyles,
+  traverseStyleValue,
+} from "../style-utils";
 
 const tokenId = "clipboard-token";
 const rootId = "clipboard-root";
@@ -174,7 +182,16 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   ): boolean =>
     nodes.toArray().every((node) => {
       if (node.type === "Rule") {
-        const selector = cssTree.generate(node.prelude);
+        const rootSelector =
+          node.prelude.type === "SelectorList" &&
+          node.prelude.children
+            .toArray()
+            .every(
+              (item) =>
+                item.type === "Selector" &&
+                item.children.first?.type === "PseudoClassSelector" &&
+                item.children.first.name === "root"
+            );
         const tokenSelector =
           node.prelude.type === "SelectorList" &&
           node.prelude.children
@@ -185,7 +202,7 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
                 item.children.first?.type === "ClassSelector" &&
                 item.children.first.name === "ws-token"
             );
-        return node.block !== null && (selector === ":root" || tokenSelector);
+        return node.block !== null && (rootSelector || tokenSelector);
       }
       if (node.type !== "Atrule" || node.block === null || inMedia) {
         return false;
@@ -261,11 +278,12 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   if (syntaxError || !visit(ast.children)) {
     return { owned: true, valid: false };
   }
-  const parsed = parseCss(body, new Map(), ast);
+  const parsed = parseCss(body, extractCssCustomProperties(body, ast), ast);
   if (
     parsed.errors.length > 0 ||
     parsed.styles.some(
-      (style) => style.selector === ":root" && !style.property.startsWith("--")
+      (style) =>
+        style.selector.startsWith(":root") && !style.property.startsWith("--")
     )
   ) {
     return { owned: true, valid: false };
@@ -304,13 +322,22 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
           item.value = { type: "asset", value: asset.id };
         }
       }
+      if (item.type === "unparsed") {
+        mapCssValueUrls(item.value, (url) => {
+          const asset = assetFromUrl(url, "image");
+          if (asset !== undefined) {
+            assets.set(asset.id, asset);
+          }
+          return;
+        });
+      }
     });
-    const suffix =
-      style.selector === ":root"
-        ? ""
-        : style.selector.slice(".ws-token".length);
+    const isRoot = style.selector.startsWith(":root");
+    const suffix = style.selector.slice(
+      isRoot ? ":root".length : ".ws-token".length
+    );
     return {
-      styleSourceId: style.selector === ":root" ? rootId : tokenId,
+      styleSourceId: isRoot ? rootId : tokenId,
       breakpointId,
       value,
       state: `${suffix}${style.state ?? ""}` || undefined,

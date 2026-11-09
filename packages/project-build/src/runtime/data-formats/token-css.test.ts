@@ -77,6 +77,53 @@ test("keeps token attribute and descendant states", () => {
   ]);
 });
 
+test("keeps complete functional and compound token states", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+.ws-token:nth-child(2) { color: red; }
+.ws-token:hover:focus { color: blue; }
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.styles.map((style) => style.state)).toEqual([
+      ":nth-child(2)",
+      ":hover:focus",
+    ]);
+  }
+});
+
+test("keeps conditional root variables and variable-backed shorthands", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+:root { --space: 10px; }
+:root:hover { --space: 20px; }
+.ws-token { padding: var(--space); }
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.styles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ property: "--space", state: ":hover" }),
+        expect.objectContaining({ property: "paddingTop" }),
+        expect.objectContaining({ property: "paddingRight" }),
+        expect.objectContaining({ property: "paddingBottom" }),
+        expect.objectContaining({ property: "paddingLeft" }),
+      ])
+    );
+  }
+});
+
+test("imports image URLs inside custom properties", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+:root { --hero: url("https://builder.example.com/cgi/image/hero.svg?format=raw"); }
+.ws-token { background-image: var(--hero); }
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.assets).toEqual([
+      expect.objectContaining({ name: "hero.svg", type: "image" }),
+    ]);
+  }
+});
+
 test("escapes token names that contain a CSS comment terminator", () => {
   const copied = copyDesignToken(
     {

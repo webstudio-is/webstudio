@@ -13,6 +13,8 @@ import {
   IMAGE_EXTENSIONS,
   detectAssetType,
   getAssetContentHash,
+  decodePathFragment,
+  validateFileName,
 } from "@webstudio-is/sdk";
 import type { UploadingFileData } from "~/shared/nano-states";
 
@@ -54,18 +56,13 @@ export const getImageNameAndType = (fileName: string) => {
   return [getMimeTypeByExtension(extractedExt)!, fileName] as const;
 };
 
-const extractImageNameAndMimeTypeFromUrl = (url: URL) => {
-  if (url.pathname.startsWith("/cgi/asset/")) {
-    try {
-      const filename = decodeURIComponent(url.pathname.split("/").at(-1) ?? "");
-      const extension = getFileExtension(filename);
-      const mimeType = extension && getMimeTypeByExtension(extension);
-      if (mimeType) {
-        return [mimeType, filename] as const;
-      }
-    } catch {
-      // Fall back to the existing URL naming behavior.
-    }
+const extractNameAndMimeTypeFromUrl = (url: URL) => {
+  try {
+    const filename = decodePathFragment(url.pathname.split("/").at(-1) ?? "");
+    const { mimeType } = validateFileName(filename);
+    return [mimeType, filename] as const;
+  } catch {
+    // Try the image name in the rest of the URL.
   }
   const nameFromPath = url.pathname
     .split("/")
@@ -119,7 +116,7 @@ export const getMimeType = (file: File | URL) => {
     return file.type;
   }
 
-  return extractImageNameAndMimeTypeFromUrl(file)[0];
+  return extractNameAndMimeTypeFromUrl(file)[0];
 };
 
 export const getFileName = (file: File | URL) => {
@@ -127,7 +124,7 @@ export const getFileName = (file: File | URL) => {
     return file.name;
   }
 
-  return extractImageNameAndMimeTypeFromUrl(file)[1];
+  return extractNameAndMimeTypeFromUrl(file)[1];
 };
 
 export const uploadingFileDataToAsset = (

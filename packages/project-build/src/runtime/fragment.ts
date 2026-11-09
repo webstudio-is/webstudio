@@ -24,6 +24,7 @@ import {
   findTreeInstanceIds,
   findTreeInstanceIdsExcludingSlotDescendants,
   getStyleDeclKey,
+  getAssetUrl,
   getHomePage,
   isFormSubmission,
   portalComponent,
@@ -58,6 +59,7 @@ import { unwrap } from "./unwrap";
 import {
   collectFontFamiliesFromStyleDecls,
   collectFontFamiliesFromStyleValue,
+  mapCssValueUrls,
   traverseStyleValue,
 } from "./style-utils";
 import { countDataSourceAssetReferences } from "./assets";
@@ -85,6 +87,7 @@ export const remapFragmentAssets = (
   importedAssets: ReadonlyMap<Asset["id"], Asset>
 ) => {
   const replacementIds = new Map<Asset["id"], Asset["id"]>();
+  const replacementUrls = new Map<string, string>();
   const replacementFontFamilies = new Map<string, string>();
   for (const sourceAsset of fragment.assets) {
     const importedAsset = importedAssets.get(sourceAsset.id);
@@ -100,6 +103,16 @@ export const remapFragmentAssets = (
       continue;
     }
     if (sourceAsset.id !== importedAsset.id) {
+      if (sourceAsset.type === "image") {
+        const importedUrl = getAssetUrl(
+          importedAsset,
+          "https://webstudio.invalid"
+        );
+        replacementUrls.set(
+          new URL(sourceAsset.id, "https://webstudio.invalid").href,
+          importedUrl.pathname + importedUrl.search
+        );
+      }
       for (const [sourceId, currentId] of replacementIds) {
         if (currentId === sourceAsset.id) {
           replacementIds.set(sourceId, importedAsset.id);
@@ -146,6 +159,17 @@ export const remapFragmentAssets = (
         if (item.type === "image" && item.value.type === "asset") {
           item.value.value =
             replacementIds.get(item.value.value) ?? item.value.value;
+        }
+        if (replacementUrls.size > 0 && item.type === "unparsed") {
+          item.value = mapCssValueUrls(item.value, (url) => {
+            try {
+              return replacementUrls.get(
+                new URL(url, "https://webstudio.invalid").href
+              );
+            } catch {
+              return;
+            }
+          });
         }
         if (item.type === "fontFamily") {
           const mapped = item.value.map(

@@ -63,6 +63,12 @@ test("keeps the filename and MIME type of a font asset URL", () => {
   expect(getMimeType(url)).toBe("font/woff2");
 });
 
+test("keeps a font filename from any supported URL path", () => {
+  const url = new URL("https://source.example.com/fonts/brand.woff2");
+  expect(getFileName(url)).toBe("brand.woff2");
+  expect(getMimeType(url)).toBe("font/woff2");
+});
+
 test("distinguishes upload fingerprints by filename and content", async () => {
   const first = new File([""], "first.md");
   const renamed = new File([""], "renamed.md");
