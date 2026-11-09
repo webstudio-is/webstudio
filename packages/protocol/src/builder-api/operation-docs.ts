@@ -484,8 +484,8 @@ const curatedPublicApiOperationDocumentation = [
     command: "list-tag-styles",
     description: "List global Tag styles and their declarations",
     examples: [
-      "webstudio list-tag-styles --json",
-      "webstudio list-tag-styles --tag button --verbose --json",
+      'MCP tool: list-tag-styles {}',
+      'MCP tool: list-tag-styles {"tag":"button","verbose":true}',
     ],
   },
   {
@@ -498,8 +498,9 @@ const curatedPublicApiOperationDocumentation = [
     command: "update-selected-styles",
     description:
       "Create or update selected style-source declarations. Use tag-style:<tag> to create or edit a global Tag style.",
-    requiredOptions: ["input", "json"],
-    examples: ["webstudio update-selected-styles --input styles.json --json"],
+    examples: [
+      'MCP tool: update-selected-styles {"updates":[{"instanceId":"instance-id","styleSourceId":"tag-style:button","property":"color","value":{"type":"keyword","value":"red"}}]}',
+    ],
   },
   {
     command: "delete-styles",
