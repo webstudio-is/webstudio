@@ -59,18 +59,8 @@ const labelContainerStyle = css({
   pointerEvents: "none",
 });
 
-const titleButtonStyle = css({
-  all: "unset",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: theme.panel.paddingInline,
-  height: "100%",
-  boxSizing: "border-box",
-  "&:focus-visible": {
-    ...focusRingStyle(),
-    [chevronOpacity]: 1,
-  },
+const titleButtonStyle = css(titleButtonLayoutStyle, {
+  "&:focus-visible": focusRingStyle(),
 });
 
 const suffixSlotStyle = css({
@@ -86,6 +76,7 @@ const invisibleSuffixStyle = css({
 const chevronStyle = css({
   width: theme.spacing[7],
   opacity: cssVar(chevronOpacity, "0"),
+  translate: "-100%",
   transition: "transform 150ms, opacity 200ms",
   color: cssVar("--foreground-secondary"),
   variants: {
