@@ -831,6 +831,267 @@ test("hydrates encoded filenames from an embedded SSG database", async () => {
 
 describe("prebuild", () => {
   test.each([true, false])(
+    "publishes escaped CSS properties through Lightning CSS (atomic: %s)",
+    async (atomicStyles) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const siteData = createSiteData();
+      siteData.build.pages.compiler = { atomicStyles };
+      siteData.build.breakpoints = [
+        ["base", { id: "base", label: "Base" }],
+      ] as never;
+      siteData.build.styleSources = [
+        ["source", { id: "source", type: "local" }],
+      ] as never;
+      siteData.build.styleSourceSelections = [
+        ["root", { instanceId: "root", values: ["source"] }],
+      ] as never;
+      siteData.build.styles = [
+        [
+          "source:base:invalid:",
+          {
+            styleSourceId: "source",
+            breakpointId: "base",
+            property:
+              "--pE--_WitxzZqY_3KruPxn-\\ \\>\\ \\.figma-block-translate",
+            value: { type: "unparsed", value: "none" },
+          },
+        ],
+        [
+          "source:base:color:",
+          {
+            styleSourceId: "source",
+            breakpointId: "base",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+
+      await prebuild({ assets: false, template: ["react-router"] });
+
+      expect(warn).not.toHaveBeenCalled();
+      const css = await readFile("app/__generated__/index.css", "utf8");
+      expect(css).toContain("color: red");
+      expect(css).toContain("figma-block-translate");
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      await runGeneratedCommand("react-router", ["build"]);
+      const cssFiles = (await readdir("build/client/assets")).filter((file) =>
+        file.endsWith(".css")
+      );
+      expect(cssFiles.length).toBeGreaterThan(0);
+      const bundledCss = await Promise.all(
+        cssFiles.map((file) => readFile(`build/client/assets/${file}`, "utf8"))
+      );
+      expect(
+        bundledCss.some((css) => css.includes("figma-block-translate"))
+      ).toBe(true);
+    },
+    30_000
+  );
+
+  test.each(["react-router", "ssg"] as const)(
+    "publishes when a generated CSS rule is malformed (%s)",
+    async (template) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const siteData = createSiteData();
+      siteData.build.breakpoints = [
+        ["base", { id: "base", label: "Base" }],
+      ] as never;
+      siteData.build.styleSources = [
+        ["source", { id: "source", type: "local" }],
+      ] as never;
+      siteData.build.styleSourceSelections = [
+        ["root", { instanceId: "root", values: ["source"] }],
+      ] as never;
+      siteData.build.styles = [
+        [
+          "source:base:color:bad-state",
+          {
+            styleSourceId: "source",
+            breakpointId: "base",
+            state: "/*",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      ] as never;
+      await writeSiteData(siteData);
+
+      await prebuild({ assets: false, template: [template] });
+
+      expect(
+        warn.mock.calls.map(([value]) => JSON.parse(String(value)))
+      ).toContainEqual(
+        expect.objectContaining({
+          type: "webstudio-build-warning",
+          code: "invalid-generated-css",
+          severity: "warning",
+        })
+      );
+      await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+      const css = await readFile("app/__generated__/index.css", "utf8");
+      expect(css).not.toContain("/*");
+      if (template === "ssg") {
+        await prerenderSsg();
+      } else {
+        await runGeneratedCommand("react-router", ["build"]);
+        expect(
+          (await readdir("build/client/assets")).some((file) =>
+            file.endsWith(".css")
+          )
+        ).toBe(true);
+      }
+    },
+    60_000
+  );
+
+  test("skips a recovered malformed declaration without dropping valid styles", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const siteData = createSiteData();
+    siteData.build.breakpoints = [
+      ["base", { id: "base", label: "Base" }],
+    ] as never;
+    siteData.build.styleSources = [
+      ["source", { id: "source", type: "local" }],
+    ] as never;
+    siteData.build.styleSourceSelections = [
+      ["root", { instanceId: "root", values: ["source"] }],
+    ] as never;
+    siteData.build.styles = [
+      [
+        "source:base:color:",
+        {
+          styleSourceId: "source",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "unparsed", value: "rgb(1, 2, 3" },
+        },
+      ],
+      [
+        "source:base:backgroundColor:",
+        {
+          styleSourceId: "source",
+          breakpointId: "base",
+          property: "backgroundColor",
+          value: { type: "keyword", value: "red" },
+        },
+      ],
+    ] as never;
+    await writeSiteData(siteData);
+
+    await prebuild({ assets: false, template: ["defaults"] });
+
+    expect(await readFile("app/__generated__/index.css", "utf8")).toContain(
+      "background-color: red"
+    );
+    expect(
+      warn.mock.calls.map(([value]) => JSON.parse(String(value)).code)
+    ).toContain("invalid-css-declaration");
+    expect(
+      warn.mock.calls.map(([value]) => JSON.parse(String(value)).code)
+    ).not.toContain("invalid-generated-css");
+  });
+
+  test("links generated CSS in prerendered SSG output", async () => {
+    const siteData = createSiteData();
+    siteData.build.breakpoints = [
+      ["base", { id: "base", label: "Base" }],
+    ] as never;
+    siteData.build.styleSources = [
+      ["source", { id: "source", type: "local" }],
+    ] as never;
+    siteData.build.styleSourceSelections = [
+      ["root", { instanceId: "root", values: ["source"] }],
+    ] as never;
+    siteData.build.styles = [
+      [
+        "source:base:color:",
+        {
+          styleSourceId: "source",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ],
+    ] as never;
+    await writeSiteData(siteData);
+
+    await prebuild({ assets: false, template: ["ssg"] });
+    await expect(
+      readFile("app/__generated__/index.css", "utf8")
+    ).resolves.toContain("color: red");
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    await prerenderSsg();
+
+    const html = parseHtml(await readFile("dist/client/index.html", "utf8"));
+    const stylesheets = findElementsByTagName(html, "link")
+      .filter((element) =>
+        element.attrs.some(
+          ({ name, value }) => name === "rel" && value === "stylesheet"
+        )
+      )
+      .map(
+        (element) => element.attrs.find(({ name }) => name === "href")?.value
+      );
+    expect(stylesheets).toHaveLength(1);
+    const stylesheet = stylesheets[0];
+    expect(stylesheet).toMatch(/^\/assets\/static\/.*\.css$/);
+    await expect(
+      readFile(`dist/client${stylesheet}`, "utf8")
+    ).resolves.toContain("red");
+  }, 60_000);
+
+  test("builds the Cloudflare Remix site with the escaped property", async () => {
+    const siteData = createSiteData();
+    siteData.build.breakpoints = [
+      ["base", { id: "base", label: "Base" }],
+    ] as never;
+    siteData.build.styleSources = [
+      ["source", { id: "source", type: "local" }],
+    ] as never;
+    siteData.build.styleSourceSelections = [
+      ["root", { instanceId: "root", values: ["source"] }],
+    ] as never;
+    siteData.build.styles = [
+      [
+        "source:base:escaped:",
+        {
+          styleSourceId: "source",
+          breakpointId: "base",
+          property: "--pE--_WitxzZqY_3KruPxn-\\ \\>\\ \\.figma-block-translate",
+          value: { type: "unparsed", value: "none" },
+        },
+      ],
+    ] as never;
+    await writeSiteData(siteData);
+    await prebuild({ assets: false, template: ["defaults", "cloudflare"] });
+    await symlink(join(originalCwd, "node_modules"), "node_modules", "dir");
+    const viteConfig = await readFile("vite.config.ts", "utf8");
+    await writeFile(
+      "vite.config.ts",
+      viteConfig
+        .replaceAll(
+          'conditions: ["browser", "development|production"]',
+          'conditions: ["webstudio", "browser", "development|production"]'
+        )
+        .replaceAll(
+          'conditions: ["node", "development|production"]',
+          'conditions: ["webstudio", "node", "development|production"]'
+        )
+    );
+    await runGeneratedCommand("remix", ["vite:build"]);
+    const cssFiles = (await readdir("build/client/assets")).filter((file) =>
+      file.endsWith(".css")
+    );
+    const bundledCss = await Promise.all(
+      cssFiles.map((file) => readFile(`build/client/assets/${file}`, "utf8"))
+    );
+    expect(
+      bundledCss.some((css) => css.includes("figma-block-translate"))
+    ).toBe(true);
+  }, 60_000);
+  test.each([true, false])(
     "imports managed Form formatting only when used (%s)",
     async (hasErrors) => {
       const siteData = createSiteData({
@@ -2271,6 +2532,36 @@ describe("prebuild", () => {
     await expect(readFile("app/routes/custom.tsx", "utf8")).resolves.toBe(
       "custom"
     );
+
+    const oldCss = await readFile("app/__generated__/index.css", "utf8");
+    siteData.build.breakpoints = [
+      ["base", { id: "base", label: "Base" }],
+    ] as never;
+    siteData.build.styleSources = [
+      ["source", { id: "source", type: "local" }],
+    ] as never;
+    siteData.build.styleSourceSelections = [
+      ["root", { instanceId: "root", values: ["source"] }],
+    ] as never;
+    siteData.build.styles = [
+      [
+        "source:base:color:",
+        {
+          styleSourceId: "source",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ],
+    ] as never;
+    await writeSiteData(siteData);
+    await prebuild({
+      assets: false,
+      template: ["react-router"],
+      incremental: true,
+    });
+    const css = await readFile("app/__generated__/index.css", "utf8");
+    expect(css).not.toBe(oldCss);
   });
 
   test("rejects generated manifests that point outside owned output", async () => {

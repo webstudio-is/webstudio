@@ -3,6 +3,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import { reactRouter } from "@react-router/dev/vite";
 
 export default defineConfig({
+  css: { transformer: "lightningcss" },
   optimizeDeps: {
     entries: ["app/root.tsx", "app/routes/**/*.{ts,tsx}"],
   },

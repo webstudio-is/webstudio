@@ -301,6 +301,45 @@ describe("build import helpers", () => {
     ]);
   });
 
+  test("rejects malformed imported CSS before storing assets or the build", async () => {
+    const data = createData();
+    data.build.styles = [
+      [
+        "source-1:base:invalid:",
+        {
+          styleSourceId: "source-1",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "unparsed", value: "red; width: 10px" },
+        },
+      ],
+    ] as never;
+
+    expect(() =>
+      createBuildImportUpdate({
+        data,
+        lastTransactionId: "import-tx",
+        updatedAt: "2024-02-01T00:00:00.000Z",
+        version: 4,
+      })
+    ).toThrow();
+
+    const calls: string[] = [];
+    await expect(
+      importPublishedProjectBundle(
+        {
+          ctx: {
+            postgrest: { client: createPostgrestClient(calls) },
+          } as never,
+          data,
+          projectId: "target-project",
+        },
+        { hasProjectPermit, loadDevBuildByProjectId }
+      )
+    ).rejects.toThrow();
+    expect(calls).toEqual([]);
+  });
+
   test.each([
     { marker: 1, expected: "ResourceForm" },
     { marker: undefined, expected: "WebhookForm" },

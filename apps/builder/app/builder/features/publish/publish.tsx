@@ -266,19 +266,22 @@ const runPublishDiagnostics = async (
   projectId: Project["id"],
   domains?: string[]
 ) => {
+  const cssBuildWarningText =
+    "Some project styles cannot be processed for publishing. Publishing can continue using base and font styles.";
   const auditFindings = getPrePublishAuditFindings();
-  const diagnostics =
+  const validation =
     domains === undefined
-      ? await nativeClient.build.contentDatabasePublishDiagnostics.query({
+      ? undefined
+      : await nativeClient.api.publish.validate.query({
           projectId,
-        })
-      : (
-          await nativeClient.api.publish.validate.query({
-            projectId,
-            target: "staging",
-            domains,
-          })
-        ).diagnostics;
+          target: "staging",
+          domains,
+        });
+  const diagnostics =
+    validation?.diagnostics ??
+    (await nativeClient.build.contentDatabasePublishDiagnostics.query({
+      projectId,
+    }));
   const contentFindings = getContentDatabasePublishFindings(diagnostics).map(
     (finding) => ({
       ...finding,
@@ -290,7 +293,17 @@ const runPublishDiagnostics = async (
         ),
     })
   );
-  const findings = [...auditFindings, ...contentFindings];
+  const cssWarning =
+    validation?.cssValid === false
+      ? [
+          {
+            severity: "warning" as const,
+            title: cssBuildWarningText,
+            reportText: cssBuildWarningText,
+          },
+        ]
+      : [];
+  const findings = [...auditFindings, ...contentFindings, ...cssWarning];
   return {
     passed: findings.every(({ severity }) => severity !== "error"),
     findings,
@@ -1178,7 +1191,7 @@ const Publish = ({
     progress.start(() =>
       runPublishAfterBestEffortChecks({
         checks: async () => {
-          const checks = await runPublishDiagnostics(project.id);
+          const checks = await runPublishDiagnostics(project.id, domains);
           diagnostics.setFindings(checks.findings);
         },
         onCheckFailure: (error) => {

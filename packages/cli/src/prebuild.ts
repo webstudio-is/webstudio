@@ -12,6 +12,8 @@ import { rm, cp, readFile, writeFile, readdir } from "node:fs/promises";
 import { cwd, exit } from "node:process";
 import { fileURLToPath } from "node:url";
 import { parse } from "acorn";
+import { transform as transformCss } from "esbuild";
+import { transform as transformLightningCss } from "lightningcss";
 import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import deepEqual from "fast-deep-equal";
@@ -81,6 +83,7 @@ import {
   getZodValidationIssues,
   createAssetUrlsByPath,
 } from "@webstudio-is/project-build/runtime";
+import { parseGeneratedStyleDeclaration } from "@webstudio-is/project-build/persistence";
 import {
   createPublishedBuildContentCompilationPlan,
   getDynamicPublishedMdxSourceBlockIds,
@@ -157,9 +160,14 @@ const contentRuntimeBundleUrl = new URL(
 const contentRuntimeFile = "$resources.asset-query-vendor.js";
 const appRoot = "app";
 const generatedDir = join(appRoot, "__generated__");
+const generatedCssDir = join("public", "__webstudio", "css");
 const sitemapModule = join(generatedDir, "$resources.sitemap.xml");
 const routesDir = join(appRoot, "routes");
-const generatedOutputDirectories = [generatedDir, routesDir] as const;
+const generatedOutputDirectories = [
+  generatedDir,
+  routesDir,
+  generatedCssDir,
+] as const;
 
 type SiteDataByPage = {
   [id: Page["id"]]: {
@@ -1020,6 +1028,9 @@ export const prebuild = async (options: {
   if (options.incremental !== true) {
     await rm(routesDir, { recursive: true, force: true });
   }
+  if (options.incremental !== true) {
+    await rm(generatedCssDir, { recursive: true, force: true });
+  }
 
   const generatedFiles = new Set<string>();
   const previousGeneratedFiles =
@@ -1678,12 +1689,29 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     }
   }
 
-  const { cssText, classes } = generateCss({
+  const publishableStyles = new Map(publishedStyles);
+  for (const [key, style] of publishedStyles) {
+    if (parseGeneratedStyleDeclaration(style).errors.length === 0) {
+      continue;
+    }
+    publishableStyles.delete(key);
+    console.warn(
+      JSON.stringify({
+        type: "webstudio-build-warning",
+        code: "invalid-css-declaration",
+        severity: "warning",
+        styleSourceId: style.styleSourceId,
+        breakpointId: style.breakpointId,
+        property: style.property,
+      })
+    );
+  }
+  const cssConfig = {
     instances: publishedInstances,
     props: publishedProps,
     assets,
     breakpoints: publishedBreakpoints,
-    styles: publishedStyles,
+    styles: publishableStyles,
     styleSourceSelections: publishedStyleSourceSelections,
     // pass only used metas to not generate unused preset styles
     componentMetas: usedMetas,
@@ -1692,9 +1720,34 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
       siteData.build.projectSettings?.compiler.atomicStyles ??
       pages.compiler?.atomicStyles ??
       true,
-  });
-
-  await writeGeneratedFile(join(generatedDir, "index.css"), cssText);
+  };
+  const { cssText, classes } = generateCss(cssConfig);
+  const canBuildCss = async (css: string) => {
+    try {
+      transformLightningCss({ filename: "index.css", code: Buffer.from(css) });
+      await transformCss(css, { loader: "css", minify: true });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  let generatedCss = cssText;
+  if ((await canBuildCss(cssText)) === false) {
+    const fallbackCss = generateCss({
+      ...cssConfig,
+      styles: new Map(),
+    }).cssText;
+    generatedCss = (await canBuildCss(fallbackCss)) ? fallbackCss : "";
+    console.warn(
+      JSON.stringify({
+        type: "webstudio-build-warning",
+        code: "invalid-generated-css",
+        severity: "warning",
+        fallback: generatedCss === "" ? "empty" : "presets-and-fonts",
+      })
+    );
+  }
+  await writeGeneratedFile(join(generatedDir, "index.css"), generatedCss);
 
   for (const page of generatedPages) {
     const scope = createScope([

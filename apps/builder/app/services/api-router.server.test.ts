@@ -1351,11 +1351,19 @@ describe("api router permits", () => {
       const loadBuild = vi
         .spyOn(projectBuild, "loadDevBuildByProjectId")
         .mockResolvedValue({
+          pages: createDefaultPages({ rootInstanceId: "root" }),
+          breakpoints: [],
+          styles: [],
+          styleSourceSelections: [],
           dataSources: [],
           props: [],
           resources: [],
           instances: [],
         } as never);
+      vi.spyOn(assetUploader, "loadAssetDataByProject").mockResolvedValue({
+        assets: [],
+        assetFolders: [],
+      });
       const loadBundle = vi
         .spyOn(db, "loadProjectBundleByProjectId")
         .mockResolvedValue(createPublishedProjectBundleFixture());
@@ -1372,6 +1380,7 @@ describe("api router permits", () => {
         target,
         domains: expected,
         diagnostics: { mdxOmissions: [], mdxErrors: [] },
+        cssValid: true,
       });
       expect(loadBuild).toHaveBeenCalledWith(expect.anything(), "project-1");
       expect(loadBundle).toHaveBeenCalledWith(
@@ -1384,6 +1393,58 @@ describe("api router permits", () => {
       );
     }
   );
+
+  test("warns before publishing when generated CSS cannot build", async () => {
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({ canPublish: true })
+    );
+    vi.spyOn(projectApi, "loadById").mockResolvedValue({
+      domain: "project.wstd.dev",
+      domainsVirtual: [],
+    } as never);
+    const build = createEditableContentBuild();
+    build.breakpoints = [{ id: "base", label: "Base" }];
+    build.styleSourceSelections = [{ instanceId: "root", values: ["source"] }];
+    build.styles = [
+      {
+        styleSourceId: "source",
+        breakpointId: "base",
+        state: "/*",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      },
+    ];
+    vi.spyOn(projectBuild, "loadDevBuildByProjectId").mockResolvedValue(build);
+    vi.spyOn(assetUploader, "loadAssetDataByProject").mockResolvedValue({
+      assets: [],
+      assetFolders: [],
+    });
+    vi.spyOn(db, "loadProjectBundleByProjectId").mockResolvedValue(
+      createPublishedProjectBundleFixture()
+    );
+
+    await expect(
+      createCaller(createContext(true)).publish.validate({
+        projectId: "project-1",
+        target: "staging",
+      })
+    ).resolves.toMatchObject({ valid: true, cssValid: false });
+    build.styles[0].state = ":hover";
+    await expect(
+      createCaller(createContext(true)).publish.validate({
+        projectId: "project-1",
+        target: "staging",
+      })
+    ).resolves.toMatchObject({ valid: true, cssValid: true });
+    build.styles[0].value = { type: "unparsed", value: "red }" };
+    await expect(
+      createCaller(createContext(true)).publish.validate({
+        projectId: "project-1",
+        target: "staging",
+      })
+    ).resolves.toMatchObject({ valid: true, cssValid: true });
+  });
 
   test.each(
     [

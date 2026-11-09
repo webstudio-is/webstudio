@@ -32,6 +32,77 @@ export type ParsedStyleDecl = {
   value: StyleValue;
 };
 
+export const parseSingleCssDeclaration = (
+  declarationCss: string,
+  expectedProperty: string
+): {
+  declaration?: { property: string; value: string };
+  errors: string[];
+} => {
+  let root: csstree.CssNode;
+  let parseError = false;
+  try {
+    root = csstree.parse(`a{${declarationCss}}`, {
+      onParseError: () => {
+        parseError = true;
+      },
+    });
+  } catch {
+    return { errors: ["Invalid CSS declaration"] };
+  }
+  if (parseError) {
+    return { errors: ["Invalid CSS declaration"] };
+  }
+  if (root.type !== "StyleSheet") {
+    return { errors: ["Expected one CSS rule"] };
+  }
+  const rules = root.children.toArray();
+  const rule = rules[0];
+  if (
+    rules.length !== 1 ||
+    rule?.type !== "Rule" ||
+    csstree.generate(rule.prelude) !== "a"
+  ) {
+    return { errors: ["Expected one CSS rule"] };
+  }
+  const declarations = rule.block.children.toArray();
+  const declaration = declarations[0];
+  if (
+    declarations.length !== 1 ||
+    declaration?.type !== "Declaration" ||
+    declaration.property !== expectedProperty
+  ) {
+    return { errors: ["Expected one CSS declaration"] };
+  }
+  return {
+    declaration: {
+      property: declaration.property,
+      value: csstree.generate(declaration.value),
+    },
+    errors: [],
+  };
+};
+
+export const hasCssSyntaxError = (css: string): boolean => {
+  const endRule = ".__webstudio_css_end__{--webstudio-css-end:1}";
+  let parseError = false;
+  try {
+    const stylesheet = csstree.parse(`${css}\n${endRule}`, {
+      onParseError: () => {
+        parseError = true;
+      },
+    });
+    const lastRule = stylesheet.children.toArray().at(-1);
+    return (
+      parseError ||
+      lastRule?.type !== "Rule" ||
+      csstree.generate(lastRule) !== endRule
+    );
+  } catch {
+    return true;
+  }
+};
+
 export const hasUnsupportedCssTemplateRules = (source: string): boolean => {
   try {
     const ast = csstree.parse(source, { context: "declarationList" });

@@ -34,7 +34,8 @@
     "@react-router/serve": "^7.5.3",
     "@shikijs/langs": "4.4.1",
     "@shikijs/themes": "4.4.1",
-    "shiki": "4.4.1"
+    "shiki": "4.4.1",
+    "lightningcss": "1.31.1"
   },
   "type": "module",
   "private": true,
