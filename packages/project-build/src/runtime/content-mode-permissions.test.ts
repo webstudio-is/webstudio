@@ -1462,22 +1462,25 @@ describe("content mode permissions", () => {
     });
 
     expect(
-      validateEditableInstanceReferences({
-        capabilities,
-        initialContentRootIds: new Set(["block"]),
-        initialEditableInstanceIds: new Set(["block", "item"]),
-        initialEditableInstanceRootIds: new Map([["item", "block"]]),
-        initialBlockTemplateChildIdsByInstanceId: new Map(),
-        addedInstanceIds: new Set(),
-        removedEditableInstanceIds: new Set(),
-        addedPageIds: new Set<string>(),
-        addedLocalStyleSourceIds: new Set(),
-        removedLocalStyleSourceIds: new Set(),
-        selectedLocalStyleSourceIds: new Set(),
-        styledLocalStyleSourceIds: new Set(),
-        editableInstanceIds: new Set(["block", "item"]),
-        copiedTemplateProps: new Map(),
-      })
+      validateEditableInstanceReferences(
+        {
+          capabilities,
+          initialContentRootIds: new Set(["block"]),
+          initialEditableInstanceIds: new Set(["block", "item"]),
+          initialEditableInstanceRootIds: new Map([["item", "block"]]),
+          initialBlockTemplateChildIdsByInstanceId: new Map(),
+          addedInstanceIds: new Set(),
+          removedEditableInstanceIds: new Set(),
+          addedPageIds: new Set<string>(),
+          addedLocalStyleSourceIds: new Set(),
+          removedLocalStyleSourceIds: new Set(),
+          selectedLocalStyleSourceIds: new Set(),
+          styledLocalStyleSourceIds: new Set(),
+          editableInstanceIds: new Set(["block", "item"]),
+          copiedTemplateProps: new Map(),
+        },
+        new Map()
+      )
     ).toEqual({
       success: false,
       error: "Content instances must not be referenced multiple times.",
@@ -3544,6 +3547,156 @@ describe("content mode permissions", () => {
     ).toEqual({
       success: false,
       error: "Content instances must not be referenced multiple times.",
+    });
+  });
+
+  test.each(["content", "text-and-props"] as const)(
+    "allows unrelated text edits when a shared instance was already referenced twice (%s)",
+    (scope) => {
+      const capabilities = getContentModeCapabilities({
+        instances: new Map<string, Instance>([
+          ...instances,
+          [
+            "block",
+            {
+              type: "instance",
+              id: "block",
+              component: blockComponent,
+              children: [
+                { type: "id", value: "link" },
+                { type: "id", value: "link" },
+              ],
+            },
+          ],
+          [
+            "other-block",
+            {
+              type: "instance",
+              id: "other-block",
+              component: blockComponent,
+              children: [{ type: "id", value: "paragraph" }],
+            },
+          ],
+          [
+            "paragraph",
+            {
+              type: "instance",
+              id: "paragraph",
+              component: "Box",
+              children: [{ type: "text", value: "Before" }],
+            },
+          ],
+        ]),
+        metas,
+        props,
+        styleSources,
+      });
+      const edit = transaction("instances", [
+        {
+          op: "replace",
+          path: ["paragraph", "children", 0],
+          value: { type: "text", value: "After" },
+        },
+      ]);
+
+      const first = applyContentModeTransaction({
+        capabilities,
+        transaction: edit,
+        scope,
+      });
+      expect(first.success).toBe(true);
+      if (first.success) {
+        expect(first.capabilities.instances.get("paragraph")?.children).toEqual(
+          [{ type: "text", value: "After" }]
+        );
+        expect(
+          applyContentModeTransaction({
+            capabilities: first.capabilities,
+            scope,
+            transaction: transaction("props", [
+              {
+                op: "replace",
+                path: ["href-prop"],
+                value: {
+                  id: "href-prop",
+                  instanceId: "link",
+                  name: "href",
+                  type: "string",
+                  value: "/after",
+                },
+              },
+            ]),
+          }).success
+        ).toBe(true);
+        expect(
+          applyContentModeTransaction({
+            capabilities: first.capabilities,
+            scope,
+            transaction: transaction("instances", [
+              {
+                op: "replace",
+                path: ["paragraph", "children", 0],
+                value: { type: "text", value: "Again" },
+              },
+            ]),
+          }).success
+        ).toBe(true);
+        expect(
+          validateContentModeTransaction({
+            capabilities: first.capabilities,
+            transaction: transaction("instances", [
+              {
+                op: "add",
+                path: ["block", "children", 2],
+                value: { type: "id", value: "link" },
+              },
+            ]),
+          })
+        ).toEqual({
+          success: false,
+          error: "Content instances must not be referenced multiple times.",
+        });
+      }
+    }
+  );
+
+  test("rejects a cycle created without increasing reference counts", () => {
+    const capabilities = getContentModeCapabilities({
+      instances: new Map<string, Instance>([
+        ...instances,
+        [
+          "block",
+          {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [
+              { type: "id", value: "link" },
+              { type: "id", value: "link" },
+            ],
+          },
+        ],
+      ]),
+      metas,
+      props,
+      styleSources,
+    });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("instances", [
+          { op: "remove", path: ["block", "children", 1] },
+          {
+            op: "add",
+            path: ["link", "children", 0],
+            value: { type: "id", value: "link" },
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: "Content instances must not contain cycles.",
     });
   });
 
