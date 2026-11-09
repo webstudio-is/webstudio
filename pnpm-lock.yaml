@@ -391,9 +391,6 @@ importers:
       lexical:
         specifier: ^0.21.0
         version: 0.21.0
-      lightningcss:
-        specifier: 1.31.1
-        version: 1.31.1
       match-sorter:
         specifier: ^8.0.0
         version: 8.0.0
@@ -2383,9 +2380,6 @@ importers:
       immer:
         specifier: ^10.1.1
         version: 10.1.1
-      lightningcss:
-        specifier: 1.31.1
-        version: 1.31.1
       papaparse:
         specifier: ^5.5.3
         version: 5.5.3

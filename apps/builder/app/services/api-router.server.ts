@@ -11,10 +11,8 @@ import {
   loadById,
   setMarketplaceApprovalStatus,
 } from "@webstudio-is/project/index.server";
-import {
-  canBuildCss,
-  loadDevBuildByProjectId,
-} from "@webstudio-is/project-build/server";
+import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
+import { hasCssSyntaxError } from "@webstudio-is/css-data";
 import { parseGeneratedStyleDeclaration } from "@webstudio-is/project-build/persistence";
 import { singlePlayerVersionMismatchError } from "@webstudio-is/project/build-patch-core.server";
 import {
@@ -642,7 +640,7 @@ const canPublishBuildCss = async (build: CompactBuild, assets: Asset[]) => {
       build.pages?.compiler?.atomicStyles ??
       true,
   });
-  return canBuildCss(cssText);
+  return hasCssSyntaxError(cssText) === false;
 };
 
 const createServerContentBlockApplication = ({

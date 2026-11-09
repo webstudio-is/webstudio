@@ -83,6 +83,26 @@ export const parseSingleCssDeclaration = (
   };
 };
 
+export const hasCssSyntaxError = (css: string): boolean => {
+  const endRule = ".__webstudio_css_end__{--webstudio-css-end:1}";
+  let parseError = false;
+  try {
+    const stylesheet = csstree.parse(`${css}\n${endRule}`, {
+      onParseError: () => {
+        parseError = true;
+      },
+    });
+    const lastRule = stylesheet.children.toArray().at(-1);
+    return (
+      parseError ||
+      lastRule?.type !== "Rule" ||
+      csstree.generate(lastRule) !== endRule
+    );
+  } catch {
+    return true;
+  }
+};
+
 export const hasUnsupportedCssTemplateRules = (source: string): boolean => {
   try {
     const ast = csstree.parse(source, { context: "declarationList" });

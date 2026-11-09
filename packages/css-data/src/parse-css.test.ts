@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   camelCaseProperty,
   hasUnsupportedCssTemplateRules,
+  hasCssSyntaxError,
   parseClassBasedSelector,
   parseCss,
   parseSingleCssDeclaration,
@@ -25,6 +26,18 @@ test("single declaration parser rejects recovered syntax errors", () => {
   expect(
     parseSingleCssDeclaration("color:rgb(1, 2, 3", "color").errors.length
   ).toBeGreaterThan(0);
+});
+
+test.each([
+  ["", false],
+  ["a{color:red}", false],
+  ["/* comment */ @media (min-width: 600px) { a { color: red } }", false],
+  ["a{--p\\ \\>\\ \\.figma-block-translate:none}", false],
+  ["a{color:red}}", true],
+  ["a{color:rgb(1, 2, 3}", true],
+  ["a{color:red/*}", true],
+] as const)("detects stylesheet syntax errors in %s", (css, expected) => {
+  expect(hasCssSyntaxError(css)).toBe(expected);
 });
 
 describe("Parse CSS", () => {
