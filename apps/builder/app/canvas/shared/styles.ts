@@ -817,8 +817,8 @@ const $instanceStyles = computed(
  *
  * For pseudo-classes like :hover, render without state so users can preview
  * the styles without triggering the state.
- * For pseudo-elements like ::before, keep the selector so styles apply
- * to the pseudo-element, not the parent.
+ * For pseudo-elements and descendant tags, keep the selector so styles apply
+ * to the matching element, not the parent.
  */
 const renderStateStyles = ({
   instanceStyles,
@@ -845,7 +845,10 @@ const renderStateStyles = ({
   }
   const selector = `[${idAttribute}="${instanceId}"]`;
   const rule = sheet.addNestingRule(selector);
-  const stateSelector = isPseudoElement(selectedState) ? selectedState : "";
+  const stateSelector =
+    isPseudoElement(selectedState) || selectedState.startsWith(" ")
+      ? selectedState
+      : "";
   for (const styleDecl of styles) {
     rule.setDeclaration({
       breakpoint: styleDecl.breakpointId,

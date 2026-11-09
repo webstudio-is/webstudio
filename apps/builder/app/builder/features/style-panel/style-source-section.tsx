@@ -318,7 +318,7 @@ const convertToInputItem = (
       styleSource.type === "local"
         ? "Local"
         : styleSource.type === "tagToken"
-          ? `${styleSource.tag[0].toUpperCase()}${styleSource.tag.slice(1)} (All Pages)`
+          ? styleSource.tag
           : styleSource.name,
     disabled: false,
     source: styleSource.type === "tagToken" ? "tag" : styleSource.type,
