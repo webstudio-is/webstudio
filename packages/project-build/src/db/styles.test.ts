@@ -1,9 +1,6 @@
 import { expect, test } from "vitest";
 import type { StyleDecl } from "@webstudio-is/sdk";
-import {
-  isValidGeneratedStyleDeclaration,
-  writableStyles,
-} from "./css-declaration-validation";
+import { isValidGeneratedStyleDeclaration, writableStyles } from "./styles";
 
 const style = (property: string, value = "none"): StyleDecl => ({
   styleSourceId: "source",

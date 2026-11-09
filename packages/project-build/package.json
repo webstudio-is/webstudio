@@ -22,10 +22,6 @@
       "import": "./src/runtime.ts",
       "default": "./src/runtime.ts"
     },
-    "./css-declaration-validation.server": {
-      "webstudio": "./src/runtime/css-declaration-validation.ts",
-      "import": "./src/runtime/css-declaration-validation.ts"
-    },
     "./transfer": {
       "webstudio": "./src/transfer.ts",
       "import": "./src/transfer.ts",

@@ -8,6 +8,7 @@ import {
   serializeData,
   serializeStyles,
   serializeStyleSourceSelections,
+  writableStyles,
 } from "@webstudio-is/project-build/persistence";
 import {
   createAssetFolderRows,
@@ -29,7 +30,6 @@ import {
   createProjectSettingsFromPages,
   removeLegacyProjectSettingsFromPages,
 } from "@webstudio-is/project-build";
-import { writableStyles } from "@webstudio-is/project-build/css-declaration-validation.server";
 import {
   isAssetFileName,
   MissingImportedAssetFilesError,

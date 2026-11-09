@@ -43,7 +43,7 @@ import {
   findCycles,
   getPropAssetError,
 } from "@webstudio-is/project-build/runtime";
-import { writableStyles } from "@webstudio-is/project-build/css-declaration-validation.server";
+import { writableStyles } from "@webstudio-is/project-build/persistence";
 import {
   parsePages,
   serializePages,
