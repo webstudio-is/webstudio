@@ -201,6 +201,39 @@ export const remapFragmentAssets = (
   });
 };
 
+export const importFragmentAssets = async (
+  fragments: WebstudioFragment[],
+  importAssets: (assets: Asset[]) => Promise<Map<Asset["id"], Asset>>
+) => {
+  const assets = new Map(
+    fragments.flatMap((fragment) =>
+      fragment.assets.map((asset) => [asset.id, asset] as const)
+    )
+  );
+  const importedAssets =
+    assets.size === 0
+      ? new Map<Asset["id"], Asset>()
+      : await importAssets([...assets.values()]);
+  if (importedAssets.size !== assets.size) {
+    throw new Error("Imported asset is missing");
+  }
+  const assetIds = new Map(
+    [...importedAssets].map(([sourceId, asset]) => [sourceId, asset.id])
+  );
+  return {
+    fragments: new Map(
+      fragments.map((fragment) => [
+        fragment,
+        fragment.assets.length === 0
+          ? fragment
+          : remapFragmentAssets(fragment, importedAssets),
+      ])
+    ),
+    assetIds,
+    assets: importedAssets,
+  };
+};
+
 export type ContentModeCopyableProp = (input: {
   prop: Prop;
   fragment: WebstudioFragment;

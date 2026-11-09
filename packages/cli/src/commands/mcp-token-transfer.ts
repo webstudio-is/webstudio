@@ -1,3 +1,4 @@
+import { importFragmentAssets } from "@webstudio-is/project-build/runtime";
 import { parseTokenTransferData } from "@webstudio-is/project-build/transfer";
 import { getAssetUrl, type Asset } from "@webstudio-is/sdk";
 
@@ -30,22 +31,32 @@ export const prepareMcpTokenPasteData = async ({
   if (parsed.data.sourceOrigin !== projectOrigin) {
     throw new Error("Token assets must come from this Webstudio origin");
   }
-  const importedAssets = new Map<Asset["id"], Asset>();
-  for (const asset of parsed.data.fragment.assets) {
-    const response = await download(getAssetUrl(asset, projectOrigin));
-    if (
-      response.ok === false ||
-      new URL(response.url).origin !== projectOrigin
-    ) {
-      throw new Error("Token asset could not be downloaded");
+  const transfer = await importFragmentAssets(
+    [parsed.data.fragment],
+    async (assets) => {
+      const importedAssets = new Map<Asset["id"], Asset>();
+      for (const asset of assets) {
+        const response = await download(getAssetUrl(asset, projectOrigin));
+        if (
+          response.ok === false ||
+          new URL(response.url).origin !== projectOrigin
+        ) {
+          throw new Error("Token asset could not be downloaded");
+        }
+        const uploaded = await upload(
+          asset,
+          await response.arrayBuffer(),
+          true
+        );
+        const imported = uploaded.find((item) => item.type === asset.type);
+        if (imported === undefined) {
+          throw new Error("Token asset could not be uploaded");
+        }
+        importedAssets.set(asset.id, imported);
+      }
+      return importedAssets;
     }
-    const uploaded = await upload(asset, await response.arrayBuffer(), true);
-    const imported = uploaded.find((item) => item.type === asset.type);
-    if (imported === undefined) {
-      throw new Error("Token asset could not be uploaded");
-    }
-    importedAssets.set(asset.id, imported);
-  }
+  );
   await refreshAssets();
-  return [...importedAssets].map(([sourceId, asset]) => [sourceId, asset.id]);
+  return [...transfer.assetIds];
 };

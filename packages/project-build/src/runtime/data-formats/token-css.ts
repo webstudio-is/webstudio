@@ -49,6 +49,18 @@ export const serializeTokenCss = (data: TokenTransferData): string => {
   const sheet = createRegularStyleSheet({ element: new FakeStyleElement() });
   const assets = new Map(fragment.assets.map((asset) => [asset.id, asset]));
   const transformValue: TransformValue = (value) => {
+    if (value.type === "unparsed" && sourceOrigin !== undefined) {
+      const rebased = mapCssValueUrls(value.value, (url) => {
+        try {
+          return new URL(url, sourceOrigin).href;
+        } catch {
+          return;
+        }
+      });
+      if (rebased !== value.value) {
+        return { ...value, value: rebased };
+      }
+    }
     if (value.type !== "image" || value.value.type !== "asset") {
       return;
     }
@@ -278,7 +290,9 @@ export const parseTokenTransferData = (source: string): ParsedTokenCss => {
   if (syntaxError || !visit(ast.children)) {
     return { owned: true, valid: false };
   }
-  const parsed = parseCss(body, extractCssCustomProperties(body, ast), ast);
+  const parsed = parseCss(body, extractCssCustomProperties(body, ast), ast, {
+    preserveShorthandVariables: true,
+  });
   if (
     parsed.errors.length > 0 ||
     parsed.styles.some(

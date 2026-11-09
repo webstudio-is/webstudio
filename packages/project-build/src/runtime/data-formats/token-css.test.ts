@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { copyDesignToken } from "../token-transfer";
-import { parseTokenTransferData } from "./token-css";
+import { parseTokenTransferData, serializeTokenCss } from "./token-css";
 
 test("reads a CSS token with variables, states, breakpoints, images, and fonts", () => {
   const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
@@ -108,6 +108,44 @@ test("keeps conditional root variables and variable-backed shorthands", () => {
         expect.objectContaining({ property: "paddingLeft" }),
       ])
     );
+  }
+});
+
+test("keeps same-rule variable references in token shorthands", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+.ws-token { --space: 10px; padding: var(--space); }
+@media (max-width: 600px) { .ws-token { --space: 20px; } }
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(
+      parsed.data.fragment.styles.find(
+        (style) => style.property === "paddingTop"
+      )?.value
+    ).toEqual({ type: "unparsed", value: "var(--space)" });
+  }
+});
+
+test("absolutizes relative image URLs when copying a pasted token", () => {
+  const first = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+:root { --hero: url(/cgi/image/target.svg?format=raw); }
+.ws-token { background-image: var(--hero); }
+`);
+  expect(first.valid).toBe(true);
+  if (first.valid === false) {
+    return;
+  }
+  const copiedAgain = serializeTokenCss({
+    ...first.data,
+    sourceOrigin: "https://target.example.com",
+  });
+  const parsedAgain = parseTokenTransferData(copiedAgain);
+  expect(parsedAgain.valid).toBe(true);
+  if (parsedAgain.valid) {
+    expect(parsedAgain.data.sourceOrigin).toBe("https://target.example.com");
+    expect(parsedAgain.data.fragment.assets).toEqual([
+      expect.objectContaining({ name: "target.svg", type: "image" }),
+    ]);
   }
 });
 

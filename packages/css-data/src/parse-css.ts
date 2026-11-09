@@ -741,7 +741,8 @@ export const parseCss = (
   css: string,
   cssVars: Map<string, string>,
   // Callers may reuse a css-tree AST parsed with positions: true.
-  parsedAst?: csstree.CssNode
+  parsedAst?: csstree.CssNode,
+  options: { preserveShorthandVariables?: boolean } = {}
 ): ParseCssResult => {
   const ast = parsedAst ?? cssTreeTryParse(css);
   const stylesMap = new Map<string, ParsedStyleDecl>();
@@ -759,6 +760,7 @@ export const parseCss = (
   //   border-color: rgb(x y z / var(--op));  --op: 0.6;
   // resolve correctly regardless of declaration order.
   const customProperties = new Map<string, string>();
+  const emptyCustomProperties = new Map<string, string>();
 
   const collectRuleCustomProperties = (rule: csstree.Rule) => {
     customProperties.clear();
@@ -946,7 +948,9 @@ export const parseCss = (
         const substituted = substituteVarsInShorthand(
           property,
           stringValue,
-          customProperties,
+          options.preserveShorthandVariables
+            ? emptyCustomProperties
+            : customProperties,
           cssVars
         );
         if (substituted !== undefined) {
