@@ -5,6 +5,7 @@ import {
   type Instance,
   ROOT_INSTANCE_ID,
   getStyleDeclKey,
+  getTagFromTokenId,
   descendantComponent,
   rootComponent,
   type Breakpoint,
@@ -31,6 +32,7 @@ import {
   $registeredComponentMetas,
   $selectedBreakpoint,
   $selectedStyleState,
+  $temporaryTagTokenId,
   assetBaseUrl,
 } from "~/shared/nano-states";
 import { $assets } from "~/shared/sync/data-stores";
@@ -39,6 +41,7 @@ import {
   $instances,
   $props,
   $styleSourceSelections,
+  $styleSources,
   $styles,
 } from "~/shared/sync/data-stores";
 import { setDifference } from "~/shared/shim";
@@ -64,6 +67,7 @@ const fontsAndDefaultsSheet = createRegularStyleSheet({
   name: "fonts-and-defaults",
 });
 const presetSheet = createRegularStyleSheet({ name: "preset-styles" });
+const tagTokenSheet = createRegularStyleSheet({ name: "tag-token-styles" });
 
 /**
  * maintain order of rendered stylesheets
@@ -72,6 +76,7 @@ const presetSheet = createRegularStyleSheet({ name: "preset-styles" });
 export const mountStyles = () => {
   fontsAndDefaultsSheet.render();
   presetSheet.render();
+  tagTokenSheet.render();
   userSheet.render();
   stateSheet.render();
   helpersSheet.render();
@@ -522,6 +527,73 @@ export const subscribeStyles = () => {
     renderUserSheetInTheNextFrame();
   });
 
+  const unsubscribeTagTokens = computed(
+    [
+      $styleSources,
+      $styles,
+      $breakpoints,
+      $selectedBreakpoint,
+      $transformValue,
+      $ephemeralStyles,
+    ],
+    (
+      styleSources,
+      styles,
+      breakpoints,
+      selectedBreakpoint,
+      transformValue,
+      ephemeralStyles
+    ) => ({
+      styleSources,
+      styles,
+      breakpoints,
+      selectedBreakpoint,
+      transformValue,
+      ephemeralStyles,
+    })
+  ).subscribe(
+    ({
+      styleSources,
+      styles,
+      breakpoints,
+      selectedBreakpoint,
+      transformValue,
+      ephemeralStyles,
+    }) => {
+      tagTokenSheet.clear();
+      tagTokenSheet.setTransformer(transformValue);
+      const mediaRules = simulateConditionBreakpoints({
+        breakpoints: breakpoints.values(),
+        selectedBreakpoint,
+      });
+      for (const [id, options] of mediaRules) {
+        tagTokenSheet.addMediaRule(id, options);
+      }
+      const tagTokens = new Map<string, string>();
+      for (const source of styleSources.values()) {
+        if (source.type === "tagToken") {
+          tagTokens.set(source.id, source.tag);
+          tagTokenSheet.addNestingRule(source.tag);
+        }
+      }
+      for (const styleDecl of [...styles.values(), ...ephemeralStyles]) {
+        const tag =
+          tagTokens.get(styleDecl.styleSourceId) ??
+          (styleSources.has(styleDecl.styleSourceId)
+            ? undefined
+            : getTagFromTokenId(styleDecl.styleSourceId));
+        if (tag === undefined) {
+          continue;
+        }
+        tagTokenSheet.addNestingRule(tag).setDeclaration({
+          ...toDeclarationParams(styleDecl),
+          value: styleDecl.value,
+        });
+      }
+      tagTokenSheet.render();
+    }
+  );
+
   // add/delete declarations in mixins
   let prevStylesSet = new Set<StyleDecl>();
   let prevTransformValue: undefined | TransformValue;
@@ -543,10 +615,16 @@ export const subscribeStyles = () => {
     prevStylesSet = nextPrevStylesSet;
     // delete before adding declarations by the same key
     for (const styleDecl of deletedStyles) {
+      if ($styleSources.get().get(styleDecl.styleSourceId)?.type === "tagToken") {
+        continue;
+      }
       const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
       rule.deleteDeclaration(toDeclarationParams(styleDecl));
     }
     for (const styleDecl of addedStyles) {
+      if ($styleSources.get().get(styleDecl.styleSourceId)?.type === "tagToken") {
+        continue;
+      }
       const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
       rule.setDeclaration({
         ...toDeclarationParams(styleDecl),
@@ -595,6 +673,7 @@ export const subscribeStyles = () => {
     unsubscribeBreakpoints();
     unsubscribeStyles();
     unsubscribeStyleSourceSelections();
+    unsubscribeTagTokens();
     unsubscribeDescendantSelectors();
     unsubscribeTransformValue();
     cancelScheduledRender();
@@ -666,12 +745,14 @@ const computeInstanceStyles = ({
   selectedStyleState,
   breakpoints,
   styleSourceSelections,
+  temporaryTagTokenId,
   styles,
 }: {
   selectedInstance: Instance | undefined;
   selectedStyleState: string | undefined;
   breakpoints: Map<string, Breakpoint>;
   styleSourceSelections: Map<string, { values: string[] }>;
+  temporaryTagTokenId?: string;
   styles: Map<string, StyleDecl>;
 }) => {
   if (selectedInstance === undefined || selectedStyleState === undefined) {
@@ -680,6 +761,9 @@ const computeInstanceStyles = ({
   const styleSources = new Set(
     styleSourceSelections.get(selectedInstance.id)?.values
   );
+  if (temporaryTagTokenId) {
+    styleSources.add(temporaryTagTokenId);
+  }
   const instanceStyles: StyleDecl[] = [];
   for (const styleDecl of styles.values()) {
     if (
@@ -703,6 +787,7 @@ const $instanceStyles = computed(
     $selectedStyleState,
     $breakpoints,
     $styleSourceSelections,
+    $temporaryTagTokenId,
     $styles,
   ],
   (
@@ -710,6 +795,7 @@ const $instanceStyles = computed(
     selectedStyleState,
     breakpoints,
     styleSourceSelections,
+    temporaryTagTokenId,
     styles
   ) =>
     computeInstanceStyles({
@@ -717,6 +803,7 @@ const $instanceStyles = computed(
       selectedStyleState,
       breakpoints,
       styleSourceSelections,
+      temporaryTagTokenId,
       styles,
     })
 );
@@ -826,6 +913,9 @@ const subscribeEphemeralStyle = () => {
       const rule = userSheet.addNestingRule(selector);
       let ephemeralSheetUpdated = false;
       for (const styleDecl of ephemeralStyles) {
+        if (getTagFromTokenId(styleDecl.styleSourceId)) {
+          continue;
+        }
         // update custom property
         document.documentElement.style.setProperty(
           getEphemeralProperty(styleDecl),
