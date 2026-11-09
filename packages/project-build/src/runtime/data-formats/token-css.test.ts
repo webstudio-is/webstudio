@@ -242,6 +242,23 @@ test.each(["prefers-reduced-motion: reduce", "min-width: 600px"])(
   }
 );
 
+test("keeps boolean operators between width conditions", () => {
+  const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
+@media (min-width: 600px) or (max-width: 400px) {
+  .ws-token { color: red; }
+}
+`);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.breakpoints[1].condition).toBe(
+      "min-width:600px) or (max-width:400px"
+    );
+    expect(serializeTokenCss(parsed.data)).toContain(
+      "@media all and (min-width:600px) or (max-width:400px)"
+    );
+  }
+});
+
 test("allows token shorthands to reference ancestor variables", () => {
   const parsed = parseTokenTransferData(`/* @webstudio/token-css/v1 "Button" */
 .ws-token { padding: var(--space); }
