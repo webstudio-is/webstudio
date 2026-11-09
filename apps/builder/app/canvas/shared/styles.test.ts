@@ -184,6 +184,22 @@ describe("renderStateStyles", () => {
     });
   });
 
+  test("descendant tag styles preview on the matching tag", () => {
+    const sheet = createTestSheet();
+    renderStateStyles({
+      instanceStyles: {
+        instanceId: "box",
+        selectedState: " h1",
+        breakpoints: [{ id: "base", label: "Base" }],
+        styles: [createStyleDecl()],
+      },
+      sheet,
+      transformValue: mockTransformValue,
+      toStyleValue: mockToStyleValue,
+    });
+    expect(sheet.cssText).toContain('[data-ws-id="box"] h1');
+  });
+
   test("creates nesting rule with correct instance selector", () => {
     const sheet = createTestSheet();
     renderStateStyles({

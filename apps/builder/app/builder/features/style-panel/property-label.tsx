@@ -127,7 +127,7 @@ export const PropertyInfo = ({
         styleSource.type === "token"
           ? styleSource.name
           : styleSource.type === "tagToken"
-            ? `${styleSource.tag[0].toUpperCase()}${styleSource.tag.slice(1)} (All Pages)`
+            ? styleSource.tag
             : "Local";
       if (source.state) {
         const stateLabel =
