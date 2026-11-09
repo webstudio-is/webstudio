@@ -1079,16 +1079,17 @@ const validateEditableInstanceReachability = (
   return { success: true };
 };
 
-const validateEditableInstanceReferences = (
-  context: ContentModeTransactionContext
-): ContentModeValidationResult => {
+const countContentInstanceReferences = (
+  instances: Map<Instance["id"], Instance>,
+  contentRootIds: Set<Instance["id"]>
+) => {
   const referenceCounts = new Map<Instance["id"], number>();
   const visited = new Set<Instance["id"]>();
   const visit = (instanceId: Instance["id"]) => {
     if (visited.has(instanceId)) {
       return;
     }
-    const instance = context.capabilities.instances.get(instanceId);
+    const instance = instances.get(instanceId);
     if (
       instance === undefined ||
       instance.component === blockTemplateComponent
@@ -1108,13 +1109,30 @@ const validateEditableInstanceReferences = (
     }
   };
 
-  for (const rootId of context.capabilities.contentRootIds) {
+  for (const rootId of contentRootIds) {
     visit(rootId);
   }
+
+  return referenceCounts;
+};
+
+const validateEditableInstanceReferences = (
+  context: ContentModeTransactionContext,
+  initialInstances: Map<Instance["id"], Instance>
+): ContentModeValidationResult => {
+  const initialReferenceCounts = countContentInstanceReferences(
+    initialInstances,
+    context.initialContentRootIds
+  );
+  const referenceCounts = countContentInstanceReferences(
+    context.capabilities.instances,
+    context.capabilities.contentRootIds
+  );
 
   for (const [instanceId, referenceCount] of referenceCounts) {
     if (
       referenceCount > 1 &&
+      referenceCount > (initialReferenceCounts.get(instanceId) ?? 0) &&
       (context.initialEditableInstanceIds.has(instanceId) ||
         context.addedInstanceIds.has(instanceId))
     ) {
@@ -1635,8 +1653,10 @@ export const applyContentModeTransaction = ({
   if (editableInstanceReachabilityResult.success === false) {
     return editableInstanceReachabilityResult;
   }
-  const editableInstanceReferencesResult =
-    validateEditableInstanceReferences(context);
+  const editableInstanceReferencesResult = validateEditableInstanceReferences(
+    context,
+    capabilities.instances
+  );
   if (editableInstanceReferencesResult.success === false) {
     return editableInstanceReferencesResult;
   }
