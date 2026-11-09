@@ -13,6 +13,7 @@ import { z } from "zod";
 import type { BuilderState } from "../state/builder-state";
 import type { BuilderPatchChange } from "../contracts/patch";
 import { buildMergedBreakpointIds, maxBreakpoints } from "./breakpoints";
+import { calculateUsagesByAssetId } from "./assets";
 import { createCopyName } from "./copy-name";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
@@ -22,7 +23,6 @@ import {
   createStyleSourceSelectionAttachPayload,
 } from "./styles";
 import {
-  collectFontFamiliesFromStyleDecls,
   getUniqueNameWithSuffix,
   mapCssValueVariables,
   traverseStyleValue,
@@ -157,15 +157,14 @@ export const copyDesignToken = (
   if (copiedBreakpoints.length !== breakpointIds.size) {
     return throwBuilderRuntimeError("NOT_FOUND", "Token breakpoint is missing");
   }
-  const assetIds = new Set<string>();
-  for (const style of copiedStyles) {
-    traverseStyleValue(style.value, (value) => {
-      if (value.type === "image" && value.value.type === "asset") {
-        assetIds.add(value.value.value);
-      }
-    });
-  }
-  const fontFamilies = collectFontFamiliesFromStyleDecls(copiedStyles);
+  const usedAssets = calculateUsagesByAssetId({
+    pages: undefined,
+    props: new Map(),
+    styles: new Map(
+      copiedStyles.map((style) => [getStyleDeclKey(style), style])
+    ),
+    assets,
+  });
   const fragment: WebstudioFragment = {
     children: [],
     instances: [],
@@ -176,13 +175,11 @@ export const copyDesignToken = (
     styleSources: [token],
     styles: copiedStyles,
     breakpoints: copiedBreakpoints,
-    assets: Array.from(assets.values()).filter(
-      (asset) =>
-        assetIds.has(asset.id) ||
-        (asset.type === "font" && fontFamilies.has(asset.meta.family))
+    assets: Array.from(assets.values()).filter((asset) =>
+      usedAssets.has(asset.id)
     ),
   };
-  for (const assetId of assetIds) {
+  for (const assetId of usedAssets.keys()) {
     if (assets.has(assetId) === false) {
       return throwBuilderRuntimeError("NOT_FOUND", "Token asset is missing");
     }

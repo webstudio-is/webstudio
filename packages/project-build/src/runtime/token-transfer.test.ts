@@ -1056,6 +1056,33 @@ test("remaps an image asset referenced through a root variable", () => {
   });
 });
 
+test("rejects a copied token with a missing image asset", () => {
+  expect(() =>
+    copyDesignToken(
+      {
+        assets: new Map(),
+        breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+        styleSources: new Map([
+          ["token", { type: "token", id: "token", name: "Hero" }],
+        ]),
+        styleSourceSelections: new Map(),
+        styles: styleMap([
+          {
+            styleSourceId: "token",
+            breakpointId: "base",
+            property: "backgroundImage",
+            value: {
+              type: "image",
+              value: { type: "asset", value: "missing" },
+            },
+          },
+        ]),
+      },
+      { tokenId: "token" }
+    )
+  ).toThrow("Token asset is missing");
+});
+
 test("copies font assets used by a root CSS variable", () => {
   const font: Asset = {
     id: "heading-font",
