@@ -3660,6 +3660,46 @@ describe("content mode permissions", () => {
     }
   );
 
+  test("rejects a cycle created without increasing reference counts", () => {
+    const capabilities = getContentModeCapabilities({
+      instances: new Map<string, Instance>([
+        ...instances,
+        [
+          "block",
+          {
+            type: "instance",
+            id: "block",
+            component: blockComponent,
+            children: [
+              { type: "id", value: "link" },
+              { type: "id", value: "link" },
+            ],
+          },
+        ],
+      ]),
+      metas,
+      props,
+      styleSources,
+    });
+
+    expect(
+      validateContentModeTransaction({
+        capabilities,
+        transaction: transaction("instances", [
+          { op: "remove", path: ["block", "children", 1] },
+          {
+            op: "add",
+            path: ["link", "children", 0],
+            value: { type: "id", value: "link" },
+          },
+        ]),
+      })
+    ).toEqual({
+      success: false,
+      error: "Content instances must not contain cycles.",
+    });
+  });
+
   test("rejects referencing one new content instance multiple times", () => {
     const capabilities = getContentModeCapabilities({
       instances: new Map([

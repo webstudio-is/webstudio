@@ -1116,6 +1116,31 @@ const countContentInstanceReferences = (
   return referenceCounts;
 };
 
+const hasInstancePath = (
+  instances: Map<Instance["id"], Instance>,
+  fromId: Instance["id"],
+  toId: Instance["id"]
+) => {
+  const visited = new Set<Instance["id"]>();
+  const pending = [fromId];
+  while (pending.length > 0) {
+    const instanceId = pending.pop()!;
+    if (instanceId === toId) {
+      return true;
+    }
+    if (visited.has(instanceId)) {
+      continue;
+    }
+    visited.add(instanceId);
+    for (const child of instances.get(instanceId)?.children ?? []) {
+      if (child.type === "id") {
+        pending.push(child.value);
+      }
+    }
+  }
+  return false;
+};
+
 const validateEditableInstanceReferences = (
   context: ContentModeTransactionContext,
   initialInstances: Map<Instance["id"], Instance>
@@ -1140,6 +1165,25 @@ const validateEditableInstanceReferences = (
         success: false,
         error: "Content instances must not be referenced multiple times.",
       };
+    }
+  }
+
+  for (const [instanceId, instance] of context.capabilities.instances) {
+    const initialChildren = initialInstances.get(instanceId)?.children ?? [];
+    for (const child of instance.children ?? []) {
+      if (
+        child.type === "id" &&
+        initialChildren.some(
+          (initialChild) =>
+            initialChild.type === "id" && initialChild.value === child.value
+        ) === false &&
+        hasInstancePath(context.capabilities.instances, child.value, instanceId)
+      ) {
+        return {
+          success: false,
+          error: "Content instances must not contain cycles.",
+        };
+      }
     }
   }
 
