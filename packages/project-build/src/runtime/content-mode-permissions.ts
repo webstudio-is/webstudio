@@ -1169,14 +1169,19 @@ const validateEditableInstanceReferences = (
   }
 
   for (const [instanceId, instance] of context.capabilities.instances) {
-    const initialChildren = initialInstances.get(instanceId)?.children ?? [];
+    const initialChildren = initialInstances.get(instanceId)?.children;
+    if (instance.children === initialChildren) {
+      continue;
+    }
+    const initialChildIds = new Set(
+      initialChildren
+        ?.filter((child) => child.type === "id")
+        .map((child) => child.value)
+    );
     for (const child of instance.children ?? []) {
       if (
         child.type === "id" &&
-        initialChildren.some(
-          (initialChild) =>
-            initialChild.type === "id" && initialChild.value === child.value
-        ) === false &&
+        initialChildIds.has(child.value) === false &&
         hasInstancePath(context.capabilities.instances, child.value, instanceId)
       ) {
         return {
