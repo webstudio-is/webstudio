@@ -19,7 +19,10 @@ import { createCopyName } from "./copy-name";
 import { throwBuilderRuntimeError } from "./errors";
 import { createRuntimeMutation } from "./mutation";
 import { remapFragmentAssets } from "./fragment";
-import { createStyleSourceSelectionAttachPayload } from "./styles";
+import {
+  collectCssVariableReferences,
+  createStyleSourceSelectionAttachPayload,
+} from "./styles";
 import {
   collectFontFamiliesFromStyleDecls,
   getUniqueNameWithSuffix,
@@ -63,27 +66,6 @@ export const pasteDesignTokenInput = z.object({
   instanceId: z.string().optional(),
   assetIds: z.array(z.tuple([z.string(), z.string()])).optional(),
 });
-
-const collectVariableReferences = (value: StyleValue) => {
-  const names = new Set<string>();
-  const parsed = cssTryParseValue(toValue(value));
-  if (parsed !== undefined) {
-    walk(parsed, (node) => {
-      if (node.type === "Function" && node.name === "var") {
-        const name = node.children.first;
-        if (name?.type === "Identifier" && name.name.startsWith("--")) {
-          names.add(name.name);
-        }
-      }
-    });
-  }
-  traverseStyleValue(value, (item) => {
-    if (item.type === "var") {
-      names.add(`--${item.value}`);
-    }
-  });
-  return names;
-};
 
 const rewriteVariableReferences = (
   value: StyleValue,
@@ -164,7 +146,7 @@ export const copyDesignToken = (
   const queue = [...tokenStyles];
   while (queue.length > 0) {
     const style = queue.shift()!;
-    for (const name of collectVariableReferences(style.value)) {
+    for (const name of collectCssVariableReferences(toValue(style.value))) {
       if (variableNames.has(name) === false || referencedNames.has(name)) {
         continue;
       }
@@ -313,7 +295,7 @@ export const pasteDesignToken = (
     if (style.property.startsWith("--")) {
       targetVariableNames.add(style.property);
     }
-    for (const name of collectVariableReferences(style.value)) {
+    for (const name of collectCssVariableReferences(toValue(style.value))) {
       targetVariableNames.add(name);
     }
   }
@@ -331,7 +313,7 @@ export const pasteDesignToken = (
     ...tokenVariableNames,
   ]);
   for (const style of fragment.styles) {
-    for (const name of collectVariableReferences(style.value)) {
+    for (const name of collectCssVariableReferences(toValue(style.value))) {
       existingNames.add(name);
     }
   }
