@@ -2169,6 +2169,10 @@ export const listDesignTokens = projectQueryInput<
     }
 >("list-design-tokens");
 
+export const listTagStyles = projectQueryInput<
+  AuthProjectParams & PaginatedQueryInput & { tag?: string }
+>("list-tag-styles");
+
 const queryCopyDesignToken = projectQueryInput<
   AuthProjectParams & { tokenId: string; sourceOrigin?: string },
   { data: string }
