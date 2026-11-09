@@ -40,9 +40,17 @@ export const parseSingleCssDeclaration = (
   errors: string[];
 } => {
   let root: csstree.CssNode;
+  let parseError = false;
   try {
-    root = csstree.parse(`a{${declarationCss}}`);
+    root = csstree.parse(`a{${declarationCss}}`, {
+      onParseError: () => {
+        parseError = true;
+      },
+    });
   } catch {
+    return { errors: ["Invalid CSS declaration"] };
+  }
+  if (parseError) {
     return { errors: ["Invalid CSS declaration"] };
   }
   if (root.type !== "StyleSheet") {

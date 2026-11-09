@@ -53,9 +53,6 @@
     },
     "./server": {
       "webstudio": "./src/server.ts"
-    },
-    "./css-build-validation/server": {
-      "webstudio": "./src/css-build-validation.server.ts"
     }
   },
   "sideEffects": [

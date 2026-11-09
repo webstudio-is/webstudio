@@ -12,7 +12,7 @@ import { rm, cp, readFile, writeFile, readdir } from "node:fs/promises";
 import { cwd, exit } from "node:process";
 import { fileURLToPath } from "node:url";
 import { parse } from "acorn";
-import { canBuildCss } from "@webstudio-is/project-build/css-build-validation/server";
+import { canBuildCss } from "@webstudio-is/project-build/server";
 import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import deepEqual from "fast-deep-equal";

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { canBuildCss } from "./css-build-validation.server";
+import { canBuildCss } from "./server";
 
 test.each([
   ["a{color:red}", true],

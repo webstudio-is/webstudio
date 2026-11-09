@@ -11,8 +11,10 @@ import {
   loadById,
   setMarketplaceApprovalStatus,
 } from "@webstudio-is/project/index.server";
-import { loadDevBuildByProjectId } from "@webstudio-is/project-build/server";
-import { canBuildCss } from "@webstudio-is/project-build/css-build-validation/server";
+import {
+  canBuildCss,
+  loadDevBuildByProjectId,
+} from "@webstudio-is/project-build/server";
 import { parseGeneratedStyleDeclaration } from "@webstudio-is/project-build/persistence";
 import { singlePlayerVersionMismatchError } from "@webstudio-is/project/build-patch-core.server";
 import {

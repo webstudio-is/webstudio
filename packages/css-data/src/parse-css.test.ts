@@ -21,6 +21,12 @@ test("single declaration parser rejects CSS that changes the rule structure", ()
   ).toBeGreaterThan(0);
 });
 
+test("single declaration parser rejects recovered syntax errors", () => {
+  expect(
+    parseSingleCssDeclaration("color:rgb(1, 2, 3", "color").errors.length
+  ).toBeGreaterThan(0);
+});
+
 describe("Parse CSS", () => {
   test("flex with a nested calc basis matches explicit longhands", () => {
     const basis = "calc((100% - var(--space-lg)) / 2)";

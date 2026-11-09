@@ -36,6 +36,7 @@ test("rejects CSS values that create additional declarations or rules", () => {
   for (const [property, value] of [
     ["color", "red; width: 10px"],
     ["color", "red } a { width: 10px"],
+    ["color", "rgb(1, 2, 3"],
   ]) {
     const result = parseGeneratedStyleDeclaration(style(property, value));
     expect(result.declaration).toBeUndefined();

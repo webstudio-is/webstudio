@@ -946,6 +946,53 @@ describe("prebuild", () => {
     60_000
   );
 
+  test("skips a recovered malformed declaration without dropping valid styles", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const siteData = createSiteData();
+    siteData.build.breakpoints = [
+      ["base", { id: "base", label: "Base" }],
+    ] as never;
+    siteData.build.styleSources = [
+      ["source", { id: "source", type: "local" }],
+    ] as never;
+    siteData.build.styleSourceSelections = [
+      ["root", { instanceId: "root", values: ["source"] }],
+    ] as never;
+    siteData.build.styles = [
+      [
+        "source:base:color:",
+        {
+          styleSourceId: "source",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "unparsed", value: "rgb(1, 2, 3" },
+        },
+      ],
+      [
+        "source:base:backgroundColor:",
+        {
+          styleSourceId: "source",
+          breakpointId: "base",
+          property: "backgroundColor",
+          value: { type: "keyword", value: "red" },
+        },
+      ],
+    ] as never;
+    await writeSiteData(siteData);
+
+    await prebuild({ assets: false, template: ["defaults"] });
+
+    expect(await readFile("app/__generated__/index.css", "utf8")).toContain(
+      "background-color: red"
+    );
+    expect(
+      warn.mock.calls.map(([value]) => JSON.parse(String(value)).code)
+    ).toContain("invalid-css-declaration");
+    expect(
+      warn.mock.calls.map(([value]) => JSON.parse(String(value)).code)
+    ).not.toContain("invalid-generated-css");
+  });
+
   test("links generated CSS in prerendered SSG output", async () => {
     const siteData = createSiteData();
     siteData.build.breakpoints = [
