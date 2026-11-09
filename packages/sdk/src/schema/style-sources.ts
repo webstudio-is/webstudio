@@ -14,8 +14,7 @@ export type StyleSourceToken = z.infer<typeof styleSourceToken>;
 
 export const getTagTokenId = (tag: string) => `tag-token:${tag}`;
 
-export const isTagTokenTag = (tag: string) =>
-  tag !== "html" && tags.includes(tag);
+export const isTagTokenTag = (tag: string) => tags.includes(tag);
 
 export const getTagFromTokenId = (id: string) => {
   if (id.startsWith("tag-token:") === false) {

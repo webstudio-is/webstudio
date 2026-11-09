@@ -510,6 +510,7 @@ export const StyleSourcesSection = () => {
 };
 
 export const __testing__ = {
+  $availableStyleSources,
   clearStyles,
   convertLocalStyleSourceToToken,
   duplicateStyleSource,

@@ -1,7 +1,16 @@
 import { describe, expect, test } from "vitest";
-import { styleSource } from "./style-sources";
+import { getTagFromTokenId, getTagTokenId, styleSource } from "./style-sources";
 
 describe("StyleSource", () => {
+  test("accepts an html Tag token for Global root", () => {
+    const id = getTagTokenId("html");
+    expect(getTagFromTokenId(id)).toBe("html");
+    expect(styleSource.parse({ type: "tagToken", id, tag: "html" })).toEqual({
+      type: "tagToken",
+      id,
+      tag: "html",
+    });
+  });
   test("parses unlocked tokens without locked field", () => {
     expect(
       styleSource.parse({
