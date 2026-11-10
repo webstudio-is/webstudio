@@ -826,6 +826,16 @@ const $instanceStyles = computed(
 const getStatePreviewSelector = (state: string) =>
   isPseudoElement(state) || state.startsWith(" ") ? state : "";
 
+const shouldRenderEphemeralTagState = (
+  styleDecl: StyleDecl,
+  isTagStyle: boolean,
+  source: { name: string; styleSourceId?: string }
+) =>
+  isTagStyle === false ||
+  (source.name !== "overwritten" &&
+    (source.styleSourceId === undefined ||
+      source.styleSourceId === styleDecl.styleSourceId));
+
 const renderStateStyles = ({
   instanceStyles,
   sheet,
@@ -975,7 +985,14 @@ const subscribeEphemeralStyle = () => {
 
           // When editing state styles (e.g., :hover), also render var() in stateSheet
           // so ephemeral updates are visible in the state preview
-          if (styleDecl.state !== undefined) {
+          if (
+            styleDecl.state !== undefined &&
+            shouldRenderEphemeralTagState(
+              styleDecl,
+              isTagStyle,
+              computedStyleDecl.source
+            )
+          ) {
             const stateRule = stateSheet.addNestingRule(selector);
             stateRule.setDeclaration({
               breakpoint: styleDecl.breakpointId,
@@ -1001,6 +1018,7 @@ export const __testing__ = {
   getInstanceSelector,
   getPresetStyleSelector,
   getStatePreviewSelector,
+  shouldRenderEphemeralTagState,
   computeDescendantSelectors,
   computeInstanceStyles,
   computeEditableCursorRules,

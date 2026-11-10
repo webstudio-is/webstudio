@@ -28,6 +28,7 @@ const {
   getInstanceSelector,
   getPresetStyleSelector,
   getStatePreviewSelector,
+  shouldRenderEphemeralTagState,
   computeDescendantSelectors,
   computeInstanceStyles,
   computeEditableCursorRules,
@@ -790,6 +791,36 @@ describe("getPresetStyleSelector", () => {
     expect(getPresetStyleSelector("MyCustomComponent", "span")).toBe(
       'span:where([data-ws-component="MyCustomComponent"])'
     );
+  });
+});
+
+describe("shouldRenderEphemeralTagState", () => {
+  test("does not let an ephemeral Tag state override an instance declaration", () => {
+    const tagStyleId = getTagStyleId("button");
+    const declaration = createStyleDecl({
+      styleSourceId: tagStyleId,
+      state: ":hover",
+      property: "color",
+    });
+
+    expect(
+      shouldRenderEphemeralTagState(declaration, true, {
+        name: "overwritten",
+        styleSourceId: tagStyleId,
+      })
+    ).toBe(false);
+    expect(
+      shouldRenderEphemeralTagState(declaration, true, {
+        name: "local",
+        styleSourceId: "local",
+      })
+    ).toBe(false);
+    expect(
+      shouldRenderEphemeralTagState(declaration, true, {
+        name: "remote",
+        styleSourceId: tagStyleId,
+      })
+    ).toBe(true);
   });
 });
 
