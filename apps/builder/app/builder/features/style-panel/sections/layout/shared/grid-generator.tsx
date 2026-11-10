@@ -307,11 +307,11 @@ const gridGeneratorButtonStyle = css({
   display: "grid",
   width: "100%",
   height: 60,
-  outline: `1px solid ${cssVar("--border-default")}`,
+  outline: `1px solid ${gridLineColor}`,
   borderRadius: theme.borderRadius[3],
   overflow: "hidden",
   cursor: "pointer",
-  "&:focus-within, &[data-state=open]": {
+  "&:focus-visible": {
     outline: `1px solid ${cssVar("--border-focus")}`,
   },
   "&:hover": {

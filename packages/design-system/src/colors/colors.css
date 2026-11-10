@@ -35,9 +35,9 @@
   --scheme-foreground-strong-lightness: 0.1;
   --scheme-foreground-chroma-scale: 1;
   --scheme-intent-lightness: 0.48;
-  --scheme-floating-weight: 97%;
-  --scheme-raised-weight: 94%;
-  --scheme-nested-weight: 91%;
+  --scheme-floating-weight: 99%;
+  --scheme-raised-weight: 98%;
+  --scheme-nested-weight: 97%;
   --scheme-informative-weight: 12.24%;
 
   /* Colors derived from the bounded theme parameters. */
@@ -242,9 +242,9 @@
   --scheme-foreground-strong-lightness: 1;
   --scheme-foreground-chroma-scale: 0.2;
   --scheme-intent-lightness: 0.75;
-  --scheme-floating-weight: 95%;
-  --scheme-raised-weight: 91%;
-  --scheme-nested-weight: 87%;
+  --scheme-floating-weight: 96%;
+  --scheme-raised-weight: 93%;
+  --scheme-nested-weight: 90%;
   --scheme-informative-weight: 30%;
 }
 

@@ -60,6 +60,20 @@ test.each(["light", "dark"] as const)(
         throw new Error("Expected the open grid generator and preset preview");
       }
 
+      const gridPreview = container.querySelector<HTMLButtonElement>("button");
+      const gridLine = gridPreview?.firstElementChild;
+      if (
+        gridPreview === null ||
+        gridPreview === undefined ||
+        gridLine === null ||
+        gridLine === undefined
+      ) {
+        throw new Error("Expected the grid preview and a cell line");
+      }
+      expect(getComputedStyle(gridPreview).outlineColor).toBe(
+        getComputedStyle(gridLine).borderRightColor
+      );
+
       for (const [border, background] of [
         [
           getComputedStyle(cells[4]).borderColor,

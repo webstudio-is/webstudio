@@ -71,10 +71,19 @@ describe("Craft color contrast", () => {
           getContrastRatio(surface, background),
           `${mode} secondary surface`
         ).toBeGreaterThanOrEqual(1.15);
+        const floatingContrast = getContrastRatio(floating, background);
         expect(
-          getContrastRatio(floating, background),
+          floatingContrast,
           `${mode} floating surface`
-        ).toBeGreaterThanOrEqual(1.05);
+        ).toBeGreaterThanOrEqual(mode === "light" ? 1.01 : 1.05);
+        expect(
+          floatingContrast,
+          `${mode} floating surface`
+        ).toBeLessThanOrEqual(mode === "light" ? 1.05 : 1.18);
+        expect(
+          getContrastRatio(nested, background),
+          `${mode} nested surface`
+        ).toBeLessThanOrEqual(mode === "light" ? 1.1 : 1.55);
         if (mode === "light") {
           expect(floating[0]).toBeLessThan(background[0]);
           expect(raised[0]).toBeLessThan(floating[0]);
