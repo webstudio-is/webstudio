@@ -301,9 +301,7 @@ export const StyleSourceControl = ({
               if (
                 !event.shiftKey &&
                 (event.key === "ArrowLeft" || event.key === "ArrowRight") &&
-                onArrowToSource?.(
-                  event.key === "ArrowLeft" ? "left" : "right"
-                )
+                onArrowToSource?.(event.key === "ArrowLeft" ? "left" : "right")
               ) {
                 event.preventDefault();
               }
