@@ -491,6 +491,42 @@ describe("computeInstanceStyles", () => {
     });
   });
 
+  test("previews Tag state styles before instance styles", () => {
+    const tagStyleId = getTagStyleId("button");
+    const result = computeInstanceStyles({
+      selectedInstance: { ...createInstance("button"), tag: "button" },
+      selectedStyleState: ":hover",
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSourceSelections: new Map([["button", { values: ["local"] }]]),
+      temporaryTagStyleId: tagStyleId,
+      styles: new Map([
+        [
+          "local",
+          createStyleDecl({
+            styleSourceId: "local",
+            state: ":hover",
+            property: "color",
+            value: { type: "keyword", value: "blue" },
+          }),
+        ],
+        [
+          "tag",
+          createStyleDecl({
+            styleSourceId: tagStyleId,
+            state: ":hover",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          }),
+        ],
+      ]),
+    });
+
+    expect(result?.styles.map((styleDecl) => styleDecl.styleSourceId)).toEqual([
+      tagStyleId,
+      "local",
+    ]);
+  });
+
   test("includes styles from multiple style sources", () => {
     const result = computeInstanceStyles({
       selectedInstance: createInstance("box"),

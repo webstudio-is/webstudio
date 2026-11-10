@@ -467,6 +467,92 @@ test("copies a token with breakpoint styles and transitive root CSS variables", 
   );
 });
 
+test("copies html Tag variables below attached Global root variables", () => {
+  const htmlTagStyleId = getTagStyleId("html");
+  const source = {
+    assets: new Map(),
+    breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+    styleSources: new Map([
+      ["token", { type: "token" as const, id: "token", name: "Card" }],
+      [
+        htmlTagStyleId,
+        { type: "tag" as const, id: htmlTagStyleId, tag: "html" },
+      ],
+      ["root", { type: "local" as const, id: "root" }],
+    ]),
+    styleSourceSelections: new Map([
+      [ROOT_INSTANCE_ID, { instanceId: ROOT_INSTANCE_ID, values: ["root"] }],
+    ]),
+    styles: styleMap([
+      style("token", "base", "color", "var(--brand)"),
+      style("token", "base", "paddingTop", "var(--space)"),
+      style(htmlTagStyleId, "base", "--brand", "red"),
+      style(htmlTagStyleId, "base", "--space", "8px"),
+      style("root", "base", "--brand", "blue"),
+    ]),
+  };
+
+  const copied = copyStyleSourceTransfer(source, {
+    styleSourceId: "token",
+    sourceType: "token",
+  });
+  const parsed = parseTokenTransferData(copied.data);
+
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(
+      parsed.data.fragment.styles.map((item) => [item.property, item.value])
+    ).toEqual(
+      expect.arrayContaining([
+        ["--brand", expect.objectContaining({ value: "blue" })],
+        ["--space", expect.objectContaining({ value: 8 })],
+      ])
+    );
+    expect(
+      parsed.data.fragment.styles
+        .filter((item) => item.property === "--brand")
+        .map((item) => item.value)
+    ).toEqual([expect.objectContaining({ value: "blue" })]);
+  }
+});
+
+test("copies html Tag variables referenced by another Tag style", () => {
+  const htmlTagStyleId = getTagStyleId("html");
+  const tagStyleId = getTagStyleId("h1");
+  const copied = copyStyleSourceTransfer(
+    {
+      assets: new Map(),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([
+        [
+          htmlTagStyleId,
+          { type: "tag" as const, id: htmlTagStyleId, tag: "html" },
+        ],
+        [tagStyleId, { type: "tag" as const, id: tagStyleId, tag: "h1" }],
+      ]),
+      styleSourceSelections: new Map(),
+      styles: styleMap([
+        style(tagStyleId, "base", "color", "var(--brand)"),
+        style(htmlTagStyleId, "base", "--brand", "red"),
+      ]),
+    },
+    { styleSourceId: tagStyleId, sourceType: "tag" }
+  );
+  const parsed = parseTagStyleTransferData(copied.data);
+
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.styles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          property: "--brand",
+          value: expect.objectContaining({ value: "red" }),
+        }),
+      ])
+    );
+  }
+});
+
 test("copies the winning root variable when root sources overlap", () => {
   const copied = copyDesignToken(
     {

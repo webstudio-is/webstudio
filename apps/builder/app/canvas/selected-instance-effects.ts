@@ -1,6 +1,5 @@
-import { shallowEqual } from "shallow-equal";
 import warnOnce from "warn-once";
-import type { Instance } from "@webstudio-is/sdk";
+import { getTagStyleId, type Instance } from "@webstudio-is/sdk";
 import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
 import { isPseudoElement, propertiesData } from "@webstudio-is/css-data";
 import { selectorIdAttribute } from "@webstudio-is/react-sdk";
@@ -289,6 +288,7 @@ const subscribeSelectedInstance = (
     const instanceStyleSourceIds = new Set(
       $styleSourceSelections.get().get(instanceId)?.values
     );
+    instanceStyleSourceIds.add(getTagStyleId(element.localName));
     const styles = $styles.get();
     for (const styleDecl of styles.values()) {
       if (
@@ -310,8 +310,12 @@ const subscribeSelectedInstance = (
       }
     }
 
+    const selectedStates = $selectedInstanceStates.get();
     if (
-      !shallowEqual(activeStates.keys(), $selectedInstanceStates.get().keys())
+      activeStates.size !== selectedStates.size ||
+      Array.from(activeStates).some(
+        (state) => selectedStates.has(state) === false
+      )
     ) {
       $selectedInstanceStates.set(activeStates);
     }
@@ -395,6 +399,7 @@ const subscribeSelectedInstance = (
   });
 
   updateObservers();
+  updateStores();
 
   const unsubscribe$stylesIndex = $stylesIndex.subscribe(update);
   const unsubscribeSelectedStyleState = $selectedStyleState.subscribe(update);

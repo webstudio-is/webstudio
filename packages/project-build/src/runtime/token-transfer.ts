@@ -2,6 +2,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import {
   createId,
   getTagFromStyleId,
+  getTagStyleId,
   getStyleDeclKey,
   ROOT_INSTANCE_ID,
   type Asset,
@@ -121,11 +122,12 @@ const copyStyleSource = (
   const tokenStyles = Array.from(styles.values()).filter(
     (style) => style.styleSourceId === source.id
   );
-  const rootSourceOrder = new Map(
-    styleSourceSelections
-      .get(ROOT_INSTANCE_ID)
-      ?.values.map((id, index) => [id, index] as const)
-  );
+  const rootSourceOrder = new Map([[getTagStyleId("html"), -1]]);
+  for (const [index, id] of (
+    styleSourceSelections.get(ROOT_INSTANCE_ID)?.values ?? []
+  ).entries()) {
+    rootSourceOrder.set(id, index);
+  }
   const rootStylesByKey = new Map<string, StyleDecl>();
   for (const style of styles.values()) {
     if (

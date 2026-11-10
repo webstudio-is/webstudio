@@ -758,21 +758,28 @@ const computeInstanceStyles = ({
   if (selectedInstance === undefined || selectedStyleState === undefined) {
     return;
   }
-  const styleSources = new Set(
-    styleSourceSelections.get(selectedInstance.id)?.values
+  const styleSourceOrder = new Map(
+    styleSourceSelections
+      .get(selectedInstance.id)
+      ?.values.map((id, index) => [id, index + 1] as const)
   );
   if (temporaryTagStyleId) {
-    styleSources.add(temporaryTagStyleId);
+    styleSourceOrder.set(temporaryTagStyleId, 0);
   }
   const instanceStyles: StyleDecl[] = [];
   for (const styleDecl of styles.values()) {
     if (
       styleDecl.state === selectedStyleState &&
-      styleSources.has(styleDecl.styleSourceId)
+      styleSourceOrder.has(styleDecl.styleSourceId)
     ) {
       instanceStyles.push(styleDecl);
     }
   }
+  instanceStyles.sort(
+    (a, b) =>
+      styleSourceOrder.get(a.styleSourceId)! -
+      styleSourceOrder.get(b.styleSourceId)!
+  );
   return {
     instanceId: selectedInstance.id,
     selectedState: selectedStyleState,

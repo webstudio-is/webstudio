@@ -2214,10 +2214,20 @@ export const pasteDesignToken = projectMutationInput<
   { tokenId: string }
 >("paste-design-token");
 
-export const pasteStyleSource = projectMutationInput<
+const queryPasteStyleSource = projectMutationInput<
   AuthProjectParams & { data: string; instanceId?: string },
-  { styleSourceId: string }
+  { styleSourceId: string } | { tokenId: string }
 >("paste-design-token");
+
+export const pasteStyleSource = async (
+  params: AuthProjectParams & { data: string; instanceId?: string }
+) => {
+  const result = await queryPasteStyleSource(params);
+  return {
+    styleSourceId:
+      "styleSourceId" in result ? result.styleSourceId : result.tokenId,
+  };
+};
 
 type DesignTokenStyleInput = {
   property: string;
