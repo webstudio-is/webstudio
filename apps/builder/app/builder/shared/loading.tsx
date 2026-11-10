@@ -102,7 +102,7 @@ export const Loading = ({ state }: { state: LoadingState }) => {
           <Box
             css={{
               position: "absolute",
-              bottom: `calc(50% + ${theme.spacing[10]})`,
+              bottom: `calc(50% + ${theme.spacing[11]})`,
               left: "50%",
               display: "flex",
               transform: "translateX(-50%)",
