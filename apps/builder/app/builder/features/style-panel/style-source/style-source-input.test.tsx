@@ -89,7 +89,7 @@ test("pastes copied Tokens and Tag styles while leaving ordinary text to the inp
 });
 
 test.each([
-  ["tagStyle", "tag-style:button", "button"],
+  ["tag", "tag-style:button", "button"],
   ["local", "temporary-local", "Local"],
 ] as const)(
   "copies the selected %s source from its menu",

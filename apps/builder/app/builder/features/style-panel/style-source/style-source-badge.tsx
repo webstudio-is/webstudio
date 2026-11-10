@@ -35,7 +35,7 @@ export const StyleSourceBadge = styled(Text, {
       token: {
         backgroundColor: styleSourceColors.local.background,
       },
-      tagStyle: {
+      tag: {
         backgroundColor: styleSourceColors.tagStyle.background,
         color: styleSourceColors.tagStyle.foreground,
       },

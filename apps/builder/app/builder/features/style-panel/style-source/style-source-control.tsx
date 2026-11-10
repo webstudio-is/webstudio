@@ -40,7 +40,7 @@ export const menuCssVars = ({
   };
 };
 
-export type ItemSource = "token" | "tagStyle" | "local";
+export type ItemSource = "token" | "tag" | "local";
 
 export type ItemSelector = {
   styleSourceId: string;
@@ -111,7 +111,7 @@ const StyleSourceContainer = styled(Box, {
         backgroundColor: styleSourceColors.local.background,
         [menuTriggerGradientVar]: styleSourceColors.local.gradient,
       },
-      tagStyle: {
+      tag: {
         color: styleSourceColors.tagStyle.foreground,
         backgroundColor: styleSourceColors.tagStyle.background,
         [menuTriggerGradientVar]: styleSourceColors.tagStyle.gradient,
@@ -174,7 +174,7 @@ const StyleSourceState = styled(Text, {
       token: {
         backgroundColor: styleSourceColors.local.background,
       },
-      tagStyle: {
+      tag: {
         backgroundColor: styleSourceColors.tagStyle.background,
       },
     },

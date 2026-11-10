@@ -60,7 +60,7 @@ export const useSortable = <Item extends { id: string; source: ItemSource }>({
       if (dropTarget === undefined) {
         setPlacementIndicator(undefined);
       } else {
-        if (items[0]?.source === "tagStyle") {
+        if (items[0]?.source === "tag") {
           const { placement } = dropTarget;
           placement.indexAdjustment = Math.max(placement.indexAdjustment, 1);
           placement.closestChildIndex = Math.max(
@@ -107,7 +107,7 @@ export const useSortable = <Item extends { id: string; source: ItemSource }>({
         return false;
       }
 
-      if (items.find((item) => item.id === itemId)?.source === "tagStyle") {
+      if (items.find((item) => item.id === itemId)?.source === "tag") {
         return false;
       }
 
@@ -146,7 +146,7 @@ export const useSortable = <Item extends { id: string; source: ItemSource }>({
         if (oldIndex < newIndex) {
           newIndex = Math.max(0, newIndex - 1);
         }
-        if (items[0]?.source === "tagStyle") {
+        if (items[0]?.source === "tag") {
           newIndex = Math.max(1, newIndex);
         }
         // when local style source is last always drop before it

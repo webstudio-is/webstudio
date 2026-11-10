@@ -189,7 +189,7 @@ export const PropertyInfo = ({
       color:
         source.styleSourceId &&
         styleSources.get(source.styleSourceId)?.type === "tagStyle"
-          ? ("tagStyle" as const)
+          ? ("tag" as const)
           : label === "Local"
             ? ("local" as const)
             : ("token" as const),

@@ -46,7 +46,7 @@ const getItems = (): Array<Item> => [
   {
     id: createNanoId(),
     label: "Tag",
-    source: "tagStyle",
+    source: "tag",
     disabled: false,
     locked: false,
     states: [],
@@ -206,7 +206,7 @@ export const TagStyle = () => {
   const tagStyle: Item = {
     id: "tag-style-div",
     label: "div",
-    source: "tagStyle",
+    source: "tag",
     disabled: false,
     locked: false,
     states: [":hover"],

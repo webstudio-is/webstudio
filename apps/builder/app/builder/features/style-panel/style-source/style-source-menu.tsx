@@ -270,7 +270,7 @@ type StyleSourceMenuProps = {
 
 export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
   const availableStates =
-    props.item.source === "tagStyle"
+    props.item.source === "tag"
       ? props.states.filter(
           ({ selector }) =>
             validateSelector(selector, { allowDescendants: false }).success
@@ -371,7 +371,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
           </DropdownMenuItem>
         )}
         {(props.item.source === "token" ||
-          props.item.source === "tagStyle" ||
+          props.item.source === "tag" ||
           props.item.source === "local") && (
           <DropdownMenuItem
             onFocus={() => {
@@ -531,7 +531,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
                 existingSelectors={availableStates.map(
                   (state) => state.selector
                 )}
-                allowDescendants={props.item.source !== "tagStyle"}
+                allowDescendants={props.item.source !== "tag"}
                 onSelect={(selector) =>
                   props.onAddSelector?.(props.item.id, selector)
                 }

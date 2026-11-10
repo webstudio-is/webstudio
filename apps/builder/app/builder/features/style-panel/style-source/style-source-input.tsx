@@ -340,7 +340,7 @@ const matchOrSuggestToCreate = (
   const matched = matchSorter(items, search, {
     keys: [itemToString],
   });
-  const order: ItemSource[] = ["tagStyle", "token"];
+  const order: ItemSource[] = ["tag", "token"];
   matched.sort((leftItem, rightItem) => {
     return order.indexOf(leftItem.source) - order.indexOf(rightItem.source);
   });
@@ -349,7 +349,7 @@ const matchOrSuggestToCreate = (
     itemToString(matched[0]).toLocaleLowerCase() !==
       search.toLocaleLowerCase().trim()
   ) {
-    matched.splice(matched[0]?.source === "tagStyle" ? 1 : 0, 0, {
+    matched.splice(matched[0]?.source === "tag" ? 1 : 0, 0, {
       id: newItemId,
       label: search.trim(),
       disabled: false,
@@ -535,7 +535,7 @@ export const StyleSourceInput = (
                   }
 
                   let label = null;
-                  if (item.source === "tagStyle" && hasTagStyleItem === false) {
+                  if (item.source === "tag" && hasTagStyleItem === false) {
                     hasTagStyleItem = true;
                     label = <ComboboxLabel>Tag style</ComboboxLabel>;
                   }

@@ -326,7 +326,7 @@ const convertToInputItem = (
           ? styleSource.tag
           : styleSource.name,
     disabled: false,
-    source: styleSource.type === "tagStyle" ? "tagStyle" : styleSource.type,
+    source: styleSource.type === "tagStyle" ? "tag" : styleSource.type,
     locked: styleSource.type === "token" && styleSource.locked === true,
     states,
   };
@@ -428,7 +428,7 @@ export const StyleSourcesSection = () => {
         componentStates={componentStates}
         onCreateItem={createStyleSource}
         onSelectAutocompleteItem={({ id, source }) => {
-          if (source === "tagStyle") {
+          if (source === "tag") {
             $temporaryTagStyleId.set(id);
             selectStyleSource(id);
           } else {
