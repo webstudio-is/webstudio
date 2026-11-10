@@ -14,6 +14,7 @@ import {
   $styleSourceSelections,
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
+import { CollapsibleProvider } from "~/builder/shared/collapsible-section";
 import { GridSettings } from "./grid-settings";
 
 registerContainers();
@@ -88,7 +89,9 @@ const GridSettingsStory = ({ areas }: { areas: boolean }) => {
           marginTop: 100,
         }}
       >
-        <GridSettings open={open} onOpenChange={setOpen} />
+        <CollapsibleProvider sectionBackground stickyHeaders>
+          <GridSettings open={open} onOpenChange={setOpen} />
+        </CollapsibleProvider>
       </Box>
     </StorySection>
   );

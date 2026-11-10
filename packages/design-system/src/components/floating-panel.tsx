@@ -311,6 +311,7 @@ export const FloatingPanel = ({
         </DialogTrigger>
       )}
       <DialogContent
+        data-floating-panel
         css={{ width: theme.sizes.sidebarWidth, overflow: "auto" }}
         width={width}
         height={height}
