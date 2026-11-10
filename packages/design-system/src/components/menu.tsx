@@ -26,7 +26,6 @@ import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import { forwardRef, type ComponentProps } from "react";
 import { truncate } from "../utilities";
 import { cssVar } from "../css-var";
-import { floatingIntentColors } from "./floating-intent-colors";
 
 export const labelCss = css(textVariants.titles, {
   color: cssVar("--foreground-primary"),
@@ -132,7 +131,6 @@ const menuPadding = theme.spacing[3];
 const menuBorderWidth = "1px";
 
 export const menuCss = css({
-  ...floatingIntentColors,
   boxSizing: "border-box",
   borderRadius: theme.borderRadius[6],
   backgroundColor: cssVar("--background-floating-raised"),

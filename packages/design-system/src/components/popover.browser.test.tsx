@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 test.each(["light", "dark"] as const)(
-  "popover uses floating intent colors in %s mode",
+  "popover uses shared intent colors in %s mode",
   async (mode) => {
     document.documentElement.dataset.colorScheme = mode;
     const container = document.createElement("div");
@@ -47,13 +47,13 @@ test.each(["light", "dark"] as const)(
         expect(document.querySelector("[data-popover-accent]")).not.toBeNull()
       );
       const reference = document.createElement("span");
-      reference.style.color = "var(--foreground-accent-floating)";
+      reference.style.color = "var(--foreground-accent)";
       document.body.append(reference);
       expect(
         getComputedStyle(document.querySelector("[data-popover-accent]")!).color
       ).toBe(getComputedStyle(reference).color);
       for (const intent of ["positive", "informative"] as const) {
-        reference.style.color = `var(--foreground-${intent}-floating)`;
+        reference.style.color = `var(--foreground-${intent})`;
         expect(
           getComputedStyle(document.querySelector(`[data-popover-${intent}]`)!)
             .color

@@ -12,7 +12,6 @@ import { Flex } from "./flex";
 import { Button } from "./button";
 import { XIcon } from "@webstudio-is/icons";
 import { cssVar } from "../css-var";
-import { floatingIntentColors } from "./floating-intent-colors";
 
 export const Popover = Primitive.Root;
 
@@ -21,7 +20,6 @@ export const PopoverPortal = Primitive.Portal;
 export const PopoverAnchor = Primitive.Anchor;
 
 const contentStyle = css({
-  ...floatingIntentColors,
   border: `1px solid ${cssVar("--border-default")}`,
   boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar(
     "--background-floating-raised"

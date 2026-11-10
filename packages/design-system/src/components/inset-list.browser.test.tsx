@@ -25,12 +25,17 @@ const pressArrow = (element: HTMLElement, key: string) => {
   });
 };
 
-test.each(["light", "dark"] as const)(
-  "selected inset list rows rise above a floating surface in %s mode",
-  (mode) => {
+test.each([
+  ["light", "--background-primary"],
+  ["light", "--background-floating"],
+  ["dark", "--background-primary"],
+  ["dark", "--background-floating"],
+] as const)(
+  "selected inset list rows follow the %s %s surface",
+  (mode, background) => {
     document.documentElement.dataset.colorScheme = mode;
     const container = document.createElement("div");
-    container.style.background = "var(--background-floating)";
+    container.style.background = `var(${background})`;
     document.body.append(container);
     root = createRoot(container);
     act(() =>
@@ -44,15 +49,26 @@ test.each(["light", "dark"] as const)(
     const selected = container.querySelector("button")!;
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d")!;
-    const brightness = (color: string) => {
-      context.fillStyle = color;
+    const brightness = (surfaceColor: string, rowColor?: string) => {
+      context.clearRect(0, 0, 1, 1);
+      context.fillStyle = surfaceColor;
       context.fillRect(0, 0, 1, 1);
+      if (rowColor) {
+        context.fillStyle = rowColor;
+        context.fillRect(0, 0, 1, 1);
+      }
       return Array.from(context.getImageData(0, 0, 1, 1).data)
         .slice(0, 3)
         .reduce((sum, channel) => sum + channel, 0);
     };
-    const surface = brightness(getComputedStyle(container).backgroundColor);
-    const selection = brightness(getComputedStyle(selected).backgroundColor);
+    const surfaceColor = getComputedStyle(container).backgroundColor;
+    const rowColor = getComputedStyle(selected).backgroundColor;
+    const surface = brightness(surfaceColor);
+    const selection = brightness(surfaceColor, rowColor);
+    context.clearRect(0, 0, 1, 1);
+    context.fillStyle = rowColor;
+    context.fillRect(0, 0, 1, 1);
+    expect(context.getImageData(0, 0, 1, 1).data[3]).toBeLessThan(255);
     expect(mode === "light" ? selection < surface : selection > surface).toBe(
       true
     );

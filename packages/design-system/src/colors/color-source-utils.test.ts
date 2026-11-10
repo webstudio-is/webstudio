@@ -102,11 +102,12 @@ describe("Craft color CSS source", () => {
         (count, category) => count + Object.keys(category).length,
         0
       )
-    ).toBe(45);
+    ).toBe(41);
     expect(colors.semantic.background).toHaveProperty("floating");
     expect(colors.semantic.background).toHaveProperty("floating-raised");
     expect(colors.semantic.background).toHaveProperty("floating-nested");
-    expect(colors.semantic.foreground).toHaveProperty("accent-floating");
+    expect(colors.semantic.foreground).toHaveProperty("accent");
+    expect(colors.semantic.foreground).not.toHaveProperty("accent-floating");
     expect(colors.semantic.background).toHaveProperty("text-selection");
     expect(colors.semantic.foreground).toHaveProperty("on-text-selection");
     expect(colors.semantic.background).toHaveProperty("positive-subtle");

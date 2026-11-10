@@ -36,7 +36,6 @@ import { InputField } from "./input-field";
 import { SmallIconButton } from "./small-icon-button";
 import { cssVar, declareCssVar } from "../css-var";
 import { getSelectedItemBackground } from "./component-state-color";
-import { floatingIntentColors } from "./floating-intent-colors";
 
 const panelWidth = "500px";
 const itemHeight = "32px";
@@ -45,7 +44,6 @@ const inputBorderBottomSize = declareCssVar(
 );
 
 const StyledCommand = styled(CommandPrimitive, {
-  ...floatingIntentColors,
   boxSizing: "border-box",
   width: panelWidth,
   boxShadow: theme.shadows.menuDropShadow,

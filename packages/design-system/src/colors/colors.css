@@ -306,30 +306,26 @@
   --foreground-on-positive: var(--color-on-chromatic);
   --foreground-on-negative: var(--color-on-chromatic);
   --foreground-on-text-selection: var(--color-background);
-  --foreground-accent: var(--color-accent-foreground);
-  --foreground-accent-secondary: var(--color-accent-secondary-foreground);
-  --foreground-positive: var(--color-positive-foreground);
+  --foreground-accent: color-mix(
+    in oklab,
+    var(--color-accent-foreground) 85%,
+    var(--foreground-primary)
+  );
+  --foreground-accent-secondary: color-mix(
+    in oklab,
+    var(--color-accent-secondary-foreground) 85%,
+    var(--foreground-primary)
+  );
+  --foreground-positive: color-mix(
+    in oklab,
+    var(--color-positive-foreground) 90%,
+    var(--foreground-primary)
+  );
   --foreground-negative: var(--color-negative-foreground);
   --foreground-warning: var(--color-warning-foreground);
-  --foreground-informative: var(--color-informative-foreground);
-  --foreground-accent-floating: color-mix(
+  --foreground-informative: color-mix(
     in oklab,
-    var(--foreground-accent) 85%,
-    var(--foreground-primary)
-  );
-  --foreground-accent-secondary-floating: color-mix(
-    in oklab,
-    var(--foreground-accent-secondary) 85%,
-    var(--foreground-primary)
-  );
-  --foreground-positive-floating: color-mix(
-    in oklab,
-    var(--foreground-positive) 90%,
-    var(--foreground-primary)
-  );
-  --foreground-informative-floating: color-mix(
-    in oklab,
-    var(--foreground-informative) 90%,
+    var(--color-informative-foreground) 90%,
     var(--foreground-primary)
   );
 
