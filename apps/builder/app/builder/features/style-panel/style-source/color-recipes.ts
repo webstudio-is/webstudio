@@ -32,10 +32,10 @@ export const styleSourceColors = {
     subtleBackground: styleSourceColor.local.background,
     gradient: gradient(styleSourceColor.local.solid),
   },
-  tagStyle: {
-    background: styleSourceColor.tagStyle.background,
-    foreground: styleSourceColor.tagStyle.foreground,
-    gradient: gradient(styleSourceColor.tagStyle.background),
+  tag: {
+    background: styleSourceColor.tag.background,
+    foreground: styleSourceColor.tag.foreground,
+    gradient: gradient(styleSourceColor.tag.background),
   },
   breakpoint: {
     background: breakpointBackground,

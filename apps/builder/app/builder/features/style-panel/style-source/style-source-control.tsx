@@ -101,7 +101,7 @@ const StyleSourceContainer = styled(Box, {
   ...menuCssVars({ show: false }),
   "&:hover": menuCssVars({ show: true }),
   "&:has(button:focus-visible)": {
-    outline: `2px solid ${cssVar("--border-focus")}`,
+    outline: `1px solid ${cssVar("--border-focus")}`,
     outlineOffset: 1,
   },
   variants: {
@@ -116,9 +116,9 @@ const StyleSourceContainer = styled(Box, {
         [menuTriggerGradientVar]: styleSourceColors.local.gradient,
       },
       tag: {
-        color: styleSourceColors.tagStyle.foreground,
-        backgroundColor: styleSourceColors.tagStyle.background,
-        [menuTriggerGradientVar]: styleSourceColors.tagStyle.gradient,
+        color: styleSourceColors.tag.foreground,
+        backgroundColor: styleSourceColors.tag.background,
+        [menuTriggerGradientVar]: styleSourceColors.tag.gradient,
       },
     },
     selected: {
@@ -179,7 +179,7 @@ const StyleSourceState = styled(Text, {
         backgroundColor: styleSourceColors.local.background,
       },
       tag: {
-        backgroundColor: styleSourceColors.tagStyle.background,
+        backgroundColor: styleSourceColors.tag.background,
       },
     },
   },

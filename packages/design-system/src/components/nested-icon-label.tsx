@@ -28,13 +28,11 @@ const colors = {
     backgroundHover: withInteractionOverlay(presetBackground),
     icon: cssVar("--foreground-primary"),
   },
-  tagStyle: {
-    border: styleSourceColor.tagStyle.border,
-    background: styleSourceColor.tagStyle.background,
-    backgroundHover: withInteractionOverlay(
-      styleSourceColor.tagStyle.background
-    ),
-    icon: styleSourceColor.tagStyle.foreground,
+  tag: {
+    border: styleSourceColor.tag.border,
+    background: styleSourceColor.tag.background,
+    backgroundHover: withInteractionOverlay(styleSourceColor.tag.background),
+    icon: styleSourceColor.tag.foreground,
   },
   local: {
     border: styleSourceColor.local.border,
@@ -103,7 +101,7 @@ const style = css({
     color: {
       default: perColorStyle("default"),
       preset: perColorStyle("preset"),
-      tagStyle: perColorStyle("tagStyle"),
+      tag: perColorStyle("tag"),
       local: perColorStyle("local"),
       overwritten: perColorStyle("overwritten"),
       remote: perColorStyle("remote"),

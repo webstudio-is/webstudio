@@ -9,7 +9,7 @@ export default {
 const colors = [
   "default",
   "preset",
-  "tagStyle",
+  "tag",
   "local",
   "overwritten",
   "remote",

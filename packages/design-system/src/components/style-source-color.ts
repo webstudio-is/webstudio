@@ -27,7 +27,7 @@ const accentForeground = cssVar("--foreground-accent");
 // error intent. Tag styles share the global Slot color; the other source
 // colors derive from the theme accent.
 export const styleSourceColor = {
-  tagStyle: {
+  tag: {
     background: cssVar("--background-accent-secondary"),
     border: cssVar("--background-accent-secondary"),
     foreground: cssVar("--foreground-on-accent-secondary"),
