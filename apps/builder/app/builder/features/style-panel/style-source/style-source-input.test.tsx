@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { expect, test, vi } from "vitest";
+import { TooltipProvider } from "@webstudio-is/design-system";
 import {
   copyDesignToken,
   copyStyleSourceTransfer,
@@ -267,4 +268,111 @@ test("allows Copy for styles on inactive states or breakpoints", () => {
   );
 
   expect(hasStyles.get("tag-style:button")).toBe(true);
+});
+
+test("moves focus between the input and adjacent style sources with arrow keys", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const sources = [
+    { id: "tag-style:button", label: "button", source: "tag" as const },
+    { id: "token-one", label: "One", source: "token" as const },
+    { id: "token-two", label: "Two", source: "token" as const },
+    { id: "local", label: "Local", source: "local" as const },
+  ].map((item) => ({
+    ...item,
+    disabled: false,
+    locked: false,
+    states: [],
+  }));
+
+  try {
+    act(() =>
+      root.render(
+        <TooltipProvider>
+          <StyleSourceInput
+            inputRef={() => {}}
+            selectedItemSelector={undefined}
+            items={sources}
+            value={sources}
+          />
+        </TooltipProvider>
+      )
+    );
+
+    const input = container.querySelector<HTMLInputElement>("input")!;
+    const press = (element: Element, key: string) =>
+      element.dispatchEvent(
+        new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true })
+      );
+    const sourceButton = (id: string) =>
+      container.querySelector<HTMLElement>(`[data-id="${id}"] button`)!;
+
+    act(() => {
+      input.focus();
+      input.setSelectionRange(0, 0);
+      press(input, "ArrowLeft");
+    });
+    expect(document.activeElement).toBe(sourceButton("token-two"));
+
+    act(() => press(sourceButton("token-two"), "ArrowRight"));
+    expect(document.activeElement).toBe(input);
+
+    act(() => {
+      input.setSelectionRange(input.value.length, input.value.length);
+      press(input, "ArrowRight");
+    });
+    expect(document.activeElement).toBe(sourceButton("local"));
+
+    act(() => press(sourceButton("local"), "ArrowLeft"));
+    expect(document.activeElement).toBe(input);
+  } finally {
+    act(() => root.unmount());
+    container.remove();
+  }
+});
+
+test("keeps menu arrow keys from toggling the outer combobox", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const onOuterKeyDown = vi.fn();
+  try {
+    act(() =>
+      root.render(
+        <div onKeyDown={onOuterKeyDown}>
+          <StyleSourceMenu
+            open
+            onOpenChange={() => {}}
+            selectedItemSelector={undefined}
+            item={{
+              id: "token",
+              label: "Token",
+              source: "token",
+              disabled: false,
+              locked: false,
+              states: [],
+            }}
+            hasStyles
+            states={[]}
+          />
+        </div>
+      )
+    );
+
+    const menu = document.querySelector<HTMLElement>('[role="menu"]')!;
+    act(() =>
+      menu.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          bubbles: true,
+          cancelable: true,
+        })
+      )
+    );
+    expect(onOuterKeyDown).not.toHaveBeenCalled();
+  } finally {
+    act(() => root.unmount());
+    container.remove();
+  }
 });

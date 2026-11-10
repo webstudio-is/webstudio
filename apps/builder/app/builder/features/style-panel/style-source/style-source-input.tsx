@@ -38,6 +38,7 @@ import {
   Fragment,
   type ComponentProps,
   type ForwardRefRenderFunction,
+  type KeyboardEvent as ReactKeyboardEvent,
   type RefObject,
   type ReactNode,
   useRef,
@@ -192,6 +193,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     onSort,
   });
   const internalInputRef = useRef<HTMLInputElement>(null);
+  const sourceButtonRefs = useRef(new Map<string, HTMLButtonElement>());
 
   const { focusWithinProps } = useFocusWithin({
     onFocusWithin: onFocus,
@@ -204,6 +206,46 @@ const TextFieldBase: ForwardRefRenderFunction<
 
   const styles = useStore($styles);
   const hasStylesMap = getHasStylesMap(value, styles.values());
+  const sourceBeforeInputId = value
+    .filter((item) => item.source !== "local")
+    .at(-1)?.id;
+
+  const handleInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    onKeyDown?.(event);
+    if (event.defaultPrevented || event.shiftKey) {
+      return;
+    }
+    if (event.key === "ArrowLeft" && !event.shiftKey) {
+      const input = internalInputRef.current;
+      if (input?.selectionStart === 0 && input.selectionEnd === 0) {
+        const previousItem = value
+          .filter((item) => item.source !== "local")
+          .at(-1);
+        const button =
+          previousItem && sourceButtonRefs.current.get(previousItem.id);
+        if (button) {
+          event.preventDefault();
+          button.focus();
+          return;
+        }
+      }
+    }
+    if (event.key === "ArrowRight" && !event.shiftKey) {
+      const input = internalInputRef.current;
+      if (
+        input?.selectionStart === input.value.length &&
+        input.selectionEnd === input.value.length
+      ) {
+        const localItem = value.find((item) => item.source === "local");
+        const button = localItem && sourceButtonRefs.current.get(localItem.id);
+        if (button) {
+          event.preventDefault();
+          button.focus();
+          return;
+        }
+      }
+    }
+  };
 
   return (
     <TextFieldContainer
@@ -239,6 +281,7 @@ const TextFieldBase: ForwardRefRenderFunction<
         value={label}
         onClick={onClick}
         inputRef={mergeRefs(internalInputRef, inputRef)}
+        onKeyDown={handleInputKeyDown}
         spellCheck={false}
         aria-label="New style source input"
       />
@@ -265,6 +308,15 @@ const TextFieldBase: ForwardRefRenderFunction<
           disabled={item.disabled}
           isDragging={item.id === dragItemId}
           isEditing={item.id === editingItemId}
+          buttonRef={(element) => {
+            if (element) {
+              sourceButtonRefs.current.set(item.id, element);
+            } else {
+              sourceButtonRefs.current.delete(item.id);
+            }
+          }}
+          beforeInput={item.id === sourceBeforeInputId}
+          onArrowToInput={() => internalInputRef.current?.focus()}
           hasStyles={hasStylesMap.get(item.id) ?? false}
           source={item.source}
           locked={item.locked}

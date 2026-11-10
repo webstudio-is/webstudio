@@ -375,6 +375,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
         </MenuTrigger>
       </DropdownMenuTrigger>
       <DropdownMenuContent
+        onKeyDown={(event) => event.stopPropagation()}
         onCloseAutoFocus={(event) => event.preventDefault()}
         autoFocus
         align="start"
