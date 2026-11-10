@@ -25,6 +25,7 @@ import { XIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 import { Separator } from "./separator";
 import { Text } from "./text";
 import { cssVar } from "../css-var";
+import { floatingIntentColors } from "./floating-intent-colors";
 
 const DIALOG_TITLE_HEIGHT = 40;
 const DIALOG_MAXIMIZED_MARGIN = 20;
@@ -44,6 +45,7 @@ if (placeholderImage) {
 }
 
 const panelStyle = css({
+  ...floatingIntentColors,
   boxSizing: "border-box",
   boxShadow: theme.shadows.panelSectionDropShadow,
   background: cssVar("--background-floating"),

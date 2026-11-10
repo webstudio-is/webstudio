@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
 } from "./dropdown-menu";
 import { MenuCheckedAndSetIcon } from "./menu";
+import { Text } from "./text";
 
 let root: Root | undefined;
 
@@ -39,6 +40,9 @@ test.each(["light", "dark"] as const)(
         <Dialog open>
           <DialogContent aria-describedby={undefined}>
             <DialogTitle>Dialog</DialogTitle>
+            <Text color="destructive" data-dialog-error>
+              Error
+            </Text>
             <DropdownMenu defaultOpen>
               <DropdownMenuTrigger asChild>
                 <Button>Actions</Button>
@@ -70,7 +74,14 @@ test.each(["light", "dark"] as const)(
     };
     const dialog = brightness(document.querySelector('[role="dialog"]')!);
     const menu = brightness(document.querySelector('[role="menu"]')!);
-    expect(mode === "light" ? menu < dialog : menu > dialog).toBe(true);
+    expect(mode === "light" ? menu > dialog : menu < dialog).toBe(true);
+    if (mode === "dark") {
+      const panel = document.createElement("div");
+      panel.style.backgroundColor = "var(--background-primary)";
+      document.body.append(panel);
+      expect(dialog).toBeLessThan(brightness(panel));
+      panel.remove();
+    }
 
     const color = (element: Element, property: "color" | "backgroundColor") => {
       context.fillStyle = getComputedStyle(element)[property];
@@ -89,24 +100,35 @@ test.each(["light", "dark"] as const)(
           (sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index],
           0
         );
-    const background = luminance(
-      color(document.querySelector('[role="menu"]')!, "backgroundColor")
-    );
-    const contrast = (element: Element) => {
+    const contrast = (element: Element, surface: Element) => {
       const foreground = luminance(color(element, "color"));
+      const background = luminance(color(surface, "backgroundColor"));
       return (
         (Math.max(foreground, background) + 0.05) /
         (Math.min(foreground, background) + 0.05)
       );
     };
     expect(
-      contrast(document.querySelector('[role="menuitem"]:last-child')!),
+      contrast(
+        document.querySelector('[role="menuitem"]:last-child')!,
+        document.querySelector('[role="menu"]')!
+      ),
       `${mode} destructive menu text contrast`
     ).toBeGreaterThanOrEqual(4.5);
     expect(
-      contrast(document.querySelector('[role="menuitem"] svg')!),
+      contrast(
+        document.querySelector('[role="menuitem"] svg')!,
+        document.querySelector('[role="menu"]')!
+      ),
       `${mode} set icon contrast`
     ).toBeGreaterThanOrEqual(3);
+    expect(
+      contrast(
+        document.querySelector("[data-dialog-error]")!,
+        document.querySelector('[role="dialog"]')!
+      ),
+      `${mode} dialog error text contrast`
+    ).toBeGreaterThanOrEqual(4.5);
   }
 );
 

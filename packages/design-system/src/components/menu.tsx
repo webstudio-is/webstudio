@@ -26,6 +26,7 @@ import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
 import { forwardRef, type ComponentProps } from "react";
 import { truncate } from "../utilities";
 import { cssVar } from "../css-var";
+import { floatingIntentColors } from "./floating-intent-colors";
 
 export const labelCss = css(textVariants.titles, {
   color: cssVar("--foreground-primary"),
@@ -81,7 +82,7 @@ export const menuItemCss = css({
     },
     destructive: {
       true: {
-        color: `color-mix(in oklab, ${cssVar("--foreground-negative")} 60%, ${cssVar("--foreground-primary")})`,
+        color: cssVar("--foreground-negative"),
       },
     },
     hint: {
@@ -131,7 +132,7 @@ const menuPadding = theme.spacing[3];
 const menuBorderWidth = "1px";
 
 export const menuCss = css({
-  "--foreground-secondary": cssVar("--foreground-secondary-floating"),
+  ...floatingIntentColors,
   boxSizing: "border-box",
   borderRadius: theme.borderRadius[6],
   backgroundColor: cssVar("--background-floating-raised"),
@@ -198,7 +199,7 @@ export const DropdownMenuArrow = () => (
 );
 
 const setIconStyle = css({
-  color: `color-mix(in oklab, ${cssVar("--foreground-accent")} 70%, ${cssVar("--foreground-primary")})`,
+  color: cssVar("--foreground-accent"),
 });
 
 // Icon for the "checked" state from Figma

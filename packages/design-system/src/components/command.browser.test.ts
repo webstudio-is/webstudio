@@ -134,7 +134,7 @@ test("command panels and selected items follow surface elevation", () => {
         luminance(panelBackground)
       );
     } else {
-      expect(luminance(panelBackground)).toBeGreaterThan(
+      expect(luminance(panelBackground)).toBeLessThan(
         luminance(referenceBackground)
       );
       expect(luminance(selectedBackground)).toBeGreaterThan(

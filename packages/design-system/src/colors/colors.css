@@ -212,16 +212,28 @@
   --background-primary: var(--color-background);
   --background-secondary: var(--color-surface-secondary);
   --background-floating: light-dark(
-    color-mix(in oklab, var(--color-background) 86%, var(--color-foreground)),
-    color-mix(in oklab, var(--color-background) 85%, var(--color-foreground))
+    color-mix(
+      in oklab,
+      var(--background-secondary) 75%,
+      var(--background-primary)
+    ),
+    color-mix(in oklab, var(--background-primary) 85%, black)
   );
   --background-floating-raised: light-dark(
-    color-mix(in oklab, var(--color-background) 80%, var(--color-foreground)),
-    color-mix(in oklab, var(--color-background) 78%, var(--color-foreground))
+    color-mix(
+      in oklab,
+      var(--background-secondary) 50%,
+      var(--background-primary)
+    ),
+    color-mix(in oklab, var(--background-primary) 75%, black)
   );
   --background-floating-nested: light-dark(
-    color-mix(in oklab, var(--color-background) 74%, var(--color-foreground)),
-    color-mix(in oklab, var(--color-background) 74%, var(--color-foreground))
+    color-mix(
+      in oklab,
+      var(--background-secondary) 25%,
+      var(--background-primary)
+    ),
+    color-mix(in oklab, var(--background-primary) 65%, black)
   );
   --background-disabled: color-mix(
     in oklab,
@@ -271,11 +283,6 @@
     var(--color-foreground) 65%,
     var(--color-background)
   );
-  --foreground-secondary-floating: color-mix(
-    in oklab,
-    var(--foreground-primary) 80%,
-    var(--background-primary)
-  );
   --foreground-disabled: color-mix(
     in oklab,
     var(--color-foreground) 45%,
@@ -293,6 +300,16 @@
   --foreground-negative: var(--color-negative-foreground);
   --foreground-warning: var(--color-warning-foreground);
   --foreground-informative: var(--color-informative-foreground);
+  --foreground-accent-floating: color-mix(
+    in oklab,
+    var(--foreground-accent) 90%,
+    var(--foreground-primary)
+  );
+  --foreground-accent-secondary-floating: color-mix(
+    in oklab,
+    var(--foreground-accent-secondary) 90%,
+    var(--foreground-primary)
+  );
 
   /* Border */
   --border-default: var(--color-border);

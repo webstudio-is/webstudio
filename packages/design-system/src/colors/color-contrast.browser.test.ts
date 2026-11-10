@@ -28,9 +28,9 @@ const expectedDefaultColors = {
   light: {
     "--background-primary": "#feffff",
     "--background-secondary": "#e8eaeb",
-    "--background-floating": "#d8dbdc",
-    "--background-floating-raised": "#c8cbcd",
-    "--background-floating-nested": "#b9bcbe",
+    "--background-floating": "#eeeff0",
+    "--background-floating-raised": "#f3f5f5",
+    "--background-floating-nested": "#f9fafb",
     "--background-disabled": "#f7f8f9",
     "--background-inverse": "#11181c",
     "--background-accent": "#096cff",
@@ -44,7 +44,6 @@ const expectedDefaultColors = {
     "--background-informative-subtle": "#e3effd",
     "--foreground-primary": "#11181c",
     "--foreground-secondary": "#595f63",
-    "--foreground-secondary-floating": "#393f43",
     "--foreground-disabled": "#898d90",
     "--foreground-on-inverse": "#feffff",
     "--foreground-on-accent": "#feffff",
@@ -58,6 +57,8 @@ const expectedDefaultColors = {
     "--foreground-negative": "#c52a28",
     "--foreground-warning": "#6f6100",
     "--foreground-informative": "#0a6bc7",
+    "--foreground-accent-floating": "#0e64e6",
+    "--foreground-accent-secondary-floating": "#9a37bf",
     "--border-default": "#e5e6e7",
     "--border-focus": "#297aff",
     "--border-negative": "#c52a28",
@@ -72,9 +73,9 @@ const expectedDefaultColors = {
   dark: {
     "--background-primary": "#151617",
     "--background-secondary": "#222425",
-    "--background-floating": "#2e3031",
-    "--background-floating-raised": "#3c3d3e",
-    "--background-floating-nested": "#444546",
+    "--background-floating": "#0e1010",
+    "--background-floating-raised": "#0a0b0c",
+    "--background-floating-nested": "#070708",
     "--background-disabled": "#191b1b",
     "--background-inverse": "#e6e8e9",
     "--background-accent": "#096cff",
@@ -88,7 +89,6 @@ const expectedDefaultColors = {
     "--background-informative-subtle": "#1a2839",
     "--foreground-primary": "#e6e8e9",
     "--foreground-secondary": "#959798",
-    "--foreground-secondary-floating": "#b7b9ba",
     "--foreground-disabled": "#6a6c6d",
     "--foreground-on-inverse": "#151617",
     "--foreground-on-accent": "#fdffff",
@@ -102,6 +102,8 @@ const expectedDefaultColors = {
     "--foreground-negative": "#ff594f",
     "--foreground-warning": "#c4c1a5",
     "--foreground-informative": "#a9c6e8",
+    "--foreground-accent-floating": "#a7c5f5",
+    "--foreground-accent-secondary-floating": "#dc7aff",
     "--border-default": "#252627",
     "--border-focus": "#1a6df2",
     "--border-negative": "#ff594f",
@@ -205,17 +207,15 @@ describe("Craft color contrast", () => {
         expect(
           getContrastRatio(floating, background),
           `${mode} floating surface`
-        ).toBeGreaterThanOrEqual(getContrastRatio(surface, background));
-        expect(
-          getContrastRatio(floating, surface),
-          `${mode} dialog above panel`
-        ).toBeGreaterThanOrEqual(1.12);
+        ).toBeGreaterThanOrEqual(1.05);
         if (mode === "light") {
-          expect(raised[0]).toBeLessThan(floating[0]);
-          expect(nested[0]).toBeLessThan(raised[0]);
-        } else {
+          expect(floating[0]).toBeGreaterThan(surface[0]);
           expect(raised[0]).toBeGreaterThan(floating[0]);
           expect(nested[0]).toBeGreaterThan(raised[0]);
+        } else {
+          expect(floating[0]).toBeLessThan(surface[0]);
+          expect(raised[0]).toBeLessThan(floating[0]);
+          expect(nested[0]).toBeLessThan(raised[0]);
         }
         expect(
           secondaryContrast,
