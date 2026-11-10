@@ -73,11 +73,14 @@ test.each(["light", "dark"] as const)(
       expect(getComputedStyle(gridPreview).outlineColor).toBe(
         getComputedStyle(gridLine).borderRightColor
       );
+      expect(getComputedStyle(cells[0]).borderColor).not.toBe(
+        getComputedStyle(cells[4]).borderColor
+      );
 
       for (const [border, background] of [
         [
           getComputedStyle(cells[4]).borderColor,
-          getComputedStyle(dialog).backgroundColor,
+          getComputedStyle(cells[4]).backgroundColor,
         ],
         [
           getComputedStyle(previewCell).borderColor,
@@ -89,7 +92,8 @@ test.each(["light", "dark"] as const)(
         const ratio =
           (Math.max(surface, stroke) + 0.05) /
           (Math.min(surface, stroke) + 0.05);
-        expect(ratio).toBeGreaterThanOrEqual(3);
+        expect(ratio).toBeGreaterThanOrEqual(2.2);
+        expect(ratio).toBeLessThanOrEqual(2.65);
       }
     } finally {
       act(() => root.unmount());

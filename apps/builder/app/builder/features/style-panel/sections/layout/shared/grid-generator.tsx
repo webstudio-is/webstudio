@@ -61,7 +61,7 @@ const getAxisTrackCount = (
   return parsedCount;
 };
 
-const gridLineColor = `color-mix(in oklab, ${cssVar("--foreground-secondary")} 75%, ${cssVar("--background-floating")})`;
+const gridLineColor = `color-mix(in oklab, ${cssVar("--foreground-secondary")} 60%, ${cssVar("--background-floating")})`;
 
 const selectorCellStyle = css({
   width: 16,
