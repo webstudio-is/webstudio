@@ -54,6 +54,7 @@ import {
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
+import { styleSourceColors } from "./color-recipes";
 import { $computedStyleDeclarations } from "../shared/model";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
 import { StyleSourceMenu, type SelectorConfig } from "./style-source-menu";
@@ -73,7 +74,7 @@ const TextFieldContainer = styled("div", {
   display: "flex",
   flexWrap: "wrap",
   alignItems: "center",
-  backgroundColor: cssVar("--background-secondary"),
+  backgroundColor: styleSourceColors.field.background,
   gap: theme.spacing[2],
   padding: theme.spacing[2],
   borderRadius: theme.borderRadius[4],

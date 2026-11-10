@@ -20,6 +20,12 @@ const neutralBackground = toggleGroupBackground;
 const neutralForeground = cssVar("--foreground-primary");
 
 export const styleSourceColors = {
+  field: {
+    // Stay between the group track and chip hover at any theme surface contrast.
+    background: `color-mix(in oklab, ${cssVar(
+      "--background-primary"
+    )} 92%, ${cssVar("--foreground-primary")})`,
+  },
   local: {
     background: styleSourceColor.local.solid,
     foreground: styleSourceColor.local.foreground,
