@@ -312,6 +312,7 @@ test("moves focus between the input and adjacent style sources with arrow keys",
       press(input, "ArrowLeft");
     });
     expect(document.activeElement).toBe(sourceButton("token-two"));
+    expect(sourceButton("token-two").matches(":focus-visible")).toBe(true);
 
     act(() => press(sourceButton("token-two"), "ArrowRight"));
     expect(document.activeElement).toBe(input);
@@ -324,6 +325,9 @@ test("moves focus between the input and adjacent style sources with arrow keys",
 
     act(() => press(sourceButton("local"), "ArrowLeft"));
     expect(document.activeElement).toBe(input);
+
+    act(() => press(sourceButton("token-two"), "ArrowDown"));
+    expect(document.querySelector('[role="menu"]')).not.toBeNull();
   } finally {
     act(() => root.unmount());
     container.remove();

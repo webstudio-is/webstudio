@@ -150,6 +150,11 @@ const StyleSourceButton = styled("button", {
   display: "block",
   boxSizing: "border-box",
   maxWidth: "100%",
+  "&:focus-visible": {
+    outline: `2px solid ${cssVar("--border-focus")}`,
+    outlineOffset: -2,
+    borderRadius: theme.borderRadius[2],
+  },
   variants: {
     isEditing: {
       true: {
@@ -291,6 +296,11 @@ export const StyleSourceControl = ({
             onKeyDown={(event) => {
               if (event.key.startsWith("Arrow")) {
                 event.stopPropagation();
+              }
+              if (event.key === "ArrowDown" && showMenu && !disabled) {
+                event.preventDefault();
+                onOpenMenu?.();
+                return;
               }
               if (
                 (beforeInput && event.key === "ArrowRight") ||
