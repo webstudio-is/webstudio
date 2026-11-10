@@ -333,7 +333,7 @@ const createStyleSource = (
       name: id,
     };
   }
-  if (type === "tagStyle") {
+  if (type === "tag") {
     return { type, id, tag: "div" };
   }
   return {

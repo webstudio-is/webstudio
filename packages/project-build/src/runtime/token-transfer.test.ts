@@ -50,7 +50,7 @@ test("pastes Tag styles into the matching tag and overwrites only matching decla
         ["base", { id: "base", label: "Base" }],
         ["mobile", { id: "mobile", label: "Mobile", maxWidth: 600 }],
       ]),
-      styleSources: new Map([[id, { type: "tagStyle", id, tag: "button" }]]),
+      styleSources: new Map([[id, { type: "tag", id, tag: "button" }]]),
       styleSourceSelections: new Map(),
       styles: styleMap([
         hover,
@@ -58,7 +58,7 @@ test("pastes Tag styles into the matching tag and overwrites only matching decla
         style(id, "mobile", "color", "orange"),
       ]),
     },
-    { styleSourceId: id, sourceType: "tagStyle" }
+    { styleSourceId: id, sourceType: "tag" }
   );
   const parsed = parseTagStyleTransferData(copied.data);
   expect(parsed.valid).toBe(true);
@@ -71,9 +71,7 @@ test("pastes Tag styles into the matching tag and overwrites only matching decla
         { id: "target-mobile", label: "Mobile", maxWidth: 600 },
       ],
     ]),
-    styleSources: new Map([
-      [id, { type: "tagStyle" as const, id, tag: "button" }],
-    ]),
+    styleSources: new Map([[id, { type: "tag" as const, id, tag: "button" }]]),
     styleSourceSelections: new Map(),
     styles: styleMap([
       { ...style(id, "target-base", "color", "blue"), state: ":hover" },
@@ -115,13 +113,13 @@ test("copies a Tag style before it has any saved declarations", () => {
       styleSourceSelections: new Map(),
       styles: new Map(),
     },
-    { styleSourceId: getTagStyleId("div"), sourceType: "tagStyle" }
+    { styleSourceId: getTagStyleId("div"), sourceType: "tag" }
   );
   const parsed = parseTagStyleTransferData(copied.data);
   expect(parsed.valid).toBe(true);
   if (parsed.valid) {
     expect(parsed.data.fragment.styleSources).toEqual([
-      { type: "tagStyle", id: getTagStyleId("div"), tag: "div" },
+      { type: "tag", id: getTagStyleId("div"), tag: "div" },
     ]);
   }
 });
@@ -132,11 +130,11 @@ test("creates the matching Tag style on paste without attaching it to an instanc
     {
       assets: new Map(),
       breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
-      styleSources: new Map([[id, { type: "tagStyle", id, tag: "h1" }]]),
+      styleSources: new Map([[id, { type: "tag", id, tag: "h1" }]]),
       styleSourceSelections: new Map(),
       styles: styleMap([style(id, "base", "color", "red")]),
     },
-    { styleSourceId: id, sourceType: "tagStyle" }
+    { styleSourceId: id, sourceType: "tag" }
   );
   const target = {
     assets: new Map(),
@@ -152,7 +150,7 @@ test("creates the matching Tag style on paste without attaching it to an instanc
     { id: "paste", payload: mutation.payload },
   ]).state;
   expect(pasted.styleSources?.get(id)).toEqual({
-    type: "tagStyle",
+    type: "tag",
     id,
     tag: "h1",
   });

@@ -322,11 +322,11 @@ const convertToInputItem = (
     label:
       styleSource.type === "local"
         ? "Local"
-        : styleSource.type === "tagStyle"
+        : styleSource.type === "tag"
           ? styleSource.tag
           : styleSource.name,
     disabled: false,
-    source: styleSource.type === "tagStyle" ? "tag" : styleSource.type,
+    source: styleSource.type,
     locked: styleSource.type === "token" && styleSource.locked === true,
     states,
   };
@@ -342,10 +342,7 @@ const $availableStyleSources = computed(
     if (tag && isTagStyleTag(tag)) {
       const id = getTagStyleId(tag);
       availableStylesSources.push(
-        convertToInputItem(
-          styleSources.get(id) ?? { type: "tagStyle", id, tag },
-          []
-        )
+        convertToInputItem(styleSources.get(id) ?? { type: "tag", id, tag }, [])
       );
     }
     for (const styleSource of styleSources.values()) {
@@ -444,7 +441,7 @@ export const StyleSourcesSection = () => {
         onCopyItem={(id) => {
           const source = $styleSources.get().get(id);
           const type =
-            source?.type ?? (getTagFromStyleId(id) ? "tagStyle" : "local");
+            source?.type ?? (getTagFromStyleId(id) ? "tag" : "local");
           const copy =
             type === "token"
               ? copyToken(id)

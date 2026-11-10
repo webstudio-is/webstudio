@@ -169,7 +169,7 @@ export const generateCss = ({
 
   for (const styleDecl of styles.values()) {
     const styleSource = styleSources.get(styleDecl.styleSourceId);
-    const sheet = styleSource?.type === "tagStyle" ? tagStyleSheet : userSheet;
+    const sheet = styleSource?.type === "tag" ? tagStyleSheet : userSheet;
     const rule = sheet.addMixinRule(styleDecl.styleSourceId);
     rule.setDeclaration({
       breakpoint: styleDecl.breakpointId,
@@ -180,7 +180,7 @@ export const generateCss = ({
   }
 
   for (const source of styleSources.values()) {
-    if (source.type === "tagStyle") {
+    if (source.type === "tag") {
       tagStyleSheet.addNestingRule(source.tag).applyMixins([source.id]);
     }
   }

@@ -571,7 +571,7 @@ export const subscribeStyles = () => {
       }
       const tagStyles = new Map<string, string>();
       for (const source of styleSources.values()) {
-        if (source.type === "tagStyle") {
+        if (source.type === "tag") {
           tagStyles.set(source.id, source.tag);
           tagStyleSheet.addNestingRule(source.tag);
         }
@@ -615,18 +615,14 @@ export const subscribeStyles = () => {
     prevStylesSet = nextPrevStylesSet;
     // delete before adding declarations by the same key
     for (const styleDecl of deletedStyles) {
-      if (
-        $styleSources.get().get(styleDecl.styleSourceId)?.type === "tagStyle"
-      ) {
+      if ($styleSources.get().get(styleDecl.styleSourceId)?.type === "tag") {
         continue;
       }
       const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
       rule.deleteDeclaration(toDeclarationParams(styleDecl));
     }
     for (const styleDecl of addedStyles) {
-      if (
-        $styleSources.get().get(styleDecl.styleSourceId)?.type === "tagStyle"
-      ) {
+      if ($styleSources.get().get(styleDecl.styleSourceId)?.type === "tag") {
         continue;
       }
       const rule = userSheet.addMixinRule(styleDecl.styleSourceId);

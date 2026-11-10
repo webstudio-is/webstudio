@@ -37,7 +37,7 @@ test("pastes copied Tokens and Tag styles while leaving ordinary text to the inp
       styleSourceSelections: new Map(),
       styles: new Map(),
     },
-    { styleSourceId: "tag-style:button", sourceType: "tagStyle" }
+    { styleSourceId: "tag-style:button", sourceType: "tag" }
   ).data;
   const localData = copyStyleSourceTransfer(
     {

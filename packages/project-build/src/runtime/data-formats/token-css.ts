@@ -41,12 +41,12 @@ export type TokenTransferData = {
   sourceOrigin?: string;
 };
 
-type TransferKind = "token" | "tagStyle" | "local";
+type TransferKind = "token" | "tag" | "local";
 
 const transferFormat = (kind: TransferKind) =>
   kind === "token"
     ? { namespace: "token-css", selector: ".ws-token" }
-    : kind === "tagStyle"
+    : kind === "tag"
       ? { namespace: "tag-style-css", selector: ".ws-tag-style" }
       : { namespace: "local-style-css", selector: ".ws-local" };
 
@@ -123,7 +123,7 @@ export const serializeTokenCss = (
   const name = JSON.stringify(
     token.type === "token"
       ? token.name
-      : token.type === "tagStyle"
+      : token.type === "tag"
         ? token.tag
         : "local"
   ).replaceAll("*/", "*\\/");
@@ -202,7 +202,7 @@ const parseStyleSourceTransferData = (
   if (
     pragma.version !== "v1" ||
     typeof pragma.value !== "string" ||
-    (kind === "tagStyle" && !isTagStyleTag(pragma.value)) ||
+    (kind === "tag" && !isTagStyleTag(pragma.value)) ||
     (kind === "local" && pragma.value !== "local") ||
     source.slice(0, pragma.start).trim() !== ""
   ) {
@@ -338,7 +338,7 @@ const parseStyleSourceTransferData = (
     parsed.styles.some(
       (style) =>
         (style.selector === ":root" && !style.property.startsWith("--")) ||
-        (kind === "tagStyle" &&
+        (kind === "tag" &&
           style.selector !== ":root" &&
           style.state !== undefined &&
           validateSelector(style.state, { allowDescendants: false }).success ===
@@ -434,8 +434,7 @@ const parseStyleSourceTransferData = (
       sourceOrigin = url.origin;
     }
   }
-  const tagStyleId =
-    kind === "tagStyle" ? getTagStyleId(pragma.value) : tokenId;
+  const tagStyleId = kind === "tag" ? getTagStyleId(pragma.value) : tokenId;
   const fragment: WebstudioFragment = {
     children: [],
     instances: [],
@@ -446,8 +445,8 @@ const parseStyleSourceTransferData = (
     styleSources: [
       kind === "token"
         ? { type: "token", id: tokenId, name: pragma.value }
-        : kind === "tagStyle"
-          ? { type: "tagStyle", id: tagStyleId, tag: pragma.value }
+        : kind === "tag"
+          ? { type: "tag", id: tagStyleId, tag: pragma.value }
           : { type: "local", id: tokenId },
     ],
     styles,
@@ -479,7 +478,7 @@ export const parseTokenTransferData = (source: string) =>
   parseStyleSourceTransferData(source, "token");
 
 export const parseTagStyleTransferData = (source: string) =>
-  parseStyleSourceTransferData(source, "tagStyle");
+  parseStyleSourceTransferData(source, "tag");
 
 export const parseLocalStyleTransferData = (source: string) =>
   parseStyleSourceTransferData(source, "local");

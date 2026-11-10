@@ -1622,7 +1622,7 @@ describe("runtime style operations", () => {
         {
           op: "add",
           path: [id],
-          value: { type: "tagStyle", id, tag: "button" },
+          value: { type: "tag", id, tag: "button" },
         },
       ],
     });
@@ -1670,7 +1670,7 @@ describe("runtime style operations", () => {
     expect(mutation.payload).toContainEqual({
       namespace: "styleSources",
       patches: [
-        { op: "add", path: [id], value: { type: "tagStyle", id, tag: "html" } },
+        { op: "add", path: [id], value: { type: "tag", id, tag: "html" } },
       ],
     });
     expect(
@@ -2156,8 +2156,8 @@ test("lists global Tag styles separately from design tokens", () => {
   };
   const state = {
     styleSources: new Map<string, StyleSource>([
-      [divId, { type: "tagStyle", id: divId, tag: "div" }],
-      [buttonId, { type: "tagStyle", id: buttonId, tag: "button" }],
+      [divId, { type: "tag", id: divId, tag: "div" }],
+      [buttonId, { type: "tag", id: buttonId, tag: "button" }],
       ["token", { type: "token", id: "token", name: "Primary" }],
     ]),
     styles: new Map([[getStyleDeclKey(declaration), declaration]]),

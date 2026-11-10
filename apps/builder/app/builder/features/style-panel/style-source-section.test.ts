@@ -65,10 +65,7 @@ test("Global root offers only the html Tag style first", () => {
   $registeredComponentMetas.set(new Map(Object.entries(coreMetas)));
   $styleSources.set(
     new Map([
-      [
-        getTagStyleId("p"),
-        { type: "tagStyle", id: getTagStyleId("p"), tag: "p" },
-      ],
+      [getTagStyleId("p"), { type: "tag", id: getTagStyleId("p"), tag: "p" }],
       ["token", { type: "token", id: "token", name: "Token" }],
     ])
   );

@@ -147,7 +147,7 @@ export const listTagStyles = (
     declarationsBySource.set(declaration.styleSourceId, declarations);
   }
   const tagStyles = Array.from(state.styleSources.values())
-    .filter((source) => source.type === "tagStyle")
+    .filter((source) => source.type === "tag")
     .filter((source) => input.tag === undefined || source.tag === input.tag)
     .sort((left, right) => left.tag.localeCompare(right.tag))
     .map((source) => {
@@ -2294,7 +2294,7 @@ export const deleteStyleSources = (
     if (source === undefined) {
       return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
     }
-    if (source.type === "tagStyle") {
+    if (source.type === "tag") {
       return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
     }
   }
@@ -3197,7 +3197,7 @@ export const createSelectedStyleDeclarationUpdatePayload = ({
     }
 
     // Tag styles render globally and never enter instance selections.
-    if (update.styleSource.type !== "tagStyle") {
+    if (update.styleSource.type !== "tag") {
       const selection = styleSourceSelectionByInstanceId.get(update.instanceId);
       const hasPendingSelection =
         selection === undefined &&
@@ -3481,16 +3481,16 @@ export const updateSelectedStyleDeclarations = (
     if (existingSource === undefined && tag === undefined) {
       return throwBuilderRuntimeError("NOT_FOUND", "Style source not found");
     }
-    if (existingSource && tag && existingSource.type !== "tagStyle") {
+    if (existingSource && tag && existingSource.type !== "tag") {
       return throwBuilderRuntimeError("CONFLICT", "Tag style id is in use");
     }
     const styleSource: StyleSource = existingSource ?? {
-      type: "tagStyle",
+      type: "tag",
       id: update.styleSourceId,
       tag: tag!,
     };
     if (
-      styleSource.type === "tagStyle" &&
+      styleSource.type === "tag" &&
       update.state !== undefined &&
       validateSelector(update.state, { allowDescendants: false }).success ===
         false

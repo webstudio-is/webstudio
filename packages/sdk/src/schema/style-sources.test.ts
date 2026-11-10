@@ -6,8 +6,8 @@ describe("StyleSource", () => {
     const id = getTagStyleId("html");
     expect(id).toBe("tag-style:html");
     expect(getTagFromStyleId(id)).toBe("html");
-    expect(styleSource.parse({ type: "tagStyle", id, tag: "html" })).toEqual({
-      type: "tagStyle",
+    expect(styleSource.parse({ type: "tag", id, tag: "html" })).toEqual({
+      type: "tag",
       id,
       tag: "html",
     });

@@ -479,7 +479,7 @@ export const copyToken = async (tokenId: string) =>
 
 export const copyReusableStyleSource = async (
   styleSourceId: string,
-  sourceType: "tagStyle" | "local"
+  sourceType: "tag" | "local"
 ) => writeClipboardText(copyReusableStyleSourceData(styleSourceId, sourceType));
 
 export const pasteStyleSource = async (data: string) => {

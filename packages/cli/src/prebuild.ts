@@ -1657,7 +1657,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
         .flatMap(({ values }) => values)
     );
     for (const source of publishedStyleSources.values()) {
-      if (source.type === "tagStyle") {
+      if (source.type === "tag") {
         styleSourceIds.add(source.id);
       }
     }

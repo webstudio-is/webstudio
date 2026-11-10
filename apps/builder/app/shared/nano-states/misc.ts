@@ -236,7 +236,7 @@ export const $selectedInstanceStyleSources = computed(
     if (tag && temporaryTagStyleId) {
       selectedInstanceStyleSources.push(
         styleSources.get(temporaryTagStyleId) ?? {
-          type: "tagStyle",
+          type: "tag",
           id: temporaryTagStyleId,
           tag,
         }

@@ -55,7 +55,7 @@ test("renders an unattached tag token before instance styles", () => {
     breakpoints: toMap<Breakpoint>([{ id: "base", label: "Base" }]),
     styleSources: new Map([
       ...data.styleSources,
-      [id, { type: "tagStyle" as const, id, tag: "p" }],
+      [id, { type: "tag" as const, id, tag: "p" }],
     ]),
     styles: new Map([
       ...data.styles,

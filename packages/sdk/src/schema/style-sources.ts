@@ -26,7 +26,7 @@ export const getTagFromStyleId = (id: string) => {
 
 const styleSourceTagStyle = z
   .object({
-    type: z.literal("tagStyle"),
+    type: z.literal("tag"),
     id: styleSourceId,
     tag: z.string().refine(isTagStyleTag),
   })

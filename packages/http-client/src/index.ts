@@ -2190,7 +2190,7 @@ export const copyDesignToken = (
 const queryCopyStyleSource = projectQueryInput<
   AuthProjectParams & {
     styleSourceId: string;
-    sourceType: "token" | "tagStyle" | "local";
+    sourceType: "token" | "tag" | "local";
     sourceOrigin?: string;
   },
   { data: string }
@@ -2199,7 +2199,7 @@ const queryCopyStyleSource = projectQueryInput<
 export const copyStyleSource = (
   params: AuthProjectParams & {
     styleSourceId: string;
-    sourceType: "token" | "tagStyle" | "local";
+    sourceType: "token" | "tag" | "local";
     sourceOrigin?: string;
   }
 ) =>

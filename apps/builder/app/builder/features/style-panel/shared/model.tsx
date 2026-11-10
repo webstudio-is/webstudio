@@ -246,7 +246,7 @@ export const $styleObjectModel = computed(
   ): StyleObjectModel => {
     const tagStyleIds = new Map<string, string>();
     for (const source of styleSources.values()) {
-      if (source.type === "tagStyle") {
+      if (source.type === "tag") {
         tagStyleIds.set(source.tag, source.id);
       }
     }

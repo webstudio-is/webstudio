@@ -126,7 +126,7 @@ export const PropertyInfo = ({
       const styleSourceName =
         styleSource.type === "token"
           ? styleSource.name
-          : styleSource.type === "tagStyle"
+          : styleSource.type === "tag"
             ? styleSource.tag
             : "Local";
       if (source.state) {
@@ -161,7 +161,7 @@ export const PropertyInfo = ({
     }
     selectInstance(target.instanceSelector);
     if (source.styleSourceId) {
-      if (styleSources.get(source.styleSourceId)?.type === "tagStyle") {
+      if (styleSources.get(source.styleSourceId)?.type === "tag") {
         $temporaryTagStyleId.set(source.styleSourceId);
       }
       selectStyleSource(source.styleSourceId, source.state);
@@ -188,7 +188,7 @@ export const PropertyInfo = ({
       source,
       color:
         source.styleSourceId &&
-        styleSources.get(source.styleSourceId)?.type === "tagStyle"
+        styleSources.get(source.styleSourceId)?.type === "tag"
           ? ("tag" as const)
           : label === "Local"
             ? ("local" as const)

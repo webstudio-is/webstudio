@@ -24,7 +24,7 @@ export const copyTokenData = (tokenId: string) =>
 
 export const copyReusableStyleSourceData = (
   styleSourceId: string,
-  sourceType: "tagStyle" | "local"
+  sourceType: "tag" | "local"
 ) =>
   copyStyleSourceTransfer(getWebstudioData(), {
     styleSourceId,
@@ -63,7 +63,7 @@ export const styleSource: Plugin = {
     if (projectId === undefined) {
       return { success: false, error: "Project is unavailable" };
     }
-    if (sourceType !== "tagStyle" && instanceId === undefined) {
+    if (sourceType !== "tag" && instanceId === undefined) {
       return { success: false, error: cannotPaste };
     }
     try {

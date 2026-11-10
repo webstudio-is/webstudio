@@ -47,15 +47,13 @@ const tagData = copyStyleSourceTransfer(
   {
     assets: new Map([[image.id, image]]),
     breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
-    styleSources: new Map([
-      [tagId, { type: "tagStyle", id: tagId, tag: "button" }],
-    ]),
+    styleSources: new Map([[tagId, { type: "tag", id: tagId, tag: "button" }]]),
     styleSourceSelections: new Map(),
     styles: new Map([[getStyleDeclKey(tagStyle), tagStyle]]),
   },
   {
     styleSourceId: tagId,
-    sourceType: "tagStyle",
+    sourceType: "tag",
     sourceOrigin: "https://builder.example.com",
   }
 ).data;

@@ -66,7 +66,7 @@ While the server is running, stdout is reserved for MCP JSON-RPC messages. Do no
 
 Use `copy-design-token` with `tokenId` to get a transfer payload. Pass that payload as `data` to `paste-design-token` in the target project. Set `instanceId` to attach the new token to an instance; without it, paste creates the token without attaching it. Each paste creates the next numbered copy. Image and font assets transfer when both projects use the same Webstudio origin.
 
-The same commands transfer all three style source types. Call `copy-design-token` with `styleSourceId` and `sourceType` set to `token`, `tagStyle`, or `local`. The older `tokenId` input still copies a Token. Pass the returned `data` to `paste-design-token`; the payload identifies its source type. A Tag style merges into the matching global tag. A Local style merges into the Local source of the supplied `instanceId`, creating that source if needed. Pasted declarations replace matching properties, states, and breakpoints; other styles remain.
+The same commands transfer all three style source types. Call `copy-design-token` with `styleSourceId` and `sourceType` set to `token`, `tag`, or `local`. The older `tokenId` input still copies a Token. Pass the returned `data` to `paste-design-token`; the payload identifies its source type. A Tag style merges into the matching global tag. A Local style merges into the Local source of the supplied `instanceId`, creating that source if needed. Pasted declarations replace matching properties, states, and breakpoints; other styles remain.
 
 ### Native Form actions
 

@@ -333,7 +333,7 @@ test("lists global Tag styles through the runtime command", () => {
   const result = executeBuilderRuntimeOperation({
     id: "tagStyles.list",
     state: {
-      styleSources: new Map([[id, { id, type: "tagStyle", tag: "h1" }]]),
+      styleSources: new Map([[id, { id, type: "tag", tag: "h1" }]]),
       styles: new Map([[getStyleDeclKey(declaration), declaration]]),
     },
     input: { tag: "h1", verbose: true },

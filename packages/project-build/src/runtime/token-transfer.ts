@@ -64,7 +64,7 @@ export const copyDesignTokenInput = z.union([
   z.object({ tokenId: z.string(), sourceOrigin: z.string().url().optional() }),
   z.object({
     styleSourceId: z.string(),
-    sourceType: z.enum(["token", "tagStyle", "local"]),
+    sourceType: z.enum(["token", "tag", "local"]),
     sourceOrigin: z.string().url().optional(),
   }),
 ]);
@@ -100,16 +100,15 @@ const rewriteVariableReferences = (
 const copyStyleSource = (
   state: TokenState,
   input: { sourceId: string; sourceOrigin?: string },
-  kind: "token" | "tagStyle" | "local"
+  kind: "token" | "tag" | "local"
 ) => {
   const { assets, breakpoints, styleSources, styleSourceSelections, styles } =
     requireTokenState(state);
-  const tag =
-    kind === "tagStyle" ? getTagFromStyleId(input.sourceId) : undefined;
+  const tag = kind === "tag" ? getTagFromStyleId(input.sourceId) : undefined;
   const source =
     styleSources.get(input.sourceId) ??
     (tag
-      ? { type: "tagStyle" as const, id: input.sourceId, tag }
+      ? { type: "tag" as const, id: input.sourceId, tag }
       : kind === "local"
         ? { type: "local" as const, id: input.sourceId }
         : undefined);
@@ -251,14 +250,14 @@ export const copyStyleSourceTransfer = (
 const pasteStyleSource = (
   state: TokenState,
   input: z.infer<typeof pasteDesignTokenInput>,
-  kind: "token" | "tagStyle" | "local",
+  kind: "token" | "tag" | "local",
   context: { createId: () => string } = { createId: () => createId("nano") }
 ) => {
   const target = requireTokenState(state);
   const parsed =
     kind === "token"
       ? parseTokenTransferData(input.data)
-      : kind === "tagStyle"
+      : kind === "tag"
         ? parseTagStyleTransferData(input.data)
         : parseLocalStyleTransferData(input.data);
   if (parsed.valid === false) {
@@ -280,9 +279,9 @@ const pasteStyleSource = (
     return throwBuilderRuntimeError("BAD_REQUEST", "Instance not found");
   }
   if (
-    kind === "tagStyle" &&
+    kind === "tag" &&
     target.styleSources.get(tokenId) !== undefined &&
-    target.styleSources.get(tokenId)?.type !== "tagStyle"
+    target.styleSources.get(tokenId)?.type !== "tag"
   ) {
     return throwBuilderRuntimeError("CONFLICT", "Tag style id is in use");
   }
@@ -579,7 +578,7 @@ export const pasteStyleSourceTransfer = (
     const mutation = pasteStyleSource(
       state,
       input,
-      kind === "local" ? "local" : "tagStyle",
+      kind === "local" ? "local" : "tag",
       context
     );
     return {
