@@ -100,6 +100,9 @@ const StyleSourceContainer = styled(Box, {
   color: cssVar("--foreground-on-accent"),
   ...menuCssVars({ show: false }),
   "&:hover": menuCssVars({ show: true }),
+  "&:has(button:focus-visible)": {
+    boxShadow: `inset 0 0 0 2px ${cssVar("--border-focus")}`,
+  },
   variants: {
     source: {
       local: {
@@ -150,11 +153,6 @@ const StyleSourceButton = styled("button", {
   display: "block",
   boxSizing: "border-box",
   maxWidth: "100%",
-  "&:focus-visible": {
-    outline: `2px solid ${cssVar("--border-focus")}`,
-    outlineOffset: -2,
-    borderRadius: theme.borderRadius[2],
-  },
   variants: {
     isEditing: {
       true: {
