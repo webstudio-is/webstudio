@@ -131,18 +131,11 @@
     var(--color-border-soft) calc(100% - var(--theme-contrast-border)),
     var(--color-border-strong)
   );
-  --color-focus: light-dark(
-    color-mix(
-      in oklab,
-      var(--color-accent) calc(92% + var(--theme-contrast-surface) * 0.08),
-      var(--color-background)
-    ),
-    color-mix(
-      in oklab,
-      oklch(from var(--color-accent) max(l, 0.6) c h)
-        calc(92% + var(--theme-contrast-surface) * 0.08),
-      var(--color-background)
-    )
+  --color-focus: color-mix(
+    in oklab,
+    oklch(from var(--theme-color-accent) max(l, 0.6) min(c, 0.3) h)
+      calc(92% + var(--theme-contrast-surface) * 0.08),
+    var(--color-background)
   );
   --color-on-chromatic: light-dark(
     var(--color-background),
@@ -214,7 +207,7 @@
   );
   --background-warning-subtle: color-mix(
     in oklab,
-    var(--color-warning) 20%,
+    var(--color-warning) 16%,
     var(--color-background)
   );
   --background-informative-subtle: light-dark(
