@@ -54,8 +54,7 @@ import {
 import { useSortable } from "./use-sortable";
 import { matchSorter } from "match-sorter";
 import { StyleSourceBadge } from "./style-source-badge";
-import { $computedStyleDeclarations } from "../shared/model";
-import type { ComputedStyleDecl } from "~/shared/style-object-model";
+import { $styles } from "~/shared/sync/data-stores";
 import { StyleSourceMenu, type SelectorConfig } from "./style-source-menu";
 
 type IntermediateItem = {
@@ -151,15 +150,13 @@ const StyleSourceControlWithMenu = <Item extends IntermediateItem>({
 // Returns true if style source has defined styles including on the states.
 const getHasStylesMap = <Item extends IntermediateItem>(
   styleSourceItems: Array<Item>,
-  computedStyleDeclarations: Array<ComputedStyleDecl>
+  styles: Iterable<{ styleSourceId: string }>
 ) => {
+  const sourceIds = new Set(Array.from(styles, (style) => style.styleSourceId));
   const map = new Map<Item["id"], boolean>();
   for (const item of styleSourceItems) {
-    for (const style of computedStyleDeclarations) {
-      if (item.id === style.source.styleSourceId) {
-        map.set(item.id, true);
-        break;
-      }
+    if (sourceIds.has(item.id)) {
+      map.set(item.id, true);
     }
   }
   return map;
@@ -205,15 +202,8 @@ const TextFieldBase: ForwardRefRenderFunction<
     internalInputRef.current?.focus();
   }, [internalInputRef]);
 
-  const computedStyleDeclarations = useStore($computedStyleDeclarations);
-
-  const hasStyles = useCallback(
-    (styleSourceId: string) => {
-      const hasStylesMap = getHasStylesMap(value, computedStyleDeclarations);
-      return hasStylesMap.get(styleSourceId) ?? false;
-    },
-    [value, computedStyleDeclarations]
-  );
+  const styles = useStore($styles);
+  const hasStylesMap = getHasStylesMap(value, styles.values());
 
   return (
     <TextFieldContainer
@@ -275,7 +265,7 @@ const TextFieldBase: ForwardRefRenderFunction<
           disabled={item.disabled}
           isDragging={item.id === dragItemId}
           isEditing={item.id === editingItemId}
-          hasStyles={hasStyles(item.id)}
+          hasStyles={hasStylesMap.get(item.id) ?? false}
           source={item.source}
           locked={item.locked}
           onChangeEditing={(isEditing) => {

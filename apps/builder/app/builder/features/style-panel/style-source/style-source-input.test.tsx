@@ -227,7 +227,7 @@ test("disables Copy when a source has no declarations", () => {
   }
 });
 
-test("does not treat an empty state list as copyable styles", () => {
+test("does not treat selectors alone as copyable styles", () => {
   const hasStyles = inputTesting.getHasStylesMap(
     [
       {
@@ -243,4 +243,28 @@ test("does not treat an empty state list as copyable styles", () => {
   );
 
   expect(hasStyles.get("tag-style:button")).toBeUndefined();
+});
+
+test("allows Copy for styles on inactive states or breakpoints", () => {
+  const hasStyles = inputTesting.getHasStylesMap(
+    [
+      {
+        id: "tag-style:button",
+        label: "button",
+        source: "tag",
+        disabled: false,
+        locked: false,
+        states: [],
+      },
+    ],
+    [
+      {
+        styleSourceId: "tag-style:button",
+        state: ":hover",
+        breakpointId: "mobile",
+      },
+    ]
+  );
+
+  expect(hasStyles.get("tag-style:button")).toBe(true);
 });
