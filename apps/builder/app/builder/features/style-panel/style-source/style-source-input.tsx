@@ -206,9 +206,28 @@ const TextFieldBase: ForwardRefRenderFunction<
 
   const styles = useStore($styles);
   const hasStylesMap = getHasStylesMap(value, styles.values());
-  const sourceBeforeInputId = value
-    .filter((item) => item.source !== "local")
-    .at(-1)?.id;
+  const focusOrder = [
+    ...value.filter((item) => item.source !== "local"),
+    undefined,
+    ...value.filter((item) => item.source === "local"),
+  ];
+  const focusAdjacent = (id: string | undefined, direction: -1 | 1) => {
+    let index = focusOrder.findIndex((item) => item?.id === id) + direction;
+    while (index >= 0 && index < focusOrder.length) {
+      const item = focusOrder[index];
+      if (item === undefined) {
+        internalInputRef.current?.focus();
+        return true;
+      }
+      const button = sourceButtonRefs.current.get(item.id);
+      if (button && button.disabled === false) {
+        button.focus();
+        return true;
+      }
+      index += direction;
+    }
+    return false;
+  };
 
   const handleInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (
@@ -218,15 +237,9 @@ const TextFieldBase: ForwardRefRenderFunction<
     ) {
       const input = internalInputRef.current;
       if (input?.selectionStart === 0 && input.selectionEnd === 0) {
-        const previousItem = value
-          .filter((item) => item.source !== "local")
-          .at(-1);
-        const button =
-          previousItem && sourceButtonRefs.current.get(previousItem.id);
-        if (button) {
+        if (focusAdjacent(undefined, -1)) {
           event.preventDefault();
           event.stopPropagation();
-          button.focus();
           return;
         }
       }
@@ -242,12 +255,9 @@ const TextFieldBase: ForwardRefRenderFunction<
         input.selectionStart === input.value.length &&
         input.selectionEnd === input.value.length
       ) {
-        const localItem = value.find((item) => item.source === "local");
-        const button = localItem && sourceButtonRefs.current.get(localItem.id);
-        if (button) {
+        if (focusAdjacent(undefined, 1)) {
           event.preventDefault();
           event.stopPropagation();
-          button.focus();
           return;
         }
       }
@@ -322,8 +332,9 @@ const TextFieldBase: ForwardRefRenderFunction<
               sourceButtonRefs.current.delete(item.id);
             }
           }}
-          beforeInput={item.id === sourceBeforeInputId}
-          onArrowToInput={() => internalInputRef.current?.focus()}
+          onArrowToSource={(direction) =>
+            focusAdjacent(item.id, direction === "left" ? -1 : 1)
+          }
           hasStyles={hasStylesMap.get(item.id) ?? false}
           source={item.source}
           locked={item.locked}

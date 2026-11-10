@@ -235,8 +235,7 @@ type StyleSourceControlProps = {
   onChangeEditing: (isEditing: boolean) => void;
   onOpenMenu?: () => void;
   buttonRef?: (element: HTMLButtonElement | null) => void;
-  beforeInput?: boolean;
-  onArrowToInput?: () => void;
+  onArrowToSource?: (direction: "left" | "right") => boolean;
 };
 
 export const StyleSourceControl = ({
@@ -258,8 +257,7 @@ export const StyleSourceControl = ({
   onSelect,
   onOpenMenu,
   buttonRef,
-  beforeInput = false,
-  onArrowToInput,
+  onArrowToSource,
 }: StyleSourceControlProps) => {
   const showMenu = isEditing === false && isDragging === false;
 
@@ -301,11 +299,13 @@ export const StyleSourceControl = ({
                 return;
               }
               if (
-                (beforeInput && event.key === "ArrowRight") ||
-                (source === "local" && event.key === "ArrowLeft")
+                !event.shiftKey &&
+                (event.key === "ArrowLeft" || event.key === "ArrowRight") &&
+                onArrowToSource?.(
+                  event.key === "ArrowLeft" ? "left" : "right"
+                )
               ) {
                 event.preventDefault();
-                onArrowToInput?.();
               }
             }}
             onContextMenu={handleContextMenu}
