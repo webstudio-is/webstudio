@@ -121,6 +121,7 @@ export const SelectItemDescription = ({
         data-select-description="content"
         css={{
           display: "grid",
+          "& > * > *": { maxWidth: "100%" },
         }}
         hint
       >
