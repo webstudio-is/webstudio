@@ -3,6 +3,12 @@ import { css, theme } from "../stitches.config";
 import { textVariants } from "./text";
 import { StorySection } from "./storybook";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./dropdown-menu";
+import {
   Dialog,
   DialogActions,
   DialogClose,
@@ -63,6 +69,26 @@ const DialogDemo = () => (
   </StorySection>
 );
 export { DialogDemo as Dialog };
+
+export const DropdownInDialog = () => (
+  <StorySection title="Dropdown in dialog">
+    <Dialog defaultOpen>
+      <DialogContent>
+        <div className={bodyStyle()}>
+          <DropdownMenu defaultOpen>
+            <DropdownMenuTrigger asChild>
+              <Button>Actions</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>Example action</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <DialogTitle>Dialog with dropdown</DialogTitle>
+      </DialogContent>
+    </Dialog>
+  </StorySection>
+);
 
 export const ResizableDialog = () => (
   <StorySection title="Resizable dialog">

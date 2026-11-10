@@ -46,7 +46,7 @@ if (placeholderImage) {
 const panelStyle = css({
   boxSizing: "border-box",
   boxShadow: theme.shadows.panelSectionDropShadow,
-  background: cssVar("--background-primary"),
+  background: cssVar("--background-floating"),
   border: `1px solid ${cssVar("--border-default")}`,
   borderRadius: theme.borderRadius[7],
   display: "flex",

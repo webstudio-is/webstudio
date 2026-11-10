@@ -22,9 +22,9 @@ export const PopoverAnchor = Primitive.Anchor;
 const contentStyle = css({
   border: `1px solid ${cssVar("--border-default")}`,
   boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar(
-    "--background-primary"
+    "--background-floating-raised"
   )}`,
-  background: cssVar("--background-primary"),
+  background: cssVar("--background-floating-raised"),
   borderRadius: theme.borderRadius[6],
   display: "flex",
   flexDirection: "column",

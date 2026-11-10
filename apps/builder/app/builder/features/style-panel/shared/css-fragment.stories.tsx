@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { StorySection, theme } from "@webstudio-is/design-system";
+import { EditorDialog } from "~/shared/code-editor-base";
 import { CssFragmentEditorContent } from "./css-fragment";
 
 export default {
@@ -28,4 +29,20 @@ export const CSSFragmentEditor = () => (
   <div style={{ width: theme.sizes.sidebarWidth }}>
     <CssFragmentEditorStory />
   </div>
+);
+
+export const CSSValueDialog = () => (
+  <EditorDialog
+    open
+    title="CSS value"
+    content={
+      <CssFragmentEditorContent
+        value="1fr"
+        showLineNumbers
+        showShortcuts
+        onChange={() => {}}
+        onChangeComplete={() => {}}
+      />
+    }
+  />
 );

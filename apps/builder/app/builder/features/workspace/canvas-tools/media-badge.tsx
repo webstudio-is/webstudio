@@ -10,7 +10,7 @@ const labelStyle = css({
 });
 
 const badgeStyle = css({
-  background: cssVar("--background-primary"),
+  background: `color-mix(in oklab, ${cssVar("--background-secondary")} 85%, ${cssVar("--foreground-primary")})`,
   color: cssVar("--foreground-primary"),
   px: theme.spacing[3],
   py: theme.spacing[2],

@@ -1,15 +1,14 @@
 import { useEffect } from "react";
-import {
-  Box,
-  Flex,
-  StorySection,
-  Text,
-  theme,
-} from "@webstudio-is/design-system";
+import { Box, StorySection, theme } from "@webstudio-is/design-system";
 import { getStyleDeclKey, type StyleDecl } from "@webstudio-is/sdk";
-import { $selectedBreakpointId } from "~/shared/nano-states";
-import { $breakpoints } from "~/shared/sync/data-stores";
 import {
+  $allSelectedInstanceSelectors,
+  $selectedBreakpointId,
+  $selectedPageId,
+  selectInstance,
+} from "~/shared/nano-states";
+import {
+  $breakpoints,
   $instances,
   $pages,
   $styles,
@@ -18,29 +17,9 @@ import {
 } from "~/shared/sync/data-stores";
 import { registerContainers } from "~/shared/sync/sync-stores";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { $selectedPageId, selectInstance } from "~/shared/nano-states";
 import { Section } from "./filter";
 
 registerContainers();
-$breakpoints.set(new Map([["base", { id: "base", label: "" }]]));
-$selectedBreakpointId.set("base");
-$styleSources.set(new Map([["local", { id: "local", type: "local" }]]));
-$styleSourceSelections.set(
-  new Map([["box", { instanceId: "box", values: ["local"] }]])
-);
-$instances.set(
-  new Map([
-    ["box", { type: "instance", id: "box", component: "Box", children: [] }],
-  ])
-);
-$pages.set(
-  createDefaultPages({
-    homePageId: "homePageId",
-    rootInstanceId: "box",
-  })
-);
-$selectedPageId.set("homePageId");
-selectInstance(["box"]);
 
 const blurFilterStyle: StyleDecl = {
   breakpointId: "base",
@@ -96,50 +75,67 @@ const multipleFilterStyles: StyleDecl = {
   },
 };
 
-const WithBlurFilterVariant = () => {
+const FilterStory = ({ style }: { style?: StyleDecl }) => {
   useEffect(() => {
-    $styles.set(new Map([[getStyleDeclKey(blurFilterStyle), blurFilterStyle]]));
-  }, []);
-  return (
-    <Box css={{ width: theme.sizes.sidebarWidth }}>
-      <Section />
-    </Box>
-  );
-};
-
-const WithMultipleFiltersVariant = () => {
-  useEffect(() => {
-    $styles.set(
-      new Map([[getStyleDeclKey(multipleFilterStyles), multipleFilterStyles]])
+    const previous = {
+      breakpoints: $breakpoints.get(),
+      selectedBreakpointId: $selectedBreakpointId.get(),
+      styleSources: $styleSources.get(),
+      styleSourceSelections: $styleSourceSelections.get(),
+      instances: $instances.get(),
+      pages: $pages.get(),
+      selectedPageId: $selectedPageId.get(),
+      selectedInstances: $allSelectedInstanceSelectors.get(),
+      styles: $styles.get(),
+    };
+    $breakpoints.set(new Map([["base", { id: "base", label: "" }]]));
+    $selectedBreakpointId.set("base");
+    $styleSources.set(new Map([["local", { id: "local", type: "local" }]]));
+    $styleSourceSelections.set(
+      new Map([["box", { instanceId: "box", values: ["local"] }]])
     );
-  }, []);
+    $instances.set(
+      new Map([
+        [
+          "box",
+          { type: "instance", id: "box", component: "Box", children: [] },
+        ],
+      ])
+    );
+    $pages.set(
+      createDefaultPages({ homePageId: "homePageId", rootInstanceId: "box" })
+    );
+    $selectedPageId.set("homePageId");
+    $styles.set(
+      style === undefined
+        ? new Map()
+        : new Map([[getStyleDeclKey(style), style]])
+    );
+    selectInstance(["box"]);
+    return () => {
+      $breakpoints.set(previous.breakpoints);
+      $selectedBreakpointId.set(previous.selectedBreakpointId);
+      $styleSources.set(previous.styleSources);
+      $styleSourceSelections.set(previous.styleSourceSelections);
+      $instances.set(previous.instances);
+      $pages.set(previous.pages);
+      $selectedPageId.set(previous.selectedPageId);
+      $allSelectedInstanceSelectors.set(previous.selectedInstances);
+      $styles.set(previous.styles);
+    };
+  }, [style]);
   return (
-    <Box css={{ width: theme.sizes.sidebarWidth }}>
-      <Section />
-    </Box>
+    <StorySection title="Filters">
+      <Box css={{ width: theme.sizes.sidebarWidth }}>
+        <Section />
+      </Box>
+    </StorySection>
   );
 };
 
-export const Filters = () => (
-  <StorySection title="Filters">
-    <Flex direction="column" gap="5">
-      <Flex direction="column" gap="5">
-        <Text variant="labels">Default</Text>
-        <Box css={{ width: theme.sizes.sidebarWidth }}>
-          <Section />
-        </Box>
-      </Flex>
-      <Flex direction="column" gap="5">
-        <Text variant="labels">With blur filter</Text>
-        <WithBlurFilterVariant />
-      </Flex>
-      <Flex direction="column" gap="5">
-        <Text variant="labels">With multiple filters</Text>
-        <WithMultipleFiltersVariant />
-      </Flex>
-    </Flex>
-  </StorySection>
-);
+export const Empty = () => <FilterStory />;
+export const Single = () => <FilterStory style={blurFilterStyle} />;
+export const Multiple = () => <FilterStory style={multipleFilterStyles} />;
 
 export default {
   title: "Style panel/Filters",

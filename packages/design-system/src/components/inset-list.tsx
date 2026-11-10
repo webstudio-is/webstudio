@@ -1,7 +1,7 @@
 import { forwardRef, type ComponentProps, type Ref } from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { buttonStyle } from "./button";
-import { selectedItemBackground } from "./component-state-color";
+import { cssVar } from "../css-var";
 import { css, styled, theme, type CSS } from "../stitches.config";
 
 export const InsetList = styled("div", {
@@ -25,7 +25,10 @@ const insetListItemStyle = css(buttonStyle, {
   gap: theme.spacing[5],
   cursor: "pointer",
   "&[aria-current=true], &[aria-current=page], &[data-state=selected]": {
-    background: selectedItemBackground,
+    background: `light-dark(
+      color-mix(in oklab, ${cssVar("--background-accent")} 12%, transparent),
+      color-mix(in oklab, ${cssVar("--background-accent")} 20%, transparent)
+    )`,
   },
 });
 

@@ -12,6 +12,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "./dropdown-menu";
+import { MenuCheckedAndSetIcon } from "./menu";
+import { Text } from "./text";
 
 let root: Root | undefined;
 
@@ -23,7 +25,112 @@ afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   document.body.innerHTML = "";
+  document.documentElement.removeAttribute("data-color-scheme");
 });
+
+test.each(["light", "dark"] as const)(
+  "dropdowns rise above dialogs in %s mode",
+  async (mode) => {
+    document.documentElement.dataset.colorScheme = mode;
+    const container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    await act(async () =>
+      root?.render(
+        <Dialog open>
+          <DialogContent aria-describedby={undefined}>
+            <DialogTitle>Dialog</DialogTitle>
+            <Text color="destructive" data-dialog-error>
+              Error
+            </Text>
+            <DropdownMenu defaultOpen>
+              <DropdownMenuTrigger asChild>
+                <Button>Actions</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Action</DropdownMenuItem>
+                <DropdownMenuItem icon={<MenuCheckedAndSetIcon />}>
+                  Set
+                </DropdownMenuItem>
+                <DropdownMenuItem destructive>Delete</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </DialogContent>
+        </Dialog>
+      )
+    );
+    await vi.waitFor(() =>
+      expect(document.querySelector('[role="menu"]')).not.toBeNull()
+    );
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d")!;
+    const brightness = (element: Element) => {
+      context.fillStyle = getComputedStyle(element).backgroundColor;
+      context.fillRect(0, 0, 1, 1);
+      return Array.from(context.getImageData(0, 0, 1, 1).data)
+        .slice(0, 3)
+        .reduce((sum, channel) => sum + channel, 0);
+    };
+    const dialog = brightness(document.querySelector('[role="dialog"]')!);
+    const menu = brightness(document.querySelector('[role="menu"]')!);
+    expect(mode === "light" ? menu < dialog : menu > dialog).toBe(true);
+    const panel = document.createElement("div");
+    panel.style.backgroundColor = "var(--background-primary)";
+    document.body.append(panel);
+    expect(
+      mode === "light" ? dialog < brightness(panel) : dialog > brightness(panel)
+    ).toBe(true);
+    panel.remove();
+
+    const color = (element: Element, property: "color" | "backgroundColor") => {
+      context.fillStyle = getComputedStyle(element)[property];
+      context.fillRect(0, 0, 1, 1);
+      return Array.from(context.getImageData(0, 0, 1, 1).data).slice(0, 3);
+    };
+    const luminance = (channels: number[]) =>
+      channels
+        .map((channel) => {
+          const value = channel / 255;
+          return value <= 0.04045
+            ? value / 12.92
+            : ((value + 0.055) / 1.055) ** 2.4;
+        })
+        .reduce(
+          (sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index],
+          0
+        );
+    const contrast = (element: Element, surface: Element) => {
+      const foreground = luminance(color(element, "color"));
+      const background = luminance(color(surface, "backgroundColor"));
+      return (
+        (Math.max(foreground, background) + 0.05) /
+        (Math.min(foreground, background) + 0.05)
+      );
+    };
+    expect(
+      contrast(
+        document.querySelector('[role="menuitem"]:last-child')!,
+        document.querySelector('[role="menu"]')!
+      ),
+      `${mode} destructive menu text contrast`
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
+      contrast(
+        document.querySelector('[role="menuitem"] svg')!,
+        document.querySelector('[role="menu"]')!
+      ),
+      `${mode} set icon contrast`
+    ).toBeGreaterThanOrEqual(3);
+    expect(
+      contrast(
+        document.querySelector("[data-dialog-error]")!,
+        document.querySelector('[role="dialog"]')!
+      ),
+      `${mode} dialog error text contrast`
+    ).toBeGreaterThanOrEqual(4.5);
+  }
+);
 
 test("shows the maximize button hover background", async () => {
   const container = document.createElement("div");

@@ -59,7 +59,7 @@ const contrast = (first: number[], second: number[]) => {
   );
 };
 
-test("command panels use the panel surface and readable group headings", () => {
+test("command panels and selected items follow surface elevation", () => {
   const container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -74,7 +74,9 @@ test("command panels use the panel surface and readable group headings", () => {
           createElement(
             Command,
             null,
-            createElement(CommandInput),
+            createElement(CommandInput, {
+              action: { name: "select", label: "Select" },
+            }),
             createElement(
               CommandList,
               null,
@@ -102,21 +104,43 @@ test("command panels use the panel surface and readable group headings", () => {
       "[data-input-field-input]"
     )?.parentElement;
     const heading = container.querySelector("[cmdk-group-heading]");
+    const selectedItem = container.querySelector(
+      "[cmdk-item][aria-selected=true]"
+    );
     const panelReference = container.firstElementChild;
     if (
       panel === null ||
       inputContainer === null ||
       inputContainer === undefined ||
       heading === null ||
+      selectedItem === null ||
       panelReference === null
     ) {
       throw new Error("Expected a rendered command group");
     }
 
     const panelBackground = readColor(getComputedStyle(panel).backgroundColor);
-    expect(panelBackground, `${mode} panel surface`).toEqual(
-      readColor(getComputedStyle(panelReference).backgroundColor)
+    const referenceBackground = readColor(
+      getComputedStyle(panelReference).backgroundColor
     );
+    const selectedBackground = readColor(
+      getComputedStyle(selectedItem).backgroundColor
+    );
+    if (mode === "light") {
+      expect(luminance(panelBackground)).toBeLessThan(
+        luminance(referenceBackground)
+      );
+      expect(luminance(selectedBackground)).toBeLessThan(
+        luminance(panelBackground)
+      );
+    } else {
+      expect(luminance(panelBackground)).toBeGreaterThan(
+        luminance(referenceBackground)
+      );
+      expect(luminance(selectedBackground)).toBeGreaterThan(
+        luminance(panelBackground)
+      );
+    }
     expect(
       readColor(getComputedStyle(inputContainer).backgroundColor),
       `${mode} command input surface`
@@ -124,6 +148,12 @@ test("command panels use the panel surface and readable group headings", () => {
     expect(
       contrast(readColor(getComputedStyle(heading).color), panelBackground),
       `${mode} heading contrast`
+    ).toBeGreaterThanOrEqual(4.5);
+    const actionHint = container.querySelector("kbd");
+    expect(actionHint).not.toBeNull();
+    expect(
+      contrast(readColor(getComputedStyle(actionHint!).color), panelBackground),
+      `${mode} command shortcut contrast`
     ).toBeGreaterThanOrEqual(4.5);
   }
 });

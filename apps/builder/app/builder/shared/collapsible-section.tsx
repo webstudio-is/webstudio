@@ -28,7 +28,12 @@ type Label = string;
 const sectionStyle = css({
   variants: {
     background: {
-      true: { background: cssVar("--background-primary") },
+      true: {
+        background: cssVar("--background-primary"),
+        "[data-floating-panel] &": {
+          background: cssVar("--background-floating"),
+        },
+      },
     },
     sticky: {
       true: { position: "sticky", bottom: 0, zIndex: 1 },
@@ -40,6 +45,9 @@ const sectionStyle = css({
           top: 0,
           zIndex: 1,
           background: cssVar("--background-primary"),
+        },
+        "[data-floating-panel] & > [data-focus-scope-start] + [data-state]": {
+          background: cssVar("--background-floating"),
         },
       },
     },

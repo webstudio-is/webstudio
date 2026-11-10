@@ -15,7 +15,9 @@ const createStyleSourceColor = (solid: string, foreground: string) => ({
   border: `color-mix(in oklab, ${solid} 44%, ${cssVar(
     "--background-primary"
   )})`,
-  foreground,
+  foreground: `light-dark(color-mix(in oklab, ${foreground} 86%, ${cssVar(
+    "--foreground-primary"
+  )}), ${foreground})`,
 });
 
 const accentBackground = cssVar("--background-accent");

@@ -37,9 +37,12 @@ scheme derivation bounds rather than maintaining a second theme or semantic
 color set. Cross-hue variants mix in `oklab`, so the neutral family cannot
 rotate an intent into another color family.
 
-Default chromatic fills keep the same bounded luminance in both schemes. Dark
-mode derives lighter foreground and focus variants from the same color family
-and uses light content on strong chromatic fills.
+Default chromatic fills use the same lightness and chroma bounds in both schemes.
+All intent text uses one shared lightness bound per scheme. Floating surfaces
+share the same mixing recipe with a weight for each level. These private scheme
+values can feed derived or semantic colors; components still consume only
+semantic colors. Dark mode uses lighter intent text and light content on strong
+chromatic fills.
 
 ## Theme parameters
 
@@ -60,10 +63,9 @@ parameter is commented at its declaration in [`colors.css`](colors.css).
 
 Theme colors support opaque, context-independent CSS colors such as hex,
 `rgb()`, and `oklch()` values. Alpha colors and context-dependent keywords such
-as `currentColor` are outside the contract. The recipe converts chromatic
-inputs into the display gamut, limits their OKLCH source to `0.2–0.8` lightness
-and `0.3` chroma, then caps relative luminance by scaling XYZ toward black.
-Neutral chroma is limited to `0.02`.
+as `currentColor` are outside the contract. The recipe converts chromatic inputs into the display gamut and limits fill
+lightness to `0.2–0.48` and chroma to `0.3`. Intent text uses lightness `0.48`
+in light mode and `0.75` in dark mode. Neutral chroma is limited to `0.02`.
 
 The default light and dark outputs are regression tested. Custom theme values
 can produce lower-contrast combinations, so theme authors must verify the
@@ -120,18 +122,19 @@ styled("button", {
 
 The package extends Craft's core registry only for reusable component needs:
 
-| Family             | Meaning and required pairing                                                                                                              |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `inverse`          | A surface with reversed polarity; pair `--background-inverse` with `--foreground-on-inverse`.                                             |
-| `accent`           | Interactive emphasis; pair a strong accent background with `--foreground-on-accent`.                                                      |
-| `text-selection`   | Strong text selection shared by native fields and code editors; pair `--background-text-selection` with `--foreground-on-text-selection`. |
-| `accent-secondary` | Secondary interactive emphasis; use the foreground on surfaces and pair the strong background with `--foreground-on-accent-secondary`.    |
-| `positive`         | Successful outcomes; pair strong or subtle backgrounds with their registered foreground.                                                  |
-| `negative`         | Errors and destructive actions; pair strong or subtle backgrounds with their registered foreground.                                       |
-| `warning`          | Caution; pair the subtle background with the warning foreground and border.                                                               |
-| `informative`      | Neutral information; pair the subtle background with the informative foreground and border.                                               |
-| `interaction`      | Translucent hover and pressed feedback composed over regular surfaces.                                                                    |
-| `on-inverse`       | Translucent hover and pressed feedback composed over inverse surfaces.                                                                    |
+| Family             | Meaning and required pairing                                                                                                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `floating`         | Dialogs, raised menus and popovers, then nested menus. Each level gets darker in light mode and lighter in dark mode. Borders and shadows separate them from their surroundings. Shared intent foregrounds work on every level. |
+| `inverse`          | A surface with reversed polarity; pair `--background-inverse` with `--foreground-on-inverse`.                                                                                                                                   |
+| `accent`           | Interactive emphasis; pair a strong accent background with `--foreground-on-accent`.                                                                                                                                            |
+| `text-selection`   | Strong text selection shared by native fields and code editors; pair `--background-text-selection` with `--foreground-on-text-selection`.                                                                                       |
+| `accent-secondary` | Secondary interactive emphasis; use the foreground on surfaces and pair the strong background with `--foreground-on-accent-secondary`.                                                                                          |
+| `positive`         | Successful outcomes; pair strong or subtle backgrounds with their registered foreground.                                                                                                                                        |
+| `negative`         | Errors and destructive actions; pair strong or subtle backgrounds with their registered foreground.                                                                                                                             |
+| `warning`          | Caution; pair the subtle background with the warning foreground and border.                                                                                                                                                     |
+| `informative`      | Neutral information; pair the subtle background with the informative foreground and border.                                                                                                                                     |
+| `interaction`      | Translucent hover and pressed feedback composed over regular surfaces.                                                                                                                                                          |
+| `on-inverse`       | Translucent hover and pressed feedback composed over inverse surfaces.                                                                                                                                                          |
 
 `--overlay-scrim` always derives from a dark version of the neutral theme
 color, so it dims content in both schemes rather than following foreground
@@ -176,24 +179,19 @@ derive a local composition from them instead of being added to the brand API.
 
 ## Validation and type generation
 
-Type generation parses CSS structurally and rejects:
-
-- Empty color layers or mismatched light and dark scheme bounds.
-- Missing variable references.
-- References across forbidden architectural layers.
-- Unused theme parameters, scheme bounds, or derived colors.
-- Standalone semantic color literals.
-- Circular color references.
-- Semantic names outside the Craft grammar.
-- Color variables declared outside the owned root selectors.
+Type generation parses CSS structurally. It rejects color variables outside the
+owned root selectors, nested color declarations, duplicate selectors or
+declarations, missing variable references, and circular references in either
+scheme. It does not enforce authoring choices such as which layers may reference
+each other or whether every private variable is used.
 
 TypeScript rejects unknown semantic names and unbranded private names passed to
 `cssVar()`.
 
-Chromium browser tests load the real stylesheet, freeze every default semantic
-color in both schemes, and verify the default foreground/background contracts.
-They also protect the neutral hierarchy, stable chromatic fills, on-color
-content, and interaction overlays.
+Chromium browser tests load the real stylesheet and verify the default
+foreground/background contracts. They also check that all nine theme controls
+affect their intended outputs in both schemes, plus the neutral hierarchy,
+stable chromatic fills, on-color content, and interaction overlays.
 
 The generator emits `ThemeVariableName` for public theme inputs and
 `SemanticColorName` for semantic colors in
