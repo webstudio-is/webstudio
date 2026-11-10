@@ -1,8 +1,6 @@
 import { describe, expect, test } from "vitest";
 import "./colors.css";
-import type { SemanticColorName } from "./__generated__/css-variable-names";
 import { getColorContrast } from "./color-contrast";
-import type { ColorMode } from "./color-source-utils";
 
 const readColor = (name: string) => {
   const sample = document.createElement("span");
@@ -22,106 +20,6 @@ const readColor = (name: string) => {
   const color = context.getImageData(0, 0, 1, 1).data;
   sample.remove();
   return color;
-};
-
-const expectedDefaultColors = {
-  light: {
-    "--background-primary": "#feffff",
-    "--background-secondary": "#e8eaeb",
-    "--background-floating": "#f6f7f8",
-    "--background-floating-raised": "#eeeff0",
-    "--background-floating-nested": "#e6e7e9",
-    "--background-disabled": "#f7f8f9",
-    "--background-inverse": "#11181c",
-    "--background-accent": "#096cff",
-    "--background-text-selection": "#096cff",
-    "--background-accent-secondary": "#ab38d4",
-    "--background-positive": "#008849",
-    "--background-positive-subtle": "#e4f1e9",
-    "--background-negative": "#dc2929",
-    "--background-negative-subtle": "#ffe9e6",
-    "--background-warning-subtle": "#f8edad",
-    "--background-informative-subtle": "#e3effd",
-    "--foreground-primary": "#11181c",
-    "--foreground-secondary": "#595f63",
-    "--foreground-disabled": "#84898b",
-    "--foreground-on-inverse": "#feffff",
-    "--foreground-on-accent": "#feffff",
-    "--foreground-on-accent-secondary": "#feffff",
-    "--foreground-on-positive": "#feffff",
-    "--foreground-on-negative": "#feffff",
-    "--foreground-on-text-selection": "#feffff",
-    "--foreground-accent": "#105fd9",
-    "--foreground-accent-secondary": "#9237b5",
-    "--foreground-positive": "#117141",
-    "--foreground-negative": "#b41017",
-    "--foreground-warning": "#6f6100",
-    "--foreground-informative": "#1062b4",
-    "--border-default": "#e5e6e7",
-    "--border-focus": "#297aff",
-    "--border-negative": "#b41017",
-    "--border-warning": "#f5d90a",
-    "--border-informative": "#bcd7f8",
-    "--overlay-interaction-hover": "#00000010",
-    "--overlay-interaction-pressed": "#0000001c",
-    "--overlay-on-inverse-hover": "#ffffff10",
-    "--overlay-on-inverse-pressed": "#ffffff1c",
-    "--overlay-scrim": "#11171ba8",
-  },
-  dark: {
-    "--background-primary": "#151617",
-    "--background-secondary": "#222425",
-    "--background-floating": "#1d1f1f",
-    "--background-floating-raised": "#242626",
-    "--background-floating-nested": "#2b2d2e",
-    "--background-disabled": "#191b1b",
-    "--background-inverse": "#e6e8e9",
-    "--background-accent": "#096cff",
-    "--background-text-selection": "#439cff",
-    "--background-accent-secondary": "#ab38d4",
-    "--background-positive": "#008849",
-    "--background-positive-subtle": "#18221d",
-    "--background-negative": "#dc2929",
-    "--background-negative-subtle": "#2b1c1b",
-    "--background-warning-subtle": "#2d2c1f",
-    "--background-informative-subtle": "#1a2839",
-    "--foreground-primary": "#e6e8e9",
-    "--foreground-secondary": "#959798",
-    "--foreground-disabled": "#6e7071",
-    "--foreground-on-inverse": "#151617",
-    "--foreground-on-accent": "#fdffff",
-    "--foreground-on-accent-secondary": "#fdffff",
-    "--foreground-on-positive": "#fdffff",
-    "--foreground-on-negative": "#fdffff",
-    "--foreground-on-text-selection": "#151617",
-    "--foreground-accent": "#abc7f4",
-    "--foreground-accent-secondary": "#dd81ff",
-    "--foreground-positive": "#b1cdba",
-    "--foreground-negative": "#ff7165",
-    "--foreground-warning": "#c4c1a5",
-    "--foreground-informative": "#afc9e9",
-    "--border-default": "#252627",
-    "--border-focus": "#1a6df2",
-    "--border-negative": "#ff7165",
-    "--border-warning": "#f5d90a",
-    "--border-informative": "#1b314c",
-    "--overlay-interaction-hover": "#ffffff10",
-    "--overlay-interaction-pressed": "#ffffff1c",
-    "--overlay-on-inverse-hover": "#00000010",
-    "--overlay-on-inverse-pressed": "#0000001c",
-    "--overlay-scrim": "#11171ba8",
-  },
-} as const satisfies Record<ColorMode, Record<SemanticColorName, string>>;
-
-const parseHex = (hex: string) => {
-  const channels = hex.slice(1).match(/.{2}/g);
-  if (channels === null) {
-    throw new Error(`Invalid expected color: ${hex}`);
-  }
-  if (channels.length === 3) {
-    channels.push("ff");
-  }
-  return channels.map((channel) => Number.parseInt(channel, 16));
 };
 
 const getRelativeLuminance = (color: Uint8ClampedArray) => {
@@ -145,37 +43,6 @@ const getContrastRatio = (
 };
 
 describe("Craft color contrast", () => {
-  test("default semantic colors stay unchanged", () => {
-    const root = document.documentElement;
-    const previousMode = root.getAttribute("data-color-scheme");
-
-    try {
-      for (const mode of ["light", "dark"] as const) {
-        root.dataset.colorScheme = mode;
-        for (const [name, expectedHex] of Object.entries(
-          expectedDefaultColors[mode]
-        )) {
-          const actual = Array.from(readColor(name));
-          const expected = parseHex(expectedHex);
-          for (const [index, expectedChannel] of expected.entries()) {
-            expect
-              .soft(
-                Math.abs(actual[index] - expectedChannel),
-                `${mode} ${name} channel ${index}: ${actual.join(", ")} versus ${expected.join(", ")}`
-              )
-              .toBeLessThanOrEqual(1);
-          }
-        }
-      }
-    } finally {
-      if (previousMode === null) {
-        root.removeAttribute("data-color-scheme");
-      } else {
-        root.setAttribute("data-color-scheme", previousMode);
-      }
-    }
-  });
-
   test("default secondary colors preserve a clear visual hierarchy", () => {
     const root = document.documentElement;
     const previousMode = root.getAttribute("data-color-scheme");

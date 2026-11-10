@@ -37,9 +37,9 @@ scheme derivation bounds rather than maintaining a second theme or semantic
 color set. Cross-hue variants mix in `oklab`, so the neutral family cannot
 rotate an intent into another color family.
 
-Default chromatic fills keep the same bounded luminance in both schemes. Dark
-mode derives lighter foreground and focus variants from the same color family
-and uses light content on strong chromatic fills.
+Default chromatic fills use the same lightness and chroma bounds in both schemes.
+All intent text uses one lightness bound per scheme. Dark mode uses lighter
+intent text and light content on strong chromatic fills.
 
 ## Theme parameters
 
@@ -60,10 +60,9 @@ parameter is commented at its declaration in [`colors.css`](colors.css).
 
 Theme colors support opaque, context-independent CSS colors such as hex,
 `rgb()`, and `oklch()` values. Alpha colors and context-dependent keywords such
-as `currentColor` are outside the contract. The recipe converts chromatic
-inputs into the display gamut, limits their OKLCH source to `0.2–0.8` lightness
-and `0.3` chroma, then caps relative luminance by scaling XYZ toward black.
-Neutral chroma is limited to `0.02`.
+as `currentColor` are outside the contract. The recipe converts chromatic inputs into the display gamut and limits fill
+lightness to `0.2–0.48` and chroma to `0.3`. Intent text uses lightness `0.48`
+in light mode and `0.75` in dark mode. Neutral chroma is limited to `0.02`.
 
 The default light and dark outputs are regression tested. Custom theme values
 can produce lower-contrast combinations, so theme authors must verify the
@@ -191,10 +190,9 @@ Type generation parses CSS structurally and rejects:
 TypeScript rejects unknown semantic names and unbranded private names passed to
 `cssVar()`.
 
-Chromium browser tests load the real stylesheet, freeze every default semantic
-color in both schemes, and verify the default foreground/background contracts.
-They also protect the neutral hierarchy, stable chromatic fills, on-color
-content, and interaction overlays.
+Chromium browser tests load the real stylesheet and verify the default
+foreground/background contracts. They also protect the neutral hierarchy, stable
+chromatic fills, on-color content, and interaction overlays.
 
 The generator emits `ThemeVariableName` for public theme inputs and
 `SemanticColorName` for semantic colors in
