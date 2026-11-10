@@ -35,7 +35,7 @@ import { Flex } from "./flex";
 import { InputField } from "./input-field";
 import { SmallIconButton } from "./small-icon-button";
 import { cssVar, declareCssVar } from "../css-var";
-import { selectedItemBackground } from "./component-state-color";
+import { getSelectedItemBackground } from "./component-state-color";
 
 const panelWidth = "500px";
 const itemHeight = "32px";
@@ -47,7 +47,7 @@ const StyledCommand = styled(CommandPrimitive, {
   boxSizing: "border-box",
   width: panelWidth,
   boxShadow: theme.shadows.menuDropShadow,
-  backgroundColor: cssVar("--background-primary"),
+  backgroundColor: cssVar("--background-floating"),
   border: `1px solid ${cssVar("--border-default")}`,
   borderRadius: theme.borderRadius[7],
   // clip selected item background
@@ -186,7 +186,7 @@ export const CommandBackIcon = styled(ChevronLeftIcon, {
 const CommandInputField = styled(InputField, {
   "--sizes-controlHeight": theme.spacing[15],
   border: "none",
-  backgroundColor: cssVar("--background-primary"),
+  backgroundColor: cssVar("--background-floating"),
   paddingInline: theme.spacing[4],
 });
 
@@ -489,7 +489,7 @@ export const CommandGroupHeading = styled("div", {
   ...textVariants.labels,
   color: cssVar("--foreground-secondary"),
   display: "flex",
-  backgroundColor: cssVar("--background-primary"),
+  backgroundColor: cssVar("--background-floating"),
   gap: theme.spacing[5],
   alignItems: "center",
   paddingInline: theme.spacing[5],
@@ -530,7 +530,7 @@ const CommandItemStyled = styled(CommandPrimitive.Item, {
     backgroundColor: cssVar("--overlay-interaction-hover"),
   },
   "&[aria-selected=true]": {
-    backgroundColor: selectedItemBackground,
+    backgroundColor: getSelectedItemBackground(cssVar("--background-floating")),
   },
 });
 

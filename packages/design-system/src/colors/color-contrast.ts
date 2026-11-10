@@ -14,6 +14,8 @@ const contrastContracts = [
   ["--foreground-secondary", "--background-primary", 4.5],
   ["--foreground-primary", "--background-secondary", 4.5],
   ["--foreground-secondary", "--background-secondary", 4.5],
+  ["--foreground-primary", "--background-floating", 4.5],
+  ["--foreground-secondary", "--background-floating", 4.5],
   ["--foreground-accent", "--background-primary", 4.5],
   ["--foreground-accent-secondary", "--background-primary", 4.5],
   ["--foreground-positive", "--background-primary", 4.5],

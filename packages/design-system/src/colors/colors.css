@@ -211,6 +211,10 @@
   /* Background */
   --background-primary: var(--color-background);
   --background-secondary: var(--color-surface-secondary);
+  --background-floating: light-dark(
+    var(--color-surface-secondary),
+    var(--color-surface-strong)
+  );
   --background-disabled: color-mix(
     in oklab,
     var(--color-background) 97.38%,

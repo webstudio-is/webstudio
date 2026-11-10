@@ -28,6 +28,7 @@ const expectedDefaultColors = {
   light: {
     "--background-primary": "#feffff",
     "--background-secondary": "#e8eaeb",
+    "--background-floating": "#e8eaeb",
     "--background-disabled": "#f7f8f9",
     "--background-inverse": "#11181c",
     "--background-accent": "#096cff",
@@ -68,6 +69,7 @@ const expectedDefaultColors = {
   dark: {
     "--background-primary": "#151617",
     "--background-secondary": "#222425",
+    "--background-floating": "#292b2c",
     "--background-disabled": "#191b1b",
     "--background-inverse": "#e6e8e9",
     "--background-accent": "#096cff",
@@ -179,6 +181,7 @@ describe("Craft color contrast", () => {
         root.dataset.colorScheme = mode;
         const background = readColor("--background-primary");
         const surface = readColor("--background-secondary");
+        const floating = readColor("--background-floating");
         const primaryForeground = readColor("--foreground-primary");
         const secondaryForeground = readColor("--foreground-secondary");
         const primaryContrast = getContrastRatio(primaryForeground, background);
@@ -191,6 +194,10 @@ describe("Craft color contrast", () => {
           getContrastRatio(surface, background),
           `${mode} secondary surface`
         ).toBeGreaterThanOrEqual(1.15);
+        expect(
+          getContrastRatio(floating, background),
+          `${mode} floating surface`
+        ).toBeGreaterThanOrEqual(getContrastRatio(surface, background));
         expect(
           secondaryContrast,
           `${mode} secondary foreground`

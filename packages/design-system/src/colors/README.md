@@ -122,6 +122,7 @@ The package extends Craft's core registry only for reusable component needs:
 
 | Family             | Meaning and required pairing                                                                                                              |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `floating`         | Menus, popovers, and dialogs; darker than the panel in light mode and lighter in dark mode. Pair with the regular foreground colors.      |
 | `inverse`          | A surface with reversed polarity; pair `--background-inverse` with `--foreground-on-inverse`.                                             |
 | `accent`           | Interactive emphasis; pair a strong accent background with `--foreground-on-accent`.                                                      |
 | `text-selection`   | Strong text selection shared by native fields and code editors; pair `--background-text-selection` with `--foreground-on-text-selection`. |
