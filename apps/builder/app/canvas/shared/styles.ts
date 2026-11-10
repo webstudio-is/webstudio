@@ -402,11 +402,11 @@ const getInstanceSelector = (instanceId: string) =>
 
 /**
  * Convert component and tag to preset CSS selector.
- * rootComponent maps to ":root", others use :where() for low specificity.
+ * rootComponent maps to :where(:root), others use :where() for low specificity.
  */
 const getPresetStyleSelector = (component: string, tag: string) =>
   component === rootComponent
-    ? ":root"
+    ? ":where(:root)"
     : `${tag}:where([data-ws-component="${component}"])`;
 
 const $descendantSelectors = computed(
@@ -820,6 +820,9 @@ const $instanceStyles = computed(
  * For pseudo-elements and descendant tags, keep the selector so styles apply
  * to the matching element, not the parent.
  */
+const getStatePreviewSelector = (state: string) =>
+  isPseudoElement(state) || state.startsWith(" ") ? state : "";
+
 const renderStateStyles = ({
   instanceStyles,
   sheet,
@@ -845,10 +848,7 @@ const renderStateStyles = ({
   }
   const selector = `[${idAttribute}="${instanceId}"]`;
   const rule = sheet.addNestingRule(selector);
-  const stateSelector =
-    isPseudoElement(selectedState) || selectedState.startsWith(" ")
-      ? selectedState
-      : "";
+  const stateSelector = getStatePreviewSelector(selectedState);
   for (const styleDecl of styles) {
     rule.setDeclaration({
       breakpoint: styleDecl.breakpointId,
@@ -911,6 +911,13 @@ const subscribeEphemeralStyle = () => {
       userSheet.setTransformer($transformValue.get());
       userSheet.render();
       appliedEphemeralDeclarations.clear();
+      renderStateStyles({
+        instanceStyles: $instanceStyles.get(),
+        sheet: stateSheet,
+        transformValue: $transformValue.get(),
+        toStyleValue: (styleDecl, transformValue) =>
+          toVarValue(styleDecl, transformValue),
+      });
     }
 
     // add ephemeral styles
@@ -920,9 +927,8 @@ const subscribeEphemeralStyle = () => {
       const rule = userSheet.addNestingRule(selector);
       let ephemeralSheetUpdated = false;
       for (const styleDecl of ephemeralStyles) {
-        if (getTagFromStyleId(styleDecl.styleSourceId)) {
-          continue;
-        }
+        const isTagStyle =
+          getTagFromStyleId(styleDecl.styleSourceId) !== undefined;
         // update custom property
         document.documentElement.style.setProperty(
           getEphemeralProperty(styleDecl),
@@ -944,8 +950,6 @@ const subscribeEphemeralStyle = () => {
         if (appliedEphemeralDeclarations.has(styleDeclKey) === false) {
           ephemeralSheetUpdated = true;
 
-          const mixinRule = userSheet.addMixinRule(styleDecl.styleSourceId);
-
           // Use the actual style value as a fallback (non-ephemeral); see the "Lazy" comment above.
           const computedStyleDecl = createComputedStyleDeclStore(
             hyphenateProperty(styleDecl.property)
@@ -957,26 +961,22 @@ const subscribeEphemeralStyle = () => {
             computedStyleDecl.cascadedValue
           );
 
-          mixinRule.setDeclaration({
-            ...toDeclarationParams(styleDecl),
-            value,
-          });
-
-          rule.addMixin(styleDecl.styleSourceId);
+          if (!isTagStyle) {
+            const mixinRule = userSheet.addMixinRule(styleDecl.styleSourceId);
+            mixinRule.setDeclaration({
+              ...toDeclarationParams(styleDecl),
+              value,
+            });
+            rule.addMixin(styleDecl.styleSourceId);
+          }
 
           // When editing state styles (e.g., :hover), also render var() in stateSheet
           // so ephemeral updates are visible in the state preview
           if (styleDecl.state !== undefined) {
             const stateRule = stateSheet.addNestingRule(selector);
-            // For pseudo-elements (::before, ::after), keep the selector so styles
-            // apply to the pseudo-element. For pseudo-classes (:hover, :focus),
-            // render without state so users can preview without triggering the state.
-            const stateSelector = isPseudoElement(styleDecl.state)
-              ? styleDecl.state
-              : "";
             stateRule.setDeclaration({
               breakpoint: styleDecl.breakpointId,
-              selector: stateSelector,
+              selector: getStatePreviewSelector(styleDecl.state),
               property: styleDecl.property,
               value,
             });
@@ -997,6 +997,7 @@ export const __testing__ = {
   getEphemeralProperty,
   getInstanceSelector,
   getPresetStyleSelector,
+  getStatePreviewSelector,
   computeDescendantSelectors,
   computeInstanceStyles,
   computeEditableCursorRules,
@@ -1004,6 +1005,8 @@ export const __testing__ = {
   toDeclarationParams,
   toVarValue,
   renderStateStyles,
+  subscribeStateStyles,
+  subscribeEphemeralStyle,
   simulateConditionBreakpoints,
   shouldRenderInBackgroundTask,
 };

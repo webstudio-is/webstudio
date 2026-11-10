@@ -1128,6 +1128,34 @@ test("selected tag token remains the source when an instance overrides it", () =
   ).toMatchObject({ name: "overwritten", styleSourceId: id });
 });
 
+test("base instance style wins over responsive tag style", () => {
+  const model = createModel({
+    css: "local { color: blue; }",
+    jsx: <Box ws:id="box" ws:tag="p" class="local" />,
+    matchingBreakpoints: ["base", "small"],
+  });
+  const id = getTagStyleId("p");
+  const declaration: StyleDecl = {
+    styleSourceId: id,
+    breakpointId: "small",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  model.tagStyleIds.set("p", id);
+  model.styles.set(getStyleDeclKey(declaration), declaration);
+
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["box"],
+      property: "color",
+    })
+  ).toMatchObject({
+    usedValue: { type: "keyword", value: "blue" },
+    source: { styleSourceId: "local" },
+  });
+});
+
 test("preset styles are more specific than browser styles", () => {
   // @layer browser { body { display: block } }
   // @layer preset { body { display: flex } }

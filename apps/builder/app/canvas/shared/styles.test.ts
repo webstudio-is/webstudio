@@ -2,6 +2,7 @@ import { describe, test, expect } from "vitest";
 import type { Instance, StyleDecl } from "@webstudio-is/sdk";
 import {
   descendantComponent,
+  getTagStyleId,
   ROOT_INSTANCE_ID,
   rootComponent,
 } from "@webstudio-is/sdk";
@@ -13,12 +14,20 @@ import {
 // polyfill CSS.escape for Node environment
 import "css.escape";
 
-import { __testing__ } from "./styles";
+import { $ephemeralStyles } from "../stores";
+import {
+  $selectedStyleState,
+  $temporaryTagStyleId,
+} from "~/shared/nano-states";
+import { $allSelectedInstanceSelectors } from "~/shared/nano-states/instance-selection";
+import { $breakpoints, $instances, $styles } from "~/shared/sync/data-stores";
+import { __testing__, mountStyles } from "./styles";
 
 const {
   getEphemeralProperty,
   getInstanceSelector,
   getPresetStyleSelector,
+  getStatePreviewSelector,
   computeDescendantSelectors,
   computeInstanceStyles,
   computeEditableCursorRules,
@@ -26,6 +35,8 @@ const {
   toDeclarationParams,
   toVarValue,
   renderStateStyles,
+  subscribeStateStyles,
+  subscribeEphemeralStyle,
   simulateConditionBreakpoints,
   shouldRenderInBackgroundTask,
 } = __testing__;
@@ -704,8 +715,27 @@ describe("getInstanceSelector", () => {
 });
 
 describe("getPresetStyleSelector", () => {
-  test("returns :root for rootComponent", () => {
-    expect(getPresetStyleSelector(rootComponent, "div")).toBe(":root");
+  test("keeps root preset below tag style specificity", () => {
+    expect(getPresetStyleSelector(rootComponent, "div")).toBe(":where(:root)");
+  });
+
+  test("html Tag style overrides the root preset in the canvas cascade", () => {
+    const preset = document.createElement("style");
+    const tagStyle = document.createElement("style");
+    preset.textContent = `${getPresetStyleSelector(rootComponent, "html")} { --root-preset-test: red; }`;
+    tagStyle.textContent = "html { --root-preset-test: blue; }";
+    document.head.appendChild(preset);
+    document.head.appendChild(tagStyle);
+    try {
+      expect(
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--root-preset-test")
+          .trim()
+      ).toBe("blue");
+    } finally {
+      preset.remove();
+      tagStyle.remove();
+    }
   });
 
   test("returns :where selector for regular component", () => {
@@ -725,6 +755,88 @@ describe("getPresetStyleSelector", () => {
       'span:where([data-ws-component="MyCustomComponent"])'
     );
   });
+});
+
+describe("getStatePreviewSelector", () => {
+  test("keeps descendant and pseudo-element selectors on live edits", () => {
+    expect(getStatePreviewSelector(" h1")).toBe(" h1");
+    expect(getStatePreviewSelector("::before")).toBe("::before");
+  });
+
+  test("previews pseudo-classes without requiring interaction", () => {
+    expect(getStatePreviewSelector(":hover")).toBe("");
+  });
+});
+
+test("ephemeral Tag state edits update and clean up the selected preview", () => {
+  const previous = {
+    instances: $instances.get(),
+    breakpoints: $breakpoints.get(),
+    styles: $styles.get(),
+    temporaryTagStyleId: $temporaryTagStyleId.get(),
+    selectedStyleState: $selectedStyleState.get(),
+    selections: $allSelectedInstanceSelectors.get(),
+  };
+  const tagStyleId = getTagStyleId("p");
+  const instance: Instance = {
+    type: "instance",
+    id: "ephemeral-tag-test",
+    component: "Box",
+    tag: "p",
+    children: [],
+  };
+  mountStyles();
+  $instances.set(new Map([[instance.id, instance]]));
+  $breakpoints.set(new Map([["base", { id: "base", label: "Base" }]]));
+  $styles.set(new Map());
+  $temporaryTagStyleId.set(tagStyleId);
+  $allSelectedInstanceSelectors.set([[instance.id]]);
+  $selectedStyleState.set(":hover");
+  const unsubscribeState = subscribeStateStyles();
+  const unsubscribeEphemeral = subscribeEphemeralStyle();
+  const declaration = createStyleDecl({
+    styleSourceId: tagStyleId,
+    state: ":hover",
+  });
+  try {
+    $ephemeralStyles.set([declaration]);
+    const property = getEphemeralProperty(declaration);
+    expect(document.documentElement.style.getPropertyValue(property)).toBe(
+      "red"
+    );
+    expect(
+      document.querySelector('style[data-webstudio="state-styles"]')
+        ?.textContent
+    ).toContain("var(");
+
+    $ephemeralStyles.set([]);
+    expect(document.documentElement.style.getPropertyValue(property)).toBe("");
+    expect(
+      document.querySelector('style[data-webstudio="state-styles"]')
+        ?.textContent
+    ).not.toContain("var(");
+
+    $selectedStyleState.set(" h1");
+    const descendantDeclaration = createStyleDecl({
+      state: " h1",
+      property: "paddingTop",
+    });
+    $ephemeralStyles.set([descendantDeclaration]);
+    expect(
+      document.querySelector('style[data-webstudio="state-styles"]')
+        ?.textContent
+    ).toContain('[data-ws-id="ephemeral-tag-test"] h1');
+  } finally {
+    $ephemeralStyles.set([]);
+    unsubscribeEphemeral();
+    unsubscribeState();
+    $allSelectedInstanceSelectors.set(previous.selections);
+    $selectedStyleState.set(previous.selectedStyleState);
+    $temporaryTagStyleId.set(previous.temporaryTagStyleId);
+    $instances.set(previous.instances);
+    $styles.set(previous.styles);
+    $breakpoints.set(previous.breakpoints);
+  }
 });
 
 describe("toVarValue", () => {

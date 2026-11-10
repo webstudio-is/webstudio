@@ -205,9 +205,11 @@ const getCascadedValue = ({
   const styleSourceIds = styleSourceSelections.get(instanceId)?.values ?? [];
   const tagStyleId = tag ? tagStyleIds.get(tag) : undefined;
   selectedStyleSourceId ??= styleSourceIds.at(-1);
+  // Within each state, resolve all Tag breakpoints before instance styles.
+  // Instance selectors then win over Tag selectors across breakpoints.
   for (const state of states) {
-    for (const breakpointId of matchingBreakpoints) {
-      if (tagStyleId) {
+    if (tagStyleId) {
+      for (const breakpointId of matchingBreakpoints) {
         const key = getStyleDeclKey({
           styleSourceId: tagStyleId,
           breakpointId,
@@ -238,6 +240,8 @@ const getCascadedValue = ({
           declaredValues.push(styleDecl.value);
         }
       }
+    }
+    for (const breakpointId of matchingBreakpoints) {
       for (const styleSourceId of styleSourceIds) {
         const key = getStyleDeclKey({
           styleSourceId,
