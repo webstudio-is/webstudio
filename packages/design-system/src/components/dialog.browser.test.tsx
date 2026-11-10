@@ -12,6 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "./dropdown-menu";
+import { MenuCheckedAndSetIcon } from "./menu";
 
 let root: Root | undefined;
 
@@ -44,6 +45,10 @@ test.each(["light", "dark"] as const)(
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem>Action</DropdownMenuItem>
+                <DropdownMenuItem icon={<MenuCheckedAndSetIcon />}>
+                  Set
+                </DropdownMenuItem>
+                <DropdownMenuItem destructive>Delete</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </DialogContent>
@@ -66,6 +71,42 @@ test.each(["light", "dark"] as const)(
     const dialog = brightness(document.querySelector('[role="dialog"]')!);
     const menu = brightness(document.querySelector('[role="menu"]')!);
     expect(mode === "light" ? menu < dialog : menu > dialog).toBe(true);
+
+    const color = (element: Element, property: "color" | "backgroundColor") => {
+      context.fillStyle = getComputedStyle(element)[property];
+      context.fillRect(0, 0, 1, 1);
+      return Array.from(context.getImageData(0, 0, 1, 1).data).slice(0, 3);
+    };
+    const luminance = (channels: number[]) =>
+      channels
+        .map((channel) => {
+          const value = channel / 255;
+          return value <= 0.04045
+            ? value / 12.92
+            : ((value + 0.055) / 1.055) ** 2.4;
+        })
+        .reduce(
+          (sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index],
+          0
+        );
+    const background = luminance(
+      color(document.querySelector('[role="menu"]')!, "backgroundColor")
+    );
+    const contrast = (element: Element) => {
+      const foreground = luminance(color(element, "color"));
+      return (
+        (Math.max(foreground, background) + 0.05) /
+        (Math.min(foreground, background) + 0.05)
+      );
+    };
+    expect(
+      contrast(document.querySelector('[role="menuitem"]:last-child')!),
+      `${mode} destructive menu text contrast`
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
+      contrast(document.querySelector('[role="menuitem"] svg')!),
+      `${mode} set icon contrast`
+    ).toBeGreaterThanOrEqual(3);
   }
 );
 

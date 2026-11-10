@@ -212,15 +212,15 @@
   --background-primary: var(--color-background);
   --background-secondary: var(--color-surface-secondary);
   --background-floating: light-dark(
-    var(--color-surface-secondary),
-    var(--color-surface-strong)
+    color-mix(in oklab, var(--color-background) 86%, var(--color-foreground)),
+    color-mix(in oklab, var(--color-background) 85%, var(--color-foreground))
   );
   --background-floating-raised: light-dark(
-    color-mix(in oklab, var(--color-background) 86%, var(--color-foreground)),
+    color-mix(in oklab, var(--color-background) 80%, var(--color-foreground)),
     color-mix(in oklab, var(--color-background) 78%, var(--color-foreground))
   );
   --background-floating-nested: light-dark(
-    color-mix(in oklab, var(--color-background) 80%, var(--color-foreground)),
+    color-mix(in oklab, var(--color-background) 74%, var(--color-foreground)),
     color-mix(in oklab, var(--color-background) 74%, var(--color-foreground))
   );
   --background-disabled: color-mix(

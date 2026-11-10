@@ -28,9 +28,9 @@ const expectedDefaultColors = {
   light: {
     "--background-primary": "#feffff",
     "--background-secondary": "#e8eaeb",
-    "--background-floating": "#e8eaeb",
-    "--background-floating-raised": "#d8dbdc",
-    "--background-floating-nested": "#c8cbcd",
+    "--background-floating": "#d8dbdc",
+    "--background-floating-raised": "#c8cbcd",
+    "--background-floating-nested": "#b9bcbe",
     "--background-disabled": "#f7f8f9",
     "--background-inverse": "#11181c",
     "--background-accent": "#096cff",
@@ -72,7 +72,7 @@ const expectedDefaultColors = {
   dark: {
     "--background-primary": "#151617",
     "--background-secondary": "#222425",
-    "--background-floating": "#292b2c",
+    "--background-floating": "#2e3031",
     "--background-floating-raised": "#3c3d3e",
     "--background-floating-nested": "#444546",
     "--background-disabled": "#191b1b",
@@ -206,6 +206,10 @@ describe("Craft color contrast", () => {
           getContrastRatio(floating, background),
           `${mode} floating surface`
         ).toBeGreaterThanOrEqual(getContrastRatio(surface, background));
+        expect(
+          getContrastRatio(floating, surface),
+          `${mode} dialog above panel`
+        ).toBeGreaterThanOrEqual(1.12);
         if (mode === "light") {
           expect(raised[0]).toBeLessThan(floating[0]);
           expect(nested[0]).toBeLessThan(raised[0]);

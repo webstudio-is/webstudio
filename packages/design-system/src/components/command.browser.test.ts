@@ -74,7 +74,9 @@ test("command panels and selected items follow surface elevation", () => {
           createElement(
             Command,
             null,
-            createElement(CommandInput),
+            createElement(CommandInput, {
+              action: { name: "select", label: "Select" },
+            }),
             createElement(
               CommandList,
               null,
@@ -146,6 +148,12 @@ test("command panels and selected items follow surface elevation", () => {
     expect(
       contrast(readColor(getComputedStyle(heading).color), panelBackground),
       `${mode} heading contrast`
+    ).toBeGreaterThanOrEqual(4.5);
+    const actionHint = container.querySelector("kbd");
+    expect(actionHint).not.toBeNull();
+    expect(
+      contrast(readColor(getComputedStyle(actionHint!).color), panelBackground),
+      `${mode} command shortcut contrast`
     ).toBeGreaterThanOrEqual(4.5);
   }
 });

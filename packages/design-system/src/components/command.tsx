@@ -217,10 +217,10 @@ export const CommandInput = (
         suffix={
           action && (
             <Text
-              color="moreSubtle"
+              color="subtle"
               css={{ alignSelf: "center", paddingInline: theme.spacing[5] }}
             >
-              {action.label} <Kbd value={["enter"]} color="moreSubtle" />
+              {action.label} <Kbd value={["enter"]} color="subtle" />
             </Text>
           )
         }

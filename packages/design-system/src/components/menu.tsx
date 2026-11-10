@@ -81,7 +81,7 @@ export const menuItemCss = css({
     },
     destructive: {
       true: {
-        color: cssVar("--foreground-negative"),
+        color: `color-mix(in oklab, ${cssVar("--foreground-negative")} 60%, ${cssVar("--foreground-primary")})`,
       },
     },
     hint: {
@@ -198,7 +198,7 @@ export const DropdownMenuArrow = () => (
 );
 
 const setIconStyle = css({
-  color: cssVar("--foreground-accent"),
+  color: `color-mix(in oklab, ${cssVar("--foreground-accent")} 70%, ${cssVar("--foreground-primary")})`,
 });
 
 // Icon for the "checked" state from Figma
