@@ -61,12 +61,14 @@ const getAxisTrackCount = (
   return parsedCount;
 };
 
+const gridLineColor = `color-mix(in oklab, ${cssVar("--foreground-secondary")} 75%, ${cssVar("--background-floating")})`;
+
 const selectorCellStyle = css({
   width: 16,
   height: 16,
   borderRadius: theme.borderRadius[3],
   backgroundColor: cssVar("--background-secondary"),
-  border: `1px solid ${cssVar("--border-default")}`,
+  border: `1px solid ${gridLineColor}`,
   transition: "all 0.1s ease",
   "&:hover": {
     borderColor: cssVar("--border-focus"),
@@ -227,7 +229,7 @@ const presetPreviewStyle = css({
   width: "100%",
   aspectRatio: "3 / 2",
   borderRadius: theme.borderRadius[2],
-  border: `1px solid ${cssVar("--border-default")}`,
+  border: `1px solid ${gridLineColor}`,
   overflow: "hidden",
 });
 
@@ -268,7 +270,7 @@ const GridPresetsPicker = ({ onSelect }: GridPresetsPickerProps) => {
                   css={{
                     backgroundColor: cssVar("--background-secondary"),
                     borderRadius: theme.borderRadius[1],
-                    border: `1px solid ${cssVar("--border-default")}`,
+                    border: `1px solid ${gridLineColor}`,
                   }}
                 />
               ))}
@@ -473,11 +475,11 @@ export const GridGenerator = ({ open, onOpenChange }: GridGeneratorProps) => {
               height: "100%",
               borderRight:
                 col < displayColumnCount - 1 && !mergedRight
-                  ? `1px solid ${cssVar("--border-default")}`
+                  ? `1px solid ${gridLineColor}`
                   : undefined,
               borderBottom:
                 row < displayRowCount - 1 && !mergedBottom
-                  ? `1px solid ${cssVar("--border-default")}`
+                  ? `1px solid ${gridLineColor}`
                   : undefined,
             }}
           />

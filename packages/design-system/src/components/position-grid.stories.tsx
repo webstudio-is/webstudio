@@ -65,3 +65,11 @@ export const PositionGrid = () => {
     </>
   );
 };
+
+export const Disabled = () => (
+  <PositionGridComponent
+    disabled
+    selectedPosition={{ x: 50, y: 50 }}
+    onSelect={() => {}}
+  />
+);

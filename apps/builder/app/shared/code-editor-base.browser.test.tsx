@@ -282,3 +282,49 @@ test("keeps editor chrome in form dialogs but removes it in editor dialogs", () 
   expect(getComputedStyle(fullEditor!).borderLeftWidth).toBe("0px");
   expect(getComputedStyle(fullEditor!).paddingLeft).toBe("0px");
 });
+
+test.each(["light", "dark"] as const)(
+  "keeps the CSS editor shortcut footer on the dialog surface in %s mode",
+  (mode) => {
+    document.documentElement.dataset.colorScheme = mode;
+    act(() => {
+      root.render(
+        <EditorDialog
+          open
+          title="CSS value"
+          content={
+            <EditorContent
+              value="1fr"
+              showShortcuts
+              onChange={() => {}}
+              onChangeComplete={() => {}}
+            />
+          }
+        />
+      );
+    });
+
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+    const footer = dialog
+      ?.querySelector<HTMLElement>(".cm-editor")
+      ?.parentElement?.querySelector<HTMLElement>(":scope > div:first-child");
+    if (dialog === null || footer === null || footer === undefined) {
+      throw new Error("Expected the CSS editor dialog and shortcut footer");
+    }
+
+    const context = document.createElement("canvas").getContext("2d");
+    if (context === null) {
+      throw new Error("Expected canvas color evaluation");
+    }
+    context.fillStyle = getComputedStyle(dialog).backgroundColor;
+    context.fillRect(0, 0, 1, 1);
+    const surface = context.getImageData(0, 0, 1, 1).data;
+    context.fillStyle = getComputedStyle(footer).backgroundColor;
+    context.fillRect(0, 0, 1, 1);
+    const underFooter = context.getImageData(0, 0, 1, 1).data;
+
+    for (const channel of [0, 1, 2]) {
+      expect(Math.abs(underFooter[channel] - surface[channel])).toBeLessThan(2);
+    }
+  }
+);

@@ -16,7 +16,7 @@ const faviconDataUrl = `data:image/svg+xml,${encodeURIComponent(
 
 export const SearchPreview = () => (
   <StorySection title="Search Preview">
-    <Box css={{ width: 600, margin: 20 }}>
+    <Box css={{ width: 600, margin: 20, background: "#fff" }}>
       <SearchPreviewComponent
         pageUrl="https://webstudio.is/blog-webstudios-architecture-an-overview"
         titleLink="Blog: Webstudio's Architecture - an overview"

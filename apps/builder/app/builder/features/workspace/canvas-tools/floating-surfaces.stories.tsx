@@ -41,6 +41,34 @@ export const TextToolbar = () => (
   </StorySection>
 );
 
+export const TextToolbarFormatted = () => (
+  <StorySection title="Formatted text toolbar">
+    <div
+      style={{
+        position: "relative",
+        width: 500,
+        height: 180,
+        background: cssVar("--background-primary"),
+      }}
+    >
+      <TooltipProvider>
+        <Toolbar
+          scale={100}
+          state={{
+            selectionRect: new DOMRect(150, 100, 80, 20),
+            isBold: true,
+            isItalic: true,
+            isSuperscript: true,
+            isSubscript: false,
+            isLink: true,
+            isSpan: true,
+          }}
+        />
+      </TooltipProvider>
+    </div>
+  </StorySection>
+);
+
 export const WorkspaceMediaBadge = () => {
   useEffect(() => {
     const previousBreakpoints = $breakpoints.get();

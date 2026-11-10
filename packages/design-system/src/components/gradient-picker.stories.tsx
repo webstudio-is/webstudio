@@ -90,3 +90,25 @@ export const GradientPicker = () => {
     </>
   );
 };
+
+export const MidpointHint = () => (
+  <GradientVariant
+    label="Midpoint"
+    initial="linear-gradient(90deg, black 0% 30%, white 100%)"
+  />
+);
+export const Disabled = () => {
+  const gradient = parseLinearGradientOrThrow(
+    "linear-gradient(90deg, black 0%, white 100%)"
+  );
+  return (
+    <GradientPickerComponent
+      disabled
+      gradient={gradient}
+      backgroundImage={formatLinearGradient(gradient)}
+      onChange={() => {}}
+      onChangeComplete={() => {}}
+      onThumbSelect={() => {}}
+    />
+  );
+};

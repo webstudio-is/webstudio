@@ -1,3 +1,4 @@
+import { RequestFixture } from "~/shared/storybook/request-fixture";
 import type { StoryFn } from "@storybook/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import type { Workspace } from "@webstudio-is/project";
@@ -120,3 +121,58 @@ export const Leave: StoryFn = () => {
   );
   return <RouterProvider router={router} />;
 };
+
+const membersRequest =
+  (maxSeats: number, empty = false) =>
+  (request: Request) =>
+    new URL(request.url).pathname === "/trpc/workspace.listMembers"
+      ? Response.json([
+          {
+            result: {
+              data: {
+                success: true,
+                data: {
+                  owner: { email: "owner@example.com" },
+                  members: empty
+                    ? []
+                    : [
+                        {
+                          email: "member@example.com",
+                          userId: "member",
+                          relation: "designers",
+                        },
+                      ],
+                  pendingInvites: empty
+                    ? []
+                    : [
+                        {
+                          email: "pending@example.com",
+                          notificationId: "pending",
+                          relation: "viewers",
+                        },
+                      ],
+                  maxSeats,
+                },
+              },
+            },
+          },
+        ])
+      : undefined;
+const membersAvailable = membersRequest(5);
+const membersOverCapacity = membersRequest(0);
+const membersEmpty = membersRequest(5, true);
+export const MembersLoaded = () => (
+  <RequestFixture request={membersAvailable}>
+    <ManageMembersOwner />
+  </RequestFixture>
+);
+export const MembersOverCapacity = () => (
+  <RequestFixture request={membersOverCapacity}>
+    <ManageMembersOwner />
+  </RequestFixture>
+);
+export const MembersEmpty = () => (
+  <RequestFixture request={membersEmpty}>
+    <ManageMembersOwner />
+  </RequestFixture>
+);

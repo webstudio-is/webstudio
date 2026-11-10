@@ -192,6 +192,9 @@ const shortcutStyle = css({
   width: "100%",
   paddingInline: theme.spacing[3],
   background: `oklch(from ${cssVar("--background-primary")} l c h / 50%)`,
+  "[data-editor-dialog-content] &": {
+    background: `oklch(from ${cssVar("--background-floating")} l c h / 50%)`,
+  },
   zIndex: 1,
   pointerEvents: "none",
 });
