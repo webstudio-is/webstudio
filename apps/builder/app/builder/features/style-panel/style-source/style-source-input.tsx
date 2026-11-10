@@ -582,7 +582,7 @@ export const StyleSourceInput = (
                   let label = null;
                   if (item.source === "tag" && hasTagStyleItem === false) {
                     hasTagStyleItem = true;
-                    label = <ComboboxLabel>Tag style</ComboboxLabel>;
+                    label = <ComboboxLabel>Tag</ComboboxLabel>;
                   }
                   if (item.source === "token" && hasGlobalTokenItem === false) {
                     hasGlobalTokenItem = true;
@@ -591,7 +591,7 @@ export const StyleSourceInput = (
                         {(hasNewTokenItem || hasTagStyleItem) && (
                           <ComboboxSeparator />
                         )}
-                        <ComboboxLabel>Global tokens</ComboboxLabel>
+                        <ComboboxLabel>Tokens</ComboboxLabel>
                       </>
                     );
                   }
