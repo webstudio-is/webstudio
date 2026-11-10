@@ -13,6 +13,7 @@ import {
   type StyleSourceSelection,
   createImageValueTransformer,
   addFontRules,
+  getTagStyleId,
 } from "@webstudio-is/sdk";
 import { inflatedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import { INFLATE_PADDING } from "~/canvas/inflator";
@@ -57,7 +58,10 @@ import {
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
 import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
-import { createComputedStyleDeclStore } from "~/builder/features/style-panel/shared/model";
+import {
+  $instanceTags,
+  createComputedStyleDeclStore,
+} from "~/builder/features/style-panel/shared/model";
 import { cssVar, declareCssVar } from "@webstudio-is/design-system";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
@@ -746,6 +750,7 @@ const computeInstanceStyles = ({
   breakpoints,
   styleSourceSelections,
   temporaryTagStyleId,
+  instanceTag,
   styles,
 }: {
   selectedInstance: Instance | undefined;
@@ -753,6 +758,7 @@ const computeInstanceStyles = ({
   breakpoints: Map<string, Breakpoint>;
   styleSourceSelections: Map<string, { values: string[] }>;
   temporaryTagStyleId?: string;
+  instanceTag?: string;
   styles: Map<string, StyleDecl>;
 }) => {
   if (selectedInstance === undefined || selectedStyleState === undefined) {
@@ -765,6 +771,8 @@ const computeInstanceStyles = ({
   );
   if (temporaryTagStyleId) {
     styleSourceOrder.set(temporaryTagStyleId, 0);
+  } else if (instanceTag) {
+    styleSourceOrder.set(getTagStyleId(instanceTag), 0);
   }
   const instanceStyles: StyleDecl[] = [];
   for (const styleDecl of styles.values()) {
@@ -795,6 +803,7 @@ const $instanceStyles = computed(
     $breakpoints,
     $styleSourceSelections,
     $temporaryTagStyleId,
+    $instanceTags,
     $styles,
   ],
   (
@@ -803,6 +812,7 @@ const $instanceStyles = computed(
     breakpoints,
     styleSourceSelections,
     temporaryTagStyleId,
+    instanceTags,
     styles
   ) =>
     computeInstanceStyles({
@@ -811,6 +821,9 @@ const $instanceStyles = computed(
       breakpoints,
       styleSourceSelections,
       temporaryTagStyleId,
+      instanceTag: selectedInstance
+        ? instanceTags.get(selectedInstance.id)
+        : undefined,
       styles,
     })
 );
@@ -860,12 +873,16 @@ const renderStateStyles = ({
     sheet.addMediaRule(breakpoint.id, breakpoint);
   }
   const selector = `[${idAttribute}="${instanceId}"]`;
-  const rule = sheet.addNestingRule(selector);
   const stateSelector = getStatePreviewSelector(selectedState);
   for (const styleDecl of styles) {
+    const isTagStyle = getTagFromStyleId(styleDecl.styleSourceId) !== undefined;
+    const previewSelector = isTagStyle
+      ? `:where(${selector})${stateSelector}`
+      : `${selector}${stateSelector}`;
+    const rule = sheet.addNestingRule(previewSelector);
     rule.setDeclaration({
       breakpoint: styleDecl.breakpointId,
-      selector: stateSelector,
+      selector: "",
       property: styleDecl.property,
       value: toStyleValue(styleDecl, transformValue),
     });

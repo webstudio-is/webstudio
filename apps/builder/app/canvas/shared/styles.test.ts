@@ -212,6 +212,41 @@ describe("renderStateStyles", () => {
     expect(sheet.cssText).toContain('[data-ws-id="box"] h1');
   });
 
+  test("Tag preview selectors stay below instance selectors at every breakpoint", () => {
+    const sheet = createTestSheet();
+    const tagStyleId = getTagStyleId("button");
+    renderStateStyles({
+      instanceStyles: {
+        instanceId: "button",
+        selectedState: ":hover",
+        breakpoints: [
+          { id: "base", label: "Base" },
+          { id: "mobile", label: "Mobile" },
+        ],
+        styles: [
+          createStyleDecl({
+            styleSourceId: tagStyleId,
+            breakpointId: "mobile",
+            state: ":hover",
+            value: { type: "keyword", value: "red" },
+          }),
+          createStyleDecl({
+            styleSourceId: "local",
+            breakpointId: "base",
+            state: ":hover",
+            value: { type: "keyword", value: "blue" },
+          }),
+        ],
+      },
+      sheet,
+      transformValue: mockTransformValue,
+      toStyleValue: mockToStyleValue,
+    });
+
+    expect(sheet.cssText).toContain(':where([data-ws-id="button"])');
+    expect(sheet.cssText).toContain('[data-ws-id="button"]');
+  });
+
   test("creates nesting rule with correct instance selector", () => {
     const sheet = createTestSheet();
     renderStateStyles({
@@ -508,6 +543,42 @@ describe("computeInstanceStyles", () => {
             state: ":hover",
             property: "color",
             value: { type: "keyword", value: "blue" },
+          }),
+        ],
+        [
+          "tag",
+          createStyleDecl({
+            styleSourceId: tagStyleId,
+            state: ":hover",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          }),
+        ],
+      ]),
+    });
+
+    expect(result?.styles.map((styleDecl) => styleDecl.styleSourceId)).toEqual([
+      tagStyleId,
+      "local",
+    ]);
+  });
+
+  test("includes matching Tag state styles without a temporary chip", () => {
+    const tagStyleId = getTagStyleId("button");
+    const result = computeInstanceStyles({
+      selectedInstance: createInstance("button"),
+      selectedStyleState: ":hover",
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSourceSelections: new Map([["button", { values: ["local"] }]]),
+      instanceTag: "button",
+      styles: new Map([
+        [
+          "local",
+          createStyleDecl({
+            styleSourceId: "local",
+            state: ":hover",
+            property: "paddingTop",
+            value: { type: "unit", unit: "px", value: 8 },
           }),
         ],
         [
