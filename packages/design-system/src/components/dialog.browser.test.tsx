@@ -23,7 +23,51 @@ afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   document.body.innerHTML = "";
+  document.documentElement.removeAttribute("data-color-scheme");
 });
+
+test.each(["light", "dark"] as const)(
+  "dropdowns rise above dialogs in %s mode",
+  async (mode) => {
+    document.documentElement.dataset.colorScheme = mode;
+    const container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    await act(async () =>
+      root?.render(
+        <Dialog open>
+          <DialogContent aria-describedby={undefined}>
+            <DialogTitle>Dialog</DialogTitle>
+            <DropdownMenu defaultOpen>
+              <DropdownMenuTrigger asChild>
+                <Button>Actions</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Action</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </DialogContent>
+        </Dialog>
+      )
+    );
+    await vi.waitFor(() =>
+      expect(document.querySelector('[role="menu"]')).not.toBeNull()
+    );
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d")!;
+    const brightness = (element: Element) => {
+      context.fillStyle = getComputedStyle(element).backgroundColor;
+      context.fillRect(0, 0, 1, 1);
+      return Array.from(context.getImageData(0, 0, 1, 1).data)
+        .slice(0, 3)
+        .reduce((sum, channel) => sum + channel, 0);
+    };
+    const dialog = brightness(document.querySelector('[role="dialog"]')!);
+    const menu = brightness(document.querySelector('[role="menu"]')!);
+    expect(mode === "light" ? menu < dialog : menu > dialog).toBe(true);
+  }
+);
 
 test("shows the maximize button hover background", async () => {
   const container = document.createElement("div");

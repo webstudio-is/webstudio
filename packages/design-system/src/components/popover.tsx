@@ -20,11 +20,12 @@ export const PopoverPortal = Primitive.Portal;
 export const PopoverAnchor = Primitive.Anchor;
 
 const contentStyle = css({
+  "--foreground-secondary": cssVar("--foreground-secondary-floating"),
   border: `1px solid ${cssVar("--border-default")}`,
   boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar(
-    "--background-floating"
+    "--background-floating-raised"
   )}`,
-  background: cssVar("--background-floating"),
+  background: cssVar("--background-floating-raised"),
   borderRadius: theme.borderRadius[6],
   display: "flex",
   flexDirection: "column",

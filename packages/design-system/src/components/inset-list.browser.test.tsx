@@ -4,6 +4,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { userEvent } from "@vitest/browser/context";
 import { InsetList, InsetListItem } from "./inset-list";
 import { List, ListItem } from "./primitives/list";
+import "../colors/colors.css";
 
 let root: Root | undefined;
 
@@ -15,6 +16,7 @@ afterEach(() => {
   act(() => root?.unmount());
   root = undefined;
   document.body.innerHTML = "";
+  document.documentElement.removeAttribute("data-color-scheme");
 });
 
 const pressArrow = (element: HTMLElement, key: string) => {
@@ -22,6 +24,40 @@ const pressArrow = (element: HTMLElement, key: string) => {
     element.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
   });
 };
+
+test.each(["light", "dark"] as const)(
+  "selected inset list rows rise above a floating surface in %s mode",
+  (mode) => {
+    document.documentElement.dataset.colorScheme = mode;
+    const container = document.createElement("div");
+    container.style.background = "var(--background-floating)";
+    document.body.append(container);
+    root = createRoot(container);
+    act(() =>
+      root?.render(
+        <InsetList>
+          <InsetListItem data-state="selected">Selected</InsetListItem>
+        </InsetList>
+      )
+    );
+
+    const selected = container.querySelector("button")!;
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d")!;
+    const brightness = (color: string) => {
+      context.fillStyle = color;
+      context.fillRect(0, 0, 1, 1);
+      return Array.from(context.getImageData(0, 0, 1, 1).data)
+        .slice(0, 3)
+        .reduce((sum, channel) => sum + channel, 0);
+    };
+    const surface = brightness(getComputedStyle(container).backgroundColor);
+    const selection = brightness(getComputedStyle(selected).backgroundColor);
+    expect(mode === "light" ? selection < surface : selection > surface).toBe(
+      true
+    );
+  }
+);
 
 test("keeps navigation labels left aligned beside their icons", () => {
   const container = document.createElement("div");

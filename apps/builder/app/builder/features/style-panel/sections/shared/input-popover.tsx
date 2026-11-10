@@ -134,7 +134,6 @@ const PopoverContentStyled = styled(PopoverContent, {
   minHeight: 0,
   border: `1px solid ${cssVar("--border-default")}`,
   borderRadius: theme.borderRadius[7],
-  background: cssVar("--background-primary"),
   padding: theme.spacing[5],
   boxShadow: theme.shadows.menuDropShadow,
   animationDuration: "200ms",

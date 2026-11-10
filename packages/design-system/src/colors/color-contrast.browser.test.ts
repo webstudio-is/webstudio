@@ -29,6 +29,8 @@ const expectedDefaultColors = {
     "--background-primary": "#feffff",
     "--background-secondary": "#e8eaeb",
     "--background-floating": "#e8eaeb",
+    "--background-floating-raised": "#d8dbdc",
+    "--background-floating-nested": "#c8cbcd",
     "--background-disabled": "#f7f8f9",
     "--background-inverse": "#11181c",
     "--background-accent": "#096cff",
@@ -42,6 +44,7 @@ const expectedDefaultColors = {
     "--background-informative-subtle": "#e3effd",
     "--foreground-primary": "#11181c",
     "--foreground-secondary": "#595f63",
+    "--foreground-secondary-floating": "#393f43",
     "--foreground-disabled": "#898d90",
     "--foreground-on-inverse": "#feffff",
     "--foreground-on-accent": "#feffff",
@@ -70,6 +73,8 @@ const expectedDefaultColors = {
     "--background-primary": "#151617",
     "--background-secondary": "#222425",
     "--background-floating": "#292b2c",
+    "--background-floating-raised": "#3c3d3e",
+    "--background-floating-nested": "#444546",
     "--background-disabled": "#191b1b",
     "--background-inverse": "#e6e8e9",
     "--background-accent": "#096cff",
@@ -83,6 +88,7 @@ const expectedDefaultColors = {
     "--background-informative-subtle": "#1a2839",
     "--foreground-primary": "#e6e8e9",
     "--foreground-secondary": "#959798",
+    "--foreground-secondary-floating": "#b7b9ba",
     "--foreground-disabled": "#6a6c6d",
     "--foreground-on-inverse": "#151617",
     "--foreground-on-accent": "#fdffff",
@@ -182,6 +188,8 @@ describe("Craft color contrast", () => {
         const background = readColor("--background-primary");
         const surface = readColor("--background-secondary");
         const floating = readColor("--background-floating");
+        const raised = readColor("--background-floating-raised");
+        const nested = readColor("--background-floating-nested");
         const primaryForeground = readColor("--foreground-primary");
         const secondaryForeground = readColor("--foreground-secondary");
         const primaryContrast = getContrastRatio(primaryForeground, background);
@@ -198,6 +206,13 @@ describe("Craft color contrast", () => {
           getContrastRatio(floating, background),
           `${mode} floating surface`
         ).toBeGreaterThanOrEqual(getContrastRatio(surface, background));
+        if (mode === "light") {
+          expect(raised[0]).toBeLessThan(floating[0]);
+          expect(nested[0]).toBeLessThan(raised[0]);
+        } else {
+          expect(raised[0]).toBeGreaterThan(floating[0]);
+          expect(nested[0]).toBeGreaterThan(raised[0]);
+        }
         expect(
           secondaryContrast,
           `${mode} secondary foreground`
