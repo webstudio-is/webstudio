@@ -44,6 +44,6 @@ describe("canEditStyleSourceStyles", () => {
 
 describe("getMenuAlignOffset", () => {
   test("aligns the menu start with the style source chip", () => {
-    expect(getMenuAlignOffset({ left: 100 }, { left: 124 })).toBe(-24);
+    expect(getMenuAlignOffset(100, 124)).toBe(-24);
   });
 });

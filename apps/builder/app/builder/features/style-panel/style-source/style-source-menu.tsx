@@ -137,10 +137,8 @@ type MenuAction = keyof typeof menuActionDescriptions;
 const canEditStyleSourceStyles = (item: IntermediateItem) =>
   item.source === "local" || item.locked === false;
 
-const getMenuAlignOffset = (
-  container: Pick<DOMRect, "left">,
-  trigger: Pick<DOMRect, "left">
-) => container.left - trigger.left;
+const getMenuAlignOffset = (containerLeft: number, triggerLeft: number) =>
+  containerLeft - triggerLeft;
 
 // All available CSS selectors for autocomplete
 const allSelectors = [
@@ -302,8 +300,8 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
     if (triggerRef.current?.parentElement) {
       setAlignOffset(
         getMenuAlignOffset(
-          triggerRef.current.parentElement.getBoundingClientRect(),
-          triggerRef.current.getBoundingClientRect()
+          triggerRef.current.parentElement.getBoundingClientRect().left,
+          triggerRef.current.getBoundingClientRect().left
         )
       );
     }
