@@ -235,36 +235,23 @@ const TextFieldBase: ForwardRefRenderFunction<
   };
 
   const handleInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
-    if (
-      !event.defaultPrevented &&
-      !event.shiftKey &&
-      event.key === "ArrowLeft"
-    ) {
-      const input = internalInputRef.current;
-      if (input?.selectionStart === 0 && input.selectionEnd === 0) {
-        if (focusAdjacent(undefined, -1)) {
-          event.preventDefault();
-          event.stopPropagation();
-          return;
-        }
-      }
-    }
-    if (
-      !event.defaultPrevented &&
-      !event.shiftKey &&
-      event.key === "ArrowRight"
-    ) {
-      const input = internalInputRef.current;
-      if (
-        input &&
+    const input = internalInputRef.current;
+    if (!event.defaultPrevented && !event.shiftKey && input) {
+      const moveLeft =
+        event.key === "ArrowLeft" &&
+        input.selectionStart === 0 &&
+        input.selectionEnd === 0;
+      const moveRight =
+        event.key === "ArrowRight" &&
         input.selectionStart === input.value.length &&
-        input.selectionEnd === input.value.length
+        input.selectionEnd === input.value.length;
+      if (
+        (moveLeft || moveRight) &&
+        focusAdjacent(undefined, moveLeft ? -1 : 1)
       ) {
-        if (focusAdjacent(undefined, 1)) {
-          event.preventDefault();
-          event.stopPropagation();
-          return;
-        }
+        event.preventDefault();
+        event.stopPropagation();
+        return;
       }
     }
     onKeyDown?.(event);
