@@ -102,6 +102,7 @@ type TextFieldBaseWrapperProps<Item extends IntermediateItem> = Omit<
       hasStyles: boolean;
       open: boolean;
       onOpenChange: (open: boolean) => void;
+      onReturnToInput: () => void;
     }) => ReactNode;
     onChangeItem?: (item: Item) => void;
     onSort?: (items: Array<Item>) => void;
@@ -117,6 +118,7 @@ const StyleSourceControlWithMenu = <Item extends IntermediateItem>({
   item,
   hasStyles,
   renderMenu,
+  onReturnToInput,
   ...props
 }: Omit<
   ComponentProps<typeof StyleSourceControl>,
@@ -124,11 +126,13 @@ const StyleSourceControlWithMenu = <Item extends IntermediateItem>({
 > & {
   item: Item;
   hasStyles: boolean;
+  onReturnToInput: () => void;
   renderMenu: (params: {
     item: Item;
     hasStyles: boolean;
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onReturnToInput: () => void;
   }) => ReactNode;
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -143,6 +147,7 @@ const StyleSourceControlWithMenu = <Item extends IntermediateItem>({
         hasStyles,
         open: menuOpen,
         onOpenChange: setMenuOpen,
+        onReturnToInput,
       })}
     />
   );
@@ -307,6 +312,7 @@ const TextFieldBase: ForwardRefRenderFunction<
           key={item.id}
           item={item}
           renderMenu={renderMenu}
+          onReturnToInput={() => internalInputRef.current?.focus()}
           selected={item.id === selectedItemSelector?.styleSourceId}
           state={
             item.id === selectedItemSelector?.styleSourceId
@@ -520,10 +526,17 @@ export const StyleSourceInput = (
             }}
             inputRef={props.inputRef}
             error={props.error}
-            renderMenu={({ item, hasStyles, open, onOpenChange }) => (
+            renderMenu={({
+              item,
+              hasStyles,
+              open,
+              onOpenChange,
+              onReturnToInput,
+            }) => (
               <StyleSourceMenu
                 open={open}
                 onOpenChange={onOpenChange}
+                onReturnToInput={onReturnToInput}
                 selectedItemSelector={props.selectedItemSelector}
                 item={item}
                 hasStyles={hasStyles}

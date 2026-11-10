@@ -262,6 +262,7 @@ const SelectorCombobox = ({
 type StyleSourceMenuProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onReturnToInput?: () => void;
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
   hasStyles: boolean;
@@ -296,6 +297,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
   const [highlightedAction, setHighlightedAction] = useState<MenuAction>();
   const [alignOffset, setAlignOffset] = useState(0);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const escapePressed = useRef(false);
   const updateAlignOffset = useCallback(() => {
     if (triggerRef.current?.parentElement) {
       setAlignOffset(
@@ -375,8 +377,19 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
         </MenuTrigger>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        onKeyDown={(event) => event.stopPropagation()}
-        onCloseAutoFocus={(event) => event.preventDefault()}
+        onKeyDown={(event) => {
+          event.stopPropagation();
+          if (event.key === "Escape") {
+            escapePressed.current = true;
+          }
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (escapePressed.current) {
+            escapePressed.current = false;
+            props.onReturnToInput?.();
+          }
+        }}
         autoFocus
         align="start"
         alignOffset={alignOffset}

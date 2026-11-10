@@ -101,7 +101,8 @@ const StyleSourceContainer = styled(Box, {
   ...menuCssVars({ show: false }),
   "&:hover": menuCssVars({ show: true }),
   "&:has(button:focus-visible)": {
-    boxShadow: `inset 0 0 0 2px ${cssVar("--border-focus")}`,
+    outline: `2px solid ${cssVar("--border-focus")}`,
+    outlineOffset: 1,
   },
   variants: {
     source: {
