@@ -125,6 +125,11 @@ const StyleSourceContainer = styled(Box, {
           backgroundColor: styleSourceColors.neutral.background,
           [menuTriggerGradientVar]: styleSourceColors.neutral.gradient,
         },
+        "&:hover": {
+          color: styleSourceColors.neutral.foreground,
+          background: styleSourceColors.neutral.hoverBackground,
+          [menuTriggerGradientVar]: styleSourceColors.neutral.gradient,
+        },
       },
     },
     disabled: {

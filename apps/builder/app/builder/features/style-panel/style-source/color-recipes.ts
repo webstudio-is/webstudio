@@ -6,6 +6,7 @@ import {
 import {
   selectedControlBackground,
   toggleGroupBackground,
+  withInteractionOverlay,
 } from "@webstudio-is/design-system/component-state-color";
 
 const gradient = (color: string) =>
@@ -18,14 +19,8 @@ const instanceBackground = `color-mix(in oklab, ${cssVar(
 const tagStyleBackground = selectedControlBackground;
 const tagStyleForeground = cssVar("--foreground-primary");
 const breakpointBackground = rotateBoundedBackgroundHue(accentBackground, 60);
-const neutralBackground = `light-dark(
-  ${cssVar("--foreground-secondary")},
-  ${toggleGroupBackground}
-)`;
-const neutralForeground = `light-dark(
-  ${cssVar("--foreground-on-inverse")},
-  ${cssVar("--foreground-primary")}
-)`;
+const neutralBackground = toggleGroupBackground;
+const neutralForeground = cssVar("--foreground-primary");
 
 export const styleSourceColors = {
   local: {
@@ -52,6 +47,7 @@ export const styleSourceColors = {
   },
   neutral: {
     background: neutralBackground,
+    hoverBackground: withInteractionOverlay(neutralBackground),
     foreground: neutralForeground,
     gradient: gradient(neutralBackground),
   },
