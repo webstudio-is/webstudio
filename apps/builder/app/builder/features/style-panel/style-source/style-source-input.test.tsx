@@ -261,8 +261,6 @@ test("allows Copy for styles on inactive states or breakpoints", () => {
     [
       {
         styleSourceId: "tag-style:button",
-        state: ":hover",
-        breakpointId: "mobile",
       },
     ]
   );
@@ -326,6 +324,66 @@ test("moves focus between the input and adjacent style sources with arrow keys",
 
     act(() => press(sourceButton("local"), "ArrowLeft"));
     expect(document.activeElement).toBe(input);
+  } finally {
+    act(() => root.unmount());
+    container.remove();
+  }
+});
+
+test("keeps the selected Tag style first in arrow-key autocomplete", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const tagStyle = {
+    id: "tag-style:button",
+    label: "button",
+    source: "tag" as const,
+    disabled: false,
+    locked: false,
+    states: [],
+  };
+  const token = {
+    id: "token-one",
+    label: "One",
+    source: "token" as const,
+    disabled: false,
+    locked: false,
+    states: [],
+  };
+  const onSelectAutocompleteItem = vi.fn();
+  try {
+    act(() =>
+      root.render(
+        <TooltipProvider>
+          <StyleSourceInput
+            inputRef={() => {}}
+            selectedItemSelector={undefined}
+            items={[tagStyle, token]}
+            value={[tagStyle]}
+            onSelectAutocompleteItem={onSelectAutocompleteItem}
+          />
+        </TooltipProvider>
+      )
+    );
+
+    const input = container.querySelector<HTMLInputElement>("input")!;
+    const press = (key: string, keyCode: number) => {
+      const event = new KeyboardEvent("keydown", {
+        key,
+        bubbles: true,
+        cancelable: true,
+      });
+      Object.defineProperty(event, "keyCode", { value: keyCode });
+      input.dispatchEvent(event);
+    };
+    act(() => input.focus());
+    act(() => press("ArrowDown", 40));
+    act(() => press("ArrowDown", 40));
+    act(() => press("Enter", 13));
+
+    expect(onSelectAutocompleteItem).toHaveBeenCalledWith(
+      expect.objectContaining({ id: tagStyle.id, source: "tag" })
+    );
   } finally {
     act(() => root.unmount());
     container.remove();

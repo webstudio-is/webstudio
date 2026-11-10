@@ -211,11 +211,11 @@ const TextFieldBase: ForwardRefRenderFunction<
     .at(-1)?.id;
 
   const handleInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
-    onKeyDown?.(event);
-    if (event.defaultPrevented || event.shiftKey) {
-      return;
-    }
-    if (event.key === "ArrowLeft" && !event.shiftKey) {
+    if (
+      !event.defaultPrevented &&
+      !event.shiftKey &&
+      event.key === "ArrowLeft"
+    ) {
       const input = internalInputRef.current;
       if (input?.selectionStart === 0 && input.selectionEnd === 0) {
         const previousItem = value
@@ -225,26 +225,34 @@ const TextFieldBase: ForwardRefRenderFunction<
           previousItem && sourceButtonRefs.current.get(previousItem.id);
         if (button) {
           event.preventDefault();
+          event.stopPropagation();
           button.focus();
           return;
         }
       }
     }
-    if (event.key === "ArrowRight" && !event.shiftKey) {
+    if (
+      !event.defaultPrevented &&
+      !event.shiftKey &&
+      event.key === "ArrowRight"
+    ) {
       const input = internalInputRef.current;
       if (
-        input?.selectionStart === input.value.length &&
+        input &&
+        input.selectionStart === input.value.length &&
         input.selectionEnd === input.value.length
       ) {
         const localItem = value.find((item) => item.source === "local");
         const button = localItem && sourceButtonRefs.current.get(localItem.id);
         if (button) {
           event.preventDefault();
+          event.stopPropagation();
           button.focus();
           return;
         }
       }
     }
+    onKeyDown?.(event);
   };
 
   return (
@@ -261,7 +269,6 @@ const TextFieldBase: ForwardRefRenderFunction<
       style={
         dragItemId ? menuCssVars({ show: false, override: true }) : undefined
       }
-      onKeyDown={onKeyDown}
     >
       {/* We want input to be the first element in DOM so it receives the focus first */}
       <InputField
@@ -399,7 +406,7 @@ const matchOrSuggestToCreate = (
   }
   // skip already added values
   return matched
-    .filter((item) => item.isAdded === false)
+    .filter((item) => item.isAdded === false || item.source === "tag")
     .slice(0, maxSuggestedTokens);
 };
 
