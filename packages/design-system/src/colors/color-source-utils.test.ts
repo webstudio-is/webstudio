@@ -102,7 +102,8 @@ describe("Craft color CSS source", () => {
         (count, category) => count + Object.keys(category).length,
         0
       )
-    ).toBe(38);
+    ).toBe(39);
+    expect(colors.semantic.background).toHaveProperty("floating");
     expect(colors.semantic.background).toHaveProperty("text-selection");
     expect(colors.semantic.foreground).toHaveProperty("on-text-selection");
     expect(colors.semantic.background).toHaveProperty("positive-subtle");
