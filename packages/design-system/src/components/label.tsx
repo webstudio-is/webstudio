@@ -22,6 +22,7 @@ const withInteractionOverlay = (background: string) =>
 export const labelColors = [
   "default",
   "preset",
+  "tagStyle",
   "local",
   "overwritten",
   "remote",
@@ -77,6 +78,15 @@ const StyledLabel = styled(RadixLabel, {
         color: cssVar("--foreground-secondary"),
         "&:hover": {
           background: withInteractionOverlay(presetBackground),
+        },
+      },
+      tagStyle: {
+        backgroundColor: styleSourceColor.tagStyle.background,
+        color: styleSourceColor.tagStyle.foreground,
+        "&:hover": {
+          background: withInteractionOverlay(
+            styleSourceColor.tagStyle.background
+          ),
         },
       },
       local: {

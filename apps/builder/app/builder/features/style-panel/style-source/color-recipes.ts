@@ -4,7 +4,6 @@ import {
   rotateBoundedBackgroundHue,
 } from "@webstudio-is/design-system";
 import {
-  selectedControlBackground,
   toggleGroupBackground,
   withInteractionOverlay,
 } from "@webstudio-is/design-system/component-state-color";
@@ -16,8 +15,6 @@ const accentBackground = cssVar("--background-accent");
 const instanceBackground = `color-mix(in oklab, ${cssVar(
   "--background-primary"
 )} 86%, ${cssVar("--foreground-primary")})`;
-const tagStyleBackground = selectedControlBackground;
-const tagStyleForeground = cssVar("--foreground-primary");
 const breakpointBackground = rotateBoundedBackgroundHue(accentBackground, 60);
 const neutralBackground = toggleGroupBackground;
 const neutralForeground = cssVar("--foreground-primary");
@@ -30,9 +27,9 @@ export const styleSourceColors = {
     gradient: gradient(styleSourceColor.local.solid),
   },
   tagStyle: {
-    background: tagStyleBackground,
-    foreground: tagStyleForeground,
-    gradient: gradient(tagStyleBackground),
+    background: styleSourceColor.tagStyle.background,
+    foreground: styleSourceColor.tagStyle.foreground,
+    gradient: gradient(styleSourceColor.tagStyle.background),
   },
   breakpoint: {
     background: breakpointBackground,
