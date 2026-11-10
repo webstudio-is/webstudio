@@ -45,6 +45,8 @@ export type SemanticColorName =
   | "--foreground-informative"
   | "--foreground-accent-floating"
   | "--foreground-accent-secondary-floating"
+  | "--foreground-positive-floating"
+  | "--foreground-informative-floating"
   | "--border-default"
   | "--border-focus"
   | "--border-negative"

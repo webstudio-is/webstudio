@@ -102,7 +102,7 @@ describe("Craft color CSS source", () => {
         (count, category) => count + Object.keys(category).length,
         0
       )
-    ).toBe(43);
+    ).toBe(45);
     expect(colors.semantic.background).toHaveProperty("floating");
     expect(colors.semantic.background).toHaveProperty("floating-raised");
     expect(colors.semantic.background).toHaveProperty("floating-nested");

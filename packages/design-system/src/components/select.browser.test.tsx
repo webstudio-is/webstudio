@@ -44,8 +44,8 @@ test.each(["light", "dark"] as const)(
       document.body.append(panel);
       expect(
         mode === "light"
-          ? brightness(list) > brightness(trigger)
-          : brightness(list) < brightness(panel)
+          ? brightness(list) < brightness(panel)
+          : brightness(list) > brightness(panel)
       ).toBe(true);
       panel.remove();
     } finally {

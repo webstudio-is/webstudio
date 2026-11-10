@@ -214,26 +214,38 @@
   --background-floating: light-dark(
     color-mix(
       in oklab,
-      var(--background-secondary) 75%,
-      var(--background-primary)
+      var(--background-primary) 97%,
+      var(--foreground-primary)
     ),
-    color-mix(in oklab, var(--background-primary) 85%, black)
+    color-mix(
+      in oklab,
+      var(--background-primary) 95%,
+      var(--foreground-primary)
+    )
   );
   --background-floating-raised: light-dark(
     color-mix(
       in oklab,
-      var(--background-secondary) 50%,
-      var(--background-primary)
+      var(--background-primary) 94%,
+      var(--foreground-primary)
     ),
-    color-mix(in oklab, var(--background-primary) 75%, black)
+    color-mix(
+      in oklab,
+      var(--background-primary) 91%,
+      var(--foreground-primary)
+    )
   );
   --background-floating-nested: light-dark(
     color-mix(
       in oklab,
-      var(--background-secondary) 25%,
-      var(--background-primary)
+      var(--background-primary) 91%,
+      var(--foreground-primary)
     ),
-    color-mix(in oklab, var(--background-primary) 65%, black)
+    color-mix(
+      in oklab,
+      var(--background-primary) 88%,
+      var(--foreground-primary)
+    )
   );
   --background-disabled: color-mix(
     in oklab,
@@ -302,12 +314,22 @@
   --foreground-informative: var(--color-informative-foreground);
   --foreground-accent-floating: color-mix(
     in oklab,
-    var(--foreground-accent) 90%,
+    var(--foreground-accent) 85%,
     var(--foreground-primary)
   );
   --foreground-accent-secondary-floating: color-mix(
     in oklab,
-    var(--foreground-accent-secondary) 90%,
+    var(--foreground-accent-secondary) 85%,
+    var(--foreground-primary)
+  );
+  --foreground-positive-floating: color-mix(
+    in oklab,
+    var(--foreground-positive) 90%,
+    var(--foreground-primary)
+  );
+  --foreground-informative-floating: color-mix(
+    in oklab,
+    var(--foreground-informative) 90%,
     var(--foreground-primary)
   );
 

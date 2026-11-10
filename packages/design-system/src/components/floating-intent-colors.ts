@@ -5,4 +5,6 @@ export const floatingIntentColors = {
   "--foreground-accent-secondary": cssVar(
     "--foreground-accent-secondary-floating"
   ),
+  "--foreground-positive": cssVar("--foreground-positive-floating"),
+  "--foreground-informative": cssVar("--foreground-informative-floating"),
 };

@@ -74,14 +74,14 @@ test.each(["light", "dark"] as const)(
     };
     const dialog = brightness(document.querySelector('[role="dialog"]')!);
     const menu = brightness(document.querySelector('[role="menu"]')!);
-    expect(mode === "light" ? menu > dialog : menu < dialog).toBe(true);
-    if (mode === "dark") {
-      const panel = document.createElement("div");
-      panel.style.backgroundColor = "var(--background-primary)";
-      document.body.append(panel);
-      expect(dialog).toBeLessThan(brightness(panel));
-      panel.remove();
-    }
+    expect(mode === "light" ? menu < dialog : menu > dialog).toBe(true);
+    const panel = document.createElement("div");
+    panel.style.backgroundColor = "var(--background-primary)";
+    document.body.append(panel);
+    expect(
+      mode === "light" ? dialog < brightness(panel) : dialog > brightness(panel)
+    ).toBe(true);
+    panel.remove();
 
     const color = (element: Element, property: "color" | "backgroundColor") => {
       context.fillStyle = getComputedStyle(element)[property];

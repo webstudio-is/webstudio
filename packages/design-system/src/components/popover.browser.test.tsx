@@ -27,6 +27,18 @@ test.each(["light", "dark"] as const)(
               >
                 Accent
               </span>
+              <span
+                style={{ color: "var(--foreground-positive)" }}
+                data-popover-positive
+              >
+                Positive
+              </span>
+              <span
+                style={{ color: "var(--foreground-informative)" }}
+                data-popover-informative
+              >
+                Informative
+              </span>
             </PopoverContent>
           </Popover>
         )
@@ -40,6 +52,13 @@ test.each(["light", "dark"] as const)(
       expect(
         getComputedStyle(document.querySelector("[data-popover-accent]")!).color
       ).toBe(getComputedStyle(reference).color);
+      for (const intent of ["positive", "informative"] as const) {
+        reference.style.color = `var(--foreground-${intent}-floating)`;
+        expect(
+          getComputedStyle(document.querySelector(`[data-popover-${intent}]`)!)
+            .color
+        ).toBe(getComputedStyle(reference).color);
+      }
       reference.remove();
     } finally {
       act(() => root.unmount());
