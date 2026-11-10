@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
 import "./colors.css";
+import type {
+  SemanticColorName,
+  ThemeVariableName,
+} from "./__generated__/css-variable-names";
 import { getColorContrast } from "./color-contrast";
 
 const readColor = (name: string) => {
@@ -196,6 +200,24 @@ describe("Craft color contrast", () => {
     });
   }
 
+  test("restores the scheme and removes temporary DOM when color evaluation fails", () => {
+    const root = document.documentElement;
+    const previousMode = root.getAttribute("data-color-scheme");
+    const previousBackground = root.style.getPropertyValue(
+      "--background-primary"
+    );
+    const previousBodyNodes = Array.from(document.body.childNodes);
+    root.style.setProperty("--background-primary", "transparent");
+
+    try {
+      expect(() => getColorContrast("dark")).toThrow();
+      expect(root.getAttribute("data-color-scheme")).toBe(previousMode);
+      expect(Array.from(document.body.childNodes)).toEqual(previousBodyNodes);
+    } finally {
+      root.style.setProperty("--background-primary", previousBackground);
+    }
+  });
+
   test("vivid theme preserves negative text and nested surface contrast", () => {
     const root = document.documentElement;
     const previousMode = root.getAttribute("data-color-scheme");
@@ -237,55 +259,77 @@ describe("Craft color contrast", () => {
     }
   });
 
-  test("theme color hue and chroma control derived semantic colors", () => {
-    const root = document.documentElement;
-    const sample = document.createElement("span");
-    sample.style.color = "var(--background-accent)";
-    document.body.append(sample);
+  test.each(["light", "dark"] as const)(
+    "all theme controls affect their intended outputs in %s mode",
+    (mode) => {
+      const root = document.documentElement;
+      const previousMode = root.getAttribute("data-color-scheme");
+      const controls = {
+        "--theme-color-neutral": {
+          value: "oklch(50% 0.02 300)",
+          output: "--foreground-primary",
+        },
+        "--theme-color-accent": {
+          value: "oklch(50% 0.18 300)",
+          output: "--background-accent",
+        },
+        "--theme-color-positive": {
+          value: "oklch(50% 0.18 300)",
+          output: "--background-positive",
+        },
+        "--theme-color-negative": {
+          value: "oklch(50% 0.18 300)",
+          output: "--background-negative",
+        },
+        "--theme-color-warning": {
+          value: "oklch(50% 0.18 300)",
+          output: "--foreground-warning",
+        },
+        "--theme-color-informative": {
+          value: "oklch(50% 0.18 300)",
+          output: "--foreground-informative",
+        },
+        "--theme-contrast-content": {
+          value: "100%",
+          output: "--foreground-primary",
+        },
+        "--theme-contrast-surface": {
+          value: "100%",
+          output: "--background-secondary",
+        },
+        "--theme-contrast-border": {
+          value: "100%",
+          output: "--border-default",
+        },
+      } satisfies Record<
+        ThemeVariableName,
+        { value: string; output: SemanticColorName }
+      >;
 
-    const accentBefore = getComputedStyle(sample).color;
-    root.style.setProperty("--theme-color-accent", "oklch(50% 0.18 300)");
-    const accentAfter = getComputedStyle(sample).color;
-
-    sample.style.color = "var(--background-primary)";
-    const neutralBefore = getComputedStyle(sample).color;
-    root.style.setProperty("--theme-color-neutral", "oklch(50% 0.02 300)");
-    const neutralAfter = getComputedStyle(sample).color;
-
-    expect.soft(accentAfter).not.toBe(accentBefore);
-    expect.soft(neutralAfter).not.toBe(neutralBefore);
-
-    root.style.removeProperty("--theme-color-accent");
-    root.style.removeProperty("--theme-color-neutral");
-    sample.remove();
-  });
-
-  test("theme contrast parameters affect their primary outputs", () => {
-    const root = document.documentElement;
-    const relationships = {
-      content: "--foreground-primary",
-      surface: "--background-secondary",
-      border: "--border-default",
-    } as const;
-
-    try {
-      for (const [relationship, semanticColor] of Object.entries(
-        relationships
-      )) {
-        const parameter = `--theme-contrast-${relationship}`;
-        root.style.setProperty(parameter, "0%");
-        const soft = Array.from(readColor(semanticColor));
-        root.style.setProperty(parameter, "100%");
-        const strong = Array.from(readColor(semanticColor));
-
-        expect(strong, relationship).not.toEqual(soft);
-      }
-    } finally {
-      for (const relationship of Object.keys(relationships)) {
-        root.style.removeProperty(`--theme-contrast-${relationship}`);
+      try {
+        root.dataset.colorScheme = mode;
+        for (const [parameter, { value, output }] of Object.entries(controls)) {
+          const previousValue = root.style.getPropertyValue(parameter);
+          try {
+            const before = Array.from(readColor(output));
+            root.style.setProperty(parameter, value);
+            expect(
+              Array.from(readColor(output)),
+              `${mode} ${parameter}`
+            ).not.toEqual(before);
+          } finally {
+            root.style.setProperty(parameter, previousValue);
+          }
+        }
+      } finally {
+        if (previousMode === null) {
+          root.removeAttribute("data-color-scheme");
+        } else {
+          root.setAttribute("data-color-scheme", previousMode);
+        }
       }
     }
-  });
+  );
 
   test("intent variants retain their semantic color family", () => {
     const root = document.documentElement;

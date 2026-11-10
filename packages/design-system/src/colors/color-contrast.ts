@@ -10,40 +10,29 @@ export type ColorContrastResult = {
 };
 
 const contrastContracts = [
-  ["--foreground-primary", "--background-primary", 4.5],
-  ["--foreground-secondary", "--background-primary", 4.5],
+  ...(
+    [
+      "--foreground-primary",
+      "--foreground-secondary",
+      "--foreground-accent",
+      "--foreground-accent-secondary",
+      "--foreground-positive",
+      "--foreground-negative",
+      "--foreground-warning",
+      "--foreground-informative",
+    ] as const
+  ).flatMap((foreground) =>
+    (
+      [
+        "--background-primary",
+        "--background-floating",
+        "--background-floating-raised",
+        "--background-floating-nested",
+      ] as const
+    ).map((background) => [foreground, background, 4.5] as const)
+  ),
   ["--foreground-primary", "--background-secondary", 4.5],
   ["--foreground-secondary", "--background-secondary", 4.5],
-  ["--foreground-primary", "--background-floating", 4.5],
-  ["--foreground-secondary", "--background-floating", 4.5],
-  ["--foreground-primary", "--background-floating-raised", 4.5],
-  ["--foreground-primary", "--background-floating-nested", 4.5],
-  ["--foreground-secondary", "--background-floating-raised", 4.5],
-  ["--foreground-secondary", "--background-floating-nested", 4.5],
-  ["--foreground-accent", "--background-floating", 4.5],
-  ["--foreground-accent", "--background-floating-raised", 4.5],
-  ["--foreground-accent", "--background-floating-nested", 4.5],
-  ["--foreground-accent-secondary", "--background-floating", 4.5],
-  ["--foreground-accent-secondary", "--background-floating-raised", 4.5],
-  ["--foreground-accent-secondary", "--background-floating-nested", 4.5],
-  ["--foreground-positive", "--background-floating", 4.5],
-  ["--foreground-positive", "--background-floating-raised", 4.5],
-  ["--foreground-positive", "--background-floating-nested", 4.5],
-  ["--foreground-negative", "--background-floating", 4.5],
-  ["--foreground-negative", "--background-floating-raised", 4.5],
-  ["--foreground-negative", "--background-floating-nested", 4.5],
-  ["--foreground-warning", "--background-floating", 4.5],
-  ["--foreground-warning", "--background-floating-raised", 4.5],
-  ["--foreground-warning", "--background-floating-nested", 4.5],
-  ["--foreground-informative", "--background-floating", 4.5],
-  ["--foreground-informative", "--background-floating-raised", 4.5],
-  ["--foreground-informative", "--background-floating-nested", 4.5],
-  ["--foreground-accent", "--background-primary", 4.5],
-  ["--foreground-accent-secondary", "--background-primary", 4.5],
-  ["--foreground-positive", "--background-primary", 4.5],
-  ["--foreground-negative", "--background-primary", 4.5],
-  ["--foreground-warning", "--background-primary", 4.5],
-  ["--foreground-informative", "--background-primary", 4.5],
   ["--foreground-on-text-selection", "--background-text-selection", 4.5],
   // Text selection appears on both regular surfaces and secondary editor fields.
   ["--background-text-selection", "--background-primary", 3],
@@ -61,18 +50,11 @@ const contrastContracts = [
   ["--foreground-secondary", "--background-informative-subtle", 4.5],
   ["--foreground-negative", "--background-informative-subtle", 4.5],
   ["--border-focus", "--background-secondary", 3],
-] as const satisfies readonly (readonly [
+] satisfies readonly (readonly [
   SemanticColorName,
   SemanticColorName,
   number,
 ])[];
-
-const contrastColorNames = new Set<SemanticColorName>(
-  contrastContracts.flatMap(([foreground, background]) => [
-    foreground,
-    background,
-  ])
-);
 
 export const colorContrastContractCount = contrastContracts.length;
 
@@ -86,51 +68,22 @@ const getLuminance = (color: Uint8ClampedArray) =>
   0.7152 * toLinearChannel(color[1]) +
   0.0722 * toLinearChannel(color[2]);
 
-const createColorReader = () => {
-  const samples = new Map<SemanticColorName, HTMLElement>();
-  const container = document.createElement("div");
-  container.hidden = true;
-  for (const name of contrastColorNames) {
-    const sample = document.createElement("span");
-    sample.style.color = cssVar(name);
-    container.append(sample);
-    samples.set(name, sample);
-  }
-  document.body.append(container);
-
-  const canvas = document.createElement("canvas");
-  canvas.width = 1;
-  canvas.height = 1;
-  const context = canvas.getContext("2d", { willReadFrequently: true });
-  if (context === null) {
-    container.remove();
-    throw new Error("Canvas color evaluation is unavailable");
-  }
-
-  const read = (name: SemanticColorName) => {
-    const sample = samples.get(name);
-    if (sample === undefined) {
-      throw new Error(`Unknown contrast color: ${name}`);
-    }
-    context.clearRect(0, 0, 1, 1);
-    context.fillStyle = getComputedStyle(sample).color;
-    context.fillRect(0, 0, 1, 1);
-    const color = context.getImageData(0, 0, 1, 1).data;
-    if (color[3] !== 255) {
-      throw new Error(`${name} must resolve to an opaque color`);
-    }
-    return color;
-  };
-
-  return { read, dispose: () => container.remove() };
-};
-
-const createColorContrastReader = () => {
+export const getColorContrast = (mode: ColorMode): ColorContrastResult[] => {
   const root = document.documentElement;
   const previousMode = root.getAttribute("data-color-scheme");
-  const reader = createColorReader();
+  const sample = document.createElement("span");
+  sample.hidden = true;
+  document.body.append(sample);
 
-  const read = (mode: ColorMode): ColorContrastResult[] => {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1;
+    canvas.height = 1;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (context === null) {
+      throw new Error("Canvas color evaluation is unavailable");
+    }
+
     root.setAttribute("data-color-scheme", mode);
     const luminances = new Map<SemanticColorName, number>();
     const readLuminance = (name: SemanticColorName) => {
@@ -138,7 +91,15 @@ const createColorContrastReader = () => {
       if (cached !== undefined) {
         return cached;
       }
-      const value = getLuminance(reader.read(name));
+      sample.style.color = cssVar(name);
+      context.clearRect(0, 0, 1, 1);
+      context.fillStyle = getComputedStyle(sample).color;
+      context.fillRect(0, 0, 1, 1);
+      const color = context.getImageData(0, 0, 1, 1).data;
+      if (color[3] !== 255) {
+        throw new Error(`${name} must resolve to an opaque color`);
+      }
+      const value = getLuminance(color);
       luminances.set(name, value);
       return value;
     };
@@ -155,27 +116,12 @@ const createColorContrastReader = () => {
         ratio: (lighter + 0.05) / (darker + 0.05),
       };
     });
-  };
-
-  const dispose = () => {
-    reader.dispose();
+  } finally {
+    sample.remove();
     if (previousMode === null) {
       root.removeAttribute("data-color-scheme");
     } else {
       root.setAttribute("data-color-scheme", previousMode);
     }
-  };
-
-  return { read, dispose };
-};
-
-export const getColorContrast = (mode: ColorMode): ColorContrastResult[] => {
-  const reader = createColorContrastReader();
-  try {
-    return reader.read(mode);
-  } finally {
-    reader.dispose();
   }
 };
-
-export const __testing__ = { createColorContrastReader };

@@ -34,7 +34,11 @@
   --scheme-foreground-soft-lightness: 0.203788;
   --scheme-foreground-strong-lightness: 0.1;
   --scheme-foreground-chroma-scale: 1;
-  --scheme-chromatic-fill-lightness: 0.48;
+  --scheme-intent-lightness: 0.48;
+  --scheme-floating-weight: 97%;
+  --scheme-raised-weight: 94%;
+  --scheme-nested-weight: 91%;
+  --scheme-informative-weight: 12.24%;
 
   /* Colors derived from the bounded theme parameters. */
   --color-background: oklch(
@@ -55,11 +59,7 @@
     var(--color-foreground-strong)
   );
   --color-accent: color(
-    from
-      oklch(
-        from var(--theme-color-accent)
-          clamp(0.2, l, var(--scheme-chromatic-fill-lightness)) min(c, 0.3) h
-      )
+    from oklch(from var(--theme-color-accent) clamp(0.2, l, 0.48) min(c, 0.3) h)
       srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
   );
   --color-accent-secondary: color(
@@ -68,68 +68,38 @@
   );
   --color-positive: color(
     from
-      oklch(
-        from var(--theme-color-positive)
-          clamp(0.2, l, var(--scheme-chromatic-fill-lightness)) min(c, 0.3) h
-      )
+      oklch(from var(--theme-color-positive) clamp(0.2, l, 0.48) min(c, 0.3) h)
       srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
   );
   --color-negative: color(
     from
-      oklch(
-        from var(--theme-color-negative)
-          clamp(0.2, l, var(--scheme-chromatic-fill-lightness)) min(c, 0.3) h
-      )
+      oklch(from var(--theme-color-negative) clamp(0.2, l, 0.48) min(c, 0.3) h)
       srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
   );
   --color-warning: color(
     from
-      oklch(
-        from var(--theme-color-warning)
-          clamp(0.2, l, var(--scheme-chromatic-fill-lightness)) min(c, 0.3) h
-      )
+      oklch(from var(--theme-color-warning) clamp(0.2, l, 0.48) min(c, 0.3) h)
       srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
   );
   --color-informative: color(
     from
       oklch(
-        from var(--theme-color-informative)
-          clamp(0.2, l, var(--scheme-chromatic-fill-lightness)) min(c, 0.3) h
+        from var(--theme-color-informative) clamp(0.2, l, 0.48) min(c, 0.3) h
       )
       srgb clamp(0, r, 1) clamp(0, g, 1) clamp(0, b, 1)
   );
   --color-shadow: oklch(
     from var(--theme-color-neutral) 0.203788 min(c, 0.02) h
   );
-  --color-surface-soft: color-mix(
-    in oklab,
-    var(--color-background) 92%,
-    var(--color-foreground)
-  );
-  --color-surface-strong: color-mix(
-    in oklab,
-    var(--color-background) 88%,
-    var(--color-foreground)
-  );
   --color-surface-secondary: color-mix(
     in oklab,
-    var(--color-surface-soft) calc(100% - var(--theme-contrast-surface)),
-    var(--color-surface-strong)
-  );
-  --color-border-soft: color-mix(
-    in oklab,
-    var(--color-background) 90.58%,
-    var(--color-foreground)
-  );
-  --color-border-strong: color-mix(
-    in oklab,
-    var(--color-background) 40%,
+    var(--color-background) calc(92% - var(--theme-contrast-surface) * 0.04),
     var(--color-foreground)
   );
   --color-border: color-mix(
     in oklab,
-    var(--color-border-soft) calc(100% - var(--theme-contrast-border)),
-    var(--color-border-strong)
+    var(--color-background) calc(90.58% - var(--theme-contrast-border) * 0.5058),
+    var(--color-foreground)
   );
   --color-focus: color-mix(
     in oklab,
@@ -145,41 +115,20 @@
   /* Background */
   --background-primary: var(--color-background);
   --background-secondary: var(--color-surface-secondary);
-  --background-floating: light-dark(
-    color-mix(
-      in oklab,
-      var(--background-primary) 97%,
-      var(--foreground-primary)
-    ),
-    color-mix(
-      in oklab,
-      var(--background-primary) 95%,
-      var(--foreground-primary)
-    )
+  --background-floating: color-mix(
+    in oklab,
+    var(--background-primary) var(--scheme-floating-weight),
+    var(--foreground-primary)
   );
-  --background-floating-raised: light-dark(
-    color-mix(
-      in oklab,
-      var(--background-primary) 94%,
-      var(--foreground-primary)
-    ),
-    color-mix(
-      in oklab,
-      var(--background-primary) 91%,
-      var(--foreground-primary)
-    )
+  --background-floating-raised: color-mix(
+    in oklab,
+    var(--background-primary) var(--scheme-raised-weight),
+    var(--foreground-primary)
   );
-  --background-floating-nested: light-dark(
-    color-mix(
-      in oklab,
-      var(--background-primary) 91%,
-      var(--foreground-primary)
-    ),
-    color-mix(
-      in oklab,
-      var(--background-primary) 87%,
-      var(--foreground-primary)
-    )
+  --background-floating-nested: color-mix(
+    in oklab,
+    var(--background-primary) var(--scheme-nested-weight),
+    var(--foreground-primary)
   );
   --background-disabled: color-mix(
     in oklab,
@@ -210,13 +159,10 @@
     var(--color-warning) 16%,
     var(--color-background)
   );
-  --background-informative-subtle: light-dark(
-    color-mix(
-      in oklab,
-      var(--color-informative) 12.24%,
-      var(--color-background)
-    ),
-    color-mix(in oklab, var(--color-informative) 30%, var(--color-background))
+  --background-informative-subtle: color-mix(
+    in oklab,
+    var(--color-informative) var(--scheme-informative-weight),
+    var(--color-background)
   );
 
   /* Foreground */
@@ -237,29 +183,23 @@
   --foreground-on-positive: var(--color-on-chromatic);
   --foreground-on-negative: var(--color-on-chromatic);
   --foreground-on-text-selection: var(--color-background);
-  --foreground-accent: light-dark(
-    oklch(from var(--color-accent) 0.48 c h),
-    oklch(from var(--color-accent) 0.75 c h)
+  --foreground-accent: oklch(
+    from var(--color-accent) var(--scheme-intent-lightness) c h
   );
-  --foreground-accent-secondary: light-dark(
-    oklch(from var(--color-accent-secondary) 0.48 c h),
-    oklch(from var(--color-accent-secondary) 0.75 c h)
+  --foreground-accent-secondary: oklch(
+    from var(--color-accent-secondary) var(--scheme-intent-lightness) c h
   );
-  --foreground-positive: light-dark(
-    oklch(from var(--color-positive) 0.48 c h),
-    oklch(from var(--color-positive) 0.75 c h)
+  --foreground-positive: oklch(
+    from var(--color-positive) var(--scheme-intent-lightness) c h
   );
-  --foreground-negative: light-dark(
-    oklch(from var(--color-negative) 0.48 c h),
-    oklch(from var(--color-negative) 0.75 c h)
+  --foreground-negative: oklch(
+    from var(--color-negative) var(--scheme-intent-lightness) c h
   );
-  --foreground-warning: light-dark(
-    oklch(from var(--color-warning) 0.48 c h),
-    oklch(from var(--color-warning) 0.75 c h)
+  --foreground-warning: oklch(
+    from var(--color-warning) var(--scheme-intent-lightness) c h
   );
-  --foreground-informative: light-dark(
-    oklch(from var(--color-informative) 0.48 c h),
-    oklch(from var(--color-informative) 0.75 c h)
+  --foreground-informative: oklch(
+    from var(--color-informative) var(--scheme-intent-lightness) c h
   );
 
   /* Border */
@@ -301,7 +241,11 @@
   --scheme-foreground-soft-lightness: 0.93;
   --scheme-foreground-strong-lightness: 1;
   --scheme-foreground-chroma-scale: 0.2;
-  --scheme-chromatic-fill-lightness: 0.48;
+  --scheme-intent-lightness: 0.75;
+  --scheme-floating-weight: 95%;
+  --scheme-raised-weight: 91%;
+  --scheme-nested-weight: 87%;
+  --scheme-informative-weight: 30%;
 }
 
 :root[data-color-scheme="light"] {

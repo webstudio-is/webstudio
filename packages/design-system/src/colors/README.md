@@ -38,8 +38,11 @@ color set. Cross-hue variants mix in `oklab`, so the neutral family cannot
 rotate an intent into another color family.
 
 Default chromatic fills use the same lightness and chroma bounds in both schemes.
-All intent text uses one lightness bound per scheme. Dark mode uses lighter
-intent text and light content on strong chromatic fills.
+All intent text uses one shared lightness bound per scheme. Floating surfaces
+share the same mixing recipe with a weight for each level. These private scheme
+values can feed derived or semantic colors; components still consume only
+semantic colors. Dark mode uses lighter intent text and light content on strong
+chromatic fills.
 
 ## Theme parameters
 
@@ -176,23 +179,19 @@ derive a local composition from them instead of being added to the brand API.
 
 ## Validation and type generation
 
-Type generation parses CSS structurally and rejects:
-
-- Empty color layers or mismatched light and dark scheme bounds.
-- Missing variable references.
-- References across forbidden architectural layers.
-- Unused theme parameters, scheme bounds, or derived colors.
-- Standalone semantic color literals.
-- Circular color references.
-- Semantic names outside the Craft grammar.
-- Color variables declared outside the owned root selectors.
+Type generation parses CSS structurally. It rejects color variables outside the
+owned root selectors, nested color declarations, duplicate selectors or
+declarations, missing variable references, and circular references in either
+scheme. It does not enforce authoring choices such as which layers may reference
+each other or whether every private variable is used.
 
 TypeScript rejects unknown semantic names and unbranded private names passed to
 `cssVar()`.
 
 Chromium browser tests load the real stylesheet and verify the default
-foreground/background contracts. They also protect the neutral hierarchy, stable
-chromatic fills, on-color content, and interaction overlays.
+foreground/background contracts. They also check that all nine theme controls
+affect their intended outputs in both schemes, plus the neutral hierarchy,
+stable chromatic fills, on-color content, and interaction overlays.
 
 The generator emits `ThemeVariableName` for public theme inputs and
 `SemanticColorName` for semantic colors in
