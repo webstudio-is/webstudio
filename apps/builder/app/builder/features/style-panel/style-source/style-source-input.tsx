@@ -38,7 +38,7 @@ import {
   Fragment,
   type ComponentProps,
   type ForwardRefRenderFunction,
-  type KeyboardEvent as ReactKeyboardEvent,
+  type KeyboardEvent,
   type RefObject,
   type ReactNode,
   useRef,
@@ -234,7 +234,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     return false;
   };
 
-  const handleInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+  const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     const input = internalInputRef.current;
     if (!event.defaultPrevented && !event.shiftKey && input) {
       const moveLeft =
