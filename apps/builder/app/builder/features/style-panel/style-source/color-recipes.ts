@@ -3,10 +3,6 @@ import {
   styleSourceColor,
   rotateBoundedBackgroundHue,
 } from "@webstudio-is/design-system";
-import {
-  toggleGroupBackground,
-  withInteractionOverlay,
-} from "@webstudio-is/design-system/component-state-color";
 
 const gradient = (color: string) =>
   `linear-gradient(90deg, oklch(from ${color} l c h / 0) 0%, ${color} 31.87%)`;
@@ -16,16 +12,20 @@ const instanceBackground = `color-mix(in oklab, ${cssVar(
   "--background-primary"
 )} 86%, ${cssVar("--foreground-primary")})`;
 const breakpointBackground = rotateBoundedBackgroundHue(accentBackground, 60);
-const neutralBackground = toggleGroupBackground;
-const neutralForeground = cssVar("--foreground-primary");
+const neutralBackground = `light-dark(
+  ${cssVar("--foreground-secondary")},
+  color-mix(
+    in oklab,
+    ${cssVar("--background-primary")} 67%,
+    ${cssVar("--foreground-primary")}
+  )
+)`;
+const neutralForeground = `light-dark(
+  ${cssVar("--foreground-on-inverse")},
+  ${cssVar("--foreground-primary")}
+)`;
 
 export const styleSourceColors = {
-  field: {
-    // Stay between the group track and chip hover at any theme surface contrast.
-    background: `color-mix(in oklab, ${cssVar(
-      "--background-primary"
-    )} 92%, ${cssVar("--foreground-primary")})`,
-  },
   local: {
     background: styleSourceColor.local.solid,
     foreground: styleSourceColor.local.foreground,
@@ -50,7 +50,6 @@ export const styleSourceColors = {
   },
   neutral: {
     background: neutralBackground,
-    hoverBackground: withInteractionOverlay(neutralBackground),
     foreground: neutralForeground,
     gradient: gradient(neutralBackground),
   },

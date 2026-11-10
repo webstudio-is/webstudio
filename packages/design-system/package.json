@@ -82,9 +82,6 @@
     ".": {
       "webstudio": "./src/index.ts"
     },
-    "./component-state-color": {
-      "webstudio": "./src/components/component-state-color.ts"
-    },
     "./global.css": "./src/global.css"
   },
   "license": "AGPL-3.0-or-later",

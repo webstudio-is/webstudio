@@ -1,6 +1,5 @@
 import { cssVar } from "../css-var";
 import { rotateBoundedBackgroundHue } from "../color-utils";
-import { selectedControlBackground } from "./component-state-color";
 
 const rotateForegroundHue = (color: string, degrees: number) =>
   `color(
@@ -25,13 +24,13 @@ const accentBackground = cssVar("--background-accent");
 const accentForeground = cssVar("--foreground-accent");
 
 // Style-source states are a component domain, not information, warning, or
-// error intent. Tag styles use the neutral selected control color; the other
-// source colors derive from the theme accent.
+// error intent. Tag styles share the global Slot color; the other source
+// colors derive from the theme accent.
 export const styleSourceColor = {
   tagStyle: {
-    background: selectedControlBackground,
-    border: cssVar("--border-default"),
-    foreground: cssVar("--foreground-primary"),
+    background: cssVar("--background-accent-secondary"),
+    border: cssVar("--background-accent-secondary"),
+    foreground: cssVar("--foreground-on-accent-secondary"),
   },
   local: createStyleSourceColor(accentBackground, accentForeground),
   overwritten: createStyleSourceColor(
