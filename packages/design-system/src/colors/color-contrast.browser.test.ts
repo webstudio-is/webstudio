@@ -44,7 +44,7 @@ const expectedDefaultColors = {
     "--background-informative-subtle": "#e3effd",
     "--foreground-primary": "#11181c",
     "--foreground-secondary": "#595f63",
-    "--foreground-disabled": "#898d90",
+    "--foreground-disabled": "#84898b",
     "--foreground-on-inverse": "#feffff",
     "--foreground-on-accent": "#feffff",
     "--foreground-on-accent-secondary": "#feffff",
@@ -54,7 +54,7 @@ const expectedDefaultColors = {
     "--foreground-accent": "#096cff",
     "--foreground-accent-secondary": "#ab38d4",
     "--foreground-positive": "#0b7b45",
-    "--foreground-negative": "#c52a28",
+    "--foreground-negative": "#b41017",
     "--foreground-warning": "#6f6100",
     "--foreground-informative": "#0a6bc7",
     "--foreground-accent-floating": "#105fd9",
@@ -63,7 +63,7 @@ const expectedDefaultColors = {
     "--foreground-informative-floating": "#1062b4",
     "--border-default": "#e5e6e7",
     "--border-focus": "#297aff",
-    "--border-negative": "#c52a28",
+    "--border-negative": "#b41017",
     "--border-warning": "#f5d90a",
     "--border-informative": "#bcd7f8",
     "--overlay-interaction-hover": "#00000010",
@@ -77,7 +77,7 @@ const expectedDefaultColors = {
     "--background-secondary": "#222425",
     "--background-floating": "#1d1f1f",
     "--background-floating-raised": "#242626",
-    "--background-floating-nested": "#292b2c",
+    "--background-floating-nested": "#2b2d2e",
     "--background-disabled": "#191b1b",
     "--background-inverse": "#e6e8e9",
     "--background-accent": "#096cff",
@@ -91,7 +91,7 @@ const expectedDefaultColors = {
     "--background-informative-subtle": "#1a2839",
     "--foreground-primary": "#e6e8e9",
     "--foreground-secondary": "#959798",
-    "--foreground-disabled": "#6a6c6d",
+    "--foreground-disabled": "#6e7071",
     "--foreground-on-inverse": "#151617",
     "--foreground-on-accent": "#fdffff",
     "--foreground-on-accent-secondary": "#fdffff",
@@ -101,7 +101,7 @@ const expectedDefaultColors = {
     "--foreground-accent": "#a0c1f6",
     "--foreground-accent-secondary": "#da6bff",
     "--foreground-positive": "#abcab5",
-    "--foreground-negative": "#ff594f",
+    "--foreground-negative": "#ff7165",
     "--foreground-warning": "#c4c1a5",
     "--foreground-informative": "#a9c6e8",
     "--foreground-accent-floating": "#abc7f4",
@@ -110,7 +110,7 @@ const expectedDefaultColors = {
     "--foreground-informative-floating": "#afc9e9",
     "--border-default": "#252627",
     "--border-focus": "#1a6df2",
-    "--border-negative": "#ff594f",
+    "--border-negative": "#ff7165",
     "--border-warning": "#f5d90a",
     "--border-informative": "#1b314c",
     "--overlay-interaction-hover": "#ffffff10",
@@ -268,15 +268,24 @@ describe("Craft color contrast", () => {
         root.dataset.colorScheme = mode;
         const primary = readColor("--background-primary");
         const disabledBackground = readColor("--background-disabled");
+        const raisedBackground = readColor("--background-floating-raised");
         const disabled = readColor("--foreground-disabled");
         const secondary = readColor("--foreground-secondary");
 
-        for (const background of [primary, disabledBackground]) {
+        for (const background of [
+          primary,
+          disabledBackground,
+          raisedBackground,
+        ]) {
           expect(
             getContrastRatio(disabled, background),
             `${mode} disabled content`
           ).toBeGreaterThanOrEqual(3);
         }
+        expect(
+          getContrastRatio(disabled, raisedBackground),
+          `${mode} disabled content on raised surfaces`
+        ).toBeLessThanOrEqual(3.4);
         expect(getContrastRatio(disabled, primary), mode).toBeLessThan(
           getContrastRatio(secondary, primary)
         );
@@ -327,6 +336,47 @@ describe("Craft color contrast", () => {
       }
     });
   }
+
+  test("vivid theme preserves negative text and nested surface contrast", () => {
+    const root = document.documentElement;
+    const previousMode = root.getAttribute("data-color-scheme");
+    const theme = {
+      "--theme-color-neutral": "oklch(45% 0.02 300)",
+      "--theme-color-negative": "oklch(60% 0.3 20)",
+      "--theme-contrast-content": "100%",
+      "--theme-contrast-surface": "100%",
+    };
+
+    try {
+      for (const [name, value] of Object.entries(theme)) {
+        root.style.setProperty(name, value);
+      }
+      for (const mode of ["light", "dark"] as const) {
+        root.dataset.colorScheme = mode;
+        for (const result of getColorContrast(mode)) {
+          if (result.foreground === "--foreground-negative") {
+            expect(
+              result.ratio,
+              `${mode} on ${result.background}`
+            ).toBeGreaterThanOrEqual(result.minimum);
+          }
+        }
+      }
+      root.dataset.colorScheme = "dark";
+      expect(Array.from(readColor("--background-floating-nested"))).not.toEqual(
+        Array.from(readColor("--background-secondary"))
+      );
+    } finally {
+      for (const name of Object.keys(theme)) {
+        root.style.removeProperty(name);
+      }
+      if (previousMode === null) {
+        root.removeAttribute("data-color-scheme");
+      } else {
+        root.setAttribute("data-color-scheme", previousMode);
+      }
+    }
+  });
 
   test("theme color hue and chroma control derived semantic colors", () => {
     const root = document.documentElement;

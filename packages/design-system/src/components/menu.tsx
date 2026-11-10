@@ -115,7 +115,7 @@ export const MenuItemButton = styled("button", menuItemCss, {
   boxSizing: "border-box",
   width: `calc(100% - ${itemMargin} * 2)`,
   "&:focus:not(:focus-visible)": { backgroundColor: "unset" },
-  "&:hover:not([diabled])": {
+  "&:hover:not([disabled])": {
     backgroundColor: cssVar("--overlay-interaction-hover"),
   },
 });

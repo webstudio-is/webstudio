@@ -188,8 +188,8 @@
     var(--color-foreground)
   );
   --color-negative-foreground: light-dark(
-    oklch(from var(--color-negative) calc(l - 0.04) calc(c * 0.9) h),
-    oklch(from var(--color-negative) max(l, 0.7) c h)
+    oklch(from var(--color-negative) calc(l - 0.09) calc(c * 0.9) h),
+    oklch(from var(--color-negative) max(l, 0.77) c h)
   );
   --color-warning-foreground: color-mix(
     in oklab,
@@ -243,7 +243,7 @@
     ),
     color-mix(
       in oklab,
-      var(--background-primary) 88%,
+      var(--background-primary) 87%,
       var(--foreground-primary)
     )
   );
@@ -297,7 +297,7 @@
   );
   --foreground-disabled: color-mix(
     in oklab,
-    var(--color-foreground) 45%,
+    var(--color-foreground) 47%,
     var(--color-background)
   );
   --foreground-on-inverse: var(--color-background);
