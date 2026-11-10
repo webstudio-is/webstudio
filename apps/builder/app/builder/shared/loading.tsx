@@ -118,7 +118,6 @@ export const Loading = ({ state }: { state: LoadingState }) => {
               left: "50%",
               transform: "translate(-50%, -50%)",
               background: cssVar("--background-primary"),
-              boxShadow: webstudioBrand.progressShadow,
             }}
             indicatorCss={{ background: webstudioBrand.progressGradient }}
           />
