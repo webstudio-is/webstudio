@@ -5,7 +5,10 @@ import {
   copyDesignToken,
   copyStyleSourceTransfer,
 } from "@webstudio-is/project-build/runtime";
-import { StyleSourceInput } from "./style-source-input";
+import {
+  __testing__ as inputTesting,
+  StyleSourceInput,
+} from "./style-source-input";
 import { StyleSourceMenu } from "./style-source-menu";
 
 (
@@ -131,3 +134,113 @@ test.each([
     }
   }
 );
+
+test("describes Copy and keeps the style source menu width stable", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  try {
+    act(() =>
+      root.render(
+        <StyleSourceMenu
+          open
+          onOpenChange={() => {}}
+          selectedItemSelector={undefined}
+          item={{
+            id: "tag-style:button",
+            label: "button",
+            source: "tag",
+            disabled: false,
+            locked: false,
+            states: [":hover"],
+          }}
+          hasStyles
+          states={[
+            {
+              type: "state",
+              selector: ":hover",
+              label: ":hover",
+              description:
+                "Apply styles while the pointer is over this element.",
+            },
+          ]}
+        />
+      )
+    );
+
+    const copy = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Copy")!;
+    act(() => copy.focus());
+    const menu = document.querySelector<HTMLElement>('[role="menu"]')!;
+    const copyDescription = menu.getBoundingClientRect().width;
+    expect(menu.textContent).toContain(
+      "Copy this source’s styles to paste them elsewhere."
+    );
+
+    const hover = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent?.trim() === ":hover")!;
+    act(() => hover.focus());
+    expect(menu.getBoundingClientRect().width).toBe(copyDescription);
+  } finally {
+    act(() => root.unmount());
+    container.remove();
+  }
+});
+
+test("disables Copy when a source has no declarations", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const onCopy = vi.fn();
+  try {
+    act(() =>
+      root.render(
+        <StyleSourceMenu
+          open
+          onOpenChange={() => {}}
+          selectedItemSelector={undefined}
+          item={{
+            id: "tag-style:button",
+            label: "button",
+            source: "tag",
+            disabled: false,
+            locked: false,
+            states: [":hover"],
+          }}
+          hasStyles={false}
+          states={[]}
+          onCopy={onCopy}
+        />
+      )
+    );
+    const copy = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent === "Copy")!;
+    expect(copy.getAttribute("aria-disabled")).toBe("true");
+    act(() => copy.click());
+    expect(onCopy).not.toHaveBeenCalled();
+  } finally {
+    act(() => root.unmount());
+    container.remove();
+  }
+});
+
+test("does not treat an empty state list as copyable styles", () => {
+  const hasStyles = inputTesting.getHasStylesMap(
+    [
+      {
+        id: "tag-style:button",
+        label: "button",
+        source: "tag",
+        disabled: false,
+        locked: false,
+        states: [":hover"],
+      },
+    ],
+    []
+  );
+
+  expect(hasStyles.get("tag-style:button")).toBeUndefined();
+});

@@ -155,10 +155,6 @@ const getHasStylesMap = <Item extends IntermediateItem>(
 ) => {
   const map = new Map<Item["id"], boolean>();
   for (const item of styleSourceItems) {
-    // Style source has styles on states.
-    if (item.states.length > 0) {
-      map.set(item.id, true);
-    }
     for (const style of computedStyleDeclarations) {
       if (item.id === style.source.styleSourceId) {
         map.set(item.id, true);
@@ -574,3 +570,5 @@ export const StyleSourceInput = (
     </ComboboxRoot>
   );
 };
+
+export const __testing__ = { getHasStylesMap };

@@ -114,6 +114,7 @@ const categoryLabels: Record<SelectorConfig["type"], string> = {
 };
 
 const menuActionDescriptions = {
+  copy: "Copy this source’s styles to paste them elsewhere.",
   rename: "Change the name of this token to better describe its purpose.",
   duplicate: "Create a copy of this token with all its styles.",
   convertToToken:
@@ -320,7 +321,9 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
       ? "Style instances without creating a token or override a token locally."
       : props.item.source === "token"
         ? "Reuse styles across multiple instances by creating a token."
-        : undefined;
+        : props.item.source === "tag"
+          ? "Apply styles to every element with this tag."
+          : undefined;
 
   const description =
     actionDescription ?? selectorDescription ?? sourceDescription;
@@ -336,7 +339,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
       <DropdownMenuContent
         onCloseAutoFocus={(event) => event.preventDefault()}
         autoFocus
-        css={{ maxWidth: theme.spacing[26] }}
+        css={{ width: theme.spacing[26] }}
       >
         <DropdownMenuLabel>
           <Flex gap="1" justify="between" align="center">
@@ -376,8 +379,9 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
           <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
-              setHighlightedAction(undefined);
+              setHighlightedAction("copy");
             }}
+            disabled={!props.hasStyles}
             onSelect={() => props.onCopy?.(props.item.id)}
           >
             Copy
