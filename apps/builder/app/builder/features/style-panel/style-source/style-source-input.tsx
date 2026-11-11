@@ -430,6 +430,8 @@ export const StyleSourceInput = (
 ) => {
   const value = props.value ?? [];
   const [label, setLabel] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const escapePressed = useRef(false);
 
   const {
     items,
@@ -466,6 +468,9 @@ export const StyleSourceInput = (
 
   const inputProps = getInputProps({
     onKeyDown(event) {
+      if (event.key === "Escape") {
+        escapePressed.current = true;
+      }
       if (
         event.key === "Backspace" &&
         label === "" &&
@@ -511,7 +516,7 @@ export const StyleSourceInput = (
                 props.onPasteStyleSource(data);
               }
             }}
-            inputRef={props.inputRef}
+            inputRef={mergeRefs(inputRef, props.inputRef)}
             error={props.error}
             renderMenu={({
               item,
@@ -559,7 +564,20 @@ export const StyleSourceInput = (
             editingItemId={props.editingItemId}
           />
         </ComboboxAnchor>
-        <ComboboxContent align="start" sideOffset={5}>
+        <ComboboxContent
+          align="start"
+          sideOffset={5}
+          onOpenAutoFocus={() => {
+            escapePressed.current = false;
+          }}
+          onCloseAutoFocus={(event) => {
+            if (escapePressed.current) {
+              event.preventDefault();
+              escapePressed.current = false;
+              inputRef.current?.focus();
+            }
+          }}
+        >
           <ComboboxListbox {...getMenuProps()}>
             <ComboboxScrollArea>
               {isOpen &&
