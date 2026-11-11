@@ -40,6 +40,7 @@ import {
 import {
   getComputedStyleDecl,
   getPresetStyleDeclKey,
+  indexNestedTagStyles,
   type ComputedStyleDecl,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
@@ -66,6 +67,11 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
   }
   return presetStyles;
 });
+
+const $indexedStyles = computed($styles, (styles) => ({
+  styles,
+  nestedTagStyles: indexNestedTagStyles(styles),
+}));
 
 export const $instanceTags = computed(
   [
@@ -226,7 +232,7 @@ const getDefinedStyles = ({
 
 export const $styleObjectModel = computed(
   [
-    $styles,
+    $indexedStyles,
     $styleSources,
     $styleSourceSelections,
     $presetStyles,
@@ -237,7 +243,7 @@ export const $styleObjectModel = computed(
     $selectedInstanceStatesByInstanceId,
   ],
   (
-    styles,
+    { styles, nestedTagStyles },
     styleSources,
     styleSourceSelections,
     presetStyles,
@@ -255,6 +261,7 @@ export const $styleObjectModel = computed(
     }
     return {
       styles,
+      nestedTagStyles,
       tagStyleIds,
       styleSourceSelections,
       presetStyles,

@@ -73,6 +73,7 @@ export type StyleValueSource = {
  */
 export type StyleObjectModel = {
   styles: Styles;
+  nestedTagStyles: Map<string, Map<string, StyleDecl>>;
   styleSourceSelections: StyleSourceSelections;
   tagStyleIds: Map<string, StyleDecl["styleSourceId"]>;
   // component:tag:state:property
@@ -101,6 +102,33 @@ export const getPresetStyleDeclKey = ({
   state?: string;
   property: CssProperty;
 }) => `${component}:${tag}:${state ?? ""}:${property}`;
+
+export const indexNestedTagStyles = (styles: Styles) => {
+  const byTag = new Map<string, Map<string, StyleDecl>>();
+  for (const declaration of styles.values()) {
+    if (!declaration.state?.startsWith(" ")) {
+      continue;
+    }
+    const selector = validateSelector(declaration.state);
+    if (!selector.success || selector.type !== "tag") {
+      continue;
+    }
+    const tag = selector.tag.toLowerCase();
+    let declarations = byTag.get(tag);
+    if (declarations === undefined) {
+      declarations = new Map();
+      byTag.set(tag, declarations);
+    }
+    declarations.set(
+      getStyleDeclKey({
+        ...declaration,
+        state: ` ${tag}${selector.condition}`,
+      }),
+      declaration
+    );
+  }
+  return byTag;
+};
 
 /**
  *
@@ -139,6 +167,7 @@ const getCascadedValue = ({
 }) => {
   const {
     styles,
+    nestedTagStyles,
     styleSourceSelections,
     tagStyleIds,
     presetStyles,
@@ -210,31 +239,7 @@ const getCascadedValue = ({
   // user styles
   const styleSourceIds = styleSourceSelections.get(instanceId)?.values ?? [];
   const tagStyleId = tag ? tagStyleIds.get(tag) : undefined;
-  const nestedStyles = new Map<string, StyleDecl>();
-  if (tag && ancestorIds.length > 0) {
-    for (const declaration of styles.values()) {
-      if (
-        declaration.property !== camelCaseProperty(property) ||
-        !declaration.state?.startsWith(" ")
-      ) {
-        continue;
-      }
-      const selector = validateSelector(declaration.state);
-      if (
-        selector.success &&
-        selector.type === "tag" &&
-        selector.tag.toLowerCase() === tag
-      ) {
-        nestedStyles.set(
-          getStyleDeclKey({
-            ...declaration,
-            state: ` ${tag}${selector.condition}`,
-          }),
-          declaration
-        );
-      }
-    }
-  }
+  const nestedStyles = tag ? nestedTagStyles.get(tag) : undefined;
   selectedStyleSourceId ??= styleSourceIds.at(-1);
   const addDeclaration = ({
     styleSourceId,
@@ -253,7 +258,7 @@ const getCascadedValue = ({
       state,
       property: camelCaseProperty(property),
     });
-    const styleDecl = nestedStyles.get(key) ?? styles.get(key);
+    const styleDecl = nestedStyles?.get(key) ?? styles.get(key);
     const isSelected =
       sourceInstanceId === instanceId &&
       styleSourceId === selectedStyleSourceId &&

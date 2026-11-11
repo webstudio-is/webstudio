@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { HtmlTags } from "@webstudio-is/html-data";
 import {
   type Breakpoint,
@@ -26,6 +26,7 @@ import {
   type StyleObjectModel,
   getComputedStyleDecl,
   getPresetStyleDeclKey,
+  indexNestedTagStyles,
 } from "./style-object-model";
 
 const Body = createTemplateComponentFixture("Body");
@@ -105,6 +106,7 @@ const createModel = ({
   }
   return {
     styles,
+    nestedTagStyles: indexNestedTagStyles(styles),
     tagStyleIds: new Map(),
     styleSourceSelections,
     presetStyles,
@@ -113,6 +115,11 @@ const createModel = ({
     matchingBreakpoints: matchingBreakpoints ?? ["base"],
     matchingStates: matchingStates ?? new Set(),
   };
+};
+
+const setStyle = (model: StyleObjectModel, declaration: StyleDecl) => {
+  model.styles.set(getStyleDeclKey(declaration), declaration);
+  model.nestedTagStyles = indexNestedTagStyles(model.styles);
 };
 
 test("use cascaded style when specified and fallback to initial value", () => {
@@ -1092,7 +1099,7 @@ test("tag token provides the source for an unstyled matching element", () => {
     value: { type: "keyword", value: "red" },
   };
   model.tagStyleIds.set("p", id);
-  model.styles.set(getStyleDeclKey(declaration), declaration);
+  setStyle(model, declaration);
 
   expect(
     getComputedStyleDecl({
@@ -1119,7 +1126,7 @@ test("shows the div's nested h2 color when h2 is selected", () => {
     property: "color",
     value: { type: "keyword", value: "purple" },
   };
-  model.styles.set(getStyleDeclKey(descendantStyle), descendantStyle);
+  setStyle(model, descendantStyle);
 
   expect(
     getComputedStyleDecl({
@@ -1144,7 +1151,7 @@ test("shows the div's nested h2 color when h2 is selected", () => {
       state: ` h2${state}`,
       value: { type: "keyword", value: "green" },
     };
-    model.styles.set(getStyleDeclKey(scopedStyle), scopedStyle);
+    setStyle(model, scopedStyle);
     expect(
       getComputedStyleDecl({
         model,
@@ -1166,7 +1173,7 @@ test("shows the div's nested h2 color when h2 is selected", () => {
     state: undefined,
     value: { type: "keyword", value: "red" },
   };
-  model.styles.set(getStyleDeclKey(headingStyle), headingStyle);
+  setStyle(model, headingStyle);
   expect(
     getComputedStyleDecl({
       model,
@@ -1174,6 +1181,33 @@ test("shows the div's nested h2 color when h2 is selected", () => {
       property: "color",
     }).usedValue
   ).toEqual({ type: "keyword", value: "red" });
+});
+
+test("does not scan all declarations while resolving a selected descendant", () => {
+  const model = createModel({
+    css: "container { color: black; }",
+    jsx: (
+      <Box ws:id="container" class="container">
+        <Heading ws:id="heading" ws:tag="h2" />
+      </Box>
+    ),
+  });
+  setStyle(model, {
+    styleSourceId: "container",
+    breakpointId: "base",
+    state: " h2",
+    property: "color",
+    value: { type: "keyword", value: "purple" },
+  });
+  const values = vi.spyOn(model.styles, "values");
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "container"],
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "purple" });
+  expect(values).not.toHaveBeenCalled();
 });
 
 test("keeps a descendant attribute state off its ancestor's inherited color", () => {
@@ -1204,7 +1238,7 @@ test("keeps a descendant attribute state off its ancestor's inherited color", ()
     value: { type: "unit", unit: "px", value: 10 },
   };
   for (const styleDecl of [parentState, nestedState]) {
-    model.styles.set(getStyleDeclKey(styleDecl), styleDecl);
+    setStyle(model, styleDecl);
   }
   expect(
     getComputedStyleDecl({
@@ -1244,7 +1278,7 @@ test("matches saved nested tag casing and leading whitespace", () => {
     property: "color",
     value: { type: "keyword", value: "purple" },
   };
-  model.styles.set(getStyleDeclKey(styleDecl), styleDecl);
+  setStyle(model, styleDecl);
   expect(
     getComputedStyleDecl({
       model,
@@ -1276,7 +1310,7 @@ test("shows nested global Tag color and lets an attached Token override it", () 
     property: "color",
     value: { type: "keyword", value: "purple" },
   };
-  model.styles.set(getStyleDeclKey(globalStyle), globalStyle);
+  setStyle(model, globalStyle);
   const selected = {
     model,
     instanceSelector: ["heading", "container"],
@@ -1295,7 +1329,7 @@ test("shows nested global Tag color and lets an attached Token override it", () 
     state: ":hover",
     value: { type: "keyword", value: "red" },
   };
-  model.styles.set(getStyleDeclKey(headingTagStyle), headingTagStyle);
+  setStyle(model, headingTagStyle);
   expect(getComputedStyleDecl(selected).usedValue).toEqual({
     type: "keyword",
     value: "red",
@@ -1305,7 +1339,7 @@ test("shows nested global Tag color and lets an attached Token override it", () 
     breakpointId: "small",
     value: { type: "keyword", value: "green" },
   };
-  model.styles.set(getStyleDeclKey(responsiveStyle), responsiveStyle);
+  setStyle(model, responsiveStyle);
   expect(getComputedStyleDecl(selected).usedValue).toEqual({
     type: "keyword",
     value: "green",
@@ -1316,7 +1350,7 @@ test("shows nested global Tag color and lets an attached Token override it", () 
     state: ":hover",
     value: { type: "keyword", value: "blue" },
   };
-  model.styles.set(getStyleDeclKey(tokenStyle), tokenStyle);
+  setStyle(model, tokenStyle);
   expect(getComputedStyleDecl(selected).usedValue).toEqual({
     type: "keyword",
     value: "blue",
@@ -1348,8 +1382,8 @@ test("matches breakpoint and source order for nested Tag styles", () => {
     breakpointId: "small",
     value: { type: "keyword", value: "purple" },
   };
-  model.styles.set(getStyleDeclKey(innerStyle), innerStyle);
-  model.styles.set(getStyleDeclKey(outerStyle), outerStyle);
+  setStyle(model, innerStyle);
+  setStyle(model, outerStyle);
 
   expect(
     getComputedStyleDecl({
@@ -1361,7 +1395,7 @@ test("matches breakpoint and source order for nested Tag styles", () => {
 
   model.styles.delete(getStyleDeclKey(outerStyle));
   outerStyle.breakpointId = "base";
-  model.styles.set(getStyleDeclKey(outerStyle), outerStyle);
+  setStyle(model, outerStyle);
   expect(
     getComputedStyleDecl({
       model,
@@ -1395,7 +1429,7 @@ test("selected tag token remains the source when an instance overrides it", () =
     value: { type: "keyword", value: "red" },
   };
   model.tagStyleIds.set("p", id);
-  model.styles.set(getStyleDeclKey(declaration), declaration);
+  setStyle(model, declaration);
 
   expect(
     getComputedStyleDecl({
@@ -1421,7 +1455,7 @@ test("base instance style wins over responsive tag style", () => {
     value: { type: "keyword", value: "red" },
   };
   model.tagStyleIds.set("p", id);
-  model.styles.set(getStyleDeclKey(declaration), declaration);
+  setStyle(model, declaration);
 
   expect(
     getComputedStyleDecl({
