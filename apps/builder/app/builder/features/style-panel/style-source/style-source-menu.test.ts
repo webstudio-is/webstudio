@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { __testing__ } from "./style-source-menu";
 
-const { canEditStyleSourceStyles } = __testing__;
+const { canEditStyleSourceStyles, getMenuAlignOffset } = __testing__;
 
 describe("canEditStyleSourceStyles", () => {
   test("allows style editing for local and unlocked token sources", () => {
@@ -39,5 +39,11 @@ describe("canEditStyleSourceStyles", () => {
         states: [],
       })
     ).toBe(false);
+  });
+});
+
+describe("getMenuAlignOffset", () => {
+  test("aligns the menu start with the style source chip", () => {
+    expect(getMenuAlignOffset(100, 124)).toBe(-24);
   });
 });

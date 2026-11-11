@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useLayoutEffect, useRef, useState } from "react";
 import { tags } from "@webstudio-is/sdk";
 import {
   Box,
@@ -130,6 +130,9 @@ type MenuAction = keyof typeof menuActionDescriptions;
 
 const canEditStyleSourceStyles = (item: IntermediateItem) =>
   item.source === "local" || item.locked === false;
+
+const getMenuAlignOffset = (containerLeft: number, triggerLeft: number) =>
+  containerLeft - triggerLeft;
 
 // All available CSS selectors for autocomplete
 const allSelectors = [
@@ -284,7 +287,21 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
     description?: string;
   }>();
   const [highlightedAction, setHighlightedAction] = useState<MenuAction>();
+  const [alignOffset, setAlignOffset] = useState(0);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const escapePressed = useRef(false);
+  useLayoutEffect(() => {
+    const trigger = triggerRef.current;
+    const container = trigger?.parentElement;
+    if (props.open && trigger && container) {
+      setAlignOffset(
+        getMenuAlignOffset(
+          container.getBoundingClientRect().left,
+          trigger.getBoundingClientRect().left
+        )
+      );
+    }
+  }, [props.open]);
   const canEditStyles = canEditStyleSourceStyles(props.item);
 
   // Get description for highlighted or selected item
@@ -333,7 +350,10 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
   return (
     <DropdownMenu modal open={props.open} onOpenChange={props.onOpenChange}>
       <DropdownMenuTrigger asChild>
-        <MenuTrigger aria-label={`Style source menu ${props.item.label}`}>
+        <MenuTrigger
+          ref={triggerRef}
+          aria-label={`Style source menu ${props.item.label}`}
+        >
           <MenuTriggerGradient />
           <ChevronDownIcon style={{ position: "relative" }} />
         </MenuTrigger>
@@ -354,6 +374,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
         }}
         autoFocus
         align="start"
+        alignOffset={alignOffset}
         css={{ width: theme.spacing[26] }}
       >
         <DropdownMenuLabel>
@@ -565,4 +586,4 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
   );
 };
 
-export const __testing__ = { canEditStyleSourceStyles };
+export const __testing__ = { canEditStyleSourceStyles, getMenuAlignOffset };
