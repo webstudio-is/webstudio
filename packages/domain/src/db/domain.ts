@@ -233,6 +233,26 @@ export const remove = async (
     context
   );
 
+  const otherLinks = await context.postgrest.client
+    .from("ProjectDomain")
+    .select("domainId", { count: "exact", head: true })
+    .eq("domainId", props.domainId)
+    .neq("projectId", props.projectId);
+
+  if (otherLinks.error) {
+    return createErrorResponse(otherLinks.error);
+  }
+
+  if (otherLinks.count === 0) {
+    const releaseResult = await context.domain.domainTrpc.remove
+      .mutate({ domain: domain.domain })
+      .catch((error) => createErrorResponse(error));
+
+    if (releaseResult.success === false) {
+      return releaseResult;
+    }
+  }
+
   const deleteResult = await context.postgrest.client
     .from("ProjectDomain")
     .delete()

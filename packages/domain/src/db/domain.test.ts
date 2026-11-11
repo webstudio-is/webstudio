@@ -197,13 +197,14 @@ describe("create — domain limit guard (msw)", () => {
 
 // ---------------------------------------------------------------------------
 // remove
-// Detaches the domain only after unpublishing and marks unreferenced domains
+// Releases the last hostname before detaching and marks unreferenced domains
 // inactive so they do not remain ACTIVE orphans.
 // ---------------------------------------------------------------------------
 
 describe("remove (msw)", () => {
   test("unpublishes, detaches, and marks an unreferenced domain inactive", async () => {
     let unpublishedDomain: string | undefined;
+    let releasedDomain: string | undefined;
     let projectDomainDeleted = false;
     let domainUpdate: unknown;
 
@@ -237,6 +238,16 @@ describe("remove (msw)", () => {
     const result = await remove(
       { projectId: "proj-1", domainId: "domain-id-1" },
       createContext({
+        domain: {
+          domainTrpc: {
+            remove: {
+              mutate: ({ domain }: { domain: string }) => {
+                releasedDomain = domain;
+                return Promise.resolve({ success: true });
+              },
+            },
+          },
+        },
         deployment: {
           deploymentTrpc: {
             publish: {
@@ -256,11 +267,12 @@ describe("remove (msw)", () => {
             PUBLISHER_HOST: "wstd.io",
           },
         },
-      })
+      } as unknown as Partial<AppContext>)
     );
 
     expect(result).toEqual({ success: true });
     expect(unpublishedDomain).toBe("example.com");
+    expect(releasedDomain).toBe("example.com");
     expect(projectDomainDeleted).toBe(true);
     expect(domainUpdate).toEqual({
       status: "INITIALIZING",
@@ -313,5 +325,120 @@ describe("remove (msw)", () => {
 
     expect(result).toEqual({ success: false, error: "Cloudflare failed" });
     expect(projectDomainDeleted).toBe(false);
+  });
+
+  test("releases the last custom hostname before detaching", async () => {
+    let releasedDomain: string | undefined;
+    let detached = false;
+    server.use(
+      projectHandler,
+      db.get("ProjectDomain", () =>
+        json({ domain: { id: "domain-id-1", domain: "example.com" } })
+      ),
+      db.get("Build", () => json([])),
+      db.head("ProjectDomain", () =>
+        empty({ headers: { "Content-Range": "*/0" } })
+      ),
+      db.delete("ProjectDomain", () => {
+        detached = true;
+        return empty({ status: 204 });
+      }),
+      db.patch("Domain", () => json({ id: "domain-id-1" }))
+    );
+
+    const result = await remove(
+      { projectId: "proj-1", domainId: "domain-id-1" },
+      createContext({
+        domain: {
+          domainTrpc: {
+            remove: {
+              mutate: ({ domain }: { domain: string }) => {
+                expect(detached).toBe(false);
+                releasedDomain = domain;
+                return Promise.resolve({ success: true });
+              },
+            },
+          },
+        },
+      } as unknown as Partial<AppContext>)
+    );
+
+    expect(result).toEqual({ success: true });
+    expect(releasedDomain).toBe("example.com");
+    expect(detached).toBe(true);
+  });
+
+  test("keeps a shared custom hostname", async () => {
+    let released = false;
+    let detached = false;
+    server.use(
+      projectHandler,
+      db.get("ProjectDomain", () =>
+        json({ domain: { id: "domain-id-1", domain: "example.com" } })
+      ),
+      db.get("Build", () => json([])),
+      db.head("ProjectDomain", () =>
+        empty({ headers: { "Content-Range": "*/1" } })
+      ),
+      db.delete("ProjectDomain", () => {
+        detached = true;
+        return empty({ status: 204 });
+      })
+    );
+
+    const result = await remove(
+      { projectId: "proj-1", domainId: "domain-id-1" },
+      createContext({
+        domain: {
+          domainTrpc: {
+            remove: {
+              mutate: () => {
+                released = true;
+                return Promise.resolve({ success: true });
+              },
+            },
+          },
+        },
+      } as unknown as Partial<AppContext>)
+    );
+
+    expect(result).toEqual({ success: true });
+    expect(released).toBe(false);
+    expect(detached).toBe(true);
+  });
+
+  test("keeps the project link when hostname cleanup fails", async () => {
+    let detached = false;
+    server.use(
+      projectHandler,
+      db.get("ProjectDomain", () =>
+        json({ domain: { id: "domain-id-1", domain: "example.com" } })
+      ),
+      db.get("Build", () => json([])),
+      db.head("ProjectDomain", () =>
+        empty({ headers: { "Content-Range": "*/0" } })
+      ),
+      db.delete("ProjectDomain", () => {
+        detached = true;
+        return empty({ status: 204 });
+      })
+    );
+
+    const result = await remove(
+      { projectId: "proj-1", domainId: "domain-id-1" },
+      createContext({
+        domain: {
+          domainTrpc: {
+            remove: {
+              mutate: () =>
+                Promise.resolve({ success: false, error: "Cloudflare failed" }),
+            },
+          },
+        },
+      } as unknown as Partial<AppContext>)
+    );
+
+    expect(result).toEqual({ success: false, error: "Cloudflare failed" });
+    expect(detached).toBe(false);
   });
 });
