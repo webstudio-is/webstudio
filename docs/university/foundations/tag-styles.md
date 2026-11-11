@@ -43,7 +43,7 @@ Open the Tag style's menu and choose a state such as `:hover` or `:focus-visible
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/tag-style-states-dark.png">
-  <img src="../../.gitbook/assets/tag-style-states-light.png" alt="div Tag style menu with Copy above hover and focus-visible states" width="240">
+  <img src="../../.gitbook/assets/tag-style-states-light.png" alt="div Tag style menu with Copy above hover and focus-visible states" width="176">
 </picture>
 
 A Tag style targets its tag and state across the site. In **Add more**, `:hover`, `[data-state=open]`, and `::before` target the source's own element. Enter an HTML tag to target a nested element: `h2`, `h2:hover`, `h2[a="123"]`, and `h2::before` are supported. For example, `div:hover` in the `div` Tag style targets every hovered `div`; `h2:hover` in a container's Local source targets hovered `h2` elements inside that container.
