@@ -188,14 +188,10 @@ const SelectorCombobox = ({
 
   const handleSubmit = (selector: string) => {
     let normalizedSelector = selector;
-    let validation = validateSelector(normalizedSelector, {
-      allowStateDescendants: false,
-    });
+    let validation = validateSelector(normalizedSelector);
     if (validation.success === false) {
       const tagSelector = ` ${selector}`;
-      const tagValidation = validateSelector(tagSelector, {
-        allowStateDescendants: false,
-      });
+      const tagValidation = validateSelector(tagSelector);
       if (tagValidation.success && tagValidation.type === "tag") {
         normalizedSelector = tagSelector;
         validation = tagValidation;

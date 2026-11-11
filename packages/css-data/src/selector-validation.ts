@@ -14,10 +14,9 @@ export type SelectorValidationResult =
  * Validates an open CSS state suffix scoped to the current element.
  *
  * Builder states are not a closed component-state enum. Valid pseudo-classes,
- * pseudo-elements, and attribute selectors may be compounded. Descendant and
- * child selectors may follow that state for existing saved selectors when
- * allowStateDescendants is enabled. New Add more input accepts only a state
- * on the styled element or one nested tag. Selector lists,
+ * pseudo-elements, and attribute selectors may be compounded. New input accepts
+ * only a state on the styled element or one nested tag. Existing saved state
+ * descendants may be checked with allowLegacyStateDescendants. Selector lists,
  * unanchored selectors, and sibling combinators are rejected.
  * @param selector - The selector to validate (e.g., ":hover", "::before", "[data-state=open]")
  * @returns SelectorValidationResult with success status and type or error message
@@ -26,8 +25,8 @@ export const validateSelector = (
   selector: string,
   {
     allowDescendants = true,
-    allowStateDescendants = true,
-  }: { allowDescendants?: boolean; allowStateDescendants?: boolean } = {}
+    allowLegacyStateDescendants = false,
+  }: { allowDescendants?: boolean; allowLegacyStateDescendants?: boolean } = {}
 ): SelectorValidationResult => {
   if (!selector || selector.trim() === "") {
     return { success: false, error: "Selector cannot be empty" };
@@ -76,7 +75,7 @@ export const validateSelector = (
         error: "Selector must be one state scoped to the current element",
       };
     }
-    if (allowStateDescendants === false && firstCombinatorIndex !== -1) {
+    if (allowLegacyStateDescendants === false && firstCombinatorIndex !== -1) {
       return {
         success: false,
         error: "Invalid CSS selector syntax",

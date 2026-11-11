@@ -325,9 +325,7 @@ const subscribeSelectedInstance = (
       if (!ancestorSourceIds.has(styleDecl.styleSourceId)) {
         continue;
       }
-      const validation = validateSelector(styleDecl.state, {
-        allowStateDescendants: false,
-      });
+      const validation = validateSelector(styleDecl.state);
       if (
         validation.success &&
         validation.type === "tag" &&
