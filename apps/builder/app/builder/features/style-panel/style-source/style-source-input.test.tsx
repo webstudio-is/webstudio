@@ -268,7 +268,7 @@ test("allows Copy for styles on inactive states or breakpoints", () => {
   expect(hasStyles.get("tag-style:button")).toBe(true);
 });
 
-test("moves focus between the input and adjacent style sources with arrow keys", () => {
+test("navigates style sources and restores input focus after Escape", () => {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -327,7 +327,11 @@ test("moves focus between the input and adjacent style sources with arrow keys",
     expect(document.activeElement).toBe(input);
 
     act(() => press(sourceButton("token-two"), "ArrowDown"));
-    expect(document.querySelector('[role="menu"]')).not.toBeNull();
+    const menu = document.querySelector('[role="menu"]');
+    expect(menu).not.toBeNull();
+    act(() => press(menu!, "Escape"));
+    expect(document.querySelector('[role="menu"]')).toBeNull();
+    expect(document.activeElement).toBe(input);
   } finally {
     act(() => root.unmount());
     container.remove();
