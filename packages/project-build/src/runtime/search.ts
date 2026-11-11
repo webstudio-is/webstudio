@@ -648,9 +648,7 @@ export const analyzeProject = (
       for (const declaration of state.styles.values()) {
         if (
           declaration.state !== undefined &&
-          validateSelector(declaration.state, {
-            allowLegacyStateDescendants: true,
-          }).success === false
+          validateSelector(declaration.state).success === false
         ) {
           matches.push({
             kind: "style",

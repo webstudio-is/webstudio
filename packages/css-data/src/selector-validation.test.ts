@@ -48,16 +48,9 @@ describe("validateSelector", () => {
     "[data-state=open] [data-part=content]",
     ":hover > .icon",
     ":not(.disabled) > [aria-hidden=true]",
-  ])(
-    "keeps saved state descendants without accepting new ones: %s",
-    (selector) => {
-      expect(
-        validateSelector(selector, { allowLegacyStateDescendants: true })
-          .success
-      ).toBe(true);
-      expect(validateSelector(selector).success).toBe(false);
-    }
-  );
+  ])("accepts states targeting descendants: %s", (selector) => {
+    expect(validateSelector(selector).success).toBe(true);
+  });
 
   test.each([
     ":hover",
