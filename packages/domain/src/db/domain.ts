@@ -333,6 +333,21 @@ export const updateStatus = async (
 
   const { domain } = validationResult;
 
+  const projectDomains = await context.postgrest.client
+    .from("ProjectDomain")
+    .select("domain:Domain(domain)")
+    .eq("projectId", props.projectId);
+
+  if (projectDomains.error) {
+    return createErrorResponse(projectDomains.error);
+  }
+
+  if (
+    projectDomains.data.some((item) => item.domain?.domain === domain) === false
+  ) {
+    return createErrorResponse("Domain not found");
+  }
+
   // @todo: must be implemented as workflow/queue service part of 3rd party domain initialization process
   const statusResult = await context.domain.domainTrpc.getStatus.query({
     domain,

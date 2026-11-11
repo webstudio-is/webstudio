@@ -7,7 +7,7 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { countTotalDomains, create, remove } from "./domain";
+import { countTotalDomains, create, remove, updateStatus } from "./domain";
 
 const server = createTestServer();
 
@@ -440,5 +440,72 @@ describe("remove (msw)", () => {
 
     expect(result).toEqual({ success: false, error: "Cloudflare failed" });
     expect(detached).toBe(false);
+  });
+});
+
+describe("updateStatus (msw)", () => {
+  test("does not check a hostname removed from the project", async () => {
+    let checked = false;
+    server.use(
+      projectHandler,
+      db.get("ProjectDomain", () => json([]))
+    );
+
+    const result = await updateStatus(
+      { projectId: "proj-1", domain: "example.com" },
+      createContext({
+        domain: {
+          domainTrpc: {
+            getStatus: {
+              query: () => {
+                checked = true;
+                return Promise.resolve({
+                  success: true,
+                  data: { status: "active" },
+                });
+              },
+            },
+          },
+        },
+      } as unknown as Partial<AppContext>)
+    );
+
+    expect(result.success).toBe(false);
+    expect(checked).toBe(false);
+  });
+
+  test("checks a hostname still linked to the project", async () => {
+    let checked = false;
+    server.use(
+      projectHandler,
+      db.get("ProjectDomain", () =>
+        json([{ domain: { domain: "example.com" } }])
+      ),
+      db.patch("Domain", () =>
+        json({ id: "domain-id-1", domain: "example.com", status: "ACTIVE" })
+      )
+    );
+
+    const result = await updateStatus(
+      { projectId: "proj-1", domain: "example.com" },
+      createContext({
+        domain: {
+          domainTrpc: {
+            getStatus: {
+              query: () => {
+                checked = true;
+                return Promise.resolve({
+                  success: true,
+                  data: { status: "active" },
+                });
+              },
+            },
+          },
+        },
+      } as unknown as Partial<AppContext>)
+    );
+
+    expect(result.success).toBe(true);
+    expect(checked).toBe(true);
   });
 });
