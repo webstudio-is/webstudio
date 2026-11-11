@@ -567,7 +567,8 @@ export const StyleSourceInput = (
         <ComboboxContent
           align="start"
           sideOffset={5}
-          onOpenAutoFocus={() => {
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
             escapePressed.current = false;
           }}
           onCloseAutoFocus={(event) => {
