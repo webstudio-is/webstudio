@@ -332,26 +332,33 @@ const convertToInputItem = (
   };
 };
 
+const $availableTokens = computed($styleSources, (styleSources) => {
+  const tokens: StyleSourceInputItem[] = [];
+  for (const styleSource of styleSources.values()) {
+    if (styleSource.type === "token") {
+      tokens.push(convertToInputItem(styleSource, []));
+    }
+  }
+  return tokens;
+});
+
 const $availableStyleSources = computed(
-  [$styleSources, $selectedInstance, $instanceTags],
-  (styleSources, selectedInstance, instanceTags) => {
-    const availableStylesSources: StyleSourceInputItem[] = [];
+  [$availableTokens, $styleSources, $selectedInstance, $instanceTags],
+  (tokens, styleSources, selectedInstance, instanceTags) => {
     const tag = selectedInstance
       ? instanceTags.get(selectedInstance.id)
       : undefined;
     if (tag && isTagStyleTag(tag)) {
       const id = getTagStyleId(tag);
-      availableStylesSources.push(
-        convertToInputItem(styleSources.get(id) ?? { type: "tag", id, tag }, [])
-      );
+      return [
+        convertToInputItem(
+          styleSources.get(id) ?? { type: "tag", id, tag },
+          []
+        ),
+        ...tokens,
+      ];
     }
-    for (const styleSource of styleSources.values()) {
-      if (styleSource.type !== "token") {
-        continue;
-      }
-      availableStylesSources.push(convertToInputItem(styleSource, []));
-    }
-    return availableStylesSources;
+    return tokens;
   }
 );
 

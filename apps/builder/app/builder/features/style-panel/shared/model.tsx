@@ -79,6 +79,16 @@ const $indexedSelections = computed($styleSourceSelections, (selections) => ({
   order: indexStyleSourceSelectionOrder(selections),
 }));
 
+const $tagStyleIds = computed($styleSources, (styleSources) => {
+  const ids = new Map<string, string>();
+  for (const source of styleSources.values()) {
+    if (source.type === "tag") {
+      ids.set(source.tag, source.id);
+    }
+  }
+  return ids;
+});
+
 export const $instanceTags = computed(
   [
     $registeredComponentMetas,
@@ -239,7 +249,7 @@ const getDefinedStyles = ({
 export const $styleObjectModel = computed(
   [
     $indexedStyles,
-    $styleSources,
+    $tagStyleIds,
     $indexedSelections,
     $presetStyles,
     $instanceTags,
@@ -250,7 +260,7 @@ export const $styleObjectModel = computed(
   ],
   (
     { styles, nestedTagStyles },
-    styleSources,
+    tagStyleIds,
     { selections: styleSourceSelections, order: styleSourceSelectionOrder },
     presetStyles,
     instanceTags,
@@ -259,12 +269,6 @@ export const $styleObjectModel = computed(
     matchingStates,
     matchingStatesByInstanceId
   ): StyleObjectModel => {
-    const tagStyleIds = new Map<string, string>();
-    for (const source of styleSources.values()) {
-      if (source.type === "tag") {
-        tagStyleIds.set(source.tag, source.id);
-      }
-    }
     return {
       styles,
       nestedTagStyles,
