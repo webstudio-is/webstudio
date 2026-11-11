@@ -353,7 +353,6 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
           }
         }}
         autoFocus
-        align="start"
         css={{ width: theme.spacing[26] }}
       >
         <DropdownMenuLabel>
