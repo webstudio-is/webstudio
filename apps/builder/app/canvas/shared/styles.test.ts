@@ -79,7 +79,7 @@ describe("renderStateStyles", () => {
     expect(sheet.cssText).toBe("");
   });
 
-  test("keeps Tag-state previews above tag selectors but below instance selectors", () => {
+  test("preserves Tag-state specificity below instance-state specificity", () => {
     const sheet = createTestSheet();
     renderStateStyles({
       instanceStyles: {
@@ -91,6 +91,10 @@ describe("renderStateStyles", () => {
             styleSourceId: getTagStyleId("button"),
             state: ":hover",
           }),
+          createStyleDecl({
+            styleSourceId: "local",
+            state: ":hover",
+          }),
         ],
       },
       sheet,
@@ -98,7 +102,10 @@ describe("renderStateStyles", () => {
       toStyleValue: mockToStyleValue,
     });
 
-    expect(sheet.cssText).toContain(':where([data-ws-id="button"])button');
+    expect(sheet.cssText).toContain(
+      ':where([data-ws-id="button"]):is(button, button:hover)'
+    );
+    expect(sheet.cssText).toContain('[data-ws-id="button"]:is(*, :hover)');
   });
 
   describe("pseudo-elements keep their selector", () => {

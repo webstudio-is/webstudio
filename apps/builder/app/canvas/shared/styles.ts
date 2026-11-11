@@ -839,6 +839,24 @@ const $instanceStyles = computed(
 const getStatePreviewSelector = (state: string) =>
   isPseudoElement(state) || state.startsWith(" ") ? state : "";
 
+const shouldSimulateState = (state: string) =>
+  (state.startsWith(":") && isPseudoElement(state) === false) ||
+  state.startsWith("[");
+
+const getTagStatePreviewSelector = (
+  selector: string,
+  tag: string,
+  state: string
+) =>
+  shouldSimulateState(state)
+    ? `:where(${selector}):is(${tag}, ${tag}${state})`
+    : `:where(${selector})${tag}${getStatePreviewSelector(state)}`;
+
+const getInstanceStatePreviewSelector = (selector: string, state: string) =>
+  shouldSimulateState(state)
+    ? `${selector}:is(*, ${state})`
+    : `${selector}${getStatePreviewSelector(state)}`;
+
 const shouldRenderEphemeralTagState = (
   styleDecl: StyleDecl,
   isTagStyle: boolean,
@@ -873,12 +891,11 @@ const renderStateStyles = ({
     sheet.addMediaRule(breakpoint.id, breakpoint);
   }
   const selector = `[${idAttribute}="${instanceId}"]`;
-  const stateSelector = getStatePreviewSelector(selectedState);
   for (const styleDecl of styles) {
     const tag = getTagFromStyleId(styleDecl.styleSourceId);
     const previewSelector = tag
-      ? `:where(${selector})${tag}${stateSelector}`
-      : `${selector}${stateSelector}`;
+      ? getTagStatePreviewSelector(selector, tag, selectedState)
+      : getInstanceStatePreviewSelector(selector, selectedState);
     const rule = sheet.addNestingRule(previewSelector);
     rule.setDeclaration({
       breakpoint: styleDecl.breakpointId,
