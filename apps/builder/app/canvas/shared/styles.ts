@@ -1,5 +1,4 @@
 import { useLayoutEffect } from "react";
-import * as csstree from "css-tree";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -18,7 +17,11 @@ import {
 } from "@webstudio-is/sdk";
 import { inflatedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import { INFLATE_PADDING } from "~/canvas/inflator";
-import { isPseudoElement, parseMediaCondition } from "@webstudio-is/css-data";
+import {
+  isPseudoElement,
+  parseMediaCondition,
+  validateSelector,
+} from "@webstudio-is/css-data";
 import {
   type StyleValue,
   type MediaRuleOptions,
@@ -844,30 +847,6 @@ const shouldSimulateState = (state: string) =>
   (state.startsWith(":") && isPseudoElement(state) === false) ||
   state.startsWith("[");
 
-const splitStateDescendant = (state: string): [string, string] => {
-  if (state.startsWith(" ")) {
-    return [state, ""];
-  }
-  try {
-    const selector = csstree.parse(state, {
-      context: "selector",
-      positions: true,
-    });
-    if (selector.type === "Selector") {
-      let previousEnd = 0;
-      for (const node of selector.children) {
-        if (node.type === "Combinator") {
-          return [state.slice(0, previousEnd), state.slice(previousEnd)];
-        }
-        previousEnd = node.loc?.end.offset ?? previousEnd;
-      }
-    }
-  } catch {
-    // Keep saved selectors unchanged when they cannot be parsed.
-  }
-  return [state, ""];
-};
-
 const getTagStatePreviewSelector = (
   selector: string,
   tag: string,
@@ -876,14 +855,18 @@ const getTagStatePreviewSelector = (
   if (state.startsWith(" ")) {
     return `:where(${selector}):where(${tag})${state}`;
   }
-  const [elementState, descendant] = splitStateDescendant(state);
+  const validation = validateSelector(state);
+  const elementState = validation.success ? validation.scopedState : state;
+  const descendant = validation.success ? validation.descendant : "";
   return shouldSimulateState(elementState)
     ? `:where(${selector}):is(${tag}, ${tag}${elementState})${descendant}`
     : `:where(${selector})${tag}${getStatePreviewSelector(state)}`;
 };
 
 const getInstanceStatePreviewSelector = (selector: string, state: string) => {
-  const [elementState, descendant] = splitStateDescendant(state);
+  const validation = validateSelector(state);
+  const elementState = validation.success ? validation.scopedState : state;
+  const descendant = validation.success ? validation.descendant : "";
   if (shouldSimulateState(elementState)) {
     return `${selector}:is(*, ${elementState})${descendant}`;
   }

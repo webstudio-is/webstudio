@@ -7,8 +7,17 @@ export type SelectorValidationResult =
   | {
       success: true;
       type: "pseudo-class" | "pseudo-element" | "attribute";
+      scopedState: string;
+      descendant: string;
     }
-  | { success: true; type: "tag"; tag: string; condition: string };
+  | {
+      success: true;
+      type: "tag";
+      tag: string;
+      condition: string;
+      scopedState: string;
+      descendant: string;
+    };
 
 /**
  * Validates an open CSS state suffix scoped to the current element.
@@ -46,7 +55,7 @@ export const validateSelector = (
   try {
     const ast = csstree.parse(selector, {
       context: "selectorList",
-      positions: isTagSelector,
+      positions: true,
     });
     if (ast.type !== "SelectorList" || ast.children.size !== 1) {
       return {
@@ -112,6 +121,13 @@ export const validateSelector = (
       };
     }
 
+    const scopedStateEnd =
+      stateNodes.at(-1)?.loc?.end.offset ?? selector.length;
+    const parts = {
+      scopedState: selector.slice(0, scopedStateEnd),
+      descendant: selector.slice(scopedStateEnd),
+    };
+
     const pseudoClassNames: string[] = [];
     const pseudoElementNames: string[] = [];
     let foundAttribute = false;
@@ -156,7 +172,7 @@ export const validateSelector = (
       pseudoClassNames.every((name) => isKnownSelector(name, pseudoElements))
     ) {
       // Keep the legacy single-colon pseudo-element classification.
-      return { success: true, type: "pseudo-element" };
+      return { success: true, type: "pseudo-element", ...parts };
     }
     if (isTagSelector && stateNodes[0]?.type === "TypeSelector") {
       return {
@@ -164,6 +180,7 @@ export const validateSelector = (
         type: "tag",
         tag: stateNodes[0].name,
         condition: selector.slice(stateNodes[0].loc?.end.offset),
+        ...parts,
       };
     }
 
@@ -171,7 +188,7 @@ export const validateSelector = (
       // Validate that the pseudo-element actually exists
       // Some pseudo-elements are functional (e.g., ::part(), ::slotted())
       // The list includes both "part" and "part()" variants
-      return { success: true, type: "pseudo-element" };
+      return { success: true, type: "pseudo-element", ...parts };
     }
 
     if (pseudoClassNames.length > 0) {
@@ -180,13 +197,13 @@ export const validateSelector = (
       if (
         pseudoClassNames.every((name) => isKnownSelector(name, pseudoElements))
       ) {
-        return { success: true, type: "pseudo-element" };
+        return { success: true, type: "pseudo-element", ...parts };
       }
-      return { success: true, type: "pseudo-class" };
+      return { success: true, type: "pseudo-class", ...parts };
     }
 
     if (foundAttribute) {
-      return { success: true, type: "attribute" };
+      return { success: true, type: "attribute", ...parts };
     }
 
     // If we get here, something unexpected happened

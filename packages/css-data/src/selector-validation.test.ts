@@ -53,6 +53,22 @@ describe("validateSelector", () => {
   });
 
   test.each([
+    [":hover .button", ":hover", " .button"],
+    [":hover > .icon", ":hover", " > .icon"],
+    ["[data-state=open] h2", "[data-state=open]", " h2"],
+    [":is(.active, .selected) > .icon", ":is(.active, .selected)", " > .icon"],
+  ])(
+    "separates the styled element from its descendant: %s",
+    (selector, scopedState, descendant) => {
+      expect(validateSelector(selector)).toMatchObject({
+        success: true,
+        scopedState,
+        descendant,
+      });
+    }
+  );
+
+  test.each([
     ":hover",
     "[data-state=open]",
     "::before",
