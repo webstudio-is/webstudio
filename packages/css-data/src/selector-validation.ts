@@ -6,23 +6,27 @@ export type SelectorValidationResult =
   | { success: false; error: string }
   | {
       success: true;
-      type: "pseudo-class" | "pseudo-element" | "attribute" | "tag";
-    };
+      type: "pseudo-class" | "pseudo-element" | "attribute";
+    }
+  | { success: true; type: "tag"; tag: string; condition: string };
 
 /**
  * Validates an open CSS state suffix scoped to the current element.
  *
  * Builder states are not a closed component-state enum. Valid pseudo-classes,
- * pseudo-elements, and attribute selectors may be compounded. Descendant and
- * child selectors may follow that state because the CSS engine anchors the
- * complete suffix to the generated instance selector. Selector lists,
+ * pseudo-elements, and attribute selectors may be compounded. New input accepts
+ * only a state on the styled element or one nested tag. Existing saved state
+ * descendants may be checked with allowLegacyStateDescendants. Selector lists,
  * unanchored selectors, and sibling combinators are rejected.
  * @param selector - The selector to validate (e.g., ":hover", "::before", "[data-state=open]")
  * @returns SelectorValidationResult with success status and type or error message
  */
 export const validateSelector = (
   selector: string,
-  { allowDescendants = true }: { allowDescendants?: boolean } = {}
+  {
+    allowDescendants = true,
+    allowLegacyStateDescendants = false,
+  }: { allowDescendants?: boolean; allowLegacyStateDescendants?: boolean } = {}
 ): SelectorValidationResult => {
   if (!selector || selector.trim() === "") {
     return { success: false, error: "Selector cannot be empty" };
@@ -44,7 +48,10 @@ export const validateSelector = (
   }
 
   try {
-    const ast = csstree.parse(selector, { context: "selectorList" });
+    const ast = csstree.parse(selector, {
+      context: "selectorList",
+      positions: isTagSelector,
+    });
     if (ast.type !== "SelectorList" || ast.children.size !== 1) {
       return {
         success: false,
@@ -66,6 +73,12 @@ export const validateSelector = (
       return {
         success: false,
         error: "Selector must be one state scoped to the current element",
+      };
+    }
+    if (allowLegacyStateDescendants === false && firstCombinatorIndex !== -1) {
+      return {
+        success: false,
+        error: "Invalid CSS selector syntax",
       };
     }
     const stateNodes = selectorNodes.slice(
@@ -145,11 +158,30 @@ export const validateSelector = (
       return { success: false, error: "Invalid pseudo-class" };
     }
 
+    if (
+      isTagSelector &&
+      stateNodes[0]?.type === "TypeSelector" &&
+      pseudoElementNames.length === 0 &&
+      pseudoClassNames.length > 0 &&
+      pseudoClassNames.every((name) => isKnownSelector(name, pseudoElements))
+    ) {
+      // Keep the legacy single-colon pseudo-element classification.
+      return { success: true, type: "pseudo-element" };
+    }
+    if (isTagSelector && stateNodes[0]?.type === "TypeSelector") {
+      return {
+        success: true,
+        type: "tag",
+        tag: stateNodes[0].name,
+        condition: selector.slice(stateNodes[0].loc?.end.offset),
+      };
+    }
+
     if (pseudoElementNames.length > 0) {
       // Validate that the pseudo-element actually exists
       // Some pseudo-elements are functional (e.g., ::part(), ::slotted())
       // The list includes both "part" and "part()" variants
-      return { success: true, type: isTagSelector ? "tag" : "pseudo-element" };
+      return { success: true, type: "pseudo-element" };
     }
 
     if (pseudoClassNames.length > 0) {
@@ -160,15 +192,11 @@ export const validateSelector = (
       ) {
         return { success: true, type: "pseudo-element" };
       }
-      return { success: true, type: isTagSelector ? "tag" : "pseudo-class" };
+      return { success: true, type: "pseudo-class" };
     }
 
     if (foundAttribute) {
-      return { success: true, type: isTagSelector ? "tag" : "attribute" };
-    }
-
-    if (isTagSelector) {
-      return { success: true, type: "tag" };
+      return { success: true, type: "attribute" };
     }
 
     // If we get here, something unexpected happened

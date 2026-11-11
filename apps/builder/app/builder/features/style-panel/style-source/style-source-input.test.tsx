@@ -190,6 +190,44 @@ test("describes Copy and keeps the style source menu width stable", () => {
   }
 });
 
+test("describes the supported selectors when Add more receives focus", () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  try {
+    act(() =>
+      root.render(
+        <StyleSourceMenu
+          open
+          onOpenChange={() => {}}
+          selectedItemSelector={undefined}
+          item={{
+            id: "tag-style:button",
+            label: "button",
+            source: "tag",
+            disabled: false,
+            locked: false,
+            states: [],
+          }}
+          hasStyles={false}
+          states={[]}
+        />
+      )
+    );
+    const input = document.querySelector<HTMLInputElement>(
+      "[role=menu] form input"
+    );
+    expect(input).not.toBeNull();
+    act(() => input?.focus());
+    expect(document.querySelector("[role=menu]")?.textContent).toContain(
+      "Start with a tag, such as h2, h2:hover, or h2::before"
+    );
+  } finally {
+    act(() => root.unmount());
+    container.remove();
+  }
+});
+
 test("disables Copy when a source has no declarations", () => {
   const container = document.createElement("div");
   document.body.appendChild(container);

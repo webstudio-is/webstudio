@@ -27,7 +27,8 @@ export const writableStyles = styles.refine((value) =>
       parseGeneratedStyleDeclaration(style).errors.length === 0 &&
       (style.state === undefined ||
         style.state === "" ||
-        validateSelector(style.state).success)
+        validateSelector(style.state, { allowLegacyStateDescendants: true })
+          .success)
   )
 );
 

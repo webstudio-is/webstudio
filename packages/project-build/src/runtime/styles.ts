@@ -2050,7 +2050,9 @@ const getExistingStyleDeletionKeys = <
       styleKey !== undefined && existingStyleKeys.has(styleKey) === true;
     if (
       deletion.state !== undefined &&
-      validateSelector(deletion.state).success === false &&
+      validateSelector(deletion.state, {
+        allowLegacyStateDescendants: true,
+      }).success === false &&
       exists === false
     ) {
       return throwBuilderRuntimeError(
@@ -3489,17 +3491,6 @@ export const updateSelectedStyleDeclarations = (
       id: update.styleSourceId,
       tag: tag!,
     };
-    if (
-      styleSource.type === "tag" &&
-      update.state !== undefined &&
-      validateSelector(update.state, { allowDescendants: false }).success ===
-        false
-    ) {
-      return throwBuilderRuntimeError(
-        "BAD_REQUEST",
-        "Selector must be one state scoped to the current element"
-      );
-    }
     if (isStyleSourceLocked(styleSource)) {
       return throwBuilderRuntimeError("BAD_REQUEST", "Style source is locked");
     }

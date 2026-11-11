@@ -27,6 +27,7 @@ import {
   $propsIndex,
   $selectedBreakpoint,
   $selectedInstanceStates,
+  $selectedInstanceStatesByInstanceId,
   $selectedOrLastStyleSourceSelector,
 } from "~/shared/nano-states";
 import { $breakpoints } from "~/shared/sync/data-stores";
@@ -233,6 +234,7 @@ export const $styleObjectModel = computed(
     $instanceComponents,
     $matchingBreakpoints,
     $selectedInstanceStates,
+    $selectedInstanceStatesByInstanceId,
   ],
   (
     styles,
@@ -242,7 +244,8 @@ export const $styleObjectModel = computed(
     instanceTags,
     instanceComponents,
     matchingBreakpoints,
-    matchingStates
+    matchingStates,
+    matchingStatesByInstanceId
   ): StyleObjectModel => {
     const tagStyleIds = new Map<string, string>();
     for (const source of styleSources.values()) {
@@ -259,6 +262,7 @@ export const $styleObjectModel = computed(
       instanceComponents,
       matchingBreakpoints,
       matchingStates,
+      matchingStatesByInstanceId,
     };
   }
 );

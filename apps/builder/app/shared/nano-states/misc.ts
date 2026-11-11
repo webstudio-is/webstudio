@@ -319,6 +319,9 @@ export const $selectedStyleSource = computed(
  * to display style values as remote
  */
 export const $selectedInstanceStates = atom(new Set<string>());
+export const $selectedInstanceStatesByInstanceId = atom(
+  new Map<string, Set<string>>()
+);
 
 export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
   undefined

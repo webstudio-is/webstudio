@@ -7,6 +7,7 @@ import {
   parseCssVar,
   propertiesData,
   isPseudoElement,
+  validateSelector,
 } from "@webstudio-is/css-data";
 import {
   type StyleValue,
@@ -86,6 +87,7 @@ export type StyleObjectModel = {
    * all currently matching and ordered breakpointsgg
    */
   matchingStates: Set<string>;
+  matchingStatesByInstanceId?: Map<Instance["id"], Set<string>>;
 };
 
 export const getPresetStyleDeclKey = ({
@@ -121,6 +123,7 @@ export const getPresetStyleDeclKey = ({
 const getCascadedValue = ({
   model,
   instanceId,
+  ancestorIds = [],
   styleSourceId: selectedStyleSourceId,
   state: selectedState,
   property,
@@ -128,6 +131,7 @@ const getCascadedValue = ({
 }: {
   model: StyleObjectModel;
   instanceId: Instance["id"];
+  ancestorIds?: Instance["id"][];
   styleSourceId?: StyleDecl["styleSourceId"];
   state?: StyleDecl["state"];
   property: CssProperty;
@@ -141,8 +145,10 @@ const getCascadedValue = ({
     instanceTags,
     instanceComponents,
     matchingBreakpoints,
-    matchingStates,
   } = model;
+  const matchingStates = model.matchingStatesByInstanceId
+    ? (model.matchingStatesByInstanceId.get(instanceId) ?? new Set<string>())
+    : model.matchingStates;
   const tag = instanceTags.get(instanceId);
   const component = instanceComponents.get(instanceId);
   let selectedIndex = -1;
@@ -204,69 +210,132 @@ const getCascadedValue = ({
   // user styles
   const styleSourceIds = styleSourceSelections.get(instanceId)?.values ?? [];
   const tagStyleId = tag ? tagStyleIds.get(tag) : undefined;
+  const nestedStyles = new Map<string, StyleDecl>();
+  if (tag && ancestorIds.length > 0) {
+    for (const declaration of styles.values()) {
+      if (
+        declaration.property !== camelCaseProperty(property) ||
+        !declaration.state?.startsWith(" ")
+      ) {
+        continue;
+      }
+      const selector = validateSelector(declaration.state);
+      if (
+        selector.success &&
+        selector.type === "tag" &&
+        selector.tag.toLowerCase() === tag
+      ) {
+        nestedStyles.set(
+          getStyleDeclKey({
+            ...declaration,
+            state: ` ${tag}${selector.condition}`,
+          }),
+          declaration
+        );
+      }
+    }
+  }
   selectedStyleSourceId ??= styleSourceIds.at(-1);
+  const addDeclaration = ({
+    styleSourceId,
+    breakpointId,
+    state,
+    sourceInstanceId,
+  }: {
+    styleSourceId: string;
+    breakpointId: string;
+    state?: string;
+    sourceInstanceId: string;
+  }) => {
+    const key = getStyleDeclKey({
+      styleSourceId,
+      breakpointId,
+      state,
+      property: camelCaseProperty(property),
+    });
+    const styleDecl = nestedStyles.get(key) ?? styles.get(key);
+    const isSelected =
+      sourceInstanceId === instanceId &&
+      styleSourceId === selectedStyleSourceId &&
+      state === selectedState;
+    if (isSelected) {
+      selectedIndex = styleDecl ? declaredValues.length : -1;
+    }
+    if (!styleDecl) {
+      if (isSelected && styleSourceId === tagStyleId) {
+        selectedTagStyleSource = undefined;
+      }
+      return;
+    }
+    const declarationSource: StyleValueSource = {
+      name: "remote",
+      instanceId: sourceInstanceId,
+      styleSourceId,
+      state: styleDecl.state,
+      breakpointId,
+    };
+    if (isSelected && styleSourceId === tagStyleId) {
+      selectedTagStyleSource = declarationSource;
+    }
+    source = declarationSource;
+    declaredValues.push(styleDecl.value);
+  };
   // Within each state, resolve all Tag breakpoints before instance styles.
   // Instance selectors then win over Tag selectors across breakpoints.
+  const ancestorIdSet = new Set(ancestorIds);
   for (const state of states) {
-    if (tagStyleId) {
+    if (tag) {
+      const descendantState = ` ${tag}${state ?? ""}`;
       for (const breakpointId of matchingBreakpoints) {
-        const key = getStyleDeclKey({
-          styleSourceId: tagStyleId,
-          breakpointId,
-          state,
-          property: camelCaseProperty(property),
-        });
-        const styleDecl = styles.get(key);
-        if (tagStyleId === selectedStyleSourceId && state === selectedState) {
-          selectedIndex = styleDecl ? declaredValues.length : -1;
-          selectedTagStyleSource = styleDecl
-            ? {
-                name: "remote",
-                instanceId,
-                styleSourceId: tagStyleId,
-                state,
-                breakpointId,
-              }
-            : undefined;
+        // Global Tag CSS follows breakpoint and source order. Within one
+        // source, the nested rule is emitted before the tag's own rule.
+        for (const [sourceTag, styleSourceId] of tagStyleIds) {
+          const ancestorId = ancestorIds.find(
+            (id) => instanceTags.get(id) === sourceTag
+          );
+          if (ancestorId) {
+            addDeclaration({
+              styleSourceId,
+              breakpointId,
+              state: descendantState,
+              sourceInstanceId: ancestorId,
+            });
+          }
+          if (sourceTag === tag) {
+            addDeclaration({
+              styleSourceId,
+              breakpointId,
+              state,
+              sourceInstanceId: instanceId,
+            });
+          }
         }
-        if (styleDecl) {
-          source = {
-            name: "remote",
-            instanceId,
-            styleSourceId: tagStyleId,
-            state,
-            breakpointId,
-          };
-          declaredValues.push(styleDecl.value);
+      }
+      // Attached Token and Local descendant rules follow the global Tag sheet.
+      for (const breakpointId of matchingBreakpoints) {
+        for (const [ancestorId, selection] of styleSourceSelections) {
+          if (!ancestorIdSet.has(ancestorId)) {
+            continue;
+          }
+          for (const ancestorSourceId of selection.values) {
+            addDeclaration({
+              styleSourceId: ancestorSourceId,
+              breakpointId,
+              state: descendantState,
+              sourceInstanceId: ancestorId,
+            });
+          }
         }
       }
     }
     for (const breakpointId of matchingBreakpoints) {
       for (const styleSourceId of styleSourceIds) {
-        const key = getStyleDeclKey({
+        addDeclaration({
           styleSourceId,
           breakpointId,
           state,
-          property: camelCaseProperty(property),
+          sourceInstanceId: instanceId,
         });
-        const styleDecl = styles.get(key);
-        if (
-          styleSourceId === selectedStyleSourceId &&
-          state === selectedState
-        ) {
-          // reset selection from another state or breakpoint
-          selectedIndex = styleDecl ? declaredValues.length : -1;
-        }
-        if (styleDecl) {
-          source = {
-            name: "remote",
-            instanceId,
-            styleSourceId,
-            state,
-            breakpointId,
-          };
-          declaredValues.push(styleDecl.value);
-        }
       }
     }
   }
@@ -458,6 +527,7 @@ export const getComputedStyleDecl = ({
     const cascaded = getCascadedValue({
       model,
       instanceId: targetInstanceId,
+      ancestorIds: instanceSelector.slice(1),
       styleSourceId,
       state,
       property,
@@ -589,8 +659,9 @@ export const getComputedStyleDecl = ({
     const cascaded = getCascadedValue({
       model,
       instanceId,
+      ancestorIds: instanceSelector.slice(index + 1),
       styleSourceId,
-      state,
+      state: index === 0 ? state : undefined,
       property,
     });
     const inheritedCascadedValue = cascadedValue;

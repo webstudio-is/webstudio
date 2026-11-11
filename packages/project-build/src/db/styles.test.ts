@@ -66,4 +66,11 @@ test("rejects malformed state selectors before saving styles", () => {
       new Map([["valid", { ...style("color", "red"), state: ":hover" }]])
     ).success
   ).toBe(true);
+  expect(
+    writableStyles.safeParse(
+      new Map([
+        ["legacy", { ...style("color", "red"), state: ":hover .button" }],
+      ])
+    ).success
+  ).toBe(true);
 });

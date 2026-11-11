@@ -675,10 +675,12 @@ Notes:
 Commands:
 
 - MCP tool: update-selected-styles {"updates":[{"instanceId":"<buttonInstanceId>","styleSourceId":"tag-style:button","property":"color","value":{"type":"keyword","value":"red"}}]}
+- MCP tool: update-selected-styles {"updates":[{"instanceId":"<divInstanceId>","styleSourceId":"tag-style:div","state":" h2:hover","property":"color","value":{"type":"keyword","value":"red"}}]}
 
 Notes:
 
 - Use `tag-style:<tag>` to create or edit a Tag style. The first update creates its style source; no instance attachment is saved.
+- For a nested tag, set `state` to a space followed by the tag and optional condition, such as ` h2:hover`. The same selector forms work in Tag, Token, and Local styles.
 - Use `delete-selected-styles` with the same `instanceId`, `styleSourceId`, and `property` to remove a declaration.
 
 ## Update local styles
