@@ -875,9 +875,9 @@ const renderStateStyles = ({
   const selector = `[${idAttribute}="${instanceId}"]`;
   const stateSelector = getStatePreviewSelector(selectedState);
   for (const styleDecl of styles) {
-    const isTagStyle = getTagFromStyleId(styleDecl.styleSourceId) !== undefined;
-    const previewSelector = isTagStyle
-      ? `:where(${selector})${stateSelector}`
+    const tag = getTagFromStyleId(styleDecl.styleSourceId);
+    const previewSelector = tag
+      ? `:where(${selector})${tag}${stateSelector}`
       : `${selector}${stateSelector}`;
     const rule = sheet.addNestingRule(previewSelector);
     rule.setDeclaration({

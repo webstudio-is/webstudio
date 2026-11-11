@@ -79,6 +79,28 @@ describe("renderStateStyles", () => {
     expect(sheet.cssText).toBe("");
   });
 
+  test("keeps Tag-state previews above tag selectors but below instance selectors", () => {
+    const sheet = createTestSheet();
+    renderStateStyles({
+      instanceStyles: {
+        instanceId: "button",
+        selectedState: ":hover",
+        breakpoints: [{ id: "base", label: "Base" }],
+        styles: [
+          createStyleDecl({
+            styleSourceId: getTagStyleId("button"),
+            state: ":hover",
+          }),
+        ],
+      },
+      sheet,
+      transformValue: mockTransformValue,
+      toStyleValue: mockToStyleValue,
+    });
+
+    expect(sheet.cssText).toContain(':where([data-ws-id="button"])button');
+  });
+
   describe("pseudo-elements keep their selector", () => {
     test("::before styles apply to ::before selector", () => {
       const sheet = createTestSheet();
