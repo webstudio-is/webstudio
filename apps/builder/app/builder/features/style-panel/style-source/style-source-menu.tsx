@@ -377,9 +377,9 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
       <DropdownMenuContent
         onKeyDown={(event) => {
           event.stopPropagation();
-          if (event.key === "Escape") {
-            escapePressed.current = true;
-          }
+        }}
+        onEscapeKeyDown={() => {
+          escapePressed.current = true;
         }}
         onCloseAutoFocus={(event) => {
           event.preventDefault();
