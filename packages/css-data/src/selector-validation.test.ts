@@ -2,6 +2,24 @@ import { describe, test, expect } from "vitest";
 import { validateSelector } from "./selector-validation";
 
 describe("validateSelector", () => {
+  test("reads the condition from one nested tag", () => {
+    expect(validateSelector(' h2[data-state="open"]:hover')).toMatchObject({
+      success: true,
+      type: "tag",
+      tag: "h2",
+      condition: '[data-state="open"]:hover',
+    });
+    expect(validateSelector(" h2[ data-state = open ]:hover")).toMatchObject({
+      success: true,
+      type: "tag",
+      tag: "h2",
+      condition: "[ data-state = open ]:hover",
+    });
+    expect(validateSelector(" h2:before")).toMatchObject({
+      success: true,
+      type: "pseudo-element",
+    });
+  });
   test.each([
     ":hover, body",
     "body:hover",
@@ -30,19 +48,44 @@ describe("validateSelector", () => {
     "[data-state=open] [data-part=content]",
     ":hover > .icon",
     ":not(.disabled) > [aria-hidden=true]",
-  ])("accepts states targeting descendants: %s", (selector) => {
-    expect(validateSelector(selector).success).toBe(true);
-  });
-
-  test.each([" p", " button:hover", " a[aria-current=page]"])(
-    "accepts one descendant tag and its states: %s",
+  ])(
+    "keeps saved state descendants without accepting new ones: %s",
     (selector) => {
-      expect(validateSelector(selector)).toMatchObject({
-        success: true,
-        type: "tag",
-      });
+      expect(
+        validateSelector(selector, { allowLegacyStateDescendants: true })
+          .success
+      ).toBe(true);
+      expect(validateSelector(selector).success).toBe(false);
     }
   );
+
+  test.each([
+    ":hover",
+    "[data-state=open]",
+    "::before",
+    " h2",
+    " h2:hover",
+    ' h2[a="123"]',
+    " h2::before",
+  ])(
+    "accepts a styled-element condition or one nested tag in Add more: %s",
+    (selector) => {
+      expect(validateSelector(selector).success).toBe(true);
+    }
+  );
+
+  test.each([
+    " p",
+    " button:hover",
+    " a[aria-current=page]",
+    ' div[a="123"]',
+    " div::before",
+  ])("accepts one descendant tag and its states: %s", (selector) => {
+    expect(validateSelector(selector)).toMatchObject({
+      success: true,
+      type: "tag",
+    });
+  });
 
   test.each([" p strong", " .card", " #card", " p + span"])(
     "rejects unsupported descendant tag selectors: %s",

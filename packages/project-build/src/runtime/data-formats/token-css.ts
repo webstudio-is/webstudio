@@ -341,8 +341,9 @@ const parseStyleSourceTransferData = (
         (kind === "tag" &&
           style.selector !== ":root" &&
           style.state !== undefined &&
-          validateSelector(style.state, { allowDescendants: false }).success ===
-            false)
+          validateSelector(style.state, {
+            allowLegacyStateDescendants: true,
+          }).success === false)
     )
   ) {
     return { owned: true, valid: false };

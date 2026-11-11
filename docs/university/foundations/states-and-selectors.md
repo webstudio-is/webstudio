@@ -45,16 +45,14 @@ States are CSS pseudo-classes that apply styles when a condition is true, such a
 
 ### Custom states
 
-You can type any valid CSS pseudo-class into the Style Sources dropdown. If it's not in the predefined list, Webstudio will accept it as a custom selector.
+Use **Add more** in a Tag, Token, or Local style source to enter a selector that is not in the list.
 
 {% hint style="info" %}
-Custom states can target descendants while staying scoped to the selected instance. For example, `:hover .button` targets descendants with the [custom class](custom-classes-and-attributes.md) `button` while the selected instance is hovered, and `:hover > .icon` targets only direct children with the custom class `icon`.
+Start with `:` or `[` to target the current source's element or its pseudo-elements. For example, `:hover` applies while the element is hovered, `[data-state=open]` applies when its attribute matches, and `::before` targets its pseudo-element. You can combine conditions, such as `[data-state=open]:hover`.
 
-You can also select a descendant tag in a Local source or Token. For example, `p` targets paragraphs inside that instance. A [Tag style](tag-styles.md) targets one tag across the site instead.
+Start with an HTML tag name to style that tag nested inside the current source's element. For example, `h2`, `h2:hover`, `h2[a="123"]`, and `h2::before` target nested headings. Quote numeric attribute values as in `a="123"`. A [Tag style](tag-styles.md) applies its nested tag selector across the site; a Token or Local source applies it only where that source is used.
 
-Prefer [CSS variables for parent-child interactions](css-variables.md#parent-child-interactions). They keep each property on the child that uses it, can coordinate several children from one parent state, and do not couple the interaction to descendant classes or structure. Use a descendant custom state when the interaction specifically requires selector-based targeting.
-
-Start a custom state with a pseudo-class, pseudo-element, or attribute selector for the selected instance. You can then use a descendant (` `) or child (`>`) combinator. A tag name on its own is treated as a descendant selector. Selector lists, class or ID selectors at the start, and sibling combinators (`+` and `~`) are rejected because they can target elements outside the selected instance.
+**Add more** accepts one nested tag with optional conditions. It does not accept multiple top-level selectors, direct class or ID selectors such as `.card` or `h2.card`, a second nested element, or combinators such as `>`, `+`, and `~`. For parent-child interactions, [CSS variables](css-variables.md#parent-child-interactions) let the parent change a value used by the child.
 {% endhint %}
 
 ## Pseudo-elements

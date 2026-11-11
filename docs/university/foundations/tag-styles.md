@@ -10,7 +10,7 @@ description: Set site-wide styles for HTML tags such as div, h1, and button.
 
 1. Select an instance on the canvas, such as a `div`.
 2. Open the **Style sources** field at the top of the Style panel.
-3. Select `div` under **Tag style**. Its source appears first in the field.
+3. Select `div` under **Tag**. Its source appears first in the field.
 4. Select that source and set a style. The Tag style is saved when you add its first style.
 
 <picture>
@@ -29,7 +29,7 @@ Open the Tag style's menu and choose a state such as `:hover` or `:focus-visible
   <img src="../../.gitbook/assets/tag-style-states-light.png" alt="div Tag style menu with Copy above hover and focus-visible states" width="240">
 </picture>
 
-A Tag style targets its tag and state across the site. To style a descendant within one element instead, use a [custom state or selector](states-and-selectors.md#custom-states) on a Token or Local source.
+A Tag style targets its tag and state across the site. In **Add more**, `:hover`, `[data-state=open]`, and `::before` target the Tag style's own element. Enter an HTML tag to target a nested element on every matching instance: `h2`, `h2:hover`, `h2[a="123"]`, and `h2::before` are supported. The same [selector forms](states-and-selectors.md#custom-states) work in Token and Local sources, where they apply only to instances using that source.
 
 ## Copy and paste
 

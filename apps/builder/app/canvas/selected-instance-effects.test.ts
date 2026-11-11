@@ -6,11 +6,13 @@ import {
   $selectedInstanceOutline,
   $selectedInstanceOutlines,
   $selectedInstanceStates,
+  $selectedInstanceStatesByInstanceId,
   selectInstances,
 } from "~/shared/nano-states";
 import {
   $instances,
   $styleSourceSelections,
+  $styleSources,
   $styles,
 } from "~/shared/sync/data-stores";
 import { subscribeSelected } from "./selected-instance-effects";
@@ -95,9 +97,11 @@ beforeEach(() => {
     ])
   );
   $styleSourceSelections.set(new Map());
+  $styleSources.set(new Map());
   $styles.set(new Map());
   $allSelectedInstanceSelectors.set([]);
   $selectedInstanceStates.set(new Set());
+  $selectedInstanceStatesByInstanceId.set(new Map());
   $selectedInstanceOutline.set(undefined);
   $selectedInstanceOutlines.set([]);
   document.body.innerHTML = "";
@@ -113,8 +117,10 @@ afterEach(() => {
   $instances.set(new Map());
   $styles.set(new Map());
   $styleSourceSelections.set(new Map());
+  $styleSources.set(new Map());
   $allSelectedInstanceSelectors.set([]);
   $selectedInstanceStates.set(new Set());
+  $selectedInstanceStatesByInstanceId.set(new Map());
   $selectedInstanceOutline.set(undefined);
   $selectedInstanceOutlines.set([]);
 });
@@ -171,6 +177,47 @@ describe("subscribeSelected", () => {
     selectInstances([["box"]]);
 
     expect($selectedInstanceStates.get()).toEqual(new Set());
+  });
+
+  test("detects an active attribute condition on a nested global Tag style", () => {
+    const parent = document.createElement("div");
+    parent.setAttribute(idAttribute, "box");
+    parent.setAttribute(selectorIdAttribute, "box");
+    const heading = document.createElement("h2");
+    heading.setAttribute(idAttribute, "heading");
+    heading.setAttribute(selectorIdAttribute, "heading,box");
+    heading.setAttribute("data-state", "open");
+    parent.appendChild(heading);
+    document.body.appendChild(parent);
+    const id = getTagStyleId("div");
+    $styleSources.set(new Map([[id, { type: "tag", id, tag: "div" }]]));
+    $styles.set(
+      new Map([
+        [
+          "nested-tag-attribute",
+          {
+            styleSourceId: id,
+            breakpointId: "base",
+            state: " h2[ data-state = open ]",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      ])
+    );
+    unsubscribe = subscribeSelected((callback) => callback());
+
+    selectInstances([["heading", "box"]]);
+
+    expect($selectedInstanceStates.get()).toEqual(
+      new Set(["[ data-state = open ]"])
+    );
+    expect($selectedInstanceStatesByInstanceId.get()).toEqual(
+      new Map([
+        ["heading", new Set(["[ data-state = open ]"])],
+        ["box", new Set()],
+      ])
+    );
   });
 
   test("creates both outline stores for one selected instance", () => {

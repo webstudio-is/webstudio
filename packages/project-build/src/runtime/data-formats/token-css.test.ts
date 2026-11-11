@@ -21,7 +21,21 @@ test("Tag style clipboard data accepts only a supported tag and its CSS selector
     parseTagStyleTransferData(
       '/* @webstudio/tag-style-css/v1 "button" */\n.ws-tag-style p { color: red; }'
     ).valid
-  ).toBe(false);
+  ).toBe(true);
+});
+
+test("Tag style clipboard data accepts one nested tag with a state", () => {
+  const parsed = parseTagStyleTransferData(
+    '/* @webstudio/tag-style-css/v1 "button" */\n.ws-tag-style h2:hover { color: red; }'
+  );
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.styles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ state: " h2:hover", property: "color" }),
+      ])
+    );
+  }
 });
 
 test("reads a CSS token with variables, states, breakpoints, images, and fonts", () => {

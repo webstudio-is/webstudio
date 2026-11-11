@@ -8,6 +8,7 @@ import {
 } from "@webstudio-is/css-data";
 import { selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
+import { areSetsEqual } from "~/shared/collection-equality";
 import {
   $isResizingCanvas,
   $selectedInstanceSizes,
@@ -15,12 +16,16 @@ import {
   $stylesIndex,
   $propValuesByInstanceSelectorWithMemoryProps,
   $selectedInstanceStates,
+  $selectedInstanceStatesByInstanceId,
   $selectedStyleState,
   $allSelectedInstanceSelectors,
   type UnitSizes,
   type PropertySizes,
 } from "~/shared/nano-states";
-import { $styleSourceSelections } from "~/shared/sync/data-stores";
+import {
+  $styleSourceSelections,
+  $styleSources,
+} from "~/shared/sync/data-stores";
 import {
   getAllElementsBoundingBox,
   getVisibleElementsByInstanceSelector,
@@ -288,44 +293,104 @@ const subscribeSelectedInstance = (
     const { propertySizes, computedValues } = readComputedStyles(element);
     $selectedInstanceSizes.set({ unitSizes, propertySizes, computedValues });
 
-    const availableStates = new Set<string>();
-    const instanceStyleSourceIds = new Set(
-      $styleSourceSelections.get().get(instanceId)?.values
-    );
-    instanceStyleSourceIds.add(getTagStyleId(element.localName));
+    const styleSourceSelections = $styleSourceSelections.get();
+    const styleSources = $styleSources.get();
     const styles = $styles.get();
-    for (const styleDecl of styles.values()) {
-      if (
-        instanceStyleSourceIds.has(styleDecl.styleSourceId) &&
-        styleDecl.state
-      ) {
-        availableStates.add(styleDecl.state);
+    const matchingStatesByInstanceId = new Map<string, Set<string>>();
+    const elementsByInstanceId = new Map<string, HTMLElement>();
+    for (
+      let ancestor: HTMLElement | null = element;
+      ancestor;
+      ancestor = ancestor.parentElement
+    ) {
+      const id = ancestor.getAttribute(selectorIdAttribute)?.split(",")[0];
+      if (id) {
+        elementsByInstanceId.set(id, ancestor);
       }
     }
-    const activeStates = new Set<string>();
-    for (const state of availableStates) {
-      if (
-        validateSelector(state, { allowDescendants: false }).success === false
-      ) {
+    for (const [index, id] of selectedInstanceSelector.entries()) {
+      const target = elementsByInstanceId.get(id);
+      if (!target) {
         continue;
       }
-      try {
-        // pseudo classes like :open or :current are not supported in .matches method
-        if (element.matches(state)) {
-          activeStates.add(state);
+      const ownSources = new Set(styleSourceSelections.get(id)?.values);
+      ownSources.add(getTagStyleId(target.localName));
+      const ancestorSources = new Set<string>();
+      for (const ancestorId of selectedInstanceSelector.slice(index + 1)) {
+        for (const sourceId of styleSourceSelections.get(ancestorId)?.values ??
+          []) {
+          ancestorSources.add(sourceId);
         }
-      } catch {
-        warnOnce(true, `state selector "${state}" is invalid`);
       }
+      for (
+        let ancestor = target.parentElement;
+        ancestor;
+        ancestor = ancestor.parentElement
+      ) {
+        const sourceId = getTagStyleId(ancestor.localName);
+        if (styleSources.get(sourceId)?.type === "tag") {
+          ancestorSources.add(sourceId);
+        }
+      }
+      const availableStates = new Set<string>();
+      const activeStates = new Set<string>();
+      for (const styleDecl of styles.values()) {
+        if (!styleDecl.state) {
+          continue;
+        }
+        if (ownSources.has(styleDecl.styleSourceId)) {
+          availableStates.add(styleDecl.state);
+        }
+        if (ancestorSources.has(styleDecl.styleSourceId)) {
+          const validation = validateSelector(styleDecl.state);
+          if (
+            validation.success &&
+            validation.type === "tag" &&
+            validation.tag.toLowerCase() === target.localName &&
+            validation.condition
+          ) {
+            try {
+              if (target.matches(styleDecl.state.trim())) {
+                activeStates.add(validation.condition);
+              }
+            } catch {
+              warnOnce(true, `state selector "${styleDecl.state}" is invalid`);
+            }
+          }
+        }
+      }
+      for (const state of availableStates) {
+        if (
+          validateSelector(state, { allowDescendants: false }).success === false
+        ) {
+          continue;
+        }
+        try {
+          // pseudo classes like :open or :current are not supported in .matches method
+          if (target.matches(state)) {
+            activeStates.add(state);
+          }
+        } catch {
+          warnOnce(true, `state selector "${state}" is invalid`);
+        }
+      }
+      matchingStatesByInstanceId.set(id, activeStates);
     }
+    const previousStates = $selectedInstanceStatesByInstanceId.get();
+    if (
+      previousStates.size !== matchingStatesByInstanceId.size ||
+      [...matchingStatesByInstanceId].some(([id, states]) => {
+        const previous = previousStates.get(id);
+        return previous === undefined || !areSetsEqual(states, previous);
+      })
+    ) {
+      $selectedInstanceStatesByInstanceId.set(matchingStatesByInstanceId);
+    }
+    const activeStates =
+      matchingStatesByInstanceId.get(instanceId) ?? new Set<string>();
 
     const selectedStates = $selectedInstanceStates.get();
-    if (
-      activeStates.size !== selectedStates.size ||
-      Array.from(activeStates).some(
-        (state) => selectedStates.has(state) === false
-      )
-    ) {
+    if (!areSetsEqual(activeStates, selectedStates)) {
       $selectedInstanceStates.set(activeStates);
     }
   };
