@@ -385,7 +385,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
           event.preventDefault();
           if (escapePressed.current) {
             escapePressed.current = false;
-            props.onReturnToInput?.();
+            queueMicrotask(() => props.onReturnToInput?.());
           }
         }}
         autoFocus
