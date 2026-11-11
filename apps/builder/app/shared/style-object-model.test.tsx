@@ -1131,6 +1131,11 @@ test("shows the div's nested h2 color when h2 is selected", () => {
   ).toMatchObject({
     cascadedValue: { type: "keyword", value: "purple" },
     usedValue: { type: "keyword", value: "purple" },
+    source: {
+      instanceId: "container",
+      styleSourceId: "container",
+      state: " h2",
+    },
   });
 
   for (const state of ['[a="123"]', ":hover", "::before"]) {
