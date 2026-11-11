@@ -209,6 +209,7 @@ const getCascadedValue = ({
   selectedStyleSourceId ??= styleSourceIds.at(-1);
   // Within each state, resolve all Tag breakpoints before instance styles.
   // Instance selectors then win over Tag selectors across breakpoints.
+  const ancestorIdSet = new Set(ancestorIds);
   for (const state of states) {
     if (tagStyleId) {
       for (const breakpointId of matchingBreakpoints) {
@@ -245,12 +246,13 @@ const getCascadedValue = ({
     }
     // Apply matching ancestor Tag rules before the descendant's own sources.
     if (tag) {
-      for (const ancestorId of [...ancestorIds].reverse()) {
-        const ancestorSourceIds =
-          styleSourceSelections.get(ancestorId)?.values ?? [];
-        for (const breakpointId of matchingBreakpoints) {
-          for (const ancestorSourceId of ancestorSourceIds) {
-            const descendantState = ` ${tag}${state ?? ""}`;
+      const descendantState = ` ${tag}${state ?? ""}`;
+      for (const breakpointId of matchingBreakpoints) {
+        for (const [ancestorId, selection] of styleSourceSelections) {
+          if (!ancestorIdSet.has(ancestorId)) {
+            continue;
+          }
+          for (const ancestorSourceId of selection.values) {
             const styleDecl = styles.get(
               getStyleDeclKey({
                 styleSourceId: ancestorSourceId,
@@ -490,6 +492,7 @@ export const getComputedStyleDecl = ({
     const cascaded = getCascadedValue({
       model,
       instanceId: targetInstanceId,
+      ancestorIds: instanceSelector.slice(1),
       styleSourceId,
       state,
       property,

@@ -265,6 +265,23 @@ describe("mixin rule", () => {
 `);
   });
 
+  test.each([' div[a="123"]', " div:hover", " div::before"])(
+    "keeps scoped tag selector specificity for %s",
+    (selector) => {
+      const sheet = createRegularStyleSheet();
+      const rule = sheet.addNestingRule(".container");
+      rule.setDeclaration({
+        breakpoint: "base",
+        selector,
+        property: "color",
+        value: { type: "keyword", value: "red" },
+      });
+      expect(rule.toString({ breakpoint: "base" })).toContain(
+        `:where(.container)${selector} {`
+      );
+    }
+  );
+
   test("invalidate cache after applying mixins", () => {
     const sheet = createRegularStyleSheet();
     const rule = sheet.addNestingRule(".instance");

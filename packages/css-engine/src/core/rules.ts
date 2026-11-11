@@ -265,7 +265,7 @@ export class NestingRule {
       }
       const isDescendant =
         this.#descendantSuffix.startsWith(" ") ||
-        /^ [a-z][\w-]*(?=$|[:\s.#\[])/i.test(nestedSelector);
+        nestedSelector.startsWith(" ");
       const baseSelector =
         isDescendant && this.#selector
           ? `:where(${this.#selector})`

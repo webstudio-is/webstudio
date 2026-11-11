@@ -852,10 +852,13 @@ const getTagStatePreviewSelector = (
     ? `:where(${selector}):is(${tag}, ${tag}${state})`
     : `:where(${selector})${tag}${getStatePreviewSelector(state)}`;
 
-const getInstanceStatePreviewSelector = (selector: string, state: string) =>
-  shouldSimulateState(state)
-    ? `${selector}:is(*, ${state})`
-    : `${selector}${getStatePreviewSelector(state)}`;
+const getInstanceStatePreviewSelector = (selector: string, state: string) => {
+  if (shouldSimulateState(state)) {
+    return `${selector}:is(*, ${state})`;
+  }
+  const base = state.startsWith(" ") ? `:where(${selector})` : selector;
+  return `${base}${getStatePreviewSelector(state)}`;
+};
 
 const shouldRenderEphemeralTagState = (
   styleDecl: StyleDecl,

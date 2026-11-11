@@ -1133,6 +1133,24 @@ test("shows the div's nested h2 color when h2 is selected", () => {
     usedValue: { type: "keyword", value: "purple" },
   });
 
+  for (const state of ['[a="123"]', ":hover", "::before"]) {
+    const scopedStyle: StyleDecl = {
+      ...descendantStyle,
+      state: ` h2${state}`,
+      value: { type: "keyword", value: "green" },
+    };
+    model.styles.set(getStyleDeclKey(scopedStyle), scopedStyle);
+    expect(
+      getComputedStyleDecl({
+        model,
+        instanceSelector: ["heading", "container"],
+        styleSourceId: "headingLocal",
+        state,
+        property: "color",
+      }).usedValue
+    ).toEqual({ type: "keyword", value: "green" });
+  }
+
   model.styleSourceSelections.set("heading", {
     instanceId: "heading",
     values: ["headingToken"],
@@ -1151,6 +1169,65 @@ test("shows the div's nested h2 color when h2 is selected", () => {
       property: "color",
     }).usedValue
   ).toEqual({ type: "keyword", value: "red" });
+});
+
+test("matches breakpoint and source order for nested Tag styles", () => {
+  const model = createModel({
+    css: "",
+    jsx: (
+      <Box ws:id="outer" class="outer">
+        <Box ws:id="inner" class="inner">
+          <Heading ws:id="heading" ws:tag="h2" />
+        </Box>
+      </Box>
+    ),
+    matchingBreakpoints: ["base", "small"],
+  });
+  const innerStyle: StyleDecl = {
+    styleSourceId: "inner",
+    breakpointId: "base",
+    state: " h2",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  const outerStyle: StyleDecl = {
+    ...innerStyle,
+    styleSourceId: "outer",
+    breakpointId: "small",
+    value: { type: "keyword", value: "purple" },
+  };
+  model.styles.set(getStyleDeclKey(innerStyle), innerStyle);
+  model.styles.set(getStyleDeclKey(outerStyle), outerStyle);
+
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "inner", "outer"],
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "purple" });
+
+  model.styles.delete(getStyleDeclKey(outerStyle));
+  outerStyle.breakpointId = "base";
+  model.styles.set(getStyleDeclKey(outerStyle), outerStyle);
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "inner", "outer"],
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "red" });
+
+  model.styleSourceSelections = new Map(
+    [...model.styleSourceSelections].reverse()
+  );
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "inner", "outer"],
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "purple" });
 });
 
 test("selected tag token remains the source when an instance overrides it", () => {

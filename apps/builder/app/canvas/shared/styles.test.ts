@@ -228,21 +228,24 @@ describe("renderStateStyles", () => {
     });
   });
 
-  test("descendant tag styles preview on the matching tag", () => {
-    const sheet = createTestSheet();
-    renderStateStyles({
-      instanceStyles: {
-        instanceId: "box",
-        selectedState: " h1",
-        breakpoints: [{ id: "base", label: "Base" }],
-        styles: [createStyleDecl()],
-      },
-      sheet,
-      transformValue: mockTransformValue,
-      toStyleValue: mockToStyleValue,
-    });
-    expect(sheet.cssText).toContain('[data-ws-id="box"] h1');
-  });
+  test.each([" h1", ' h2[a="123"]', " h2:hover", " h2::before"])(
+    "descendant tag styles preview on the matching tag: %s",
+    (state) => {
+      const sheet = createTestSheet();
+      renderStateStyles({
+        instanceStyles: {
+          instanceId: "box",
+          selectedState: state,
+          breakpoints: [{ id: "base", label: "Base" }],
+          styles: [createStyleDecl()],
+        },
+        sheet,
+        transformValue: mockTransformValue,
+        toStyleValue: mockToStyleValue,
+      });
+      expect(sheet.cssText).toContain(`:where([data-ws-id="box"])${state}`);
+    }
+  );
 
   test("Tag preview selectors stay below instance selectors at every breakpoint", () => {
     const sheet = createTestSheet();
@@ -995,7 +998,7 @@ test("ephemeral Tag state edits update and clean up the selected preview", () =>
     expect(
       document.querySelector('style[data-webstudio="state-styles"]')
         ?.textContent
-    ).toContain('[data-ws-id="ephemeral-tag-test"] h1');
+    ).toContain(':where([data-ws-id="ephemeral-tag-test"]) h1');
   } finally {
     $ephemeralStyles.set([]);
     unsubscribeEphemeral();

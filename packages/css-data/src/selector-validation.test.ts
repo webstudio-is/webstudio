@@ -34,15 +34,18 @@ describe("validateSelector", () => {
     expect(validateSelector(selector).success).toBe(true);
   });
 
-  test.each([" p", " button:hover", " a[aria-current=page]"])(
-    "accepts one descendant tag and its states: %s",
-    (selector) => {
-      expect(validateSelector(selector)).toMatchObject({
-        success: true,
-        type: "tag",
-      });
-    }
-  );
+  test.each([
+    " p",
+    " button:hover",
+    " a[aria-current=page]",
+    ' div[a="123"]',
+    " div::before",
+  ])("accepts one descendant tag and its states: %s", (selector) => {
+    expect(validateSelector(selector)).toMatchObject({
+      success: true,
+      type: "tag",
+    });
+  });
 
   test.each([" p strong", " .card", " #card", " p + span"])(
     "rejects unsupported descendant tag selectors: %s",
