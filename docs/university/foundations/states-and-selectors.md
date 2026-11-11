@@ -52,7 +52,7 @@ Start with `:` or `[` to target the current source's element or its pseudo-eleme
 
 Start with an HTML tag name to style that tag nested inside the current source's element. For example, `h2`, `h2:hover`, `h2[a="123"]`, and `h2::before` target nested headings. Quote numeric attribute values as in `a="123"`. A [Tag style](tag-styles.md) applies its nested tag selector across the site; a Token or Local source applies it only where that source is used.
 
-**Add more** accepts one nested tag with optional conditions. It does not accept selector lists, class or ID selectors, a second nested element, or combinators such as `>`, `+`, and `~`. For parent-child interactions, [CSS variables](css-variables.md#parent-child-interactions) let the parent change a value used by the child.
+**Add more** accepts one nested tag with optional conditions. It does not accept multiple top-level selectors, direct class or ID selectors such as `.card` or `h2.card`, a second nested element, or combinators such as `>`, `+`, and `~`. For parent-child interactions, [CSS variables](css-variables.md#parent-child-interactions) let the parent change a value used by the child.
 {% endhint %}
 
 ## Pseudo-elements
