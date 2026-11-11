@@ -188,7 +188,8 @@ describe("renderStateStyles", () => {
         transformValue: mockTransformValue,
         toStyleValue: mockToStyleValue,
       });
-      expect(sheet.cssText).not.toContain(":hover");
+      expect(sheet.cssText).not.toContain('[data-ws-id="button"]:hover');
+      expect(sheet.cssText).toContain(":is(*, :hover)");
       expect(sheet.cssText).toContain("background-color: blue");
     });
 
@@ -205,7 +206,8 @@ describe("renderStateStyles", () => {
         transformValue: mockTransformValue,
         toStyleValue: mockToStyleValue,
       });
-      expect(sheet.cssText).not.toContain(":focus");
+      expect(sheet.cssText).not.toContain('[data-ws-id="input"]:focus');
+      expect(sheet.cssText).toContain(":is(*, :focus)");
     });
 
     test(":active styles apply without :active selector", () => {
@@ -221,7 +223,8 @@ describe("renderStateStyles", () => {
         transformValue: mockTransformValue,
         toStyleValue: mockToStyleValue,
       });
-      expect(sheet.cssText).not.toContain(":active");
+      expect(sheet.cssText).not.toContain('[data-ws-id="button"]:active');
+      expect(sheet.cssText).toContain(":is(*, :active)");
     });
   });
 

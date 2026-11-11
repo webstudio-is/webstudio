@@ -974,8 +974,8 @@ const subscribeEphemeralStyle = () => {
       const rule = userSheet.addNestingRule(selector);
       let ephemeralSheetUpdated = false;
       for (const styleDecl of ephemeralStyles) {
-        const isTagStyle =
-          getTagFromStyleId(styleDecl.styleSourceId) !== undefined;
+        const tag = getTagFromStyleId(styleDecl.styleSourceId);
+        const isTagStyle = tag !== undefined;
         // update custom property
         document.documentElement.style.setProperty(
           getEphemeralProperty(styleDecl),
@@ -1027,10 +1027,13 @@ const subscribeEphemeralStyle = () => {
               computedStyleDecl.source
             )
           ) {
-            const stateRule = stateSheet.addNestingRule(selector);
+            const previewSelector = tag
+              ? getTagStatePreviewSelector(selector, tag, styleDecl.state)
+              : getInstanceStatePreviewSelector(selector, styleDecl.state);
+            const stateRule = stateSheet.addNestingRule(previewSelector);
             stateRule.setDeclaration({
               breakpoint: styleDecl.breakpointId,
-              selector: getStatePreviewSelector(styleDecl.state),
+              selector: "",
               property: styleDecl.property,
               value,
             });
