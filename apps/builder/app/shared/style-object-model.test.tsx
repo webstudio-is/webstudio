@@ -27,6 +27,7 @@ import {
   getComputedStyleDecl,
   getPresetStyleDeclKey,
   indexNestedTagStyles,
+  indexStyleSourceSelectionOrder,
 } from "./style-object-model";
 
 const Body = createTemplateComponentFixture("Body");
@@ -109,6 +110,9 @@ const createModel = ({
     nestedTagStyles: indexNestedTagStyles(styles),
     tagStyleIds: new Map(),
     styleSourceSelections,
+    styleSourceSelectionOrder: indexStyleSourceSelectionOrder(
+      styleSourceSelections
+    ),
     presetStyles,
     instanceTags,
     instanceComponents,
@@ -1200,6 +1204,7 @@ test("does not scan all declarations while resolving a selected descendant", () 
     value: { type: "keyword", value: "purple" },
   });
   const values = vi.spyOn(model.styles, "values");
+  const selections = vi.spyOn(model.styleSourceSelections, Symbol.iterator);
   expect(
     getComputedStyleDecl({
       model,
@@ -1208,6 +1213,7 @@ test("does not scan all declarations while resolving a selected descendant", () 
     }).usedValue
   ).toEqual({ type: "keyword", value: "purple" });
   expect(values).not.toHaveBeenCalled();
+  expect(selections).not.toHaveBeenCalled();
 });
 
 test("keeps a descendant attribute state off its ancestor's inherited color", () => {
@@ -1406,6 +1412,9 @@ test("matches breakpoint and source order for nested Tag styles", () => {
 
   model.styleSourceSelections = new Map(
     [...model.styleSourceSelections].reverse()
+  );
+  model.styleSourceSelectionOrder = indexStyleSourceSelectionOrder(
+    model.styleSourceSelections
   );
   expect(
     getComputedStyleDecl({

@@ -75,6 +75,7 @@ export type StyleObjectModel = {
   styles: Styles;
   nestedTagStyles: Map<string, Map<string, StyleDecl>>;
   styleSourceSelections: StyleSourceSelections;
+  styleSourceSelectionOrder: Map<Instance["id"], number>;
   tagStyleIds: Map<string, StyleDecl["styleSourceId"]>;
   // component:tag:state:property
   presetStyles: Map<string, StyleValue>;
@@ -130,6 +131,17 @@ export const indexNestedTagStyles = (styles: Styles) => {
   return byTag;
 };
 
+export const indexStyleSourceSelectionOrder = (
+  selections: StyleSourceSelections
+) => {
+  const order = new Map<Instance["id"], number>();
+  let index = 0;
+  for (const instanceId of selections.keys()) {
+    order.set(instanceId, index++);
+  }
+  return order;
+};
+
 /**
  *
  * Standard specificity is defined as ID-CLASS-TYPE.
@@ -169,6 +181,7 @@ const getCascadedValue = ({
     styles,
     nestedTagStyles,
     styleSourceSelections,
+    styleSourceSelectionOrder,
     tagStyleIds,
     presetStyles,
     instanceTags,
@@ -287,7 +300,13 @@ const getCascadedValue = ({
   };
   // Within each state, resolve all Tag breakpoints before instance styles.
   // Instance selectors then win over Tag selectors across breakpoints.
-  const ancestorIdSet = new Set(ancestorIds);
+  const ancestorSelections = ancestorIds
+    .filter((id) => styleSourceSelections.has(id))
+    .sort(
+      (a, b) =>
+        (styleSourceSelectionOrder.get(a) ?? 0) -
+        (styleSourceSelectionOrder.get(b) ?? 0)
+    );
   for (const state of states) {
     if (tag) {
       const descendantState = ` ${tag}${state ?? ""}`;
@@ -318,11 +337,9 @@ const getCascadedValue = ({
       }
       // Attached Token and Local descendant rules follow the global Tag sheet.
       for (const breakpointId of matchingBreakpoints) {
-        for (const [ancestorId, selection] of styleSourceSelections) {
-          if (!ancestorIdSet.has(ancestorId)) {
-            continue;
-          }
-          for (const ancestorSourceId of selection.values) {
+        for (const ancestorId of ancestorSelections) {
+          for (const ancestorSourceId of styleSourceSelections.get(ancestorId)!
+            .values) {
             addDeclaration({
               styleSourceId: ancestorSourceId,
               breakpointId,

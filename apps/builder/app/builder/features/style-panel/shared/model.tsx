@@ -41,6 +41,7 @@ import {
   getComputedStyleDecl,
   getPresetStyleDeclKey,
   indexNestedTagStyles,
+  indexStyleSourceSelectionOrder,
   type ComputedStyleDecl,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
@@ -71,6 +72,11 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
 const $indexedStyles = computed($styles, (styles) => ({
   styles,
   nestedTagStyles: indexNestedTagStyles(styles),
+}));
+
+const $indexedSelections = computed($styleSourceSelections, (selections) => ({
+  selections,
+  order: indexStyleSourceSelectionOrder(selections),
 }));
 
 export const $instanceTags = computed(
@@ -234,7 +240,7 @@ export const $styleObjectModel = computed(
   [
     $indexedStyles,
     $styleSources,
-    $styleSourceSelections,
+    $indexedSelections,
     $presetStyles,
     $instanceTags,
     $instanceComponents,
@@ -245,7 +251,7 @@ export const $styleObjectModel = computed(
   (
     { styles, nestedTagStyles },
     styleSources,
-    styleSourceSelections,
+    { selections: styleSourceSelections, order: styleSourceSelectionOrder },
     presetStyles,
     instanceTags,
     instanceComponents,
@@ -264,6 +270,7 @@ export const $styleObjectModel = computed(
       nestedTagStyles,
       tagStyleIds,
       styleSourceSelections,
+      styleSourceSelectionOrder,
       presetStyles,
       instanceTags,
       instanceComponents,
