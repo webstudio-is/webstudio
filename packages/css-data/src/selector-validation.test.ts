@@ -1,7 +1,14 @@
 import { describe, test, expect } from "vitest";
-import { validateSelector } from "./selector-validation";
+import { getNestedTagCondition, validateSelector } from "./selector-validation";
 
 describe("validateSelector", () => {
+  test("reads the condition from one nested tag", () => {
+    expect(getNestedTagCondition(' h2[data-state="open"]:hover', "h2")).toBe(
+      '[data-state="open"]:hover'
+    );
+    expect(getNestedTagCondition(" h2:hover", "p")).toBeUndefined();
+    expect(getNestedTagCondition(":hover .button", "button")).toBeUndefined();
+  });
   test.each([
     ":hover, body",
     "body:hover",
@@ -32,7 +39,27 @@ describe("validateSelector", () => {
     ":not(.disabled) > [aria-hidden=true]",
   ])("accepts states targeting descendants: %s", (selector) => {
     expect(validateSelector(selector).success).toBe(true);
+    expect(
+      validateSelector(selector, { allowStateDescendants: false }).success
+    ).toBe(false);
   });
+
+  test.each([
+    ":hover",
+    "[data-state=open]",
+    "::before",
+    " h2",
+    " h2:hover",
+    ' h2[a="123"]',
+    " h2::before",
+  ])(
+    "accepts a styled-element condition or one nested tag in Add more: %s",
+    (selector) => {
+      expect(
+        validateSelector(selector, { allowStateDescendants: false }).success
+      ).toBe(true);
+    }
+  );
 
   test.each([
     " p",

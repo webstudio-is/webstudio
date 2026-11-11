@@ -14,15 +14,19 @@ export type SelectorValidationResult =
  *
  * Builder states are not a closed component-state enum. Valid pseudo-classes,
  * pseudo-elements, and attribute selectors may be compounded. Descendant and
- * child selectors may follow that state because the CSS engine anchors the
- * complete suffix to the generated instance selector. Selector lists,
+ * child selectors may follow that state for existing saved selectors when
+ * allowStateDescendants is enabled. New Add more input accepts only a state
+ * on the styled element or one nested tag. Selector lists,
  * unanchored selectors, and sibling combinators are rejected.
  * @param selector - The selector to validate (e.g., ":hover", "::before", "[data-state=open]")
  * @returns SelectorValidationResult with success status and type or error message
  */
 export const validateSelector = (
   selector: string,
-  { allowDescendants = true }: { allowDescendants?: boolean } = {}
+  {
+    allowDescendants = true,
+    allowStateDescendants = true,
+  }: { allowDescendants?: boolean; allowStateDescendants?: boolean } = {}
 ): SelectorValidationResult => {
   if (!selector || selector.trim() === "") {
     return { success: false, error: "Selector cannot be empty" };
@@ -66,6 +70,12 @@ export const validateSelector = (
       return {
         success: false,
         error: "Selector must be one state scoped to the current element",
+      };
+    }
+    if (allowStateDescendants === false && firstCombinatorIndex !== -1) {
+      return {
+        success: false,
+        error: "Invalid CSS selector syntax",
       };
     }
     const stateNodes = selectorNodes.slice(
@@ -182,4 +192,27 @@ export const validateSelector = (
       error: "Invalid CSS selector syntax",
     };
   }
+};
+
+/** Return the condition on a nested tag, if this selector targets that tag. */
+export const getNestedTagCondition = (
+  selector: string,
+  tag: string
+): string | undefined => {
+  if (
+    validateSelector(selector, { allowStateDescendants: false }).success ===
+      false ||
+    !selector.startsWith(" ")
+  ) {
+    return;
+  }
+  const ast = csstree.parse(selector, { context: "selector" });
+  if (ast.type !== "Selector") {
+    return;
+  }
+  const [type, ...conditions] = ast.children.toArray();
+  if (type?.type !== "TypeSelector" || type.name !== tag) {
+    return;
+  }
+  return conditions.map((condition) => csstree.generate(condition)).join("");
 };

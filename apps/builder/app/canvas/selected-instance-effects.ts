@@ -2,6 +2,7 @@ import warnOnce from "warn-once";
 import { getTagStyleId, type Instance } from "@webstudio-is/sdk";
 import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
 import {
+  getNestedTagCondition,
   isPseudoElement,
   propertiesData,
   validateSelector,
@@ -20,7 +21,10 @@ import {
   type UnitSizes,
   type PropertySizes,
 } from "~/shared/nano-states";
-import { $styleSourceSelections } from "~/shared/sync/data-stores";
+import {
+  $styleSourceSelections,
+  $styleSources,
+} from "~/shared/sync/data-stores";
 import {
   getAllElementsBoundingBox,
   getVisibleElementsByInstanceSelector,
@@ -316,6 +320,37 @@ const subscribeSelectedInstance = (
         }
       } catch {
         warnOnce(true, `state selector "${state}" is invalid`);
+      }
+    }
+
+    const ancestorSourceIds = new Set<string>();
+    for (const ancestorId of selectedInstanceSelector.slice(1)) {
+      for (const sourceId of $styleSourceSelections.get().get(ancestorId)
+        ?.values ?? []) {
+        ancestorSourceIds.add(sourceId);
+      }
+    }
+    for (const source of $styleSources.get().values()) {
+      if (source.type === "tag" && element.parentElement?.closest(source.tag)) {
+        ancestorSourceIds.add(source.id);
+      }
+    }
+    for (const styleDecl of styles.values()) {
+      if (!ancestorSourceIds.has(styleDecl.styleSourceId) || !styleDecl.state) {
+        continue;
+      }
+      const condition = getNestedTagCondition(
+        styleDecl.state,
+        element.localName
+      );
+      if (condition) {
+        try {
+          if (element.matches(styleDecl.state.trim())) {
+            activeStates.add(condition);
+          }
+        } catch {
+          warnOnce(true, `state selector "${styleDecl.state}" is invalid`);
+        }
       }
     }
 

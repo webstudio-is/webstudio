@@ -1171,6 +1171,72 @@ test("shows the div's nested h2 color when h2 is selected", () => {
   ).toEqual({ type: "keyword", value: "red" });
 });
 
+test("shows nested global Tag color and lets an attached Token override it", () => {
+  const model = createModel({
+    css: "",
+    jsx: (
+      <Box ws:id="container">
+        <Heading ws:id="heading" ws:tag="h2" class="headingToken" />
+      </Box>
+    ),
+    matchingBreakpoints: ["base", "small"],
+  });
+  const id = getTagStyleId("div");
+  model.tagStyleIds.set("div", id);
+  const globalStyle: StyleDecl = {
+    styleSourceId: id,
+    breakpointId: "base",
+    state: " h2:hover",
+    property: "color",
+    value: { type: "keyword", value: "purple" },
+  };
+  model.styles.set(getStyleDeclKey(globalStyle), globalStyle);
+  const selected = {
+    model,
+    instanceSelector: ["heading", "container"],
+    state: ":hover",
+    property: "color" as const,
+  };
+  expect(getComputedStyleDecl(selected).usedValue).toEqual({
+    type: "keyword",
+    value: "purple",
+  });
+  const headingTagId = getTagStyleId("h2");
+  model.tagStyleIds.set("h2", headingTagId);
+  const headingTagStyle: StyleDecl = {
+    ...globalStyle,
+    styleSourceId: headingTagId,
+    state: ":hover",
+    value: { type: "keyword", value: "red" },
+  };
+  model.styles.set(getStyleDeclKey(headingTagStyle), headingTagStyle);
+  expect(getComputedStyleDecl(selected).usedValue).toEqual({
+    type: "keyword",
+    value: "red",
+  });
+  const responsiveStyle: StyleDecl = {
+    ...globalStyle,
+    breakpointId: "small",
+    value: { type: "keyword", value: "green" },
+  };
+  model.styles.set(getStyleDeclKey(responsiveStyle), responsiveStyle);
+  expect(getComputedStyleDecl(selected).usedValue).toEqual({
+    type: "keyword",
+    value: "green",
+  });
+  const tokenStyle: StyleDecl = {
+    ...globalStyle,
+    styleSourceId: "headingToken",
+    state: ":hover",
+    value: { type: "keyword", value: "blue" },
+  };
+  model.styles.set(getStyleDeclKey(tokenStyle), tokenStyle);
+  expect(getComputedStyleDecl(selected).usedValue).toEqual({
+    type: "keyword",
+    value: "blue",
+  });
+});
+
 test("matches breakpoint and source order for nested Tag styles", () => {
   const model = createModel({
     css: "",

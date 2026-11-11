@@ -3492,8 +3492,7 @@ export const updateSelectedStyleDeclarations = (
     if (
       styleSource.type === "tag" &&
       update.state !== undefined &&
-      validateSelector(update.state, { allowDescendants: false }).success ===
-        false
+      validateSelector(update.state).success === false
     ) {
       return throwBuilderRuntimeError(
         "BAD_REQUEST",

@@ -211,42 +211,65 @@ const getCascadedValue = ({
   // Instance selectors then win over Tag selectors across breakpoints.
   const ancestorIdSet = new Set(ancestorIds);
   for (const state of states) {
-    if (tagStyleId) {
-      for (const breakpointId of matchingBreakpoints) {
-        const key = getStyleDeclKey({
-          styleSourceId: tagStyleId,
-          breakpointId,
-          state,
-          property: camelCaseProperty(property),
-        });
-        const styleDecl = styles.get(key);
-        if (tagStyleId === selectedStyleSourceId && state === selectedState) {
-          selectedIndex = styleDecl ? declaredValues.length : -1;
-          selectedTagStyleSource = styleDecl
-            ? {
-                name: "remote",
-                instanceId,
-                styleSourceId: tagStyleId,
-                state,
-                breakpointId,
-              }
-            : undefined;
-        }
-        if (styleDecl) {
-          source = {
-            name: "remote",
-            instanceId,
-            styleSourceId: tagStyleId,
-            state,
-            breakpointId,
-          };
-          declaredValues.push(styleDecl.value);
-        }
-      }
-    }
-    // Apply matching ancestor Tag rules before the descendant's own sources.
     if (tag) {
       const descendantState = ` ${tag}${state ?? ""}`;
+      for (const breakpointId of matchingBreakpoints) {
+        // Global Tag CSS follows breakpoint and source order. Within one
+        // source, the nested rule is emitted before the tag's own rule.
+        for (const [sourceTag, styleSourceId] of tagStyleIds) {
+          const ancestorId = ancestorIds.find(
+            (id) => instanceTags.get(id) === sourceTag
+          );
+          const targets: Array<{ targetId: string; selectorState?: string }> =
+            [];
+          if (ancestorId) {
+            targets.push({
+              targetId: ancestorId,
+              selectorState: descendantState,
+            });
+          }
+          if (sourceTag === tag) {
+            targets.push({ targetId: instanceId, selectorState: state });
+          }
+          for (const { targetId, selectorState } of targets) {
+            const styleDecl = styles.get(
+              getStyleDeclKey({
+                styleSourceId,
+                breakpointId,
+                state: selectorState,
+                property: camelCaseProperty(property),
+              })
+            );
+            if (
+              targetId === instanceId &&
+              styleSourceId === selectedStyleSourceId &&
+              state === selectedState
+            ) {
+              selectedIndex = styleDecl ? declaredValues.length : -1;
+              selectedTagStyleSource = styleDecl
+                ? {
+                    name: "remote",
+                    instanceId,
+                    styleSourceId,
+                    state,
+                    breakpointId,
+                  }
+                : undefined;
+            }
+            if (styleDecl) {
+              source = {
+                name: "remote",
+                instanceId: targetId,
+                styleSourceId,
+                state: selectorState,
+                breakpointId,
+              };
+              declaredValues.push(styleDecl.value);
+            }
+          }
+        }
+      }
+      // Attached Token and Local descendant rules follow the global Tag sheet.
       for (const breakpointId of matchingBreakpoints) {
         for (const [ancestorId, selection] of styleSourceSelections) {
           if (!ancestorIdSet.has(ancestorId)) {

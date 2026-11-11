@@ -124,6 +124,8 @@ const menuActionDescriptions = {
   unlock: "Allow style changes on this token again.",
   detach: "Remove this token from the element without deleting it.",
   delete: "Permanently delete this token and all its styles from the project.",
+  addMore:
+    "Use :hover or [data-state=open] to style this element in a state, and ::before to style its pseudo-element. Start with a tag, such as h2, h2:hover, or h2::before, to style nested elements.",
 } as const;
 
 type MenuAction = keyof typeof menuActionDescriptions;
@@ -172,11 +174,13 @@ const getSelectorDescription = (selector: string | null | undefined) => {
 
 const SelectorCombobox = ({
   existingSelectors,
-  allowDescendants,
+  onFocus,
+  onBlur,
   onSelect,
 }: {
   existingSelectors: string[];
-  allowDescendants: boolean;
+  onFocus: () => void;
+  onBlur: () => void;
   onSelect: (selector: string) => void;
 }) => {
   const [value, setValue] = useState("");
@@ -184,10 +188,14 @@ const SelectorCombobox = ({
 
   const handleSubmit = (selector: string) => {
     let normalizedSelector = selector;
-    let validation = validateSelector(normalizedSelector, { allowDescendants });
-    if (validation.success === false && allowDescendants) {
+    let validation = validateSelector(normalizedSelector, {
+      allowStateDescendants: false,
+    });
+    if (validation.success === false) {
       const tagSelector = ` ${selector}`;
-      const tagValidation = validateSelector(tagSelector, { allowDescendants });
+      const tagValidation = validateSelector(tagSelector, {
+        allowStateDescendants: false,
+      });
       if (tagValidation.success && tagValidation.type === "tag") {
         normalizedSelector = tagSelector;
         validation = tagValidation;
@@ -202,14 +210,14 @@ const SelectorCombobox = ({
     setValue("");
   };
 
-  const availableItems = allSelectors.filter(
-    (selector) =>
-      (allowDescendants || tags.includes(selector) === false) &&
-      existingSelectors.every((s) => s.trim() !== selector)
+  const availableItems = allSelectors.filter((selector) =>
+    existingSelectors.every((s) => s.trim() !== selector)
   );
 
   return (
     <form
+      onFocus={onFocus}
+      onBlur={onBlur}
       onKeyDown={(event) => event.stopPropagation()}
       onSubmit={(event) => {
         event.preventDefault();
@@ -271,13 +279,7 @@ type StyleSourceMenuProps = {
 };
 
 export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
-  const availableStates =
-    props.item.source === "tag"
-      ? props.states.filter(
-          ({ selector }) =>
-            validateSelector(selector, { allowDescendants: false }).success
-        )
-      : props.states;
+  const availableStates = props.states;
   const [highlightedSelector, setHighlightedSelector] = useState<{
     selector: string;
     type: "state" | "pseudoElement" | "tag";
@@ -549,7 +551,11 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
                 existingSelectors={availableStates.map(
                   (state) => state.selector
                 )}
-                allowDescendants={props.item.source !== "tag"}
+                onFocus={() => {
+                  setHighlightedSelector(undefined);
+                  setHighlightedAction("addMore");
+                }}
+                onBlur={() => setHighlightedAction(undefined)}
                 onSelect={(selector) =>
                   props.onAddSelector?.(props.item.id, selector)
                 }

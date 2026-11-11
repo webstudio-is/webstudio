@@ -848,9 +848,11 @@ const getTagStatePreviewSelector = (
   tag: string,
   state: string
 ) =>
-  shouldSimulateState(state)
-    ? `:where(${selector}):is(${tag}, ${tag}${state})`
-    : `:where(${selector})${tag}${getStatePreviewSelector(state)}`;
+  state.startsWith(" ")
+    ? `:where(${selector}):where(${tag})${state}`
+    : shouldSimulateState(state)
+      ? `:where(${selector}):is(${tag}, ${tag}${state})`
+      : `:where(${selector})${tag}${getStatePreviewSelector(state)}`;
 
 const getInstanceStatePreviewSelector = (selector: string, state: string) => {
   if (shouldSimulateState(state)) {

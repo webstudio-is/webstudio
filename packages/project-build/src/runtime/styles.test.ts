@@ -1680,30 +1680,34 @@ describe("runtime style operations", () => {
     ).toBe(false);
   });
 
-  test("rejects a descendant selector on a tag token", () => {
+  test("accepts a nested tag selector on a global Tag style", () => {
     const id = getTagStyleId("button");
-    expect(() =>
-      updateSelectedStyleDeclarations(
-        {
-          breakpoints: runtimeBreakpoints,
-          instances: toMap([instance("button-instance")]),
-          styles: new Map(),
-          styleSources: new Map(),
-          styleSourceSelections: new Map(),
-        },
-        {
-          updates: [
-            {
-              instanceId: "button-instance",
-              styleSourceId: id,
-              property: "color",
-              value: { type: "keyword", value: "red" },
-              state: " p",
-            },
-          ],
-        }
-      )
-    ).toThrow();
+    const mutation = updateSelectedStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: toMap([instance("button-instance")]),
+        styles: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      {
+        updates: [
+          {
+            instanceId: "button-instance",
+            styleSourceId: id,
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            state: " h2:hover",
+          },
+        ],
+      }
+    );
+    expect(mutation.payload).toContainEqual({
+      namespace: "styleSources",
+      patches: [
+        { op: "add", path: [id], value: { type: "tag", id, tag: "button" } },
+      ],
+    });
   });
 
   test("renames, locks, and deletes style sources", () => {

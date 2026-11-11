@@ -247,6 +247,24 @@ describe("renderStateStyles", () => {
     }
   );
 
+  test("global Tag descendant preview keeps the saved selector specificity", () => {
+    const sheet = createTestSheet();
+    renderStateStyles({
+      instanceStyles: {
+        instanceId: "box",
+        selectedState: " h2:hover",
+        breakpoints: [{ id: "base", label: "Base" }],
+        styles: [createStyleDecl({ styleSourceId: getTagStyleId("div") })],
+      },
+      sheet,
+      transformValue: mockTransformValue,
+      toStyleValue: mockToStyleValue,
+    });
+    expect(sheet.cssText).toContain(
+      ':where([data-ws-id="box"]):where(div) h2:hover'
+    );
+  });
+
   test("Tag preview selectors stay below instance selectors at every breakpoint", () => {
     const sheet = createTestSheet();
     const tagStyleId = getTagStyleId("button");
