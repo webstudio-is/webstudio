@@ -2,6 +2,7 @@ import { describe, test, expect } from "vitest";
 import type { Instance, StyleDecl } from "@webstudio-is/sdk";
 import {
   descendantComponent,
+  getTagStyleId,
   ROOT_INSTANCE_ID,
   rootComponent,
 } from "@webstudio-is/sdk";
@@ -13,12 +14,21 @@ import {
 // polyfill CSS.escape for Node environment
 import "css.escape";
 
-import { __testing__ } from "./styles";
+import { $ephemeralStyles } from "../stores";
+import {
+  $selectedStyleState,
+  $temporaryTagStyleId,
+} from "~/shared/nano-states";
+import { $allSelectedInstanceSelectors } from "~/shared/nano-states/instance-selection";
+import { $breakpoints, $instances, $styles } from "~/shared/sync/data-stores";
+import { __testing__, mountStyles } from "./styles";
 
 const {
   getEphemeralProperty,
   getInstanceSelector,
   getPresetStyleSelector,
+  getStatePreviewSelector,
+  shouldRenderEphemeralTagState,
   computeDescendantSelectors,
   computeInstanceStyles,
   computeEditableCursorRules,
@@ -26,6 +36,8 @@ const {
   toDeclarationParams,
   toVarValue,
   renderStateStyles,
+  subscribeStateStyles,
+  subscribeEphemeralStyle,
   simulateConditionBreakpoints,
   shouldRenderInBackgroundTask,
 } = __testing__;
@@ -65,6 +77,35 @@ describe("renderStateStyles", () => {
       toStyleValue: mockToStyleValue,
     });
     expect(sheet.cssText).toBe("");
+  });
+
+  test("preserves Tag-state specificity below instance-state specificity", () => {
+    const sheet = createTestSheet();
+    renderStateStyles({
+      instanceStyles: {
+        instanceId: "button",
+        selectedState: ":hover",
+        breakpoints: [{ id: "base", label: "Base" }],
+        styles: [
+          createStyleDecl({
+            styleSourceId: getTagStyleId("button"),
+            state: ":hover",
+          }),
+          createStyleDecl({
+            styleSourceId: "local",
+            state: ":hover",
+          }),
+        ],
+      },
+      sheet,
+      transformValue: mockTransformValue,
+      toStyleValue: mockToStyleValue,
+    });
+
+    expect(sheet.cssText).toContain(
+      ':where([data-ws-id="button"]):is(button, button:hover)'
+    );
+    expect(sheet.cssText).toContain('[data-ws-id="button"]:is(*, :hover)');
   });
 
   describe("pseudo-elements keep their selector", () => {
@@ -147,7 +188,8 @@ describe("renderStateStyles", () => {
         transformValue: mockTransformValue,
         toStyleValue: mockToStyleValue,
       });
-      expect(sheet.cssText).not.toContain(":hover");
+      expect(sheet.cssText).not.toContain('[data-ws-id="button"]:hover');
+      expect(sheet.cssText).toContain(":is(*, :hover)");
       expect(sheet.cssText).toContain("background-color: blue");
     });
 
@@ -164,7 +206,8 @@ describe("renderStateStyles", () => {
         transformValue: mockTransformValue,
         toStyleValue: mockToStyleValue,
       });
-      expect(sheet.cssText).not.toContain(":focus");
+      expect(sheet.cssText).not.toContain('[data-ws-id="input"]:focus');
+      expect(sheet.cssText).toContain(":is(*, :focus)");
     });
 
     test(":active styles apply without :active selector", () => {
@@ -180,8 +223,60 @@ describe("renderStateStyles", () => {
         transformValue: mockTransformValue,
         toStyleValue: mockToStyleValue,
       });
-      expect(sheet.cssText).not.toContain(":active");
+      expect(sheet.cssText).not.toContain('[data-ws-id="button"]:active');
+      expect(sheet.cssText).toContain(":is(*, :active)");
     });
+  });
+
+  test("descendant tag styles preview on the matching tag", () => {
+    const sheet = createTestSheet();
+    renderStateStyles({
+      instanceStyles: {
+        instanceId: "box",
+        selectedState: " h1",
+        breakpoints: [{ id: "base", label: "Base" }],
+        styles: [createStyleDecl()],
+      },
+      sheet,
+      transformValue: mockTransformValue,
+      toStyleValue: mockToStyleValue,
+    });
+    expect(sheet.cssText).toContain('[data-ws-id="box"] h1');
+  });
+
+  test("Tag preview selectors stay below instance selectors at every breakpoint", () => {
+    const sheet = createTestSheet();
+    const tagStyleId = getTagStyleId("button");
+    renderStateStyles({
+      instanceStyles: {
+        instanceId: "button",
+        selectedState: ":hover",
+        breakpoints: [
+          { id: "base", label: "Base" },
+          { id: "mobile", label: "Mobile" },
+        ],
+        styles: [
+          createStyleDecl({
+            styleSourceId: tagStyleId,
+            breakpointId: "mobile",
+            state: ":hover",
+            value: { type: "keyword", value: "red" },
+          }),
+          createStyleDecl({
+            styleSourceId: "local",
+            breakpointId: "base",
+            state: ":hover",
+            value: { type: "keyword", value: "blue" },
+          }),
+        ],
+      },
+      sheet,
+      transformValue: mockTransformValue,
+      toStyleValue: mockToStyleValue,
+    });
+
+    expect(sheet.cssText).toContain(':where([data-ws-id="button"])');
+    expect(sheet.cssText).toContain('[data-ws-id="button"]');
   });
 
   test("creates nesting rule with correct instance selector", () => {
@@ -464,6 +559,78 @@ describe("computeInstanceStyles", () => {
     });
   });
 
+  test("previews Tag state styles before instance styles", () => {
+    const tagStyleId = getTagStyleId("button");
+    const result = computeInstanceStyles({
+      selectedInstance: { ...createInstance("button"), tag: "button" },
+      selectedStyleState: ":hover",
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSourceSelections: new Map([["button", { values: ["local"] }]]),
+      temporaryTagStyleId: tagStyleId,
+      styles: new Map([
+        [
+          "local",
+          createStyleDecl({
+            styleSourceId: "local",
+            state: ":hover",
+            property: "color",
+            value: { type: "keyword", value: "blue" },
+          }),
+        ],
+        [
+          "tag",
+          createStyleDecl({
+            styleSourceId: tagStyleId,
+            state: ":hover",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          }),
+        ],
+      ]),
+    });
+
+    expect(result?.styles.map((styleDecl) => styleDecl.styleSourceId)).toEqual([
+      tagStyleId,
+      "local",
+    ]);
+  });
+
+  test("includes matching Tag state styles without a temporary chip", () => {
+    const tagStyleId = getTagStyleId("button");
+    const result = computeInstanceStyles({
+      selectedInstance: createInstance("button"),
+      selectedStyleState: ":hover",
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSourceSelections: new Map([["button", { values: ["local"] }]]),
+      instanceTag: "button",
+      styles: new Map([
+        [
+          "local",
+          createStyleDecl({
+            styleSourceId: "local",
+            state: ":hover",
+            property: "paddingTop",
+            value: { type: "unit", unit: "px", value: 8 },
+          }),
+        ],
+        [
+          "tag",
+          createStyleDecl({
+            styleSourceId: tagStyleId,
+            state: ":hover",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          }),
+        ],
+      ]),
+    });
+
+    expect(result?.styles.map((styleDecl) => styleDecl.styleSourceId)).toEqual([
+      tagStyleId,
+      "local",
+    ]);
+  });
+
   test("includes styles from multiple style sources", () => {
     const result = computeInstanceStyles({
       selectedInstance: createInstance("box"),
@@ -688,8 +855,27 @@ describe("getInstanceSelector", () => {
 });
 
 describe("getPresetStyleSelector", () => {
-  test("returns :root for rootComponent", () => {
-    expect(getPresetStyleSelector(rootComponent, "div")).toBe(":root");
+  test("keeps root preset below tag style specificity", () => {
+    expect(getPresetStyleSelector(rootComponent, "div")).toBe(":where(:root)");
+  });
+
+  test("html Tag style overrides the root preset in the canvas cascade", () => {
+    const preset = document.createElement("style");
+    const tagStyle = document.createElement("style");
+    preset.textContent = `${getPresetStyleSelector(rootComponent, "html")} { --root-preset-test: red; }`;
+    tagStyle.textContent = "html { --root-preset-test: blue; }";
+    document.head.appendChild(preset);
+    document.head.appendChild(tagStyle);
+    try {
+      expect(
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--root-preset-test")
+          .trim()
+      ).toBe("blue");
+    } finally {
+      preset.remove();
+      tagStyle.remove();
+    }
   });
 
   test("returns :where selector for regular component", () => {
@@ -709,6 +895,118 @@ describe("getPresetStyleSelector", () => {
       'span:where([data-ws-component="MyCustomComponent"])'
     );
   });
+});
+
+describe("shouldRenderEphemeralTagState", () => {
+  test("does not let an ephemeral Tag state override an instance declaration", () => {
+    const tagStyleId = getTagStyleId("button");
+    const declaration = createStyleDecl({
+      styleSourceId: tagStyleId,
+      state: ":hover",
+      property: "color",
+    });
+
+    expect(
+      shouldRenderEphemeralTagState(declaration, true, {
+        name: "overwritten",
+        styleSourceId: tagStyleId,
+      })
+    ).toBe(false);
+    expect(
+      shouldRenderEphemeralTagState(declaration, true, {
+        name: "local",
+        styleSourceId: "local",
+      })
+    ).toBe(false);
+    expect(
+      shouldRenderEphemeralTagState(declaration, true, {
+        name: "remote",
+        styleSourceId: tagStyleId,
+      })
+    ).toBe(true);
+  });
+});
+
+describe("getStatePreviewSelector", () => {
+  test("keeps descendant and pseudo-element selectors on live edits", () => {
+    expect(getStatePreviewSelector(" h1")).toBe(" h1");
+    expect(getStatePreviewSelector("::before")).toBe("::before");
+  });
+
+  test("previews pseudo-classes without requiring interaction", () => {
+    expect(getStatePreviewSelector(":hover")).toBe("");
+  });
+});
+
+test("ephemeral Tag state edits update and clean up the selected preview", () => {
+  const previous = {
+    instances: $instances.get(),
+    breakpoints: $breakpoints.get(),
+    styles: $styles.get(),
+    temporaryTagStyleId: $temporaryTagStyleId.get(),
+    selectedStyleState: $selectedStyleState.get(),
+    selections: $allSelectedInstanceSelectors.get(),
+  };
+  const tagStyleId = getTagStyleId("p");
+  const instance: Instance = {
+    type: "instance",
+    id: "ephemeral-tag-test",
+    component: "Box",
+    tag: "p",
+    children: [],
+  };
+  mountStyles();
+  $instances.set(new Map([[instance.id, instance]]));
+  $breakpoints.set(new Map([["base", { id: "base", label: "Base" }]]));
+  $styles.set(new Map());
+  $temporaryTagStyleId.set(tagStyleId);
+  $allSelectedInstanceSelectors.set([[instance.id]]);
+  $selectedStyleState.set(":hover");
+  const unsubscribeState = subscribeStateStyles();
+  const unsubscribeEphemeral = subscribeEphemeralStyle();
+  const declaration = createStyleDecl({
+    styleSourceId: tagStyleId,
+    state: ":hover",
+  });
+  try {
+    $ephemeralStyles.set([declaration]);
+    const property = getEphemeralProperty(declaration);
+    expect(document.documentElement.style.getPropertyValue(property)).toBe(
+      "red"
+    );
+    expect(
+      document.querySelector('style[data-webstudio="state-styles"]')
+        ?.textContent
+    ).toContain("var(");
+
+    $ephemeralStyles.set([]);
+    expect(document.documentElement.style.getPropertyValue(property)).toBe("");
+    expect(
+      document.querySelector('style[data-webstudio="state-styles"]')
+        ?.textContent
+    ).not.toContain("var(");
+
+    $selectedStyleState.set(" h1");
+    const descendantDeclaration = createStyleDecl({
+      state: " h1",
+      property: "paddingTop",
+    });
+    $ephemeralStyles.set([descendantDeclaration]);
+    expect(
+      document.querySelector('style[data-webstudio="state-styles"]')
+        ?.textContent
+    ).toContain('[data-ws-id="ephemeral-tag-test"] h1');
+  } finally {
+    $ephemeralStyles.set([]);
+    unsubscribeEphemeral();
+    unsubscribeState();
+    $allSelectedInstanceSelectors.set(previous.selections);
+    $selectedStyleState.set(previous.selectedStyleState);
+    $temporaryTagStyleId.set(previous.temporaryTagStyleId);
+    $instances.set(previous.instances);
+    $styles.set(previous.styles);
+    $breakpoints.set(previous.breakpoints);
+  }
 });
 
 describe("toVarValue", () => {

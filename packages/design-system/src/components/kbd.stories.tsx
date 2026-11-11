@@ -1,3 +1,4 @@
+import { cssVar } from "../css-var";
 import { Kbd as KbdComponent } from "./kbd";
 import { Flex } from "./flex";
 import { Text } from "./text";
@@ -21,7 +22,9 @@ export const Kbd = () => (
         </Flex>
         <Flex direction="column" gap="1">
           <Text variant="labels">contrast</Text>
-          <KbdComponent value={["meta", "z"]} color="contrast" />
+          <div style={{ background: cssVar("--background-inverse") }}>
+            <KbdComponent value={["meta", "z"]} color="contrast" />
+          </div>
         </Flex>
       </StoryGrid>
     </StorySection>

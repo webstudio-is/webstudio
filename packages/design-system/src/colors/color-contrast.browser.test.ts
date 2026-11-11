@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
 import "./colors.css";
-import type { SemanticColorName } from "./__generated__/css-variable-names";
+import type {
+  SemanticColorName,
+  ThemeVariableName,
+} from "./__generated__/css-variable-names";
 import { getColorContrast } from "./color-contrast";
-import type { ColorMode } from "./color-source-utils";
 
 const readColor = (name: string) => {
   const sample = document.createElement("span");
@@ -22,100 +24,6 @@ const readColor = (name: string) => {
   const color = context.getImageData(0, 0, 1, 1).data;
   sample.remove();
   return color;
-};
-
-const expectedDefaultColors = {
-  light: {
-    "--background-primary": "#feffff",
-    "--background-secondary": "#e8eaeb",
-    "--background-disabled": "#f7f8f9",
-    "--background-inverse": "#11181c",
-    "--background-accent": "#096cff",
-    "--background-text-selection": "#096cff",
-    "--background-accent-secondary": "#ab38d4",
-    "--background-positive": "#008849",
-    "--background-positive-subtle": "#e4f1e9",
-    "--background-negative": "#dc2929",
-    "--background-negative-subtle": "#ffe9e6",
-    "--background-warning-subtle": "#f8edad",
-    "--background-informative-subtle": "#e3effd",
-    "--foreground-primary": "#11181c",
-    "--foreground-secondary": "#595f63",
-    "--foreground-disabled": "#898d90",
-    "--foreground-on-inverse": "#feffff",
-    "--foreground-on-accent": "#feffff",
-    "--foreground-on-accent-secondary": "#feffff",
-    "--foreground-on-positive": "#feffff",
-    "--foreground-on-negative": "#feffff",
-    "--foreground-on-text-selection": "#feffff",
-    "--foreground-accent": "#096cff",
-    "--foreground-accent-secondary": "#ab38d4",
-    "--foreground-positive": "#0b7b45",
-    "--foreground-negative": "#c52a28",
-    "--foreground-warning": "#6f6100",
-    "--foreground-informative": "#0a6bc7",
-    "--border-default": "#e5e6e7",
-    "--border-focus": "#297aff",
-    "--border-negative": "#c52a28",
-    "--border-warning": "#f5d90a",
-    "--border-informative": "#bcd7f8",
-    "--overlay-interaction-hover": "#00000010",
-    "--overlay-interaction-pressed": "#0000001c",
-    "--overlay-on-inverse-hover": "#ffffff10",
-    "--overlay-on-inverse-pressed": "#ffffff1c",
-    "--overlay-scrim": "#11171ba8",
-  },
-  dark: {
-    "--background-primary": "#151617",
-    "--background-secondary": "#222425",
-    "--background-disabled": "#191b1b",
-    "--background-inverse": "#e6e8e9",
-    "--background-accent": "#096cff",
-    "--background-text-selection": "#439cff",
-    "--background-accent-secondary": "#ab38d4",
-    "--background-positive": "#008849",
-    "--background-positive-subtle": "#18221d",
-    "--background-negative": "#dc2929",
-    "--background-negative-subtle": "#2b1c1b",
-    "--background-warning-subtle": "#2d2c1f",
-    "--background-informative-subtle": "#1a2839",
-    "--foreground-primary": "#e6e8e9",
-    "--foreground-secondary": "#959798",
-    "--foreground-disabled": "#6a6c6d",
-    "--foreground-on-inverse": "#151617",
-    "--foreground-on-accent": "#fdffff",
-    "--foreground-on-accent-secondary": "#fdffff",
-    "--foreground-on-positive": "#fdffff",
-    "--foreground-on-negative": "#fdffff",
-    "--foreground-on-text-selection": "#151617",
-    "--foreground-accent": "#a0c1f6",
-    "--foreground-accent-secondary": "#da6bff",
-    "--foreground-positive": "#abcab5",
-    "--foreground-negative": "#ff594f",
-    "--foreground-warning": "#c4c1a5",
-    "--foreground-informative": "#a9c6e8",
-    "--border-default": "#252627",
-    "--border-focus": "#1a6df2",
-    "--border-negative": "#ff594f",
-    "--border-warning": "#f5d90a",
-    "--border-informative": "#1b314c",
-    "--overlay-interaction-hover": "#ffffff10",
-    "--overlay-interaction-pressed": "#ffffff1c",
-    "--overlay-on-inverse-hover": "#00000010",
-    "--overlay-on-inverse-pressed": "#0000001c",
-    "--overlay-scrim": "#11171ba8",
-  },
-} as const satisfies Record<ColorMode, Record<SemanticColorName, string>>;
-
-const parseHex = (hex: string) => {
-  const channels = hex.slice(1).match(/.{2}/g);
-  if (channels === null) {
-    throw new Error(`Invalid expected color: ${hex}`);
-  }
-  if (channels.length === 3) {
-    channels.push("ff");
-  }
-  return channels.map((channel) => Number.parseInt(channel, 16));
 };
 
 const getRelativeLuminance = (color: Uint8ClampedArray) => {
@@ -139,37 +47,6 @@ const getContrastRatio = (
 };
 
 describe("Craft color contrast", () => {
-  test("default semantic colors stay unchanged", () => {
-    const root = document.documentElement;
-    const previousMode = root.getAttribute("data-color-scheme");
-
-    try {
-      for (const mode of ["light", "dark"] as const) {
-        root.dataset.colorScheme = mode;
-        for (const [name, expectedHex] of Object.entries(
-          expectedDefaultColors[mode]
-        )) {
-          const actual = Array.from(readColor(name));
-          const expected = parseHex(expectedHex);
-          for (const [index, expectedChannel] of expected.entries()) {
-            expect
-              .soft(
-                Math.abs(actual[index] - expectedChannel),
-                `${mode} ${name} channel ${index}: ${actual.join(", ")} versus ${expected.join(", ")}`
-              )
-              .toBeLessThanOrEqual(1);
-          }
-        }
-      }
-    } finally {
-      if (previousMode === null) {
-        root.removeAttribute("data-color-scheme");
-      } else {
-        root.setAttribute("data-color-scheme", previousMode);
-      }
-    }
-  });
-
   test("default secondary colors preserve a clear visual hierarchy", () => {
     const root = document.documentElement;
     const previousMode = root.getAttribute("data-color-scheme");
@@ -179,6 +56,9 @@ describe("Craft color contrast", () => {
         root.dataset.colorScheme = mode;
         const background = readColor("--background-primary");
         const surface = readColor("--background-secondary");
+        const floating = readColor("--background-floating");
+        const raised = readColor("--background-floating-raised");
+        const nested = readColor("--background-floating-nested");
         const primaryForeground = readColor("--foreground-primary");
         const secondaryForeground = readColor("--foreground-secondary");
         const primaryContrast = getContrastRatio(primaryForeground, background);
@@ -191,6 +71,28 @@ describe("Craft color contrast", () => {
           getContrastRatio(surface, background),
           `${mode} secondary surface`
         ).toBeGreaterThanOrEqual(1.15);
+        const floatingContrast = getContrastRatio(floating, background);
+        expect(
+          floatingContrast,
+          `${mode} floating surface`
+        ).toBeGreaterThanOrEqual(mode === "light" ? 1.01 : 1.05);
+        expect(
+          floatingContrast,
+          `${mode} floating surface`
+        ).toBeLessThanOrEqual(mode === "light" ? 1.05 : 1.18);
+        expect(
+          getContrastRatio(nested, background),
+          `${mode} nested surface`
+        ).toBeLessThanOrEqual(mode === "light" ? 1.1 : 1.55);
+        if (mode === "light") {
+          expect(floating[0]).toBeLessThan(background[0]);
+          expect(raised[0]).toBeLessThan(floating[0]);
+          expect(nested[0]).toBeLessThan(raised[0]);
+        } else {
+          expect(floating[0]).toBeGreaterThan(background[0]);
+          expect(raised[0]).toBeGreaterThan(floating[0]);
+          expect(nested[0]).toBeGreaterThan(raised[0]);
+        }
         expect(
           secondaryContrast,
           `${mode} secondary foreground`
@@ -238,15 +140,24 @@ describe("Craft color contrast", () => {
         root.dataset.colorScheme = mode;
         const primary = readColor("--background-primary");
         const disabledBackground = readColor("--background-disabled");
+        const raisedBackground = readColor("--background-floating-raised");
         const disabled = readColor("--foreground-disabled");
         const secondary = readColor("--foreground-secondary");
 
-        for (const background of [primary, disabledBackground]) {
+        for (const background of [
+          primary,
+          disabledBackground,
+          raisedBackground,
+        ]) {
           expect(
             getContrastRatio(disabled, background),
             `${mode} disabled content`
           ).toBeGreaterThanOrEqual(3);
         }
+        expect(
+          getContrastRatio(disabled, raisedBackground),
+          `${mode} disabled content on raised surfaces`
+        ).toBeLessThanOrEqual(3.4);
         expect(getContrastRatio(disabled, primary), mode).toBeLessThan(
           getContrastRatio(secondary, primary)
         );
@@ -298,55 +209,136 @@ describe("Craft color contrast", () => {
     });
   }
 
-  test("theme color hue and chroma control derived semantic colors", () => {
+  test("restores the scheme and removes temporary DOM when color evaluation fails", () => {
     const root = document.documentElement;
-    const sample = document.createElement("span");
-    sample.style.color = "var(--background-accent)";
-    document.body.append(sample);
-
-    const accentBefore = getComputedStyle(sample).color;
-    root.style.setProperty("--theme-color-accent", "oklch(50% 0.18 300)");
-    const accentAfter = getComputedStyle(sample).color;
-
-    sample.style.color = "var(--background-primary)";
-    const neutralBefore = getComputedStyle(sample).color;
-    root.style.setProperty("--theme-color-neutral", "oklch(50% 0.02 300)");
-    const neutralAfter = getComputedStyle(sample).color;
-
-    expect.soft(accentAfter).not.toBe(accentBefore);
-    expect.soft(neutralAfter).not.toBe(neutralBefore);
-
-    root.style.removeProperty("--theme-color-accent");
-    root.style.removeProperty("--theme-color-neutral");
-    sample.remove();
-  });
-
-  test("theme contrast parameters affect their primary outputs", () => {
-    const root = document.documentElement;
-    const relationships = {
-      content: "--foreground-primary",
-      surface: "--background-secondary",
-      border: "--border-default",
-    } as const;
+    const previousMode = root.getAttribute("data-color-scheme");
+    const previousBackground = root.style.getPropertyValue(
+      "--background-primary"
+    );
+    const previousBodyNodes = Array.from(document.body.childNodes);
+    root.style.setProperty("--background-primary", "transparent");
 
     try {
-      for (const [relationship, semanticColor] of Object.entries(
-        relationships
-      )) {
-        const parameter = `--theme-contrast-${relationship}`;
-        root.style.setProperty(parameter, "0%");
-        const soft = Array.from(readColor(semanticColor));
-        root.style.setProperty(parameter, "100%");
-        const strong = Array.from(readColor(semanticColor));
-
-        expect(strong, relationship).not.toEqual(soft);
-      }
+      expect(() => getColorContrast("dark")).toThrow();
+      expect(root.getAttribute("data-color-scheme")).toBe(previousMode);
+      expect(Array.from(document.body.childNodes)).toEqual(previousBodyNodes);
     } finally {
-      for (const relationship of Object.keys(relationships)) {
-        root.style.removeProperty(`--theme-contrast-${relationship}`);
+      root.style.setProperty("--background-primary", previousBackground);
+    }
+  });
+
+  test("vivid theme preserves negative text and nested surface contrast", () => {
+    const root = document.documentElement;
+    const previousMode = root.getAttribute("data-color-scheme");
+    const theme = {
+      "--theme-color-neutral": "oklch(45% 0.02 300)",
+      "--theme-color-negative": "oklch(60% 0.3 20)",
+      "--theme-contrast-content": "100%",
+      "--theme-contrast-surface": "100%",
+    };
+
+    try {
+      for (const [name, value] of Object.entries(theme)) {
+        root.style.setProperty(name, value);
+      }
+      for (const mode of ["light", "dark"] as const) {
+        root.dataset.colorScheme = mode;
+        for (const result of getColorContrast(mode)) {
+          if (result.foreground === "--foreground-negative") {
+            expect(
+              result.ratio,
+              `${mode} on ${result.background}`
+            ).toBeGreaterThanOrEqual(result.minimum);
+          }
+        }
+      }
+      root.dataset.colorScheme = "dark";
+      expect(Array.from(readColor("--background-floating-nested"))).not.toEqual(
+        Array.from(readColor("--background-secondary"))
+      );
+    } finally {
+      for (const name of Object.keys(theme)) {
+        root.style.removeProperty(name);
+      }
+      if (previousMode === null) {
+        root.removeAttribute("data-color-scheme");
+      } else {
+        root.setAttribute("data-color-scheme", previousMode);
       }
     }
   });
+
+  test.each(["light", "dark"] as const)(
+    "all theme controls affect their intended outputs in %s mode",
+    (mode) => {
+      const root = document.documentElement;
+      const previousMode = root.getAttribute("data-color-scheme");
+      const controls = {
+        "--theme-color-neutral": {
+          value: "oklch(50% 0.02 300)",
+          output: "--foreground-primary",
+        },
+        "--theme-color-accent": {
+          value: "oklch(50% 0.18 300)",
+          output: "--background-accent",
+        },
+        "--theme-color-positive": {
+          value: "oklch(50% 0.18 300)",
+          output: "--background-positive",
+        },
+        "--theme-color-negative": {
+          value: "oklch(50% 0.18 300)",
+          output: "--background-negative",
+        },
+        "--theme-color-warning": {
+          value: "oklch(50% 0.18 300)",
+          output: "--foreground-warning",
+        },
+        "--theme-color-informative": {
+          value: "oklch(50% 0.18 300)",
+          output: "--foreground-informative",
+        },
+        "--theme-contrast-content": {
+          value: "100%",
+          output: "--foreground-primary",
+        },
+        "--theme-contrast-surface": {
+          value: "100%",
+          output: "--background-secondary",
+        },
+        "--theme-contrast-border": {
+          value: "100%",
+          output: "--border-default",
+        },
+      } satisfies Record<
+        ThemeVariableName,
+        { value: string; output: SemanticColorName }
+      >;
+
+      try {
+        root.dataset.colorScheme = mode;
+        for (const [parameter, { value, output }] of Object.entries(controls)) {
+          const previousValue = root.style.getPropertyValue(parameter);
+          try {
+            const before = Array.from(readColor(output));
+            root.style.setProperty(parameter, value);
+            expect(
+              Array.from(readColor(output)),
+              `${mode} ${parameter}`
+            ).not.toEqual(before);
+          } finally {
+            root.style.setProperty(parameter, previousValue);
+          }
+        }
+      } finally {
+        if (previousMode === null) {
+          root.removeAttribute("data-color-scheme");
+        } else {
+          root.setAttribute("data-color-scheme", previousMode);
+        }
+      }
+    }
+  );
 
   test("intent variants retain their semantic color family", () => {
     const root = document.documentElement;

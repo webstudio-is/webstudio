@@ -102,7 +102,7 @@ export const Loading = ({ state }: { state: LoadingState }) => {
           <Box
             css={{
               position: "absolute",
-              bottom: `calc(50% + ${theme.spacing[10]})`,
+              bottom: `calc(50% + ${theme.spacing[12]})`,
               left: "50%",
               display: "flex",
               transform: "translateX(-50%)",
@@ -118,7 +118,6 @@ export const Loading = ({ state }: { state: LoadingState }) => {
               left: "50%",
               transform: "translate(-50%, -50%)",
               background: cssVar("--background-primary"),
-              boxShadow: webstudioBrand.progressShadow,
             }}
             indicatorCss={{ background: webstudioBrand.progressGradient }}
           />

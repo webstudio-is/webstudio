@@ -54,3 +54,42 @@ export const ColorPicker = () => {
     </>
   );
 };
+
+export const Transparent = () => {
+  const [value, setValue] = useState<StyleValue>({
+    ...initialColor,
+    alpha: 0.25,
+  });
+  return (
+    <ColorPickerComponent
+      open
+      value={value}
+      onChange={(next) => next && setValue(next)}
+      onChangeComplete={setValue}
+    />
+  );
+};
+export const Disabled = () => (
+  <ColorPickerComponent
+    disabled
+    value={initialColor}
+    onChange={() => {}}
+    onChangeComplete={() => {}}
+  />
+);
+export const Oklch = () => {
+  const [value, setValue] = useState<StyleValue>({
+    type: "color",
+    colorSpace: "oklch",
+    components: [0.65, 0.2, 260],
+    alpha: 0.5,
+  });
+  return (
+    <ColorPickerComponent
+      open
+      value={value}
+      onChange={(next) => next && setValue(next)}
+      onChangeComplete={setValue}
+    />
+  );
+};

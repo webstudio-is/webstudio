@@ -8,6 +8,7 @@ import {
   type Instance,
   type StyleDecl,
   getStyleDeclKey,
+  getTagStyleId,
 } from "@webstudio-is/sdk";
 import {
   createTemplateComponentFixture,
@@ -104,6 +105,7 @@ const createModel = ({
   }
   return {
     styles,
+    tagStyleIds: new Map(),
     styleSourceSelections,
     presetStyles,
     instanceTags,
@@ -1075,6 +1077,83 @@ test("user styles are more specific than preset styles", () => {
       property: "color",
     }).usedValue
   ).toEqual({ type: "keyword", value: "red" });
+});
+
+test("tag token provides the source for an unstyled matching element", () => {
+  const model = createModel({
+    css: "",
+    jsx: <Box ws:id="box" ws:tag="p" />,
+  });
+  const id = getTagStyleId("p");
+  const declaration: StyleDecl = {
+    styleSourceId: id,
+    breakpointId: "base",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  model.tagStyleIds.set("p", id);
+  model.styles.set(getStyleDeclKey(declaration), declaration);
+
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["box"],
+      property: "color",
+    }).source
+  ).toMatchObject({ styleSourceId: id, instanceId: "box" });
+});
+
+test("selected tag token remains the source when an instance overrides it", () => {
+  const model = createModel({
+    css: "local { color: blue; }",
+    jsx: <Box ws:id="box" ws:tag="p" class="local" />,
+  });
+  const id = getTagStyleId("p");
+  const declaration: StyleDecl = {
+    styleSourceId: id,
+    breakpointId: "base",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  model.tagStyleIds.set("p", id);
+  model.styles.set(getStyleDeclKey(declaration), declaration);
+
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["box"],
+      styleSourceId: id,
+      property: "color",
+    }).source
+  ).toMatchObject({ name: "overwritten", styleSourceId: id });
+});
+
+test("base instance style wins over responsive tag style", () => {
+  const model = createModel({
+    css: "local { color: blue; }",
+    jsx: <Box ws:id="box" ws:tag="p" class="local" />,
+    matchingBreakpoints: ["base", "small"],
+  });
+  const id = getTagStyleId("p");
+  const declaration: StyleDecl = {
+    styleSourceId: id,
+    breakpointId: "small",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  model.tagStyleIds.set("p", id);
+  model.styles.set(getStyleDeclKey(declaration), declaration);
+
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["box"],
+      property: "color",
+    })
+  ).toMatchObject({
+    usedValue: { type: "keyword", value: "blue" },
+    source: { styleSourceId: "local" },
+  });
 });
 
 test("preset styles are more specific than browser styles", () => {

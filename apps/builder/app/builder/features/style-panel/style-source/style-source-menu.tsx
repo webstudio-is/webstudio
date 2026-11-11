@@ -1,4 +1,5 @@
-import { Fragment, useState } from "react";
+import { Fragment, useRef, useState } from "react";
+import { tags } from "@webstudio-is/sdk";
 import {
   Box,
   Combobox,
@@ -31,7 +32,7 @@ import {
 } from "./style-source-control";
 
 export type SelectorConfig = {
-  type: "state" | "pseudoElement";
+  type: "state" | "pseudoElement" | "tag";
   selector: string;
   label: string;
   description?: string;
@@ -103,14 +104,17 @@ const MenuTriggerGradient = styled(Box, {
 const selectorLabels = [
   "state",
   "pseudoElement",
+  "tag",
 ] satisfies SelectorConfig["type"][];
 
 const categoryLabels: Record<SelectorConfig["type"], string> = {
   state: "States",
   pseudoElement: "Pseudo elements",
+  tag: "Tag",
 };
 
 const menuActionDescriptions = {
+  copy: "Copy this source’s styles to paste them elsewhere.",
   rename: "Change the name of this token to better describe its purpose.",
   duplicate: "Create a copy of this token with all its styles.",
   convertToToken:
@@ -131,6 +135,7 @@ const canEditStyleSourceStyles = (item: IntermediateItem) =>
 const allSelectors = [
   ...Object.keys(pseudoClassDescriptions),
   ...Object.keys(pseudoElementDescriptions),
+  ...tags.filter((tag) => tag !== "html"),
 ];
 
 const getDescription = (selector: string, type: "state" | "pseudoElement") => {
@@ -167,27 +172,40 @@ const getSelectorDescription = (selector: string | null | undefined) => {
 
 const SelectorCombobox = ({
   existingSelectors,
+  allowDescendants,
   onSelect,
 }: {
   existingSelectors: string[];
+  allowDescendants: boolean;
   onSelect: (selector: string) => void;
 }) => {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string>();
 
   const handleSubmit = (selector: string) => {
-    const validation = validateSelector(selector);
+    let normalizedSelector = selector;
+    let validation = validateSelector(normalizedSelector, { allowDescendants });
+    if (validation.success === false && allowDescendants) {
+      const tagSelector = ` ${selector}`;
+      const tagValidation = validateSelector(tagSelector, { allowDescendants });
+      if (tagValidation.success && tagValidation.type === "tag") {
+        normalizedSelector = tagSelector;
+        validation = tagValidation;
+      }
+    }
     if (validation.success === false) {
       setError(validation.error);
       return;
     }
     setError(undefined);
-    onSelect(selector);
+    onSelect(normalizedSelector);
     setValue("");
   };
 
-  const availableItems = allSelectors.filter((selector) =>
-    existingSelectors.every((s) => s !== selector)
+  const availableItems = allSelectors.filter(
+    (selector) =>
+      (allowDescendants || tags.includes(selector) === false) &&
+      existingSelectors.every((s) => s.trim() !== selector)
   );
 
   return (
@@ -233,6 +251,7 @@ const SelectorCombobox = ({
 type StyleSourceMenuProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onReturnToInput?: () => void;
   selectedItemSelector: undefined | ItemSelector;
   item: IntermediateItem;
   hasStyles: boolean;
@@ -252,18 +271,26 @@ type StyleSourceMenuProps = {
 };
 
 export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
+  const availableStates =
+    props.item.source === "tag"
+      ? props.states.filter(
+          ({ selector }) =>
+            validateSelector(selector, { allowDescendants: false }).success
+        )
+      : props.states;
   const [highlightedSelector, setHighlightedSelector] = useState<{
     selector: string;
-    type: "state" | "pseudoElement";
+    type: "state" | "pseudoElement" | "tag";
     description?: string;
   }>();
   const [highlightedAction, setHighlightedAction] = useState<MenuAction>();
+  const escapePressed = useRef(false);
   const canEditStyles = canEditStyleSourceStyles(props.item);
 
   // Get description for highlighted or selected item
   const selectedState = props.selectedItemSelector?.state;
   const selectedConfig = selectedState
-    ? props.states.find((s) => s.selector === selectedState)
+    ? availableStates.find((s) => s.selector === selectedState)
     : undefined;
   const descriptionSelector =
     highlightedSelector ??
@@ -282,7 +309,12 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
 
   const selectorDescription = descriptionSelector
     ? (descriptionSelector.description ??
-      getDescription(descriptionSelector.selector, descriptionSelector.type))
+      (descriptionSelector.type === "tag"
+        ? undefined
+        : getDescription(
+            descriptionSelector.selector,
+            descriptionSelector.type
+          )))
     : undefined;
 
   // Get source description based on item source
@@ -291,7 +323,9 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
       ? "Style instances without creating a token or override a token locally."
       : props.item.source === "token"
         ? "Reuse styles across multiple instances by creating a token."
-        : undefined;
+        : props.item.source === "tag"
+          ? "Apply styles to every element with this tag."
+          : undefined;
 
   const description =
     actionDescription ?? selectorDescription ?? sourceDescription;
@@ -305,9 +339,21 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
         </MenuTrigger>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        onCloseAutoFocus={(event) => event.preventDefault()}
+        onKeyDown={(event) => {
+          event.stopPropagation();
+        }}
+        onEscapeKeyDown={() => {
+          escapePressed.current = true;
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (escapePressed.current) {
+            escapePressed.current = false;
+            queueMicrotask(() => props.onReturnToInput?.());
+          }
+        }}
         autoFocus
-        css={{ maxWidth: theme.spacing[26] }}
+        css={{ width: theme.spacing[26] }}
       >
         <DropdownMenuLabel>
           <Flex gap="1" justify="between" align="center">
@@ -319,7 +365,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             )}
           </Flex>
         </DropdownMenuLabel>
-        {props.item.source !== "local" && (
+        {props.item.source === "token" && (
           <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
@@ -330,7 +376,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Rename
           </DropdownMenuItem>
         )}
-        {props.item.source !== "local" && (
+        {props.item.source === "token" && (
           <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
@@ -341,12 +387,15 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Duplicate
           </DropdownMenuItem>
         )}
-        {props.item.source === "token" && (
+        {(props.item.source === "token" ||
+          props.item.source === "tag" ||
+          props.item.source === "local") && (
           <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
-              setHighlightedAction(undefined);
+              setHighlightedAction("copy");
             }}
+            disabled={!props.hasStyles}
             onSelect={() => props.onCopy?.(props.item.id)}
           >
             Copy
@@ -388,7 +437,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Clear styles
           </DropdownMenuItem>
         )}
-        {props.item.source !== "local" && (
+        {props.item.source === "token" && (
           <DropdownMenuItem
             onFocus={() => {
               setHighlightedSelector(undefined);
@@ -399,7 +448,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             Detach
           </DropdownMenuItem>
         )}
-        {props.item.source !== "local" && (
+        {props.item.source === "token" && (
           <DropdownMenuItem
             destructive={true}
             onFocus={() => {
@@ -413,7 +462,7 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
         )}
         {canEditStyles &&
           selectorLabels.map((currentCategory) => {
-            const categoryStates = props.states.filter(
+            const categoryStates = availableStates.filter(
               ({ type }) => type === currentCategory
             );
             if (categoryStates.length === 0) {
@@ -497,7 +546,10 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
             <DropdownMenuLabel>Add more</DropdownMenuLabel>
             <Box css={{ padding: theme.spacing[4] }}>
               <SelectorCombobox
-                existingSelectors={props.states.map((state) => state.selector)}
+                existingSelectors={availableStates.map(
+                  (state) => state.selector
+                )}
+                allowDescendants={props.item.source !== "tag"}
                 onSelect={(selector) =>
                   props.onAddSelector?.(props.item.id, selector)
                 }

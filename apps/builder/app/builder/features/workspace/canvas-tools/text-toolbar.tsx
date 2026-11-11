@@ -63,7 +63,7 @@ type ToolbarProps = {
   scale: number;
 };
 
-const Toolbar = ({ state, scale }: ToolbarProps) => {
+export const Toolbar = ({ state, scale }: ToolbarProps) => {
   const isWithinLink = useStore($isWithinLink);
 
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -111,7 +111,7 @@ const Toolbar = ({ state, scale }: ToolbarProps) => {
         top: 0,
         left: 0,
         pointerEvents: "auto",
-        background: cssVar("--background-primary"),
+        background: cssVar("--background-floating-raised"),
         padding: theme.spacing[3],
         borderRadius: theme.borderRadius[6],
         border: `1px solid ${cssVar("--border-default")}`,

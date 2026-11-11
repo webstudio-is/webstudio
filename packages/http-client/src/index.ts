@@ -2169,6 +2169,10 @@ export const listDesignTokens = projectQueryInput<
     }
 >("list-design-tokens");
 
+export const listTagStyles = projectQueryInput<
+  AuthProjectParams & PaginatedQueryInput & { tag?: string }
+>("list-tag-styles");
+
 const queryCopyDesignToken = projectQueryInput<
   AuthProjectParams & { tokenId: string; sourceOrigin?: string },
   { data: string }
@@ -2183,10 +2187,47 @@ export const copyDesignToken = (
       params.sourceOrigin ?? parseBuilderUrl(params.origin).sourceOrigin,
   });
 
+const queryCopyStyleSource = projectQueryInput<
+  AuthProjectParams & {
+    styleSourceId: string;
+    sourceType: "token" | "tag" | "local";
+    sourceOrigin?: string;
+  },
+  { data: string }
+>("copy-design-token");
+
+export const copyStyleSource = (
+  params: AuthProjectParams & {
+    styleSourceId: string;
+    sourceType: "token" | "tag" | "local";
+    sourceOrigin?: string;
+  }
+) =>
+  queryCopyStyleSource({
+    ...params,
+    sourceOrigin:
+      params.sourceOrigin ?? parseBuilderUrl(params.origin).sourceOrigin,
+  });
+
 export const pasteDesignToken = projectMutationInput<
   AuthProjectParams & { data: string; instanceId?: string },
   { tokenId: string }
 >("paste-design-token");
+
+const queryPasteStyleSource = projectMutationInput<
+  AuthProjectParams & { data: string; instanceId?: string },
+  { styleSourceId: string } | { tokenId: string }
+>("paste-design-token");
+
+export const pasteStyleSource = async (
+  params: AuthProjectParams & { data: string; instanceId?: string }
+) => {
+  const result = await queryPasteStyleSource(params);
+  return {
+    styleSourceId:
+      "styleSourceId" in result ? result.styleSourceId : result.tokenId,
+  };
+};
 
 type DesignTokenStyleInput = {
   property: string;

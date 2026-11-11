@@ -14,6 +14,9 @@ export type ThemeVariableName =
 export type SemanticColorName =
   | "--background-primary"
   | "--background-secondary"
+  | "--background-floating"
+  | "--background-floating-raised"
+  | "--background-floating-nested"
   | "--background-disabled"
   | "--background-inverse"
   | "--background-accent"

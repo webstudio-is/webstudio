@@ -60,6 +60,14 @@ export const useSortable = <Item extends { id: string; source: ItemSource }>({
       if (dropTarget === undefined) {
         setPlacementIndicator(undefined);
       } else {
+        if (items[0]?.source === "tag") {
+          const { placement } = dropTarget;
+          placement.indexAdjustment = Math.max(placement.indexAdjustment, 1);
+          placement.closestChildIndex = Math.max(
+            placement.closestChildIndex,
+            1
+          );
+        }
         // when local style source is last always drop before it
         if (items.at(-1)?.source === "local") {
           const lastIndex = items.length - 1;
@@ -99,6 +107,10 @@ export const useSortable = <Item extends { id: string; source: ItemSource }>({
         return false;
       }
 
+      if (items.find((item) => item.id === itemId)?.source === "tag") {
+        return false;
+      }
+
       return itemId;
     },
     onStart({ data: itemId }) {
@@ -133,6 +145,9 @@ export const useSortable = <Item extends { id: string; source: ItemSource }>({
         // we need to do this to account for it.
         if (oldIndex < newIndex) {
           newIndex = Math.max(0, newIndex - 1);
+        }
+        if (items[0]?.source === "tag") {
+          newIndex = Math.max(1, newIndex);
         }
         // when local style source is last always drop before it
         if (items.at(-1)?.source === "local") {

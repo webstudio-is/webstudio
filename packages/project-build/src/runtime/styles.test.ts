@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   type Breakpoint,
   getStyleDeclKey,
+  getTagStyleId,
   ROOT_INSTANCE_ID,
   type Instance,
   type Prop,
@@ -51,6 +52,7 @@ import {
   getReferencedCssVariables,
   getStyleSourceInsertionIndex,
   getStyleDeclarations,
+  listTagStyles,
   getUnusedCssVariableNames,
   performCssVariableRename,
   renameCssVariable,
@@ -1591,6 +1593,119 @@ describe("runtime style operations", () => {
     ]);
   });
 
+  test("editing a tag token creates a global source without attaching it", () => {
+    const id = getTagStyleId("button");
+    const mutation = updateSelectedStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: toMap([instance("button-instance")]),
+        styles: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      {
+        updates: [
+          {
+            instanceId: "button-instance",
+            styleSourceId: id,
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            state: ":hover",
+          },
+        ],
+      }
+    );
+
+    expect(mutation.payload).toContainEqual({
+      namespace: "styleSources",
+      patches: [
+        {
+          op: "add",
+          path: [id],
+          value: { type: "tag", id, tag: "button" },
+        },
+      ],
+    });
+    expect(mutation.payload).toContainEqual({
+      namespace: "styles",
+      patches: [
+        expect.objectContaining({
+          path: [`${id}:desktop:color::hover`],
+          value: expect.objectContaining({
+            styleSourceId: id,
+            state: ":hover",
+          }),
+        }),
+      ],
+    });
+    expect(
+      mutation.payload.some(
+        (change) => change.namespace === "styleSourceSelections"
+      )
+    ).toBe(false);
+  });
+
+  test("editing the html Tag style from Global root creates a global source", () => {
+    const id = getTagStyleId("html");
+    const mutation = updateSelectedStyleDeclarations(
+      {
+        breakpoints: runtimeBreakpoints,
+        instances: new Map(),
+        styles: new Map(),
+        styleSources: new Map(),
+        styleSourceSelections: new Map(),
+      },
+      {
+        updates: [
+          {
+            instanceId: ROOT_INSTANCE_ID,
+            styleSourceId: id,
+            property: "color",
+            value: { type: "keyword", value: "red" },
+          },
+        ],
+      }
+    );
+
+    expect(mutation.payload).toContainEqual({
+      namespace: "styleSources",
+      patches: [
+        { op: "add", path: [id], value: { type: "tag", id, tag: "html" } },
+      ],
+    });
+    expect(
+      mutation.payload.some(
+        (change) => change.namespace === "styleSourceSelections"
+      )
+    ).toBe(false);
+  });
+
+  test("rejects a descendant selector on a tag token", () => {
+    const id = getTagStyleId("button");
+    expect(() =>
+      updateSelectedStyleDeclarations(
+        {
+          breakpoints: runtimeBreakpoints,
+          instances: toMap([instance("button-instance")]),
+          styles: new Map(),
+          styleSources: new Map(),
+          styleSourceSelections: new Map(),
+        },
+        {
+          updates: [
+            {
+              instanceId: "button-instance",
+              styleSourceId: id,
+              property: "color",
+              value: { type: "keyword", value: "red" },
+              state: " p",
+            },
+          ],
+        }
+      )
+    ).toThrow();
+  });
+
   test("renames, locks, and deletes style sources", () => {
     const styleSources = sources([token("token", "Primary")]);
 
@@ -2027,6 +2142,47 @@ describe("serializeDesignTokens", () => {
         ?.usageCount
     ).toBeUndefined();
   });
+});
+
+test("lists global Tag styles separately from design tokens", () => {
+  const divId = getTagStyleId("div");
+  const buttonId = getTagStyleId("button");
+  const declaration: StyleDecl = {
+    styleSourceId: divId,
+    breakpointId: "base",
+    property: "color",
+    state: ":hover",
+    value: { type: "keyword", value: "red" },
+  };
+  const state = {
+    styleSources: new Map<string, StyleSource>([
+      [divId, { type: "tag", id: divId, tag: "div" }],
+      [buttonId, { type: "tag", id: buttonId, tag: "button" }],
+      ["token", { type: "token", id: "token", name: "Primary" }],
+    ]),
+    styles: new Map([[getStyleDeclKey(declaration), declaration]]),
+  };
+  expect(listTagStyles(state).tagStyles).toEqual([
+    { id: buttonId, tag: "button", declarationCount: 0 },
+    { id: divId, tag: "div", declarationCount: 1 },
+  ]);
+  expect(listTagStyles(state, { tag: "div", verbose: true }).tagStyles).toEqual(
+    [
+      {
+        id: divId,
+        tag: "div",
+        declarationCount: 1,
+        declarations: [
+          {
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            breakpoint: "base",
+            state: ":hover",
+          },
+        ],
+      },
+    ]
+  );
 });
 
 test("expands style values without changing pagination or filters", () => {

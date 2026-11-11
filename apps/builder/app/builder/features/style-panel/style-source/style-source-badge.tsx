@@ -37,6 +37,7 @@ export const StyleSourceBadge = styled(Text, {
       },
       tag: {
         backgroundColor: styleSourceColors.tag.background,
+        color: styleSourceColors.tag.foreground,
       },
       breakpoint: {
         backgroundColor: styleSourceColors.breakpoint.background,

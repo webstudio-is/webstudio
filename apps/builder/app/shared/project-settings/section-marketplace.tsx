@@ -327,7 +327,7 @@ export const SectionMarketplace = () => {
 
       {approval.status === "UNLISTED" && (
         <Grid gap={2} css={sectionSpacing}>
-          <CheckboxAndLabel>
+          <CheckboxAndLabel css={{ alignItems: "flex-start" }}>
             <Checkbox
               checked={isConfirmed}
               id={ids.isConfirmed}

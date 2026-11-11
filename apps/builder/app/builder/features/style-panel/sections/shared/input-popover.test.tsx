@@ -4,6 +4,7 @@ import { act } from "react-dom/test-utils";
 import { expect, test, vi } from "vitest";
 import { userEvent } from "@vitest/browser/context";
 import { TooltipProvider } from "@webstudio-is/design-system";
+import "@webstudio-is/design-system/global.css";
 import { InputPopover } from "./input-popover";
 
 (
@@ -50,3 +51,44 @@ test("clearing spacing keeps the input focused instead of exposing canvas shortc
     container.remove();
   }
 });
+
+test.each(["light", "dark"] as const)(
+  "spacing popover uses the floating surface in %s mode",
+  async (mode) => {
+    document.documentElement.dataset.colorScheme = mode;
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    try {
+      act(() =>
+        root.render(
+          <TooltipProvider>
+            <InputPopover
+              styleSource="local"
+              property="paddingTop"
+              value={{ type: "unit", value: 20, unit: "px" }}
+              isOpen
+              getActiveProperties={() => ["paddingTop"]}
+              onClose={() => {}}
+            />
+          </TooltipProvider>
+        )
+      );
+      await vi.waitFor(() =>
+        expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+      );
+      const reference = document.createElement("div");
+      reference.style.background = "var(--background-floating-raised)";
+      document.body.append(reference);
+      expect(
+        getComputedStyle(document.querySelector('[role="dialog"]')!)
+          .backgroundColor
+      ).toBe(getComputedStyle(reference).backgroundColor);
+      reference.remove();
+    } finally {
+      act(() => root.unmount());
+      container.remove();
+      document.documentElement.removeAttribute("data-color-scheme");
+    }
+  }
+);

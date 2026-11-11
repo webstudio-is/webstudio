@@ -11,6 +11,10 @@ import { SmallToggleButton } from "./small-toggle-button";
 import { ToggleButton } from "./toggle-button";
 import { ToggleGroup, ToggleGroupButton } from "./toggle-group";
 import { Tooltip, TooltipProvider } from "./tooltip";
+import { Text } from "./text";
+import { Label } from "./label";
+import { MenuItemButton } from "./menu";
+import { getSelectedItemBackground } from "./component-state-color";
 
 let root: Root | undefined;
 
@@ -151,6 +155,101 @@ const contrast = (first: number[], second: number[]) => {
     (Math.min(firstLuminance, secondLuminance) + 0.05)
   );
 };
+
+test("secondary text stays readable in selected floating rows", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  for (const mode of ["light", "dark"] as const) {
+    document.documentElement.dataset.colorScheme = mode;
+    act(() =>
+      root?.render(
+        createElement(
+          "div",
+          {
+            style: {
+              background: getSelectedItemBackground(
+                "var(--background-floating-raised)"
+              ),
+            },
+          },
+          createElement(Text, { color: "moreSubtle" }, "Category")
+        )
+      )
+    );
+    const row = container.firstElementChild!;
+    const text = row.firstElementChild!;
+    expect(
+      contrast(
+        readColor(getComputedStyle(text).color),
+        readColor(getComputedStyle(row).backgroundColor)
+      ),
+      mode
+    ).toBeGreaterThanOrEqual(4.5);
+  }
+});
+
+test("style source labels keep small text readable", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  for (const mode of ["light", "dark"] as const) {
+    document.documentElement.dataset.colorScheme = mode;
+    act(() =>
+      root?.render(
+        createElement(
+          "div",
+          null,
+          ...(["local", "overwritten", "remote"] as const).map((color) =>
+            createElement(Label, { key: color, color, children: color })
+          )
+        )
+      )
+    );
+    for (const label of container.querySelectorAll("button")) {
+      const style = getComputedStyle(label);
+      expect(
+        contrast(readColor(style.color), readColor(style.backgroundColor)),
+        `${mode} ${label.textContent}`
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  }
+});
+
+test("neutral destructive buttons keep small text readable", () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  for (const mode of ["light", "dark"] as const) {
+    document.documentElement.dataset.colorScheme = mode;
+    act(() =>
+      root?.render(
+        createElement(Button, { color: "neutral-destructive" }, "Delete")
+      )
+    );
+    const style = getComputedStyle(container.querySelector("button")!);
+    expect(
+      contrast(readColor(style.color), readColor(style.backgroundColor)),
+      mode
+    ).toBeGreaterThanOrEqual(4.5);
+  }
+});
+
+test("disabled menu items do not highlight on hover", async () => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  act(() =>
+    root?.render(createElement(MenuItemButton, { disabled: true }, "Disabled"))
+  );
+  const button = container.querySelector("button")!;
+  const before = getComputedStyle(button).backgroundColor;
+  await page.elementLocator(button).hover({ force: true });
+  expect(getComputedStyle(button).backgroundColor).toBe(before);
+});
 
 test("strong button interaction states preserve text contrast", async () => {
   const container = document.createElement("div");

@@ -114,7 +114,7 @@ export const MenuItemButton = styled("button", menuItemCss, {
   boxSizing: "border-box",
   width: `calc(100% - ${itemMargin} * 2)`,
   "&:focus:not(:focus-visible)": { backgroundColor: "unset" },
-  "&:hover:not([diabled])": {
+  "&:hover:not([disabled])": {
     backgroundColor: cssVar("--overlay-interaction-hover"),
   },
 });
@@ -133,10 +133,10 @@ const menuBorderWidth = "1px";
 export const menuCss = css({
   boxSizing: "border-box",
   borderRadius: theme.borderRadius[6],
-  backgroundColor: cssVar("--background-primary"),
+  backgroundColor: cssVar("--background-floating-raised"),
   border: `1px solid ${cssVar("--border-default")}`,
   boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar(
-    "--background-primary"
+    "--background-floating-raised"
   )}`,
   padding: `${menuPadding} 0`,
   variants: {
@@ -149,6 +149,10 @@ export const menuCss = css({
 export const MenuList = styled("div", menuCss);
 
 export const subMenuCss = css(menuCss, {
+  backgroundColor: cssVar("--background-floating-nested"),
+  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${cssVar(
+    "--background-floating-nested"
+  )}`,
   // the goal is to align the top menu item in a sub menu
   // with the menu item in the parent menu that opened it
   marginTop: `calc((${menuPadding} + ${menuBorderWidth}) * -1)`,
@@ -163,10 +167,10 @@ export const subContentProps: Partial<ComponentProps<typeof SubContent>> = {
 // Arrow is hard to implement with just CSS,
 // so we implement it as a component
 const ArrowBackground = styled("path", {
-  fill: cssVar("--background-primary"),
+  fill: cssVar("--background-floating-raised"),
 });
 const ArrowInnerBorder = styled("path", {
-  fill: cssVar("--background-primary"),
+  fill: cssVar("--background-floating-raised"),
 });
 const ArrowOuterBorder = styled("path", { fill: cssVar("--border-default") });
 const ArrowSvg = styled("svg", { transform: "translateY(-3px)" });

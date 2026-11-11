@@ -16,6 +16,7 @@ import { toast, type Placement } from "@webstudio-is/design-system";
 import {
   createId,
   getHtmlTagsFromProps,
+  getTagFromStyleId,
   type AssetType,
   type Instance,
   type Prop,
@@ -72,9 +73,11 @@ export const $selectedStyleSources = atom(
   new Map<Instance["id"], StyleSource["id"]>()
 );
 export const $selectedStyleState = atom<StyleDecl["state"]>();
+export const $temporaryTagStyleId = atom<string | undefined>(undefined);
 // reset style state whenever selected instance change
 onSet($selectedInstanceSelector, () => {
   $selectedStyleState.set(undefined);
+  $temporaryTagStyleId.set(undefined);
 });
 
 /**
@@ -178,8 +181,8 @@ export const $selectedInstanceRenderState = atom<
 >("notMounted");
 
 export const $selectedInstanceStatesByStyleSourceId = computed(
-  [$styles, $styleSourceSelections, $selectedInstance],
-  (styles, styleSourceSelections, selectedInstance) => {
+  [$styles, $styleSourceSelections, $selectedInstance, $temporaryTagStyleId],
+  (styles, styleSourceSelections, selectedInstance, temporaryTagStyleId) => {
     const statesByStyleSourceId = new Map<StyleSource["id"], string[]>();
     if (selectedInstance === undefined) {
       return statesByStyleSourceId;
@@ -187,6 +190,9 @@ export const $selectedInstanceStatesByStyleSourceId = computed(
     const styleSourceIds = new Set(
       styleSourceSelections.get(selectedInstance.id)?.values
     );
+    if (temporaryTagStyleId) {
+      styleSourceIds.add(temporaryTagStyleId);
+    }
     for (const styleDecl of styles.values()) {
       if (
         styleDecl.state === undefined ||
@@ -208,11 +214,33 @@ export const $selectedInstanceStatesByStyleSourceId = computed(
 );
 
 export const $selectedInstanceStyleSources = computed(
-  [$styleSourceSelections, $styleSources, $selectedInstance],
-  (styleSourceSelections, styleSources, selectedInstance) => {
+  [
+    $styleSourceSelections,
+    $styleSources,
+    $selectedInstance,
+    $temporaryTagStyleId,
+  ],
+  (
+    styleSourceSelections,
+    styleSources,
+    selectedInstance,
+    temporaryTagStyleId
+  ) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
     if (selectedInstance === undefined) {
       return selectedInstanceStyleSources;
+    }
+    const tag = temporaryTagStyleId
+      ? getTagFromStyleId(temporaryTagStyleId)
+      : undefined;
+    if (tag && temporaryTagStyleId) {
+      selectedInstanceStyleSources.push(
+        styleSources.get(temporaryTagStyleId) ?? {
+          type: "tag",
+          id: temporaryTagStyleId,
+          tag,
+        }
+      );
     }
     const styleSourceIds =
       styleSourceSelections.get(selectedInstance.id)?.values ?? [];

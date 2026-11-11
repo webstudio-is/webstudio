@@ -348,10 +348,9 @@ export const insertStyleSources = ({
   };
 
   for (const styleSource of fragmentStyleSources) {
-    if (styleSource.type === "local") {
+    if (styleSource.type !== "token") {
       continue;
     }
-    styleSource.type satisfies "token";
 
     const originalFragmentTokenId = styleSource.id;
     const referencedTokenId = referencedTokenIds?.get(originalFragmentTokenId);

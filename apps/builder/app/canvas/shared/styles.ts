@@ -5,6 +5,7 @@ import {
   type Instance,
   ROOT_INSTANCE_ID,
   getStyleDeclKey,
+  getTagFromStyleId,
   descendantComponent,
   rootComponent,
   type Breakpoint,
@@ -12,6 +13,7 @@ import {
   type StyleSourceSelection,
   createImageValueTransformer,
   addFontRules,
+  getTagStyleId,
 } from "@webstudio-is/sdk";
 import { inflatedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import { INFLATE_PADDING } from "~/canvas/inflator";
@@ -31,6 +33,7 @@ import {
   $registeredComponentMetas,
   $selectedBreakpoint,
   $selectedStyleState,
+  $temporaryTagStyleId,
   assetBaseUrl,
 } from "~/shared/nano-states";
 import { $assets } from "~/shared/sync/data-stores";
@@ -39,6 +42,7 @@ import {
   $instances,
   $props,
   $styleSourceSelections,
+  $styleSources,
   $styles,
 } from "~/shared/sync/data-stores";
 import { setDifference } from "~/shared/shim";
@@ -54,7 +58,10 @@ import {
   type InstanceSelector,
 } from "@webstudio-is/project-build/runtime";
 import { getAllElementsByInstanceSelector } from "~/shared/dom-utils";
-import { createComputedStyleDeclStore } from "~/builder/features/style-panel/shared/model";
+import {
+  $instanceTags,
+  createComputedStyleDeclStore,
+} from "~/builder/features/style-panel/shared/model";
 import { cssVar, declareCssVar } from "@webstudio-is/design-system";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
@@ -64,6 +71,7 @@ const fontsAndDefaultsSheet = createRegularStyleSheet({
   name: "fonts-and-defaults",
 });
 const presetSheet = createRegularStyleSheet({ name: "preset-styles" });
+const tagStyleSheet = createRegularStyleSheet({ name: "tag-style-styles" });
 
 /**
  * maintain order of rendered stylesheets
@@ -72,6 +80,7 @@ const presetSheet = createRegularStyleSheet({ name: "preset-styles" });
 export const mountStyles = () => {
   fontsAndDefaultsSheet.render();
   presetSheet.render();
+  tagStyleSheet.render();
   userSheet.render();
   stateSheet.render();
   helpersSheet.render();
@@ -397,11 +406,11 @@ const getInstanceSelector = (instanceId: string) =>
 
 /**
  * Convert component and tag to preset CSS selector.
- * rootComponent maps to ":root", others use :where() for low specificity.
+ * rootComponent maps to :where(:root), others use :where() for low specificity.
  */
 const getPresetStyleSelector = (component: string, tag: string) =>
   component === rootComponent
-    ? ":root"
+    ? ":where(:root)"
     : `${tag}:where([data-ws-component="${component}"])`;
 
 const $descendantSelectors = computed(
@@ -522,6 +531,73 @@ export const subscribeStyles = () => {
     renderUserSheetInTheNextFrame();
   });
 
+  const unsubscribeTagStyles = computed(
+    [
+      $styleSources,
+      $styles,
+      $breakpoints,
+      $selectedBreakpoint,
+      $transformValue,
+      $ephemeralStyles,
+    ],
+    (
+      styleSources,
+      styles,
+      breakpoints,
+      selectedBreakpoint,
+      transformValue,
+      ephemeralStyles
+    ) => ({
+      styleSources,
+      styles,
+      breakpoints,
+      selectedBreakpoint,
+      transformValue,
+      ephemeralStyles,
+    })
+  ).subscribe(
+    ({
+      styleSources,
+      styles,
+      breakpoints,
+      selectedBreakpoint,
+      transformValue,
+      ephemeralStyles,
+    }) => {
+      tagStyleSheet.clear();
+      tagStyleSheet.setTransformer(transformValue);
+      const mediaRules = simulateConditionBreakpoints({
+        breakpoints: breakpoints.values(),
+        selectedBreakpoint,
+      });
+      for (const [id, options] of mediaRules) {
+        tagStyleSheet.addMediaRule(id, options);
+      }
+      const tagStyles = new Map<string, string>();
+      for (const source of styleSources.values()) {
+        if (source.type === "tag") {
+          tagStyles.set(source.id, source.tag);
+          tagStyleSheet.addNestingRule(source.tag);
+        }
+      }
+      for (const styleDecl of [...styles.values(), ...ephemeralStyles]) {
+        const tag =
+          tagStyles.get(styleDecl.styleSourceId) ??
+          (styleSources.has(styleDecl.styleSourceId)
+            ? undefined
+            : getTagFromStyleId(styleDecl.styleSourceId));
+        if (tag === undefined) {
+          continue;
+        }
+        tagStyleSheet.addNestingRule(tag).setDeclaration({
+          ...toDeclarationParams(styleDecl),
+          value: styleDecl.value,
+        });
+      }
+      tagStyleSheet.render();
+    }
+  );
+
   // add/delete declarations in mixins
   let prevStylesSet = new Set<StyleDecl>();
   let prevTransformValue: undefined | TransformValue;
@@ -543,10 +619,16 @@ export const subscribeStyles = () => {
     prevStylesSet = nextPrevStylesSet;
     // delete before adding declarations by the same key
     for (const styleDecl of deletedStyles) {
+      if ($styleSources.get().get(styleDecl.styleSourceId)?.type === "tag") {
+        continue;
+      }
       const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
       rule.deleteDeclaration(toDeclarationParams(styleDecl));
     }
     for (const styleDecl of addedStyles) {
+      if ($styleSources.get().get(styleDecl.styleSourceId)?.type === "tag") {
+        continue;
+      }
       const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
       rule.setDeclaration({
         ...toDeclarationParams(styleDecl),
@@ -595,6 +677,7 @@ export const subscribeStyles = () => {
     unsubscribeBreakpoints();
     unsubscribeStyles();
     unsubscribeStyleSourceSelections();
+    unsubscribeTagStyles();
     unsubscribeDescendantSelectors();
     unsubscribeTransformValue();
     cancelScheduledRender();
@@ -666,29 +749,45 @@ const computeInstanceStyles = ({
   selectedStyleState,
   breakpoints,
   styleSourceSelections,
+  temporaryTagStyleId,
+  instanceTag,
   styles,
 }: {
   selectedInstance: Instance | undefined;
   selectedStyleState: string | undefined;
   breakpoints: Map<string, Breakpoint>;
   styleSourceSelections: Map<string, { values: string[] }>;
+  temporaryTagStyleId?: string;
+  instanceTag?: string;
   styles: Map<string, StyleDecl>;
 }) => {
   if (selectedInstance === undefined || selectedStyleState === undefined) {
     return;
   }
-  const styleSources = new Set(
-    styleSourceSelections.get(selectedInstance.id)?.values
+  const styleSourceOrder = new Map(
+    styleSourceSelections
+      .get(selectedInstance.id)
+      ?.values.map((id, index) => [id, index + 1] as const)
   );
+  if (temporaryTagStyleId) {
+    styleSourceOrder.set(temporaryTagStyleId, 0);
+  } else if (instanceTag) {
+    styleSourceOrder.set(getTagStyleId(instanceTag), 0);
+  }
   const instanceStyles: StyleDecl[] = [];
   for (const styleDecl of styles.values()) {
     if (
       styleDecl.state === selectedStyleState &&
-      styleSources.has(styleDecl.styleSourceId)
+      styleSourceOrder.has(styleDecl.styleSourceId)
     ) {
       instanceStyles.push(styleDecl);
     }
   }
+  instanceStyles.sort(
+    (a, b) =>
+      styleSourceOrder.get(a.styleSourceId)! -
+      styleSourceOrder.get(b.styleSourceId)!
+  );
   return {
     instanceId: selectedInstance.id,
     selectedState: selectedStyleState,
@@ -703,6 +802,8 @@ const $instanceStyles = computed(
     $selectedStyleState,
     $breakpoints,
     $styleSourceSelections,
+    $temporaryTagStyleId,
+    $instanceTags,
     $styles,
   ],
   (
@@ -710,6 +811,8 @@ const $instanceStyles = computed(
     selectedStyleState,
     breakpoints,
     styleSourceSelections,
+    temporaryTagStyleId,
+    instanceTags,
     styles
   ) =>
     computeInstanceStyles({
@@ -717,6 +820,10 @@ const $instanceStyles = computed(
       selectedStyleState,
       breakpoints,
       styleSourceSelections,
+      temporaryTagStyleId,
+      instanceTag: selectedInstance
+        ? instanceTags.get(selectedInstance.id)
+        : undefined,
       styles,
     })
 );
@@ -726,9 +833,40 @@ const $instanceStyles = computed(
  *
  * For pseudo-classes like :hover, render without state so users can preview
  * the styles without triggering the state.
- * For pseudo-elements like ::before, keep the selector so styles apply
- * to the pseudo-element, not the parent.
+ * For pseudo-elements and descendant tags, keep the selector so styles apply
+ * to the matching element, not the parent.
  */
+const getStatePreviewSelector = (state: string) =>
+  isPseudoElement(state) || state.startsWith(" ") ? state : "";
+
+const shouldSimulateState = (state: string) =>
+  (state.startsWith(":") && isPseudoElement(state) === false) ||
+  state.startsWith("[");
+
+const getTagStatePreviewSelector = (
+  selector: string,
+  tag: string,
+  state: string
+) =>
+  shouldSimulateState(state)
+    ? `:where(${selector}):is(${tag}, ${tag}${state})`
+    : `:where(${selector})${tag}${getStatePreviewSelector(state)}`;
+
+const getInstanceStatePreviewSelector = (selector: string, state: string) =>
+  shouldSimulateState(state)
+    ? `${selector}:is(*, ${state})`
+    : `${selector}${getStatePreviewSelector(state)}`;
+
+const shouldRenderEphemeralTagState = (
+  styleDecl: StyleDecl,
+  isTagStyle: boolean,
+  source: { name: string; styleSourceId?: string }
+) =>
+  isTagStyle === false ||
+  (source.name !== "overwritten" &&
+    (source.styleSourceId === undefined ||
+      source.styleSourceId === styleDecl.styleSourceId));
+
 const renderStateStyles = ({
   instanceStyles,
   sheet,
@@ -753,12 +891,15 @@ const renderStateStyles = ({
     sheet.addMediaRule(breakpoint.id, breakpoint);
   }
   const selector = `[${idAttribute}="${instanceId}"]`;
-  const rule = sheet.addNestingRule(selector);
-  const stateSelector = isPseudoElement(selectedState) ? selectedState : "";
   for (const styleDecl of styles) {
+    const tag = getTagFromStyleId(styleDecl.styleSourceId);
+    const previewSelector = tag
+      ? getTagStatePreviewSelector(selector, tag, selectedState)
+      : getInstanceStatePreviewSelector(selector, selectedState);
+    const rule = sheet.addNestingRule(previewSelector);
     rule.setDeclaration({
       breakpoint: styleDecl.breakpointId,
-      selector: stateSelector,
+      selector: "",
       property: styleDecl.property,
       value: toStyleValue(styleDecl, transformValue),
     });
@@ -817,6 +958,13 @@ const subscribeEphemeralStyle = () => {
       userSheet.setTransformer($transformValue.get());
       userSheet.render();
       appliedEphemeralDeclarations.clear();
+      renderStateStyles({
+        instanceStyles: $instanceStyles.get(),
+        sheet: stateSheet,
+        transformValue: $transformValue.get(),
+        toStyleValue: (styleDecl, transformValue) =>
+          toVarValue(styleDecl, transformValue),
+      });
     }
 
     // add ephemeral styles
@@ -826,6 +974,8 @@ const subscribeEphemeralStyle = () => {
       const rule = userSheet.addNestingRule(selector);
       let ephemeralSheetUpdated = false;
       for (const styleDecl of ephemeralStyles) {
+        const tag = getTagFromStyleId(styleDecl.styleSourceId);
+        const isTagStyle = tag !== undefined;
         // update custom property
         document.documentElement.style.setProperty(
           getEphemeralProperty(styleDecl),
@@ -847,8 +997,6 @@ const subscribeEphemeralStyle = () => {
         if (appliedEphemeralDeclarations.has(styleDeclKey) === false) {
           ephemeralSheetUpdated = true;
 
-          const mixinRule = userSheet.addMixinRule(styleDecl.styleSourceId);
-
           // Use the actual style value as a fallback (non-ephemeral); see the "Lazy" comment above.
           const computedStyleDecl = createComputedStyleDeclStore(
             hyphenateProperty(styleDecl.property)
@@ -860,26 +1008,32 @@ const subscribeEphemeralStyle = () => {
             computedStyleDecl.cascadedValue
           );
 
-          mixinRule.setDeclaration({
-            ...toDeclarationParams(styleDecl),
-            value,
-          });
-
-          rule.addMixin(styleDecl.styleSourceId);
+          if (!isTagStyle) {
+            const mixinRule = userSheet.addMixinRule(styleDecl.styleSourceId);
+            mixinRule.setDeclaration({
+              ...toDeclarationParams(styleDecl),
+              value,
+            });
+            rule.addMixin(styleDecl.styleSourceId);
+          }
 
           // When editing state styles (e.g., :hover), also render var() in stateSheet
           // so ephemeral updates are visible in the state preview
-          if (styleDecl.state !== undefined) {
-            const stateRule = stateSheet.addNestingRule(selector);
-            // For pseudo-elements (::before, ::after), keep the selector so styles
-            // apply to the pseudo-element. For pseudo-classes (:hover, :focus),
-            // render without state so users can preview without triggering the state.
-            const stateSelector = isPseudoElement(styleDecl.state)
-              ? styleDecl.state
-              : "";
+          if (
+            styleDecl.state !== undefined &&
+            shouldRenderEphemeralTagState(
+              styleDecl,
+              isTagStyle,
+              computedStyleDecl.source
+            )
+          ) {
+            const previewSelector = tag
+              ? getTagStatePreviewSelector(selector, tag, styleDecl.state)
+              : getInstanceStatePreviewSelector(selector, styleDecl.state);
+            const stateRule = stateSheet.addNestingRule(previewSelector);
             stateRule.setDeclaration({
               breakpoint: styleDecl.breakpointId,
-              selector: stateSelector,
+              selector: "",
               property: styleDecl.property,
               value,
             });
@@ -900,6 +1054,8 @@ export const __testing__ = {
   getEphemeralProperty,
   getInstanceSelector,
   getPresetStyleSelector,
+  getStatePreviewSelector,
+  shouldRenderEphemeralTagState,
   computeDescendantSelectors,
   computeInstanceStyles,
   computeEditableCursorRules,
@@ -907,6 +1063,8 @@ export const __testing__ = {
   toDeclarationParams,
   toVarValue,
   renderStateStyles,
+  subscribeStateStyles,
+  subscribeEphemeralStyle,
   simulateConditionBreakpoints,
   shouldRenderInBackgroundTask,
 };

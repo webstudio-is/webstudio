@@ -73,6 +73,7 @@ export type StyleValueSource = {
 export type StyleObjectModel = {
   styles: Styles;
   styleSourceSelections: StyleSourceSelections;
+  tagStyleIds: Map<string, StyleDecl["styleSourceId"]>;
   // component:tag:state:property
   presetStyles: Map<string, StyleValue>;
   instanceTags: Map<Instance["id"], HtmlTags>;
@@ -135,6 +136,7 @@ const getCascadedValue = ({
   const {
     styles,
     styleSourceSelections,
+    tagStyleIds,
     presetStyles,
     instanceTags,
     instanceComponents,
@@ -144,6 +146,7 @@ const getCascadedValue = ({
   const tag = instanceTags.get(instanceId);
   const component = instanceComponents.get(instanceId);
   let selectedIndex = -1;
+  let selectedTagStyleSource: StyleValueSource | undefined;
   // store the source of latest value
   let source: StyleValueSource = { name: "default" };
 
@@ -200,8 +203,44 @@ const getCascadedValue = ({
 
   // user styles
   const styleSourceIds = styleSourceSelections.get(instanceId)?.values ?? [];
+  const tagStyleId = tag ? tagStyleIds.get(tag) : undefined;
   selectedStyleSourceId ??= styleSourceIds.at(-1);
+  // Within each state, resolve all Tag breakpoints before instance styles.
+  // Instance selectors then win over Tag selectors across breakpoints.
   for (const state of states) {
+    if (tagStyleId) {
+      for (const breakpointId of matchingBreakpoints) {
+        const key = getStyleDeclKey({
+          styleSourceId: tagStyleId,
+          breakpointId,
+          state,
+          property: camelCaseProperty(property),
+        });
+        const styleDecl = styles.get(key);
+        if (tagStyleId === selectedStyleSourceId && state === selectedState) {
+          selectedIndex = styleDecl ? declaredValues.length : -1;
+          selectedTagStyleSource = styleDecl
+            ? {
+                name: "remote",
+                instanceId,
+                styleSourceId: tagStyleId,
+                state,
+                breakpointId,
+              }
+            : undefined;
+        }
+        if (styleDecl) {
+          source = {
+            name: "remote",
+            instanceId,
+            styleSourceId: tagStyleId,
+            state,
+            breakpointId,
+          };
+          declaredValues.push(styleDecl.value);
+        }
+      }
+    }
     for (const breakpointId of matchingBreakpoints) {
       for (const styleSourceId of styleSourceIds) {
         const key = getStyleDeclKey({
@@ -236,6 +275,9 @@ const getCascadedValue = ({
   // when reset or unselected (-1) take last declared value
   const cascadedValue = declaredValues.at(selectedIndex);
   if (cascadedValue) {
+    if (selectedStyleSourceId === tagStyleId && selectedTagStyleSource) {
+      source = selectedTagStyleSource;
+    }
     if (selectedIndex > -1) {
       // local when selected value is latest declared
       if (selectedIndex === declaredValues.length - 1) {

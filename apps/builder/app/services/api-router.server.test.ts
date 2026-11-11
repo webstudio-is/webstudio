@@ -1354,6 +1354,7 @@ describe("api router permits", () => {
           pages: createDefaultPages({ rootInstanceId: "root" }),
           breakpoints: [],
           styles: [],
+          styleSources: [],
           styleSourceSelections: [],
           dataSources: [],
           props: [],

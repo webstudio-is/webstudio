@@ -241,6 +241,7 @@ export const generateStories = async ({
       assets: new Map(),
       breakpoints,
       styles: new Map(data.styles.map((item) => [getStyleDeclKey(item), item])),
+      styleSources: new Map(data.styleSources.map((item) => [item.id, item])),
       styleSourceSelections: new Map(
         data.styleSourceSelections.map((item) => [item.instanceId, item])
       ),

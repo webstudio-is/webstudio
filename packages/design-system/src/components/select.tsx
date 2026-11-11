@@ -10,7 +10,7 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { styled, theme } from "../stitches.config";
+import { rawTheme, styled, theme } from "../stitches.config";
 import {
   menuCss,
   menuItemCss,
@@ -121,6 +121,7 @@ export const SelectItemDescription = ({
         data-select-description="content"
         css={{
           display: "grid",
+          "& > * > *": { maxWidth: "100%" },
         }}
         hint
       >
@@ -269,7 +270,10 @@ const SelectBase = <Option,>(
         </SelectButton>
       </Primitive.Trigger>
       <Primitive.Portal>
-        <SelectContent position="popper">
+        <SelectContent
+          position="popper"
+          sideOffset={Number.parseFloat(rawTheme.spacing[3])}
+        >
           <Box
             css={{
               display: "flex",

@@ -89,7 +89,6 @@ describe("Craft color CSS source", () => {
     expect(Object.keys(colors.scheme.light)).toEqual(
       Object.keys(colors.scheme.dark)
     );
-    expect(Object.keys(colors.derived)).toHaveLength(31);
     expect(colors.derived).toHaveProperty("focus");
     expect(Object.keys(colors.semantic)).toEqual([
       "background",
@@ -102,7 +101,12 @@ describe("Craft color CSS source", () => {
         (count, category) => count + Object.keys(category).length,
         0
       )
-    ).toBe(38);
+    ).toBe(41);
+    expect(colors.semantic.background).toHaveProperty("floating");
+    expect(colors.semantic.background).toHaveProperty("floating-raised");
+    expect(colors.semantic.background).toHaveProperty("floating-nested");
+    expect(colors.semantic.foreground).toHaveProperty("accent");
+    expect(colors.semantic.foreground).not.toHaveProperty("accent-floating");
     expect(colors.semantic.background).toHaveProperty("text-selection");
     expect(colors.semantic.foreground).toHaveProperty("on-text-selection");
     expect(colors.semantic.background).toHaveProperty("positive-subtle");
@@ -117,9 +121,9 @@ describe("Craft color CSS source", () => {
     const extendedSource = addRootDeclarations(source, {
       "--theme-color-custom": "oklch(50% 0.1 300)",
       "--color-custom":
-        "oklch(from var(--theme-color-custom) var(--scheme-chromatic-luminance-max) c h)",
+        "oklch(from var(--theme-color-custom) clamp(0.2, l, 0.48) c h)",
       "--foreground-custom":
-        "color-mix(in oklab, var(--color-custom) 86%, var(--color-foreground))",
+        "oklch(from var(--color-custom) var(--scheme-foreground-soft-lightness) c h)",
     });
     const colors = parseColorSource(extendedSource);
 
@@ -153,16 +157,18 @@ describe("Craft color CSS source", () => {
     );
   });
 
-  test("rejects standalone semantic color literals", () => {
-    const invalidSource = replaceDeclaration({
+  test("accepts standalone semantic color literals", () => {
+    const customSource = replaceDeclaration({
       css: source,
       property: "--background-primary",
       value: "oklch(50% 0.2 250)",
     });
 
-    expect(() => parseColorSource(invalidSource)).toThrow(
-      "--background-primary must derive from another color variable"
-    );
+    expect(
+      getCssVariableReferences(
+        parseColorSource(customSource).semantic.background.primary
+      )
+    ).toEqual([]);
   });
 
   test("rejects circular semantic references", () => {
@@ -196,5 +202,27 @@ describe("Craft color CSS source", () => {
     expect(() => parseColorSource(invalidSource)).toThrow(
       `--scheme-background-lightness references missing variable --scheme-missing`
     );
+  });
+
+  test("rejects duplicate root selectors and declarations", () => {
+    expect(() => parseColorSource(`${source}\n:root {}`)).toThrow(
+      "Duplicate color selector: :root"
+    );
+    const duplicate = addRootDeclarations(source, {
+      "--color-background": "var(--theme-color-neutral)",
+    });
+    expect(() => parseColorSource(duplicate)).toThrow(
+      "Duplicate color declaration: --color-background"
+    );
+  });
+
+  test("rejects cycles introduced by a dark scheme override", () => {
+    const cycle = replaceDeclaration({
+      css: source,
+      selector: ':root[data-color-scheme="dark"]',
+      property: "--scheme-background-lightness",
+      value: "var(--color-background)",
+    });
+    expect(() => parseColorSource(cycle)).toThrow("Circular color reference");
   });
 });

@@ -1,3 +1,8 @@
+import "./request-fixtures";
+import { updateCsrfToken } from "../apps/builder/app/shared/csrf.client";
+
+// Use a synthetic CSRF value in the isolated Storybook environment.
+updateCsrfToken("storybook-fixture");
 import type { Preview } from "@storybook/react";
 import * as React from "react";
 import { useEffect, useLayoutEffect, type ReactNode } from "react";

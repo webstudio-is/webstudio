@@ -164,7 +164,7 @@ const declaration = looseObject({
   value: styleValue,
   breakpoint: id,
   state: z.string().optional(),
-  source: z.enum(["local", "token"]),
+  source: z.enum(["local", "token", "tag"]),
 });
 const declarationSummary = declaration.omit({ value: true }).extend({
   valueType: z.string(),
@@ -176,6 +176,21 @@ const token = looseObject({
   declarationCount: z.number().int(),
   styles: z.record(z.string(), styleValue).optional(),
   usageCount: z.number().int().optional(),
+});
+const tagStyle = looseObject({
+  id,
+  tag: z.string(),
+  declarationCount: z.number().int(),
+  declarations: z
+    .array(
+      looseObject({
+        property: z.string(),
+        value: styleValue,
+        breakpoint: id,
+        state: z.string().optional(),
+      })
+    )
+    .optional(),
 });
 const cssVariable = looseObject({
   name: z.string(),
@@ -659,8 +674,15 @@ export const runtimeOutputSchemas = {
   "styles.deleteSelectedDeclarations": styleKeysResult,
   "styles.replaceValues": styleKeysResult,
   "designTokens.list": looseObject({ tokens: z.array(token), ...outputPage }),
+  "tagStyles.list": looseObject({
+    tagStyles: z.array(tagStyle),
+    ...outputPage,
+  }),
   "designTokens.copy": looseObject({ data: z.string() }),
-  "designTokens.paste": looseObject({ tokenId: id }),
+  "designTokens.paste": z.union([
+    looseObject({ tokenId: id }),
+    looseObject({ styleSourceId: id }),
+  ]),
   "designTokens.create": looseObject({ tokenIds: stringArray }),
   "designTokens.import": looseObject({
     plan: z.array(designTokenImportPlanEntrySchema),

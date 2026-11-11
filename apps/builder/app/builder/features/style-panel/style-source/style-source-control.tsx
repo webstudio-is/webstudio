@@ -100,6 +100,10 @@ const StyleSourceContainer = styled(Box, {
   color: cssVar("--foreground-on-accent"),
   ...menuCssVars({ show: false }),
   "&:hover": menuCssVars({ show: true }),
+  "&:has(button:focus-visible)": {
+    outline: `1px solid ${cssVar("--border-focus")}`,
+    outlineOffset: -1,
+  },
   variants: {
     source: {
       local: {
@@ -112,6 +116,7 @@ const StyleSourceContainer = styled(Box, {
         [menuTriggerGradientVar]: styleSourceColors.local.gradient,
       },
       tag: {
+        color: styleSourceColors.tag.foreground,
         backgroundColor: styleSourceColors.tag.background,
         [menuTriggerGradientVar]: styleSourceColors.tag.gradient,
       },
@@ -230,6 +235,8 @@ type StyleSourceControlProps = {
   onChangeValue: (value: string) => void;
   onChangeEditing: (isEditing: boolean) => void;
   onOpenMenu?: () => void;
+  buttonRef?: (element: HTMLButtonElement | null) => void;
+  onArrowToSource?: (direction: "left" | "right") => boolean;
 };
 
 export const StyleSourceControl = ({
@@ -250,6 +257,8 @@ export const StyleSourceControl = ({
   onChangeEditing,
   onSelect,
   onOpenMenu,
+  buttonRef,
+  onArrowToSource,
 }: StyleSourceControlProps) => {
   const showMenu = isEditing === false && isDragging === false;
 
@@ -279,7 +288,25 @@ export const StyleSourceControl = ({
             disabled={disabled || isEditing}
             isEditing={isEditing}
             tabIndex={-1}
+            ref={buttonRef}
             onClick={onSelect}
+            onKeyDown={(event) => {
+              if (event.key.startsWith("Arrow")) {
+                event.stopPropagation();
+              }
+              if (event.key === "ArrowDown" && showMenu && !disabled) {
+                event.preventDefault();
+                onOpenMenu?.();
+                return;
+              }
+              if (
+                !event.shiftKey &&
+                (event.key === "ArrowLeft" || event.key === "ArrowRight") &&
+                onArrowToSource?.(event.key === "ArrowLeft" ? "left" : "right")
+              ) {
+                event.preventDefault();
+              }
+            }}
             onContextMenu={handleContextMenu}
           >
             {source === "local" ? (

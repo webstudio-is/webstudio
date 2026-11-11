@@ -25,6 +25,8 @@ A Webstudio **Token** is a reusable style source that can contain multiple
 declarations and states. [Craft](../craft.md) calls it a **composite Token** to
 distinguish it from individual values stored in CSS variables.
 
+[Tag styles](tag-styles.md) are a separate source for styles that apply to every instance of an HTML tag. Tokens apply only where you attach them.
+
 The Design Tokens Community Group also uses _design token_ for values in its
 portable data format. Webstudio imports that format and represents its values
 as CSS variables or Webstudio Tokens according to their type and intended use.
