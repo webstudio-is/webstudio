@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   $allSelectedInstanceSelectors,
   $textEditingInstanceSelector,
@@ -122,6 +122,21 @@ describe("canvas instance selection", () => {
     );
 
     expect($ephemeralStyles.get()).toEqual([]);
+  });
+
+  test("does not reset empty ephemeral styles when creating multi-selection", () => {
+    const box = createCanvasElement({ selector: "box,body" });
+    const heading = createCanvasElement({ selector: "heading,body" });
+    box.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    const onStylesChange = vi.fn();
+    const unsubscribe = $ephemeralStyles.listen(onStylesChange);
+
+    heading.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, metaKey: true })
+    );
+
+    expect(onStylesChange).not.toHaveBeenCalled();
+    unsubscribe();
   });
 
   test("edits a literal child without promoting its mixed rich-text parent", () => {
