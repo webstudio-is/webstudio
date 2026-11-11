@@ -6,6 +6,7 @@ import {
   $selectedInstanceOutline,
   $selectedInstanceOutlines,
   $selectedInstanceStates,
+  $selectedInstanceStatesByInstanceId,
   selectInstances,
 } from "~/shared/nano-states";
 import {
@@ -100,6 +101,7 @@ beforeEach(() => {
   $styles.set(new Map());
   $allSelectedInstanceSelectors.set([]);
   $selectedInstanceStates.set(new Set());
+  $selectedInstanceStatesByInstanceId.set(new Map());
   $selectedInstanceOutline.set(undefined);
   $selectedInstanceOutlines.set([]);
   document.body.innerHTML = "";
@@ -118,6 +120,7 @@ afterEach(() => {
   $styleSources.set(new Map());
   $allSelectedInstanceSelectors.set([]);
   $selectedInstanceStates.set(new Set());
+  $selectedInstanceStatesByInstanceId.set(new Map());
   $selectedInstanceOutline.set(undefined);
   $selectedInstanceOutlines.set([]);
 });
@@ -208,6 +211,12 @@ describe("subscribeSelected", () => {
 
     expect($selectedInstanceStates.get()).toEqual(
       new Set(["[ data-state = open ]"])
+    );
+    expect($selectedInstanceStatesByInstanceId.get()).toEqual(
+      new Map([
+        ["heading", new Set(["[ data-state = open ]"])],
+        ["box", new Set()],
+      ])
     );
   });
 

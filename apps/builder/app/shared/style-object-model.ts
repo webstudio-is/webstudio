@@ -7,6 +7,7 @@ import {
   parseCssVar,
   propertiesData,
   isPseudoElement,
+  validateSelector,
 } from "@webstudio-is/css-data";
 import {
   type StyleValue,
@@ -86,6 +87,7 @@ export type StyleObjectModel = {
    * all currently matching and ordered breakpointsgg
    */
   matchingStates: Set<string>;
+  matchingStatesByInstanceId?: Map<Instance["id"], Set<string>>;
 };
 
 export const getPresetStyleDeclKey = ({
@@ -143,8 +145,10 @@ const getCascadedValue = ({
     instanceTags,
     instanceComponents,
     matchingBreakpoints,
-    matchingStates,
   } = model;
+  const matchingStates = model.matchingStatesByInstanceId
+    ? (model.matchingStatesByInstanceId.get(instanceId) ?? new Set<string>())
+    : model.matchingStates;
   const tag = instanceTags.get(instanceId);
   const component = instanceComponents.get(instanceId);
   let selectedIndex = -1;
@@ -206,6 +210,31 @@ const getCascadedValue = ({
   // user styles
   const styleSourceIds = styleSourceSelections.get(instanceId)?.values ?? [];
   const tagStyleId = tag ? tagStyleIds.get(tag) : undefined;
+  const nestedStyles = new Map<string, StyleDecl>();
+  if (tag && ancestorIds.length > 0) {
+    for (const declaration of styles.values()) {
+      if (
+        declaration.property !== camelCaseProperty(property) ||
+        !declaration.state?.startsWith(" ")
+      ) {
+        continue;
+      }
+      const selector = validateSelector(declaration.state);
+      if (
+        selector.success &&
+        selector.type === "tag" &&
+        selector.tag.toLowerCase() === tag
+      ) {
+        nestedStyles.set(
+          getStyleDeclKey({
+            ...declaration,
+            state: ` ${tag}${selector.condition}`,
+          }),
+          declaration
+        );
+      }
+    }
+  }
   selectedStyleSourceId ??= styleSourceIds.at(-1);
   const addDeclaration = ({
     styleSourceId,
@@ -218,14 +247,13 @@ const getCascadedValue = ({
     state?: string;
     sourceInstanceId: string;
   }) => {
-    const styleDecl = styles.get(
-      getStyleDeclKey({
-        styleSourceId,
-        breakpointId,
-        state,
-        property: camelCaseProperty(property),
-      })
-    );
+    const key = getStyleDeclKey({
+      styleSourceId,
+      breakpointId,
+      state,
+      property: camelCaseProperty(property),
+    });
+    const styleDecl = nestedStyles.get(key) ?? styles.get(key);
     const isSelected =
       sourceInstanceId === instanceId &&
       styleSourceId === selectedStyleSourceId &&
@@ -243,7 +271,7 @@ const getCascadedValue = ({
       name: "remote",
       instanceId: sourceInstanceId,
       styleSourceId,
-      state,
+      state: styleDecl.state,
       breakpointId,
     };
     if (isSelected && styleSourceId === tagStyleId) {
@@ -633,7 +661,7 @@ export const getComputedStyleDecl = ({
       instanceId,
       ancestorIds: instanceSelector.slice(index + 1),
       styleSourceId,
-      state,
+      state: index === 0 ? state : undefined,
       property,
     });
     const inheritedCascadedValue = cascadedValue;

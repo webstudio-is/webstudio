@@ -1176,6 +1176,87 @@ test("shows the div's nested h2 color when h2 is selected", () => {
   ).toEqual({ type: "keyword", value: "red" });
 });
 
+test("keeps a descendant attribute state off its ancestor's inherited color", () => {
+  const model = createModel({
+    css: "container { color: black; }",
+    jsx: (
+      <Box ws:id="container" class="container">
+        <Heading ws:id="heading" ws:tag="h2" />
+      </Box>
+    ),
+    matchingStates: new Set(["[data-active]"]),
+  });
+  model.matchingStatesByInstanceId = new Map([
+    ["container", new Set()],
+    ["heading", new Set(["[data-active]"])],
+  ]);
+  const parentState: StyleDecl = {
+    styleSourceId: "container",
+    breakpointId: "base",
+    state: "[data-active]",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  const nestedState: StyleDecl = {
+    ...parentState,
+    state: " h2[data-active]",
+    property: "paddingTop",
+    value: { type: "unit", unit: "px", value: 10 },
+  };
+  for (const styleDecl of [parentState, nestedState]) {
+    model.styles.set(getStyleDeclKey(styleDecl), styleDecl);
+  }
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "container"],
+      styleSourceId: "heading",
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "black" });
+  model.matchingStatesByInstanceId?.set(
+    "container",
+    new Set(["[data-active]"])
+  );
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "container"],
+      styleSourceId: "heading",
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "red" });
+});
+
+test("matches saved nested tag casing and leading whitespace", () => {
+  const model = createModel({
+    css: "",
+    jsx: (
+      <Box ws:id="container" class="container">
+        <Heading ws:id="heading" ws:tag="h2" />
+      </Box>
+    ),
+  });
+  const styleDecl: StyleDecl = {
+    styleSourceId: "container",
+    breakpointId: "base",
+    state: "  H2",
+    property: "color",
+    value: { type: "keyword", value: "purple" },
+  };
+  model.styles.set(getStyleDeclKey(styleDecl), styleDecl);
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "container"],
+      property: "color",
+    })
+  ).toMatchObject({
+    usedValue: { type: "keyword", value: "purple" },
+    source: { state: "  H2" },
+  });
+});
+
 test("shows nested global Tag color and lets an attached Token override it", () => {
   const model = createModel({
     css: "",
