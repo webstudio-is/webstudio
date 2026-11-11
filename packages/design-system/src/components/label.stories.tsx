@@ -6,7 +6,14 @@ export default {
   title: "Label",
 };
 
-const colors = ["default", "preset", "local", "overwritten", "remote"] as const;
+const colors = [
+  "default",
+  "preset",
+  "tag",
+  "local",
+  "overwritten",
+  "remote",
+] as const;
 
 const LabelStory = () => (
   <>

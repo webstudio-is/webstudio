@@ -79,3 +79,25 @@ export const Checkbox = () => {
     </>
   );
 };
+
+export const MarketplaceConsent = () => (
+  <StorySection title="Marketplace consent">
+    <StoryGrid css={{ width: 220 }}>
+      {[false, true].map((checked) => (
+        <CheckboxAndLabel
+          key={String(checked)}
+          css={{ alignItems: "flex-start" }}
+        >
+          <CheckboxComponent
+            checked={checked}
+            aria-label={checked ? "Checked consent" : "Unchecked consent"}
+          />
+          <Label css={{ flexShrink: 1 }}>
+            I understand that by submitting, this project will become available
+            in a public marketplace.
+          </Label>
+        </CheckboxAndLabel>
+      ))}
+    </StoryGrid>
+  </StorySection>
+);

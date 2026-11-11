@@ -1,8 +1,11 @@
 import { importFragmentAssets } from "@webstudio-is/project-build/runtime";
-import { parseTokenTransferData } from "@webstudio-is/project-build/transfer";
+import {
+  parseReusableStyleSourceTransferData,
+  parseTokenTransferData,
+} from "@webstudio-is/project-build/transfer";
 import { getAssetUrl, type Asset } from "@webstudio-is/sdk";
 
-export const prepareMcpTokenPasteData = async ({
+export const prepareMcpStyleSourcePasteData = async ({
   data,
   projectOrigin,
   dryRun,
@@ -21,7 +24,11 @@ export const prepareMcpTokenPasteData = async ({
   ) => Promise<Asset[]>;
   refreshAssets: () => Promise<unknown>;
 }) => {
-  const parsed = parseTokenTransferData(data);
+  const token = parseTokenTransferData(data);
+  const parsed = token.owned
+    ? token
+    : parseReusableStyleSourceTransferData(data);
+  const isToken = token.owned;
   if (parsed.valid === false || parsed.data.fragment.assets.length === 0) {
     return [];
   }
@@ -29,7 +36,11 @@ export const prepareMcpTokenPasteData = async ({
     throw new Error("Asset transfer is unavailable in dry-run mode");
   }
   if (parsed.data.sourceOrigin !== projectOrigin) {
-    throw new Error("Token assets must come from this Webstudio origin");
+    throw new Error(
+      isToken
+        ? "Token assets must come from this Webstudio origin"
+        : "Style source assets must come from this Webstudio origin"
+    );
   }
   const transfer = await importFragmentAssets(
     [parsed.data.fragment],
@@ -41,7 +52,11 @@ export const prepareMcpTokenPasteData = async ({
           response.ok === false ||
           new URL(response.url).origin !== projectOrigin
         ) {
-          throw new Error("Token asset could not be downloaded");
+          throw new Error(
+            isToken
+              ? "Token asset could not be downloaded"
+              : "Style source asset could not be downloaded"
+          );
         }
         const uploaded = await upload(
           asset,
@@ -50,7 +65,11 @@ export const prepareMcpTokenPasteData = async ({
         );
         const imported = uploaded.find((item) => item.type === asset.type);
         if (imported === undefined) {
-          throw new Error("Token asset could not be uploaded");
+          throw new Error(
+            isToken
+              ? "Token asset could not be uploaded"
+              : "Style source asset could not be uploaded"
+          );
         }
         importedAssets.set(asset.id, imported);
       }

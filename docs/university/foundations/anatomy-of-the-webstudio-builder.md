@@ -155,12 +155,13 @@ The Style Panel is located to the right of the canvas, and you can use it to cus
   <img src="../../.gitbook/assets/style-panel-light.png" alt="Style panel showing style sources, layout, grid child, and spacing controls" width="240">
 </picture>
 
-There are three methods for adding styles:
+There are four methods for adding styles:
 
 1.  Local - By default, the Local icon is active, meaning any styles you apply to that instance are for that instance only. The dot in the middle of the Local icon indicates that it has styles, whereas no dot indicates that there are no styles applied, making it easy to identify which ones have styles applied.
 
 2.  [CSS variables](css-variables.md) - Instead of pasting in your colors, sizes, and other styles, you can create a variable for each style and access the variables in each input field. For example, you can define a variable called "color-primary," and in your border color field, you can enter the variable name instead of the color itself.
 3.  [Tokens](design-tokens.md) - These enable reusing groupings of styles across your site. You can either create a new Token and apply styles to it or start with Local and convert it to a Token. Tokens are typically comprised of CSS variables and one-off styles.
+4.  [Tag styles](tag-styles.md) - Set styles for every instance of an HTML tag, such as `h1` or `button`.
 
 ### Label colors
 

@@ -24,8 +24,14 @@ const accentBackground = cssVar("--background-accent");
 const accentForeground = cssVar("--foreground-accent");
 
 // Style-source states are a component domain, not information, warning, or
-// error intent. Their palette is derived from the theme accent locally.
+// error intent. Tag styles share the global Slot color; the other source
+// colors derive from the theme accent.
 export const styleSourceColor = {
+  tag: {
+    background: cssVar("--background-accent-secondary"),
+    border: cssVar("--background-accent-secondary"),
+    foreground: cssVar("--foreground-on-accent-secondary"),
+  },
   local: createStyleSourceColor(accentBackground, accentForeground),
   overwritten: createStyleSourceColor(
     rotateBoundedBackgroundHue(accentBackground, 100),

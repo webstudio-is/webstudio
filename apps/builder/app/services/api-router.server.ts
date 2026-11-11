@@ -625,6 +625,9 @@ const canPublishBuildCss = async (build: CompactBuild, assets: Asset[]) => {
         )
         .map((style) => [getStyleDeclKey(style), style])
     ),
+    styleSources: new Map(
+      build.styleSources.map((source) => [source.id, source])
+    ),
     styleSourceSelections: new Map(
       build.styleSourceSelections.map((selection) => [
         selection.instanceId,

@@ -5,6 +5,7 @@ import {
   $selectedInstanceOutlines,
   $selectedInstanceSelector,
   $selectedPageId,
+  $temporaryTagStyleId,
   selectInstance,
   selectInstances,
 } from "../nano-states";
@@ -370,6 +371,18 @@ describe("createObjectPool", () => {
     });
 
     expect($resourcesState.get()).toBe("settled");
+  });
+
+  test("syncs temporary Tag style selection to the canvas", () => {
+    const objectPool = createObjectPool();
+
+    objectPool.applyTransaction({
+      id: "select-tag-style",
+      object: "temporaryTagStyleId",
+      payload: "tag-style:button",
+    });
+
+    expect($temporaryTagStyleId.get()).toBe("tag-style:button");
   });
 
   test("syncs selected instance outlines for builder canvas overlay", () => {

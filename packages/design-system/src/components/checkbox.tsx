@@ -12,8 +12,10 @@ import { cssVar } from "../css-var";
 const checkboxStyle = css({
   all: "unset", // reset <button>
 
-  width: theme.spacing[7],
-  height: theme.spacing[7],
+  boxSizing: "border-box",
+  width: theme.spacing[8],
+  height: theme.spacing[8],
+  flexShrink: 0,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",

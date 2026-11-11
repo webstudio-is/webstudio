@@ -658,6 +658,29 @@ Commands:
 
 - MCP tool: get-styles {"instanceIds":["<instanceId>"],"includeTokens":true}
 
+## Read global Tag styles
+
+Commands:
+
+- MCP tool: list-tag-styles {}
+- MCP tool: list-tag-styles {"tag":"button","verbose":true}
+
+Notes:
+
+- Tag styles apply across the project without being attached to an instance. Use `list-tag-styles` to read them; `get-styles` lists attached sources.
+- `list-design-tokens` does not include Tag styles.
+
+## Update a global Tag style
+
+Commands:
+
+- MCP tool: update-selected-styles {"updates":[{"instanceId":"<buttonInstanceId>","styleSourceId":"tag-style:button","property":"color","value":{"type":"keyword","value":"red"}}]}
+
+Notes:
+
+- Use `tag-style:<tag>` to create or edit a Tag style. The first update creates its style source; no instance attachment is saved.
+- Use `delete-selected-styles` with the same `instanceId`, `styleSourceId`, and `property` to remove a declaration.
+
 ## Update local styles
 
 Commands:

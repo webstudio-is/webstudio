@@ -9,6 +9,7 @@ import { generateCss, type CssConfig } from "./css";
 import type { Breakpoint } from "./schema/breakpoints";
 import type { Asset } from "./schema/assets";
 import { rootComponent } from "./core-metas";
+import { getTagStyleId } from "./schema/style-sources";
 
 const Body = createTemplateComponentFixture("Body");
 const Box = createTemplateComponentFixture("Box");
@@ -28,6 +29,81 @@ const generateAllCss = (config: Omit<CssConfig, "atomic">) => {
   });
   return { cssText, atomicCssText, classes, atomicClasses };
 };
+
+test("renders an unattached tag token before instance styles", () => {
+  const data = renderData(
+    <Box
+      ws:id="box"
+      ws:style={css`
+        color: blue;
+      `}
+    />
+  );
+  const id = getTagStyleId("p");
+  const declaration = {
+    styleSourceId: id,
+    breakpointId: "base",
+    property: "color" as const,
+    value: { type: "keyword" as const, value: "red" },
+  };
+  const hoverDeclaration = {
+    ...declaration,
+    state: ":hover",
+  };
+  const { cssText, atomicCssText } = generateAllCss({
+    ...data,
+    breakpoints: toMap<Breakpoint>([{ id: "base", label: "Base" }]),
+    styleSources: new Map([
+      ...data.styleSources,
+      [id, { type: "tag" as const, id, tag: "p" }],
+    ]),
+    styles: new Map([
+      ...data.styles,
+      ["tag-color", declaration],
+      ["tag-hover-color", hoverDeclaration],
+    ]),
+    componentMetas: new Map(),
+    assetBaseUrl: "/",
+  });
+
+  expect(cssText).toContain("p {\n    color: red\n  }");
+  expect(atomicCssText).toContain("p {\n    color: red\n  }");
+  expect(cssText).toContain("p:hover");
+  expect(atomicCssText).toContain("p:hover");
+  expect(cssText.indexOf("p {")).toBeLessThan(cssText.indexOf("color: blue"));
+});
+
+test("renders a tag selector inside an attached token as a descendant", () => {
+  const data = renderData(<Box ws:id="box" />);
+  const { cssText, atomicCssText } = generateAllCss({
+    ...data,
+    styleSources: new Map([
+      ...data.styleSources,
+      ["token", { type: "token" as const, id: "token", name: "Token" }],
+    ]),
+    styleSourceSelections: new Map([
+      ["box", { instanceId: "box", values: ["token"] }],
+    ]),
+    styles: new Map([
+      [
+        "token-descendant",
+        {
+          styleSourceId: "token",
+          breakpointId: "base",
+          state: " p",
+          property: "color",
+          value: { type: "keyword" as const, value: "red" },
+        },
+      ],
+    ]),
+    breakpoints: toMap<Breakpoint>([{ id: "base", label: "Base" }]),
+    componentMetas: new Map(),
+    assetBaseUrl: "/",
+  });
+
+  expect(cssText).toContain(".w-box p");
+  expect(atomicCssText).toMatch(/\.c[a-z0-9]+ p/);
+});
 
 test("generates distinct upright and italic variable font faces", () => {
   const variableFontAsset = (style: "normal" | "italic"): Asset => ({

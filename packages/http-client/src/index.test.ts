@@ -101,6 +101,7 @@ import {
   parseBuildPatchTransactions,
   parseBuilderUrl,
   pasteDesignToken,
+  pasteStyleSource,
   toLocalProjectBundle,
   uploadAsset,
   uploadAssets,
@@ -171,6 +172,46 @@ const apiParams = {
   origin: "https://apps.webstudio.is",
   projectId: "project-id",
 };
+
+test("normalizes Token and Tag paste results in pasteStyleSource", async () => {
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify([{ result: { data: { tokenId: "token" } } }]),
+        {
+          headers: { "content-type": "application/json" },
+        }
+      )
+    )
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify([
+          { result: { data: { styleSourceId: "tag-style:p" } } },
+        ]),
+        { headers: { "content-type": "application/json" } }
+      )
+    )
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify([{ result: { data: { tokenId: "legacy" } } }]),
+        {
+          headers: { "content-type": "application/json" },
+        }
+      )
+    );
+  vi.stubGlobal("fetch", fetch);
+
+  await expect(
+    pasteStyleSource({ ...apiParams, data: "token-data" })
+  ).resolves.toEqual({ styleSourceId: "token" });
+  await expect(
+    pasteStyleSource({ ...apiParams, data: "tag-data" })
+  ).resolves.toEqual({ styleSourceId: "tag-style:p" });
+  await expect(
+    pasteDesignToken({ ...apiParams, data: "token-data" })
+  ).resolves.toEqual({ tokenId: "legacy" });
+});
 
 test("re-exports builder URL parsing from protocol", () => {
   expect(

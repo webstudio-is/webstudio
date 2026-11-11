@@ -4,7 +4,10 @@ import { pseudoClasses } from "./__generated__/pseudo-classes";
 
 export type SelectorValidationResult =
   | { success: false; error: string }
-  | { success: true; type: "pseudo-class" | "pseudo-element" | "attribute" };
+  | {
+      success: true;
+      type: "pseudo-class" | "pseudo-element" | "attribute" | "tag";
+    };
 
 /**
  * Validates an open CSS state suffix scoped to the current element.
@@ -18,14 +21,21 @@ export type SelectorValidationResult =
  * @returns SelectorValidationResult with success status and type or error message
  */
 export const validateSelector = (
-  selector: string
+  selector: string,
+  { allowDescendants = true }: { allowDescendants?: boolean } = {}
 ): SelectorValidationResult => {
   if (!selector || selector.trim() === "") {
     return { success: false, error: "Selector cannot be empty" };
   }
 
-  // Must start with a colon or bracket
-  if (!selector.startsWith(":") && !selector.startsWith("[")) {
+  // A leading space marks a descendant tag selector. The CSS engine appends
+  // state strings directly to the styled element's selector.
+  const isTagSelector = selector.startsWith(" ");
+  if (
+    !isTagSelector &&
+    !selector.startsWith(":") &&
+    !selector.startsWith("[")
+  ) {
     return {
       success: false,
       error:
@@ -49,19 +59,42 @@ export const validateSelector = (
     const firstCombinatorIndex = selectorNodes.findIndex(
       (node) => node.type === "Combinator"
     );
+    if (
+      allowDescendants === false &&
+      (isTagSelector || firstCombinatorIndex !== -1)
+    ) {
+      return {
+        success: false,
+        error: "Selector must be one state scoped to the current element",
+      };
+    }
     const stateNodes = selectorNodes.slice(
       0,
       firstCombinatorIndex === -1 ? undefined : firstCombinatorIndex
     );
+    const hasValidTagStart =
+      isTagSelector &&
+      firstCombinatorIndex === -1 &&
+      stateNodes[0]?.type === "TypeSelector" &&
+      stateNodes
+        .slice(1)
+        .every(
+          (node) =>
+            node.type === "PseudoClassSelector" ||
+            node.type === "PseudoElementSelector" ||
+            node.type === "AttributeSelector"
+        );
     if (
       parsedSelector?.type !== "Selector" ||
       stateNodes.length === 0 ||
-      stateNodes.some(
-        (node) =>
-          node.type !== "PseudoClassSelector" &&
-          node.type !== "PseudoElementSelector" &&
-          node.type !== "AttributeSelector"
-      ) ||
+      (!hasValidTagStart &&
+        stateNodes.some(
+          (node) =>
+            node.type !== "PseudoClassSelector" &&
+            node.type !== "PseudoElementSelector" &&
+            node.type !== "AttributeSelector"
+        )) ||
+      (isTagSelector && !hasValidTagStart) ||
       selectorNodes.some(
         (node) =>
           node.type === "Combinator" && node.name !== " " && node.name !== ">"
@@ -116,7 +149,7 @@ export const validateSelector = (
       // Validate that the pseudo-element actually exists
       // Some pseudo-elements are functional (e.g., ::part(), ::slotted())
       // The list includes both "part" and "part()" variants
-      return { success: true, type: "pseudo-element" };
+      return { success: true, type: isTagSelector ? "tag" : "pseudo-element" };
     }
 
     if (pseudoClassNames.length > 0) {
@@ -127,11 +160,15 @@ export const validateSelector = (
       ) {
         return { success: true, type: "pseudo-element" };
       }
-      return { success: true, type: "pseudo-class" };
+      return { success: true, type: isTagSelector ? "tag" : "pseudo-class" };
     }
 
     if (foundAttribute) {
-      return { success: true, type: "attribute" };
+      return { success: true, type: isTagSelector ? "tag" : "attribute" };
+    }
+
+    if (isTagSelector) {
+      return { success: true, type: "tag" };
     }
 
     // If we get here, something unexpected happened

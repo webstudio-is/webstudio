@@ -2,12 +2,21 @@ import { expect, test } from "vitest";
 import { parseCssValue } from "@webstudio-is/css-data";
 import {
   getStyleDeclKey,
+  getTagStyleId,
   ROOT_INSTANCE_ID,
   type Asset,
   type StyleDecl,
 } from "@webstudio-is/sdk";
-import { copyDesignToken, pasteDesignToken } from "./token-transfer";
-import { parseTokenTransferData } from "./data-formats/token-css";
+import {
+  copyDesignToken,
+  copyStyleSourceTransfer,
+  pasteDesignToken,
+  pasteStyleSourceTransfer,
+} from "./token-transfer";
+import {
+  parseTagStyleTransferData,
+  parseTokenTransferData,
+} from "./data-formats/token-css";
 import { remapFragmentAssets } from "./fragment";
 import { applyBuilderPatchTransactions } from "../state/patch";
 
@@ -30,6 +39,286 @@ const styleMap = (declarations: StyleDecl[]) =>
       declaration,
     ])
   );
+
+test("pastes Tag styles into the matching tag and overwrites only matching declarations", () => {
+  const id = getTagStyleId("button");
+  const hover = { ...style(id, "base", "color", "red"), state: ":hover" };
+  const copied = copyStyleSourceTransfer(
+    {
+      assets: new Map(),
+      breakpoints: new Map([
+        ["base", { id: "base", label: "Base" }],
+        ["mobile", { id: "mobile", label: "Mobile", maxWidth: 600 }],
+      ]),
+      styleSources: new Map([[id, { type: "tag", id, tag: "button" }]]),
+      styleSourceSelections: new Map(),
+      styles: styleMap([
+        hover,
+        style(id, "base", "paddingTop", "8px"),
+        style(id, "mobile", "color", "orange"),
+      ]),
+    },
+    { styleSourceId: id, sourceType: "tag" }
+  );
+  const parsed = parseTagStyleTransferData(copied.data);
+  expect(parsed.valid).toBe(true);
+  const target = {
+    assets: new Map(),
+    breakpoints: new Map([
+      ["target-base", { id: "target-base", label: "Base" }],
+      [
+        "target-mobile",
+        { id: "target-mobile", label: "Mobile", maxWidth: 600 },
+      ],
+    ]),
+    styleSources: new Map([[id, { type: "tag" as const, id, tag: "button" }]]),
+    styleSourceSelections: new Map(),
+    styles: styleMap([
+      { ...style(id, "target-base", "color", "blue"), state: ":hover" },
+      style(id, "target-base", "marginTop", "4px"),
+      style(id, "target-mobile", "color", "blue"),
+      style(getTagStyleId("h1"), "target-base", "color", "green"),
+    ]),
+  };
+  const mutation = pasteStyleSourceTransfer(target, { data: copied.data });
+  expect(mutation.result).toEqual({ styleSourceId: id });
+  const pasted = applyBuilderPatchTransactions(target, [
+    { id: "paste", payload: mutation.payload },
+  ]).state;
+  expect(
+    pasted.styles!.get(`${id}:target-base:color::hover`)?.value
+  ).toMatchObject({ value: "red" });
+  expect(
+    pasted.styles!.get(`${id}:target-base:paddingTop:`)?.value
+  ).toMatchObject({ type: "unit", unit: "px", value: 8 });
+  expect(pasted.styles!.get(`${id}:target-mobile:color:`)?.value).toMatchObject(
+    {
+      value: "orange",
+    }
+  );
+  expect(
+    pasted.styles!.get(`${id}:target-base:marginTop:`)?.value
+  ).toMatchObject({ value: "4px" });
+  expect(
+    pasted.styles!.get(`${getTagStyleId("h1")}:target-base:color:`)?.value
+  ).toMatchObject({ value: "green" });
+});
+
+test("copies a Tag style before it has any saved declarations", () => {
+  const copied = copyStyleSourceTransfer(
+    {
+      assets: new Map(),
+      breakpoints: new Map(),
+      styleSources: new Map(),
+      styleSourceSelections: new Map(),
+      styles: new Map(),
+    },
+    { styleSourceId: getTagStyleId("div"), sourceType: "tag" }
+  );
+  const parsed = parseTagStyleTransferData(copied.data);
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.styleSources).toEqual([
+      { type: "tag", id: getTagStyleId("div"), tag: "div" },
+    ]);
+  }
+});
+
+test("creates the matching Tag style on paste without attaching it to an instance", () => {
+  const id = getTagStyleId("h1");
+  const copied = copyStyleSourceTransfer(
+    {
+      assets: new Map(),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([[id, { type: "tag", id, tag: "h1" }]]),
+      styleSourceSelections: new Map(),
+      styles: styleMap([style(id, "base", "color", "red")]),
+    },
+    { styleSourceId: id, sourceType: "tag" }
+  );
+  const target = {
+    assets: new Map(),
+    breakpoints: new Map([
+      ["target-base", { id: "target-base", label: "Base" }],
+    ]),
+    styleSources: new Map(),
+    styleSourceSelections: new Map(),
+    styles: new Map(),
+  };
+  const mutation = pasteStyleSourceTransfer(target, { data: copied.data });
+  const pasted = applyBuilderPatchTransactions(target, [
+    { id: "paste", payload: mutation.payload },
+  ]).state;
+  expect(pasted.styleSources?.get(id)).toEqual({
+    type: "tag",
+    id,
+    tag: "h1",
+  });
+  expect(pasted.styles?.get(`${id}:target-base:color:`)?.value).toMatchObject({
+    value: "red",
+  });
+  expect(pasted.styleSourceSelections?.size).toBe(0);
+});
+
+test("pastes Local styles into the selected instance and overwrites matching declarations", () => {
+  const copied = copyStyleSourceTransfer(
+    {
+      assets: new Map(),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([
+        ["source-local", { type: "local", id: "source-local" }],
+      ]),
+      styleSourceSelections: new Map(),
+      styles: styleMap([
+        { ...style("source-local", "base", "color", "red"), state: ":hover" },
+        style("source-local", "base", "paddingTop", "8px"),
+      ]),
+    },
+    { styleSourceId: "source-local", sourceType: "local" }
+  );
+  const target = {
+    assets: new Map(),
+    instances: new Map([
+      [
+        "box",
+        {
+          type: "instance" as const,
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]),
+    breakpoints: new Map([
+      ["target-base", { id: "target-base", label: "Base" }],
+    ]),
+    styleSources: new Map([
+      ["target-local", { type: "local" as const, id: "target-local" }],
+    ]),
+    styleSourceSelections: new Map([
+      ["box", { instanceId: "box", values: ["target-local"] }],
+    ]),
+    styles: styleMap([
+      {
+        ...style("target-local", "target-base", "color", "blue"),
+        state: ":hover",
+      },
+      style("target-local", "target-base", "marginTop", "4px"),
+    ]),
+  };
+  const mutation = pasteStyleSourceTransfer(target, {
+    data: copied.data,
+    instanceId: "box",
+  });
+  expect(mutation.result).toEqual({ styleSourceId: "target-local" });
+  const pasted = applyBuilderPatchTransactions(target, [
+    { id: "paste", payload: mutation.payload },
+  ]).state;
+  expect(
+    pasted.styles?.get("target-local:target-base:color::hover")?.value
+  ).toMatchObject({ value: "red" });
+  expect(
+    pasted.styles?.get("target-local:target-base:paddingTop:")?.value
+  ).toMatchObject({ type: "unit", unit: "px", value: 8 });
+  expect(
+    pasted.styles?.get("target-local:target-base:marginTop:")?.value
+  ).toMatchObject({ value: "4px" });
+  expect(pasted.styleSourceSelections?.get("box")?.values).toEqual([
+    "target-local",
+  ]);
+});
+
+test("creates one Local source when pasting into an instance without one", () => {
+  const copied = copyStyleSourceTransfer(
+    {
+      assets: new Map(),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map(),
+      styleSourceSelections: new Map(),
+      styles: new Map(),
+    },
+    { styleSourceId: "temporary-local", sourceType: "local" }
+  );
+  const target = {
+    assets: new Map(),
+    instances: new Map([
+      [
+        "box",
+        {
+          type: "instance" as const,
+          id: "box",
+          component: "Box",
+          children: [],
+        },
+      ],
+    ]),
+    breakpoints: new Map([
+      ["target-base", { id: "target-base", label: "Base" }],
+    ]),
+    styleSources: new Map(),
+    styleSourceSelections: new Map(),
+    styles: new Map(),
+  };
+  const mutation = pasteStyleSourceTransfer(
+    target,
+    { data: copied.data, instanceId: "box" },
+    { createId: () => "new-local" }
+  );
+  expect(mutation.result).toEqual({ styleSourceId: "new-local" });
+  const pasted = applyBuilderPatchTransactions(target, [
+    { id: "paste", payload: mutation.payload },
+  ]).state;
+  expect(pasted.styleSources?.get("new-local")).toEqual({
+    type: "local",
+    id: "new-local",
+  });
+  expect(pasted.styleSourceSelections?.get("box")?.values).toEqual([
+    "new-local",
+  ]);
+});
+
+test("pastes Local styles into Global root without creating two Local sources", () => {
+  const copied = copyStyleSourceTransfer(
+    {
+      assets: new Map(),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([
+        ["source-local", { type: "local", id: "source-local" }],
+      ]),
+      styleSourceSelections: new Map(),
+      styles: styleMap([style("source-local", "base", "color", "red")]),
+    },
+    { styleSourceId: "source-local", sourceType: "local" }
+  );
+  const target = {
+    assets: new Map(),
+    instances: new Map(),
+    breakpoints: new Map([
+      ["target-base", { id: "target-base", label: "Base" }],
+    ]),
+    styleSources: new Map(),
+    styleSourceSelections: new Map(),
+    styles: new Map(),
+  };
+  const mutation = pasteStyleSourceTransfer(
+    target,
+    { data: copied.data, instanceId: ROOT_INSTANCE_ID },
+    { createId: () => "root-local" }
+  );
+  const pasted = applyBuilderPatchTransactions(target, [
+    { id: "paste", payload: mutation.payload },
+  ]).state;
+  expect(pasted.styleSourceSelections?.get(ROOT_INSTANCE_ID)?.values).toEqual([
+    "root-local",
+  ]);
+  expect(pasted.styleSources?.get("root-local")).toEqual({
+    type: "local",
+    id: "root-local",
+  });
+  expect(
+    pasted.styles?.get("root-local:target-base:color:")?.value
+  ).toMatchObject({ value: "red" });
+});
 
 test("copies a token with breakpoint styles and transitive root CSS variables", () => {
   const source = {
@@ -54,7 +343,10 @@ test("copies a token with breakpoint styles and transitive root CSS variables", 
       style("root", "base", "--unrelated", "black"),
     ]),
   };
-  const copied = copyDesignToken(source, { tokenId: "token" });
+  const copied = copyStyleSourceTransfer(source, {
+    styleSourceId: "token",
+    sourceType: "token",
+  });
   expect(copied.data.startsWith('/* @webstudio/token-css/v1 "Button" */')).toBe(
     true
   );
@@ -173,6 +465,133 @@ test("copies a token with breakpoint styles and transitive root CSS variables", 
       }),
     ])
   );
+});
+
+test("copies html Tag variables below attached Global root variables", () => {
+  const htmlTagStyleId = getTagStyleId("html");
+  const source = {
+    assets: new Map(),
+    breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+    styleSources: new Map([
+      ["token", { type: "token" as const, id: "token", name: "Card" }],
+      [
+        htmlTagStyleId,
+        { type: "tag" as const, id: htmlTagStyleId, tag: "html" },
+      ],
+      ["root", { type: "local" as const, id: "root" }],
+    ]),
+    styleSourceSelections: new Map([
+      [ROOT_INSTANCE_ID, { instanceId: ROOT_INSTANCE_ID, values: ["root"] }],
+    ]),
+    styles: styleMap([
+      style("token", "base", "color", "var(--brand)"),
+      style("token", "base", "paddingTop", "var(--space)"),
+      style(htmlTagStyleId, "base", "--brand", "red"),
+      style(htmlTagStyleId, "base", "--space", "8px"),
+      style("root", "base", "--brand", "blue"),
+    ]),
+  };
+
+  const copied = copyStyleSourceTransfer(source, {
+    styleSourceId: "token",
+    sourceType: "token",
+  });
+  const parsed = parseTokenTransferData(copied.data);
+
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(
+      parsed.data.fragment.styles.map((item) => [item.property, item.value])
+    ).toEqual(
+      expect.arrayContaining([
+        ["--brand", expect.objectContaining({ value: "blue" })],
+        ["--space", expect.objectContaining({ value: 8 })],
+      ])
+    );
+    expect(
+      parsed.data.fragment.styles
+        .filter((item) => item.property === "--brand")
+        .map((item) => item.value)
+    ).toEqual([expect.objectContaining({ value: "blue" })]);
+  }
+});
+
+test("copies html Tag variables referenced by another Tag style", () => {
+  const htmlTagStyleId = getTagStyleId("html");
+  const tagStyleId = getTagStyleId("h1");
+  const copied = copyStyleSourceTransfer(
+    {
+      assets: new Map(),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([
+        [
+          htmlTagStyleId,
+          { type: "tag" as const, id: htmlTagStyleId, tag: "html" },
+        ],
+        [tagStyleId, { type: "tag" as const, id: tagStyleId, tag: "h1" }],
+      ]),
+      styleSourceSelections: new Map(),
+      styles: styleMap([
+        style(tagStyleId, "base", "color", "var(--brand)"),
+        style(htmlTagStyleId, "base", "--brand", "red"),
+      ]),
+    },
+    { styleSourceId: tagStyleId, sourceType: "tag" }
+  );
+  const parsed = parseTagStyleTransferData(copied.data);
+
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(parsed.data.fragment.styles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          property: "--brand",
+          value: expect.objectContaining({ value: "red" }),
+        }),
+      ])
+    );
+  }
+});
+
+test("does not copy html Tag variables a second time as root dependencies", () => {
+  const htmlTagStyleId = getTagStyleId("html");
+  const copied = copyStyleSourceTransfer(
+    {
+      assets: new Map(),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([
+        [
+          htmlTagStyleId,
+          { type: "tag" as const, id: htmlTagStyleId, tag: "html" },
+        ],
+      ]),
+      styleSourceSelections: new Map(),
+      styles: styleMap([
+        style(htmlTagStyleId, "base", "--brand", "red"),
+        style(htmlTagStyleId, "base", "color", "var(--brand)"),
+      ]),
+    },
+    { styleSourceId: htmlTagStyleId, sourceType: "tag" }
+  );
+  const parsed = parseTagStyleTransferData(copied.data);
+
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(
+      parsed.data.fragment.styles.filter((item) => item.property === "--brand")
+    ).toHaveLength(1);
+    expect(
+      parsed.data.fragment.styles.map((item) => [
+        item.styleSourceId,
+        item.property,
+      ])
+    ).toEqual(
+      expect.arrayContaining([
+        [htmlTagStyleId, "--brand"],
+        [htmlTagStyleId, "color"],
+      ])
+    );
+  }
 });
 
 test("copies the winning root variable when root sources overlap", () => {

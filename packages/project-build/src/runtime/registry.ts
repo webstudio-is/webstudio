@@ -473,6 +473,10 @@ const designTokenListInput = z.object({
   sort: z.enum(["name", "usage"]).optional(),
   ...paginatedOutputInputSchema.shape,
 });
+const tagStyleListInput = z.object({
+  tag: z.string().optional(),
+  ...paginatedOutputInputSchema.shape,
+});
 const cssVariableListInput = z.object({
   filter: z.string().optional(),
   withUsage: z.boolean().optional(),
@@ -1852,11 +1856,18 @@ export const builderRuntimeOperations = [
     ({ state, input }) => styles.listDesignTokens(state, input)
   ),
   runtimeOperation(
+    "tagStyles.list",
+    api("list-tag-styles", "listTagStyles"),
+    readContract(["styleSources", "styles"]),
+    tagStyleListInput,
+    ({ state, input }) => styles.listTagStyles(state, input)
+  ),
+  runtimeOperation(
     "designTokens.copy",
     api("copy-design-token", "copyDesignToken"),
     readContract(["assets", "breakpoints", ...styleNamespaces]),
     tokenTransfer.copyDesignTokenInput,
-    ({ state, input }) => tokenTransfer.copyDesignToken(state, input)
+    ({ state, input }) => tokenTransfer.copyStyleSourceTransfer(state, input)
   ),
   runtimeOperation(
     "designTokens.paste",
@@ -1877,7 +1888,7 @@ export const builderRuntimeOperations = [
     }),
     tokenTransfer.pasteDesignTokenInput,
     ({ state, input, context }) =>
-      tokenTransfer.pasteDesignToken(state, input, context)
+      tokenTransfer.pasteStyleSourceTransfer(state, input, context)
   ),
   runtimeOperation(
     "designTokens.create",

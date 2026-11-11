@@ -481,10 +481,26 @@ const curatedPublicApiOperationDocumentation = [
     examples: ["webstudio get-styles --instance instance-id --json"],
   },
   {
+    command: "list-tag-styles",
+    description: "List global Tag styles and their declarations",
+    examples: [
+      "MCP tool: list-tag-styles {}",
+      'MCP tool: list-tag-styles {"tag":"button","verbose":true}',
+    ],
+  },
+  {
     command: "update-styles",
     description: "Create or update local style declarations",
     requiredOptions: ["input", "json"],
     examples: ["webstudio update-styles --input styles.json --json"],
+  },
+  {
+    command: "update-selected-styles",
+    description:
+      "Create or update selected style-source declarations. Use tag-style:<tag> to create or edit a global Tag style.",
+    examples: [
+      'MCP tool: update-selected-styles {"updates":[{"instanceId":"instance-id","styleSourceId":"tag-style:button","property":"color","value":{"type":"keyword","value":"red"}}]}',
+    ],
   },
   {
     command: "delete-styles",

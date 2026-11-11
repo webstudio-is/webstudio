@@ -1656,6 +1656,11 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
         .filter(({ instanceId }) => renderedIds.has(instanceId))
         .flatMap(({ values }) => values)
     );
+    for (const source of publishedStyleSources.values()) {
+      if (source.type === "tag") {
+        styleSourceIds.add(source.id);
+      }
+    }
     const pageStyles = Array.from(publishedStyles.values()).filter(
       ({ styleSourceId }) => styleSourceIds.has(styleSourceId)
     );
@@ -1712,6 +1717,7 @@ export const createManagedFormResourceFetch = ({ request, context, projectDomain
     assets,
     breakpoints: publishedBreakpoints,
     styles: publishableStyles,
+    styleSources: publishedStyleSources,
     styleSourceSelections: publishedStyleSourceSelections,
     // pass only used metas to not generate unused preset styles
     componentMetas: usedMetas,

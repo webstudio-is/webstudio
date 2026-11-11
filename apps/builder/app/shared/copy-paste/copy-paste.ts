@@ -16,7 +16,11 @@ import { jsx } from "./plugin-jsx";
 import { markdown } from "./plugin-markdown";
 import { webflow } from "./plugin-webflow/plugin-webflow";
 import { designTokens } from "./plugin-design-tokens";
-import { token, copyTokenData } from "./plugin-token";
+import {
+  styleSource,
+  copyTokenData,
+  copyReusableStyleSourceData,
+} from "./plugin-style-source";
 import { builderApi } from "../builder-api";
 import { readClipboardText } from "../clipboard";
 import { $selectedInstance } from "../nano-states";
@@ -330,7 +334,7 @@ export const initCopyPaste = ({ signal }: { signal: AbortSignal }) => {
   initPlugins({
     plugins: [
       variableClipboard,
-      token,
+      styleSource,
       pageText,
       instanceJson,
       instanceText,
@@ -473,8 +477,13 @@ export const copyInstance = () => {
 export const copyToken = async (tokenId: string) =>
   writeClipboardText(copyTokenData(tokenId));
 
-export const pasteToken = async (data: string) => {
-  const result = await token.onPaste?.(data);
+export const copyReusableStyleSource = async (
+  styleSourceId: string,
+  sourceType: "tag" | "local"
+) => writeClipboardText(copyReusableStyleSourceData(styleSourceId, sourceType));
+
+export const pasteStyleSource = async (data: string) => {
+  const result = await styleSource.onPaste?.(data);
   if (result !== undefined) {
     reportPasteResult(result);
   }

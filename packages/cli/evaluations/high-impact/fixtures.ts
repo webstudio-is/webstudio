@@ -7,6 +7,7 @@ import {
   type Asset,
   type AssetFolder,
   type Page,
+  type StyleSource,
 } from "@webstudio-is/sdk";
 import {
   fontAssetFixtureFiles,
@@ -95,9 +96,7 @@ export type EvaluationProject = {
     minWidth?: number;
     maxWidth?: number;
   }>;
-  styleSources: Array<
-    { type: "token"; id: string; name: string } | { type: "local"; id: string }
-  >;
+  styleSources: StyleSource[];
   styleSourceSelections: Array<{ instanceId: string; values: string[] }>;
   styles: EvaluationStyle[];
 };

@@ -5,6 +5,8 @@ import { Select as SelectComponent, type SelectOption } from "./select";
 import { Flex } from "./flex";
 import { Text } from "./text";
 import { StorySection } from "./storybook";
+import { Box } from "./box";
+import { theme } from "../stitches.config";
 
 export default {
   title: "Select",
@@ -142,6 +144,38 @@ export const WithItemHighlight = () => {
           value={value}
           onChange={setValue}
           onItemHighlight={setHighlighted}
+        />
+      </Flex>
+    </StorySection>
+  );
+};
+
+const displayDescriptions = {
+  block: "Displays an element as a block-level element.",
+  flex: "Displays an element as a flexible container.",
+};
+
+export const NarrowDescription = () => {
+  const [display, setDisplay] =
+    useState<keyof typeof displayDescriptions>("block");
+
+  return (
+    <StorySection title="Narrow description">
+      <Flex css={{ width: 180 }}>
+        <SelectComponent
+          fullWidth
+          options={
+            Object.keys(displayDescriptions) as Array<
+              keyof typeof displayDescriptions
+            >
+          }
+          value={display}
+          onChange={setDisplay}
+          getDescription={(option) => (
+            <Box css={{ width: theme.spacing[26] }}>
+              {displayDescriptions[option]}
+            </Box>
+          )}
         />
       </Flex>
     </StorySection>

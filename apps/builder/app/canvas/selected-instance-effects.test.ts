@@ -1,11 +1,18 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { getTagStyleId, type StyleDecl } from "@webstudio-is/sdk";
+import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import {
   $allSelectedInstanceSelectors,
   $selectedInstanceOutline,
   $selectedInstanceOutlines,
+  $selectedInstanceStates,
   selectInstances,
 } from "~/shared/nano-states";
-import { $instances, $styleSourceSelections } from "~/shared/sync/data-stores";
+import {
+  $instances,
+  $styleSourceSelections,
+  $styles,
+} from "~/shared/sync/data-stores";
 import { subscribeSelected } from "./selected-instance-effects";
 import { subscribeInstanceSelection } from "./instance-selection-events";
 import { createCanvasElement } from "./test-utils";
@@ -88,7 +95,9 @@ beforeEach(() => {
     ])
   );
   $styleSourceSelections.set(new Map());
+  $styles.set(new Map());
   $allSelectedInstanceSelectors.set([]);
+  $selectedInstanceStates.set(new Set());
   $selectedInstanceOutline.set(undefined);
   $selectedInstanceOutlines.set([]);
   document.body.innerHTML = "";
@@ -102,12 +111,68 @@ afterEach(() => {
   vi.unstubAllGlobals();
   document.body.innerHTML = "";
   $instances.set(new Map());
+  $styles.set(new Map());
+  $styleSourceSelections.set(new Map());
   $allSelectedInstanceSelectors.set([]);
+  $selectedInstanceStates.set(new Set());
   $selectedInstanceOutline.set(undefined);
   $selectedInstanceOutlines.set([]);
 });
 
 describe("subscribeSelected", () => {
+  test("detects active states defined only by the selected tag style", () => {
+    const button = document.createElement("button");
+    button.disabled = true;
+    button.setAttribute(idAttribute, "box");
+    button.setAttribute(selectorIdAttribute, "box");
+    document.body.appendChild(button);
+    $instances.set(
+      new Map([["box", { ...createInstance("box"), tag: "button" }]])
+    );
+    const declaration: StyleDecl = {
+      styleSourceId: getTagStyleId("button"),
+      breakpointId: "base",
+      state: ":disabled",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    };
+    $styles.set(new Map([["button-disabled", declaration]]));
+    unsubscribe = subscribeSelected((callback) => callback());
+
+    selectInstances([["box"]]);
+
+    expect($selectedInstanceStates.get()).toEqual(new Set([":disabled"]));
+  });
+
+  test("does not treat a descendant selector as an active instance state", () => {
+    const div = document.createElement("div");
+    div.setAttribute(idAttribute, "box");
+    div.setAttribute(selectorIdAttribute, "box");
+    document.body.appendChild(div);
+    $styleSourceSelections.set(
+      new Map([["box", { instanceId: "box", values: ["token"] }]])
+    );
+    $styles.set(
+      new Map([
+        [
+          "token-descendant",
+          {
+            styleSourceId: "token",
+            breakpointId: "base",
+            state: " div",
+            property: "paddingTop",
+            value: { type: "unit", value: 20, unit: "px" },
+          },
+        ],
+      ])
+    );
+    unsubscribe = subscribeSelected((callback) => callback());
+
+    selectInstances([["box"]]);
+
+    expect($selectedInstanceStates.get()).toEqual(new Set());
+  });
+
   test("creates both outline stores for one selected instance", () => {
     createCanvasElement({
       selector: "box,body",

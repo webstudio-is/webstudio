@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   coreMetas,
   getStyleDeclKey,
+  getTagStyleId,
   getInputJsonSchemaMetadata,
   ROOT_INSTANCE_ID,
   rootComponent,
@@ -90,6 +91,7 @@ const paginatedReadOperationIds = [
   "instances.listTexts",
   "styles.getDeclarations",
   "designTokens.list",
+  "tagStyles.list",
   "cssVariables.list",
   "variables.list",
   "resources.list",
@@ -319,6 +321,35 @@ test.each(paginatedReadOperationIds)(
     }
   }
 );
+
+test("lists global Tag styles through the runtime command", () => {
+  const id = getTagStyleId("h1");
+  const declaration: StyleDecl = {
+    styleSourceId: id,
+    breakpointId: "base",
+    property: "color",
+    value: { type: "keyword", value: "red" },
+  };
+  const result = executeBuilderRuntimeOperation({
+    id: "tagStyles.list",
+    state: {
+      styleSources: new Map([[id, { id, type: "tag", tag: "h1" }]]),
+      styles: new Map([[getStyleDeclKey(declaration), declaration]]),
+    },
+    input: { tag: "h1", verbose: true },
+    context,
+  });
+  expect(result).toMatchObject({
+    tagStyles: [
+      {
+        id,
+        tag: "h1",
+        declarationCount: 1,
+        declarations: [{ property: "color", breakpoint: "base" }],
+      },
+    ],
+  });
+});
 
 const getMutationResult = (operation: unknown): unknown => {
   expect(operation).toHaveProperty("result");
@@ -2904,6 +2935,12 @@ describe("builder runtime registry", () => {
       [
         "styles.deleteDeclarations",
         { deletions: [{ instanceId: "heading", property: "color" }] },
+      ],
+      [
+        "designTokens.paste",
+        {
+          data: '/* @webstudio/tag-style-css/v1 "h1" */\n.ws-tag-style { color: red; }',
+        },
       ],
       [
         "designTokens.create",
