@@ -1103,6 +1103,56 @@ test("tag token provides the source for an unstyled matching element", () => {
   ).toMatchObject({ styleSourceId: id, instanceId: "box" });
 });
 
+test("shows the div's nested h2 color when h2 is selected", () => {
+  const model = createModel({
+    css: "container { color: black; }",
+    jsx: (
+      <Box ws:id="container" class="container">
+        <Heading ws:id="heading" ws:tag="h2" class="headingLocal" />
+      </Box>
+    ),
+  });
+  const descendantStyle: StyleDecl = {
+    styleSourceId: "container",
+    breakpointId: "base",
+    state: " h2",
+    property: "color",
+    value: { type: "keyword", value: "purple" },
+  };
+  model.styles.set(getStyleDeclKey(descendantStyle), descendantStyle);
+
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "container"],
+      styleSourceId: "headingLocal",
+      property: "color",
+    })
+  ).toMatchObject({
+    cascadedValue: { type: "keyword", value: "purple" },
+    usedValue: { type: "keyword", value: "purple" },
+  });
+
+  model.styleSourceSelections.set("heading", {
+    instanceId: "heading",
+    values: ["headingToken"],
+  });
+  const headingStyle: StyleDecl = {
+    ...descendantStyle,
+    styleSourceId: "headingToken",
+    state: undefined,
+    value: { type: "keyword", value: "red" },
+  };
+  model.styles.set(getStyleDeclKey(headingStyle), headingStyle);
+  expect(
+    getComputedStyleDecl({
+      model,
+      instanceSelector: ["heading", "container"],
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "red" });
+});
+
 test("selected tag token remains the source when an instance overrides it", () => {
   const model = createModel({
     css: "local { color: blue; }",

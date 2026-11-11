@@ -101,8 +101,8 @@ test("renders a tag selector inside an attached token as a descendant", () => {
     assetBaseUrl: "/",
   });
 
-  expect(cssText).toContain(".w-box p");
-  expect(atomicCssText).toMatch(/\.c[a-z0-9]+ p/);
+  expect(cssText).toContain(":where(.w-box) p");
+  expect(atomicCssText).toMatch(/:where\(\.c[a-z0-9]+\) p/);
 });
 
 test("generates distinct upright and italic variable font faces", () => {
@@ -228,39 +228,39 @@ test("generate descendant selector", () => {
     assetBaseUrl: "",
   });
   expect(cssText).toMatchInlineSnapshot(`
-"
-@media all {
-  .w-body {
-    color: blue
-  }
-  .w-body:hover {
-    color: red
-  }
-  .w-body a {
-    color: blue
-  }
-  .w-body a:hover {
-    color: red
-  }
-}"
-`);
+    "
+    @media all {
+      .w-body {
+        color: blue
+      }
+      .w-body:hover {
+        color: red
+      }
+      :where(.w-body) a {
+        color: blue
+      }
+      :where(.w-body) a:hover {
+        color: red
+      }
+    }"
+  `);
   expect(atomicCssText).toMatchInlineSnapshot(`
-"
-@media all {
-  .c17hlgoh {
-    color: blue
-  }
-  .c92zrdl:hover {
-    color: red
-  }
-  .chhpmat a {
-    color: blue
-  }
-  .c32fhpn a:hover {
-    color: red
-  }
-}"
-`);
+    "
+    @media all {
+      .c17hlgoh {
+        color: blue
+      }
+      .c92zrdl:hover {
+        color: red
+      }
+      :where(.chhpmat) a {
+        color: blue
+      }
+      :where(.c32fhpn) a:hover {
+        color: red
+      }
+    }"
+  `);
   expect(atomicClasses).toMatchInlineSnapshot(`
 Map {
   "body" => [

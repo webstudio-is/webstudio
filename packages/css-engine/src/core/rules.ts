@@ -263,7 +263,14 @@ export class NestingRule {
       if (nestedSelector === ":local-link") {
         nestedSelector = "[aria-current=page]";
       }
-      const selector = this.#selector + this.#descendantSuffix + nestedSelector;
+      const isDescendant =
+        this.#descendantSuffix.startsWith(" ") ||
+        /^ [a-z][\w-]*(?=$|[:\s.#\[])/i.test(nestedSelector);
+      const baseSelector =
+        isDescendant && this.#selector
+          ? `:where(${this.#selector})`
+          : this.#selector;
+      const selector = baseSelector + this.#descendantSuffix + nestedSelector;
       let style = styleBySelector.get(selector);
       if (style === undefined) {
         style = new Map();

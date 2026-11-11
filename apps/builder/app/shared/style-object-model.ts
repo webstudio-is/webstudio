@@ -121,6 +121,7 @@ export const getPresetStyleDeclKey = ({
 const getCascadedValue = ({
   model,
   instanceId,
+  ancestorIds = [],
   styleSourceId: selectedStyleSourceId,
   state: selectedState,
   property,
@@ -128,6 +129,7 @@ const getCascadedValue = ({
 }: {
   model: StyleObjectModel;
   instanceId: Instance["id"];
+  ancestorIds?: Instance["id"][];
   styleSourceId?: StyleDecl["styleSourceId"];
   state?: StyleDecl["state"];
   property: CssProperty;
@@ -238,6 +240,36 @@ const getCascadedValue = ({
             breakpointId,
           };
           declaredValues.push(styleDecl.value);
+        }
+      }
+    }
+    // Apply matching ancestor Tag rules before the descendant's own sources.
+    if (tag) {
+      for (const ancestorId of [...ancestorIds].reverse()) {
+        const ancestorSourceIds =
+          styleSourceSelections.get(ancestorId)?.values ?? [];
+        for (const breakpointId of matchingBreakpoints) {
+          for (const ancestorSourceId of ancestorSourceIds) {
+            const descendantState = ` ${tag}${state ?? ""}`;
+            const styleDecl = styles.get(
+              getStyleDeclKey({
+                styleSourceId: ancestorSourceId,
+                breakpointId,
+                state: descendantState,
+                property: camelCaseProperty(property),
+              })
+            );
+            if (styleDecl) {
+              source = {
+                name: "remote",
+                instanceId: ancestorId,
+                styleSourceId: ancestorSourceId,
+                state: descendantState,
+                breakpointId,
+              };
+              declaredValues.push(styleDecl.value);
+            }
+          }
         }
       }
     }
@@ -589,6 +621,7 @@ export const getComputedStyleDecl = ({
     const cascaded = getCascadedValue({
       model,
       instanceId,
+      ancestorIds: instanceSelector.slice(index + 1),
       styleSourceId,
       state,
       property,
