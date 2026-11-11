@@ -22,7 +22,7 @@
   * [🧱 CSS variables](university/foundations/css-variables.md)
   * [🖌️ Design tokens](university/foundations/design-tokens.md)
   * [🎨 Style panel](university/foundations/style-panel.md)
-  * [Tag styles](university/foundations/tag-styles.md)
+  * [🏷️ Tag styles](university/foundations/tag-styles.md)
   * [🎯 States and selectors](university/foundations/states-and-selectors.md)
   * [🔡 Variables](university/foundations/variables.md)
   * [➕ Expression editor](university/foundations/expression-editor.md)

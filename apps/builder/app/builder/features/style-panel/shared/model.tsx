@@ -40,6 +40,8 @@ import {
 import {
   getComputedStyleDecl,
   getPresetStyleDeclKey,
+  indexNestedTagStyles,
+  indexStyleSourceSelectionOrder,
   type ComputedStyleDecl,
   type StyleObjectModel,
 } from "~/shared/style-object-model";
@@ -65,6 +67,26 @@ const $presetStyles = computed($registeredComponentMetas, (metas) => {
     }
   }
   return presetStyles;
+});
+
+const $indexedStyles = computed($styles, (styles) => ({
+  styles,
+  nestedTagStyles: indexNestedTagStyles(styles),
+}));
+
+const $indexedSelections = computed($styleSourceSelections, (selections) => ({
+  selections,
+  order: indexStyleSourceSelectionOrder(selections),
+}));
+
+const $tagStyleIds = computed($styleSources, (styleSources) => {
+  const ids = new Map<string, string>();
+  for (const source of styleSources.values()) {
+    if (source.type === "tag") {
+      ids.set(source.tag, source.id);
+    }
+  }
+  return ids;
 });
 
 export const $instanceTags = computed(
@@ -226,9 +248,9 @@ const getDefinedStyles = ({
 
 export const $styleObjectModel = computed(
   [
-    $styles,
-    $styleSources,
-    $styleSourceSelections,
+    $indexedStyles,
+    $tagStyleIds,
+    $indexedSelections,
     $presetStyles,
     $instanceTags,
     $instanceComponents,
@@ -237,9 +259,9 @@ export const $styleObjectModel = computed(
     $selectedInstanceStatesByInstanceId,
   ],
   (
-    styles,
-    styleSources,
-    styleSourceSelections,
+    { styles, nestedTagStyles },
+    tagStyleIds,
+    { selections: styleSourceSelections, order: styleSourceSelectionOrder },
     presetStyles,
     instanceTags,
     instanceComponents,
@@ -247,16 +269,12 @@ export const $styleObjectModel = computed(
     matchingStates,
     matchingStatesByInstanceId
   ): StyleObjectModel => {
-    const tagStyleIds = new Map<string, string>();
-    for (const source of styleSources.values()) {
-      if (source.type === "tag") {
-        tagStyleIds.set(source.tag, source.id);
-      }
-    }
     return {
       styles,
+      nestedTagStyles,
       tagStyleIds,
       styleSourceSelections,
+      styleSourceSelectionOrder,
       presetStyles,
       instanceTags,
       instanceComponents,

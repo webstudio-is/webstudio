@@ -38,7 +38,7 @@ import {
   $selectedInstanceOutline,
   $selectedInstanceOutlines,
 } from "~/shared/nano-states";
-import { $instances, $styles } from "~/shared/sync/data-stores";
+import { $instances } from "~/shared/sync/data-stores";
 import { inflateInstance } from "~/canvas/inflator";
 import {
   areInstanceSelectorsEqual,
@@ -295,7 +295,7 @@ const subscribeSelectedInstance = (
 
     const styleSourceSelections = $styleSourceSelections.get();
     const styleSources = $styleSources.get();
-    const styles = $styles.get();
+    const { stylesByStyleSourceId } = $stylesIndex.get();
     const matchingStatesByInstanceId = new Map<string, Set<string>>();
     const elementsByInstanceId = new Map<string, HTMLElement>();
     for (
@@ -333,29 +333,36 @@ const subscribeSelectedInstance = (
         }
       }
       const availableStates = new Set<string>();
+      const ancestorStates = new Set<string>();
       const activeStates = new Set<string>();
-      for (const styleDecl of styles.values()) {
-        if (!styleDecl.state) {
-          continue;
+      for (const sourceId of ownSources) {
+        for (const styleDecl of stylesByStyleSourceId.get(sourceId) ?? []) {
+          if (styleDecl.state) {
+            availableStates.add(styleDecl.state);
+          }
         }
-        if (ownSources.has(styleDecl.styleSourceId)) {
-          availableStates.add(styleDecl.state);
+      }
+      for (const sourceId of ancestorSources) {
+        for (const styleDecl of stylesByStyleSourceId.get(sourceId) ?? []) {
+          if (styleDecl.state?.startsWith(" ")) {
+            ancestorStates.add(styleDecl.state);
+          }
         }
-        if (ancestorSources.has(styleDecl.styleSourceId)) {
-          const validation = validateSelector(styleDecl.state);
-          if (
-            validation.success &&
-            validation.type === "tag" &&
-            validation.tag.toLowerCase() === target.localName &&
-            validation.condition
-          ) {
-            try {
-              if (target.matches(styleDecl.state.trim())) {
-                activeStates.add(validation.condition);
-              }
-            } catch {
-              warnOnce(true, `state selector "${styleDecl.state}" is invalid`);
+      }
+      for (const state of ancestorStates) {
+        const validation = validateSelector(state);
+        if (
+          validation.success &&
+          validation.type === "tag" &&
+          validation.tag.toLowerCase() === target.localName &&
+          validation.condition
+        ) {
+          try {
+            if (target.matches(state.trim())) {
+              activeStates.add(validation.condition);
             }
+          } catch {
+            warnOnce(true, `state selector "${state}" is invalid`);
           }
         }
       }

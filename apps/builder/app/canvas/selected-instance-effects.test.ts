@@ -7,6 +7,7 @@ import {
   $selectedInstanceOutlines,
   $selectedInstanceStates,
   $selectedInstanceStatesByInstanceId,
+  $stylesIndex,
   selectInstances,
 } from "~/shared/nano-states";
 import {
@@ -143,11 +144,14 @@ describe("subscribeSelected", () => {
       value: { type: "keyword", value: "red" },
     };
     $styles.set(new Map([["button-disabled", declaration]]));
+    $stylesIndex.get();
+    const allStyles = vi.spyOn($styles.get(), "values");
     unsubscribe = subscribeSelected((callback) => callback());
 
     selectInstances([["box"]]);
 
     expect($selectedInstanceStates.get()).toEqual(new Set([":disabled"]));
+    expect(allStyles).not.toHaveBeenCalled();
   });
 
   test("does not treat a descendant selector as an active instance state", () => {

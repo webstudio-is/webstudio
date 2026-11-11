@@ -17,7 +17,11 @@ import {
 } from "@webstudio-is/sdk";
 import { inflatedAttribute, idAttribute } from "@webstudio-is/react-sdk";
 import { INFLATE_PADDING } from "~/canvas/inflator";
-import { isPseudoElement, parseMediaCondition } from "@webstudio-is/css-data";
+import {
+  isPseudoElement,
+  parseMediaCondition,
+  validateSelector,
+} from "@webstudio-is/css-data";
 import {
   type StyleValue,
   type MediaRuleOptions,
@@ -847,16 +851,24 @@ const getTagStatePreviewSelector = (
   selector: string,
   tag: string,
   state: string
-) =>
-  state.startsWith(" ")
-    ? `:where(${selector}):where(${tag})${state}`
-    : shouldSimulateState(state)
-      ? `:where(${selector}):is(${tag}, ${tag}${state})`
-      : `:where(${selector})${tag}${getStatePreviewSelector(state)}`;
+) => {
+  if (state.startsWith(" ")) {
+    return `:where(${selector}):where(${tag})${state}`;
+  }
+  const validation = validateSelector(state);
+  const elementState = validation.success ? validation.scopedState : state;
+  const descendant = validation.success ? validation.descendant : "";
+  return shouldSimulateState(elementState)
+    ? `:where(${selector}):is(${tag}, ${tag}${elementState})${descendant}`
+    : `:where(${selector})${tag}${getStatePreviewSelector(state)}`;
+};
 
 const getInstanceStatePreviewSelector = (selector: string, state: string) => {
-  if (shouldSimulateState(state)) {
-    return `${selector}:is(*, ${state})`;
+  const validation = validateSelector(state);
+  const elementState = validation.success ? validation.scopedState : state;
+  const descendant = validation.success ? validation.descendant : "";
+  if (shouldSimulateState(elementState)) {
+    return `${selector}:is(*, ${elementState})${descendant}`;
   }
   const base = state.startsWith(" ") ? `:where(${selector})` : selector;
   return `${base}${getStatePreviewSelector(state)}`;
