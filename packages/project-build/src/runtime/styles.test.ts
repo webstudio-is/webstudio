@@ -1105,44 +1105,41 @@ describe("runtime style operations", () => {
     ":hover ~ .tooltip",
     ":hover .button",
     ":hover > .icon",
-  ])(
-    "rejects unsupported state selectors when writing: %s",
-    (state) => {
-      expect(
-        styleUpdateInput.safeParse({
-          instanceId: "box",
-          property: "color",
-          value: { type: "keyword", value: "red" },
-          state,
-        })
-      ).toMatchObject({ success: false });
-      expect(
-        designTokenCreateInput.safeParse({
-          name: "Primary",
-          declarations: [
-            {
-              property: "color",
-              value: { type: "keyword", value: "red" },
-              state,
-            },
-          ],
-        })
-      ).toMatchObject({ success: false });
-      expect(
-        selectedStyleUpdateDeclarationsInput.safeParse({
-          updates: [
-            {
-              instanceId: "box",
-              styleSourceId: "token",
-              property: "color",
-              value: { type: "keyword", value: "red" },
-              state,
-            },
-          ],
-        })
-      ).toMatchObject({ success: false });
-    }
-  );
+  ])("rejects unsupported state selectors when writing: %s", (state) => {
+    expect(
+      styleUpdateInput.safeParse({
+        instanceId: "box",
+        property: "color",
+        value: { type: "keyword", value: "red" },
+        state,
+      })
+    ).toMatchObject({ success: false });
+    expect(
+      designTokenCreateInput.safeParse({
+        name: "Primary",
+        declarations: [
+          {
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            state,
+          },
+        ],
+      })
+    ).toMatchObject({ success: false });
+    expect(
+      selectedStyleUpdateDeclarationsInput.safeParse({
+        updates: [
+          {
+            instanceId: "box",
+            styleSourceId: "token",
+            property: "color",
+            value: { type: "keyword", value: "red" },
+            state,
+          },
+        ],
+      })
+    ).toMatchObject({ success: false });
+  });
 
   test("accepts an invalid state as an existing declaration deletion coordinate", () => {
     expect(
