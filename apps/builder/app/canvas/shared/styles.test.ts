@@ -265,6 +265,47 @@ describe("renderStateStyles", () => {
     );
   });
 
+  test.each([
+    [":hover .button", " .button"],
+    [":hover > .icon", " > .icon"],
+  ])("previews a source state on its descendant: %s", (state, descendant) => {
+    const sheet = createTestSheet();
+    renderStateStyles({
+      instanceStyles: {
+        instanceId: "box",
+        selectedState: state,
+        breakpoints: [{ id: "base", label: "Base" }],
+        styles: [createStyleDecl()],
+      },
+      sheet,
+      transformValue: mockTransformValue,
+      toStyleValue: mockToStyleValue,
+    });
+    expect(sheet.cssText).toContain(
+      `[data-ws-id="box"]:is(*, :hover)${descendant}`
+    );
+    expect(sheet.cssText).not.toContain(`:is(*, ${state})`);
+  });
+
+  test("previews a Tag state on its descendant", () => {
+    const sheet = createTestSheet();
+    renderStateStyles({
+      instanceStyles: {
+        instanceId: "box",
+        selectedState: ":hover .button",
+        breakpoints: [{ id: "base", label: "Base" }],
+        styles: [createStyleDecl({ styleSourceId: getTagStyleId("div") })],
+      },
+      sheet,
+      transformValue: mockTransformValue,
+      toStyleValue: mockToStyleValue,
+    });
+    expect(sheet.cssText).toContain(
+      ':where([data-ws-id="box"]):is(div, div:hover) .button'
+    );
+    expect(sheet.cssText).not.toContain("div:hover .button)");
+  });
+
   test("Tag preview selectors stay below instance selectors at every breakpoint", () => {
     const sheet = createTestSheet();
     const tagStyleId = getTagStyleId("button");
@@ -1017,6 +1058,22 @@ test("ephemeral Tag state edits update and clean up the selected preview", () =>
       document.querySelector('style[data-webstudio="state-styles"]')
         ?.textContent
     ).toContain(':where([data-ws-id="ephemeral-tag-test"]) h1');
+
+    $ephemeralStyles.set([]);
+    $selectedStyleState.set(":hover .button");
+    $ephemeralStyles.set([
+      createStyleDecl({
+        styleSourceId: tagStyleId,
+        state: ":hover .button",
+        property: "paddingTop",
+      }),
+    ]);
+    expect(
+      document.querySelector('style[data-webstudio="state-styles"]')
+        ?.textContent
+    ).toContain(
+      ':where([data-ws-id="ephemeral-tag-test"]):is(p, p:hover) .button'
+    );
   } finally {
     $ephemeralStyles.set([]);
     unsubscribeEphemeral();

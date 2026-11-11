@@ -1,4 +1,5 @@
 import { useLayoutEffect } from "react";
+import * as csstree from "css-tree";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -843,20 +844,48 @@ const shouldSimulateState = (state: string) =>
   (state.startsWith(":") && isPseudoElement(state) === false) ||
   state.startsWith("[");
 
+const splitStateDescendant = (state: string): [string, string] => {
+  if (state.startsWith(" ")) {
+    return [state, ""];
+  }
+  try {
+    const selector = csstree.parse(state, {
+      context: "selector",
+      positions: true,
+    });
+    if (selector.type === "Selector") {
+      let previousEnd = 0;
+      for (const node of selector.children) {
+        if (node.type === "Combinator") {
+          return [state.slice(0, previousEnd), state.slice(previousEnd)];
+        }
+        previousEnd = node.loc?.end.offset ?? previousEnd;
+      }
+    }
+  } catch {
+    // Keep saved selectors unchanged when they cannot be parsed.
+  }
+  return [state, ""];
+};
+
 const getTagStatePreviewSelector = (
   selector: string,
   tag: string,
   state: string
-) =>
-  state.startsWith(" ")
-    ? `:where(${selector}):where(${tag})${state}`
-    : shouldSimulateState(state)
-      ? `:where(${selector}):is(${tag}, ${tag}${state})`
-      : `:where(${selector})${tag}${getStatePreviewSelector(state)}`;
+) => {
+  if (state.startsWith(" ")) {
+    return `:where(${selector}):where(${tag})${state}`;
+  }
+  const [elementState, descendant] = splitStateDescendant(state);
+  return shouldSimulateState(elementState)
+    ? `:where(${selector}):is(${tag}, ${tag}${elementState})${descendant}`
+    : `:where(${selector})${tag}${getStatePreviewSelector(state)}`;
+};
 
 const getInstanceStatePreviewSelector = (selector: string, state: string) => {
-  if (shouldSimulateState(state)) {
-    return `${selector}:is(*, ${state})`;
+  const [elementState, descendant] = splitStateDescendant(state);
+  if (shouldSimulateState(elementState)) {
+    return `${selector}:is(*, ${elementState})${descendant}`;
   }
   const base = state.startsWith(" ") ? `:where(${selector})` : selector;
   return `${base}${getStatePreviewSelector(state)}`;
