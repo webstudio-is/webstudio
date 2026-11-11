@@ -1,7 +1,11 @@
 import warnOnce from "warn-once";
 import { getTagStyleId, type Instance } from "@webstudio-is/sdk";
 import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
-import { isPseudoElement, propertiesData } from "@webstudio-is/css-data";
+import {
+  isPseudoElement,
+  propertiesData,
+  validateSelector,
+} from "@webstudio-is/css-data";
 import { selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
@@ -300,6 +304,11 @@ const subscribeSelectedInstance = (
     }
     const activeStates = new Set<string>();
     for (const state of availableStates) {
+      if (
+        validateSelector(state, { allowDescendants: false }).success === false
+      ) {
+        continue;
+      }
       try {
         // pseudo classes like :open or :current are not supported in .matches method
         if (element.matches(state)) {

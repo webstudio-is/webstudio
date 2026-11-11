@@ -553,6 +553,47 @@ test("copies html Tag variables referenced by another Tag style", () => {
   }
 });
 
+test("does not copy html Tag variables a second time as root dependencies", () => {
+  const htmlTagStyleId = getTagStyleId("html");
+  const copied = copyStyleSourceTransfer(
+    {
+      assets: new Map(),
+      breakpoints: new Map([["base", { id: "base", label: "Base" }]]),
+      styleSources: new Map([
+        [
+          htmlTagStyleId,
+          { type: "tag" as const, id: htmlTagStyleId, tag: "html" },
+        ],
+      ]),
+      styleSourceSelections: new Map(),
+      styles: styleMap([
+        style(htmlTagStyleId, "base", "--brand", "red"),
+        style(htmlTagStyleId, "base", "color", "var(--brand)"),
+      ]),
+    },
+    { styleSourceId: htmlTagStyleId, sourceType: "tag" }
+  );
+  const parsed = parseTagStyleTransferData(copied.data);
+
+  expect(parsed.valid).toBe(true);
+  if (parsed.valid) {
+    expect(
+      parsed.data.fragment.styles.filter((item) => item.property === "--brand")
+    ).toHaveLength(1);
+    expect(
+      parsed.data.fragment.styles.map((item) => [
+        item.styleSourceId,
+        item.property,
+      ])
+    ).toEqual(
+      expect.arrayContaining([
+        [htmlTagStyleId, "--brand"],
+        [htmlTagStyleId, "color"],
+      ])
+    );
+  }
+});
+
 test("copies the winning root variable when root sources overlap", () => {
   const copied = copyDesignToken(
     {

@@ -144,6 +144,35 @@ describe("subscribeSelected", () => {
     expect($selectedInstanceStates.get()).toEqual(new Set([":disabled"]));
   });
 
+  test("does not treat a descendant selector as an active instance state", () => {
+    const div = document.createElement("div");
+    div.setAttribute(idAttribute, "box");
+    div.setAttribute(selectorIdAttribute, "box");
+    document.body.appendChild(div);
+    $styleSourceSelections.set(
+      new Map([["box", { instanceId: "box", values: ["token"] }]])
+    );
+    $styles.set(
+      new Map([
+        [
+          "token-descendant",
+          {
+            styleSourceId: "token",
+            breakpointId: "base",
+            state: " div",
+            property: "paddingTop",
+            value: { type: "unit", value: 20, unit: "px" },
+          },
+        ],
+      ])
+    );
+    unsubscribe = subscribeSelected((callback) => callback());
+
+    selectInstances([["box"]]);
+
+    expect($selectedInstanceStates.get()).toEqual(new Set());
+  });
+
   test("creates both outline stores for one selected instance", () => {
     createCanvasElement({
       selector: "box,body",
