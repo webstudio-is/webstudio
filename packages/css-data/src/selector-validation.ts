@@ -6,8 +6,9 @@ export type SelectorValidationResult =
   | { success: false; error: string }
   | {
       success: true;
-      type: "pseudo-class" | "pseudo-element" | "attribute" | "tag";
-    };
+      type: "pseudo-class" | "pseudo-element" | "attribute";
+    }
+  | { success: true; type: "tag"; tag: string; condition: string };
 
 /**
  * Validates an open CSS state suffix scoped to the current element.
@@ -48,7 +49,10 @@ export const validateSelector = (
   }
 
   try {
-    const ast = csstree.parse(selector, { context: "selectorList" });
+    const ast = csstree.parse(selector, {
+      context: "selectorList",
+      positions: isTagSelector,
+    });
     if (ast.type !== "SelectorList" || ast.children.size !== 1) {
       return {
         success: false,
@@ -155,11 +159,30 @@ export const validateSelector = (
       return { success: false, error: "Invalid pseudo-class" };
     }
 
+    if (
+      isTagSelector &&
+      stateNodes[0]?.type === "TypeSelector" &&
+      pseudoElementNames.length === 0 &&
+      pseudoClassNames.length > 0 &&
+      pseudoClassNames.every((name) => isKnownSelector(name, pseudoElements))
+    ) {
+      // Keep the legacy single-colon pseudo-element classification.
+      return { success: true, type: "pseudo-element" };
+    }
+    if (isTagSelector && stateNodes[0]?.type === "TypeSelector") {
+      return {
+        success: true,
+        type: "tag",
+        tag: stateNodes[0].name,
+        condition: selector.slice(stateNodes[0].loc?.end.offset),
+      };
+    }
+
     if (pseudoElementNames.length > 0) {
       // Validate that the pseudo-element actually exists
       // Some pseudo-elements are functional (e.g., ::part(), ::slotted())
       // The list includes both "part" and "part()" variants
-      return { success: true, type: isTagSelector ? "tag" : "pseudo-element" };
+      return { success: true, type: "pseudo-element" };
     }
 
     if (pseudoClassNames.length > 0) {
@@ -170,15 +193,11 @@ export const validateSelector = (
       ) {
         return { success: true, type: "pseudo-element" };
       }
-      return { success: true, type: isTagSelector ? "tag" : "pseudo-class" };
+      return { success: true, type: "pseudo-class" };
     }
 
     if (foundAttribute) {
-      return { success: true, type: isTagSelector ? "tag" : "attribute" };
-    }
-
-    if (isTagSelector) {
-      return { success: true, type: "tag" };
+      return { success: true, type: "attribute" };
     }
 
     // If we get here, something unexpected happened
@@ -192,27 +211,4 @@ export const validateSelector = (
       error: "Invalid CSS selector syntax",
     };
   }
-};
-
-/** Return the condition on a nested tag, if this selector targets that tag. */
-export const getNestedTagCondition = (
-  selector: string,
-  tag: string
-): string | undefined => {
-  if (
-    validateSelector(selector, { allowStateDescendants: false }).success ===
-      false ||
-    !selector.startsWith(" ")
-  ) {
-    return;
-  }
-  const ast = csstree.parse(selector, { context: "selector", positions: true });
-  if (ast.type !== "Selector") {
-    return;
-  }
-  const type = ast.children.first;
-  if (type?.type !== "TypeSelector" || type.name !== tag || !type.loc) {
-    return;
-  }
-  return selector.slice(type.loc.end.offset);
 };

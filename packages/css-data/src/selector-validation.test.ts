@@ -1,16 +1,24 @@
 import { describe, test, expect } from "vitest";
-import { getNestedTagCondition, validateSelector } from "./selector-validation";
+import { validateSelector } from "./selector-validation";
 
 describe("validateSelector", () => {
   test("reads the condition from one nested tag", () => {
-    expect(getNestedTagCondition(' h2[data-state="open"]:hover', "h2")).toBe(
-      '[data-state="open"]:hover'
-    );
-    expect(getNestedTagCondition(" h2[ data-state = open ]:hover", "h2")).toBe(
-      "[ data-state = open ]:hover"
-    );
-    expect(getNestedTagCondition(" h2:hover", "p")).toBeUndefined();
-    expect(getNestedTagCondition(":hover .button", "button")).toBeUndefined();
+    expect(validateSelector(' h2[data-state="open"]:hover')).toMatchObject({
+      success: true,
+      type: "tag",
+      tag: "h2",
+      condition: '[data-state="open"]:hover',
+    });
+    expect(validateSelector(" h2[ data-state = open ]:hover")).toMatchObject({
+      success: true,
+      type: "tag",
+      tag: "h2",
+      condition: "[ data-state = open ]:hover",
+    });
+    expect(validateSelector(" h2:before")).toMatchObject({
+      success: true,
+      type: "pseudo-element",
+    });
   });
   test.each([
     ":hover, body",

@@ -207,6 +207,51 @@ const getCascadedValue = ({
   const styleSourceIds = styleSourceSelections.get(instanceId)?.values ?? [];
   const tagStyleId = tag ? tagStyleIds.get(tag) : undefined;
   selectedStyleSourceId ??= styleSourceIds.at(-1);
+  const addDeclaration = ({
+    styleSourceId,
+    breakpointId,
+    state,
+    sourceInstanceId,
+  }: {
+    styleSourceId: string;
+    breakpointId: string;
+    state?: string;
+    sourceInstanceId: string;
+  }) => {
+    const styleDecl = styles.get(
+      getStyleDeclKey({
+        styleSourceId,
+        breakpointId,
+        state,
+        property: camelCaseProperty(property),
+      })
+    );
+    const isSelected =
+      sourceInstanceId === instanceId &&
+      styleSourceId === selectedStyleSourceId &&
+      state === selectedState;
+    if (isSelected) {
+      selectedIndex = styleDecl ? declaredValues.length : -1;
+    }
+    if (!styleDecl) {
+      if (isSelected && styleSourceId === tagStyleId) {
+        selectedTagStyleSource = undefined;
+      }
+      return;
+    }
+    const declarationSource: StyleValueSource = {
+      name: "remote",
+      instanceId: sourceInstanceId,
+      styleSourceId,
+      state,
+      breakpointId,
+    };
+    if (isSelected && styleSourceId === tagStyleId) {
+      selectedTagStyleSource = declarationSource;
+    }
+    source = declarationSource;
+    declaredValues.push(styleDecl.value);
+  };
   // Within each state, resolve all Tag breakpoints before instance styles.
   // Instance selectors then win over Tag selectors across breakpoints.
   const ancestorIdSet = new Set(ancestorIds);
@@ -220,52 +265,21 @@ const getCascadedValue = ({
           const ancestorId = ancestorIds.find(
             (id) => instanceTags.get(id) === sourceTag
           );
-          const targets: Array<{ targetId: string; selectorState?: string }> =
-            [];
           if (ancestorId) {
-            targets.push({
-              targetId: ancestorId,
-              selectorState: descendantState,
+            addDeclaration({
+              styleSourceId,
+              breakpointId,
+              state: descendantState,
+              sourceInstanceId: ancestorId,
             });
           }
           if (sourceTag === tag) {
-            targets.push({ targetId: instanceId, selectorState: state });
-          }
-          for (const { targetId, selectorState } of targets) {
-            const styleDecl = styles.get(
-              getStyleDeclKey({
-                styleSourceId,
-                breakpointId,
-                state: selectorState,
-                property: camelCaseProperty(property),
-              })
-            );
-            if (
-              targetId === instanceId &&
-              styleSourceId === selectedStyleSourceId &&
-              state === selectedState
-            ) {
-              selectedIndex = styleDecl ? declaredValues.length : -1;
-              selectedTagStyleSource = styleDecl
-                ? {
-                    name: "remote",
-                    instanceId,
-                    styleSourceId,
-                    state,
-                    breakpointId,
-                  }
-                : undefined;
-            }
-            if (styleDecl) {
-              source = {
-                name: "remote",
-                instanceId: targetId,
-                styleSourceId,
-                state: selectorState,
-                breakpointId,
-              };
-              declaredValues.push(styleDecl.value);
-            }
+            addDeclaration({
+              styleSourceId,
+              breakpointId,
+              state,
+              sourceInstanceId: instanceId,
+            });
           }
         }
       }
@@ -276,54 +290,24 @@ const getCascadedValue = ({
             continue;
           }
           for (const ancestorSourceId of selection.values) {
-            const styleDecl = styles.get(
-              getStyleDeclKey({
-                styleSourceId: ancestorSourceId,
-                breakpointId,
-                state: descendantState,
-                property: camelCaseProperty(property),
-              })
-            );
-            if (styleDecl) {
-              source = {
-                name: "remote",
-                instanceId: ancestorId,
-                styleSourceId: ancestorSourceId,
-                state: descendantState,
-                breakpointId,
-              };
-              declaredValues.push(styleDecl.value);
-            }
+            addDeclaration({
+              styleSourceId: ancestorSourceId,
+              breakpointId,
+              state: descendantState,
+              sourceInstanceId: ancestorId,
+            });
           }
         }
       }
     }
     for (const breakpointId of matchingBreakpoints) {
       for (const styleSourceId of styleSourceIds) {
-        const key = getStyleDeclKey({
+        addDeclaration({
           styleSourceId,
           breakpointId,
           state,
-          property: camelCaseProperty(property),
+          sourceInstanceId: instanceId,
         });
-        const styleDecl = styles.get(key);
-        if (
-          styleSourceId === selectedStyleSourceId &&
-          state === selectedState
-        ) {
-          // reset selection from another state or breakpoint
-          selectedIndex = styleDecl ? declaredValues.length : -1;
-        }
-        if (styleDecl) {
-          source = {
-            name: "remote",
-            instanceId,
-            styleSourceId,
-            state,
-            breakpointId,
-          };
-          declaredValues.push(styleDecl.value);
-        }
       }
     }
   }

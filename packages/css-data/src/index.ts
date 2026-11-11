@@ -46,6 +46,5 @@ export const isPseudoElement = (state: string): boolean => {
 
 export {
   validateSelector,
-  getNestedTagCondition,
   type SelectorValidationResult,
 } from "./selector-validation";

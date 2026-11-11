@@ -2,7 +2,6 @@ import warnOnce from "warn-once";
 import { getTagStyleId, type Instance } from "@webstudio-is/sdk";
 import type { CssProperty, UnitValue } from "@webstudio-is/css-engine";
 import {
-  getNestedTagCondition,
   isPseudoElement,
   propertiesData,
   validateSelector,
@@ -326,14 +325,18 @@ const subscribeSelectedInstance = (
       if (!ancestorSourceIds.has(styleDecl.styleSourceId)) {
         continue;
       }
-      const condition = getNestedTagCondition(
-        styleDecl.state,
-        element.localName
-      );
-      if (condition) {
+      const validation = validateSelector(styleDecl.state, {
+        allowStateDescendants: false,
+      });
+      if (
+        validation.success &&
+        validation.type === "tag" &&
+        validation.tag === element.localName &&
+        validation.condition
+      ) {
         try {
           if (element.matches(styleDecl.state.trim())) {
-            activeStates.add(condition);
+            activeStates.add(validation.condition);
           }
         } catch {
           warnOnce(true, `state selector "${styleDecl.state}" is invalid`);
