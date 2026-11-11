@@ -6,6 +6,9 @@ describe("validateSelector", () => {
     expect(getNestedTagCondition(' h2[data-state="open"]:hover', "h2")).toBe(
       '[data-state="open"]:hover'
     );
+    expect(getNestedTagCondition(" h2[ data-state = open ]:hover", "h2")).toBe(
+      "[ data-state = open ]:hover"
+    );
     expect(getNestedTagCondition(" h2:hover", "p")).toBeUndefined();
     expect(getNestedTagCondition(":hover .button", "button")).toBeUndefined();
   });

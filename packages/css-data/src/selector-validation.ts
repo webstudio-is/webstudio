@@ -206,13 +206,13 @@ export const getNestedTagCondition = (
   ) {
     return;
   }
-  const ast = csstree.parse(selector, { context: "selector" });
+  const ast = csstree.parse(selector, { context: "selector", positions: true });
   if (ast.type !== "Selector") {
     return;
   }
-  const [type, ...conditions] = ast.children.toArray();
-  if (type?.type !== "TypeSelector" || type.name !== tag) {
+  const type = ast.children.first;
+  if (type?.type !== "TypeSelector" || type.name !== tag || !type.loc) {
     return;
   }
-  return conditions.map((condition) => csstree.generate(condition)).join("");
+  return selector.slice(type.loc.end.offset);
 };

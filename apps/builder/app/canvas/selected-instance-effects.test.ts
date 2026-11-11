@@ -195,7 +195,7 @@ describe("subscribeSelected", () => {
           {
             styleSourceId: id,
             breakpointId: "base",
-            state: " h2[data-state=open]",
+            state: " h2[ data-state = open ]",
             property: "color",
             value: { type: "keyword", value: "red" },
           },
@@ -207,7 +207,7 @@ describe("subscribeSelected", () => {
     selectInstances([["heading", "box"]]);
 
     expect($selectedInstanceStates.get()).toEqual(
-      new Set(["[data-state=open]"])
+      new Set(["[ data-state = open ]"])
     );
   });
 

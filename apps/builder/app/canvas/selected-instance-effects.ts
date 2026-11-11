@@ -292,51 +292,38 @@ const subscribeSelectedInstance = (
     const { propertySizes, computedValues } = readComputedStyles(element);
     $selectedInstanceSizes.set({ unitSizes, propertySizes, computedValues });
 
-    const availableStates = new Set<string>();
+    const styleSourceSelections = $styleSourceSelections.get();
     const instanceStyleSourceIds = new Set(
-      $styleSourceSelections.get().get(instanceId)?.values
+      styleSourceSelections.get(instanceId)?.values
     );
     instanceStyleSourceIds.add(getTagStyleId(element.localName));
-    const styles = $styles.get();
-    for (const styleDecl of styles.values()) {
-      if (
-        instanceStyleSourceIds.has(styleDecl.styleSourceId) &&
-        styleDecl.state
-      ) {
-        availableStates.add(styleDecl.state);
-      }
-    }
-    const activeStates = new Set<string>();
-    for (const state of availableStates) {
-      if (
-        validateSelector(state, { allowDescendants: false }).success === false
-      ) {
-        continue;
-      }
-      try {
-        // pseudo classes like :open or :current are not supported in .matches method
-        if (element.matches(state)) {
-          activeStates.add(state);
-        }
-      } catch {
-        warnOnce(true, `state selector "${state}" is invalid`);
-      }
-    }
-
     const ancestorSourceIds = new Set<string>();
     for (const ancestorId of selectedInstanceSelector.slice(1)) {
-      for (const sourceId of $styleSourceSelections.get().get(ancestorId)
-        ?.values ?? []) {
+      for (const sourceId of styleSourceSelections.get(ancestorId)?.values ??
+        []) {
         ancestorSourceIds.add(sourceId);
       }
     }
-    for (const source of $styleSources.get().values()) {
-      if (source.type === "tag" && element.parentElement?.closest(source.tag)) {
-        ancestorSourceIds.add(source.id);
+    for (
+      let ancestor = element.parentElement;
+      ancestor;
+      ancestor = ancestor.parentElement
+    ) {
+      const sourceId = getTagStyleId(ancestor.localName);
+      if ($styleSources.get().get(sourceId)?.type === "tag") {
+        ancestorSourceIds.add(sourceId);
       }
     }
-    for (const styleDecl of styles.values()) {
-      if (!ancestorSourceIds.has(styleDecl.styleSourceId) || !styleDecl.state) {
+    const availableStates = new Set<string>();
+    const activeStates = new Set<string>();
+    for (const styleDecl of $styles.get().values()) {
+      if (!styleDecl.state) {
+        continue;
+      }
+      if (instanceStyleSourceIds.has(styleDecl.styleSourceId)) {
+        availableStates.add(styleDecl.state);
+      }
+      if (!ancestorSourceIds.has(styleDecl.styleSourceId)) {
         continue;
       }
       const condition = getNestedTagCondition(
@@ -351,6 +338,21 @@ const subscribeSelectedInstance = (
         } catch {
           warnOnce(true, `state selector "${styleDecl.state}" is invalid`);
         }
+      }
+    }
+    for (const state of availableStates) {
+      if (
+        validateSelector(state, { allowDescendants: false }).success === false
+      ) {
+        continue;
+      }
+      try {
+        // pseudo classes like :open or :current are not supported in .matches method
+        if (element.matches(state)) {
+          activeStates.add(state);
+        }
+      } catch {
+        warnOnce(true, `state selector "${state}" is invalid`);
       }
     }
 
