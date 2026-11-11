@@ -252,3 +252,39 @@ export const TagStyle = () => {
     </Flex>
   );
 };
+
+export const LocalTagSelector = () => {
+  const local: Item = {
+    ...localItem,
+    states: [" h2:hover", ":hover .button"],
+  };
+  const [selectedItemSelector, setSelectedItemSelector] = useState<
+    undefined | ItemSelector
+  >({ styleSourceId: local.id, state: " h2:hover" });
+
+  return (
+    <Flex
+      css={{
+        width: theme.sizes.sidebarWidth,
+        padding: theme.spacing[5],
+        boxSizing: "content-box",
+      }}
+    >
+      <StyleSourceInputComponent
+        inputRef={() => {}}
+        css={{ width: theme.sizes.sidebarWidth }}
+        value={[local]}
+        selectedItemSelector={selectedItemSelector}
+        componentStates={[
+          {
+            type: "state",
+            selector: ":hover .button",
+            label: ":hover .button",
+          },
+          { type: "tag", selector: " h2:hover", label: "h2:hover" },
+        ]}
+        onSelectItem={setSelectedItemSelector}
+      />
+    </Flex>
+  );
+};

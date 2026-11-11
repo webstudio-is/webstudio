@@ -48,14 +48,23 @@ describe("validateSelector", () => {
     "[data-state=open] [data-part=content]",
     ":hover > .icon",
     ":not(.disabled) > [aria-hidden=true]",
+  ])("accepts states targeting descendants: %s", (selector) => {
+    expect(validateSelector(selector).success).toBe(true);
+  });
+
+  test.each([
+    [":hover .button", ":hover", " .button"],
+    [":hover > .icon", ":hover", " > .icon"],
+    ["[data-state=open] h2", "[data-state=open]", " h2"],
+    [":is(.active, .selected) > .icon", ":is(.active, .selected)", " > .icon"],
   ])(
-    "keeps saved state descendants without accepting new ones: %s",
-    (selector) => {
-      expect(
-        validateSelector(selector, { allowLegacyStateDescendants: true })
-          .success
-      ).toBe(true);
-      expect(validateSelector(selector).success).toBe(false);
+    "separates the styled element from its descendant: %s",
+    (selector, scopedState, descendant) => {
+      expect(validateSelector(selector)).toMatchObject({
+        success: true,
+        scopedState,
+        descendant,
+      });
     }
   );
 

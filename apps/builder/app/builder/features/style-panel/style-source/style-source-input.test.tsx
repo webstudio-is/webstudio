@@ -278,7 +278,7 @@ test("does not treat selectors alone as copyable styles", () => {
         states: [":hover"],
       },
     ],
-    []
+    new Map()
   );
 
   expect(hasStyles.get("tag-style:button")).toBeUndefined();
@@ -296,11 +296,7 @@ test("allows Copy for styles on inactive states or breakpoints", () => {
         states: [],
       },
     ],
-    [
-      {
-        styleSourceId: "tag-style:button",
-      },
-    ]
+    new Map([["tag-style:button", [{ styleSourceId: "tag-style:button" }]]])
   );
 
   expect(hasStyles.get("tag-style:button")).toBe(true);

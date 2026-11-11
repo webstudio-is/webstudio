@@ -1103,8 +1103,6 @@ describe("runtime style operations", () => {
     "body:hover",
     ":hover + .tooltip",
     ":hover ~ .tooltip",
-    ":hover .button",
-    ":hover > .icon",
   ])("rejects unsupported state selectors when writing: %s", (state) => {
     expect(
       styleUpdateInput.safeParse({
@@ -1141,6 +1139,45 @@ describe("runtime style operations", () => {
     ).toMatchObject({ success: false });
   });
 
+  test.each([":hover .button", ":hover > .icon"])(
+    "accepts a state targeting descendants in shared style inputs: %s",
+    (state) => {
+      expect(
+        styleUpdateInput.safeParse({
+          instanceId: "box",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+          state,
+        }).success
+      ).toBe(true);
+      expect(
+        designTokenCreateInput.safeParse({
+          name: "Primary",
+          declarations: [
+            {
+              property: "color",
+              value: { type: "keyword", value: "red" },
+              state,
+            },
+          ],
+        }).success
+      ).toBe(true);
+      expect(
+        selectedStyleUpdateDeclarationsInput.safeParse({
+          updates: [
+            {
+              instanceId: "box",
+              styleSourceId: "token",
+              property: "color",
+              value: { type: "keyword", value: "red" },
+              state,
+            },
+          ],
+        }).success
+      ).toBe(true);
+    }
+  );
+
   test("accepts an invalid state as an existing declaration deletion coordinate", () => {
     expect(
       styleDeleteInput.safeParse({
@@ -1159,7 +1196,7 @@ describe("runtime style operations", () => {
       ".box[data-state=open] > [data-part=content]",
     ],
   ])(
-    "preserves saved descendant states in generated CSS: %s",
+    "renders descendant states in generated CSS: %s",
     (state, generatedSelector) => {
       const sheet = createRegularStyleSheet();
       const rule = sheet.addNestingRule(".box");

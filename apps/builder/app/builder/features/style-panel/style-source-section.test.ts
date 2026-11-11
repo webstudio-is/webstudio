@@ -77,6 +77,19 @@ test("Global root offers only the html Tag style first", () => {
   ]);
 });
 
+test("keeps token suggestions stable when selecting another instance", () => {
+  setupSelectedBody();
+  $registeredComponentMetas.set(new Map(Object.entries(coreMetas)));
+  $styleSources.set(
+    new Map([["token", { type: "token", id: "token", name: "Token" }]])
+  );
+  const token = $availableStyleSources.get().find(({ id }) => id === "token");
+  selectInstance([ROOT_INSTANCE_ID]);
+  expect($availableStyleSources.get().find(({ id }) => id === "token")).toBe(
+    token
+  );
+});
+
 describe("getComponentStates", () => {
   test("returns predefined states for tag", () => {
     const result = getComponentStates({

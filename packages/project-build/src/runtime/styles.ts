@@ -2050,9 +2050,7 @@ const getExistingStyleDeletionKeys = <
       styleKey !== undefined && existingStyleKeys.has(styleKey) === true;
     if (
       deletion.state !== undefined &&
-      validateSelector(deletion.state, {
-        allowLegacyStateDescendants: true,
-      }).success === false &&
+      validateSelector(deletion.state).success === false &&
       exists === false
     ) {
       return throwBuilderRuntimeError(

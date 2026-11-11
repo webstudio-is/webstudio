@@ -52,8 +52,15 @@ Start with `:` or `[` to target the current source's element or its pseudo-eleme
 
 Start with an HTML tag name to style that tag nested inside the current source's element. For example, `h2`, `h2:hover`, `h2[a="123"]`, and `h2::before` target nested headings. Quote numeric attribute values as in `a="123"`. A [Tag style](tag-styles.md) applies its nested tag selector across the site; a Token or Local source applies it only where that source is used.
 
-**Add more** accepts one nested tag with optional conditions. It does not accept multiple top-level selectors, direct class or ID selectors such as `.card` or `h2.card`, a second nested element, or combinators such as `>`, `+`, and `~`. For parent-child interactions, [CSS variables](css-variables.md#parent-child-interactions) let the parent change a value used by the child.
+You can also start with a state on the source's element, then target a descendant class. For example, `:hover .button` targets descendants with the [custom class](custom-classes-and-attributes.md) `button` while the source's element is hovered. `:hover > .icon` targets only direct children with class `icon`. These work in Tag, Token, and Local sources, with each source's usual scope.
+
+**Add more** does not accept multiple top-level selectors or unanchored class and ID selectors such as `.card`. A nested tag selector accepts one tag with optional conditions; a state-based descendant selector begins with a state on the source's element.
 {% endhint %}
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../.gitbook/assets/state-descendant-dark.png">
+  <img src="../../.gitbook/assets/state-descendant-light.png" alt="Local source menu with :hover > .icon entered under Add more and :hover .button listed under States" width="176">
+</picture>
 
 ## Pseudo-elements
 

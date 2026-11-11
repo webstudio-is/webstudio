@@ -73,7 +73,9 @@ export type StyleValueSource = {
  */
 export type StyleObjectModel = {
   styles: Styles;
+  nestedTagStyles: Map<string, Map<string, StyleDecl>>;
   styleSourceSelections: StyleSourceSelections;
+  styleSourceSelectionOrder: Map<Instance["id"], number>;
   tagStyleIds: Map<string, StyleDecl["styleSourceId"]>;
   // component:tag:state:property
   presetStyles: Map<string, StyleValue>;
@@ -101,6 +103,44 @@ export const getPresetStyleDeclKey = ({
   state?: string;
   property: CssProperty;
 }) => `${component}:${tag}:${state ?? ""}:${property}`;
+
+export const indexNestedTagStyles = (styles: Styles) => {
+  const byTag = new Map<string, Map<string, StyleDecl>>();
+  for (const declaration of styles.values()) {
+    if (!declaration.state?.startsWith(" ")) {
+      continue;
+    }
+    const selector = validateSelector(declaration.state);
+    if (!selector.success || selector.type !== "tag") {
+      continue;
+    }
+    const tag = selector.tag.toLowerCase();
+    let declarations = byTag.get(tag);
+    if (declarations === undefined) {
+      declarations = new Map();
+      byTag.set(tag, declarations);
+    }
+    declarations.set(
+      getStyleDeclKey({
+        ...declaration,
+        state: ` ${tag}${selector.condition}`,
+      }),
+      declaration
+    );
+  }
+  return byTag;
+};
+
+export const indexStyleSourceSelectionOrder = (
+  selections: StyleSourceSelections
+) => {
+  const order = new Map<Instance["id"], number>();
+  let index = 0;
+  for (const instanceId of selections.keys()) {
+    order.set(instanceId, index++);
+  }
+  return order;
+};
 
 /**
  *
@@ -139,7 +179,9 @@ const getCascadedValue = ({
 }) => {
   const {
     styles,
+    nestedTagStyles,
     styleSourceSelections,
+    styleSourceSelectionOrder,
     tagStyleIds,
     presetStyles,
     instanceTags,
@@ -210,31 +252,7 @@ const getCascadedValue = ({
   // user styles
   const styleSourceIds = styleSourceSelections.get(instanceId)?.values ?? [];
   const tagStyleId = tag ? tagStyleIds.get(tag) : undefined;
-  const nestedStyles = new Map<string, StyleDecl>();
-  if (tag && ancestorIds.length > 0) {
-    for (const declaration of styles.values()) {
-      if (
-        declaration.property !== camelCaseProperty(property) ||
-        !declaration.state?.startsWith(" ")
-      ) {
-        continue;
-      }
-      const selector = validateSelector(declaration.state);
-      if (
-        selector.success &&
-        selector.type === "tag" &&
-        selector.tag.toLowerCase() === tag
-      ) {
-        nestedStyles.set(
-          getStyleDeclKey({
-            ...declaration,
-            state: ` ${tag}${selector.condition}`,
-          }),
-          declaration
-        );
-      }
-    }
-  }
+  const nestedStyles = tag ? nestedTagStyles.get(tag) : undefined;
   selectedStyleSourceId ??= styleSourceIds.at(-1);
   const addDeclaration = ({
     styleSourceId,
@@ -253,7 +271,7 @@ const getCascadedValue = ({
       state,
       property: camelCaseProperty(property),
     });
-    const styleDecl = nestedStyles.get(key) ?? styles.get(key);
+    const styleDecl = nestedStyles?.get(key) ?? styles.get(key);
     const isSelected =
       sourceInstanceId === instanceId &&
       styleSourceId === selectedStyleSourceId &&
@@ -282,7 +300,13 @@ const getCascadedValue = ({
   };
   // Within each state, resolve all Tag breakpoints before instance styles.
   // Instance selectors then win over Tag selectors across breakpoints.
-  const ancestorIdSet = new Set(ancestorIds);
+  const ancestorSelections = ancestorIds
+    .filter((id) => styleSourceSelections.has(id))
+    .sort(
+      (a, b) =>
+        (styleSourceSelectionOrder.get(a) ?? 0) -
+        (styleSourceSelectionOrder.get(b) ?? 0)
+    );
   for (const state of states) {
     if (tag) {
       const descendantState = ` ${tag}${state ?? ""}`;
@@ -313,11 +337,9 @@ const getCascadedValue = ({
       }
       // Attached Token and Local descendant rules follow the global Tag sheet.
       for (const breakpointId of matchingBreakpoints) {
-        for (const [ancestorId, selection] of styleSourceSelections) {
-          if (!ancestorIdSet.has(ancestorId)) {
-            continue;
-          }
-          for (const ancestorSourceId of selection.values) {
+        for (const ancestorId of ancestorSelections) {
+          for (const ancestorSourceId of styleSourceSelections.get(ancestorId)!
+            .values) {
             addDeclaration({
               styleSourceId: ancestorSourceId,
               breakpointId,
