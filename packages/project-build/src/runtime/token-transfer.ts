@@ -162,10 +162,17 @@ const copyStyleSource = (
       queue.push(...rootStyles.filter((style) => style.property === name));
     }
   }
-  const variableStyles = rootStyles.filter(
-    (style) =>
-      referencedNames.has(style.property) && style.styleSourceId !== source.id
-  );
+  const variableStyles = rootStyles
+    .filter(
+      (style) =>
+        referencedNames.has(style.property) &&
+        (kind === "token" || style.styleSourceId !== source.id)
+    )
+    .map((style) =>
+      style.styleSourceId === source.id
+        ? { ...style, styleSourceId: ROOT_INSTANCE_ID }
+        : style
+    );
   const copiedStyles = [...tokenStyles, ...variableStyles];
   const breakpointIds = new Set(
     copiedStyles.map((style) => style.breakpointId)
