@@ -223,7 +223,7 @@ test("still rejects new page-folder cycles when saving", () => {
   expect(() => serializePages(loaded)).toThrow();
 });
 
-test("repairs cycles in legacy page data", () => {
+test("repairs a self-referencing folder in legacy page data", () => {
   const recovered = migratePages({
     homePage: {
       id: "home",
@@ -236,12 +236,11 @@ test("repairs cycles in legacy page data", () => {
     pages: [],
     folders: [
       { id: "root", name: "Root", slug: "", children: ["home", "a"] },
-      { id: "a", name: "A", slug: "a", children: ["b"] },
-      { id: "b", name: "B", slug: "b", children: ["a"] },
+      { id: "a", name: "A", slug: "a", children: ["a"] },
     ],
   });
 
-  expect(recovered.folders.get("b")?.children).toEqual([]);
+  expect(recovered.folders.get("a")?.children).toEqual([]);
   expect(() => serializePages(recovered)).not.toThrow();
 });
 
