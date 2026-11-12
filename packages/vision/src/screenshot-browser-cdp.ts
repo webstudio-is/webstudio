@@ -1767,16 +1767,6 @@ const capturePageWithBrowserRuntime = async (
             recordJavascriptError(params.exceptionDetails);
           }
         });
-        cdp.on("Runtime.consoleAPICalled", (params) => {
-          if (
-            typeof params === "object" &&
-            params !== null &&
-            "type" in params &&
-            params.type === "error"
-          ) {
-            recordJavascriptError(params);
-          }
-        });
         cdp.on("Network.requestWillBeSent", (params) => {
           if (
             typeof params !== "object" ||

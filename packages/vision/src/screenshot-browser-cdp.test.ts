@@ -448,36 +448,35 @@ class FakeWebSocket {
             sameDocumentNavigation) &&
             navigationNumber === 2);
         if (shouldLogError) {
+          const isException = this.runtimeErrorScenario !== "console-error";
           this.emit("message", {
             data: JSON.stringify({
-              method:
-                this.runtimeErrorScenario === "exception-error"
-                  ? "Runtime.exceptionThrown"
-                  : "Runtime.consoleAPICalled",
-              params:
-                this.runtimeErrorScenario === "exception-error"
-                  ? {
-                      exceptionDetails: {
-                        executionContextId,
-                        url: "https://example.com/assets/exception.js?token=private",
-                        lineNumber: 6,
-                      },
-                    }
-                  : {
-                      type: "error",
+              method: isException
+                ? "Runtime.exceptionThrown"
+                : "Runtime.consoleAPICalled",
+              params: isException
+                ? {
+                    exceptionDetails: {
                       executionContextId:
-                        this.runtimeErrorScenario === "console-error"
+                        this.runtimeErrorScenario === "exception-error"
                           ? executionContextId
                           : 1,
-                      stackTrace: {
-                        callFrames: [
-                          {
-                            url: "https://example.com/assets/app.js?token=private",
-                            lineNumber: 41,
-                          },
-                        ],
-                      },
+                      url: "https://example.com/assets/exception.js?token=private",
+                      lineNumber: 6,
                     },
+                  }
+                : {
+                    type: "error",
+                    executionContextId,
+                    stackTrace: {
+                      callFrames: [
+                        {
+                          url: "https://example.com/assets/app.js?token=private",
+                          lineNumber: 41,
+                        },
+                      ],
+                    },
+                  },
             }),
           });
         }
@@ -2412,7 +2411,7 @@ test("returns final URL, redirects, and HTTP error status", async () => {
   });
 });
 
-test("reports React error boundary errors logged by the page", async () => {
+test("does not treat console.error as an uncaught page exception", async () => {
   const layout = await captureBrowserScreenshot(
     {
       url: "https://example.com",
@@ -2437,7 +2436,7 @@ test("reports React error boundary errors logged by the page", async () => {
     })
   );
 
-  expect(layout.navigation?.javascriptErrorPresent).toBe(true);
+  expect(layout.navigation?.javascriptErrorPresent).toBeUndefined();
   expect(layout.navigation).not.toHaveProperty("javascriptErrorLocation");
 });
 
