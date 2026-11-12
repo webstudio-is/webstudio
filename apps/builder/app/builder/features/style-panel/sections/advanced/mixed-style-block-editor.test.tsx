@@ -10,10 +10,7 @@ import { TooltipProvider } from "@webstudio-is/design-system";
 import { $availableVariables } from "../../shared/model";
 import { parseStyleInput } from "~/builder/shared/css-editor/parse-style-input";
 import type { ApplyChanges } from "~/builder/shared/css-editor/style-block-parse";
-import {
-  InlineMixedStyleBlockEditor,
-  MixedStyleBlockDialog,
-} from "./style-block-dialog";
+import { MixedStyleBlockEditor } from "./mixed-style-block-editor";
 import {
   parseBlock,
   cssBlockLanguage,
@@ -174,7 +171,8 @@ test("keeps hidden and uploaded image layers when editing a gradient", async () 
   };
   let changes: ApplyChanges | undefined;
   const container = render(
-    <InlineMixedStyleBlockEditor
+    <MixedStyleBlockEditor
+      inline
       declarations={[{ property: "background-image", value: stored }]}
       sourceDeclarations={[]}
       readonly={false}
@@ -228,7 +226,8 @@ const render = (content: React.ReactNode) => {
 
 test("inline Advanced editor renders stored longhands as editable shorthands", async () => {
   const container = render(
-    <InlineMixedStyleBlockEditor
+    <MixedStyleBlockEditor
+      inline
       declarations={declarations}
       sourceDeclarations={[]}
       readonly={false}
@@ -245,7 +244,7 @@ test("inline Advanced editor renders stored longhands as editable shorthands", a
 
 test("centered Local editor renders stored longhands as editable shorthands", async () => {
   render(
-    <MixedStyleBlockDialog
+    <MixedStyleBlockEditor
       declarations={declarations}
       sourceDeclarations={[]}
       readonly={false}
@@ -272,9 +271,9 @@ test.each(["inline", "centered"])(
     };
     const container = render(
       mode === "inline" ? (
-        <InlineMixedStyleBlockEditor {...props} />
+        <MixedStyleBlockEditor {...props} inline />
       ) : (
-        <MixedStyleBlockDialog {...props} open onOpenChange={() => {}} />
+        <MixedStyleBlockEditor {...props} open onOpenChange={() => {}} />
       )
     );
     const editor = await vi.waitFor(() => {
@@ -323,7 +322,7 @@ test.each(["inline", "centered"])(
 
 test("centered search finds every source and keeps Local editable", async () => {
   render(
-    <MixedStyleBlockDialog
+    <MixedStyleBlockEditor
       declarations={Array.from(
         parseStyleInput("color: red", new Map()).styleMap,
         ([property, value]) => ({ property, value })
@@ -374,7 +373,7 @@ test("centered search finds every source and keeps Local editable", async () => 
 test("centered search starts empty each time the dialog opens", async () => {
   const dialog = (open: boolean) => (
     <TooltipProvider>
-      <MixedStyleBlockDialog
+      <MixedStyleBlockEditor
         declarations={declarations}
         sourceDeclarations={sourceDeclarations}
         readonly={false}
@@ -439,7 +438,7 @@ test("reports malformed pasted CSS without saving the broken declaration", () =>
 
 test("Enter adds a separator before a new declaration line", async () => {
   render(
-    <MixedStyleBlockDialog
+    <MixedStyleBlockEditor
       declarations={[]}
       sourceDeclarations={[]}
       readonly={false}

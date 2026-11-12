@@ -39,10 +39,7 @@ import {
 } from "~/shared/nano-states";
 import { $styles } from "~/shared/sync/data-stores";
 import { useReadonly } from "../../shared/readonly";
-import {
-  InlineMixedStyleBlockEditor,
-  MixedStyleBlockDialog,
-} from "./style-block-dialog";
+import { MixedStyleBlockEditor } from "./mixed-style-block-editor";
 import type { ApplyChanges } from "~/builder/shared/css-editor/style-block-parse";
 import { $settings, setSetting } from "~/builder/shared/client-settings";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
@@ -253,8 +250,9 @@ export const Section = () => {
         }
       >
         {selectedInstanceKey !== undefined && (
-          <InlineMixedStyleBlockEditor
+          <MixedStyleBlockEditor
             key={selectionKey}
+            inline
             declarations={blockDeclarations}
             sourceDeclarations={visibleAdvancedStyleDeclarations}
             readonly={readonly}
@@ -266,7 +264,7 @@ export const Section = () => {
         )}
       </AdvancedStyleSection>
       {selectedInstanceKey !== undefined && (
-        <MixedStyleBlockDialog
+        <MixedStyleBlockEditor
           key={selectionKey}
           declarations={blockDeclarations}
           sourceDeclarations={visibleAdvancedStyleDeclarations}

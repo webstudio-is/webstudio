@@ -2,16 +2,13 @@ import { useState, type ComponentProps } from "react";
 import { Box, cssVar, theme } from "@webstudio-is/design-system";
 import { ROOT_INSTANCE_ID } from "@webstudio-is/sdk";
 import type { ComputedStyleDecl } from "~/shared/style-object-model";
-import {
-  InlineMixedStyleBlockEditor,
-  MixedStyleBlockDialog,
-} from "./style-block-dialog";
+import { MixedStyleBlockEditor } from "./mixed-style-block-editor";
 
 const cascadedValue = { type: "keyword", value: "blue" } as const;
 const presetValue = { type: "keyword", value: "block" } as const;
 const globalValue = { type: "keyword", value: "red" } as const;
 const localDeclarations: ComponentProps<
-  typeof InlineMixedStyleBlockEditor
+  typeof MixedStyleBlockEditor
 >["declarations"] = [
   { property: "opacity", value: { type: "unit", unit: "number", value: 0.8 } },
 ];
@@ -50,7 +47,8 @@ export const InlineCode = () => (
       background: cssVar("--background-primary"),
     }}
   >
-    <InlineMixedStyleBlockEditor
+    <MixedStyleBlockEditor
+      inline
       declarations={localDeclarations}
       sourceDeclarations={inheritedDeclarations}
       readonly={false}
@@ -60,7 +58,7 @@ export const InlineCode = () => (
 );
 
 export const CenteredCode = () => (
-  <MixedStyleBlockDialog
+  <MixedStyleBlockEditor
     declarations={localDeclarations}
     sourceDeclarations={inheritedDeclarations}
     readonly={false}
@@ -72,10 +70,11 @@ export const CenteredCode = () => (
 
 export const EditableCode = () => {
   const [declarations, setDeclarations] = useState<
-    ComponentProps<typeof InlineMixedStyleBlockEditor>["declarations"]
+    ComponentProps<typeof MixedStyleBlockEditor>["declarations"]
   >([]);
   return (
-    <InlineMixedStyleBlockEditor
+    <MixedStyleBlockEditor
+      inline
       declarations={declarations}
       sourceDeclarations={inheritedDeclarations}
       readonly={false}
