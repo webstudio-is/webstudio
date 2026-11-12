@@ -542,21 +542,31 @@ export const StyleSourceMenu = (props: StyleSourceMenuProps) => {
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Add more</DropdownMenuLabel>
-            <Box css={{ padding: theme.spacing[4] }}>
-              <SelectorCombobox
-                existingSelectors={availableStates.map(
-                  (state) => state.selector
-                )}
-                onFocus={() => {
-                  setHighlightedSelector(undefined);
-                  setHighlightedAction("addMore");
-                }}
-                onBlur={() => setHighlightedAction(undefined)}
-                onSelect={(selector) =>
-                  props.onAddSelector?.(props.item.id, selector)
+            <DropdownMenuItem
+              asChild
+              onFocus={(event) => {
+                if (event.target === event.currentTarget) {
+                  event.currentTarget.querySelector("input")?.focus();
                 }
-              />
-            </Box>
+              }}
+              onSelect={(event) => event.preventDefault()}
+            >
+              <Box css={{ padding: theme.spacing[4], margin: 0 }}>
+                <SelectorCombobox
+                  existingSelectors={availableStates.map(
+                    (state) => state.selector
+                  )}
+                  onFocus={() => {
+                    setHighlightedSelector(undefined);
+                    setHighlightedAction("addMore");
+                  }}
+                  onBlur={() => setHighlightedAction(undefined)}
+                  onSelect={(selector) =>
+                    props.onAddSelector?.(props.item.id, selector)
+                  }
+                />
+              </Box>
+            </DropdownMenuItem>
           </>
         )}
         <DropdownMenuSeparator />
