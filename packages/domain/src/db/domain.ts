@@ -15,69 +15,6 @@ import type { Database } from "@webstudio-is/postgrest/index.server";
 
 type Result = { success: false; error: string } | { success: true };
 
-// The RPC types are generated only after the migration is applied.
-const domainOperationClient = (context: AppContext) =>
-  context.postgrest.client as unknown as {
-    rpc: (
-      name: string,
-      args: Record<string, unknown>
-    ) => Promise<{ data: number | boolean | null; error: unknown }>;
-  };
-
-const runDomainOperation = async <T extends Result>(
-  props: { domainId: string; projectId: string; removeOnSuccess: boolean },
-  context: AppContext,
-  action: (linkCount: number) => Promise<T>
-): Promise<T | { success: false; error: string }> => {
-  const client = domainOperationClient(context);
-  const token = createId();
-  const args = {
-    p_domain_id: props.domainId,
-    p_project_id: props.projectId,
-    p_token: token,
-  };
-  const claim = await client.rpc("claim_domain_operation", args);
-  if (claim.error) {
-    return createErrorResponse(claim.error);
-  }
-  if (claim.data === -2) {
-    return createErrorResponse("Domain not found");
-  }
-  if (typeof claim.data !== "number" || claim.data < 0) {
-    return createErrorResponse("Domain operation failed");
-  }
-
-  let finished = false;
-  try {
-    const result = await action(claim.data);
-    if (result.success === false) {
-      return result;
-    }
-    const finish = await client.rpc("finish_domain_operation", {
-      ...args,
-      p_remove: props.removeOnSuccess,
-    });
-    if (finish.error) {
-      return createErrorResponse(finish.error);
-    }
-    if (finish.data !== true) {
-      return createErrorResponse("Domain operation failed");
-    }
-    finished = true;
-    return result;
-  } finally {
-    if (finished === false) {
-      const release = await client.rpc("release_domain_operation", {
-        p_domain_id: props.domainId,
-        p_token: token,
-      });
-      if (release.error) {
-        throw release.error;
-      }
-    }
-  }
-};
-
 /**
  * Creates 2 entries in the database:
  * at the "domain" table and at the "projectDomain" table
@@ -217,32 +154,29 @@ export const verify = async (
     return createErrorResponse("Domain not found");
   }
 
-  return runDomainOperation(
-    { ...props, removeOnSuccess: false },
-    context,
-    async () => {
-      // @todo: TXT verification and domain initialization should be implemented in the future as queue service
-      const createDomainResult = await context.domain.domainTrpc.create.mutate({
-        domain,
-        txtRecord: projectDomain.data.txtRecord,
-      });
-      if (createDomainResult.success === false) {
-        return createDomainResult;
-      }
+  // @todo: TXT verification and domain initialization should be implemented in the future as queue service
+  const createDomainResult = await context.domain.domainTrpc.create.mutate({
+    domain,
+    txtRecord: projectDomain.data.txtRecord,
+  });
 
-      const domainUpdateResult = await context.postgrest.client
-        .from("Domain")
-        .update({
-          status: "PENDING",
-          txtRecord: projectDomain.data.txtRecord,
-        })
-        .eq("id", props.domainId);
-      if (domainUpdateResult.error) {
-        return createErrorResponse(domainUpdateResult.error);
-      }
-      return { success: true };
-    }
-  );
+  if (createDomainResult.success === false) {
+    return createDomainResult;
+  }
+
+  const domainUpdateResult = await context.postgrest.client
+    .from("Domain")
+    .update({
+      status: "PENDING",
+      txtRecord: projectDomain.data.txtRecord,
+    })
+    .eq("id", props.domainId);
+
+  if (domainUpdateResult.error) {
+    return createErrorResponse(domainUpdateResult.error);
+  }
+
+  return { success: true };
 };
 
 /**
@@ -281,41 +215,77 @@ export const remove = async (
     return createErrorResponse("Domain not found");
   }
 
-  return runDomainOperation(
-    { ...props, removeOnSuccess: true },
-    context,
-    async (linkCount) => {
-      const deploymentResult = await context.deployment.deploymentTrpc.unpublish
-        .mutate({
-          domain: domain.domain,
-        })
-        .catch((error) => createErrorResponse(error));
+  const deploymentResult = await context.deployment.deploymentTrpc.unpublish
+    .mutate({
+      domain: domain.domain,
+    })
+    .catch((error) => createErrorResponse(error));
 
-      if (
-        deploymentResult.success === false &&
-        deploymentResult.error !== "NOT_IMPLEMENTED"
-      ) {
-        return deploymentResult;
-      }
+  if (
+    deploymentResult.success === false &&
+    deploymentResult.error !== "NOT_IMPLEMENTED"
+  ) {
+    return deploymentResult;
+  }
 
-      await unpublishBuild(
-        { projectId: props.projectId, domain: domain.domain },
-        context
-      );
-
-      if (linkCount === 1) {
-        const releaseResult = await context.domain.domainTrpc.remove
-          .mutate({ domain: domain.domain })
-          .catch((error) => createErrorResponse(error));
-
-        if (releaseResult.success === false) {
-          return releaseResult;
-        }
-      }
-
-      return { success: true };
-    }
+  await unpublishBuild(
+    { projectId: props.projectId, domain: domain.domain },
+    context
   );
+
+  const connections = await context.postgrest.client
+    .from("ProjectDomain")
+    .select("domainId", { count: "exact", head: true })
+    .eq("domainId", props.domainId);
+
+  if (connections.error) {
+    return createErrorResponse(connections.error);
+  }
+
+  if (connections.count === 1) {
+    const releaseResult = await context.domain.domainTrpc.remove
+      .mutate({ domain: domain.domain })
+      .catch((error) => createErrorResponse(error));
+    if (releaseResult.success === false) {
+      return releaseResult;
+    }
+  }
+
+  const deleteResult = await context.postgrest.client
+    .from("ProjectDomain")
+    .delete()
+    .eq("domainId", props.domainId)
+    .eq("projectId", props.projectId);
+
+  if (deleteResult.error) {
+    return createErrorResponse(deleteResult.error);
+  }
+
+  const remainingDomains = await context.postgrest.client
+    .from("ProjectDomain")
+    .select("domainId", { count: "exact", head: true })
+    .eq("domainId", props.domainId);
+
+  if (remainingDomains.error) {
+    return createErrorResponse(remainingDomains.error);
+  }
+
+  if (remainingDomains.count === 0) {
+    const updateResult = await context.postgrest.client
+      .from("Domain")
+      .update({
+        status: "INITIALIZING",
+        error: "Removed from project",
+        txtRecord: null,
+      })
+      .eq("id", props.domainId);
+
+    if (updateResult.error) {
+      return createErrorResponse(updateResult.error);
+    }
+  }
+
+  return { success: true };
 };
 
 type Status = "active" | "pending" | "error";
@@ -377,38 +347,28 @@ export const updateStatus = async (
     return createErrorResponse("Domain not found");
   }
 
-  return runDomainOperation(
-    {
-      projectId: props.projectId,
-      domainId: domainRow.id,
-      removeOnSuccess: false,
-    },
-    context,
-    async (): Promise<RefreshResult> => {
-      // @todo: must be implemented as workflow/queue service part of 3rd party domain initialization process
-      const statusResult = await context.domain.domainTrpc.getStatus.query({
-        domain,
-      });
-      if (statusResult.success === false) {
-        return statusResult;
-      }
+  // @todo: must be implemented as workflow/queue service part of 3rd party domain initialization process
+  const statusResult = await context.domain.domainTrpc.getStatus.query({
+    domain,
+  });
+  if (statusResult.success === false) {
+    return statusResult;
+  }
 
-      const { data } = statusResult;
-      const updatedDomainResult = await context.postgrest.client
-        .from("Domain")
-        .update({
-          status: statusToStatusEnum(data.status),
-          error: data.status === "error" ? data.error : null,
-        })
-        .eq("id", domainRow.id)
-        .select("*")
-        .single();
-      if (updatedDomainResult.error) {
-        return createErrorResponse(updatedDomainResult.error);
-      }
-      return { success: true, domain: updatedDomainResult.data };
-    }
-  );
+  const { data } = statusResult;
+  const updatedDomainResult = await context.postgrest.client
+    .from("Domain")
+    .update({
+      status: statusToStatusEnum(data.status),
+      error: data.status === "error" ? data.error : null,
+    })
+    .eq("id", domainRow.id)
+    .select("*")
+    .single();
+  if (updatedDomainResult.error) {
+    return createErrorResponse(updatedDomainResult.error);
+  }
+  return { success: true, domain: updatedDomainResult.data };
 };
 
 export const countTotalDomains = async (

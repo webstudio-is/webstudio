@@ -7,13 +7,7 @@ import {
   testContext,
 } from "@webstudio-is/postgrest/testing";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import {
-  countTotalDomains,
-  create,
-  remove,
-  updateStatus,
-  verify,
-} from "./domain";
+import { countTotalDomains, create, remove, updateStatus } from "./domain";
 
 const server = createTestServer();
 
@@ -201,8 +195,6 @@ describe("create — domain limit guard (msw)", () => {
   });
 });
 
-// The RPC handlers stand in for the migration's single-hostname claim. They
-// keep the remote call and the final database mutation in a known order.
 const domainLink = db.get("ProjectDomain", () =>
   json({
     txtRecord: "txt-1",
@@ -212,288 +204,89 @@ const domainLink = db.get("ProjectDomain", () =>
 );
 
 describe("remove (msw)", () => {
-  test("releases the last hostname before detaching its link", async () => {
+  test.each([
+    "last",
+    "shared",
+    "cleanup failure",
+    "transport failure",
+    "unpublish failure",
+    "count failure",
+  ])("handles %s connection removal", async (scenario) => {
     const events: string[] = [];
+    let links = scenario === "shared" ? 2 : 1;
     server.use(
       projectHandler,
       domainLink,
       db.get("Build", () => json([])),
-      db.post("rpc/claim_domain_operation", () => {
-        events.push("claim");
-        return json(1);
-      }),
-      db.post("rpc/finish_domain_operation", async ({ request }) => {
-        expect(await request.json()).toMatchObject({ p_remove: true });
-        events.push("finish");
-        return json(true);
-      })
-    );
-    const result = await remove(
-      { projectId: "proj-1", domainId: "domain-id-1" },
-      createContext({
-        domain: {
-          domainTrpc: {
-            remove: {
-              mutate: () => {
-                events.push("release hostname");
-                return Promise.resolve({ success: true });
-              },
-            },
-          },
-        },
-        deployment: {
-          ...createContext().deployment,
-          deploymentTrpc: {
-            unpublish: {
-              mutate: () => {
-                events.push("unpublish");
-                return Promise.resolve({ success: true });
-              },
-            },
-          },
-        },
-      } as unknown as Partial<AppContext>)
-    );
-    expect(result).toEqual({ success: true });
-    expect(events).toEqual([
-      "claim",
-      "unpublish",
-      "release hostname",
-      "finish",
-    ]);
-  });
-
-  test("keeps a shared hostname when detaching one project", async () => {
-    let released = false;
-    server.use(
-      projectHandler,
-      domainLink,
-      db.get("Build", () => json([])),
-      db.post("rpc/claim_domain_operation", () => json(2)),
-      db.post("rpc/finish_domain_operation", () => json(true))
-    );
-    const result = await remove(
-      { projectId: "proj-1", domainId: "domain-id-1" },
-      createContext({
-        domain: {
-          domainTrpc: {
-            remove: {
-              mutate: () => {
-                released = true;
-                return Promise.resolve({ success: true });
-              },
-            },
-          },
-        },
-      } as unknown as Partial<AppContext>)
-    );
-    expect(result).toEqual({ success: true });
-    expect(released).toBe(false);
-  });
-
-  test("does not detach when unpublish fails", async () => {
-    let finished = false;
-    server.use(
-      projectHandler,
-      domainLink,
-      db.post("rpc/claim_domain_operation", () => json(1)),
-      db.post("rpc/finish_domain_operation", () => {
-        finished = true;
-        return json(true);
-      }),
-      db.post("rpc/release_domain_operation", () => json(true))
-    );
-    const result = await remove(
-      { projectId: "proj-1", domainId: "domain-id-1" },
-      createContext({
-        deployment: {
-          ...createContext().deployment,
-          deploymentTrpc: {
-            unpublish: {
-              mutate: () =>
-                Promise.resolve({ success: false, error: "Cloudflare failed" }),
-            },
-          },
-        },
-      } as unknown as Partial<AppContext>)
-    );
-    expect(result).toEqual({ success: false, error: "Cloudflare failed" });
-    expect(finished).toBe(false);
-  });
-
-  test("releases the claim and keeps the link when hostname cleanup fails", async () => {
-    let finished = false;
-    let releasedClaim = false;
-    server.use(
-      projectHandler,
-      domainLink,
-      db.get("Build", () => json([])),
-      db.post("rpc/claim_domain_operation", () => json(1)),
-      db.post("rpc/finish_domain_operation", () => {
-        finished = true;
-        return json(true);
-      }),
-      db.post("rpc/release_domain_operation", () => {
-        releasedClaim = true;
-        return json(true);
-      })
-    );
-    const result = await remove(
-      { projectId: "proj-1", domainId: "domain-id-1" },
-      createContext({
-        domain: {
-          domainTrpc: {
-            remove: {
-              mutate: () =>
-                Promise.resolve({ success: false, error: "Cloudflare failed" }),
-            },
-          },
-        },
-      } as unknown as Partial<AppContext>)
-    );
-    expect(result).toEqual({ success: false, error: "Cloudflare failed" });
-    expect(finished).toBe(false);
-    expect(releasedClaim).toBe(true);
-  });
-
-  test("a competing removal retries after the first link is detached", async () => {
-    let links = 2;
-    let claimed = false;
-    let releases = 0;
-    let unblockFirst: () => void = () => {};
-    const firstWaiting = new Promise<void>((resolve) => {
-      unblockFirst = resolve;
-    });
-    let signalClaimed: () => void = () => {};
-    const claimStarted = new Promise<void>((resolve) => {
-      signalClaimed = resolve;
-    });
-    server.use(
-      projectHandler,
-      domainLink,
-      db.get("Build", () => json([])),
-      db.post("rpc/claim_domain_operation", () => {
-        if (claimed) {
-          return json(-1);
+      db.head("ProjectDomain", ({ request }) => {
+        expect(new URL(request.url).searchParams.get("domainId")).toBe(
+          "eq.domain-id-1"
+        );
+        if (scenario === "count failure") {
+          return json({ message: "failed" }, { status: 500 });
         }
-        claimed = true;
-        signalClaimed();
-        return json(links);
+        return empty({ headers: { "Content-Range": `*/${links}` } });
       }),
-      db.post("rpc/finish_domain_operation", () => {
+      db.delete("ProjectDomain", ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        expect(params.get("domainId")).toBe("eq.domain-id-1");
+        expect(params.get("projectId")).toBe("eq.proj-1");
+        events.push("detach");
         links -= 1;
-        claimed = false;
-        return json(true);
-      })
-    );
-    const context = createContext({
-      domain: {
-        domainTrpc: {
-          remove: {
-            mutate: () => {
-              releases += 1;
-              return Promise.resolve({ success: true });
-            },
-          },
-        },
-      },
-      deployment: {
-        ...createContext().deployment,
-        deploymentTrpc: {
-          unpublish: {
-            mutate: async () => {
-              if (links === 2) {
-                await firstWaiting;
-              }
-              return { success: true };
-            },
-          },
-        },
-      },
-    } as unknown as Partial<AppContext>);
-    const first = remove(
-      { projectId: "proj-1", domainId: "domain-id-1" },
-      context
-    );
-    await claimStarted;
-    const competing = await remove(
-      { projectId: "proj-2", domainId: "domain-id-1" },
-      context
-    );
-    expect(competing.success).toBe(false);
-    unblockFirst();
-    expect(await first).toEqual({ success: true });
-    expect(
-      await remove({ projectId: "proj-2", domainId: "domain-id-1" }, context)
-    ).toEqual({ success: true });
-    expect(links).toBe(0);
-    expect(releases).toBe(1);
-  });
-});
-
-describe("verify (msw)", () => {
-  test("claims the hostname before creating it", async () => {
-    const events: string[] = [];
-    server.use(
-      projectHandler,
-      domainLink,
-      db.post("rpc/claim_domain_operation", () => {
-        events.push("claim");
-        return json(1);
+        return empty({ status: 204 });
       }),
       db.patch("Domain", () => {
-        events.push("status");
-        return json({ id: "domain-id-1" });
-      }),
-      db.post("rpc/finish_domain_operation", async ({ request }) => {
-        expect(await request.json()).toMatchObject({ p_remove: false });
-        events.push("finish");
-        return json(true);
+        events.push("reset");
+        return empty({ status: 204 });
       })
     );
-    const result = await verify(
+    const result = await remove(
       { projectId: "proj-1", domainId: "domain-id-1" },
       createContext({
         domain: {
           domainTrpc: {
-            create: {
-              mutate: () => {
-                events.push("create hostname");
-                return Promise.resolve({ success: true });
+            remove: {
+              mutate: async () => {
+                events.push("release");
+                if (scenario === "transport failure") {
+                  throw new Error("failed");
+                }
+                return scenario === "cleanup failure"
+                  ? { success: false, error: "failed" }
+                  : { success: true };
+              },
+            },
+          },
+        },
+        deployment: {
+          ...createContext().deployment,
+          deploymentTrpc: {
+            unpublish: {
+              mutate: async () => {
+                events.push("unpublish");
+                return scenario === "unpublish failure"
+                  ? { success: false, error: "failed" }
+                  : { success: true };
               },
             },
           },
         },
       } as unknown as Partial<AppContext>)
     );
-    expect(result).toEqual({ success: true });
-    expect(events).toEqual(["claim", "create hostname", "status", "finish"]);
-  });
-
-  test("does not recreate a hostname while removal holds the claim", async () => {
-    let created = false;
-    server.use(
-      projectHandler,
-      domainLink,
-      db.post("rpc/claim_domain_operation", () => json(-1))
-    );
-    const result = await verify(
-      { projectId: "proj-1", domainId: "domain-id-1" },
-      createContext({
-        domain: {
-          domainTrpc: {
-            create: {
-              mutate: () => {
-                created = true;
-                return Promise.resolve({ success: true });
-              },
-            },
-          },
-        },
-      } as unknown as Partial<AppContext>)
-    );
-    expect(result.success).toBe(false);
-    expect(created).toBe(false);
+    if (scenario === "last") {
+      expect(result.success).toBe(true);
+      expect(events).toEqual(["unpublish", "release", "detach", "reset"]);
+      expect(links).toBe(0);
+    } else if (scenario === "shared") {
+      expect(result.success).toBe(true);
+      expect(events).toEqual(["unpublish", "detach"]);
+      expect(links).toBe(1);
+    } else {
+      expect(result.success).toBe(false);
+      expect(events).not.toContain("detach");
+      expect(events).not.toContain("reset");
+      expect(links).toBe(1);
+    }
   });
 });
 
@@ -535,8 +328,6 @@ describe("updateStatus (msw)", () => {
       db.get("ProjectDomain", () =>
         json([{ domain: { id: "domain-id-1", domain: "example.com" } }])
       ),
-      db.post("rpc/claim_domain_operation", () => json(1)),
-      db.post("rpc/finish_domain_operation", () => json(true)),
       db.patch("Domain", () =>
         json({ id: "domain-id-1", domain: "example.com", status: "ACTIVE" })
       )
