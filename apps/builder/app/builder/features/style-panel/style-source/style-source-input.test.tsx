@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { expect, test, vi } from "vitest";
+import { userEvent } from "@vitest/browser/context";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import {
   copyDesignToken,
@@ -306,6 +307,7 @@ test("navigates style sources and restores input focus after Escape", async () =
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
+  const onSelectAutocompleteItem = vi.fn();
   const sources = [
     { id: "tag-style:button", label: "button", source: "tag" as const },
     { id: "token-one", label: "One", source: "token" as const },
@@ -327,6 +329,7 @@ test("navigates style sources and restores input focus after Escape", async () =
             selectedItemSelector={undefined}
             items={sources}
             value={sources}
+            onSelectAutocompleteItem={onSelectAutocompleteItem}
           />
         </TooltipProvider>
       )
@@ -340,11 +343,15 @@ test("navigates style sources and restores input focus after Escape", async () =
     const sourceButton = (id: string) =>
       container.querySelector<HTMLElement>(`[data-id="${id}"] button`)!;
 
+    act(() => input.focus());
+    act(() => press(input, "ArrowDown"));
+    expect(input.getAttribute("aria-activedescendant")).toBeTruthy();
     act(() => {
-      input.focus();
       input.setSelectionRange(0, 0);
       press(input, "ArrowLeft");
     });
+    await act(async () => Promise.resolve());
+    expect(onSelectAutocompleteItem).not.toHaveBeenCalled();
     expect(document.activeElement).toBe(sourceButton("token-two"));
     expect(sourceButton("token-two").matches(":focus-visible")).toBe(true);
 
@@ -369,6 +376,102 @@ test("navigates style sources and restores input focus after Escape", async () =
     });
     expect(document.querySelector('[role="menu"]')).toBeNull();
     expect(document.activeElement).toBe(input);
+  } finally {
+    act(() => root.unmount());
+    container.remove();
+  }
+});
+
+test("opens suggestions on input focus and waits for another action after Escape", async () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const token = {
+    id: "token-one",
+    label: "One",
+    source: "token" as const,
+    disabled: false,
+    locked: false,
+    states: [],
+  };
+  try {
+    act(() =>
+      root.render(
+        <TooltipProvider>
+          <StyleSourceInput
+            inputRef={() => {}}
+            selectedItemSelector={undefined}
+            items={[token]}
+          />
+        </TooltipProvider>
+      )
+    );
+    const input = container.querySelector<HTMLInputElement>("input")!;
+    const press = (key: string, keyCode: number) => {
+      const event = new KeyboardEvent("keydown", {
+        key,
+        bubbles: true,
+        cancelable: true,
+      });
+      Object.defineProperty(event, "keyCode", { value: keyCode });
+      act(() => input.dispatchEvent(event));
+    };
+
+    act(() => input.focus());
+    expect(document.querySelector('[role="listbox"]')).not.toBeNull();
+
+    await act(async () => {
+      press("Escape", 27);
+      await Promise.resolve();
+    });
+    expect(document.querySelector('[role="listbox"]')).toBeNull();
+    expect(document.activeElement).toBe(input);
+
+    press("ArrowDown", 40);
+    expect(document.querySelector('[role="listbox"]')).not.toBeNull();
+  } finally {
+    act(() => root.unmount());
+    container.remove();
+  }
+});
+
+test("arrow navigation reaches the Add more input and allows typing", async () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  try {
+    act(() =>
+      root.render(
+        <StyleSourceMenu
+          open
+          onOpenChange={() => {}}
+          selectedItemSelector={undefined}
+          item={{
+            id: "tag-style:button",
+            label: "button",
+            source: "tag",
+            disabled: false,
+            locked: false,
+            states: [":hover"],
+          }}
+          hasStyles
+          states={[{ type: "state", selector: ":hover", label: ":hover" }]}
+        />
+      )
+    );
+    const menu = document.querySelector<HTMLElement>('[role="menu"]')!;
+    const state = Array.from(
+      menu.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    ).find((item) => item.textContent?.trim() === ":hover")!;
+    const input = menu.querySelector<HTMLInputElement>("form input")!;
+    expect(input.closest('[role="menuitem"]')).not.toBeNull();
+    await act(async () => Promise.resolve());
+    act(() => state.focus());
+    expect(document.activeElement).toBe(state);
+    await act(async () => userEvent.keyboard("{ArrowDown}"));
+    expect(document.activeElement).toBe(input);
+    await act(async () => userEvent.keyboard("h2"));
+    expect(input.value).toBe("h2");
   } finally {
     act(() => root.unmount());
     container.remove();
@@ -422,7 +525,6 @@ test("keeps the selected Tag style first in arrow-key autocomplete", () => {
       input.dispatchEvent(event);
     };
     act(() => input.focus());
-    act(() => press("ArrowDown", 40));
     act(() => press("ArrowDown", 40));
     act(() => press("Enter", 13));
 
