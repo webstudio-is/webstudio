@@ -10,7 +10,7 @@ import { TooltipProvider } from "@webstudio-is/design-system";
 import { $availableVariables } from "../../shared/model";
 import { parseStyleInput } from "~/builder/shared/css-editor/parse-style-input";
 import type { ApplyChanges } from "~/builder/shared/css-editor/style-block-parse";
-import { MixedStyleBlockEditor } from "./mixed-style-block-editor";
+import { StyleBlockEditor } from "./style-block-editor";
 import {
   parseBlock,
   cssBlockLanguage,
@@ -171,7 +171,7 @@ test("keeps hidden and uploaded image layers when editing a gradient", async () 
   };
   let changes: ApplyChanges | undefined;
   const container = render(
-    <MixedStyleBlockEditor
+    <StyleBlockEditor
       inline
       declarations={[{ property: "background-image", value: stored }]}
       sourceDeclarations={[]}
@@ -226,7 +226,7 @@ const render = (content: React.ReactNode) => {
 
 test("inline Advanced editor renders stored longhands as editable shorthands", async () => {
   const container = render(
-    <MixedStyleBlockEditor
+    <StyleBlockEditor
       inline
       declarations={declarations}
       sourceDeclarations={[]}
@@ -244,7 +244,7 @@ test("inline Advanced editor renders stored longhands as editable shorthands", a
 
 test("centered Local editor renders stored longhands as editable shorthands", async () => {
   render(
-    <MixedStyleBlockEditor
+    <StyleBlockEditor
       declarations={declarations}
       sourceDeclarations={[]}
       readonly={false}
@@ -271,9 +271,9 @@ test.each(["inline", "centered"])(
     };
     const container = render(
       mode === "inline" ? (
-        <MixedStyleBlockEditor {...props} inline />
+        <StyleBlockEditor {...props} inline />
       ) : (
-        <MixedStyleBlockEditor {...props} open onOpenChange={() => {}} />
+        <StyleBlockEditor {...props} open onOpenChange={() => {}} />
       )
     );
     const editor = await vi.waitFor(() => {
@@ -291,7 +291,7 @@ test.each(["inline", "centered"])(
     expect(view.state.doc.toString()).toBe(before);
     await vi.waitFor(() => {
       expect(
-        document.querySelector(".cm-mixed-blocked-tooltip")?.textContent
+        document.querySelector(".cm-style-block-blocked-tooltip")?.textContent
       ).toContain("This heading marks a style source and cannot be changed.");
       expect(document.querySelector("[aria-live]")?.textContent).toContain(
         "This heading marks a style source and cannot be changed."
@@ -305,7 +305,7 @@ test.each(["inline", "centered"])(
     });
     expect(view.state.doc.toString()).toBe(before);
     expect(
-      document.querySelector(".cm-mixed-blocked-tooltip")?.textContent
+      document.querySelector(".cm-style-block-blocked-tooltip")?.textContent
     ).toContain("This heading marks a style source and cannot be changed.");
     const remoteDeclaration = before.indexOf("background-color:");
     act(() => {
@@ -315,14 +315,14 @@ test.each(["inline", "centered"])(
     });
     expect(view.state.doc.toString()).toBe(before);
     expect(
-      document.querySelector(".cm-mixed-blocked-tooltip")?.textContent
+      document.querySelector(".cm-style-block-blocked-tooltip")?.textContent
     ).toContain("This declaration comes from another source.");
   }
 );
 
 test("centered search finds every source and keeps Local editable", async () => {
   render(
-    <MixedStyleBlockEditor
+    <StyleBlockEditor
       declarations={Array.from(
         parseStyleInput("color: red", new Map()).styleMap,
         ([property, value]) => ({ property, value })
@@ -373,7 +373,7 @@ test("centered search finds every source and keeps Local editable", async () => 
 test("centered search starts empty each time the dialog opens", async () => {
   const dialog = (open: boolean) => (
     <TooltipProvider>
-      <MixedStyleBlockEditor
+      <StyleBlockEditor
         declarations={declarations}
         sourceDeclarations={sourceDeclarations}
         readonly={false}
@@ -438,7 +438,7 @@ test("reports malformed pasted CSS without saving the broken declaration", () =>
 
 test("Enter adds a separator before a new declaration line", async () => {
   render(
-    <MixedStyleBlockEditor
+    <StyleBlockEditor
       declarations={[]}
       sourceDeclarations={[]}
       readonly={false}

@@ -86,12 +86,12 @@ import {
   type ApplyChanges,
 } from "~/builder/shared/css-editor/style-block-parse";
 import {
-  formatMixedStyleBlock,
-  getMixedStyleGroups,
-  getMixedPropertyRanges,
-  getProtectedMixedRanges,
-  parseMixedStyleBlock,
-} from "./mixed-style-block";
+  formatStyleSources,
+  getStyleSourceGroups,
+  getStyleSourcePropertyRanges,
+  getProtectedStyleSourceRanges,
+  parseLocalStyleGroup,
+} from "./style-block-sources";
 import { formatStyleBlock } from "~/builder/shared/css-editor/style-block-format";
 
 const blockedEditMessage =
@@ -101,7 +101,7 @@ const blockedHeadingMessage =
 class ReadonlyDivider extends WidgetType {
   toDOM() {
     const element = document.createElement("div");
-    element.className = "cm-mixed-readonly-divider";
+    element.className = "cm-style-block-readonly-divider";
     return element;
   }
 }
@@ -158,7 +158,7 @@ const blockedEditTooltip = StateField.define<CodeMirrorTooltip | null>({
         above: true,
         create: () =>
           renderTooltip(
-            "cm-mixed-blocked-tooltip",
+            "cm-style-block-blocked-tooltip",
             <Box
               className={tooltipContentCss({ variant: "wrapped" }).className}
             >
@@ -176,17 +176,17 @@ const protectedEditFilter = EditorState.transactionFilter.of((transaction) => {
   if (!transaction.docChanged || transaction.annotation(ExternalChange)) {
     return transaction;
   }
-  const currentGroups = getMixedStyleGroups(
+  const currentGroups = getStyleSourceGroups(
     transaction.startState.doc.toString()
   );
-  const nextGroups = getMixedStyleGroups(transaction.newDoc.toString());
+  const nextGroups = getStyleSourceGroups(transaction.newDoc.toString());
   const changedGroups =
     currentGroups.length !== nextGroups.length ||
     nextGroups[0]?.from !== 0 ||
     currentGroups.some(
       (group, index) => group.source !== nextGroups[index]?.source
     );
-  const protectedRanges = getProtectedMixedRanges(currentGroups);
+  const protectedRanges = getProtectedStyleSourceRanges(currentGroups);
   let blocked = changedGroups;
   let blockedHeading = changedGroups;
   let blockedPos = transaction.startState.selection.main.head;
@@ -246,19 +246,19 @@ type Props = {
 );
 
 const sourceColorTheme = EditorView.theme({
-  ".cm-mixed-local, .cm-mixed-local *": {
+  ".cm-style-block-local, .cm-style-block-local *": {
     color: `${styleSourceColor.local.foreground} !important`,
   },
-  ".cm-mixed-overwritten, .cm-mixed-overwritten *": {
+  ".cm-style-block-overwritten, .cm-style-block-overwritten *": {
     color: `${styleSourceColor.overwritten.foreground} !important`,
   },
-  ".cm-mixed-remote, .cm-mixed-remote *": {
+  ".cm-style-block-remote, .cm-style-block-remote *": {
     color: `${styleSourceColor.remote.foreground} !important`,
   },
-  ".cm-mixed-preset, .cm-mixed-preset *": {
+  ".cm-style-block-preset, .cm-style-block-preset *": {
     color: `${cssVar("--foreground-secondary")} !important`,
   },
-  ".cm-mixed-readonly-divider": {
+  ".cm-style-block-readonly-divider": {
     paddingBlock: rawTheme.spacing[5],
     "&::before": {
       content: '""',
@@ -266,7 +266,7 @@ const sourceColorTheme = EditorView.theme({
       borderTop: `1px solid ${cssVar("--border-default")}`,
     },
   },
-  ".cm-tooltip-hover:has(> .cm-mixed-property-tooltip), .cm-tooltip.cm-mixed-blocked-tooltip":
+  ".cm-tooltip-hover:has(> .cm-style-block-property-tooltip), .cm-tooltip.cm-style-block-blocked-tooltip":
     {
       border: 0,
       background: "transparent",
@@ -294,9 +294,9 @@ const getLocalStyles = (declarations: Declaration[]): CssStyleMap =>
     ])
   );
 
-const mixedCompletionSource: CompletionSource = (context) => {
+const styleBlockCompletionSource: CompletionSource = (context) => {
   const end = context.state.doc.length;
-  const group = getMixedStyleGroups(context.state.doc.toString()).find(
+  const group = getStyleSourceGroups(context.state.doc.toString()).find(
     ({ contentFrom, to }) =>
       context.pos >= contentFrom &&
       (context.pos < to || (to === end && context.pos === end))
@@ -311,7 +311,7 @@ const mixedCompletionSource: CompletionSource = (context) => {
 
 type SearchNavigation = { hasPrevious: boolean; hasNext: boolean };
 
-const useMixedStyleBlockExtensions = ({
+const useStyleBlockExtensions = ({
   inline,
   readonly,
   colorSwatches,
@@ -353,7 +353,7 @@ const useMixedStyleBlockExtensions = ({
     const decorate = (value: string) =>
       Decoration.set(
         [
-          ...getMixedStyleGroups(value)
+          ...getStyleSourceGroups(value)
             .slice(1, 2)
             .map(({ from }) =>
               Decoration.widget({
@@ -362,7 +362,7 @@ const useMixedStyleBlockExtensions = ({
                 side: -1,
               }).range(from)
             ),
-          ...getMixedPropertyRanges(value).map((range) => {
+          ...getStyleSourcePropertyRanges(value).map((range) => {
             let source = range.source === "preset" ? "preset" : "remote";
             if (range.source === "local") {
               const parsed = parseBlock(
@@ -380,12 +380,12 @@ const useMixedStyleBlockExtensions = ({
                 ? "overwritten"
                 : "local";
             }
-            return Decoration.mark({ class: `cm-mixed-${source}` }).range(
+            return Decoration.mark({ class: `cm-style-block-${source}` }).range(
               range.from,
               range.to
             );
           }),
-          ...parseMixedStyleBlock(
+          ...parseLocalStyleGroup(
             value,
             $cssVarsMap.get()
           ).overriddenRanges.map(({ from, to }) =>
@@ -439,9 +439,9 @@ const useMixedStyleBlockExtensions = ({
       blockedEditTooltip,
       protectedEditFilter,
       hoverTooltip((view, position) => {
-        const range = getMixedPropertyRanges(view.state.doc.toString()).find(
-          ({ from, to }) => position >= from && position <= to
-        );
+        const range = getStyleSourcePropertyRanges(
+          view.state.doc.toString()
+        ).find(({ from, to }) => position >= from && position <= to);
         if (range === undefined) {
           return null;
         }
@@ -481,7 +481,7 @@ const useMixedStyleBlockExtensions = ({
           create: () => {
             const isLocal = range.source === "local";
             return renderTooltip(
-              "cm-mixed-property-tooltip",
+              "cm-style-block-property-tooltip",
               <ReadonlyProvider value={readonly}>
                 <MenuList
                   onPointerDown={(event) => event.preventDefault()}
@@ -522,7 +522,7 @@ const useMixedStyleBlockExtensions = ({
                               doc.sliceString(to, lastLine.to).trim() === ""
                             ) {
                               from = firstLine.from;
-                              const local = getMixedStyleGroups(
+                              const local = getStyleSourceGroups(
                                 doc.toString()
                               ).find((group) => group.source === "local");
                               const isLastLocalDeclaration =
@@ -549,7 +549,7 @@ const useMixedStyleBlockExtensions = ({
       }),
       linter(
         (view) =>
-          parseMixedStyleBlock(view.state.doc.toString(), $cssVarsMap.get())
+          parseLocalStyleGroup(view.state.doc.toString(), $cssVarsMap.get())
             .diagnostics
       ),
       linterTooltipTheme,
@@ -567,7 +567,7 @@ const useMixedStyleBlockExtensions = ({
   ]);
 };
 
-export const MixedStyleBlockEditor = ({
+export const StyleBlockEditor = ({
   declarations,
   sourceDeclarations,
   readonly,
@@ -663,7 +663,7 @@ export const MixedStyleBlockEditor = ({
       return;
     }
     const localStyles = getLocalStyles(declarations);
-    const nextCode = formatMixedStyleBlock(
+    const nextCode = formatStyleSources(
       localStyles,
       sourceDeclarations,
       $cssVarsMap.get()
@@ -690,7 +690,7 @@ export const MixedStyleBlockEditor = ({
       onPreview?.(undefined);
       return;
     }
-    const parsed = parseMixedStyleBlock(codeRef.current, $cssVarsMap.get());
+    const parsed = parseLocalStyleGroup(codeRef.current, $cssVarsMap.get());
     const appliedStyles = onApply({
       oldStyles: oldStylesRef.current,
       initialParsedStyles: initialParsedRef.current,
@@ -720,7 +720,7 @@ export const MixedStyleBlockEditor = ({
         getVariables: () => $cssVarsMap.get(),
         subscribeVariables: (callback) => $cssVarsMap.listen(callback),
         getEditableRange: (source) => {
-          const local = getMixedStyleGroups(source).find(
+          const local = getStyleSourceGroups(source).find(
             ({ source }) => source === "local"
           );
           return local && { from: local.contentFrom, to: local.to };
@@ -729,7 +729,7 @@ export const MixedStyleBlockEditor = ({
     []
   );
 
-  const extensions = useMixedStyleBlockExtensions({
+  const extensions = useStyleBlockExtensions({
     inline,
     readonly,
     colorSwatches,
@@ -795,9 +795,9 @@ export const MixedStyleBlockEditor = ({
       <CssFragmentEditorContent
         ariaLabel="Styles"
         language={cssBlockLanguage}
-        completionSource={mixedCompletionSource}
+        completionSource={styleBlockCompletionSource}
         autoFocus={!inline}
-        initialSelection={getMixedStyleGroups(code)[0]?.contentFrom ?? 0}
+        initialSelection={getStyleSourceGroups(code)[0]?.contentFrom ?? 0}
         chromeless={inline}
         resetHistoryOnExternalChange
         showLineNumbers={!inline}
@@ -811,7 +811,7 @@ export const MixedStyleBlockEditor = ({
             preserveAssetLayers(
               oldStylesRef.current,
               initialParsedRef.current,
-              parseMixedStyleBlock(value, $cssVarsMap.get()).styleMap
+              parseLocalStyleGroup(value, $cssVarsMap.get()).styleMap
             )
           );
         }}
