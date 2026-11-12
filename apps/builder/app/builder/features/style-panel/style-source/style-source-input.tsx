@@ -199,10 +199,7 @@ const TextFieldBase: ForwardRefRenderFunction<
   const internalInputRef = useRef<HTMLInputElement>(null);
   const sourceButtonRefs = useRef(new Map<string, HTMLButtonElement>());
 
-  const { focusWithinProps } = useFocusWithin({
-    onFocusWithin: onFocus,
-    onBlurWithin: onBlur,
-  });
+  const { focusWithinProps } = useFocusWithin({ onBlurWithin: onBlur });
 
   const onClickCapture = useCallback(() => {
     internalInputRef.current?.focus();
@@ -288,6 +285,7 @@ const TextFieldBase: ForwardRefRenderFunction<
         size="1"
         value={label}
         onClick={onClick}
+        onFocus={onFocus}
         inputRef={mergeRefs(internalInputRef, inputRef)}
         onKeyDown={handleInputKeyDown}
         spellCheck={false}
@@ -439,6 +437,7 @@ export const StyleSourceInput = (
     getMenuProps,
     getItemProps,
     isOpen,
+    openMenu,
   } = useCombobox<IntermediateItem>({
     getItems: () => markAddedValues(props.items ?? [], value),
     value: {
@@ -466,6 +465,7 @@ export const StyleSourceInput = (
   });
 
   const inputProps = getInputProps({
+    onFocus: () => openMenu(),
     onKeyDown(event) {
       if (event.key === "Escape") {
         escapePressed.current = true;
