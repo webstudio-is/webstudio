@@ -11,7 +11,10 @@ import {
   type Deployment,
 } from "@webstudio-is/sdk";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { PrePublishAuditError } from "@webstudio-is/project-build/runtime";
+import {
+  limitPrePublishAuditFindings,
+  PrePublishAuditError,
+} from "@webstudio-is/project-build/runtime";
 import { db } from "./db";
 import { validateDomain } from "./db/validate";
 import {
@@ -26,6 +29,10 @@ import {
 
 type LoadedProject = Awaited<ReturnType<typeof projectApi.loadById>>;
 type ProjectDomain = LoadedProject["domainsVirtual"][number];
+export type GetBuildFindings = (
+  buildId: string,
+  context: AppContext
+) => Promise<PrePublishAuditError["findings"]>;
 
 const assertMutation = (result: { success: boolean; error?: string }) => {
   if (result.success === false) {
@@ -218,10 +225,8 @@ export const listProjectPublishes = async (
   projectId: string,
   context: AppContext
 ) => {
-  const attempts = await listPublishAttempts(projectId, context).catch(
-    () => undefined
-  );
-  if (attempts !== undefined && attempts.length > 0) {
+  const attempts = await listPublishAttempts(projectId, context);
+  if (attempts.length > 0) {
     return {
       publishes: attempts.map((attempt) => ({
         id: attempt.id,
@@ -255,21 +260,56 @@ export const listProjectPublishes = async (
       })),
     };
   }
-  const result = await context.postgrest.client
+  const activityRetentionDays =
+    context.planFeatures.publishActivityRetentionDays ?? 0;
+  let query = context.postgrest.client
     .from("Build")
     .select("id, version, createdAt, updatedAt, deployment, publishStatus")
     .eq("projectId", projectId)
     .not("deployment", "is", null)
-    .order("createdAt", { ascending: false });
+    .order("createdAt", { ascending: false })
+    .order("id", { ascending: false });
+  if (activityRetentionDays !== 0) {
+    query = query.gte(
+      "createdAt",
+      new Date(
+        Date.now() - activityRetentionDays * 24 * 60 * 60 * 1000
+      ).toISOString()
+    );
+  }
+  const pageSize = 1000;
+  const result = await query.range(0, pageSize - 1);
 
   if (result.error) {
     throw result.error;
   }
+  const builds = result.data;
+  for (let from = pageSize; builds.length === from; from += pageSize) {
+    const page = await query.range(from, from + pageSize - 1);
+    if (page.error) {
+      throw page.error;
+    }
+    builds.push(...page.data);
+  }
+  const seenDomains = new Set<string>();
 
   return {
-    publishes: result.data.flatMap((build) => {
+    publishes: builds.flatMap((build) => {
       const deployment = parseDeployment(build.deployment);
       if (deployment === undefined || deployment.destination === "static") {
+        return [];
+      }
+      const domains = deployment.domains.filter((domain) => {
+        if (activityRetentionDays !== 0) {
+          return true;
+        }
+        if (seenDomains.has(domain)) {
+          return false;
+        }
+        seenDomains.add(domain);
+        return true;
+      });
+      if (domains.length === 0) {
         return [];
       }
       return [
@@ -279,7 +319,7 @@ export const listProjectPublishes = async (
           buildId: build.id,
           version: build.version,
           target: deployment.domains.length > 1 ? "production" : "staging",
-          domains: deployment.domains,
+          domains,
           status:
             build.publishStatus === "FAILED"
               ? "failed"
@@ -315,7 +355,7 @@ export const getProjectPublishJob = async (
   const attempt = await getPublishAttempt(
     { projectId: input.projectId, attemptId: input.jobId },
     context
-  ).catch(() => null);
+  );
   if (attempt !== null) {
     return {
       id: attempt.id,
@@ -452,7 +492,8 @@ export const publishProject = async (
     domains: string[];
     idempotencyKey?: string;
   },
-  context: AppContext
+  context: AppContext,
+  getBuildFindings?: GetBuildFindings
 ) => {
   const target =
     domains.length === 1 && domains[0] === project.domain
@@ -487,6 +528,7 @@ export const publishProject = async (
     };
   }
   let build;
+  let findings: PrePublishAuditError["findings"];
   try {
     build = await createProductionBuild(
       {
@@ -495,6 +537,13 @@ export const publishProject = async (
       },
       context
     );
+    findings = limitPrePublishAuditFindings([
+      ...((await getBuildFindings?.(build.id, context)) ?? []),
+      ...build.auditFindings,
+    ]);
+    if (findings.some(({ severity }) => severity === "error")) {
+      throw new PrePublishAuditError(findings);
+    }
   } catch (error) {
     if (error instanceof PrePublishAuditError) {
       await blockPublishAttempt(attempt.id, error.findings, context);
@@ -526,21 +575,21 @@ export const publishProject = async (
     }
     throw error;
   }
-  const auditErrorCount = build.auditFindings.filter(
+  const auditErrorCount = findings.filter(
     ({ severity }) => severity === "error"
   ).length;
-  const auditWarningCount = build.auditFindings.filter(
+  const auditWarningCount = findings.filter(
     ({ severity }) => severity === "warning"
   ).length;
   await storeInitialPublishReport({
     attemptId: attempt.id,
     retentionDays: attempt.retentionDays,
-    findings: build.auditFindings,
+    findings,
     targetLabels: domains,
     expiresAt: attempt.expiresAt,
     context,
   }).catch(() => undefined);
-  await updatePublishAttempt(
+  const queuedAttempt = await updatePublishAttempt(
     attempt.id,
     {
       buildId: build.id,
@@ -548,7 +597,7 @@ export const publishProject = async (
       summary: "Publish queued",
       auditErrorCount,
       auditWarningCount,
-      issues: toCompactPublishIssues(build.auditFindings, "audit"),
+      issues: toCompactPublishIssues(findings, "audit"),
       startedAt: new Date().toISOString(),
     },
     context,
@@ -574,29 +623,36 @@ export const publishProject = async (
   const deploymentNotImplemented =
     result.success === false && result.error === "NOT_IMPLEMENTED";
   if (result.success === false && deploymentNotImplemented === false) {
-    await updatePublishAttempt(
-      attempt.id,
-      {
-        status: "FAILED",
-        failureCode: "dispatch_failed",
-        summary: "The publish service could not start the build.",
-        completedAt: new Date().toISOString(),
-        reportAvailability: "UNAVAILABLE",
-      },
-      context,
-      ["QUEUED"]
-    );
+    if (result.dispatchUncertain !== true) {
+      await updatePublishAttempt(
+        attempt.id,
+        {
+          status: "FAILED",
+          failureCode: "dispatch_failed",
+          summary: "The publish service could not start the build.",
+          completedAt: new Date().toISOString(),
+          reportAvailability: "UNAVAILABLE",
+        },
+        context,
+        ["QUEUED"]
+      );
+    }
     throw new Error(String(result.error ?? "Publish failed"));
   }
 
-  return { attempt, build, project, deploymentNotImplemented };
+  return {
+    attempt: queuedAttempt ?? attempt,
+    build,
+    project,
+    deploymentNotImplemented,
+  };
 };
 
 export const publishStaticProject = async (
   {
     projectId,
     templates,
-    name = `${projectId}-${nanoid()}.zip`,
+    name: requestedName,
     idempotencyKey,
   }: {
     projectId: string;
@@ -604,9 +660,11 @@ export const publishStaticProject = async (
     name?: string;
     idempotencyKey?: string;
   },
-  context: AppContext
+  context: AppContext,
+  getBuildFindings?: GetBuildFindings
 ) => {
   const project = await projectApi.loadById(projectId, context);
+  const name = requestedName ?? `${projectId}-${nanoid()}.zip`;
   const { attempt, created } = await createPublishAttempt(
     {
       projectId,
@@ -622,16 +680,13 @@ export const publishStaticProject = async (
                 idempotencyKey,
                 target: "STATIC",
                 templates,
-                artifactName: name,
+                artifactName: requestedName,
               })
             ),
     },
     context
   );
   if (created === false) {
-    if (attempt.status === "BLOCKED" || attempt.status === "FAILED") {
-      return { success: false as const, error: attempt.summary, attempt };
-    }
     return {
       success: true as const,
       name: attempt.artifactName ?? name,
@@ -641,6 +696,7 @@ export const publishStaticProject = async (
     };
   }
   let build;
+  let findings: PrePublishAuditError["findings"];
   try {
     build = await createProductionBuild(
       {
@@ -654,6 +710,13 @@ export const publishStaticProject = async (
       },
       context
     );
+    findings = limitPrePublishAuditFindings([
+      ...((await getBuildFindings?.(build.id, context)) ?? []),
+      ...build.auditFindings,
+    ]);
+    if (findings.some(({ severity }) => severity === "error")) {
+      throw new PrePublishAuditError(findings);
+    }
   } catch (error) {
     if (error instanceof PrePublishAuditError) {
       await blockPublishAttempt(attempt.id, error.findings, context);
@@ -688,21 +751,21 @@ export const publishStaticProject = async (
   await storeInitialPublishReport({
     attemptId: attempt.id,
     retentionDays: attempt.retentionDays,
-    findings: build.auditFindings,
+    findings,
     targetLabels: ["Static export"],
     expiresAt: attempt.expiresAt,
     context,
   }).catch(() => undefined);
-  await updatePublishAttempt(
+  const queuedAttempt = await updatePublishAttempt(
     attempt.id,
     {
       buildId: build.id,
       status: "QUEUED",
       summary: "Static export queued",
-      auditWarningCount: build.auditFindings.filter(
+      auditWarningCount: findings.filter(
         ({ severity }) => severity === "warning"
       ).length,
-      issues: toCompactPublishIssues(build.auditFindings, "audit"),
+      issues: toCompactPublishIssues(findings, "audit"),
       startedAt: new Date().toISOString(),
     },
     context,
@@ -726,7 +789,7 @@ export const publishStaticProject = async (
     reportRetentionDays: attempt.retentionDays as 0 | 1 | 30,
   });
 
-  if (result.success === false) {
+  if (result.success === false && result.dispatchUncertain !== true) {
     await updatePublishAttempt(
       attempt.id,
       {
@@ -742,7 +805,13 @@ export const publishStaticProject = async (
   }
 
   return result.success
-    ? { success: true as const, name, build, project, attempt }
+    ? {
+        success: true as const,
+        name,
+        build,
+        project,
+        attempt: queuedAttempt ?? attempt,
+      }
     : result;
 };
 

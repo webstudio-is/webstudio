@@ -30,5 +30,14 @@ describe("getPublishActivityStatus", () => {
     expect(getPublishActivityStatus({ ...item, status: "building" })).toBe(
       "pending"
     );
+    expect(getPublishActivityStatus({ ...item, status: "validating" })).toBe(
+      "pending"
+    );
+  });
+
+  test("shows an audit-blocked attempt as an error", () => {
+    expect(getPublishActivityStatus({ ...item, status: "blocked" })).toBe(
+      "error"
+    );
   });
 });

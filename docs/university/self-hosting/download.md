@@ -23,6 +23,13 @@ See [export types](./#export-types) for more information about JavaScript applic
 
 The export contains a static site consisting of HTML, CSS, JS, and images ready to be uploaded to another platform.
 
+To check an export, open **Publish**, choose **Export**, and click the status
+icon beside the static-site build button.
+Its **Activity** and **Audit** tabs work like the [publish details for a domain](../foundations/publishing-and-custom-domains.md#publish-details):
+Activity shows export attempts and short issues, while Audit checks the current
+project. Detailed reports, when available on your plan, open from Activity in
+the same dialog.
+
 See [static site hosting platforms](./#platforms-for-static-sites) we have documented.
 
 ## Related

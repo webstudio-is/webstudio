@@ -31,6 +31,7 @@ import {
   PrePublishAuditError,
   type PrePublishAuditFinding,
 } from "@webstudio-is/project-build/runtime";
+import { getContentDatabaseBuildFindings } from "./content-database-publish-findings.server";
 import {
   getBuilderRuntimeOperationInputSchema,
   paginateOutput,
@@ -917,16 +918,26 @@ export const apiRouter = router({
                 templates: input.templates,
                 idempotencyKey: input.idempotencyKey,
               },
-              ctx
+              ctx,
+              getContentDatabaseBuildFindings
             );
             if (result.success === false) {
               throw new Error(result.error);
             }
             return {
-              status: "queued" as const,
+              status: result.attempt.status.toLowerCase(),
               jobId: result.attempt.id,
               buildId: result.build?.id,
-              artifact: { readiness: "pending" as const, name: result.name },
+              artifact: {
+                readiness:
+                  result.attempt.status === "SUCCEEDED"
+                    ? ("ready" as const)
+                    : result.attempt.status === "FAILED" ||
+                        result.attempt.status === "BLOCKED"
+                      ? ("failed" as const)
+                      : ("pending" as const),
+                name: result.name,
+              },
             };
           } catch (error) {
             if (error instanceof PrePublishAuditError) {
@@ -947,7 +958,8 @@ export const apiRouter = router({
         try {
           result = await publishProject(
             { project, domains, idempotencyKey: input.idempotencyKey },
-            ctx
+            ctx,
+            getContentDatabaseBuildFindings
           );
         } catch (error) {
           if (error instanceof PrePublishAuditError) {
@@ -961,7 +973,7 @@ export const apiRouter = router({
         }
         const { attempt, build, deploymentNotImplemented } = result;
         return {
-          status: "queued" as const,
+          status: attempt.status.toLowerCase(),
           jobId: attempt.id,
           buildId: build?.id,
           warning: deploymentNotImplemented

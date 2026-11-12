@@ -17,10 +17,28 @@ that could make the generated site fail or behave unexpectedly.
 - **Errors** stop publishing until you resolve them.
 - **Warnings** appear immediately but do not prevent publishing.
 
-When a finding identifies a component, choose **Show element** to close the
-publish dialog, open the affected page, select the instance, and scroll it into
-view. Fix the problem, then publish again. Draft pages are excluded because
-they are not part of the generated site.
+On paid plans, when a finding identifies a component, choose **Show element** to
+select the affected instance. Free plans show a
+short error or warning without full details or element navigation. Fix the
+problem, then publish again. Draft pages are excluded because they are not part
+of the generated site.
+
+## Publish details
+
+Click the status icon beside a domain in the publish dialog to open its publish
+details. **Activity** shows publish attempts for that domain, their status, and
+short errors or warnings. This includes saved warnings about content omitted
+from the published database. Filter the list by all, errors, or warnings.
+**Audit** shows checks for the current project before you publish; it is not a
+saved report from an earlier publish.
+
+Free plans show the latest activity for each domain. Paid plans can show up to
+30 days of activity. Where available, **View detailed report** opens the audit
+at publish time, build diagnostics, and any available build logs. Detailed
+reports are kept for one day on Pro and up to 30 days on plans with longer
+report retention.
+Report access also depends on your current plan; upgrading does not restore a
+report that was never created or has expired.
 
 ## Adding a custom domain
 

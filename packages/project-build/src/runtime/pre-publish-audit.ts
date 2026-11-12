@@ -259,12 +259,26 @@ export const runPrePublishAudit = ({
       });
     }
   }
+  return limitPrePublishAuditFindings(findings);
+};
+
+export const limitPrePublishAuditFindings = (
+  findings: PrePublishAuditFinding[]
+): PrePublishAuditFinding[] => {
   if (findings.length <= maxAuditFindings) {
     return findings;
   }
   const omittedCount = findings.length - maxAuditFindings + 1;
+  const prioritizedFindings = [
+    ...findings.filter(({ severity }) => severity === "error"),
+    ...findings.filter(({ ruleId }) => ruleId === "audit-truncated"),
+    ...findings.filter(
+      ({ severity, ruleId }) =>
+        severity !== "error" && ruleId !== "audit-truncated"
+    ),
+  ];
   return [
-    ...findings.slice(0, maxAuditFindings - 1),
+    ...prioritizedFindings.slice(0, maxAuditFindings - 1),
     {
       ruleId: "audit-truncated",
       severity: "warning",

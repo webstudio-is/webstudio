@@ -47,7 +47,6 @@ type AttemptQuery = PromiseLike<QueryResult> & {
   gte: (column: string, value: string) => AttemptQuery;
   in: (column: string, values: string[]) => AttemptQuery;
   order: (column: string, options: { ascending: boolean }) => AttemptQuery;
-  limit: (count: number) => AttemptQuery;
   range: (from: number, to: number) => AttemptQuery;
   maybeSingle: () => AttemptQuery;
 };
@@ -75,14 +74,15 @@ const truncateSummary = (summary: string) => summary.trim().slice(0, 512);
 export const toCompactPublishIssues = (
   findings: Array<{ severity: "error" | "warning" | "info"; message: string }>,
   source: CompactPublishIssue["source"]
-) =>
-  findings
-    .filter(
-      (
-        finding
-      ): finding is { severity: "error" | "warning"; message: string } =>
-        finding.severity === "error" || finding.severity === "warning"
-    )
+) => {
+  const issues = findings.filter(
+    (finding): finding is { severity: "error" | "warning"; message: string } =>
+      finding.severity === "error" || finding.severity === "warning"
+  );
+  return [
+    ...issues.filter(({ severity }) => severity === "error"),
+    ...issues.filter(({ severity }) => severity === "warning"),
+  ]
     .slice(0, 20)
     .map(({ severity, message }) => ({
       severity,
@@ -90,6 +90,7 @@ export const toCompactPublishIssues = (
       message:
         message.length <= 160 ? message : `${message.slice(0, 157).trimEnd()}…`,
     }));
+};
 
 export const hashPublishIdempotencyKey = async (value: string) => {
   const digest = await crypto.subtle.digest(
@@ -171,27 +172,6 @@ export const createPublishAttempt = async (
   return { attempt: result.data as PublishAttempt, created: true };
 };
 
-const staleAttemptTimeoutMs = 30 * 60 * 1000;
-
-const normalizeStaleAttempt = (attempt: PublishAttempt): PublishAttempt => {
-  if (attempt.status !== "QUEUED" && attempt.status !== "BUILDING") {
-    return attempt;
-  }
-  if (
-    Date.now() - new Date(attempt.updatedAt).getTime() <
-    staleAttemptTimeoutMs
-  ) {
-    return attempt;
-  }
-  return {
-    ...attempt,
-    status: "FAILED",
-    failureCode: "workflow_timeout",
-    summary: "The publish did not complete within the expected time.",
-    completedAt: attempt.updatedAt,
-  };
-};
-
 export const updatePublishAttempt = async (
   id: string,
   values: Partial<PublishAttempt>,
@@ -205,29 +185,6 @@ export const updatePublishAttempt = async (
   const result = await query.select("*").maybeSingle();
   throwOnError(result);
   return result.data as PublishAttempt | null;
-};
-
-const reconcileStaleAttempt = async (
-  attempt: PublishAttempt,
-  context: AppContext
-) => {
-  const normalized = normalizeStaleAttempt(attempt);
-  if (normalized === attempt) {
-    return attempt;
-  }
-  return (
-    (await updatePublishAttempt(
-      attempt.id,
-      {
-        status: normalized.status,
-        failureCode: normalized.failureCode,
-        summary: normalized.summary,
-        completedAt: normalized.completedAt,
-      },
-      context,
-      ["QUEUED", "BUILDING"]
-    ).catch(() => null)) ?? normalized
-  );
 };
 
 export const blockPublishAttempt = async (
@@ -261,63 +218,50 @@ export const listPublishAttempts = async (
 ) => {
   const activityRetentionDays =
     context.planFeatures.publishActivityRetentionDays ?? 0;
-  if (activityRetentionDays === 0) {
-    const result = await table(context)
-      .select("*")
-      .eq("projectId", projectId)
-      .order("createdAt", { ascending: false })
-      .limit(25);
-    throwOnError(result);
-    const attempts = await Promise.all(
-      (result.data as PublishAttempt[]).map((attempt) =>
-        reconcileStaleAttempt(attempt, context)
-      )
-    );
-    const seen = new Set<string>();
-    return attempts.flatMap((attempt) => {
-      const unseenIndexes = attempt.targetKeys.flatMap((key, index) =>
-        seen.has(key) ? [] : [index]
-      );
-      unseenIndexes.forEach((index) => seen.add(attempt.targetKeys[index]!));
-      if (unseenIndexes.length === 0) {
-        return [];
-      }
-      return [
-        {
-          ...attempt,
-          targetKeys: unseenIndexes.map((index) => attempt.targetKeys[index]!),
-          targetLabels: unseenIndexes.map(
-            (index) => attempt.targetLabels[index]!
-          ),
-        },
-      ];
-    });
-  }
-
   const cutoff = new Date(
     Date.now() - activityRetentionDays * 24 * 60 * 60 * 1000
   ).toISOString();
   const attempts: PublishAttempt[] = [];
   const pageSize = 1000;
   for (let from = 0; ; from += pageSize) {
-    const result = await table(context)
+    let query = table(context)
       .select("*")
       .eq("projectId", projectId)
-      .gte("createdAt", cutoff)
       .order("createdAt", { ascending: false })
-      .range(from, from + pageSize - 1);
+      .order("id", { ascending: false });
+    if (activityRetentionDays !== 0) {
+      query = query.gte("createdAt", cutoff);
+    }
+    const result = await query.range(from, from + pageSize - 1);
     throwOnError(result);
     const page = result.data as PublishAttempt[];
-    attempts.push(
-      ...(await Promise.all(
-        page.map((attempt) => reconcileStaleAttempt(attempt, context))
-      ))
-    );
+    attempts.push(...page);
     if (page.length < pageSize) {
       break;
     }
   }
-  return attempts;
+  if (activityRetentionDays !== 0) {
+    return attempts;
+  }
+  const seen = new Set<string>();
+  return attempts.flatMap((attempt) => {
+    const unseenIndexes = attempt.targetKeys.flatMap((key, index) =>
+      seen.has(key) ? [] : [index]
+    );
+    unseenIndexes.forEach((index) => seen.add(attempt.targetKeys[index]!));
+    if (unseenIndexes.length === 0) {
+      return [];
+    }
+    return [
+      {
+        ...attempt,
+        targetKeys: unseenIndexes.map((index) => attempt.targetKeys[index]!),
+        targetLabels: unseenIndexes.map(
+          (index) => attempt.targetLabels[index]!
+        ),
+      },
+    ];
+  });
 };
 
 export const getPublishAttempt = async (
@@ -330,6 +274,5 @@ export const getPublishAttempt = async (
     .eq("id", attemptId)
     .maybeSingle();
   throwOnError(result);
-  const attempt = result.data as PublishAttempt | null;
-  return attempt === null ? null : reconcileStaleAttempt(attempt, context);
+  return result.data as PublishAttempt | null;
 };

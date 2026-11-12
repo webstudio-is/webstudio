@@ -7,6 +7,13 @@ import type { CompactBuild } from "@webstudio-is/project-build";
 import * as projectBuild from "@webstudio-is/project-build/server";
 import * as projectApi from "@webstudio-is/project/index.server";
 import {
+  createTestServer,
+  db,
+  json,
+  testContext,
+} from "@webstudio-is/postgrest/testing";
+import { http } from "msw";
+import {
   buildPatchTransaction,
   publicApiContractVersion,
   publicApiOperationRequiresServerSupport,
@@ -34,6 +41,7 @@ import {
 } from "./api-permits.server";
 
 const servicesDir = new URL(".", import.meta.url);
+const server = createTestServer();
 
 const { assertContentOrBuildPayload, assertApiPublishDomains } = __testing__;
 
@@ -391,6 +399,89 @@ describe("api router build operation adapters", () => {
 afterEach(() => {
   vi.restoreAllMocks();
 });
+
+test.each([
+  ["staging", "SUCCEEDED", undefined],
+  ["staging", "FAILED", undefined],
+  ["staging", "BLOCKED", undefined],
+  ["static", "SUCCEEDED", "ready"],
+  ["static", "FAILED", "failed"],
+  ["static", "BLOCKED", "failed"],
+] as const)(
+  "returns persisted %s %s replay without building or dispatching",
+  async (target, status, readiness) => {
+    vi.spyOn(authDb, "getTokenInfo").mockResolvedValue(
+      createToken({ canPublish: true })
+    );
+    vi.spyOn(authorizeProject, "hasProjectPermit").mockResolvedValue(true);
+    vi.spyOn(projectApi, "loadById").mockResolvedValue({
+      id: "project-1",
+      domain: "project.wstd.io",
+      domainsVirtual: [],
+    } as never);
+    const insertAttempt = vi.fn(() => json({}));
+    const createBuild = vi.fn(() => json("build-2"));
+    const dispatch = vi.fn().mockResolvedValue({ success: true });
+    server.use(
+      db.get("PublishAttempt", ({ request }) => {
+        const query = new URL(request.url).searchParams;
+        expect(query.get("projectId")).toBe("eq.project-1");
+        expect(query.get("idempotencyHash")).toMatch(/^eq\.[a-f0-9]{64}$/);
+        return json({
+          id: "attempt-1",
+          projectId: "project-1",
+          target: target === "static" ? "STATIC" : "STAGING",
+          status,
+          buildId: status === "BLOCKED" ? null : "build-1",
+          artifactName: target === "static" ? "project.zip" : null,
+        });
+      }),
+      db.post("PublishAttempt", insertAttempt),
+      http.post(
+        "http://test-postgrest/rpc/create_production_build_expected",
+        createBuild
+      )
+    );
+    const context = {
+      ...createContext(true),
+      ...testContext,
+      deployment: {
+        deploymentTrpc: { publish: { mutate: dispatch } },
+        env: {
+          BUILDER_ORIGIN: "https://apps.webstudio.is",
+          GITHUB_REF_NAME: "main",
+          GITHUB_SHA: "sha-1",
+          PUBLISHER_HOST: "wstd.io",
+        },
+      },
+    } as unknown as AppContext;
+
+    const result = await createCaller(context).publish.create(
+      target === "static"
+        ? {
+            projectId: "project-1",
+            target: "static",
+            idempotencyKey: "request-1",
+          }
+        : {
+            projectId: "project-1",
+            target: "staging",
+            idempotencyKey: "request-1",
+          }
+    );
+    expect(result).toMatchObject({
+      status: status.toLowerCase(),
+      jobId: "attempt-1",
+      buildId: status === "BLOCKED" ? undefined : "build-1",
+      ...(readiness === undefined
+        ? {}
+        : { artifact: { name: "project.zip", readiness } }),
+    });
+    expect(insertAttempt).not.toHaveBeenCalled();
+    expect(createBuild).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
+  }
+);
 
 describe("api router permits", () => {
   test("adds api permit only when token and plan both allow it", () => {

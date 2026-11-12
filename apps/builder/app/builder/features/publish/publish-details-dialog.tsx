@@ -116,7 +116,11 @@ export const getPublishActivityStatus = (item?: ActivityItem) => {
   ) {
     return "error" as const;
   }
-  if (item.status === "queued" || item.status === "building") {
+  if (
+    item.status === "validating" ||
+    item.status === "queued" ||
+    item.status === "building"
+  ) {
     return "pending" as const;
   }
   if (item.auditWarningCount + item.diagnosticWarnings > 0) {
@@ -143,10 +147,10 @@ const Activity = ({
   const instances = useStore($instances);
   const { allowAdvancedPublishDiagnostics = false } = useStore($planFeatures);
   const [items, setItems] = useState<ActivityItem[]>([]);
-  const [report, setReport] =
-    useState<
-      Awaited<ReturnType<typeof nativeClient.domain.publishReport.query>>
-    >();
+  const [report, setReport] = useState<{
+    key: string;
+    result: Awaited<ReturnType<typeof nativeClient.domain.publishReport.query>>;
+  }>();
   const [selectedId, setSelectedId] = useState<string>();
   const [reportFilter, setReportFilter] = useState<Filter>("all");
   const [activityFilter, setActivityFilter] = useState<Filter>("all");
@@ -158,12 +162,32 @@ const Activity = ({
   >("idle");
 
   const reportData =
-    report?.success === true && report.result.availability === "available"
-      ? report.result.report
+    allowAdvancedPublishDiagnostics &&
+    report?.key === `${project?.id}:${selectedId}` &&
+    report.result.success === true &&
+    report.result.result.availability === "available"
+      ? report.result.result.report
       : undefined;
   const diagnostics = (reportData?.diagnostics ?? []).filter(
     (item) => reportFilter === "all" || item.severity === reportFilter
   );
+  const filteredItems = items.filter((item) => {
+    if (activityFilter === "all") {
+      return true;
+    }
+    if (activityFilter === "error") {
+      return (
+        item.status === "failed" ||
+        item.status === "blocked" ||
+        item.auditErrorCount + item.diagnosticErrors > 0 ||
+        item.issues.some(({ severity }) => severity === "error")
+      );
+    }
+    return (
+      item.auditWarningCount + item.diagnosticWarnings > 0 ||
+      item.issues.some(({ severity }) => severity === "warning")
+    );
+  });
 
   useEffect(() => {
     if (project == null) {
@@ -194,7 +218,45 @@ const Activity = ({
     };
   }, [label, project]);
 
-  if (selectedId !== undefined) {
+  useEffect(() => {
+    if (
+      selectedId === undefined ||
+      project === undefined ||
+      !allowAdvancedPublishDiagnostics
+    ) {
+      setReport(undefined);
+      setReportState("idle");
+      return;
+    }
+    let cancelled = false;
+    const key = `${project.id}:${selectedId}`;
+    setReport(undefined);
+    setReportState("loading");
+    nativeClient.domain.publishReport
+      .query({ projectId: project.id, attemptId: selectedId })
+      .then((result) => {
+        if (!cancelled) {
+          setReport({ key, result });
+          setReportState("loaded");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setReportState("error");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId, project, allowAdvancedPublishDiagnostics]);
+
+  useEffect(() => {
+    if (!allowAdvancedPublishDiagnostics) {
+      setSelectedId(undefined);
+    }
+  }, [allowAdvancedPublishDiagnostics]);
+
+  if (selectedId !== undefined && allowAdvancedPublishDiagnostics) {
     return (
       <Flex direction="column" gap="3" css={{ padding: theme.spacing[5] }}>
         <Button
@@ -358,85 +420,63 @@ const Activity = ({
           </Button>
         ))}
       </Flex>
-      {items.filter(
-        (item) =>
-          activityFilter === "all" ||
-          item.issues.some(({ severity }) => severity === activityFilter)
-      ).length === 0 && (
+      {filteredItems.length === 0 && (
         <Text color="subtle">No publish issues in this category.</Text>
       )}
-      {items
-        .filter(
-          (item) =>
-            activityFilter === "all" ||
-            item.issues.some(({ severity }) => severity === activityFilter)
-        )
-        .map((item) => (
-          <Flex key={item.id} direction="column" gap="1">
-            <Flex gap="2" align="center">
-              <Text variant="titles">
-                {item.summary ?? item.status ?? "Published"}
-              </Text>
-              {item.buildId !== undefined && item.buildId === latestBuildId && (
-                <Text variant="labels">Latest</Text>
-              )}
-            </Flex>
-            <Text color="subtle">
-              {new Date(item.createdAt).toLocaleString()}
-              {item.completedAt !== undefined &&
-                ` · ${Math.max(
-                  0,
-                  Math.round(
-                    (new Date(item.completedAt).getTime() -
-                      new Date(item.createdAt).getTime()) /
-                      1000
-                  )
-                )}s`}
+      {filteredItems.map((item) => (
+        <Flex key={item.id} direction="column" gap="1">
+          <Flex gap="2" align="center">
+            <Text variant="titles">
+              {item.summary ?? item.status ?? "Published"}
             </Text>
-            {item.issues
-              .filter(
-                (issue) =>
-                  activityFilter === "all" || issue.severity === activityFilter
-              )
-              .map((issue, index) => (
-                <Text key={`${issue.source}-${index}`}>
-                  {issue.severity === "error" ? "Error" : "Warning"} ·{" "}
-                  {issue.message}
-                </Text>
-              ))}
-            {allowAdvancedPublishDiagnostics &&
-              item.reportAvailability === "available" &&
-              project !== undefined && (
-                <Button
-                  color="neutral"
-                  onClick={async () => {
-                    setSelectedId(item.id);
-                    setReportState("loading");
-                    try {
-                      const result =
-                        await nativeClient.domain.publishReport.query({
-                          projectId: project.id,
-                          attemptId: item.id,
-                        });
-                      setReport(result);
-                      setReportState("loaded");
-                    } catch {
-                      setReportState("error");
-                    }
-                  }}
-                >
-                  View detailed report
-                </Button>
-              )}
-            {!allowAdvancedPublishDiagnostics &&
-              item.reportAvailability === "available" && (
-                <Text color="subtle">
-                  Detailed reports are available on Pro plans.
-                </Text>
-              )}
-            <Separator />
+            {item.buildId !== undefined && item.buildId === latestBuildId && (
+              <Text variant="labels">Latest</Text>
+            )}
           </Flex>
-        ))}
+          <Text color="subtle">
+            {new Date(item.createdAt).toLocaleString()}
+            {item.completedAt !== undefined &&
+              ` · ${Math.max(
+                0,
+                Math.round(
+                  (new Date(item.completedAt).getTime() -
+                    new Date(item.createdAt).getTime()) /
+                    1000
+                )
+              )}s`}
+          </Text>
+          {item.issues
+            .filter(
+              (issue) =>
+                activityFilter === "all" || issue.severity === activityFilter
+            )
+            .map((issue, index) => (
+              <Text key={`${issue.source}-${index}`}>
+                {issue.severity === "error" ? "Error" : "Warning"} ·{" "}
+                {issue.message}
+              </Text>
+            ))}
+          {allowAdvancedPublishDiagnostics &&
+            item.reportAvailability === "available" &&
+            project !== undefined && (
+              <Button
+                color="neutral"
+                onClick={() => {
+                  setSelectedId(item.id);
+                }}
+              >
+                View detailed report
+              </Button>
+            )}
+          {!allowAdvancedPublishDiagnostics &&
+            item.reportAvailability === "available" && (
+              <Text color="subtle">
+                Detailed reports are available on Pro plans.
+              </Text>
+            )}
+          <Separator />
+        </Flex>
+      ))}
     </Flex>
   );
 };
@@ -497,7 +537,7 @@ const Findings = ({
     (finding) => filter === "all" || finding.severity === filter
   );
 
-  if (selected !== undefined) {
+  if (selected !== undefined && allowAdvancedPublishDiagnostics) {
     return (
       <Flex direction="column" gap="3" css={{ padding: theme.spacing[5] }}>
         <Button color="neutral" onClick={() => setSelected(undefined)}>
@@ -641,19 +681,7 @@ export const PublishStatusButton = ({
     };
   }, [label, project, status]);
 
-  const activityStatus = getPublishActivityStatus(latestActivity);
-  const displayedStatus =
-    status === "pending"
-      ? status
-      : status === "error"
-        ? status
-        : activityStatus === "error"
-          ? "error"
-          : activityStatus === "pending"
-            ? "pending"
-            : activityStatus === "warning"
-              ? "warning"
-              : status;
+  const displayedStatus = getPublishActivityStatus(latestActivity) ?? status;
   const Icon = displayedStatus === "success" ? CheckCircleIcon : AlertIcon;
   const color =
     displayedStatus === "success"
@@ -686,7 +714,7 @@ export const PublishStatusButton = ({
         </IconButton>
       </Tooltip>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent width={560} height={560}>
+        <DialogContent width={560} height={560} aria-describedby={undefined}>
           <DialogTitle
             suffix={
               <DialogTitleActions>

@@ -10,8 +10,44 @@ import { $, renderData, ws } from "@webstudio-is/template";
 import {
   formatPrePublishAuditFinding,
   getGeneratedStylesheetFinding,
+  limitPrePublishAuditFindings,
   runPrePublishAudit,
 } from "./pre-publish-audit";
+
+test("keeps the content warning within the shared 500-finding limit", () => {
+  const contentWarning = {
+    ruleId: "content-database-truncated",
+    severity: "warning" as const,
+    message: "Published content is incomplete.",
+    location: {},
+  };
+  const existingWarnings = Array.from({ length: 499 }, (_, index) => ({
+    ruleId: `warning-${index}`,
+    severity: "warning" as const,
+    message: "Existing warning",
+    location: {},
+  }));
+  const previousTruncation = {
+    ruleId: "audit-truncated",
+    severity: "warning" as const,
+    message: "Some earlier audit findings were omitted.",
+    location: {},
+  };
+
+  const findings = limitPrePublishAuditFindings([
+    contentWarning,
+    ...existingWarnings,
+    previousTruncation,
+  ]);
+
+  expect(findings).toHaveLength(500);
+  expect(findings).toContainEqual(contentWarning);
+  expect(findings).toContainEqual(previousTruncation);
+  expect(findings.at(-1)?.ruleId).toBe("audit-truncated");
+  expect(
+    findings.filter(({ ruleId }) => ruleId === "audit-truncated")
+  ).toHaveLength(2);
+});
 
 const createPages = (page: Page): Pages => {
   const rootFolder: Folder = {
@@ -266,6 +302,54 @@ test("includes existing resource integrity checks in the audit pipeline", () => 
       },
     },
   ]);
+});
+
+test("keeps blocking errors when warnings exceed the audit report limit", () => {
+  const { instances, props } = renderData(
+    <$.Body ws:id="body">
+      <ws.element ws:tag="button">
+        <$.Heading ws:tag="h3">Invalid nesting</$.Heading>
+      </ws.element>
+    </$.Body>
+  );
+  const pages = createPages(marketEdgePage);
+  const rootFolder = pages.folders.get(ROOT_FOLDER_ID)!;
+  for (let index = 1; index < 500; index += 1) {
+    const id = `page-${index}`;
+    pages.pages.set(id, { ...marketEdgePage, id, path: `/${id}` });
+    rootFolder.children.push(id);
+  }
+
+  const findings = runPrePublishAudit({
+    pages,
+    instances,
+    props,
+    dataSources: new Map([
+      [
+        "missing-resource-variable",
+        {
+          id: "missing-resource-variable",
+          scopeInstanceId: "body",
+          name: "Products",
+          type: "resource",
+          resourceId: "missing-resource",
+        },
+      ],
+    ]),
+    resources: new Map(),
+    metas: componentMetas,
+  });
+
+  expect(findings).toHaveLength(500);
+  expect(findings.some(({ ruleId }) => ruleId === "audit-truncated")).toBe(
+    true
+  );
+  expect(findings).toContainEqual(
+    expect.objectContaining({
+      ruleId: "resource-integrity",
+      severity: "error",
+    })
+  );
 });
 
 test("reports generated stylesheet syntax errors", () => {

@@ -30,6 +30,7 @@ export const output = z.discriminatedUnion("success", [
   z.object({
     success: z.literal(false),
     error: z.string(),
+    dispatchUncertain: z.boolean().optional(),
   }),
 ]);
 
