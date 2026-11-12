@@ -104,9 +104,10 @@ const isSerializedPages = (pages: unknown): pages is MigratablePages => {
   );
 };
 
-const removeOrphanFolderChildren = (
+const normalizeFolderChildren = (
   pages: Map<Page["id"], Page>,
-  folders: Map<Folder["id"], Folder>
+  folders: Map<Folder["id"], Folder>,
+  rootFolderId: Folder["id"]
 ) => {
   const nextFolders = new Map<Folder["id"], Folder>();
   for (const [folderId, folder] of folders) {
@@ -115,6 +116,58 @@ const removeOrphanFolderChildren = (
       children: folder.children.filter(
         (childId) => pages.has(childId) || folders.has(childId)
       ),
+    });
+  }
+
+  const visiting = new Set<Folder["id"]>();
+  const visited = new Set<Folder["id"]>();
+  const detached = new Set<Folder["id"]>();
+  const visit = (folderId: Folder["id"]) => {
+    const folder = nextFolders.get(folderId);
+    if (folder === undefined) {
+      return;
+    }
+    visiting.add(folderId);
+    const children = folder.children.filter((childId) => {
+      if (nextFolders.has(childId) === false) {
+        return true;
+      }
+      if (visiting.has(childId)) {
+        detached.add(childId);
+        return false;
+      }
+      if (visited.has(childId) === false) {
+        visit(childId);
+      }
+      return true;
+    });
+    nextFolders.set(folderId, { ...folder, children });
+    visiting.delete(folderId);
+    visited.add(folderId);
+  };
+
+  // Keep existing paths from the root when choosing which cycle edge to remove.
+  visit(rootFolderId);
+  for (const folderId of [...nextFolders.keys()].sort()) {
+    if (visited.has(folderId) === false) {
+      visit(folderId);
+    }
+  }
+
+  // A detached cycle needs a new root link to remain visible in the Pages panel.
+  const referenced = new Set(
+    [...nextFolders.values()].flatMap((folder) => folder.children)
+  );
+  const root = nextFolders.get(rootFolderId);
+  if (root !== undefined) {
+    nextFolders.set(rootFolderId, {
+      ...root,
+      children: [
+        ...root.children,
+        ...[...detached]
+          .sort()
+          .filter((id) => id !== rootFolderId && referenced.has(id) === false),
+      ],
     });
   }
   return nextFolders;
@@ -154,9 +207,10 @@ export const migratePages = (pagesData: unknown): Pages => {
     const normalizedPages = {
       ...currentPages,
       pageTemplates: currentPages.pageTemplates ?? new Map(),
-      folders: removeOrphanFolderChildren(
+      folders: normalizeFolderChildren(
         currentPages.pages,
-        currentPages.folders
+        currentPages.folders,
+        currentPages.rootFolderId
       ),
     };
     if (hasHistoricalFormComponentIdentityVersion(currentPages)) {
@@ -179,7 +233,11 @@ export const migratePages = (pagesData: unknown): Pages => {
         pagesData.pageTemplates === undefined
           ? new Map()
           : toMap<PageTemplate>(pagesData.pageTemplates),
-      folders: removeOrphanFolderChildren(nextPages, nextFolders),
+      folders: normalizeFolderChildren(
+        nextPages,
+        nextFolders,
+        pagesData.rootFolderId
+      ),
     };
   }
 
@@ -250,6 +308,6 @@ export const migratePages = (pagesData: unknown): Pages => {
     rootFolderId: rootFolder.id,
     pages: nextPages,
     pageTemplates: new Map(),
-    folders: nextFolders,
+    folders: normalizeFolderChildren(nextPages, nextFolders, rootFolder.id),
   };
 };
