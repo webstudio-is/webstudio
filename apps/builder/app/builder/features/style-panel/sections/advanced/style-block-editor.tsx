@@ -617,6 +617,36 @@ export const StyleBlockEditor = ({
     }
   }, [inline, editorOpen]);
 
+  useEffect(() => {
+    if (!editorOpen) {
+      return;
+    }
+    const handleSearchShortcut = (event: KeyboardEvent) => {
+      const editor = editorViewRef.current?.dom;
+      const scope = inline ? editor : editor?.closest("[data-floating-panel]");
+      if (
+        event.key.toLowerCase() !== "f" ||
+        (!event.metaKey && !event.ctrlKey) ||
+        event.altKey ||
+        event.shiftKey ||
+        !(event.target instanceof Node) ||
+        !scope?.contains(event.target)
+      ) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      if (inline) {
+        searchInputRef.current?.focus();
+      } else {
+        setSearchPopoverOpen(true);
+      }
+    };
+    document.addEventListener("keydown", handleSearchShortcut, true);
+    return () =>
+      document.removeEventListener("keydown", handleSearchShortcut, true);
+  }, [editorOpen, inline]);
+
   const moveSearch = (direction: "previous" | "next") => {
     const view = editorViewRef.current;
     if (
@@ -787,22 +817,6 @@ export const StyleBlockEditor = ({
 
   const content = (
     <Box
-      onKeyDownCapture={(event) => {
-        if (
-          event.key.toLowerCase() === "f" &&
-          (event.metaKey || event.ctrlKey) &&
-          !event.altKey &&
-          !event.shiftKey
-        ) {
-          event.preventDefault();
-          event.stopPropagation();
-          if (inline) {
-            searchInputRef.current?.focus();
-          } else {
-            setSearchPopoverOpen(true);
-          }
-        }
-      }}
       css={
         inline
           ? {
@@ -894,7 +908,15 @@ export const StyleBlockEditor = ({
     <EditorDialog
       title="Styles"
       titleSuffix={
-        <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
+        <Popover
+          open={searchPopoverOpen}
+          onOpenChange={(nextOpen) => {
+            setSearchPopoverOpen(nextOpen);
+            if (!nextOpen) {
+              setSearchTerm(undefined);
+            }
+          }}
+        >
           <PopoverTrigger asChild>
             <Button
               type="button"
@@ -906,7 +928,7 @@ export const StyleBlockEditor = ({
           <PopoverContent
             align="end"
             side="bottom"
-            css={{ width: theme.sizes.sidebarWidth }}
+            css={{ width: theme.sizes.sidebarWidth, maxWidth: "none" }}
             onOpenAutoFocus={(event) => {
               event.preventDefault();
               searchInputRef.current?.focus();

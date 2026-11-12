@@ -453,6 +453,70 @@ test.each(["metaKey", "ctrlKey"] as const)(
   }
 );
 
+test("Cmd+F opens search from the centered dialog header", () => {
+  render(
+    <StyleBlockEditor
+      declarations={declarations}
+      sourceDeclarations={sourceDeclarations}
+      readonly={false}
+      open
+      onOpenChange={() => {}}
+      onApply={() => {}}
+    />
+  );
+  const headerButton = document.querySelector<HTMLButtonElement>(
+    '[data-floating-panel] button[aria-label="Expand"]'
+  )!;
+  const event = new KeyboardEvent("keydown", {
+    key: "f",
+    metaKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  act(() => headerButton.dispatchEvent(event));
+  expect(event.defaultPrevented).toBe(true);
+  expect(
+    document.querySelector<HTMLInputElement>("input[type=text]")
+  ).not.toBeNull();
+});
+
+test("closing the centered search clears its query", async () => {
+  render(
+    <StyleBlockEditor
+      declarations={declarations}
+      sourceDeclarations={sourceDeclarations}
+      readonly={false}
+      open
+      onOpenChange={() => {}}
+      onApply={() => {}}
+    />
+  );
+  const trigger = document.querySelector<HTMLButtonElement>(
+    '[data-floating-panel] button[aria-label="Search styles"]'
+  )!;
+  await act(async () => {
+    await userEvent.click(trigger);
+  });
+  const input = document.querySelector<HTMLInputElement>("input[type=text]")!;
+  await act(async () => {
+    await userEvent.type(input, "color");
+  });
+  const view = EditorView.findFromDOM(
+    document.querySelector<HTMLElement>(".cm-content")!
+  )!;
+  expect(getSearchQuery(view.state).search).toBe("color");
+  await act(async () => {
+    await userEvent.click(trigger);
+  });
+  expect(getSearchQuery(view.state).search).toBe("");
+  await act(async () => {
+    await userEvent.click(trigger);
+  });
+  expect(
+    document.querySelector<HTMLInputElement>("input[type=text]")?.value
+  ).toBe("");
+});
+
 test("Cmd+F focuses the inline editor search", () => {
   const container = render(
     <StyleBlockEditor
