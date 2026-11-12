@@ -114,7 +114,7 @@ const renderTooltip = (className: string, content: ReactNode) => {
   return { dom, destroy: () => root.unmount() };
 };
 const blockedEdit = StateEffect.define<{ pos: number; message: string }>();
-const sourceChanged = StateEffect.define<void>();
+const sourceDeclarationsChanged = StateEffect.define<void>();
 const searchMatches = StateField.define({
   create: (state) => getSearchDecorations(state),
   update: (decorations, transaction) =>
@@ -315,17 +315,17 @@ const useMixedStyleBlockExtensions = ({
   inline,
   readonly,
   colorSwatches,
-  sourceSnapshotRef,
+  sourceDeclarationsRef,
   editorViewRef,
-  applyRef,
+  applyChangesRef,
   setSearchNavigation,
 }: {
   inline: boolean;
   readonly: boolean;
   colorSwatches: Extension;
-  sourceSnapshotRef: MutableRefObject<ComputedStyleDecl[]>;
+  sourceDeclarationsRef: MutableRefObject<ComputedStyleDecl[]>;
   editorViewRef: MutableRefObject<EditorView | undefined>;
-  applyRef: MutableRefObject<() => void>;
+  applyChangesRef: MutableRefObject<() => void>;
   setSearchNavigation: Dispatch<SetStateAction<SearchNavigation>>;
 }) => {
   return useMemo(() => {
@@ -372,7 +372,7 @@ const useMixedStyleBlockExtensions = ({
               const properties = new Set(
                 parsed.size > 0 ? parsed.keys() : [range.property]
               );
-              source = sourceSnapshotRef.current.some(
+              source = sourceDeclarationsRef.current.some(
                 (declaration) =>
                   properties.has(declaration.property) &&
                   declaration.source.name === "overwritten"
@@ -401,7 +401,9 @@ const useMixedStyleBlockExtensions = ({
       create: (state) => decorate(state.doc.toString()),
       update: (decorations, transaction) =>
         transaction.docChanged ||
-        transaction.effects.some((effect) => effect.is(sourceChanged))
+        transaction.effects.some((effect) =>
+          effect.is(sourceDeclarationsChanged)
+        )
           ? decorate(transaction.state.doc.toString())
           : decorations,
       provide: (field) => EditorView.decorations.from(field),
@@ -448,7 +450,7 @@ const useMixedStyleBlockExtensions = ({
           range.declarationTo
         );
         const parsed = parseBlock(line, $cssVarsMap.get()).styleMap;
-        const source = sourceSnapshotRef.current.find(
+        const source = sourceDeclarationsRef.current.find(
           (declaration) => declaration.property === range.property
         );
         const value = parsed.values().next().value ?? source?.cascadedValue;
@@ -534,7 +536,7 @@ const useMixedStyleBlockExtensions = ({
                             view.dispatch({
                               changes: { from, to },
                             });
-                            applyRef.current();
+                            applyChangesRef.current();
                           }
                         : undefined
                     }
@@ -558,9 +560,9 @@ const useMixedStyleBlockExtensions = ({
     colorSwatches,
     inline,
     readonly,
-    sourceSnapshotRef,
+    sourceDeclarationsRef,
     editorViewRef,
-    applyRef,
+    applyChangesRef,
     setSearchNavigation,
   ]);
 };
@@ -585,14 +587,14 @@ export const MixedStyleBlockEditor = ({
     hasNext: false,
   });
   const codeRef = useRef("");
-  const cleanCodeRef = useRef("");
+  const lastValidCodeRef = useRef("");
   const appliedCodeRef = useRef("");
   const oldStylesRef = useRef<CssStyleMap>(new Map());
   const initialParsedRef = useRef<CssStyleMap>(new Map());
-  const sourceSnapshotRef = useRef(sourceDeclarations);
+  const sourceDeclarationsRef = useRef(sourceDeclarations);
   const editorViewRef = useRef<EditorView>();
   const wasOpenRef = useRef(false);
-  const applyRef = useRef<() => void>(() => {});
+  const applyChangesRef = useRef<() => void>(() => {});
   const onPreviewRef = useRef(onPreview);
   onPreviewRef.current = onPreview;
 
@@ -635,16 +637,16 @@ export const MixedStyleBlockEditor = ({
     }
   }, [searchTerm]);
 
-  const setInitialStyles = useCallback(
+  const syncFromDeclarations = useCallback(
     (localStyles: CssStyleMap, nextCode: string) => {
       oldStylesRef.current = localStyles;
-      sourceSnapshotRef.current = sourceDeclarations;
+      sourceDeclarationsRef.current = sourceDeclarations;
       initialParsedRef.current = parseBlock(
         formatStyleBlock(localStyles, $cssVarsMap.get()),
         $cssVarsMap.get()
       ).styleMap;
       codeRef.current = nextCode;
-      cleanCodeRef.current = nextCode;
+      lastValidCodeRef.current = nextCode;
       appliedCodeRef.current = nextCode;
       setCode(nextCode);
     },
@@ -656,7 +658,7 @@ export const MixedStyleBlockEditor = ({
     wasOpenRef.current = editorOpen;
     if (
       !editorOpen ||
-      (wasOpen && (!inline || codeRef.current !== cleanCodeRef.current))
+      (wasOpen && (!inline || codeRef.current !== lastValidCodeRef.current))
     ) {
       return;
     }
@@ -666,14 +668,22 @@ export const MixedStyleBlockEditor = ({
       sourceDeclarations,
       $cssVarsMap.get()
     );
-    if (!wasOpen || nextCode !== cleanCodeRef.current) {
-      setInitialStyles(localStyles, nextCode);
+    if (!wasOpen || nextCode !== lastValidCodeRef.current) {
+      syncFromDeclarations(localStyles, nextCode);
     } else {
       oldStylesRef.current = localStyles;
-      sourceSnapshotRef.current = sourceDeclarations;
-      editorViewRef.current?.dispatch({ effects: sourceChanged.of() });
+      sourceDeclarationsRef.current = sourceDeclarations;
+      editorViewRef.current?.dispatch({
+        effects: sourceDeclarationsChanged.of(),
+      });
     }
-  }, [editorOpen, inline, declarations, sourceDeclarations, setInitialStyles]);
+  }, [
+    editorOpen,
+    inline,
+    declarations,
+    sourceDeclarations,
+    syncFromDeclarations,
+  ]);
 
   const applyChanges = () => {
     if (codeRef.current === appliedCodeRef.current) {
@@ -697,16 +707,16 @@ export const MixedStyleBlockEditor = ({
       initialParsedRef.current = parsed.styleMap;
       appliedCodeRef.current = codeRef.current;
       if (parsed.canDelete && parsed.diagnostics.length === 0) {
-        cleanCodeRef.current = codeRef.current;
+        lastValidCodeRef.current = codeRef.current;
       }
     }
     onPreview?.(undefined);
   };
-  applyRef.current = inline ? applyChanges : () => {};
+  applyChangesRef.current = inline ? applyChanges : () => {};
 
   const colorSwatches = useMemo(
     () =>
-      createColorSwatches(() => applyRef.current(), {
+      createColorSwatches(() => applyChangesRef.current(), {
         getVariables: () => $cssVarsMap.get(),
         subscribeVariables: (callback) => $cssVarsMap.listen(callback),
         getEditableRange: (source) => {
@@ -723,9 +733,9 @@ export const MixedStyleBlockEditor = ({
     inline,
     readonly,
     colorSwatches,
-    sourceSnapshotRef,
+    sourceDeclarationsRef,
     editorViewRef,
-    applyRef,
+    applyChangesRef,
     setSearchNavigation,
   });
 
