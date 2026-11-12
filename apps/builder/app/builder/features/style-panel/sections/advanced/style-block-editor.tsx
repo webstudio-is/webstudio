@@ -39,10 +39,14 @@ import {
 } from "@codemirror/view";
 import {
   Box,
+  Button,
   Flex,
   Kbd,
   MenuList,
   PanelContent,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   rawTheme,
   SearchField,
   SmallIconButton,
@@ -53,7 +57,11 @@ import {
   tooltipContentCss,
   cssVar,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  SearchIcon,
+} from "@webstudio-is/icons";
 import {
   camelCaseProperty,
   propertyDescriptions,
@@ -582,6 +590,7 @@ export const StyleBlockEditor = ({
   const editorOpen = inline || open === true;
   const [code, setCode] = useState("");
   const [searchTerm, setSearchTerm] = useState<string>();
+  const [searchPopoverOpen, setSearchPopoverOpen] = useState(false);
   const [searchNavigation, setSearchNavigation] = useState({
     hasPrevious: false,
     hasNext: false,
@@ -593,6 +602,7 @@ export const StyleBlockEditor = ({
   const initialParsedRef = useRef<CssStyleMap>(new Map());
   const sourceDeclarationsRef = useRef(sourceDeclarations);
   const editorViewRef = useRef<EditorView>();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const wasOpenRef = useRef(false);
   const applyChangesRef = useRef<() => void>(() => {});
   const onPreviewRef = useRef(onPreview);
@@ -603,6 +613,7 @@ export const StyleBlockEditor = ({
   useEffect(() => {
     if (!inline && !editorOpen) {
       setSearchTerm(undefined);
+      setSearchPopoverOpen(false);
     }
   }, [inline, editorOpen]);
 
@@ -741,6 +752,7 @@ export const StyleBlockEditor = ({
 
   const searchControl = (
     <SearchField
+      inputRef={searchInputRef}
       value={searchTerm ?? ""}
       suffix={
         searchTerm ? (
@@ -775,6 +787,22 @@ export const StyleBlockEditor = ({
 
   const content = (
     <Box
+      onKeyDownCapture={(event) => {
+        if (
+          event.key.toLowerCase() === "f" &&
+          (event.metaKey || event.ctrlKey) &&
+          !event.altKey &&
+          !event.shiftKey
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (inline) {
+            searchInputRef.current?.focus();
+          } else {
+            setSearchPopoverOpen(true);
+          }
+        }
+      }}
       css={
         inline
           ? {
@@ -866,9 +894,27 @@ export const StyleBlockEditor = ({
     <EditorDialog
       title="Styles"
       titleSuffix={
-        <Box css={{ width: theme.sizes.sidebarWidth, minWidth: 0 }}>
-          {searchControl}
-        </Box>
+        <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              color="ghost"
+              prefix={<SearchIcon />}
+              aria-label="Search styles"
+            />
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            side="bottom"
+            css={{ width: theme.sizes.sidebarWidth }}
+            onOpenAutoFocus={(event) => {
+              event.preventDefault();
+              searchInputRef.current?.focus();
+            }}
+          >
+            <PanelContent>{searchControl}</PanelContent>
+          </PopoverContent>
+        </Popover>
       }
       modal
       open={editorOpen}

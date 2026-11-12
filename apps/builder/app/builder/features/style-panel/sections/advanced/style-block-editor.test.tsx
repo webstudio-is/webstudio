@@ -334,10 +334,19 @@ test("centered search finds every source and keeps Local editable", async () => 
       onApply={() => {}}
     />
   );
-  const input = document.querySelector<HTMLInputElement>(
-    "[data-floating-panel] input[type=text]"
+  const trigger = document.querySelector<HTMLButtonElement>(
+    '[data-floating-panel] button[aria-label="Search styles"]'
   );
+  expect(trigger).not.toBeNull();
+  expect(
+    document.querySelector("[data-floating-panel] input[type=text]")
+  ).toBeNull();
+  await act(async () => {
+    await userEvent.click(trigger!);
+  });
+  const input = document.querySelector<HTMLInputElement>("input[type=text]");
   expect(input).not.toBeNull();
+  expect(document.activeElement).toBe(input);
   await act(async () => {
     await userEvent.type(input!, "color");
   });
@@ -387,23 +396,84 @@ test("centered search starts empty each time the dialog opens", async () => {
   document.body.appendChild(container);
   root = createRoot(container);
   act(() => root?.render(dialog(true)));
-  const input = document.querySelector<HTMLInputElement>(
-    "[data-floating-panel] input[type=text]"
+  const trigger = document.querySelector<HTMLButtonElement>(
+    '[data-floating-panel] button[aria-label="Search styles"]'
   )!;
+  await act(async () => {
+    await userEvent.click(trigger);
+  });
+  const input = document.querySelector<HTMLInputElement>("input[type=text]")!;
   await act(async () => {
     await userEvent.type(input, "color");
   });
   expect(input.value).toBe("color");
   act(() => root?.render(dialog(false)));
   act(() => root?.render(dialog(true)));
-  const reopenedInput = document.querySelector<HTMLInputElement>(
-    "[data-floating-panel] input[type=text]"
-  )!;
+  await act(async () => {
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-floating-panel] button[aria-label="Search styles"]'
+      )!
+    );
+  });
+  const reopenedInput =
+    document.querySelector<HTMLInputElement>("input[type=text]")!;
   expect(reopenedInput.value).toBe("");
   const view = EditorView.findFromDOM(
     document.querySelector<HTMLElement>(".cm-content")!
   )!;
   expect(getSearchQuery(view.state).search).toBe("");
+});
+
+test.each(["metaKey", "ctrlKey"] as const)(
+  "%s+F opens the centered editor search",
+  (modifier) => {
+    render(
+      <StyleBlockEditor
+        declarations={declarations}
+        sourceDeclarations={sourceDeclarations}
+        readonly={false}
+        open
+        onOpenChange={() => {}}
+        onApply={() => {}}
+      />
+    );
+    const editor = document.querySelector<HTMLElement>(".cm-content")!;
+    const event = new KeyboardEvent("keydown", {
+      key: "f",
+      [modifier]: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => editor.dispatchEvent(event));
+    expect(event.defaultPrevented).toBe(true);
+    expect(
+      document.querySelector<HTMLInputElement>("input[type=text]")
+    ).not.toBeNull();
+  }
+);
+
+test("Cmd+F focuses the inline editor search", () => {
+  const container = render(
+    <StyleBlockEditor
+      inline
+      declarations={declarations}
+      sourceDeclarations={sourceDeclarations}
+      readonly={false}
+      onApply={() => {}}
+    />
+  );
+  const editor = container.querySelector<HTMLElement>(".cm-content")!;
+  const input = container.querySelector<HTMLInputElement>("input[type=text]")!;
+  const event = new KeyboardEvent("keydown", {
+    key: "f",
+    metaKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  act(() => editor.dispatchEvent(event));
+  expect(event.defaultPrevented).toBe(true);
+  expect(document.activeElement).toBe(input);
 });
 
 test("keeps an unknown declaration as a custom property", () => {
