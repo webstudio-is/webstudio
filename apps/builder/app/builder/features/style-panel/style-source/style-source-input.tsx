@@ -11,6 +11,7 @@
  * - Local source can only be disabled, nothing else should be possible
  */
 
+import { useFocusWithin } from "@react-aria/interactions";
 import { useStore } from "@nanostores/react";
 import {
   Box,
@@ -198,6 +199,8 @@ const TextFieldBase: ForwardRefRenderFunction<
   const internalInputRef = useRef<HTMLInputElement>(null);
   const sourceButtonRefs = useRef(new Map<string, HTMLButtonElement>());
 
+  const { focusWithinProps } = useFocusWithin({ onBlurWithin: onBlur });
+
   const onClickCapture = useCallback(() => {
     internalInputRef.current?.focus();
   }, [internalInputRef]);
@@ -252,6 +255,7 @@ const TextFieldBase: ForwardRefRenderFunction<
 
   return (
     <TextFieldContainer
+      {...focusWithinProps}
       onClickCapture={onClickCapture}
       // Setting tabIndex to -1 to allow this element to be focused via JavaScript.
       // This is used when we need to hide the caret but want to:
@@ -282,7 +286,6 @@ const TextFieldBase: ForwardRefRenderFunction<
         value={label}
         onClick={onClick}
         onFocus={onFocus}
-        onBlur={onBlur}
         inputRef={mergeRefs(internalInputRef, inputRef)}
         onKeyDown={handleInputKeyDown}
         spellCheck={false}

@@ -307,6 +307,7 @@ test("navigates style sources and restores input focus after Escape", async () =
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
+  const onSelectAutocompleteItem = vi.fn();
   const sources = [
     { id: "tag-style:button", label: "button", source: "tag" as const },
     { id: "token-one", label: "One", source: "token" as const },
@@ -328,6 +329,7 @@ test("navigates style sources and restores input focus after Escape", async () =
             selectedItemSelector={undefined}
             items={sources}
             value={sources}
+            onSelectAutocompleteItem={onSelectAutocompleteItem}
           />
         </TooltipProvider>
       )
@@ -341,11 +343,15 @@ test("navigates style sources and restores input focus after Escape", async () =
     const sourceButton = (id: string) =>
       container.querySelector<HTMLElement>(`[data-id="${id}"] button`)!;
 
+    act(() => input.focus());
+    act(() => press(input, "ArrowDown"));
+    expect(input.getAttribute("aria-activedescendant")).toBeTruthy();
     act(() => {
-      input.focus();
       input.setSelectionRange(0, 0);
       press(input, "ArrowLeft");
     });
+    await act(async () => Promise.resolve());
+    expect(onSelectAutocompleteItem).not.toHaveBeenCalled();
     expect(document.activeElement).toBe(sourceButton("token-two"));
     expect(sourceButton("token-two").matches(":focus-visible")).toBe(true);
 
@@ -459,17 +465,10 @@ test("arrow navigation reaches the Add more input and allows typing", async () =
     ).find((item) => item.textContent?.trim() === ":hover")!;
     const input = menu.querySelector<HTMLInputElement>("form input")!;
     expect(input.closest('[role="menuitem"]')).not.toBeNull();
+    await act(async () => Promise.resolve());
     act(() => state.focus());
-    await act(async () => {
-      const event = new KeyboardEvent("keydown", {
-        key: "ArrowDown",
-        bubbles: true,
-        cancelable: true,
-      });
-      Object.defineProperty(event, "keyCode", { value: 40 });
-      state.dispatchEvent(event);
-      await Promise.resolve();
-    });
+    expect(document.activeElement).toBe(state);
+    await act(async () => userEvent.keyboard("{ArrowDown}"));
     expect(document.activeElement).toBe(input);
     await act(async () => userEvent.keyboard("h2"));
     expect(input.value).toBe("h2");
