@@ -88,6 +88,8 @@ import { formatStyleBlock } from "~/builder/shared/css-editor/style-block-format
 
 const blockedEditMessage =
   "This declaration comes from another source. Add a local declaration to override it.";
+const blockedHeadingMessage =
+  "This heading marks a style source and cannot be changed.";
 class ReadonlyDivider extends WidgetType {
   toDOM() {
     const element = document.createElement("div");
@@ -103,7 +105,7 @@ const renderTooltip = (className: string, content: ReactNode) => {
   root.render(content);
   return { dom, destroy: () => root.unmount() };
 };
-const blockedEdit = StateEffect.define<number>();
+const blockedEdit = StateEffect.define<{ pos: number; message: string }>();
 const sourceChanged = StateEffect.define<void>();
 const searchMatches = StateField.define({
   create: (state) => getSearchDecorations(state),
@@ -144,7 +146,7 @@ const blockedEditTooltip = StateField.define<CodeMirrorTooltip | null>({
     );
     if (blocked) {
       return {
-        pos: blocked.value,
+        pos: blocked.value.pos,
         above: true,
         create: () =>
           renderTooltip(
@@ -152,7 +154,7 @@ const blockedEditTooltip = StateField.define<CodeMirrorTooltip | null>({
             <Box
               className={tooltipContentCss({ variant: "wrapped" }).className}
             >
-              <Text>{blockedEditMessage}</Text>
+              <Text>{blocked.value.message}</Text>
             </Box>
           ),
       };
@@ -172,12 +174,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   inline?: boolean;
-  searchTerm?: string;
-  onEditorView?: (view: EditorView | undefined) => void;
-  onSearchUpdate?: (navigation: {
-    hasPrevious: boolean;
-    hasNext: boolean;
-  }) => void;
+  searchStickyTop?: string;
   onMaximize?: () => void;
 };
 
@@ -254,12 +251,15 @@ const MixedStyleBlockEditor = ({
   open,
   onOpenChange,
   inline = false,
-  searchTerm,
-  onEditorView,
-  onSearchUpdate,
+  searchStickyTop,
   onMaximize,
 }: Props) => {
   const [code, setCode] = useState("");
+  const [searchTerm, setSearchTerm] = useState<string>();
+  const [searchNavigation, setSearchNavigation] = useState({
+    hasPrevious: false,
+    hasNext: false,
+  });
   const codeRef = useRef("");
   const cleanCodeRef = useRef("");
   const appliedCodeRef = useRef("");
@@ -273,6 +273,25 @@ const MixedStyleBlockEditor = ({
   onPreviewRef.current = onPreview;
 
   useEffect(() => () => onPreviewRef.current?.(undefined), []);
+
+  useEffect(() => {
+    if (!inline && !open) {
+      setSearchTerm(undefined);
+    }
+  }, [inline, open]);
+
+  const moveSearch = (direction: "previous" | "next") => {
+    const view = editorViewRef.current;
+    if (
+      view === undefined ||
+      (direction === "previous"
+        ? !searchNavigation.hasPrevious
+        : !searchNavigation.hasNext)
+    ) {
+      return;
+    }
+    (direction === "previous" ? findPrevious : findNext)(view);
+  };
 
   useEffect(() => {
     const view = editorViewRef.current;
@@ -377,9 +396,6 @@ const MixedStyleBlockEditor = ({
   );
   const extensions = useMemo(() => {
     const notifySearchUpdate = (view: EditorView) => {
-      if (onSearchUpdate === undefined) {
-        return;
-      }
       const query = getSearchQuery(view.state);
       const { from, to } = view.state.selection.main;
       let hasPrevious = false;
@@ -394,7 +410,11 @@ const MixedStyleBlockEditor = ({
           }
         }
       }
-      onSearchUpdate({ hasPrevious, hasNext });
+      setSearchNavigation((previous) =>
+        previous.hasPrevious === hasPrevious && previous.hasNext === hasNext
+          ? previous
+          : { hasPrevious, hasNext }
+      );
     };
     const decorate = (value: string) =>
       Decoration.set(
@@ -461,7 +481,6 @@ const MixedStyleBlockEditor = ({
         class {
           constructor(view: EditorView) {
             editorViewRef.current = view;
-            onEditorView?.(view);
             notifySearchUpdate(view);
           }
           update(update: ViewUpdate) {
@@ -477,7 +496,6 @@ const MixedStyleBlockEditor = ({
           }
           destroy() {
             editorViewRef.current = undefined;
-            onEditorView?.(undefined);
           }
         }
       ),
@@ -499,6 +517,7 @@ const MixedStyleBlockEditor = ({
           );
         const protectedRanges = getProtectedMixedRanges(currentGroups);
         let blocked = changedGroups;
+        let blockedHeading = changedGroups;
         let blockedPos = transaction.startState.selection.main.head;
         transaction.changes.iterChangedRanges((from, to) => {
           if (
@@ -513,13 +532,23 @@ const MixedStyleBlockEditor = ({
           ) {
             blocked = true;
             blockedPos = from;
+            blockedHeading ||= currentGroups.some(
+              (group) =>
+                (from === to &&
+                  from >= group.from &&
+                  from < group.contentFrom) ||
+                (from < to && from < group.contentFrom && to > group.from)
+            );
           }
         });
+        const message = blockedHeading
+          ? blockedHeadingMessage
+          : blockedEditMessage;
         return blocked
           ? {
               effects: [
-                blockedEdit.of(blockedPos),
-                EditorView.announce.of(blockedEditMessage),
+                blockedEdit.of({ pos: blockedPos, message }),
+                EditorView.announce.of(message),
               ],
             }
           : transaction;
@@ -642,7 +671,41 @@ const MixedStyleBlockEditor = ({
       declarationLineBreak,
       ...(inline ? [placeholder("Add local styles")] : []),
     ];
-  }, [colorSwatches, inline, readonly, onEditorView, onSearchUpdate]);
+  }, [colorSwatches, inline, readonly]);
+
+  const searchControl = (
+    <SearchField
+      value={searchTerm ?? ""}
+      suffix={
+        searchTerm ? (
+          <>
+            <SmallIconButton
+              aria-label="Previous match"
+              icon={<ChevronUpIcon />}
+              bleed={false}
+              disabled={!searchNavigation.hasPrevious}
+              onClick={() => moveSearch("previous")}
+            />
+            <SmallIconButton
+              aria-label="Next match"
+              icon={<ChevronDownIcon />}
+              bleed={false}
+              disabled={!searchNavigation.hasNext}
+              onClick={() => moveSearch("next")}
+            />
+          </>
+        ) : undefined
+      }
+      onChange={(event) => setSearchTerm(event.target.value || undefined)}
+      onAbort={() => setSearchTerm(undefined)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          moveSearch(event.shiftKey ? "previous" : "next");
+        }
+      }}
+    />
+  );
 
   const content = (
     <Box
@@ -700,30 +763,47 @@ const MixedStyleBlockEditor = ({
 
   if (inline) {
     return (
-      <EditorDialogControl>
-        {content}
-        {onMaximize && (
-          <Tooltip
-            content={
-              <Flex align="center" gap="1">
-                <Text>Edit local styles</Text>
-                <Kbd value={["alt", "shift", "x"]} color="moreSubtle" />
-              </Flex>
-            }
-          >
-            <EditorDialogButton
-              aria-label="Edit local styles"
-              disabled={readonly}
-              onClick={onMaximize}
-            />
-          </Tooltip>
-        )}
-      </EditorDialogControl>
+      <>
+        <PanelContent
+          css={{
+            position: searchStickyTop === undefined ? undefined : "sticky",
+            top: searchStickyTop,
+            zIndex: 1,
+            background: cssVar("--background-primary"),
+          }}
+        >
+          {searchControl}
+        </PanelContent>
+        <EditorDialogControl>
+          {content}
+          {onMaximize && (
+            <Tooltip
+              content={
+                <Flex align="center" gap="1">
+                  <Text>Edit local styles</Text>
+                  <Kbd value={["alt", "shift", "x"]} color="moreSubtle" />
+                </Flex>
+              }
+            >
+              <EditorDialogButton
+                aria-label="Edit local styles"
+                disabled={readonly}
+                onClick={onMaximize}
+              />
+            </Tooltip>
+          )}
+        </EditorDialogControl>
+      </>
     );
   }
   return (
     <EditorDialog
       title="Styles"
+      titleSuffix={
+        <Box css={{ width: theme.sizes.sidebarWidth, minWidth: 0 }}>
+          {searchControl}
+        </Box>
+      }
       modal
       open={open}
       onOpenChange={(nextOpen) => {
@@ -737,92 +817,9 @@ const MixedStyleBlockEditor = ({
   );
 };
 
-export const InlineMixedStyleBlockEditor = ({
-  searchStickyTop,
-  ...props
-}: Omit<
-  Props,
-  | "inline"
-  | "open"
-  | "onOpenChange"
-  | "searchTerm"
-  | "onEditorView"
-  | "onSearchUpdate"
-> & { searchStickyTop?: string }) => {
-  const [searchTerm, setSearchTerm] = useState<string>();
-  const [searchNavigation, setSearchNavigation] = useState({
-    hasPrevious: false,
-    hasNext: false,
-  });
-  const editorRef = useRef<EditorView>();
-  const handleEditorView = useCallback((view: EditorView | undefined) => {
-    editorRef.current = view;
-  }, []);
-  const moveSearch = (direction: "previous" | "next") => {
-    const view = editorRef.current;
-    if (
-      view === undefined ||
-      (direction === "previous"
-        ? !searchNavigation.hasPrevious
-        : !searchNavigation.hasNext)
-    ) {
-      return;
-    }
-    (direction === "previous" ? findPrevious : findNext)(view);
-  };
-  return (
-    <>
-      <PanelContent
-        css={{
-          position: searchStickyTop === undefined ? undefined : "sticky",
-          top: searchStickyTop,
-          zIndex: 1,
-          background: cssVar("--background-primary"),
-        }}
-      >
-        <SearchField
-          suffix={
-            searchTerm ? (
-              <>
-                <SmallIconButton
-                  aria-label="Previous match"
-                  icon={<ChevronUpIcon />}
-                  bleed={false}
-                  disabled={!searchNavigation.hasPrevious}
-                  onClick={() => moveSearch("previous")}
-                />
-                <SmallIconButton
-                  aria-label="Next match"
-                  icon={<ChevronDownIcon />}
-                  bleed={false}
-                  disabled={!searchNavigation.hasNext}
-                  onClick={() => moveSearch("next")}
-                />
-              </>
-            ) : undefined
-          }
-          onChange={(event) => setSearchTerm(event.target.value || undefined)}
-          onAbort={() => setSearchTerm(undefined)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              moveSearch(event.shiftKey ? "previous" : "next");
-            }
-          }}
-        />
-      </PanelContent>
-      <MixedStyleBlockEditor
-        {...props}
-        inline
-        open
-        onOpenChange={() => {}}
-        searchTerm={searchTerm}
-        onEditorView={handleEditorView}
-        onSearchUpdate={setSearchNavigation}
-      />
-    </>
-  );
-};
+export const InlineMixedStyleBlockEditor = (
+  props: Omit<Props, "inline" | "open" | "onOpenChange">
+) => <MixedStyleBlockEditor {...props} inline open onOpenChange={() => {}} />;
 
 export const MixedStyleBlockDialog = (props: Omit<Props, "inline">) => (
   <MixedStyleBlockEditor {...props} />
