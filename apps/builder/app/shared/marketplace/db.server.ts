@@ -55,19 +55,18 @@ export const getItems = async (
       ...parsedProduct.data,
     });
   }
-  const assetIds = items
-    .map((item) => item.thumbnailAssetId)
-    .filter((value): value is string => value != null);
-
   const assets = new Map<string, string>();
-  if (assetIds.length > 0) {
+  if (items.length > 0) {
     const data = await context.postgrest.client
       .from("Asset")
       .select("id,projectId,name")
-      .in("id", assetIds)
-      .in(
-        "projectId",
-        items.map((item) => item.projectId)
+      .or(
+        items
+          .map(
+            (item) =>
+              `and(id.eq.${JSON.stringify(item.thumbnailAssetId)},projectId.eq.${JSON.stringify(item.projectId)})`
+          )
+          .join(",")
       );
     if (data.error) {
       throw data.error;

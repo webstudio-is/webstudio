@@ -120,8 +120,8 @@ describe("getItems (msw)", () => {
         ])
       ),
       db.get("Asset", ({ request }) => {
-        expect(new URL(request.url).searchParams.get("projectId")).toBe(
-          "in.(proj-1,proj-2)"
+        expect(new URL(request.url).searchParams.get("or")).toBe(
+          '(and(id.eq."asset-thumb",projectId.eq."proj-1"),and(id.eq."asset-thumb",projectId.eq."proj-2"))'
         );
         return json([
           { id: "asset-thumb", projectId: "proj-1", name: "first.png" },
