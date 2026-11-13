@@ -1,4 +1,6 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
 import type {
@@ -16,6 +18,26 @@ const tsxPath = fileURLToPath(import.meta.resolve("tsx"));
 const cliTsconfigPath = fileURLToPath(
   new URL("../../../../packages/cli/tsconfig.local.json", import.meta.url)
 );
+
+const getMcpBrowserPath = () => {
+  const chromiumPath = chromium.executablePath();
+  const match = chromiumPath.match(/^(.*)[\\/]chromium-(\d+)[\\/]/);
+  if (match === null) {
+    return chromiumPath;
+  }
+  const [, cacheDir, revision] = match;
+  const shellPath = join(
+    cacheDir,
+    `chromium_headless_shell-${revision}`,
+    process.platform === "darwin"
+      ? "chrome-mac"
+      : process.platform === "win32"
+        ? "chrome-win"
+        : "chrome-linux",
+    process.platform === "win32" ? "headless_shell.exe" : "headless_shell"
+  );
+  return existsSync(shellPath) ? shellPath : chromiumPath;
+};
 
 /** One JSON payload goes over stdin so base64 files are not limited by argv size. */
 export const submitPreviewFormViaMcp = async ({
@@ -40,7 +62,7 @@ export const submitPreviewFormViaMcp = async ({
       env: {
         ...process.env,
         TSX_TSCONFIG_PATH: cliTsconfigPath,
-        WEBSTUDIO_BROWSER_PATH: chromium.executablePath(),
+        WEBSTUDIO_BROWSER_PATH: getMcpBrowserPath(),
       },
     }
   );
@@ -65,7 +87,9 @@ export const submitPreviewFormViaMcp = async ({
         } else {
           reject(
             new Error(
-              `MCP Preview submit fixture exited ${code}: ${stderr.slice(-4000)}`
+              `MCP Preview submit fixture exited ${code}: ${stderr.slice(
+                -4000
+              )}`
             )
           );
         }

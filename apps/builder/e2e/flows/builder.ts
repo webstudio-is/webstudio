@@ -110,18 +110,6 @@ export const waitForCanvasTextHidden = async ({
   });
 };
 
-export const dismissBlockingAlerts = async ({ page }: { page: Page }) => {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < 3_000) {
-    const dismissButton = page.getByRole("button", { name: "Dismiss" });
-    if (await dismissButton.isVisible({ timeout: 500 }).catch(() => false)) {
-      await dismissButton.click();
-      return;
-    }
-    await delay(100);
-  }
-};
-
 export const openProjectBuilder = async ({
   page,
   projectId,
@@ -148,7 +136,9 @@ export const openProjectBuilder = async ({
     .waitForLoadState("networkidle", { timeout: builderNetworkIdleTimeout })
     .catch(() => undefined);
   const canvas = await waitForCanvasFrame({ page });
-  await dismissBlockingAlerts({ page });
+  await page
+    .getByRole("progressbar")
+    .waitFor({ state: "hidden", timeout: 30_000 });
   return canvas;
 };
 
@@ -164,6 +154,8 @@ export const openBuilderUrl = async ({
     .waitForLoadState("networkidle", { timeout: builderNetworkIdleTimeout })
     .catch(() => undefined);
   const canvas = await waitForCanvasFrame({ page });
-  await dismissBlockingAlerts({ page });
+  await page
+    .getByRole("progressbar")
+    .waitFor({ state: "hidden", timeout: 30_000 });
   return canvas;
 };
