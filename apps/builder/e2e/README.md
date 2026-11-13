@@ -92,7 +92,7 @@ each invocation.
   declaration order by default.
 
 CI discovers isolated Playwright shards from filename tags. Each shard uses
-four workers, except shard 5 uses one to avoid overlapping MCP browser launches.
+two workers, except shard 5 uses one to avoid overlapping MCP browser launches.
 Files are assigned by measured CI duration to keep the slowest job short:
 
 ```txt
