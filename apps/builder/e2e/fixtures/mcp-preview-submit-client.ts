@@ -13,41 +13,6 @@ const screenshotModuleUrl = new URL(
 const { createMcpPreviewHandlers } = await import(previewModuleUrl);
 const { createScreenshotCaptureSession } = await import(screenshotModuleUrl);
 
-const createE2eCaptureSession = () => {
-  let session = createScreenshotCaptureSession();
-  return {
-    capture: (...args: Parameters<typeof session.capture>) =>
-      session.capture(...args),
-    capturePage: (...args: Parameters<typeof session.capturePage>) =>
-      session.capturePage(...args),
-    close: () => session.close(),
-    async submitForm(input: Parameters<typeof session.submitForm>[0]) {
-      const browserPath = process.env.WEBSTUDIO_BROWSER_PATH;
-      const options = Object.assign(
-        {},
-        input,
-        browserPath === undefined ? {} : { browserPath }
-      );
-      try {
-        return await session.submitForm(options);
-      } catch (error) {
-        // A startup failure happens before the form is dispatched.
-        if (
-          !(error instanceof Error) ||
-          !("code" in error) ||
-          error.code !== "BROWSER_STARTUP_FAILED"
-        ) {
-          throw error;
-        }
-        await session.close();
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        session = createScreenshotCaptureSession();
-        return await session.submitForm(options);
-      }
-    },
-  };
-};
-
 let payload = "";
 for await (const chunk of process.stdin) {
   payload += String(chunk);
@@ -80,7 +45,7 @@ const previewHandlers = createMcpPreviewHandlers({
     stop: async () => ({ running: false, url, mode: "iterative" as const }),
   },
   isStale: () => false,
-  createCaptureSession: createE2eCaptureSession,
+  createCaptureSession: createScreenshotCaptureSession,
 });
 const server = await createProjectSessionMcpServer({
   operations: [],
