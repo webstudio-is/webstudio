@@ -103,6 +103,40 @@ describe("getItems (msw)", () => {
     expect(result[0].thumbnailAssetName).toBe("thumb.png");
   });
 
+  test("loads thumbnail names only from their marketplace projects", async () => {
+    server.use(
+      db.get("ApprovedMarketplaceProduct", () =>
+        json([
+          {
+            projectId: "proj-1",
+            marketplaceProduct: marketplaceProductJson,
+            authorizationToken: null,
+          },
+          {
+            projectId: "proj-2",
+            marketplaceProduct: marketplaceProductJson,
+            authorizationToken: null,
+          },
+        ])
+      ),
+      db.get("Asset", ({ request }) => {
+        expect(new URL(request.url).searchParams.get("projectId")).toBe(
+          "in.(proj-1,proj-2)"
+        );
+        return json([
+          { id: "asset-thumb", projectId: "proj-1", name: "first.png" },
+          { id: "asset-thumb", projectId: "proj-2", name: "second.png" },
+        ]);
+      })
+    );
+
+    const result = await getItems(ctx);
+    expect(result.map((item) => item.thumbnailAssetName)).toEqual([
+      "first.png",
+      "second.png",
+    ]);
+  });
+
   test("returns items without thumbnailAssetName when asset missing", async () => {
     server.use(
       db.get("ApprovedMarketplaceProduct", () =>

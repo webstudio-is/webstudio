@@ -63,20 +63,26 @@ export const getItems = async (
   if (assetIds.length > 0) {
     const data = await context.postgrest.client
       .from("Asset")
-      .select()
-      .in("id", assetIds);
+      .select("id,projectId,name")
+      .in("id", assetIds)
+      .in(
+        "projectId",
+        items.map((item) => item.projectId)
+      );
     if (data.error) {
       throw data.error;
     }
     for (const asset of data.data) {
-      assets.set(asset.id, asset.name);
+      assets.set(`${asset.projectId}:${asset.id}`, asset.name);
     }
   }
 
   return items.map((item) => {
     return {
       ...item,
-      thumbnailAssetName: assets.get(item.thumbnailAssetId),
+      thumbnailAssetName: assets.get(
+        `${item.projectId}:${item.thumbnailAssetId}`
+      ),
     };
   });
 };
