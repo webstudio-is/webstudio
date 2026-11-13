@@ -92,8 +92,8 @@ each invocation.
   declaration order by default.
 
 CI discovers isolated Playwright shards from filename tags. Each shard uses
-two workers, and files are assigned by measured CI duration to keep the slowest
-job short:
+two workers, except shard 5 uses one to avoid overlapping MCP browser launches.
+Files are assigned by measured CI duration to keep the slowest job short:
 
 ```txt
 pages-actions.[shard-3].e2e.ts
