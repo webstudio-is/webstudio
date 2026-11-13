@@ -137,14 +137,12 @@ export const PublishDiagnosticsDialog = ({
   onLoadLog?: (item: PublishLog) => void;
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
-  const [selectedBuildId, setSelectedBuildId] = useState<string>();
   const [selectedFinding, setSelectedFinding] =
     useState<PublishValidationFinding>();
   const isOpen = open ?? internalOpen;
   const setIsOpen = onOpenChange ?? setInternalOpen;
   const errors = findings.filter(({ severity }) => severity === "error");
   const warnings = findings.filter(({ severity }) => severity === "warning");
-  const selectedItem = items.find(({ buildId }) => buildId === selectedBuildId);
   const defaultTab = initialTab ?? (errors.length > 0 ? "errors" : "warnings");
   const [tab, setTab] = useState(defaultTab);
   const activeTab =
@@ -160,17 +158,30 @@ export const PublishDiagnosticsDialog = ({
   const reportText = findings.map(({ reportText }) => reportText).join("\n\n");
 
   useEffect(() => {
-    setSelectedBuildId(undefined);
     setSelectedFinding(undefined);
     setTab(defaultTab);
   }, [target, isOpen, defaultTab]);
 
   useEffect(() => {
     if (canViewPublishLogs === false) {
-      setSelectedBuildId(undefined);
       setSelectedFinding(undefined);
     }
   }, [canViewPublishLogs]);
+
+  useEffect(() => {
+    if (isOpen === false || activeTab !== "publish" || !canViewPublishLogs) {
+      return;
+    }
+    for (const item of items) {
+      if (
+        item.status !== "pending" &&
+        item.logHandle !== undefined &&
+        item.logState === undefined
+      ) {
+        onLoadLog?.(item);
+      }
+    }
+  }, [activeTab, canViewPublishLogs, isOpen, items, onLoadLog]);
 
   if (open === undefined && findings.length === 0) {
     return null;
@@ -252,38 +263,6 @@ export const PublishDiagnosticsDialog = ({
               >
                 {selectedFinding.link}
               </div>
-            </PanelContent>
-          ) : selectedItem !== undefined && canViewPublishLogs ? (
-            <PanelContent
-              as={Flex}
-              direction="column"
-              gap={3}
-              css={{ minHeight: 0, flex: 1 }}
-            >
-              <Button
-                type="button"
-                color="neutral"
-                onClick={() => setSelectedBuildId(undefined)}
-              >
-                Back
-              </Button>
-              <Text variant="titles">Publish log</Text>
-              <Text>{selectedItem.domains.join(", ") || "Static export"}</Text>
-              {selectedItem.logState === "loading" ? (
-                <Text color="subtle">Loading logs…</Text>
-              ) : selectedItem.logState === "available" ? (
-                <ScrollArea css={{ minHeight: 0, flex: 1 }}>
-                  <Text
-                    as="pre"
-                    userSelect="text"
-                    css={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
-                  >
-                    {selectedItem.logText}
-                  </Text>
-                </ScrollArea>
-              ) : (
-                <Text color="subtle">Publish logs are unavailable.</Text>
-              )}
             </PanelContent>
           ) : (
             <PanelTabs
@@ -368,6 +347,27 @@ export const PublishDiagnosticsDialog = ({
                                   .join(" · ")}
                               </Text>
                             )}
+                          {canViewPublishLogs &&
+                            item.status !== "pending" &&
+                            (item.logState === "available" ? (
+                              <Text
+                                as="pre"
+                                userSelect="text"
+                                css={{
+                                  whiteSpace: "pre-wrap",
+                                  overflowWrap: "anywhere",
+                                }}
+                              >
+                                {item.logText}
+                              </Text>
+                            ) : (
+                              <Text color="subtle">
+                                {item.logHandle === undefined ||
+                                item.logState === "unavailable"
+                                  ? "Publish logs are unavailable."
+                                  : "Loading logs…"}
+                              </Text>
+                            ))}
                           {item.findings.length > 0 && (
                             <Flex direction="column" gap={1}>
                               <Text variant="labels">Audit</Text>
@@ -404,18 +404,6 @@ export const PublishDiagnosticsDialog = ({
                                 {item.issuesOmitted} more issues not shown.
                               </Text>
                             )}
-                          {canViewPublishLogs && item.status !== "pending" && (
-                            <Button
-                              type="button"
-                              color="neutral"
-                              onClick={() => {
-                                setSelectedBuildId(item.buildId);
-                                onLoadLog?.(item);
-                              }}
-                            >
-                              View detailed report
-                            </Button>
-                          )}
                           {!canViewPublishLogs && (
                             <Text color="subtle">
                               Upgrade to Pro to view publish logs.

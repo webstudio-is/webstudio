@@ -134,7 +134,13 @@ export const usePublishLogs = (
       if (isCurrent() === false) {
         return;
       }
-      const accepted: PublishLog = { ...item, status: "pending" };
+      const accepted: PublishLog = {
+        ...item,
+        status: "pending",
+        startedAt: permission.current.allowed
+          ? new Date().toISOString()
+          : undefined,
+      };
       retainedBuilds.current.delete(item.buildId);
       retainedBuilds.current.add(item.buildId);
       setItems((current) =>
@@ -212,7 +218,7 @@ export const usePublishLogs = (
             return;
           }
           update(item.buildId, {
-            startedAt: result.startedAt,
+            startedAt: result.startedAt ?? item.startedAt,
             completedAt: result.completedAt,
             failedStage: result.failedStage,
             code: result.code,
@@ -248,7 +254,7 @@ export const usePublishLogs = (
                 ...issues.filter(({ severity }) => severity === "warning"),
               ],
               issuesOmitted,
-              startedAt: result.startedAt,
+              startedAt: result.startedAt ?? item.startedAt,
               completedAt: result.completedAt,
               failedStage: result.failedStage,
               code: result.code,

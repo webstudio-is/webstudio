@@ -137,6 +137,21 @@ const record = () =>
     })
   );
 
+test("records a start time immediately and replaces it with the runner time", async () => {
+  render(true);
+  const beforeRecord = Date.now();
+  record();
+  const startedAt = Date.parse(session.items[0]?.startedAt ?? "");
+  expect(startedAt).toBeGreaterThanOrEqual(beforeRecord);
+  expect(startedAt).toBeLessThanOrEqual(Date.now());
+
+  await act(async () => session.loadLog(session.items[0]!));
+  expect(session.items[0]?.startedAt).toBe("2026-11-13T10:00:00.000Z");
+
+  render(false);
+  expect(session.items[0]?.startedAt).toBeUndefined();
+});
+
 test("Free does not fetch logs, then Pro reads the full UTF-8 log from byte zero", async () => {
   render(false);
   record();

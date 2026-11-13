@@ -26,7 +26,8 @@ afterEach(() => {
 const render = (
   findings: PublishValidationFinding[],
   canViewPublishLogs = true,
-  items: PublishLog[] = []
+  items: PublishLog[] = [],
+  onLoadLog?: (item: PublishLog) => void
 ) => {
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -38,6 +39,7 @@ const render = (
           findings={findings}
           canViewPublishLogs={canViewPublishLogs}
           items={items}
+          onLoadLog={onLoadLog}
         />
       </TooltipProvider>
     );
@@ -204,6 +206,72 @@ test("Free hides log-derived issues, stage, and code", async () => {
   expect(document.body.textContent).not.toContain("private-code");
   expect(document.body.textContent).not.toContain("private-stage");
   expect(document.body.textContent).not.toContain("private-log-issue");
+});
+
+test("loads a completed publish when Publish opens and shows its log inline", async () => {
+  const item: PublishLog = {
+    buildId: "build-1",
+    logHandle: "log-handle-1",
+    target: "site",
+    domains: ["example.com"],
+    findings: [],
+    status: "failed",
+  };
+  const onLoadLog = vi.fn();
+  const element = render(
+    [createFinding("warning", 0)],
+    true,
+    [item],
+    onLoadLog
+  );
+  openDetails(element);
+  expect(onLoadLog).not.toHaveBeenCalled();
+  const publishTab = Array.from(
+    document.body.querySelectorAll('[role="tab"]')
+  ).find((tab) => tab.textContent === "Publish");
+  await act(async () => userEvent.click(publishTab as HTMLElement));
+  expect(onLoadLog).toHaveBeenCalledWith(item);
+
+  item.logState = "available";
+  item.logText = "Unstructured runner output";
+  act(() => {
+    root?.render(
+      <TooltipProvider>
+        <PublishDiagnosticsDialog
+          findings={[createFinding("warning", 0)]}
+          items={[item]}
+          onLoadLog={onLoadLog}
+        />
+      </TooltipProvider>
+    );
+  });
+  expect(document.body.textContent).toContain("Unstructured runner output");
+  expect(document.body.textContent).not.toContain("View detailed report");
+});
+
+test("shows unavailable instead of loading forever when a publish has no log handle", async () => {
+  const onLoadLog = vi.fn();
+  const element = render(
+    [createFinding("warning", 0)],
+    true,
+    [
+      {
+        buildId: "build-1",
+        target: "site",
+        domains: ["example.com"],
+        findings: [],
+        status: "failed",
+      },
+    ],
+    onLoadLog
+  );
+  openDetails(element);
+  const publishTab = Array.from(
+    document.body.querySelectorAll('[role="tab"]')
+  ).find((tab) => tab.textContent === "Publish");
+  await act(async () => userEvent.click(publishTab as HTMLElement));
+  expect(onLoadLog).not.toHaveBeenCalled();
+  expect(document.body.textContent).toContain("Publish logs are unavailable.");
 });
 
 test("Free audit summaries do not expose long cached details", () => {
