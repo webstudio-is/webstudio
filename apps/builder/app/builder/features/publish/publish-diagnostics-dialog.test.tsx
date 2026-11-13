@@ -414,15 +414,48 @@ test("publish failure is plain text and links to the Publish tab", async () => {
   ).toBe(false);
   const publishLink = Array.from(document.body.querySelectorAll("button")).find(
     (button) =>
-      button.getAttribute("role") !== "tab" && button.textContent === "Publish"
+      button.getAttribute("role") !== "tab" &&
+      button.textContent === "show logs"
   );
   expect(publishLink).toBeDefined();
+  expect(publishLink?.parentElement?.textContent).toContain(
+    "Build failed before deployment"
+  );
   await act(async () => userEvent.click(publishLink!));
   expect(
     Array.from(document.body.querySelectorAll('[role="tab"]'))
       .find((tab) => tab.textContent === "Publish")
       ?.getAttribute("aria-selected")
   ).toBe("true");
+});
+
+test("Free publish failures do not offer a log link", () => {
+  render(
+    [
+      {
+        severity: "error",
+        source: "publish",
+        title: "Publish failed",
+        reportText: "Publish failed",
+      },
+    ],
+    false,
+    [
+      {
+        buildId: "build-1",
+        target: "site",
+        domains: ["first.example"],
+        findings: [],
+        status: "failed",
+      },
+    ],
+    undefined,
+    true
+  );
+  expect(document.body.textContent).toContain("Publish failed");
+  expect(
+    document.body.querySelector('[role="tabpanel"][data-state="active"] button')
+  ).toBeNull();
 });
 
 test("pre-dispatch failure has no link to an absent Publish tab", () => {

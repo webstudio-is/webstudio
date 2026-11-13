@@ -9,6 +9,7 @@ import {
   DialogTitleActions,
   Flex,
   IconButton,
+  Link,
   PanelBanner,
   PanelContent,
   PanelTabs,
@@ -104,16 +105,25 @@ const FindingList = ({
               </Text>
             )}
             {finding.source === "publish" ? (
-              <>
-                <Text variant="labels" userSelect="text">
-                  {canViewPublishLogs ? finding.title : shortFinding(finding)}
-                </Text>
-                {onOpenPublish !== undefined && (
-                  <Button type="button" color="ghost" onClick={onOpenPublish}>
-                    Publish
-                  </Button>
+              <Text variant="labels" userSelect="text">
+                {canViewPublishLogs ? finding.title : shortFinding(finding)}
+                {canViewPublishLogs && onOpenPublish !== undefined && (
+                  <>
+                    {" "}
+                    <Link
+                      as="button"
+                      type="button"
+                      variant="inherit"
+                      color="inherit"
+                      underline="always"
+                      css={{ border: 0, padding: 0, background: "none" }}
+                      onClick={onOpenPublish}
+                    >
+                      show logs
+                    </Link>
+                  </>
                 )}
-              </>
+              </Text>
             ) : canViewPublishLogs ? (
               <Button
                 type="button"
