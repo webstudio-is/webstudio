@@ -36,10 +36,12 @@ may still appear after reload, without a session log.
 
 Free plans show validation findings and a short publish failure notice, but not
 build-log issues or detailed build errors. Pro and Team plans can open finding
-details and view publish logs. Successful publishes show the publish steps.
-Failed publishes show every executed step, with the failed step first. If a step
-log is unavailable, Webstudio tries the full job log. GitHub may provide no log
-even when publishing succeeds or fails.
+details and view publish logs. Successful publishes show output from publish
+steps. Failed publishes show the failed step first and output from commands
+that ran. GitHub's runner setup output and environment listing are not shown.
+If a step fails before its command starts or its log is unavailable,
+Webstudio shows its step name and status without the raw runner log. GitHub may
+provide no log even when publishing succeeds or fails.
 
 ## Adding a custom domain
 
