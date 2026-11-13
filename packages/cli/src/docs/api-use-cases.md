@@ -1137,7 +1137,7 @@ Commands:
 
 - webstudio publish log --build-id <buildId> --log-handle <logHandle> --json
 - MCP tool: get-publish-log {}
-- MCP tool: get-publish-log {"buildId":"<buildId>","cursor":<nextCursor>}
+- MCP tool: get-publish-log {"buildId":"<buildId>","cursor":262144}
 
 An MCP server remembers at most ten publishes it started. Omit `buildId` to
 read the latest accepted publish, or pass the build ID returned by `publish`.

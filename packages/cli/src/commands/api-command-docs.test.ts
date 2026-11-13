@@ -10,7 +10,10 @@ import {
   topLevelCliCommandMetadata,
 } from "./api-command-metadata";
 import { useCaseCoverageScenarios, useCaseScenarios } from "./api-command-docs";
+import { __testing__ } from "./mcp";
 import { readCliDoc } from "../docs";
+
+const { toMcpPublishOperation } = __testing__;
 
 const getDocumentedCommands = () => {
   const knownCliCommands = [
@@ -41,7 +44,7 @@ const getDocumentedCommands = () => {
 
 const createMetadataOnlyMcpAdapter = () =>
   createProjectSessionMcpCore({
-    operations: publicApiOperations,
+    operations: publicApiOperations.map(toMcpPublishOperation),
     createProjectSession: () => {
       throw new Error(
         "MCP metadata reads must not initialize a ProjectSession."
