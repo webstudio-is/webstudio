@@ -74,6 +74,7 @@ import { $project } from "~/shared/sync/data-stores";
 import { Domains, PENDING_TIMEOUT, getPublishStatusAndText } from "./domains";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import {
+  ActivityIcon,
   AlertIcon,
   CheckCircleIcon,
   CopyIcon,
@@ -1880,6 +1881,7 @@ const Content = (props: {
                   Export
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                  icon={<ActivityIcon />}
                   disabled={!hasDiagnostics}
                   onSelect={() =>
                     props.onOpenReport(
