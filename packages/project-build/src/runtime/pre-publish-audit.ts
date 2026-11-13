@@ -81,14 +81,14 @@ const checkHtmlContentModel: PrePublishAuditCheck = ({
   }
 
   for (const page of getPublishablePages(pages)) {
-    const pageFindings: PrePublishAuditFinding[] = [];
-    const isValid = isTreeSatisfyingContentModel({
+    isTreeSatisfyingContentModel({
       instances,
       props,
       metas: auditMetas,
       instanceSelector: [page.rootInstanceId],
+      collectAllErrors: true,
       onError: (error, instanceSelector) => {
-        pageFindings.push({
+        findings.push({
           ruleId: "html-content-model",
           severity: "warning",
           message: error,
@@ -101,25 +101,6 @@ const checkHtmlContentModel: PrePublishAuditCheck = ({
         });
       },
     });
-
-    if (isValid === false) {
-      findings.push(
-        ...(pageFindings.length > 0
-          ? pageFindings
-          : [
-              {
-                ruleId: "html-content-model",
-                severity: "warning" as const,
-                message: "The page contains invalid element nesting.",
-                location: {
-                  pageId: page.id,
-                  pageName: page.name,
-                  pagePath: getPagePath(page.id, pages) || "/",
-                },
-              },
-            ])
-      );
-    }
   }
 
   return findings;

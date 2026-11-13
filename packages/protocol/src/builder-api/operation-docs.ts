@@ -764,7 +764,7 @@ const curatedPublicApiOperationDocumentation = [
   {
     command: "list-publishes",
     description:
-      "List retained publish Activity for the configured project, including staging, production, blocked audits, failures, and static exports",
+      "List recorded staging and production publishes for the configured project. Blocked audits and static exports do not appear in this list.",
     examples: ["webstudio list-publishes --json"],
   },
   {
@@ -775,12 +775,12 @@ const curatedPublicApiOperationDocumentation = [
     examples: ["webstudio get-publish-job --job build-id --json"],
   },
   {
-    command: "get-publish-report",
+    command: "get-publish-log",
     description:
-      "Read the signed execution result for a publish attempt. Available log pages require an advanced diagnostics plan and are not retained by Webstudio.",
-    requiredOptions: ["build-id", "attempt-id", "execution-handle", "json"],
+      "Read a build's publish log using the handle from this session. Full log pages require a Pro or Team plan and are not retained by Webstudio.",
+    requiredOptions: ["build-id", "log-handle", "json"],
     examples: [
-      "webstudio publish report --build-id build-id --attempt-id publish-attempt-id --execution-handle signed-handle --json",
+      "webstudio publish log --build-id build-id --log-handle signed-handle --json",
     ],
   },
   {

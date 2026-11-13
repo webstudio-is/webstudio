@@ -444,6 +444,7 @@ export const isTreeSatisfyingContentModel = ({
   instanceSelector,
   htmlTagsByInstanceId = getHtmlTagsFromProps(props),
   onError,
+  collectAllErrors = false,
   _allowedCategories: allowedCategories,
   _parentTag: parentTag,
   _allowedAncestorCategories: allowedAncestorCategories,
@@ -455,6 +456,7 @@ export const isTreeSatisfyingContentModel = ({
   instanceSelector: InstanceSelector;
   htmlTagsByInstanceId?: HtmlTagsByInstanceId;
   onError?: (message: string, instanceSelector: InstanceSelector) => void;
+  collectAllErrors?: boolean;
   _allowedCategories?: string[];
   _parentTag?: string;
   _allowedAncestorCategories?: string[];
@@ -578,13 +580,17 @@ export const isTreeSatisfyingContentModel = ({
   }
   for (const child of instance.children) {
     if (child.type === "id") {
-      isSatisfying &&= isTreeSatisfyingContentModel({
+      if (collectAllErrors === false && isSatisfying === false) {
+        continue;
+      }
+      const childSatisfies = isTreeSatisfyingContentModel({
         instances,
         props,
         metas,
         htmlTagsByInstanceId,
         instanceSelector: [child.value, ...instanceSelector],
         onError,
+        collectAllErrors,
         _allowedCategories:
           instance.component === blockTemplateComponent
             ? undefined
@@ -593,6 +599,7 @@ export const isTreeSatisfyingContentModel = ({
         _allowedParentCategories: allowedParentCategories,
         _allowedAncestorCategories: allowedAncestorCategories,
       });
+      isSatisfying = isSatisfying && childSatisfies;
     }
   }
   return isSatisfying;

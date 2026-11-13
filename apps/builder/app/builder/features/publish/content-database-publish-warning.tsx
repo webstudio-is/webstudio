@@ -1,7 +1,7 @@
 import { Flex, Text } from "@webstudio-is/design-system";
 import type { nativeClient } from "~/shared/trpc/trpc-client";
 import { ContentDatabasePublishWarning } from "./content-database-publish-warning-view";
-import type { PublishValidationFinding } from "./publish-validation-results";
+import type { PublishValidationFinding } from "./publish-diagnostics-dialog";
 
 type ContentDatabasePublishDiagnostics = Awaited<
   ReturnType<typeof nativeClient.build.contentDatabasePublishDiagnostics.query>

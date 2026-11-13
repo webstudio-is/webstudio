@@ -1189,7 +1189,7 @@ export const publishCommandOptions = (yargs: CommonYargsArgv) =>
     });
 
 export const validatePublishCommandOptions = (yargs: CommonYargsArgv) =>
-  publishDomainsOption(publishTargetOption(apiCommandOptions(yargs)));
+  publishDomainsOption(deploymentTargetOption(apiCommandOptions(yargs)));
 
 export const publishJobCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs).option("job", {
@@ -1198,24 +1198,15 @@ export const publishJobCommandOptions = (yargs: CommonYargsArgv) =>
     demandOption: true,
   });
 
-export const publishReportCommandOptions = (yargs: CommonYargsArgv) =>
+export const publishLogCommandOptions = (yargs: CommonYargsArgv) =>
   apiCommandOptions(yargs)
     .option("build-id", { type: "string", demandOption: true })
-    .option("attempt-id", { type: "string", demandOption: true })
-    .option("execution-handle", { type: "string", demandOption: true })
+    .option("log-handle", { type: "string", demandOption: true })
     .option("cursor", { type: "number" });
 
 export const unpublishCommandOptions = (yargs: CommonYargsArgv) =>
   confirmOption(
-    publishDomainsOption(deploymentTargetOption(apiCommandOptions(yargs)))
-      .option("message", {
-        type: "string",
-        describe: "Optional human-readable unpublish message",
-      })
-      .option("idempotency-key", {
-        type: "string",
-        describe: "Optional idempotency key for retrying the same unpublish",
-      }),
+    publishDomainsOption(deploymentTargetOption(apiCommandOptions(yargs))),
     "Required. Confirm that selected domains should be unpublished"
   );
 
@@ -1417,8 +1408,7 @@ export type ApiCommandOptions = {
   target?: "staging" | "production" | "static";
   job?: string;
   buildId?: string;
-  attemptId?: string;
-  executionHandle?: string;
+  logHandle?: string;
   wait?: boolean;
   idempotencyKey?: string;
   from?: string;
@@ -1945,7 +1935,7 @@ const runProjectSessionCommand = async (
 
 const publishWaitDelayMs = 5_000;
 const publishWaitPolls = 360;
-const publishReportGracePolls = 12;
+const publishLogGracePolls = 12;
 
 const waitForPublish = async (
   publishResult: unknown,
@@ -1958,120 +1948,22 @@ const waitForPublish = async (
   ) {
     return publishResult;
   }
-  const { jobId, buildId, attemptId, executionHandle } = publishResult;
+  const { jobId, buildId, logHandle } = publishResult;
   if (typeof jobId !== "string") {
     return { ...publishResult, waitStatus: "unavailable" };
   }
-  let canReadExecution =
-    typeof buildId === "string" &&
-    typeof attemptId === "string" &&
-    typeof executionHandle === "string";
   let job: unknown;
-  let terminalJobPolls = 0;
   console.error(
     JSON.stringify({ event: "publish.wait", jobId, status: "pending" })
   );
   for (let poll = 0; poll < publishWaitPolls; poll++) {
-    let execution: unknown;
-    if (canReadExecution) {
-      try {
-        execution = await dependencies.getPublishReport({
-          ...connection,
-          buildId: buildId as string,
-          attemptId: attemptId as string,
-          executionHandle: executionHandle as string,
-        });
-      } catch {
-        canReadExecution = false;
-      }
-      if (isPlainRecord(execution) && execution.availability === "available") {
-        let cursor: number | undefined;
-        const chunks: Buffer[] = [];
-        const issues: unknown[] = [];
-        let issuesOmitted = 0;
-        let fullLogAllowed = true;
-        let complete = false;
-        const firstExecution = execution;
-        while (
-          isPlainRecord(execution) &&
-          execution.availability === "available"
-        ) {
-          const log = isPlainRecord(execution.log) ? execution.log : undefined;
-          if (Array.isArray(log?.issues)) {
-            issues.push(...log.issues);
-          }
-          if (typeof log?.issuesOmitted === "number") {
-            issuesOmitted += log.issuesOmitted;
-          }
-          if (
-            log?.encoding === "base64url" &&
-            typeof log.chunk === "string" &&
-            fullLogAllowed
-          ) {
-            chunks.push(Buffer.from(log.chunk, "base64url"));
-          } else {
-            fullLogAllowed = false;
-            chunks.length = 0;
-          }
-          complete = log?.complete === true;
-          if (
-            complete ||
-            log?.complete !== false ||
-            typeof log.nextCursor !== "number" ||
-            log.nextCursor <= (cursor ?? -1)
-          ) {
-            break;
-          }
-          cursor = log.nextCursor;
-          try {
-            execution = await dependencies.getPublishReport({
-              ...connection,
-              buildId: buildId as string,
-              attemptId: attemptId as string,
-              executionHandle: executionHandle as string,
-              cursor,
-            });
-          } catch {
-            execution = undefined;
-          }
-        }
-        return {
-          ...publishResult,
-          status: firstExecution.outcome === "succeeded" ? "success" : "failed",
-          execution: {
-            ...firstExecution,
-            logAvailability:
-              complete && fullLogAllowed
-                ? firstExecution.logAvailability
-                : "unavailable",
-            log: { complete, issues, issuesOmitted },
-            ...(complete && fullLogAllowed
-              ? { logText: new TextDecoder().decode(Buffer.concat(chunks)) }
-              : {}),
-          },
-        };
-      }
-      if (
-        isPlainRecord(execution) &&
-        execution.availability === "unavailable"
-      ) {
-        canReadExecution = false;
-      }
-    }
     try {
-      job = await dependencies.getPublishJob({ ...connection, jobId });
+      job = await dependencies.getPublishJob({
+        ...connection,
+        jobId,
+        ...(typeof logHandle === "string" ? { logHandle } : {}),
+      });
     } catch {
-      if (
-        isPlainRecord(job) &&
-        (job.status === "success" || job.status === "failed")
-      ) {
-        return {
-          ...publishResult,
-          status: job.status,
-          job,
-          execution: { availability: "unavailable" },
-        };
-      }
       return { ...publishResult, waitStatus: "unavailable" };
     }
     const status = isPlainRecord(job) ? job.status : undefined;
@@ -2090,45 +1982,111 @@ const waitForPublish = async (
       );
     }
     if (status === "success" || status === "failed" || status === "removed") {
-      terminalJobPolls++;
-      if (status === "removed") {
-        return { ...publishResult, job, waitStatus: "unavailable" };
-      }
-      if (
-        canReadExecution === false ||
-        terminalJobPolls >= publishReportGracePolls
-      ) {
-        return {
-          ...publishResult,
-          status,
-          job,
-          execution: { availability: "unavailable" },
-        };
-      }
+      break;
     }
     if (poll < publishWaitPolls - 1) {
       await dependencies.pause(publishWaitDelayMs);
     }
   }
-  if (
-    isPlainRecord(job) &&
-    (job.status === "success" || job.status === "failed")
-  ) {
+  const status = isPlainRecord(job) ? job.status : undefined;
+  if (status !== "success" && status !== "failed") {
     return {
       ...publishResult,
-      status: job.status,
       job,
-      execution: { availability: "unavailable" },
+      waitStatus: status === "pending" ? "timeout" : "unavailable",
     };
   }
-  return {
+  const terminalResult = {
     ...publishResult,
+    status,
     job,
-    waitStatus:
-      isPlainRecord(job) && job.status === "pending"
-        ? "timeout"
-        : "unavailable",
+    publishLog: { availability: "unavailable" },
   };
+  if (typeof buildId !== "string" || typeof logHandle !== "string") {
+    return terminalResult;
+  }
+  let publishLog: unknown;
+  for (let poll = 0; poll < publishLogGracePolls; poll++) {
+    try {
+      publishLog = await dependencies.getPublishLog({
+        ...connection,
+        buildId,
+        logHandle,
+      });
+    } catch {
+      return terminalResult;
+    }
+    if (isPlainRecord(publishLog) && publishLog.availability === "available") {
+      break;
+    }
+    if (
+      isPlainRecord(publishLog) === false ||
+      publishLog.availability !== "pending"
+    ) {
+      return terminalResult;
+    }
+    if (poll < publishLogGracePolls - 1) {
+      await dependencies.pause(publishWaitDelayMs);
+    }
+  }
+  if (
+    isPlainRecord(publishLog) === false ||
+    publishLog.availability !== "available" ||
+    publishLog.logAvailability !== "available"
+  ) {
+    return terminalResult;
+  }
+  const firstLog = publishLog;
+  const chunks: Buffer[] = [];
+  const issues: unknown[] = [];
+  let issuesOmitted = 0;
+  let cursor: number | undefined;
+  while (isPlainRecord(publishLog) && publishLog.availability === "available") {
+    const log = isPlainRecord(publishLog.log) ? publishLog.log : undefined;
+    if (
+      publishLog.logAvailability !== "available" ||
+      log?.encoding !== "base64url" ||
+      typeof log.chunk !== "string"
+    ) {
+      return terminalResult;
+    }
+    chunks.push(Buffer.from(log.chunk, "base64url"));
+    if (Array.isArray(log.issues)) {
+      issues.push(...log.issues);
+    }
+    if (typeof log.issuesOmitted === "number") {
+      issuesOmitted += log.issuesOmitted;
+    }
+    if (log.complete === true) {
+      return {
+        ...terminalResult,
+        publishLog: {
+          ...firstLog,
+          log: { complete: true, issues, issuesOmitted },
+          logText: new TextDecoder().decode(Buffer.concat(chunks)),
+        },
+      };
+    }
+    if (
+      log.complete !== false ||
+      typeof log.nextCursor !== "number" ||
+      log.nextCursor <= (cursor ?? -1)
+    ) {
+      return terminalResult;
+    }
+    cursor = log.nextCursor;
+    try {
+      publishLog = await dependencies.getPublishLog({
+        ...connection,
+        buildId,
+        logHandle,
+        cursor,
+      });
+    } catch {
+      return terminalResult;
+    }
+  }
+  return terminalResult;
 };
 
 type ApiCommandHandler = (
@@ -3317,7 +3275,7 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
   },
   "validate-publish": async (options, connection, dependencies) => {
     const input = {
-      target: publishTargetValue(options.target),
+      target: deploymentTargetValue(options.target),
       domains: listStringOption(options.domain),
     };
     return runProjectSessionCommand(
@@ -3347,18 +3305,14 @@ const apiCommandHandlers: Partial<Record<ApiCommandName, ApiCommandHandler>> = {
       dependencies
     );
   },
-  "get-publish-report": async (options, connection, dependencies) => {
+  "get-publish-log": async (options, connection, dependencies) => {
     const input = {
       buildId: requireOption(options.buildId, "--build-id"),
-      attemptId: requireOption(options.attemptId, "--attempt-id"),
-      executionHandle: requireOption(
-        options.executionHandle,
-        "--execution-handle"
-      ),
+      logHandle: requireOption(options.logHandle, "--log-handle"),
       cursor: options.cursor === undefined ? undefined : Number(options.cursor),
     };
     return runProjectSessionCommand(
-      "get-publish-report",
+      "get-publish-log",
       input,
       connection,
       dependencies
@@ -3606,15 +3560,12 @@ export const apiCommand = async (
       ? response.result
       : response;
     const publishFailure =
-      options.command === "publish" &&
-      options.wait === true &&
-      isPlainRecord(result)
+      options.command === "publish" && isPlainRecord(result)
         ? result.status === "blocked" ||
-          result.waitStatus === "timeout" ||
-          result.waitStatus === "unavailable" ||
-          (isPlainRecord(result.execution) &&
-            result.execution.outcome === "failed") ||
-          (isPlainRecord(result.job) && result.job.status === "failed")
+          (options.wait === true &&
+            (result.waitStatus === "timeout" ||
+              result.waitStatus === "unavailable" ||
+              result.status === "failed"))
         : false;
     if (options.command === "audit" && options.json !== true) {
       printAuditReport(result);

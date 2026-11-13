@@ -56,6 +56,9 @@ const {
   getCliUpdateInstructions,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
+  createMcpPublishSession,
+  toMcpPublishLogPage,
+  toMcpPublishOperation,
   prepareTextAssetWriteFeedback,
   withTextAssetWriteFeedback,
   validateDownloadedTextAsset,
@@ -72,6 +75,128 @@ const {
   executeMcpRunCall,
   withMcpHost,
 } = __testing__;
+
+test("keeps only ten publish handles in one MCP host and never falls back to an older publish", () => {
+  const session = createMcpPublishSession();
+  const first = session.begin();
+  session.remember(first, {
+    status: "pending",
+    buildId: "build-1",
+    logHandle: "handle-1",
+  });
+  expect(session.get(undefined)).toEqual({
+    buildId: "build-1",
+    logHandle: "handle-1",
+  });
+  const blocked = session.begin();
+  session.remember(blocked, { status: "blocked" });
+  expect(() => session.get(undefined)).toThrowError(
+    expect.objectContaining({ code: "PUBLISH_REQUIRED" })
+  );
+  expect(session.get("build-1").logHandle).toBe("handle-1");
+  const earlier = session.begin();
+  const later = session.begin();
+  session.remember(later, { status: "pending", buildId: "build-3" });
+  session.remember(earlier, {
+    status: "pending",
+    buildId: "build-2",
+    logHandle: "handle-2",
+  });
+  expect(session.get(undefined)).toEqual({
+    buildId: "build-3",
+    logHandle: undefined,
+  });
+  expect(() => session.get("unknown")).toThrowError(
+    expect.objectContaining({ code: "PUBLISH_NOT_FOUND" })
+  );
+  for (let index = 4; index <= 11; index++) {
+    const sequence = session.begin();
+    session.remember(sequence, {
+      status: "pending",
+      buildId: `build-${index}`,
+      logHandle: `handle-${index}`,
+    });
+  }
+  expect(() => session.get("build-1")).toThrowError(
+    expect.objectContaining({ code: "PUBLISH_NOT_FOUND" })
+  );
+  expect(session.getHandle("build-11")).toBe("handle-11");
+  expect(createMcpPublishSession().getHandle("build-11")).toBeUndefined();
+});
+
+test("exposes a session-only publish log schema without changing the public API schema", () => {
+  const operation = publicApiOperations.find(
+    ({ command }) => command === "get-publish-log"
+  );
+  expect(operation).toBeDefined();
+  if (operation === undefined) {
+    return;
+  }
+  const tool = listProjectSessionMcpTools([
+    toMcpPublishOperation(operation),
+  ]).find(({ name }) => name === "get-publish-log");
+  expect(tool).toBeDefined();
+  const schema = getDetailedProjectSessionMcpInputSchema(tool!);
+  expect(getInputJsonSchemaMetadata(schema).requiredInputFields).toEqual([]);
+  expect(getInputJsonSchemaProperties(schema)).toHaveProperty("buildId");
+  expect(getInputJsonSchemaProperties(schema)).toHaveProperty("cursor");
+  expect(getInputJsonSchemaProperties(schema)).not.toHaveProperty("logHandle");
+  expect(operation.requiredInputFields).toContain("logHandle");
+  const jobOperation = publicApiOperations.find(
+    ({ command }) => command === "get-publish-job"
+  );
+  expect(jobOperation).toBeDefined();
+  const jobTool = listProjectSessionMcpTools([
+    toMcpPublishOperation(jobOperation!),
+  ]).find(({ name }) => name === "get-publish-job");
+  expect(
+    getInputJsonSchemaProperties(
+      getDetailedProjectSessionMcpInputSchema(jobTool!)
+    )
+  ).not.toHaveProperty("logHandle");
+});
+
+test("returns readable log pages at UTF-8 boundaries and preserves invalid bytes", () => {
+  const first = toMcpPublishLogPage({
+    availability: "available",
+    logAvailability: "available",
+    log: {
+      encoding: "base64url",
+      chunk: Buffer.from([0x41, 0xe2]).toString("base64url"),
+      complete: false,
+      nextCursor: 2,
+    },
+  });
+  expect(first).toMatchObject({
+    log: { text: "A", nextCursor: 1, complete: false },
+  });
+  expect(JSON.stringify(first)).not.toContain("chunk");
+  const second = toMcpPublishLogPage(
+    {
+      availability: "available",
+      logAvailability: "available",
+      log: {
+        encoding: "base64url",
+        chunk: Buffer.from([0xe2, 0x82, 0xac]).toString("base64url"),
+        complete: true,
+      },
+    },
+    1
+  );
+  expect(second).toMatchObject({ log: { text: "€", complete: true } });
+  const invalid = {
+    availability: "available",
+    log: {
+      encoding: "base64url",
+      chunk: Buffer.from([0xff, 0x41]).toString("base64url"),
+      complete: true,
+    },
+  };
+  expect(toMcpPublishLogPage(invalid)).toEqual(invalid);
+  expect(toMcpPublishLogPage({ availability: "unavailable" })).toEqual({
+    availability: "unavailable",
+  });
+});
 
 test("instructs connected agents to update an outdated MCP CLI", () => {
   expect(

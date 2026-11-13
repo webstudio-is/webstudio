@@ -164,8 +164,7 @@ test("prints compact mcp tool summaries as json by default", () => {
   expect(
     JSON.stringify(
       handshakePayload.filter(
-        ({ name }) =>
-          name !== "validate-publish" && name !== "get-publish-report"
+        ({ name }) => name !== "validate-publish" && name !== "get-publish-log"
       )
     ).length
   ).toBeLessThan(224_500);

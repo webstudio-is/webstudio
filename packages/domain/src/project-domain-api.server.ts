@@ -16,6 +16,7 @@ import {
 import {
   authorizeProject,
   AuthorizationError,
+  getProjectPlanFeatures,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import { PrePublishAuditError } from "@webstudio-is/project-build/runtime";
@@ -26,9 +27,9 @@ type LoadedProject = Awaited<ReturnType<typeof projectApi.loadById>>;
 type ProjectDomain = LoadedProject["domainsVirtual"][number];
 export const getVisiblePublishFindings = (
   findings: PrePublishAuditError["findings"],
-  context: AppContext
+  allowPublishLogs: boolean | undefined
 ) =>
-  context.planFeatures.allowAdvancedPublishDiagnostics === true
+  allowPublishLogs === true
     ? findings
     : findings.map(({ message, location, ...finding }) => ({
         ...finding,
@@ -212,7 +213,7 @@ export const listProjectPublishes = async (
 };
 
 export const getProjectPublishJob = async (
-  input: { projectId: string; jobId: string },
+  input: { projectId: string; jobId: string; logHandle?: string },
   context: AppContext
 ) => {
   const result = await context.postgrest.client
@@ -247,7 +248,7 @@ export const getProjectPublishJob = async (
     hostedDeployment?.domains.includes(hostedDomain)
       ? hostedDomain
       : undefined;
-  const status =
+  let status: "removed" | "success" | "failed" | "pending" =
     deployment === undefined
       ? "removed"
       : publishJob.publishStatus === "PUBLISHED"
@@ -255,10 +256,37 @@ export const getProjectPublishJob = async (
         : publishJob.publishStatus === "FAILED"
           ? "failed"
           : "pending";
+  let completedAt =
+    status === "success" || status === "failed"
+      ? publishJob.updatedAt
+      : undefined;
+  let code: string | undefined;
+  if (input.logHandle !== undefined && status !== "removed") {
+    try {
+      const result =
+        await context.deployment.deploymentTrpc.getPublishLog.query({
+          buildId: publishJob.id,
+          logHandle: input.logHandle,
+          includeLog: false,
+        });
+      if (result.availability === "pending") {
+        status = "pending";
+        completedAt = undefined;
+      }
+      if (result.availability === "available") {
+        status = result.outcome === "succeeded" ? "success" : "failed";
+        completedAt = result.completedAt;
+        code = result.outcome === "failed" ? result.code : undefined;
+      }
+    } catch {
+      // The durable Build status remains available when GitHub status is not.
+    }
+  }
   return {
     id: publishJob.id,
     version: publishJob.version,
     status,
+    ...(code === undefined ? {} : { code }),
     target,
     domains: hostedDeployment?.domains ?? [],
     ...(stagingDomain === undefined
@@ -271,19 +299,15 @@ export const getProjectPublishJob = async (
           }`,
         }),
     createdAt: publishJob.createdAt,
-    completedAt:
-      status === "success" || status === "failed"
-        ? publishJob.updatedAt
-        : undefined,
+    completedAt,
   };
 };
 
-export const getProjectPublishExecution = async (
+export const getProjectPublishLog = async (
   input: {
     projectId: string;
     buildId: string;
-    attemptId: string;
-    executionHandle: string;
+    logHandle: string;
     cursor?: number;
   },
   context: AppContext
@@ -307,42 +331,19 @@ export const getProjectPublishExecution = async (
   if (build.data === null) {
     return { availability: "unavailable" as const };
   }
-  const result =
-    await context.deployment.deploymentTrpc.getPublishExecution.query({
-      buildId: input.buildId,
-      attemptId: input.attemptId,
-      executionHandle: input.executionHandle,
-      cursor: input.cursor,
-    });
-  if (
-    result.availability !== "available" ||
-    context.planFeatures.allowAdvancedPublishDiagnostics === true
-  ) {
-    return result;
+  const { allowPublishLogs } = await getProjectPlanFeatures(
+    input.projectId,
+    context
+  );
+  if (allowPublishLogs !== true) {
+    return { availability: "unavailable" as const };
   }
-  return {
-    availability: "available" as const,
-    outcome: result.outcome,
-    logAvailability: result.logAvailability,
-    ...(result.startedAt === undefined ? {} : { startedAt: result.startedAt }),
-    ...(result.completedAt === undefined
-      ? {}
-      : { completedAt: result.completedAt }),
-    failureReason: result.failureReason,
-    failedStage: result.failedStage,
-    log:
-      result.log === undefined
-        ? undefined
-        : {
-            complete: result.log.complete,
-            nextCursor: result.log.nextCursor,
-            issues: result.log.issues?.map((issue) => ({
-              severity: issue.severity,
-              message: issue.message.slice(0, 160),
-            })),
-            issuesOmitted: result.log.issuesOmitted,
-          },
-  };
+  return await context.deployment.deploymentTrpc.getPublishLog.query({
+    buildId: input.buildId,
+    logHandle: input.logHandle,
+    cursor: input.cursor,
+    includeLog: true,
+  });
 };
 
 const createPublishedDeployment = ({
@@ -387,7 +388,6 @@ export const publishProject = async (
     context
   );
   const findings = build.auditFindings;
-  const attemptId = crypto.randomUUID();
   const { deploymentTrpc, env } = context.deployment;
 
   if (env.BUILDER_ORIGIN === undefined) {
@@ -403,7 +403,6 @@ export const publishProject = async (
       branchName: env.GITHUB_REF_NAME,
       destination: publishedDeploymentDestination,
       logProjectName: `${project.title} - ${project.id}`,
-      attemptId,
     });
   } catch (error) {
     const diagnostics = getDeploymentPublishErrorDiagnostics(error);
@@ -422,8 +421,7 @@ export const publishProject = async (
   return {
     build,
     project,
-    attemptId,
-    executionHandle: result.success ? result.executionHandle : undefined,
+    logHandle: result.success ? result.logHandle : undefined,
     findings,
     deploymentNotImplemented,
   };
@@ -433,15 +431,18 @@ export const publishStaticProject = async (
   {
     projectId,
     templates,
+    project: loadedProject,
     name = `${projectId}-${createId("nano")}.zip`,
   }: {
     projectId: string;
     templates: z.infer<typeof templateSchema>[];
+    project?: LoadedProject;
     name?: string;
   },
   context: AppContext
 ) => {
-  const project = await projectApi.loadById(projectId, context);
+  const project =
+    loadedProject ?? (await projectApi.loadById(projectId, context));
   const build = await createProductionBuild(
     {
       projectId,
@@ -456,7 +457,6 @@ export const publishStaticProject = async (
   );
 
   const findings = build.auditFindings;
-  const attemptId = crypto.randomUUID();
   const { deploymentTrpc, env } = context.deployment;
 
   if (env.BUILDER_ORIGIN === undefined) {
@@ -470,7 +470,6 @@ export const publishStaticProject = async (
     branchName: env.GITHUB_REF_NAME,
     destination: "static",
     logProjectName: `${project.title} - ${project.id}`,
-    attemptId,
   });
 
   return result.success
@@ -479,8 +478,7 @@ export const publishStaticProject = async (
         name,
         build,
         project,
-        attemptId,
-        executionHandle: result.executionHandle,
+        logHandle: result.logHandle,
         findings,
       }
     : result;

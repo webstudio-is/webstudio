@@ -6,6 +6,7 @@ import {
   router,
   type AppContext,
   type AuthPermit,
+  getProjectPlanFeatures,
 } from "@webstudio-is/trpc-interface/index.server";
 import {
   loadById,
@@ -21,19 +22,17 @@ import {
   getDefaultPublishDomains,
   getVerifiedPublishDomains,
   getProjectPublishJob,
-  getProjectPublishExecution,
+  getProjectPublishLog,
   listProjectDomains,
   listProjectPublishes,
   publishProject,
   publishStaticProject,
+  getVisiblePublishFindings,
   updateProjectDomain,
   unpublishProjectDomains,
   verifyProjectDomain,
 } from "@webstudio-is/domain/index.server";
-import {
-  PrePublishAuditError,
-  type PrePublishAuditFinding,
-} from "@webstudio-is/project-build/runtime";
+import { PrePublishAuditError } from "@webstudio-is/project-build/runtime";
 import {
   getBuilderRuntimeOperationInputSchema,
   getBuildIntegrityIssues,
@@ -139,20 +138,6 @@ const assertApiPublishDomains = ({
   throw new AuthorizationError(
     "Authorization token does not have publish permission"
   );
-};
-
-const getVisiblePublishFindings = (
-  findings: PrePublishAuditFinding[],
-  context: AppContext
-) => {
-  if (context.planFeatures.allowAdvancedPublishDiagnostics === true) {
-    return findings;
-  }
-  return findings.map(({ message, location, ...finding }) => ({
-    ...finding,
-    message: message.length <= 160 ? message : `${message.slice(0, 157)}…`,
-    location: {},
-  }));
 };
 
 const projectIdInput = z.object({ projectId: z.string() });
@@ -1284,8 +1269,12 @@ export const apiRouter = router({
       ]),
       "edit",
       async ({ auth, ctx, input }) => {
-        if (input.target === "static") {
-          try {
+        const { allowPublishLogs } = await getProjectPlanFeatures(
+          input.projectId,
+          ctx
+        );
+        try {
+          if (input.target === "static") {
             const result = await publishStaticProject(
               { projectId: input.projectId, templates: input.templates },
               ctx
@@ -1297,26 +1286,18 @@ export const apiRouter = router({
               status: "pending" as const,
               jobId: result.build.id,
               buildId: result.build.id,
-              attemptId: result.attemptId,
-              executionHandle: result.executionHandle,
-              findings: getVisiblePublishFindings(result.findings, ctx),
+              logHandle: result.logHandle,
+              findings: getVisiblePublishFindings(
+                result.findings,
+                allowPublishLogs
+              ),
               artifact: { readiness: "pending" as const, name: result.name },
             };
-          } catch (error) {
-            if (error instanceof PrePublishAuditError) {
-              return {
-                status: "blocked" as const,
-                findings: getVisiblePublishFindings(error.findings, ctx),
-              };
-            }
-            throw error;
           }
-        }
-        const project = await loadById(input.projectId, ctx);
-        const domains =
-          input.domains ?? getDefaultPublishDomains(project, input.target);
-        assertApiPublishDomains({ auth, domains, project });
-        try {
+          const project = await loadById(input.projectId, ctx);
+          const domains =
+            input.domains ?? getDefaultPublishDomains(project, input.target);
+          assertApiPublishDomains({ auth, domains, project });
           const result = await publishProject(
             { project, domains, target: input.target },
             ctx
@@ -1325,9 +1306,11 @@ export const apiRouter = router({
             status: "pending" as const,
             jobId: result.build.id,
             buildId: result.build.id,
-            attemptId: result.attemptId,
-            executionHandle: result.executionHandle,
-            findings: getVisiblePublishFindings(result.findings, ctx),
+            logHandle: result.logHandle,
+            findings: getVisiblePublishFindings(
+              result.findings,
+              allowPublishLogs
+            ),
             warning: result.deploymentNotImplemented
               ? "Publish was recorded locally, but the deployment service is not available in this environment."
               : undefined,
@@ -1336,7 +1319,10 @@ export const apiRouter = router({
           if (error instanceof PrePublishAuditError) {
             return {
               status: "blocked" as const,
-              findings: getVisiblePublishFindings(error.findings, ctx),
+              findings: getVisiblePublishFindings(
+                error.findings,
+                allowPublishLogs
+              ),
             };
           }
           throw error;
@@ -1346,7 +1332,10 @@ export const apiRouter = router({
     ),
 
     getJob: projectQuery(
-      projectIdInput.extend({ jobId: z.string() }),
+      projectIdInput.extend({
+        jobId: z.string(),
+        logHandle: z.string().max(2048).optional(),
+      }),
       "view",
       async ({ ctx, input }) => {
         const publishJob = await getProjectPublishJob(input, ctx);
@@ -1358,16 +1347,15 @@ export const apiRouter = router({
       { command: "get-publish-job", client: "getPublishJob" }
     ),
 
-    getReport: projectQuery(
+    getLog: projectQuery(
       projectIdInput.extend({
         buildId: z.string(),
-        attemptId: z.string().uuid(),
-        executionHandle: z.string().max(2048),
+        logHandle: z.string().max(2048),
         cursor: z.number().int().nonnegative().safe().optional(),
       }),
       "view",
-      async ({ ctx, input }) => getProjectPublishExecution(input, ctx),
-      { command: "get-publish-report", client: "getPublishReport" }
+      async ({ ctx, input }) => getProjectPublishLog(input, ctx),
+      { command: "get-publish-log", client: "getPublishLog" }
     ),
 
     unpublish: projectMutation(

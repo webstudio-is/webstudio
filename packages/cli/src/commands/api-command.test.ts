@@ -12,6 +12,7 @@ import {
   createPageCommandOptions,
   createPageTemplateCommandOptions,
   publishCommandOptions,
+  validatePublishCommandOptions,
   unpublishCommandOptions,
 } from "./api-command";
 import type { CommonYargsArgv } from "./yargs-types";
@@ -1880,7 +1881,7 @@ test("publishes project", async () => {
       idempotencyKey: "publish-key",
     },
   });
-  expect(apiCalls.getPublishReport).not.toHaveBeenCalled();
+  expect(apiCalls.getPublishLog).not.toHaveBeenCalled();
   expect(apiCalls.getPublishJob).not.toHaveBeenCalled();
 });
 
@@ -1896,18 +1897,29 @@ test("parses publish wait without changing the immediate default", async () => {
   ).toBe(true);
 });
 
-test("waits for the signed execution and joins every log page across UTF-8 boundaries", async () => {
+test("validate-publish rejects static while publish accepts it", async () => {
+  const validate = validatePublishCommandOptions(
+    makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+  ).strictOptions();
+  const publish = publishCommandOptions(
+    makeCLI([]).exitProcess(false) as unknown as CommonYargsArgv
+  ).strictOptions();
+  expect(() => validate.parse(["--target", "static", "--json"])).toThrow();
+  expect((await publish.parse(["--target", "static", "--json"])).target).toBe(
+    "static"
+  );
+});
+
+test("waits for the job before reading every log page across UTF-8 boundaries", async () => {
   mockConfig();
   apiCalls.publish.mockResolvedValue({
     status: "pending",
     jobId: "build-2",
     buildId: "build-2",
-    attemptId: "attempt-2",
-    executionHandle: "signed-handle",
+    logHandle: "signed-handle",
     findings: [],
   });
-  apiCalls.getPublishReport
-    .mockResolvedValueOnce({ availability: "pending" })
+  apiCalls.getPublishLog
     .mockResolvedValueOnce({
       availability: "available",
       outcome: "succeeded",
@@ -1929,7 +1941,9 @@ test("waits for the signed execution and joins every log page across UTF-8 bound
         complete: true,
       },
     });
-  apiCalls.getPublishJob.mockResolvedValue({ status: "pending" });
+  apiCalls.getPublishJob
+    .mockResolvedValueOnce({ status: "pending" })
+    .mockResolvedValueOnce({ status: "success" });
 
   await apiCommand(
     { command: "publish", target: "production", json: true, wait: true },
@@ -1937,12 +1951,14 @@ test("waits for the signed execution and joins every log page across UTF-8 bound
   );
 
   expect(apiCalls.publish).toHaveBeenCalledOnce();
-  expect(apiCalls.getPublishReport).toHaveBeenNthCalledWith(
-    3,
+  expect(apiCalls.getPublishJob.mock.invocationCallOrder[0]).toBeLessThan(
+    apiCalls.getPublishLog.mock.invocationCallOrder[0]
+  );
+  expect(apiCalls.getPublishLog).toHaveBeenNthCalledWith(
+    2,
     expectConnection({
       buildId: "build-2",
-      attemptId: "attempt-2",
-      executionHandle: "signed-handle",
+      logHandle: "signed-handle",
       cursor: 1,
     })
   );
@@ -1951,7 +1967,7 @@ test("waits for the signed execution and joins every log page across UTF-8 bound
     data: {
       status: "success",
       jobId: "build-2",
-      execution: {
+      publishLog: {
         availability: "available",
         outcome: "succeeded",
         logText: "€",
@@ -1970,20 +1986,22 @@ test("returns nonzero with the publish result and available failure diagnostics"
     status: "pending",
     jobId: "build-2",
     buildId: "build-2",
-    attemptId: "attempt-2",
-    executionHandle: "signed-handle",
+    logHandle: "signed-handle",
   });
-  apiCalls.getPublishReport.mockResolvedValue({
+  apiCalls.getPublishLog.mockResolvedValue({
     availability: "available",
     outcome: "failed",
-    failureReason: "cancelled",
+    code: "cancelled",
     failedStage: "build",
-    logAvailability: "unavailable",
+    logAvailability: "available",
     log: {
+      encoding: "base64url",
+      chunk: Buffer.from("Build failed").toString("base64url"),
       complete: true,
       issues: [{ severity: "error", message: "Build failed" }],
     },
   });
+  apiCalls.getPublishJob.mockResolvedValue({ status: "failed" });
 
   await expect(
     apiCommand(
@@ -1995,10 +2013,10 @@ test("returns nonzero with the publish result and available failure diagnostics"
     ok: false,
     data: {
       jobId: "build-2",
-      execution: {
+      publishLog: {
         availability: "available",
         outcome: "failed",
-        failureReason: "cancelled",
+        code: "cancelled",
         failedStage: "build",
         log: { issues: [{ severity: "error", message: "Build failed" }] },
       },
@@ -2007,16 +2025,15 @@ test("returns nonzero with the publish result and available failure diagnostics"
   });
 });
 
-test("keeps Free issues but clears paid bytes if access changes during pagination", async () => {
+test("clears paid bytes and issues if access changes during pagination", async () => {
   mockConfig();
   apiCalls.publish.mockResolvedValue({
     status: "pending",
     jobId: "build-2",
     buildId: "build-2",
-    attemptId: "attempt-2",
-    executionHandle: "signed-handle",
+    logHandle: "signed-handle",
   });
-  apiCalls.getPublishReport
+  apiCalls.getPublishLog
     .mockResolvedValueOnce({
       availability: "available",
       outcome: "succeeded",
@@ -2037,6 +2054,7 @@ test("keeps Free issues but clears paid bytes if access changes during paginatio
         issues: [{ severity: "warning", message: "Check output" }],
       },
     });
+  apiCalls.getPublishJob.mockResolvedValue({ status: "success" });
 
   await apiCommand(
     { command: "publish", target: "production", json: true, wait: true },
@@ -2044,20 +2062,16 @@ test("keeps Free issues but clears paid bytes if access changes during paginatio
   );
 
   const output = getLastJsonOutput();
-  expect(output.data.execution.log).toMatchObject({
-    issues: [{ severity: "warning", message: "Check output" }],
-  });
-  expect(output.data.execution.logText).toBeUndefined();
+  expect(output.data.publishLog).toEqual({ availability: "unavailable" });
   expect(JSON.stringify(output)).not.toContain("secret");
 });
 
-test("uses durable job status when the signed execution cannot be read", async () => {
+test("uses durable job status when the signed publishLog cannot be read", async () => {
   mockConfig();
   apiCalls.publish.mockResolvedValue({
     status: "pending",
     jobId: "build-2",
     buildId: "build-2",
-    attemptId: "attempt-2",
   });
   apiCalls.getPublishJob.mockResolvedValue({
     id: "build-2",
@@ -2069,13 +2083,13 @@ test("uses durable job status when the signed execution cannot be read", async (
     dependencies
   );
 
-  expect(apiCalls.getPublishReport).not.toHaveBeenCalled();
+  expect(apiCalls.getPublishLog).not.toHaveBeenCalled();
   expect(getLastJsonOutput()).toMatchObject({
     ok: true,
     data: {
       status: "success",
       job: { status: "success" },
-      execution: { availability: "unavailable" },
+      publishLog: { availability: "unavailable" },
     },
   });
 });
@@ -2094,7 +2108,29 @@ test("returns nonzero for a blocked submission without polling", async () => {
     )
   ).rejects.toBeInstanceOf(Error);
 
-  expect(apiCalls.getPublishReport).not.toHaveBeenCalled();
+  expect(apiCalls.getPublishLog).not.toHaveBeenCalled();
+  expect(apiCalls.getPublishJob).not.toHaveBeenCalled();
+  expect(getLastJsonOutput()).toMatchObject({
+    ok: false,
+    data: { status: "blocked" },
+    error: { code: "PUBLISH_BLOCKED" },
+  });
+});
+
+test("returns nonzero for a blocked submission without --wait", async () => {
+  mockConfig();
+  apiCalls.publish.mockResolvedValue({
+    status: "blocked",
+    findings: [{ severity: "error", ruleId: "invalid", location: {} }],
+  });
+
+  await expect(
+    apiCommand(
+      { command: "publish", target: "production", json: true },
+      dependencies
+    )
+  ).rejects.toBeInstanceOf(Error);
+  expect(apiCalls.getPublishLog).not.toHaveBeenCalled();
   expect(apiCalls.getPublishJob).not.toHaveBeenCalled();
   expect(getLastJsonOutput()).toMatchObject({
     ok: false,
@@ -2109,7 +2145,6 @@ test("returns nonzero for a failed durable job when logs are unavailable", async
     status: "pending",
     jobId: "build-2",
     buildId: "build-2",
-    attemptId: "attempt-2",
   });
   apiCalls.getPublishJob.mockResolvedValue({ id: "build-2", status: "failed" });
 
@@ -2125,7 +2160,7 @@ test("returns nonzero for a failed durable job when logs are unavailable", async
     data: {
       status: "failed",
       job: { status: "failed" },
-      execution: { availability: "unavailable" },
+      publishLog: { availability: "unavailable" },
     },
     error: { code: "PUBLISH_FAILED" },
   });
@@ -2137,7 +2172,6 @@ test("does not report success when the publish job was removed", async () => {
     status: "pending",
     jobId: "build-2",
     buildId: "build-2",
-    attemptId: "attempt-2",
   });
   apiCalls.getPublishJob.mockResolvedValue({
     id: "build-2",
@@ -2158,16 +2192,15 @@ test("does not report success when the publish job was removed", async () => {
   });
 });
 
-test("preserves a successful execution if a later log page fails", async () => {
+test("preserves a successful publishLog if a later log page fails", async () => {
   mockConfig();
   apiCalls.publish.mockResolvedValue({
     status: "pending",
     jobId: "build-2",
     buildId: "build-2",
-    attemptId: "attempt-2",
-    executionHandle: "signed-handle",
+    logHandle: "signed-handle",
   });
-  apiCalls.getPublishReport
+  apiCalls.getPublishLog
     .mockResolvedValueOnce({
       availability: "available",
       outcome: "succeeded",
@@ -2182,6 +2215,7 @@ test("preserves a successful execution if a later log page fails", async () => {
     .mockRejectedValueOnce(
       Object.assign(new Error("Forbidden"), { code: "FORBIDDEN" })
     );
+  apiCalls.getPublishJob.mockResolvedValue({ status: "success" });
 
   await apiCommand(
     { command: "publish", target: "production", json: true, wait: true },
@@ -2193,14 +2227,10 @@ test("preserves a successful execution if a later log page fails", async () => {
     ok: true,
     data: {
       status: "success",
-      execution: {
-        outcome: "succeeded",
-        logAvailability: "unavailable",
-        log: { complete: false },
-      },
+      publishLog: { availability: "unavailable" },
     },
   });
-  expect(output.data.execution.logText).toBeUndefined();
+  expect(output.data.publishLog.logText).toBeUndefined();
   expect(JSON.stringify(output)).not.toContain("secret");
 });
 
@@ -2210,10 +2240,9 @@ test("returns a structured timeout without canceling a pending publish", async (
     status: "pending",
     jobId: "build-2",
     buildId: "build-2",
-    attemptId: "attempt-2",
-    executionHandle: "signed-handle",
+    logHandle: "signed-handle",
   });
-  apiCalls.getPublishReport.mockResolvedValue({ availability: "pending" });
+  apiCalls.getPublishLog.mockResolvedValue({ availability: "pending" });
   apiCalls.getPublishJob.mockResolvedValue({
     id: "build-2",
     status: "pending",
@@ -2227,7 +2256,8 @@ test("returns a structured timeout without canceling a pending publish", async (
   ).rejects.toBeInstanceOf(Error);
 
   expect(apiCalls.publish).toHaveBeenCalledOnce();
-  expect(apiCalls.getPublishReport).toHaveBeenCalledTimes(360);
+  expect(apiCalls.getPublishJob).toHaveBeenCalledTimes(360);
+  expect(apiCalls.getPublishLog).not.toHaveBeenCalled();
   expect(getLastJsonOutput()).toMatchObject({
     ok: false,
     data: {
@@ -2248,12 +2278,9 @@ test("returns a structured unknown outcome when job lookup fails", async () => {
     status: "pending",
     jobId: "build-2",
     buildId: "build-2",
-    attemptId: "attempt-2",
-    executionHandle: "signed-handle",
+    logHandle: "signed-handle",
   });
-  apiCalls.getPublishReport.mockRejectedValueOnce(
-    new Error("Report unavailable")
-  );
+  apiCalls.getPublishLog.mockRejectedValueOnce(new Error("Report unavailable"));
   apiCalls.getPublishJob.mockRejectedValueOnce(new Error("Status unavailable"));
 
   await expect(
@@ -2317,19 +2344,17 @@ test("gets publish job", async () => {
   });
 });
 
-test("gets publish report", async () => {
+test("gets publish log", async () => {
   await expectCommandCall({
     options: {
-      command: "get-publish-report",
+      command: "get-publish-log",
       buildId: "build-id",
-      attemptId: "attempt-id",
-      executionHandle: "signed-handle",
+      logHandle: "signed-handle",
     },
-    call: apiCalls.getPublishReport,
+    call: apiCalls.getPublishLog,
     connection: {
       buildId: "build-id",
-      attemptId: "attempt-id",
-      executionHandle: "signed-handle",
+      logHandle: "signed-handle",
     },
   });
 });
@@ -2362,8 +2387,8 @@ test("unpublish help advertises only deployment options", async () => {
   ).getHelp();
   expect(help).toContain("--target");
   expect(help).toContain("--domain");
-  expect(help).toContain("--message");
-  expect(help).toContain("--idempotency-key");
+  expect(help).not.toContain("--message");
+  expect(help).not.toContain("--idempotency-key");
   expect(help).not.toContain("static");
   expect(help).not.toContain("--wait");
 });

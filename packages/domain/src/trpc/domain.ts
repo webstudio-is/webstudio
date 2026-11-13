@@ -6,6 +6,7 @@ import {
   createErrorResponse,
   authorizeProject,
   getProjectOwnerId,
+  getProjectPlanFeatures,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
 import { publishedDeploymentDestination, templates } from "@webstudio-is/sdk";
@@ -14,7 +15,6 @@ import { db } from "../db";
 import { isDomainUsingCloudflareNameservers } from "../rdap";
 import {
   getVerifiedPublishDomains,
-  getProjectPublishExecution,
   listProjectPublishes,
   getPublishTargetForDomains,
   getVisiblePublishFindings,
@@ -35,26 +35,6 @@ export const domainRouter = router({
         return {
           success: true as const,
           ...(await listProjectPublishes(input.projectId, ctx)),
-        };
-      } catch (error) {
-        return createErrorResponse(error);
-      }
-    }),
-  publishExecution: procedure
-    .input(
-      z.object({
-        projectId: z.string(),
-        buildId: z.string(),
-        attemptId: z.string().uuid(),
-        executionHandle: z.string().max(2048),
-        cursor: z.number().int().nonnegative().safe().optional(),
-      })
-    )
-    .query(async ({ input, ctx }) => {
-      try {
-        return {
-          success: true as const,
-          result: await getProjectPublishExecution(input, ctx),
         };
       } catch (error) {
         return createErrorResponse(error);
@@ -109,9 +89,14 @@ export const domainRouter = router({
       ])
     )
     .mutation(async ({ input, ctx }) => {
+      let allowPublishLogs: boolean | undefined;
       try {
+        const project = await projectApi.loadById(input.projectId, ctx);
+        ({ allowPublishLogs } = await getProjectPlanFeatures(
+          input.projectId,
+          ctx
+        ));
         if (input.destination === publishedDeploymentDestination) {
-          const project = await projectApi.loadById(input.projectId, ctx);
           const domains = getVerifiedPublishDomains(project, input.domains);
           const result = await publishProject(
             {
@@ -124,13 +109,15 @@ export const domainRouter = router({
           return {
             success: true as const,
             buildId: result.build.id,
-            attemptId: result.attemptId,
-            executionHandle: result.executionHandle,
-            findings: getVisiblePublishFindings(result.findings, ctx),
+            logHandle: result.logHandle,
+            findings: getVisiblePublishFindings(
+              result.findings,
+              allowPublishLogs
+            ),
           };
         }
         const result = await publishStaticProject(
-          { projectId: input.projectId, templates: input.templates },
+          { projectId: input.projectId, templates: input.templates, project },
           ctx
         );
         if (result.success) {
@@ -138,9 +125,11 @@ export const domainRouter = router({
             success: true as const,
             name: result.name,
             buildId: result.build.id,
-            attemptId: result.attemptId,
-            executionHandle: result.executionHandle,
-            findings: getVisiblePublishFindings(result.findings, ctx),
+            logHandle: result.logHandle,
+            findings: getVisiblePublishFindings(
+              result.findings,
+              allowPublishLogs
+            ),
           };
         }
         return result;
@@ -148,7 +137,10 @@ export const domainRouter = router({
         if (error instanceof PrePublishAuditError) {
           return {
             success: false as const,
-            auditFindings: getVisiblePublishFindings(error.findings, ctx),
+            auditFindings: getVisiblePublishFindings(
+              error.findings,
+              allowPublishLogs
+            ),
           };
         }
         return createErrorResponse(error);

@@ -174,19 +174,30 @@ describe("parsePlansEnv", () => {
     ).toBeUndefined();
   });
 
-  test("inherits advanced publish diagnostics without retention settings", () => {
+  test("normalizes the legacy log flag and inherits the canonical value", () => {
     const result = parsePlansEnv(
       JSON.stringify([
         { name: "Pro", features: { allowAdvancedPublishDiagnostics: true } },
         { name: "Team", extends: "Pro", features: {} },
       ])
     );
-    expect(result.get("Pro")?.features.allowAdvancedPublishDiagnostics).toBe(
-      true
+    expect(result.get("Pro")?.features.allowPublishLogs).toBe(true);
+    expect(result.get("Team")?.features.allowPublishLogs).toBe(true);
+    expect(result.get("Pro")?.features).not.toHaveProperty(
+      "allowAdvancedPublishDiagnostics"
     );
-    expect(result.get("Team")?.features.allowAdvancedPublishDiagnostics).toBe(
-      true
+    const explicitFalse = parsePlansEnv(
+      JSON.stringify([
+        {
+          name: "Pro",
+          features: {
+            allowAdvancedPublishDiagnostics: true,
+            allowPublishLogs: false,
+          },
+        },
+      ])
     );
+    expect(explicitFalse.get("Pro")?.features.allowPublishLogs).toBe(false);
     expect(result.get("Team")?.features).not.toHaveProperty(
       "publishLogRetentionDays"
     );

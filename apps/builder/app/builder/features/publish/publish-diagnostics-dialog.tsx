@@ -20,8 +20,8 @@ import {
 } from "@webstudio-is/design-system";
 import { CopyIcon } from "@webstudio-is/icons";
 import { CopyToClipboard } from "~/shared/copy-to-clipboard";
-import type { PublishSessionItem } from "./use-publish-session";
-import { getPublishDuration } from "./use-publish-session";
+import type { PublishLog } from "./use-publish-logs";
+import { getPublishDuration } from "./use-publish-logs";
 
 export type PublishValidationFinding = {
   severity: "error" | "warning";
@@ -33,6 +33,11 @@ export type PublishValidationFinding = {
   relatedInstanceId?: string;
   reportText: string;
 };
+
+const shortFinding = (finding: PublishValidationFinding) =>
+  (
+    finding.summary ?? (typeof finding.title === "string" ? finding.title : "")
+  ).slice(0, 160);
 
 export const PublishValidationBanner = ({
   findings,
@@ -76,11 +81,11 @@ export const PublishValidationBanner = ({
 
 const FindingList = ({
   findings,
-  isPro,
+  canViewPublishLogs,
   onSelect,
 }: {
   findings: PublishValidationFinding[];
-  isPro: boolean;
+  canViewPublishLogs: boolean;
   onSelect: (finding: PublishValidationFinding) => void;
 }) => (
   <ScrollArea css={{ height: "100%" }}>
@@ -91,7 +96,7 @@ const FindingList = ({
             <Text color="subtle" variant="labels">
               {finding.source === "build" ? "Build" : "Audit"}
             </Text>
-            {isPro ? (
+            {canViewPublishLogs ? (
               <Button
                 type="button"
                 color="ghost"
@@ -101,7 +106,7 @@ const FindingList = ({
               </Button>
             ) : (
               <Text variant="labels" userSelect="text">
-                {finding.summary ?? finding.title}
+                {shortFinding(finding)}
               </Text>
             )}
           </Flex>
@@ -112,14 +117,14 @@ const FindingList = ({
   </ScrollArea>
 );
 
-export const PublishValidationResults = ({
+export const PublishDiagnosticsDialog = ({
   findings,
   open,
   onOpenChange,
   target,
   initialTab,
   items = [],
-  isPro = true,
+  canViewPublishLogs = true,
   onLoadLog,
 }: {
   findings: PublishValidationFinding[];
@@ -127,35 +132,35 @@ export const PublishValidationResults = ({
   onOpenChange?: (open: boolean) => void;
   target?: string;
   initialTab?: "warnings" | "errors" | "publish";
-  items?: PublishSessionItem[];
-  isPro?: boolean;
-  onLoadLog?: (item: PublishSessionItem) => void;
+  items?: PublishLog[];
+  canViewPublishLogs?: boolean;
+  onLoadLog?: (item: PublishLog) => void;
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
-  const [selectedAttemptId, setSelectedAttemptId] = useState<string>();
+  const [selectedBuildId, setSelectedBuildId] = useState<string>();
   const [selectedFinding, setSelectedFinding] =
     useState<PublishValidationFinding>();
   const isOpen = open ?? internalOpen;
   const setIsOpen = onOpenChange ?? setInternalOpen;
   const errors = findings.filter(({ severity }) => severity === "error");
   const warnings = findings.filter(({ severity }) => severity === "warning");
-  const selectedItem = items.find(
-    ({ attemptId }) => attemptId === selectedAttemptId
-  );
+  const selectedItem = items.find(({ buildId }) => buildId === selectedBuildId);
   const defaultTab = initialTab ?? (errors.length > 0 ? "errors" : "warnings");
+  const [tab, setTab] = useState(defaultTab);
   const reportText = findings.map(({ reportText }) => reportText).join("\n\n");
 
   useEffect(() => {
-    setSelectedAttemptId(undefined);
+    setSelectedBuildId(undefined);
     setSelectedFinding(undefined);
-  }, [target, isOpen]);
+    setTab(defaultTab);
+  }, [target, isOpen, defaultTab]);
 
   useEffect(() => {
-    if (isPro === false) {
-      setSelectedAttemptId(undefined);
+    if (canViewPublishLogs === false) {
+      setSelectedBuildId(undefined);
       setSelectedFinding(undefined);
     }
-  }, [isPro]);
+  }, [canViewPublishLogs]);
 
   if (open === undefined && findings.length === 0) {
     return null;
@@ -179,7 +184,7 @@ export const PublishValidationResults = ({
           <DialogTitle
             suffix={
               <DialogTitleActions>
-                {isPro && reportText.length > 0 && (
+                {canViewPublishLogs && reportText.length > 0 && (
                   <CopyToClipboard
                     text={reportText}
                     copyText="Copy all reports"
@@ -199,7 +204,7 @@ export const PublishValidationResults = ({
           >
             Diagnostics
           </DialogTitle>
-          {selectedFinding !== undefined && isPro ? (
+          {selectedFinding !== undefined && canViewPublishLogs ? (
             <PanelContent
               as={Flex}
               direction="column"
@@ -221,9 +226,24 @@ export const PublishValidationResults = ({
                   <Text userSelect="text">{selectedFinding.details}</Text>
                 </ScrollArea>
               )}
-              {selectedFinding.link}
+              <div
+                onClick={(event) => {
+                  if (
+                    event.button !== 0 ||
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.shiftKey ||
+                    event.altKey
+                  ) {
+                    return;
+                  }
+                  setIsOpen(false);
+                }}
+              >
+                {selectedFinding.link}
+              </div>
             </PanelContent>
-          ) : selectedItem !== undefined && isPro ? (
+          ) : selectedItem !== undefined && canViewPublishLogs ? (
             <PanelContent
               as={Flex}
               direction="column"
@@ -233,11 +253,11 @@ export const PublishValidationResults = ({
               <Button
                 type="button"
                 color="neutral"
-                onClick={() => setSelectedAttemptId(undefined)}
+                onClick={() => setSelectedBuildId(undefined)}
               >
                 Back
               </Button>
-              <Text variant="titles">Publish report</Text>
+              <Text variant="titles">Publish log</Text>
               <Text>{selectedItem.domains.join(", ") || "Static export"}</Text>
               {selectedItem.logState === "loading" ? (
                 <Text color="subtle">Loading logs…</Text>
@@ -257,8 +277,8 @@ export const PublishValidationResults = ({
             </PanelContent>
           ) : (
             <PanelTabs
-              key={`${defaultTab}-${target}`}
-              defaultValue={defaultTab}
+              value={tab}
+              onValueChange={(value) => setTab(value as typeof tab)}
               css={{ flex: 1, minHeight: 0, overflow: "hidden" }}
             >
               <PanelTabsList aria-label="Publish check severity">
@@ -272,7 +292,7 @@ export const PublishValidationResults = ({
               >
                 <FindingList
                   findings={warnings}
-                  isPro={isPro}
+                  canViewPublishLogs={canViewPublishLogs}
                   onSelect={setSelectedFinding}
                 />
               </PanelTabsContent>
@@ -282,7 +302,7 @@ export const PublishValidationResults = ({
               >
                 <FindingList
                   findings={errors}
-                  isPro={isPro}
+                  canViewPublishLogs={canViewPublishLogs}
                   onSelect={setSelectedFinding}
                 />
               </PanelTabsContent>
@@ -298,35 +318,35 @@ export const PublishValidationResults = ({
                     {items.map((item) => {
                       const duration = getPublishDuration(item);
                       return (
-                        <Flex key={item.attemptId} direction="column" gap={2}>
+                        <Flex key={item.buildId} direction="column" gap={2}>
                           <Text variant="labels">
                             {item.domains.join(", ") || "Static export"}
                           </Text>
                           <Text color="subtle">
-                            {item.availability === "pending"
+                            {item.status === "pending"
                               ? "Publishing started"
-                              : item.outcome === "succeeded"
+                              : item.status === "success"
                                 ? "Published"
-                                : item.outcome === "failed"
-                                  ? "Publish failed"
-                                  : "Publish logs are unavailable."}
+                                : "Publish failed"}
                           </Text>
-                          {item.startedAt !== undefined && (
-                            <Text>
-                              Started:{" "}
-                              {new Date(item.startedAt).toLocaleString()}
-                            </Text>
-                          )}
-                          {duration !== undefined && (
+                          {canViewPublishLogs &&
+                            item.startedAt !== undefined && (
+                              <Text>
+                                Started:{" "}
+                                {new Date(item.startedAt).toLocaleString()}
+                              </Text>
+                            )}
+                          {canViewPublishLogs && duration !== undefined && (
                             <Text>Duration: {duration}s</Text>
                           )}
-                          {item.outcome === "failed" &&
+                          {canViewPublishLogs &&
+                            item.status === "failed" &&
                             (item.failedStage !== undefined ||
-                              item.failureReason !== undefined) && (
+                              item.code !== undefined) && (
                               <Text color="destructive">
                                 {[
                                   item.failedStage,
-                                  item.failureReason?.replaceAll("_", " "),
+                                  item.code?.replaceAll("_", " "),
                                 ]
                                   .filter(Boolean)
                                   .join(" · ")}
@@ -337,45 +357,50 @@ export const PublishValidationResults = ({
                               <Text variant="labels">Audit</Text>
                               {item.findings.map((finding, index) => (
                                 <Text key={index}>
-                                  {finding.summary ?? finding.title}
+                                  {canViewPublishLogs
+                                    ? (finding.summary ?? finding.title)
+                                    : shortFinding(finding)}
                                 </Text>
                               ))}
                             </Flex>
                           )}
-                          {item.issues !== undefined &&
+                          {canViewPublishLogs &&
+                            item.issues !== undefined &&
                             item.issues.length > 0 && (
                               <Text variant="labels">Build</Text>
                             )}
-                          {item.issues?.map((issue, index) => (
-                            <Text
-                              key={index}
-                              color={
-                                issue.severity === "error"
-                                  ? "destructive"
-                                  : "subtle"
-                              }
-                            >
-                              {issue.message}
-                            </Text>
-                          ))}
-                          {(item.issuesOmitted ?? 0) > 0 && (
-                            <Text color="subtle">
-                              {item.issuesOmitted} more issues not shown.
-                            </Text>
-                          )}
-                          {isPro && item.availability === "available" && (
+                          {canViewPublishLogs &&
+                            item.issues?.map((issue, index) => (
+                              <Text
+                                key={index}
+                                color={
+                                  issue.severity === "error"
+                                    ? "destructive"
+                                    : "subtle"
+                                }
+                              >
+                                {issue.message}
+                              </Text>
+                            ))}
+                          {canViewPublishLogs &&
+                            (item.issuesOmitted ?? 0) > 0 && (
+                              <Text color="subtle">
+                                {item.issuesOmitted} more issues not shown.
+                              </Text>
+                            )}
+                          {canViewPublishLogs && item.status !== "pending" && (
                             <Button
                               type="button"
                               color="neutral"
                               onClick={() => {
-                                setSelectedAttemptId(item.attemptId);
+                                setSelectedBuildId(item.buildId);
                                 onLoadLog?.(item);
                               }}
                             >
                               View detailed report
                             </Button>
                           )}
-                          {!isPro && (
+                          {!canViewPublishLogs && (
                             <Text color="subtle">
                               Upgrade to Pro to view publish logs.
                             </Text>

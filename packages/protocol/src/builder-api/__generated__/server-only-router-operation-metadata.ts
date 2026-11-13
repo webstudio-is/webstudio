@@ -298,7 +298,6 @@ export const serverOnlyRouterOperationMetadata = {
                           "requestId",
                           "jobId",
                           "buildId",
-                          "attemptId",
                           "domainId",
                           "blockInstanceId",
                           "assetId",
@@ -494,7 +493,6 @@ export const serverOnlyRouterOperationMetadata = {
                             "requestId",
                             "jobId",
                             "buildId",
-                            "attemptId",
                             "domainId",
                             "blockInstanceId",
                             "assetId",
@@ -1818,16 +1816,20 @@ export const serverOnlyRouterOperationMetadata = {
         jobId: {
           type: "string",
         },
+        logHandle: {
+          type: "string",
+          maxLength: 2048,
+        },
       },
       required: ["jobId"],
     },
   },
-  "publish.getReport": {
-    id: "publish.getReport",
-    command: "get-publish-report",
+  "publish.getLog": {
+    id: "publish.getLog",
+    command: "get-publish-log",
     method: "query",
-    path: "api.publish.getReport",
-    client: "getPublishReport",
+    path: "api.publish.getLog",
+    client: "getPublishLog",
     permit: "view",
     inputSchema: {
       type: "object",
@@ -1835,13 +1837,7 @@ export const serverOnlyRouterOperationMetadata = {
         buildId: {
           type: "string",
         },
-        attemptId: {
-          type: "string",
-          format: "uuid",
-          pattern:
-            "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-        },
-        executionHandle: {
+        logHandle: {
           type: "string",
           maxLength: 2048,
         },
@@ -1851,7 +1847,7 @@ export const serverOnlyRouterOperationMetadata = {
           maximum: 9007199254740991,
         },
       },
-      required: ["buildId", "attemptId", "executionHandle"],
+      required: ["buildId", "logHandle"],
     },
   },
   "publish.unpublish": {

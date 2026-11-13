@@ -14,6 +14,18 @@ import {
 
 const { parseProductMeta, mergeProductMetas } = __testing__;
 
+test("normalizes legacy Product.meta log access and honors explicit false", () => {
+  expect(parseProductMeta({ allowAdvancedPublishDiagnostics: true })).toEqual({
+    allowPublishLogs: true,
+  });
+  expect(
+    parseProductMeta({
+      allowAdvancedPublishDiagnostics: true,
+      allowPublishLogs: false,
+    })
+  ).toEqual({ allowPublishLogs: false });
+});
+
 // ---------------------------------------------------------------------------
 // Unit tests for private helpers
 // ---------------------------------------------------------------------------

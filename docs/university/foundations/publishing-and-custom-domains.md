@@ -29,15 +29,15 @@ Choose **Validate** to see findings in the **Warnings** and **Errors** tabs.
 Click the status icon beside a domain to open the same dialog on the
 **Publish** tab for that domain. For a static export, click its status icon.
 
-The **Publish** tab shows up to 10 recent attempts started in the current Builder tab. It keeps
+The **Publish** tab shows up to 10 recent publishes started in the current Builder tab. It keeps
 results when you close the dialog, but clears them when you reload or close the
 Builder tab. Results for other domains stay separate. An older published status
-may still appear after reload, without a session report.
+may still appear after reload, without a session log.
 
-Free plans show short findings and publish status. Pro plans can open the
-detailed report and, when GitHub provides them, view the full build logs.
-Unavailable logs cannot be restored by upgrading. Build logs may be unavailable
-even when publishing succeeds or fails.
+Free plans show validation findings and a short publish failure notice, but not
+build-log issues or detailed build errors. Pro and Team plans can open finding
+details and, when GitHub provides them, view the full build logs. Build logs may
+be unavailable even when publishing succeeds or fails.
 
 ## Adding a custom domain
 

@@ -1104,6 +1104,140 @@ const getMcpOperationInput = (command: string, input: unknown) => {
   return input;
 };
 
+const createMcpPublishSession = () => {
+  const publishes = new Map<string, { sequence: number; logHandle?: string }>();
+  let sequence = 0;
+  let latestBuildId: string | undefined;
+  return {
+    begin() {
+      latestBuildId = undefined;
+      return ++sequence;
+    },
+    remember(callSequence: number, result: unknown) {
+      if (
+        isPlainRecord(result) === false ||
+        result.status !== "pending" ||
+        typeof result.buildId !== "string"
+      ) {
+        return;
+      }
+      publishes.set(result.buildId, {
+        sequence: callSequence,
+        logHandle:
+          typeof result.logHandle === "string" ? result.logHandle : undefined,
+      });
+      if (callSequence === sequence) {
+        latestBuildId = result.buildId;
+      }
+      if (publishes.size > 10) {
+        const oldest = [...publishes].reduce((left, right) =>
+          left[1].sequence < right[1].sequence ? left : right
+        )[0];
+        publishes.delete(oldest);
+      }
+    },
+    get(buildId: string | undefined) {
+      const selected = buildId ?? latestBuildId;
+      if (selected === undefined) {
+        throw createMcpInputError(
+          "No accepted publish is available in this MCP session.",
+          "PUBLISH_REQUIRED"
+        );
+      }
+      const publish = publishes.get(selected);
+      if (publish === undefined) {
+        throw createMcpInputError(
+          "This publish is not available in this MCP session.",
+          "PUBLISH_NOT_FOUND"
+        );
+      }
+      return { buildId: selected, logHandle: publish.logHandle };
+    },
+    getHandle(buildId: string) {
+      return publishes.get(buildId)?.logHandle;
+    },
+  };
+};
+
+const toMcpPublishLogPage = (value: unknown, cursor = 0) => {
+  if (isPlainRecord(value) === false || value.availability !== "available") {
+    return value;
+  }
+  const log = value.log;
+  if (
+    isPlainRecord(log) === false ||
+    log.encoding !== "base64url" ||
+    typeof log.chunk !== "string"
+  ) {
+    return value;
+  }
+  const bytes = Buffer.from(log.chunk, "base64url");
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  for (let trailingBytes = 0; trailingBytes <= 3; trailingBytes++) {
+    if (trailingBytes > 0 && log.complete !== false) {
+      break;
+    }
+    try {
+      const text = decoder.decode(
+        bytes.subarray(0, bytes.length - trailingBytes)
+      );
+      const nextCursor =
+        trailingBytes === 0
+          ? log.nextCursor
+          : typeof log.nextCursor === "number" &&
+              log.nextCursor === cursor + bytes.length
+            ? log.nextCursor - trailingBytes
+            : undefined;
+      if (
+        trailingBytes > 0 &&
+        (typeof nextCursor !== "number" || nextCursor <= cursor)
+      ) {
+        break;
+      }
+      const { chunk: _chunk, encoding: _encoding, ...metadata } = log;
+      return {
+        ...value,
+        log: {
+          ...metadata,
+          text,
+          ...(nextCursor === undefined ? {} : { nextCursor }),
+        },
+      };
+    } catch {
+      // Invalid UTF-8 stays in its original byte-exact base64url form.
+    }
+  }
+  return value;
+};
+
+const toMcpPublishOperation = (
+  operation: (typeof publicApiOperations)[number]
+) =>
+  operation.command === "get-publish-job"
+    ? {
+        ...operation,
+        inputSchema: {
+          type: "object" as const,
+          properties: { jobId: { type: "string" as const } },
+          required: ["jobId"],
+        },
+      }
+    : operation.command === "get-publish-log"
+      ? {
+          ...operation,
+          description:
+            "Read one page of the log for a publish started in this MCP session. Use nextCursor to continue. Publishes are forgotten when this MCP server stops.",
+          inputSchema: {
+            type: "object" as const,
+            properties: {
+              buildId: { type: "string" as const },
+              cursor: { type: "integer" as const, minimum: 0 },
+            },
+            required: [],
+          },
+        }
+      : operation;
+
 const publicApiOperationByCommand = new Map<
   string,
   (typeof publicApiOperations)[number]
@@ -2023,7 +2157,10 @@ const createCliMcpHost = async ({
     },
   };
   const apiContract = await getCliServerApiContract(apiConnection);
-  const operations = getSupportedPublicApiOperations(apiContract);
+  const operations = getSupportedPublicApiOperations(apiContract).map(
+    toMcpPublishOperation
+  );
+  const publishSession = createMcpPublishSession();
   const failureTracker = createIssueReportFailureTracker();
   const targetTracker = createIssueReportTargetTracker();
   const issueReportFailureFile = getIssueReportFailureFile(
@@ -2144,6 +2281,41 @@ const createCliMcpHost = async ({
     executeOperation: async ({ command, input, dryRun }) => {
       assertMcpToolServerSupport(command, apiContract, dryRun === true);
       let operationInput = getMcpOperationInput(command, input);
+      const publishSequence =
+        command === "publish" && dryRun !== true
+          ? publishSession.begin()
+          : undefined;
+      let unavailableLogBuildId: string | undefined;
+      if (command === "get-publish-log") {
+        const requestedBuildId =
+          isPlainRecord(operationInput) &&
+          typeof operationInput.buildId === "string"
+            ? operationInput.buildId
+            : undefined;
+        const publish = publishSession.get(requestedBuildId);
+        if (publish.logHandle === undefined) {
+          unavailableLogBuildId = publish.buildId;
+        } else {
+          operationInput = {
+            buildId: publish.buildId,
+            logHandle: publish.logHandle,
+            ...(isPlainRecord(operationInput) &&
+            typeof operationInput.cursor === "number"
+              ? { cursor: operationInput.cursor }
+              : {}),
+          };
+        }
+      }
+      if (
+        command === "get-publish-job" &&
+        isPlainRecord(operationInput) &&
+        typeof operationInput.jobId === "string"
+      ) {
+        const logHandle = publishSession.getHandle(operationInput.jobId);
+        if (logHandle !== undefined) {
+          operationInput = { ...operationInput, logHandle };
+        }
+      }
       const projectOrigin = new URL(apiConnection.origin).origin;
       if (command === "copy-design-token" && isPlainRecord(operationInput)) {
         operationInput = { ...operationInput, sourceOrigin: projectOrigin };
@@ -2180,8 +2352,12 @@ const createCliMcpHost = async ({
         session,
       });
       const result = await executeProjectSessionApiOperation({
-        command,
-        input: operationInput,
+        command:
+          unavailableLogBuildId === undefined ? command : "get-publish-job",
+        input:
+          unavailableLogBuildId === undefined
+            ? operationInput
+            : { jobId: unavailableLogBuildId },
         connection: apiConnection,
         createProjectSession: () => session,
         apiContract,
@@ -2189,6 +2365,35 @@ const createCliMcpHost = async ({
       });
       if (dryRun !== true && shouldInvalidatePreview(command)) {
         previewFreshness.markStale();
+      }
+      if (unavailableLogBuildId !== undefined) {
+        return {
+          ...result,
+          operationId: "publish.getLog",
+          result: { availability: "unavailable" },
+        };
+      }
+      if (command === "publish" && publishSequence !== undefined) {
+        publishSession.remember(publishSequence, result.result);
+        if (isPlainRecord(result.result)) {
+          const { logHandle: _logHandle, ...publicResult } = result.result;
+          return { ...result, result: publicResult };
+        }
+      }
+      if (command === "get-publish-log") {
+        return {
+          ...result,
+          result: toMcpPublishLogPage(
+            result.result,
+            isPlainRecord(input) && typeof input.cursor === "number"
+              ? input.cursor
+              : 0
+          ),
+        };
+      }
+      if (command === "get-publish-job" && isPlainRecord(result.result)) {
+        const { logHandle: _logHandle, ...publicResult } = result.result;
+        return { ...result, result: publicResult };
       }
       return withTextAssetWriteFeedback({
         command,
@@ -3162,6 +3367,9 @@ export const __testing__ = {
   createMcpRunCheckpointStopPayload,
   getLoadedProjectSessionSnapshot,
   getMcpOperationInput,
+  createMcpPublishSession,
+  toMcpPublishLogPage,
+  toMcpPublishOperation,
   prepareTextAssetWriteFeedback,
   withTextAssetWriteFeedback,
   validateDownloadedTextAsset,

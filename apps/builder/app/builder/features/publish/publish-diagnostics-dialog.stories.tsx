@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { StorySection } from "@webstudio-is/design-system";
 import {
-  PublishValidationResults,
+  PublishDiagnosticsDialog,
   type PublishValidationFinding,
-} from "./publish-validation-results";
+} from "./publish-diagnostics-dialog";
 
 export default {
   title: "Publish/Validation results",
-  component: PublishValidationResults,
+  component: PublishDiagnosticsDialog,
 };
 
 const errorsAndWarnings: PublishValidationFinding[] = [
@@ -48,7 +48,7 @@ const ValidationStory = ({
 
   return (
     <StorySection title="Publish validation">
-      <PublishValidationResults findings={findings} />
+      <PublishDiagnosticsDialog findings={findings} />
     </StorySection>
   );
 };

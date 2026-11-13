@@ -13,7 +13,7 @@ export const planFeatures = z.object({
   allowAuth: z.boolean(),
   allowContentMode: z.boolean(),
   allowStagingPublish: z.boolean(),
-  allowAdvancedPublishDiagnostics: z.boolean().optional(),
+  allowPublishLogs: z.boolean(),
   maxContactEmailsPerProject: z.number().nonnegative(),
   maxDomainsAllowedPerUser: z.number().nonnegative(),
   maxDailyPublishesPerUser: z.number().nonnegative(),
@@ -24,14 +24,24 @@ export const planFeatures = z.object({
   maxSeatsPerWorkspace: z.number().nonnegative(),
 });
 
+/** Accept the previous feature name only where external plan data enters. */
+export const planFeatureOverrides = planFeatures
+  .partial()
+  .extend({ allowAdvancedPublishDiagnostics: z.boolean().optional() })
+  .transform(({ allowAdvancedPublishDiagnostics, ...features }) => ({
+    ...features,
+    ...(features.allowPublishLogs === undefined &&
+    allowAdvancedPublishDiagnostics !== undefined
+      ? { allowPublishLogs: allowAdvancedPublishDiagnostics }
+      : {}),
+  }));
+
 export type PlanFeatures = z.infer<typeof planFeatures>;
 
 // Compile-time guard: all PlanFeatures values must be boolean or number.
 // If a new field with a different type is added to planFeatures, this line will error.
 type _AssertBooleanOrNumber =
-  PlanFeatures extends Record<string, boolean | number | undefined>
-    ? true
-    : never;
+  PlanFeatures extends Record<string, boolean | number> ? true : never;
 const _checkPlanFeaturesValueTypes: _AssertBooleanOrNumber = true;
 void _checkPlanFeaturesValueTypes;
 
@@ -44,7 +54,7 @@ export const defaultPlanFeatures: PlanFeatures = {
   allowAuth: false,
   allowContentMode: false,
   allowStagingPublish: false,
-  allowAdvancedPublishDiagnostics: false,
+  allowPublishLogs: false,
   maxContactEmailsPerProject: 0,
   maxDomainsAllowedPerUser: 0,
   maxDailyPublishesPerUser: 10,
@@ -110,9 +120,9 @@ export const parsePlansEnv = (raw: string): Map<string, PlanConfig> => {
       console.error("Invalid PLANS entry (extends must be a string):", item);
       return [];
     }
-    const featuresResult = planFeatures
-      .partial()
-      .safeParse("features" in item ? item.features : {});
+    const featuresResult = planFeatureOverrides.safeParse(
+      "features" in item ? item.features : {}
+    );
     if (!featuresResult.success) {
       console.error(
         `Invalid PLANS entry "${item.name}" features:`,

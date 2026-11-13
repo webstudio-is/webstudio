@@ -4,9 +4,10 @@ import { afterEach, expect, test, vi } from "vitest";
 import { userEvent } from "@vitest/browser/context";
 import { TooltipProvider } from "@webstudio-is/design-system";
 import {
-  PublishValidationResults,
+  PublishDiagnosticsDialog,
   type PublishValidationFinding,
-} from "./publish-validation-results";
+} from "./publish-diagnostics-dialog";
+import type { PublishLog } from "./use-publish-logs";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -22,14 +23,22 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const render = (findings: PublishValidationFinding[], isPro = true) => {
+const render = (
+  findings: PublishValidationFinding[],
+  canViewPublishLogs = true,
+  items: PublishLog[] = []
+) => {
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
   act(() => {
     root?.render(
       <TooltipProvider>
-        <PublishValidationResults findings={findings} isPro={isPro} />
+        <PublishDiagnosticsDialog
+          findings={findings}
+          canViewPublishLogs={canViewPublishLogs}
+          items={items}
+        />
       </TooltipProvider>
     );
   });
@@ -107,6 +116,19 @@ test("shows all mixed findings, counted tabs, selectable text, and copy-all", as
   await act(async () => userEvent.click(warningTab as HTMLElement));
   expect(document.body.textContent).toContain("warning-10");
   expect(document.body.textContent).not.toContain("error-0");
+  const warningFinding = Array.from(
+    document.body.querySelectorAll("button")
+  ).find((button) => button.textContent === "warning-0");
+  await act(async () => userEvent.click(warningFinding as HTMLElement));
+  const warningBack = Array.from(document.body.querySelectorAll("button")).find(
+    (button) => button.textContent === "Back"
+  );
+  await act(async () => userEvent.click(warningBack as HTMLElement));
+  expect(
+    Array.from(document.body.querySelectorAll('[role="tab"]'))
+      .find((tab) => tab.textContent === "Warnings")
+      ?.getAttribute("aria-selected")
+  ).toBe("true");
 
   const copyButton = document.body.querySelector<HTMLButtonElement>(
     'button[aria-label="Copy all reports"]'
@@ -158,4 +180,67 @@ test("Free shows the actual short error without details, navigation, or report c
   expect(
     document.body.querySelector('[aria-label="Copy all reports"]')
   ).toBeNull();
+});
+
+test("Free hides log-derived issues, stage, and code", async () => {
+  const element = render([createFinding("warning", 0)], false, [
+    {
+      buildId: "build-1",
+      target: "site",
+      domains: ["example.com"],
+      findings: [],
+      status: "failed",
+      code: "private-code",
+      failedStage: "private-stage",
+      issues: [{ severity: "error", message: "private-log-issue" }],
+    },
+  ]);
+  openDetails(element);
+  const publishTab = Array.from(
+    document.body.querySelectorAll('[role="tab"]')
+  ).find((tab) => tab.textContent === "Publish");
+  await act(async () => userEvent.click(publishTab as HTMLElement));
+  expect(document.body.textContent).toContain("Publish failed");
+  expect(document.body.textContent).not.toContain("private-code");
+  expect(document.body.textContent).not.toContain("private-stage");
+  expect(document.body.textContent).not.toContain("private-log-issue");
+});
+
+test("Free audit summaries do not expose long cached details", () => {
+  const longSummary = `Short reason ${"private context ".repeat(30)}`;
+  const element = render(
+    [
+      {
+        severity: "error",
+        title: longSummary,
+        summary: longSummary,
+        reportText: longSummary,
+      },
+    ],
+    false
+  );
+  openDetails(element);
+  expect(document.body.textContent).toContain("Short reason");
+  expect(document.body.textContent).not.toContain(longSummary);
+});
+
+test("Show element closes the diagnostics dialog on ordinary navigation", async () => {
+  const element = render([
+    {
+      severity: "error",
+      title: "Invalid element",
+      link: <a href="#element">Show element</a>,
+      reportText: "Invalid element",
+    },
+  ]);
+  openDetails(element);
+  const finding = Array.from(document.body.querySelectorAll("button")).find(
+    (button) => button.textContent === "Invalid element"
+  );
+  await act(async () => userEvent.click(finding as HTMLElement));
+  const link =
+    document.body.querySelector<HTMLAnchorElement>('a[href="#element"]');
+  expect(link).not.toBeNull();
+  await act(async () => userEvent.click(link as HTMLElement));
+  expect(document.body.querySelector('[role="dialog"]')).toBeNull();
 });

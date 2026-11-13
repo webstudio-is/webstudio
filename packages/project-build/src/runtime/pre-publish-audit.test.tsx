@@ -135,6 +135,53 @@ test("warns without blocking legacy invalid HTML", () => {
   );
 });
 
+test("reports invalid sibling and descendant HTML on each published page, not drafts", () => {
+  const { instances, props } = renderData(
+    <>
+      <Body ws:id="body">
+        <Paragraph>
+          <Heading ws:id="first" ws:tag="h2">
+            <Heading ws:id="nested" ws:tag="h3">
+              Nested
+            </Heading>
+          </Heading>
+          <Heading ws:id="second" ws:tag="h2">
+            Second
+          </Heading>
+        </Paragraph>
+      </Body>
+      <Body ws:id="draft-body">
+        <Paragraph>
+          <Heading ws:id="draft-heading" ws:tag="h2">
+            Draft
+          </Heading>
+        </Paragraph>
+      </Body>
+    </>
+  );
+  const pages = createPages(marketEdgePage);
+  pages.pages.set("draft", {
+    ...marketEdgePage,
+    id: "draft",
+    name: "Draft",
+    path: "/draft",
+    rootInstanceId: "draft-body",
+    isDraft: true,
+  });
+  const findings = runAudit({ pages, instances, props }).filter(
+    ({ ruleId }) => ruleId === "html-content-model"
+  );
+
+  expect(findings.map(({ location }) => location.instanceId)).toEqual([
+    "first",
+    "nested",
+    "second",
+  ]);
+  expect(
+    findings.every(({ location }) => location.pagePath === "/marketedge")
+  ).toBe(true);
+});
+
 test("warns for nested and shared Webhook Forms on every published page", () => {
   const pages = createPages(marketEdgePage);
   pages.pages.set("other", {

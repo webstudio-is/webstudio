@@ -1113,8 +1113,11 @@ Commands:
 - webstudio publish deploy --target production --json
 - webstudio publish deploy --target production --json --wait
 
-Use `--wait` to read this publish's available diagnostics before the command
-exits. The default command returns when the job is accepted.
+The default CLI command returns when the job is accepted. Use `--wait` to
+receive status updates on stderr until publishing finishes, then read available
+logs before the command exits. `--wait` does not cancel a publish if waiting
+stops. Logs are available only on Pro and Team plans. In an MCP session, call
+`publish {"target":"production"}` to start a publish.
 
 ## List publishes
 
@@ -1128,11 +1131,19 @@ Commands:
 
 - webstudio publish status --job <buildId> --json
 
-## Inspect publish report
+## Inspect publish log
 
 Commands:
 
-- webstudio publish report --build-id <buildId> --attempt-id <publishAttemptId> --execution-handle <executionHandle> --json
+- webstudio publish log --build-id <buildId> --log-handle <logHandle> --json
+- MCP tool: get-publish-log {}
+- MCP tool: get-publish-log {"buildId":"<buildId>","cursor":<nextCursor>}
+
+An MCP server remembers at most ten publishes it started. Omit `buildId` to
+read the latest accepted publish, or pass the build ID returned by `publish`.
+Continue with `nextCursor` until the page says `complete`. Each page checks
+project access and the current plan. The MCP server forgets publishes when it
+stops; a separate one-shot CLI process cannot read its session memory.
 
 ## Unpublish
 

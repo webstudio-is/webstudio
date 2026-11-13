@@ -45,7 +45,7 @@ import { CopyToClipboard } from "~/shared/copy-to-clipboard";
 import { RelativeTime } from "~/builder/shared/relative-time";
 import { $currentSystem } from "~/shared/system";
 import { getPublishUrl } from "./publish-url";
-import type { PublishSessionItem } from "./use-publish-session";
+import type { PublishLog } from "./use-publish-logs";
 
 export type Domain = Project["domainsVirtual"][number];
 
@@ -167,33 +167,36 @@ const getStatusText = (props: {
 const StatusIcon = (props: {
   projectDomain: Domain;
   isLoading: boolean;
-  latestSession?: PublishSessionItem;
+  latestLog?: PublishLog;
   onOpenReport?: (domain: string) => void;
 }) => {
   const fallback = getStatusText(props);
-  const { latestSession } = props;
+  const latestLog =
+    props.latestLog?.buildId === props.projectDomain.latestBuildVirtual?.buildId
+      ? props.latestLog
+      : undefined;
   const Icon =
-    latestSession?.availability === "pending"
+    latestLog?.status === "pending"
       ? SpinnerIcon
-      : latestSession?.outcome === "failed"
+      : latestLog?.status === "failed"
         ? AlertIcon
-        : latestSession?.outcome === "succeeded"
+        : latestLog?.status === "success"
           ? CheckCircleIcon
           : fallback.Icon;
   const color =
-    latestSession?.availability === "pending"
+    latestLog?.status === "pending"
       ? cssVar("--foreground-warning")
-      : latestSession?.outcome === "failed"
+      : latestLog?.status === "failed"
         ? cssVar("--foreground-negative")
-        : latestSession?.outcome === "succeeded"
+        : latestLog?.status === "success"
           ? cssVar("--foreground-positive")
           : fallback.color;
   const text =
-    latestSession?.availability === "pending"
+    latestLog?.status === "pending"
       ? "Publishing started"
-      : latestSession?.outcome === "failed"
+      : latestLog?.status === "failed"
         ? "Publish failed"
-        : latestSession?.outcome === "succeeded"
+        : latestLog?.status === "success"
           ? "Published"
           : fallback.text;
 
@@ -201,7 +204,7 @@ const StatusIcon = (props: {
     <Tooltip content={text}>
       <IconButton
         type="button"
-        aria-label={`Publish report: ${props.projectDomain.domain}`}
+        aria-label={`Publish log: ${props.projectDomain.domain}`}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
@@ -221,7 +224,7 @@ const DomainItem = ({
   refresh,
   validatedDomains,
   onOpenReport,
-  latestSession,
+  latestLog,
 }: {
   initiallyOpen: boolean;
   projectDomain: Domain;
@@ -229,7 +232,7 @@ const DomainItem = ({
   refresh: () => Promise<void>;
   validatedDomains?: readonly string[];
   onOpenReport?: (domain: string) => void;
-  latestSession?: PublishSessionItem;
+  latestLog?: PublishLog;
 }) => {
   const timeSinceLastUpdateMs =
     Date.now() - new Date(projectDomain.updatedAt).getTime();
@@ -405,7 +408,7 @@ const DomainItem = ({
             projectDomain={projectDomain}
             isLoading={isStatusLoading}
             onOpenReport={onOpenReport}
-            latestSession={latestSession}
+            latestLog={latestLog}
           />
 
           <CopyToClipboard
@@ -619,7 +622,7 @@ type DomainsProps = {
   project: Project;
   validatedDomains?: readonly string[];
   onOpenReport?: (domain: string) => void;
-  sessionItems?: PublishSessionItem[];
+  publishLogs?: PublishLog[];
 };
 
 export const Domains = ({
@@ -629,7 +632,7 @@ export const Domains = ({
   project,
   validatedDomains,
   onOpenReport,
-  sessionItems = [],
+  publishLogs = [],
 }: DomainsProps) => {
   return (
     <>
@@ -642,7 +645,7 @@ export const Domains = ({
           project={project}
           validatedDomains={validatedDomains}
           onOpenReport={onOpenReport}
-          latestSession={sessionItems.find(
+          latestLog={publishLogs.find(
             (item) =>
               item.target === "site" &&
               item.domains.includes(projectDomain.domain)
@@ -652,8 +655,5 @@ export const Domains = ({
     </>
   );
 };
-
-undefined;
-undefined;
 
 export const __testing__ = { StatusIcon };

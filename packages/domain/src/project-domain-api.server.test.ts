@@ -10,7 +10,7 @@ import { http } from "msw";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import {
   getProjectPublishJob,
-  getProjectPublishExecution,
+  getProjectPublishLog,
   listProjectPublishes,
   getDeploymentPublishErrorDiagnostics,
   publishProject,
@@ -33,6 +33,9 @@ const ownershipHandler = db.get("Project", ({ request }) => {
   const url = new URL(request.url);
   if (url.searchParams.has("userId")) {
     return json({ id: url.searchParams.get("id")?.replace("eq.", "") });
+  }
+  if (url.searchParams.get("select") === "userId") {
+    return json({ userId: "user-1" });
   }
   return json(null);
 });
@@ -125,6 +128,9 @@ const createPublishContext = (
   ({
     ...testContext,
     authorization: { type: "user", userId: "user-1" },
+    getOwnerPlanFeatures: async () => ({
+      allowPublishLogs: false,
+    }),
     deployment: {
       deploymentTrpc: {
         publish: {
@@ -156,21 +162,20 @@ const productionBuildHandler = (
     }
   );
 
-const executionInput = {
+const logInput = {
   projectId: "project-1",
   buildId: "build-prod",
-  attemptId: "85ce611c-9d38-4530-9c4e-4cb7a605743d",
-  executionHandle: "signed-handle",
+  logHandle: "signed-handle",
   cursor: 128,
 };
 
-test("checks project and build ownership before fetching publish execution", async () => {
+test("checks project and build ownership before fetching publish logs", async () => {
   const query = vi.fn().mockResolvedValue({ availability: "pending" });
   const publishContext = {
     ...createPublishContext(),
     deployment: {
       ...createPublishContext().deployment,
-      deploymentTrpc: { getPublishExecution: { query } },
+      deploymentTrpc: { getPublishLog: { query } },
     },
   } as unknown as AppContext;
   server.use(
@@ -183,11 +188,11 @@ test("checks project and build ownership before fetching publish execution", asy
     })
   );
 
+  await expect(getProjectPublishLog(logInput, publishContext)).resolves.toEqual(
+    { availability: "unavailable" }
+  );
   await expect(
-    getProjectPublishExecution(executionInput, publishContext)
-  ).resolves.toEqual({ availability: "unavailable" });
-  await expect(
-    getProjectPublishExecution(executionInput, {
+    getProjectPublishLog(logInput, {
       ...publishContext,
       authorization: { type: "anonymous" },
     } as AppContext)
@@ -195,30 +200,19 @@ test("checks project and build ownership before fetching publish execution", asy
   expect(query).not.toHaveBeenCalled();
 });
 
-test("keeps Free publish outcome and short issues without exposing log bytes", async () => {
+test("uses the Free project owner's plan despite a Pro collaborator", async () => {
   const query = vi.fn().mockResolvedValue({
     availability: "available",
     outcome: "failed",
     logAvailability: "unavailable",
-    failureReason: "cancelled",
-    failedStage: "setup",
-    startedAt: "2026-11-13T12:00:00Z",
-    completedAt: "2026-11-13T12:02:00Z",
-    log: {
-      encoding: "base64url",
-      chunk: "c2VjcmV0",
-      complete: false,
-      nextCursor: 256,
-      issues: [{ severity: "error", message: "x".repeat(200) }],
-      issuesOmitted: 2,
-    },
+    code: "cancelled",
   });
   const publishContext = {
     ...createPublishContext(),
-    planFeatures: { allowAdvancedPublishDiagnostics: false },
+    planFeatures: { allowPublishLogs: true },
     deployment: {
       ...createPublishContext().deployment,
-      deploymentTrpc: { getPublishExecution: { query } },
+      deploymentTrpc: { getPublishLog: { query } },
     },
   } as unknown as AppContext;
   server.use(
@@ -226,35 +220,13 @@ test("keeps Free publish outcome and short issues without exposing log bytes", a
     db.get("Build", () => json({ id: "build-prod" }))
   );
 
-  const result = await getProjectPublishExecution(
-    executionInput,
-    publishContext
-  );
-  expect(result).toEqual({
-    availability: "available",
-    outcome: "failed",
-    logAvailability: "unavailable",
-    failureReason: "cancelled",
-    failedStage: "setup",
-    startedAt: "2026-11-13T12:00:00Z",
-    completedAt: "2026-11-13T12:02:00Z",
-    log: {
-      complete: false,
-      nextCursor: 256,
-      issues: [{ severity: "error", message: "x".repeat(160) }],
-      issuesOmitted: 2,
-    },
-  });
-  expect(JSON.stringify(result)).not.toContain("c2VjcmV0");
-  expect(query).toHaveBeenCalledWith({
-    buildId: "build-prod",
-    attemptId: executionInput.attemptId,
-    executionHandle: "signed-handle",
-    cursor: 128,
-  });
+  const attemptedOverride = { ...logInput, includeLog: true };
+  const result = await getProjectPublishLog(attemptedOverride, publishContext);
+  expect(result).toEqual({ availability: "unavailable" });
+  expect(query).not.toHaveBeenCalled();
 });
 
-test("returns complete log bytes only on an advanced diagnostics plan", async () => {
+test("uses the Pro project owner's plan despite a Free collaborator", async () => {
   const response = {
     availability: "available" as const,
     outcome: "succeeded" as const,
@@ -263,11 +235,14 @@ test("returns complete log bytes only on an advanced diagnostics plan", async ()
   };
   const publishContext = {
     ...createPublishContext(),
-    planFeatures: { allowAdvancedPublishDiagnostics: true },
+    planFeatures: { allowPublishLogs: false },
+    getOwnerPlanFeatures: async () => ({
+      allowPublishLogs: true,
+    }),
     deployment: {
       ...createPublishContext().deployment,
       deploymentTrpc: {
-        getPublishExecution: { query: vi.fn().mockResolvedValue(response) },
+        getPublishLog: { query: vi.fn().mockResolvedValue(response) },
       },
     },
   } as unknown as AppContext;
@@ -275,44 +250,238 @@ test("returns complete log bytes only on an advanced diagnostics plan", async ()
     ownershipHandler,
     db.get("Build", () => json({ id: "build-prod" }))
   );
-  await expect(
-    getProjectPublishExecution(executionInput, publishContext)
-  ).resolves.toEqual(response);
+  await expect(getProjectPublishLog(logInput, publishContext)).resolves.toEqual(
+    response
+  );
+  expect(
+    publishContext.deployment.deploymentTrpc.getPublishLog.query
+  ).toHaveBeenCalledWith({
+    buildId: "build-prod",
+    logHandle: "signed-handle",
+    cursor: 128,
+    includeLog: true,
+  });
 });
 
-test("keeps failure details for Free when GitHub logs are unavailable", async () => {
-  const publishContext = {
-    ...createPublishContext(),
-    planFeatures: { allowAdvancedPublishDiagnostics: false },
-    deployment: {
-      ...createPublishContext().deployment,
-      deploymentTrpc: {
-        getPublishExecution: {
-          query: vi.fn().mockResolvedValue({
-            availability: "available",
-            outcome: "failed",
-            logAvailability: "unavailable",
-            failureReason: "startup_failure",
-            failedStage: "setup",
-          }),
-        },
-      },
-    },
-  } as unknown as AppContext;
-  server.use(
-    ownershipHandler,
-    db.get("Build", () => json({ id: "build-prod" }))
-  );
-  await expect(
-    getProjectPublishExecution(executionInput, publishContext)
-  ).resolves.toEqual({
+test("keeps Free publish failure status without downloading logs", async () => {
+  const query = vi.fn().mockResolvedValue({
     availability: "available",
     outcome: "failed",
     logAvailability: "unavailable",
-    failureReason: "startup_failure",
-    failedStage: "setup",
-    log: undefined,
+    code: "startup_failure",
   });
+  const publishContext = {
+    ...createPublishContext(),
+    planFeatures: { allowPublishLogs: false },
+    deployment: {
+      ...createPublishContext().deployment,
+      deploymentTrpc: {
+        getPublishLog: { query },
+      },
+    },
+  } as unknown as AppContext;
+  server.use(
+    ownershipHandler,
+    db.get("Build", ({ request }) => {
+      const params = new URL(request.url).searchParams;
+      expect(params.get("projectId")).toBe("eq.project-1");
+      expect(params.get("id")).toBe("eq.build-prod");
+      return json({
+        id: "build-prod",
+        version: 3,
+        createdAt: "2024-01-03T00:00:00.000Z",
+        updatedAt: "2024-01-03T00:01:00.000Z",
+        publishStatus: "PENDING",
+        deployment: JSON.stringify({
+          destination: "saas",
+          target: "production",
+          domains: ["example.com"],
+        }),
+      });
+    })
+  );
+  await expect(
+    getProjectPublishJob(
+      {
+        projectId: "project-1",
+        jobId: "build-prod",
+        logHandle: "signed-handle",
+      },
+      publishContext
+    )
+  ).resolves.toMatchObject({ status: "failed", code: "startup_failure" });
+  expect(query).toHaveBeenCalledWith({
+    buildId: "build-prod",
+    logHandle: "signed-handle",
+    includeLog: false,
+  });
+});
+
+test.each([
+  {
+    label: "pending",
+    response: { availability: "pending" },
+    durableStatus: "PUBLISHED",
+    status: "pending",
+    code: undefined,
+    completedAt: undefined,
+  },
+  {
+    label: "succeeded",
+    response: {
+      availability: "available",
+      outcome: "succeeded",
+      completedAt: "2024-01-03T00:02:00.000Z",
+    },
+    durableStatus: "PENDING",
+    status: "success",
+    code: undefined,
+    completedAt: "2024-01-03T00:02:00.000Z",
+  },
+  {
+    label: "failed",
+    response: {
+      availability: "available",
+      outcome: "failed",
+      code: "cancelled",
+    },
+    durableStatus: "PUBLISHED",
+    status: "failed",
+    code: "cancelled",
+    completedAt: undefined,
+  },
+  {
+    label: "unavailable",
+    response: { availability: "unavailable" },
+    durableStatus: "PUBLISHED",
+    status: "success",
+    code: undefined,
+    completedAt: "2024-01-03T00:01:00.000Z",
+  },
+] as const)(
+  "uses $label verified runner status without log transfer",
+  async ({ response, durableStatus, status, code, completedAt }) => {
+    const query = vi.fn().mockResolvedValue(response);
+    const publishContext = {
+      ...createPublishContext(),
+      deployment: {
+        ...createPublishContext().deployment,
+        deploymentTrpc: { getPublishLog: { query } },
+      },
+    } as unknown as AppContext;
+    server.use(
+      db.get("Build", () =>
+        json({
+          id: "build-prod",
+          version: 3,
+          createdAt: "2024-01-03T00:00:00.000Z",
+          updatedAt: "2024-01-03T00:01:00.000Z",
+          publishStatus: durableStatus,
+          deployment: JSON.stringify({
+            destination: "saas",
+            target: "production",
+            domains: ["example.com"],
+          }),
+        })
+      )
+    );
+    const result = await getProjectPublishJob(
+      {
+        projectId: "project-1",
+        jobId: "build-prod",
+        logHandle: "signed-handle",
+      },
+      publishContext
+    );
+    expect(result).toMatchObject({ status });
+    expect(result?.completedAt).toBe(completedAt);
+    if (code === undefined) {
+      expect(result).not.toHaveProperty("code");
+    } else {
+      expect(result).toHaveProperty("code", code);
+    }
+    expect(query).toHaveBeenCalledWith({
+      buildId: "build-prod",
+      logHandle: "signed-handle",
+      includeLog: false,
+    });
+    expect(result).not.toHaveProperty("log");
+  }
+);
+
+test("keeps the durable status when runner status lookup rejects", async () => {
+  const query = vi.fn().mockRejectedValue(new Error("runner unavailable"));
+  const publishContext = {
+    ...createPublishContext(),
+    deployment: {
+      ...createPublishContext().deployment,
+      deploymentTrpc: { getPublishLog: { query } },
+    },
+  } as unknown as AppContext;
+  server.use(
+    db.get("Build", () =>
+      json({
+        id: "build-prod",
+        version: 3,
+        createdAt: "2024-01-03T00:00:00.000Z",
+        updatedAt: "2024-01-03T00:01:00.000Z",
+        publishStatus: "FAILED",
+        deployment: JSON.stringify({ destination: "saas", domains: [] }),
+      })
+    )
+  );
+  await expect(
+    getProjectPublishJob(
+      {
+        projectId: "project-1",
+        jobId: "build-prod",
+        logHandle: "signed-handle",
+      },
+      publishContext
+    )
+  ).resolves.toMatchObject({ status: "failed" });
+  expect(query).toHaveBeenCalledOnce();
+});
+
+test("removed and missing jobs never query the runner", async () => {
+  const query = vi.fn();
+  const publishContext = {
+    ...createPublishContext(),
+    deployment: {
+      ...createPublishContext().deployment,
+      deploymentTrpc: { getPublishLog: { query } },
+    },
+  } as unknown as AppContext;
+  server.use(
+    db.get("Build", () =>
+      json({
+        id: "build-prod",
+        version: 3,
+        createdAt: "2024-01-03T00:00:00.000Z",
+        updatedAt: "2024-01-03T00:01:00.000Z",
+        publishStatus: "PUBLISHED",
+        deployment: null,
+      })
+    )
+  );
+  await expect(
+    getProjectPublishJob(
+      {
+        projectId: "project-1",
+        jobId: "build-prod",
+        logHandle: "signed-handle",
+      },
+      publishContext
+    )
+  ).resolves.toMatchObject({ status: "removed" });
+  server.use(db.get("Build", () => empty({ status: 204 })));
+  await expect(
+    getProjectPublishJob(
+      { projectId: "project-1", jobId: "missing", logHandle: "signed-handle" },
+      publishContext
+    )
+  ).resolves.toBeUndefined();
+  expect(query).not.toHaveBeenCalled();
 });
 
 test("publish error diagnostics expose metadata without response values", () => {
@@ -423,8 +592,7 @@ test("publishes saas project through shared domain service", async () => {
     build: { id: "build-prod" },
     deploymentNotImplemented: false,
   });
-  expect(response.attemptId).toMatch(/^[0-9a-f-]{36}$/);
-  expect(response.executionHandle).toBeUndefined();
+  expect(response.logHandle).toBeUndefined();
   expect(publish).toHaveBeenCalledOnce();
 
   expect(productionBuildRequest?.project_id).toBe("project-1");
@@ -442,7 +610,6 @@ test("publishes saas project through shared domain service", async () => {
     branchName: "main",
     destination: "saas",
     logProjectName: "Project One - project-1",
-    attemptId: expect.any(String),
   });
 });
 
@@ -511,7 +678,6 @@ test("publishes static project through shared domain service", async () => {
     branchName: "main",
     destination: "static",
     logProjectName: "Project One - project-1",
-    attemptId: expect.any(String),
   });
 });
 
