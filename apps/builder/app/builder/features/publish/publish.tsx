@@ -2402,6 +2402,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
             : [
                 {
                   severity: "error" as const,
+                  source: "publish" as const,
                   title: publishProgress.publishError,
                   summary:
                     typeof publishProgress.publishError === "string"

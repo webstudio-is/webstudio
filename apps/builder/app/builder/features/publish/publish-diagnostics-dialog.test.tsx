@@ -27,7 +27,8 @@ const render = (
   findings: PublishValidationFinding[],
   canViewPublishLogs = true,
   items: PublishLog[] = [],
-  onLoadLog?: (item: PublishLog) => void
+  onLoadLog?: (item: PublishLog) => void,
+  open?: boolean
 ) => {
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -40,6 +41,7 @@ const render = (
           canViewPublishLogs={canViewPublishLogs}
           items={items}
           onLoadLog={onLoadLog}
+          open={open}
         />
       </TooltipProvider>
     );
@@ -272,6 +274,134 @@ test("shows unavailable instead of loading forever when a publish has no log han
   await act(async () => userEvent.click(publishTab as HTMLElement));
   expect(onLoadLog).not.toHaveBeenCalled();
   expect(document.body.textContent).toContain("Publish logs are unavailable.");
+});
+
+test("lists each publish domain and copies the full loaded log", async () => {
+  const writeText = vi.fn(async (_text: string) => {});
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText },
+  });
+  render(
+    [],
+    true,
+    [
+      {
+        buildId: "build-1",
+        target: "site",
+        domains: ["first.example", "second.example"],
+        findings: [],
+        status: "failed",
+        logState: "available",
+        logText: "First complete runner log",
+      },
+      {
+        buildId: "build-2",
+        target: "site",
+        domains: ["third.example"],
+        findings: [],
+        status: "success",
+        logState: "available",
+        logText: "Second complete runner log",
+      },
+    ],
+    undefined,
+    true
+  );
+  expect(document.body.textContent).toContain("first.example");
+  expect(document.body.textContent).toContain("second.example");
+  expect(document.body.textContent).toContain("third.example");
+  expect(document.body.textContent).not.toContain(
+    "first.example, second.example"
+  );
+  const copyButton = document.body.querySelector<HTMLButtonElement>(
+    'button[aria-label="Copy all reports"]'
+  );
+  expect(copyButton).not.toBeNull();
+  await act(async () => userEvent.click(copyButton!));
+  expect(writeText).toHaveBeenCalledOnce();
+  const copied = writeText.mock.calls[0][0];
+  expect(copied).toContain("First complete runner log");
+  expect(copied).toContain("Second complete runner log");
+  expect(copied).toContain("first.example");
+  expect(copied).toContain("second.example");
+  expect(copied).toContain("third.example");
+});
+
+test("publish failure is plain text and links to the Publish tab", async () => {
+  render(
+    [
+      {
+        severity: "error",
+        source: "publish",
+        title: "Build failed before deployment",
+        summary: "Build failed before deployment",
+        reportText: "Build failed before deployment",
+      },
+    ],
+    true,
+    [
+      {
+        buildId: "build-1",
+        target: "site",
+        domains: ["first.example"],
+        findings: [],
+        status: "failed",
+      },
+    ],
+    undefined,
+    true
+  );
+  expect(document.body.textContent).toContain("Build failed before deployment");
+  expect(document.body.textContent).not.toContain("Audit");
+  expect(
+    Array.from(document.body.querySelectorAll("button")).some(
+      (button) => button.textContent === "Build failed before deployment"
+    )
+  ).toBe(false);
+  const publishLink = Array.from(document.body.querySelectorAll("button")).find(
+    (button) =>
+      button.getAttribute("role") !== "tab" && button.textContent === "Publish"
+  );
+  expect(publishLink).toBeDefined();
+  await act(async () => userEvent.click(publishLink!));
+  expect(
+    Array.from(document.body.querySelectorAll('[role="tab"]'))
+      .find((tab) => tab.textContent === "Publish")
+      ?.getAttribute("aria-selected")
+  ).toBe("true");
+});
+
+test("pre-dispatch failure has no link to an absent Publish tab", () => {
+  render(
+    [
+      {
+        severity: "error",
+        source: "publish",
+        title: "Publish request failed",
+        reportText: "Publish request failed",
+      },
+    ],
+    true,
+    [],
+    undefined,
+    true
+  );
+  expect(document.body.textContent).toContain("Publish request failed");
+  expect(document.body.textContent).not.toContain("Audit");
+  expect(
+    Array.from(document.body.querySelectorAll("button")).some(
+      (button) => button.textContent === "Publish request failed"
+    )
+  ).toBe(false);
+  expect(document.body.querySelector('[role="tab"]')?.textContent).toBe(
+    "Errors"
+  );
+  expect(
+    Array.from(document.body.querySelectorAll("button")).some(
+      (button) => button.textContent === "Publish"
+    )
+  ).toBe(false);
 });
 
 test("Free audit summaries do not expose long cached details", () => {

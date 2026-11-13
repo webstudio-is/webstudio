@@ -25,7 +25,7 @@ import { getPublishDuration } from "./use-publish-logs";
 
 export type PublishValidationFinding = {
   severity: "error" | "warning";
-  source?: "audit" | "build";
+  source?: "audit" | "build" | "publish";
   title: ReactNode;
   summary?: string;
   details?: ReactNode;
@@ -83,20 +83,35 @@ const FindingList = ({
   findings,
   canViewPublishLogs,
   onSelect,
+  onOpenPublish,
 }: {
   findings: PublishValidationFinding[];
   canViewPublishLogs: boolean;
   onSelect: (finding: PublishValidationFinding) => void;
+  onOpenPublish?: () => void;
 }) => (
   <ScrollArea css={{ height: "100%" }}>
     <PanelContent as={Flex} direction="column" gap={3}>
       {findings.map((finding, index) => (
         <Fragment key={`${finding.severity}-${index}`}>
           <Flex direction="column" gap={2}>
-            <Text color="subtle" variant="labels">
-              {finding.source === "build" ? "Build" : "Audit"}
-            </Text>
-            {canViewPublishLogs ? (
+            {finding.source !== "publish" && (
+              <Text color="subtle" variant="labels">
+                {finding.source === "build" ? "Build" : "Audit"}
+              </Text>
+            )}
+            {finding.source === "publish" ? (
+              <>
+                <Text variant="labels" userSelect="text">
+                  {canViewPublishLogs ? finding.title : shortFinding(finding)}
+                </Text>
+                {onOpenPublish !== undefined && (
+                  <Button type="button" color="ghost" onClick={onOpenPublish}>
+                    Publish
+                  </Button>
+                )}
+              </>
+            ) : canViewPublishLogs ? (
               <Button
                 type="button"
                 color="ghost"
@@ -156,6 +171,18 @@ export const PublishDiagnosticsDialog = ({
           ? "warnings"
           : "publish";
   const reportText = findings.map(({ reportText }) => reportText).join("\n\n");
+  const publishText = items
+    .filter(
+      (item) => item.logState === "available" && item.logText !== undefined
+    )
+    .map((item) =>
+      [
+        ...(item.domains.length > 0 ? item.domains : ["Static export"]),
+        item.logText,
+      ].join("\n")
+    )
+    .join("\n\n");
+  const copyText = activeTab === "publish" ? publishText : reportText;
 
   useEffect(() => {
     setSelectedFinding(undefined);
@@ -205,11 +232,8 @@ export const PublishDiagnosticsDialog = ({
           <DialogTitle
             suffix={
               <DialogTitleActions>
-                {canViewPublishLogs && reportText.length > 0 && (
-                  <CopyToClipboard
-                    text={reportText}
-                    copyText="Copy all reports"
-                  >
+                {canViewPublishLogs && copyText.length > 0 && (
+                  <CopyToClipboard text={copyText} copyText="Copy all reports">
                     <IconButton
                       type="button"
                       aria-label="Copy all reports"
@@ -289,6 +313,9 @@ export const PublishDiagnosticsDialog = ({
                   findings={warnings}
                   canViewPublishLogs={canViewPublishLogs}
                   onSelect={setSelectedFinding}
+                  onOpenPublish={
+                    items.length > 0 ? () => setTab("publish") : undefined
+                  }
                 />
               </PanelTabsContent>
               <PanelTabsContent
@@ -299,6 +326,9 @@ export const PublishDiagnosticsDialog = ({
                   findings={errors}
                   canViewPublishLogs={canViewPublishLogs}
                   onSelect={setSelectedFinding}
+                  onOpenPublish={
+                    items.length > 0 ? () => setTab("publish") : undefined
+                  }
                 />
               </PanelTabsContent>
               <PanelTabsContent
@@ -314,9 +344,17 @@ export const PublishDiagnosticsDialog = ({
                       const duration = getPublishDuration(item);
                       return (
                         <Flex key={item.buildId} direction="column" gap={2}>
-                          <Text variant="labels">
-                            {item.domains.join(", ") || "Static export"}
-                          </Text>
+                          {item.domains.length > 0 ? (
+                            <Flex direction="column" gap={1}>
+                              {item.domains.map((domain) => (
+                                <Text key={domain} variant="labels">
+                                  {domain}
+                                </Text>
+                              ))}
+                            </Flex>
+                          ) : (
+                            <Text variant="labels">Static export</Text>
+                          )}
                           <Text color="subtle">
                             {item.status === "pending"
                               ? "Publishing started"
